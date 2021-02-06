@@ -52,6 +52,7 @@ ParsableGeneralNameList = Iterable[ParsableGeneralName]
 ExtensionTypeTypeVar = TypeVar('ExtensionTypeTypeVar', bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
+SerializedItem = TypeVar('SerializedItem')
 
 if TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]

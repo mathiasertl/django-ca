@@ -133,7 +133,7 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess]):
         descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self._ocsp]
         return x509.AuthorityInformationAccess(descriptions=descs)
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.AuthorityInformationAccess) -> None:
         self.issuers = [v.access_location for v in value
                         if v.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
         self.ocsp = [v.access_location for v in value
@@ -248,7 +248,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
             self.authority_cert_issuer = GeneralNameList(value.get('authority_cert_issuer'))
             self.authority_cert_serial_number = value.get('authority_cert_serial_number')
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.AuthorityKeyIdentifier) -> None:
         self.key_identifier = value.key_identifier
         self.authority_cert_issuer = GeneralNameList(value.authority_cert_issuer)
         self.authority_cert_serial_number = value.authority_cert_serial_number
@@ -261,14 +261,14 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier]):
         else:
             super().from_other(value)
 
-    def from_subject_key_identifier(self, ext):
+    def from_subject_key_identifier(self, ext) -> None:
         """Create an extension based on SubjectKeyIdentifier extension."""
         # pylint: disable=attribute-defined-outside-init; func is designed to be called by init
         self.key_identifier = ext.value
         self.authority_cert_issuer = GeneralNameList()
         self.authority_cert_serial_number = None
 
-    def parse_keyid(self, value):  # pylint: disable=inconsistent-return-statements
+    def parse_keyid(self, value) -> Optional[bytes]:  # pylint: disable=inconsistent-return-statements
         """Parse the given key id (may be None)."""
         if isinstance(value, bytes):
             return value
@@ -315,13 +315,13 @@ class BasicConstraints(Extension[x509.BasicConstraints]):
     def hash_value(self) -> Tuple[bool, Optional[int]]:
         return self.ca, self.pathlen
 
-    def repr_value(self):
+    def repr_value(self) -> str:
         val = 'ca=%s' % self.ca
         if self.ca:
             val += ', pathlen=%s' % self.pathlen
         return val
 
-    def from_extension(self, value):
+    def from_extension(self, value: x509.BasicConstraints) -> None:
         self.ca = value.ca
         self.pathlen = value.path_length
 
@@ -337,7 +337,7 @@ class BasicConstraints(Extension[x509.BasicConstraints]):
     def extension_type(self) -> x509.BasicConstraints:
         return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
 
-    def as_text(self):
+    def as_text(self) -> str:
         if self.ca is True:
             val = 'CA:TRUE'
         else:
@@ -347,7 +347,7 @@ class BasicConstraints(Extension[x509.BasicConstraints]):
 
         return val
 
-    def parse_pathlen(self, value):
+    def parse_pathlen(self, value: Optional[Union[int, str]]) -> Optional[int]:
         """Parse a pathlen from the given value (either an int, a str of an int or None)."""
         if value is not None:
             try:
@@ -363,7 +363,7 @@ class BasicConstraints(Extension[x509.BasicConstraints]):
         return value
 
 
-class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints]):
+class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints, str]):
     """Class representing a CRLDistributionPoints extension.
 
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
@@ -389,7 +389,7 @@ class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
 
-class CertificatePolicies(ListExtension[x509.CertificatePolicies]):
+class CertificatePolicies(ListExtension[x509.CertificatePolicies, str]):
     """Class representing a Certificate Policies extension.
 
     The value passed to this extension should be a ``list`` of
@@ -436,7 +436,7 @@ class CertificatePolicies(ListExtension[x509.CertificatePolicies]):
         return value.serialize()
 
 
-class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL]):
+class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL, str]):
     """Class representing a FreshestCRL extension.
 
     This extension handles identically to the :py:class:`~django_ca.extensions.CRLDistributionPoints`
@@ -463,7 +463,7 @@ class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL]):
         return x509.FreshestCRL(distribution_points=[dp.for_extension_type for dp in self.value])
 
 
-class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName]):
+class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName, str]):
     """Class representing an Issuer Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -487,7 +487,7 @@ class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName]
         return x509.IssuerAlternativeName(self.value)
 
 
-class KeyUsage(OrderedSetExtension[x509.KeyUsage]):
+class KeyUsage(OrderedSetExtension[x509.KeyUsage, str]):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
     This extension is usually marked as critical and RFC 5280 defines that conforming CAs SHOULD mark it as
@@ -580,7 +580,7 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage]):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
-class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage]):
+class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, str]):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = 'extended_key_usage'
@@ -691,7 +691,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy]):
     def extension_type(self) -> x509.InhibitAnyPolicy:
         return x509.InhibitAnyPolicy(skip_certs=self.skip_certs)
 
-    def from_dict(self, value):
+    def from_dict(self, value) -> None:
         self.skip_certs = value.get('value')
 
     def from_extension(self, value: x509.InhibitAnyPolicy) -> None:
@@ -786,7 +786,7 @@ class PolicyConstraints(Extension[x509.PolicyConstraints]):
         return x509.PolicyConstraints(require_explicit_policy=self.require_explicit_policy,
                                       inhibit_policy_mapping=self.inhibit_policy_mapping)
 
-    def from_dict(self, value):
+    def from_dict(self, value) -> None:
         value = value.get('value', {})
         self.require_explicit_policy = value.get('require_explicit_policy')
         self.inhibit_policy_mapping = value.get('inhibit_policy_mapping')
@@ -796,7 +796,7 @@ class PolicyConstraints(Extension[x509.PolicyConstraints]):
         self.inhibit_policy_mapping = value.inhibit_policy_mapping
 
     def serialize_value(self) -> SerializedPolicyConstraints:
-        value = {}
+        value: SerializedPolicyConstraints = {}
         if self.inhibit_policy_mapping is not None:
             value['inhibit_policy_mapping'] = self.inhibit_policy_mapping
         if self.require_explicit_policy is not None:
@@ -885,11 +885,11 @@ class NameConstraints(Extension[x509.NameConstraints]):
     def extension_type(self) -> x509.NameConstraints:
         return x509.NameConstraints(permitted_subtrees=self._permitted, excluded_subtrees=self._excluded)
 
-    def from_extension(self, value: x509.NameConstraints):
+    def from_extension(self, value: x509.NameConstraints) -> None:
         self.permitted = value.permitted_subtrees
         self.excluded = value.excluded_subtrees
 
-    def from_dict(self, value):
+    def from_dict(self, value) -> None:
         value = value.get('value', {})
         self.permitted = value.get('permitted')
         self.excluded = value.get('excluded')
@@ -971,7 +971,7 @@ class PrecertPoison(NullExtension[x509.PrecertPoison]):
 
 
 class PrecertificateSignedCertificateTimestamps(
-    ListExtension[x509.PrecertificateSignedCertificateTimestamps]
+    ListExtension[x509.PrecertificateSignedCertificateTimestamps, SerializedSignedCertificateTimestamp]
 ):
     """Class representing signed certificate timestamps.
 
@@ -1079,7 +1079,7 @@ class PrecertificateSignedCertificateTimestamps(
         }
 
 
-class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName]):
+class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName, str]):
     """Class representing an Subject Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -1167,7 +1167,7 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier]):
         return bytes_to_hex(self.value)
 
 
-class TLSFeature(OrderedSetExtension[x509.TLSFeature]):
+class TLSFeature(OrderedSetExtension[x509.TLSFeature, str]):
     """Class representing a TLSFeature extension.
 
     As a :py:class:`~django_ca.extensions.base.OrderedSetExtension`, this extension handles much like it's

@@ -34,6 +34,7 @@ from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
 from ..typehints import ExtensionTypeVar
 from ..typehints import SerializedCRLDistributionPoints
+from ..typehints import SerializedItem
 from ..utils import GeneralNameList
 from ..utils import format_general_name
 from .utils import DistributionPoint
@@ -314,7 +315,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar]):
         return
 
 
-class IterableExtension(Extension[ExtensionTypeTypeVar]):
+class IterableExtension(Extension[ExtensionTypeTypeVar], Generic[ExtensionTypeTypeVar, SerializedItem]):
     """Base class for iterable extensions.
 
     Extensions of this class can be used just like any other iterable, e.g.:
@@ -348,7 +349,7 @@ class IterableExtension(Extension[ExtensionTypeTypeVar]):
         return len(self.value)
 
     def repr_value(self) -> str:
-        return self.serialize_value()
+        return repr(self.serialize_value())
 
     def as_text(self) -> str:
         return '\n'.join(['* %s' % v for v in self.serialize_value()])
@@ -357,18 +358,18 @@ class IterableExtension(Extension[ExtensionTypeTypeVar]):
         """Parse a single value (presumably from an iterable)."""
         return value
 
-    def serialize_value(self):
+    def serialize_value(self) -> List[SerializedItem]:
         """Serialize the whole iterable contained in this extension."""
 
         return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
 
-    def serialize_item(self, value) -> str:
+    def serialize_item(self, value) -> SerializedItem:
         """Serialize a single item in the iterable contained in this extension."""
 
         return value
 
 
-class ListExtension(IterableExtension[ExtensionTypeTypeVar]):
+class ListExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
     """Base class for extensions with multiple ordered values.
 
     .. versionchanged:: 1.18.0
@@ -428,7 +429,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar]):
         return self.value.remove(self.parse_value(value))
 
 
-class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
+class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, SerializedItem]):
     """Base class for extensions that contain a set of values.
 
     .. versionchanged:: 1.18.0
@@ -568,7 +569,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar]):
             self.value.update(self.parse_iterable(elem))
 
 
-class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar]):  # pylint: disable=abstract-method
+class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, SerializedItem]):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -580,6 +581,8 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar]):  # pylint: 
         (True, True, True)
 
     """
+    # pylint: disable=abstract-method; class is itself abstract
+
     value: GeneralNameList
 
     def from_dict(self, value):
@@ -598,7 +601,7 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar]):  # pylint: 
         return format_general_name(value)
 
 
-class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar]):
+class CRLDistributionPointsBase(ListExtension[ExtensionTypeTypeVar, SerializedItem]):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
     """
