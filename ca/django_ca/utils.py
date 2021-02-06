@@ -55,9 +55,9 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .typehints import SupportsIndex
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
+from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
@@ -1052,14 +1052,14 @@ class GeneralNameList(List[x509.GeneralName]):
     def __repr__(self) -> str:
         return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
 
-    # orig
-    #def __setitem__(self, key: int, value: ParsableGeneralName) -> None:
+    # Overloading functions, see also:
+    #   https://mypy.readthedocs.io/en/stable/more_types.html#function-overloading
     @overload
-    def __setitem__(self, key: SupportsIndex, value: ParsableGeneralName) -> None:
+    def __setitem__(self, key: SupportsIndex, value: ParsableGeneralName) -> None:  # pragma: no cover
         ...
 
     @overload
-    def __setitem__(self, key: slice, value: ParsableGeneralNameList) -> None:
+    def __setitem__(self, key: slice, value: ParsableGeneralNameList) -> None:  # pragma: no cover
         ...
 
     def __setitem__(

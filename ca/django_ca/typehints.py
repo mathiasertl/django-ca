@@ -75,7 +75,7 @@ else:
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     # NOTE: without the "as SupportsIndex", mypy won't consider this as "re-exported"
-    from typing import SupportsIndex as SupportsIndex
+    from typing import SupportsIndex as SupportsIndex  # pylint: disable=useless-import-alias
     from typing import TypedDict
 
     ParsableSubjectKeyIdentifier = TypedDict('ParsableSubjectKeyIdentifier', {
@@ -131,6 +131,7 @@ else:  # pragma: only py<3.8
 
         1:1 copy of the Python 3.9.0 implementation
         """
+        # pylint: disable=too-few-public-methods; just a copy of py3.9 implementation
         __slots__ = ()
 
         @abstractmethod
