@@ -138,7 +138,7 @@ def acme_token():
 def validate_past(value):
     """Validate that a given datetime is not in the future."""
     if value > timezone.now():
-        raise ValidationError(_('Date must be in the past!'))
+        raise ValidationError(_("Date must be in the past!"))
 
 
 def json_validator(value):
@@ -146,16 +146,16 @@ def json_validator(value):
     try:
         json.loads(value)
     except Exception as e:
-        raise ValidationError(_('Must be valid JSON: %(message)s') % {'message': str(e)}) from e
+        raise ValidationError(_("Must be valid JSON: %(message)s") % {"message": str(e)}) from e
 
 
 def pem_validator(value):
     """Validator that ensures a value is a valid PEM public certificate."""
 
-    if not value.startswith('-----BEGIN PUBLIC KEY-----\n'):
-        raise ValidationError(_('Not a valid PEM.'))
-    if not value.endswith('\n-----END PUBLIC KEY-----'):
-        raise ValidationError(_('Not a valid PEM.'))
+    if not value.startswith("-----BEGIN PUBLIC KEY-----\n"):
+        raise ValidationError(_("Not a valid PEM."))
+    if not value.endswith("\n-----END PUBLIC KEY-----"):
+        raise ValidationError(_("Not a valid PEM."))
 
 
 class DjangoCAModelMixin:
@@ -164,29 +164,30 @@ class DjangoCAModelMixin:
     @classproperty
     def admin_add_url(cls):  # pylint: disable=no-self-argument; false positive
         """URL to add an instance in the admin interface."""
-        return reverse('admin:%s_%s_add' % (cls._meta.app_label, cls._meta.model_name))
+        return reverse("admin:%s_%s_add" % (cls._meta.app_label, cls._meta.model_name))
 
     @classproperty
     def admin_changelist_url(cls):  # pylint: disable=no-self-argument; false positive
         """Changelist URL in the admin interface for the model."""
-        return reverse('admin:%s_%s_changelist' % (cls._meta.app_label, cls._meta.model_name))
+        return reverse("admin:%s_%s_changelist" % (cls._meta.app_label, cls._meta.model_name))
 
     @property
     def admin_change_url(self):
         """Change URL in the admin interface for the model instance."""
-        return reverse('admin:%s_%s_change' % (self._meta.app_label, self._meta.model_name), args=(self.pk, ))
+        return reverse("admin:%s_%s_change" % (self._meta.app_label, self._meta.model_name), args=(self.pk,))
 
 
 class Watcher(models.Model):
     """A watcher represents an email address that will receive notifications about expiring certificates."""
-    name = models.CharField(max_length=64, blank=True, default='', verbose_name=_('CommonName'))
-    mail = models.EmailField(verbose_name=_('E-Mail'), unique=True)
+
+    name = models.CharField(max_length=64, blank=True, default="", verbose_name=_("CommonName"))
+    mail = models.EmailField(verbose_name=_("E-Mail"), unique=True)
 
     @classmethod
     def from_addr(cls, addr):
         """Class constructor that creates an instance from an email address."""
-        name = ''
-        match = re.match(r'(.*?)\s*<(.*)>', addr)
+        name = ""
+        match = re.match(r"(.*?)\s*<(.*)>", addr)
         if match is not None:
             name, addr = match.groups()
 
@@ -204,27 +205,28 @@ class Watcher(models.Model):
 
     def __str__(self):
         if self.name:
-            return '%s <%s>' % (self.name, self.mail)
+            return "%s <%s>" % (self.name, self.mail)
         return self.mail
 
 
 class X509CertMixin(DjangoCAModelMixin, models.Model):
     """Mixin class with common attributes for Certificates and Certificate Authorities."""
+
     # pylint: disable=too-many-instance-attributes,too-many-public-methods
     # X.509 certificates are complex. Sorry.
 
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = (
-        (ReasonFlags.aa_compromise.name, _('Attribute Authority compromised')),
-        (ReasonFlags.affiliation_changed.name, _('Affiliation changed')),
-        (ReasonFlags.ca_compromise.name, _('CA compromised')),
-        (ReasonFlags.certificate_hold.name, _('On Hold')),
-        (ReasonFlags.cessation_of_operation.name, _('Cessation of operation')),
-        (ReasonFlags.key_compromise.name, _('Key compromised')),
-        (ReasonFlags.privilege_withdrawn.name, _('Privilege withdrawn')),
-        (ReasonFlags.remove_from_crl.name, _('Removed from CRL')),
-        (ReasonFlags.superseded.name, _('Superseded')),
-        (ReasonFlags.unspecified.name, _('Unspecified')),
+        (ReasonFlags.aa_compromise.name, _("Attribute Authority compromised")),
+        (ReasonFlags.affiliation_changed.name, _("Affiliation changed")),
+        (ReasonFlags.ca_compromise.name, _("CA compromised")),
+        (ReasonFlags.certificate_hold.name, _("On Hold")),
+        (ReasonFlags.cessation_of_operation.name, _("Cessation of operation")),
+        (ReasonFlags.key_compromise.name, _("Key compromised")),
+        (ReasonFlags.privilege_withdrawn.name, _("Privilege withdrawn")),
+        (ReasonFlags.remove_from_crl.name, _("Removed from CRL")),
+        (ReasonFlags.superseded.name, _("Superseded")),
+        (ReasonFlags.unspecified.name, _("Unspecified")),
     )
 
     created = models.DateTimeField(auto_now=True)
@@ -232,20 +234,29 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     valid_from = models.DateTimeField(blank=False)
     expires = models.DateTimeField(null=False, blank=False)
 
-    pub = models.TextField(verbose_name=_('Public key'))
-    cn = models.CharField(max_length=128, verbose_name=_('CommonName'))
+    pub = models.TextField(verbose_name=_("Public key"))
+    cn = models.CharField(max_length=128, verbose_name=_("CommonName"))
     serial = models.CharField(max_length=64, unique=True)
 
     # revocation information
     revoked = models.BooleanField(default=False)
-    revoked_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Revoked on'),
-                                        validators=[validate_past])
+    revoked_date = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Revoked on"), validators=[validate_past]
+    )
     revoked_reason = models.CharField(
-        max_length=32, blank=True, default='', verbose_name=_('Reason for revokation'),
-        choices=REVOCATION_REASONS)
+        max_length=32,
+        blank=True,
+        default="",
+        verbose_name=_("Reason for revokation"),
+        choices=REVOCATION_REASONS,
+    )
     compromised = models.DateTimeField(
-        null=True, blank=True, verbose_name=_('Date of compromise'), validators=[validate_past],
-        help_text=_('Optional: When this certificate was compromised. You can change this date later.'))
+        null=True,
+        blank=True,
+        verbose_name=_("Date of compromise"),
+        validators=[validate_past],
+        help_text=_("Optional: When this certificate was compromised. You can change this date later."),
+    )
 
     _x509 = None
 
@@ -297,7 +308,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
-        self.cn = self.subject.get('CN', '')  # pylint: disable=invalid-name
+        self.cn = self.subject.get("CN", "")  # pylint: disable=invalid-name
         self.expires = self.not_after
         self.valid_from = self.not_before
         if settings.USE_TZ:
@@ -330,7 +341,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     def get_digest(self, algo):
         """Get the digest for a certificate as string, including colons."""
         algo = getattr(hashes, algo.upper())()
-        return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode('utf-8'))
+        return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode("utf-8"))
 
     def get_filename(self, ext, bundle=False):
         """Get a filename safe for any file system and OS for this certificate based on the common name.
@@ -343,11 +354,11 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         bundle : bool, optional
             Adds "_bundle" as suffix.
         """
-        slug = slugify(self.cn.replace('.', '_'))
+        slug = slugify(self.cn.replace(".", "_"))
 
         if bundle is True:
-            return '%s_bundle.%s' % (slug, ext.lower())
-        return '%s.%s' % (slug, ext.lower())
+            return "%s_bundle.%s" % (slug, ext.lower())
+        return "%s.%s" % (slug, ext.lower())
 
     def get_revocation(self):
         """Get the `RevokedCertificate` instance for this certificate for CRLs.
@@ -369,10 +380,13 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         :py:class:`~cg:cryptography.x509.RevokedCertificate`
         """
         if self.revoked is False:
-            raise ValueError('Certificate is not revoked.')
+            raise ValueError("Certificate is not revoked.")
 
-        revoked_cert = x509.RevokedCertificateBuilder().serial_number(
-            self.x509.serial_number).revocation_date(self.revoked_date)
+        revoked_cert = (
+            x509.RevokedCertificateBuilder()
+            .serial_number(self.x509.serial_number)
+            .revocation_date(self.revoked_date)
+        )
 
         reason = self.get_revocation_reason()
         if reason != x509.ReasonFlags.unspecified:
@@ -397,9 +411,10 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         """
 
         public_key_raw = self.x509.public_key().public_bytes(
-            encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo)
+            encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo
+        )
         public_key_hash = hashlib.sha256(public_key_raw).digest()
-        return base64.b64encode(public_key_hash).decode('utf-8')
+        return base64.b64encode(public_key_hash).decode("utf-8")
 
     @property
     def issuer(self):
@@ -416,7 +431,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         """Date/Time this certificate expires."""
         return self.x509.not_valid_after
 
-    def revoke(self, reason='', compromised=None):
+    def revoke(self, reason="", compromised=None):
         """Revoke the current certificate.
 
         This function emits the ``pre_revoke_cert`` and ``post_revoke_cert`` signals.
@@ -451,7 +466,8 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     def distinguished_name(self):
         """The certificates distinguished name formatted as string."""
         return format_name(self.x509.subject)
-    distinguished_name.fget.short_description = 'Distinguished Name'
+
+    distinguished_name.fget.short_description = "Distinguished Name"
 
     ###################
     # X509 extensions #
@@ -469,8 +485,9 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     def _sorted_extensions(self):
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
-        return list(sorted(self._x509_extensions.values(),
-                           key=lambda e: (get_extension_name(e), e.oid.dotted_string)))
+        return list(
+            sorted(self._x509_extensions.values(), key=lambda e: (get_extension_name(e), e.oid.dotted_string))
+        )
 
     @cached_property
     def extension_fields(self):
@@ -483,8 +500,9 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 
             # extension that does not support new extension framework
             else:
-                log.warning('Unknown extension encountered: %s (%s)',
-                            get_extension_name(ext), ext.oid.dotted_string)
+                log.warning(
+                    "Unknown extension encountered: %s (%s)", get_extension_name(ext), ext.oid.dotted_string
+                )
                 fields.append(ext)
         return fields
 
@@ -640,42 +658,71 @@ class CertificateAuthority(X509CertMixin):
 
     objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
 
-    name = models.CharField(max_length=32, help_text=_('A human-readable name'), unique=True)
+    name = models.CharField(max_length=32, help_text=_("A human-readable name"), unique=True)
     """Human-readable name of the CA, only used for displaying the CA."""
     enabled = models.BooleanField(default=True)
-    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
-                               related_name='children')
-    private_key_path = models.CharField(max_length=256, help_text=_('Path to the private key.'))
+    parent = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
+    )
+    private_key_path = models.CharField(max_length=256, help_text=_("Path to the private key."))
 
     # various details used when signing certs
-    crl_url = models.TextField(blank=True, default='', validators=[multiline_url_validator],
-                               verbose_name=_('CRL URLs'),
-                               help_text=_("URLs, one per line, where you can retrieve the CRL."))
-    crl_number = models.TextField(
-        default='{"scope": {}}', blank=True, verbose_name=_('CRL Number'), validators=[json_validator],
-        help_text=_("Data structure to store the CRL number (see RFC 5280, 5.2.3) depending on the scope.")
+    crl_url = models.TextField(
+        blank=True,
+        default="",
+        validators=[multiline_url_validator],
+        verbose_name=_("CRL URLs"),
+        help_text=_("URLs, one per line, where you can retrieve the CRL."),
     )
-    issuer_url = models.URLField(blank=True, null=True, verbose_name=_('Issuer URL'),
-                                 help_text=_("URL to the certificate of this CA (in DER format)."))
-    ocsp_url = models.URLField(blank=True, null=True, verbose_name=_('OCSP responder URL'),
-                               help_text=_("URL of a OCSP responser for the CA."))
-    issuer_alt_name = models.CharField(blank=True, max_length=255, default='',
-                                       verbose_name=_('issuerAltName'), help_text=_("URL for your CA."))
+    crl_number = models.TextField(
+        default='{"scope": {}}',
+        blank=True,
+        verbose_name=_("CRL Number"),
+        validators=[json_validator],
+        help_text=_("Data structure to store the CRL number (see RFC 5280, 5.2.3) depending on the scope."),
+    )
+    issuer_url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name=_("Issuer URL"),
+        help_text=_("URL to the certificate of this CA (in DER format)."),
+    )
+    ocsp_url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name=_("OCSP responder URL"),
+        help_text=_("URL of a OCSP responser for the CA."),
+    )
+    issuer_alt_name = models.CharField(
+        blank=True,
+        max_length=255,
+        default="",
+        verbose_name=_("issuerAltName"),
+        help_text=_("URL for your CA."),
+    )
 
     caa_identity = models.CharField(
-        blank=True, max_length=32, verbose_name=_('CAA identity'),
-        help_text=_('CAA identity for this CA (NOTE: Not currently used!).')
+        blank=True,
+        max_length=32,
+        verbose_name=_("CAA identity"),
+        help_text=_("CAA identity for this CA (NOTE: Not currently used!)."),
     )
-    website = models.URLField(blank=True, help_text=_('Website for your CA.'))
-    terms_of_service = models.URLField(blank=True, verbose_name='Terms of Service',
-                                       help_text=_('URL to Terms of Service for this CA'))
+    website = models.URLField(blank=True, help_text=_("Website for your CA."))
+    terms_of_service = models.URLField(
+        blank=True, verbose_name="Terms of Service", help_text=_("URL to Terms of Service for this CA")
+    )
 
     # ACMEv2 fields
     acme_enabled = models.BooleanField(
-        default=False, verbose_name=_('Enable ACME'),
-        help_text=_("Whether it is possible to use ACME for this CA."))
-    acme_requires_contact = models.BooleanField(default=True, verbose_name='Requires contact', help_text=_(
-        'If this CA requires a contact address during account registration.'))
+        default=False,
+        verbose_name=_("Enable ACME"),
+        help_text=_("Whether it is possible to use ACME for this CA."),
+    )
+    acme_requires_contact = models.BooleanField(
+        default=True,
+        verbose_name="Requires contact",
+        help_text=_("If this CA requires a contact address during account registration."),
+    )
     # CAA record and website are general fields
 
     _key = None
@@ -707,17 +754,25 @@ class CertificateAuthority(X509CertMixin):
             algorithm = hashes.SHA1()
 
         for config in ca_settings.CA_CRL_PROFILES.values():
-            overrides = config.get('OVERRIDES', {}).get(self.serial, {})
+            overrides = config.get("OVERRIDES", {}).get(self.serial, {})
 
-            if overrides.get('skip'):
+            if overrides.get("skip"):
                 continue
 
-            algorithm = algorithm or parse_hash_algorithm(overrides.get('algorithm', config.get('algorithm')))
-            expires = overrides.get('expires', config.get('expires', 86400))
-            scope = overrides.get('scope', config.get('scope'))
-            full_name = overrides.get('full_name', config.get('full_name'))
-            relative_name = overrides.get('relative_name', config.get('relative_name'))
-            encodings = overrides.get('encodings', config.get('encodings', ['DER', ]))
+            algorithm = algorithm or parse_hash_algorithm(overrides.get("algorithm", config.get("algorithm")))
+            expires = overrides.get("expires", config.get("expires", 86400))
+            scope = overrides.get("scope", config.get("scope"))
+            full_name = overrides.get("full_name", config.get("full_name"))
+            relative_name = overrides.get("relative_name", config.get("relative_name"))
+            encodings = overrides.get(
+                "encodings",
+                config.get(
+                    "encodings",
+                    [
+                        "DER",
+                    ],
+                ),
+            )
             crl = None  # only compute crl when it is actually needed
 
             for encoding in encodings:
@@ -731,14 +786,29 @@ class CertificateAuthority(X509CertMixin):
 
                 if cache.get(cache_key) is None:
                     if crl is None:
-                        crl = self.get_crl(expires=expires, algorithm=algorithm, password=password,
-                                           scope=scope, full_name=full_name, relative_name=relative_name)
+                        crl = self.get_crl(
+                            expires=expires,
+                            algorithm=algorithm,
+                            password=password,
+                            scope=scope,
+                            full_name=full_name,
+                            relative_name=relative_name,
+                        )
 
                     encoded_crl = crl.public_bytes(encoding)
                     cache.set(cache_key, encoded_crl, cache_expires)
 
-    def generate_ocsp_key(self, profile='ocsp', expires=3, algorithm=None, password=None,
-                          key_size=None, key_type=None, ecc_curve=None, autogenerated=True):
+    def generate_ocsp_key(
+        self,
+        profile="ocsp",
+        expires=3,
+        algorithm=None,
+        password=None,
+        key_size=None,
+        key_type=None,
+        ecc_curve=None,
+        autogenerated=True,
+    ):
         """Generate OCSP keys for this CA.
 
         Parameters
@@ -773,8 +843,8 @@ class CertificateAuthority(X509CertMixin):
         if key_type is None:
             ca_key = self.key(password)
             if isinstance(ca_key, dsa.DSAPrivateKey):
-                key_type = 'DSA'
-                algorithm = 'SHA1'
+                key_type = "DSA"
+                algorithm = "SHA1"
 
         key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
         if isinstance(expires, int):
@@ -783,24 +853,37 @@ class CertificateAuthority(X509CertMixin):
 
         # generate the private key
         private_key = generate_private_key(key_size, key_type, ecc_curve)
-        private_pem = private_key.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8,
-                                                encryption_algorithm=serialization.NoEncryption())
-        private_path = ca_storage.generate_filename('ocsp/%s.key' % self.serial.replace(':', ''))
+        private_pem = private_key.private_bytes(
+            encoding=Encoding.PEM,
+            format=PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        private_path = ca_storage.generate_filename("ocsp/%s.key" % self.serial.replace(":", ""))
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(self.x509.subject).sign(
-            private_key, hashes.SHA256(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(self.x509.subject)
+            .sign(private_key, hashes.SHA256(), default_backend())
+        )
 
         # TODO: The subject we pass is just a guess - see what public CAs do!?  pylint: disable=fixme
-        cert = Certificate.objects.create_cert(ca=self, csr=csr, profile=profile, subject=self.subject,
-                                               algorithm=algorithm, autogenerated=autogenerated,
-                                               password=password, add_ocsp_url=False)
+        cert = Certificate.objects.create_cert(
+            ca=self,
+            csr=csr,
+            profile=profile,
+            subject=self.subject,
+            algorithm=algorithm,
+            autogenerated=autogenerated,
+            password=password,
+            add_ocsp_url=False,
+        )
 
-        cert_path = ca_storage.generate_filename('ocsp/%s.pem' % self.serial.replace(':', ''))
+        cert_path = ca_storage.generate_filename("ocsp/%s.pem" % self.serial.replace(":", ""))
         cert_pem = cert.dump_certificate(encoding=Encoding.PEM)
 
         for path, contents in [(private_path, private_pem), (cert_path, cert_pem)]:
             if ca_storage.exists(path):
-                with ca_storage.open(path, 'wb') as stream:
+                with ca_storage.open(path, "wb") as stream:
                     stream.write(contents)
             else:
                 ca_storage.save(path, ContentFile(contents))
@@ -833,11 +916,13 @@ class CertificateAuthority(X509CertMixin):
             The extension to use.
         """
 
-        return AuthorityKeyIdentifier(x509.Extension(
-            critical=AuthorityKeyIdentifier.default_critical,
-            oid=AuthorityKeyIdentifier.oid,
-            value=self.get_authority_key_identifier()
-        ))
+        return AuthorityKeyIdentifier(
+            x509.Extension(
+                critical=AuthorityKeyIdentifier.default_critical,
+                oid=AuthorityKeyIdentifier.oid,
+                value=self.get_authority_key_identifier(),
+            )
+        )
 
     def get_crl(self, expires=86400, algorithm=None, password=None, scope=None, counter=None, **kwargs):
         """Generate a Certificate Revocation List (CRL).
@@ -881,7 +966,7 @@ class CertificateAuthority(X509CertMixin):
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals,too-many-arguments
         # It's not easy to create a CRL. Sorry.
 
-        if scope is not None and scope not in ['ca', 'user', 'attribute']:
+        if scope is not None and scope not in ["ca", "user", "attribute"]:
             raise ValueError('Scope must be either None, "ca", "user" or "attribute"')
 
         now = now_builder = timezone.now()
@@ -897,8 +982,8 @@ class CertificateAuthority(X509CertMixin):
         builder = builder.last_update(now_builder)
         builder = builder.next_update(now_builder + timedelta(seconds=expires))
 
-        if kwargs.get('full_name'):
-            full_name = kwargs['full_name']
+        if kwargs.get("full_name"):
+            full_name = kwargs["full_name"]
             full_name = [parse_general_name(n) for n in full_name]
 
         # CRLs for root CAs with scope "ca" (or no scope) do not add an IssuingDistributionPoint extension by
@@ -906,19 +991,19 @@ class CertificateAuthority(X509CertMixin):
         # does not contain a CRL Distribution Point). But the Full Name in the CRL IDP and the CA CRL DP have
         # to match. See also:
         #       https://github.com/mathiasertl/django-ca/issues/64
-        elif scope in ('ca', None) and self.parent is None:
+        elif scope in ("ca", None) and self.parent is None:
             full_name = None
 
         # If CA_DEFAULT_HOSTNAME is set, CRLs with scope "ca" add the same URL in the IssuingDistributionPoint
         # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
         # See also:
         #       https://github.com/mathiasertl/django-ca/issues/64
-        elif scope == 'ca' and ca_settings.CA_DEFAULT_HOSTNAME:
-            crl_path = reverse('django_ca:ca-crl', kwargs={'serial': self.serial})
-            full_name = [x509.UniformResourceIdentifier(
-                'http://%s%s' % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path)
-            )]
-        elif scope in ('user', None) and self.crl_url:
+        elif scope == "ca" and ca_settings.CA_DEFAULT_HOSTNAME:
+            crl_path = reverse("django_ca:ca-crl", kwargs={"serial": self.serial})
+            full_name = [
+                x509.UniformResourceIdentifier("http://%s%s" % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path))
+            ]
+        elif scope in ("user", None) and self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
             full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
         else:
@@ -926,28 +1011,28 @@ class CertificateAuthority(X509CertMixin):
 
         # Keyword arguments for the IssuingDistributionPoint extension
         idp_kwargs = {
-            'only_contains_ca_certs': False,
-            'only_contains_user_certs': False,
-            'indirect_crl': False,
-            'only_contains_attribute_certs': False,
-            'only_some_reasons': None,
-            'full_name': full_name,
-            'relative_name': kwargs.get('relative_name'),
+            "only_contains_ca_certs": False,
+            "only_contains_user_certs": False,
+            "indirect_crl": False,
+            "only_contains_attribute_certs": False,
+            "only_some_reasons": None,
+            "full_name": full_name,
+            "relative_name": kwargs.get("relative_name"),
         }
 
         ca_qs = self.children.filter(expires__gt=now).revoked()
         cert_qs = self.certificate_set.filter(expires__gt=now).revoked()
 
-        if scope == 'ca':
+        if scope == "ca":
             certs = ca_qs
-            idp_kwargs['only_contains_ca_certs'] = True
-        elif scope == 'user':
+            idp_kwargs["only_contains_ca_certs"] = True
+        elif scope == "user":
             certs = cert_qs
-            idp_kwargs['only_contains_user_certs'] = True
-        elif scope == 'attribute':
+            idp_kwargs["only_contains_user_certs"] = True
+        elif scope == "attribute":
             # sorry, nothing we support right now
             certs = []
-            idp_kwargs['only_contains_attribute_certs'] = True
+            idp_kwargs["only_contains_attribute_certs"] = True
         else:
             certs = itertools.chain(ca_qs, cert_qs)
 
@@ -955,8 +1040,13 @@ class CertificateAuthority(X509CertMixin):
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
         # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
-        add_idp = idp_kwargs['only_contains_attribute_certs'] or idp_kwargs['only_contains_user_certs'] \
-            or idp_kwargs['only_contains_ca_certs'] or idp_kwargs['full_name'] or idp_kwargs['relative_name']
+        add_idp = (
+            idp_kwargs["only_contains_attribute_certs"]
+            or idp_kwargs["only_contains_user_certs"]
+            or idp_kwargs["only_contains_ca_certs"]
+            or idp_kwargs["full_name"]
+            or idp_kwargs["relative_name"]
+        )
 
         if add_idp:  # pragma: no branch
             builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
@@ -967,13 +1057,13 @@ class CertificateAuthority(X509CertMixin):
 
         # Add the CRLNumber extension (RFC 5280, 5.2.3)
         if counter is None:
-            counter = scope or 'all'
+            counter = scope or "all"
         crl_number_data = json.loads(self.crl_number)
-        crl_number = int(crl_number_data['scope'].get(counter, 0))
+        crl_number = int(crl_number_data["scope"].get(counter, 0))
         builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
 
         # increase crl_number for the given scope and save
-        crl_number_data['scope'][counter] = crl_number + 1
+        crl_number_data["scope"][counter] = crl_number + 1
         self.crl_number = json.dumps(crl_number_data)
         self.save()
 
@@ -1053,8 +1143,8 @@ class CertificateAuthority(X509CertMixin):
         return self.enabled and self.valid_from < timezone.now() < self.expires
 
     class Meta:
-        verbose_name = _('Certificate Authority')
-        verbose_name_plural = _('Certificate Authorities')
+        verbose_name = _("Certificate Authority")
+        verbose_name_plural = _("Certificate Authorities")
 
     def __str__(self):
         return self.name
@@ -1065,18 +1155,24 @@ class Certificate(X509CertMixin):
 
     objects = CertificateManager.from_queryset(CertificateQuerySet)()
 
-    watchers = models.ManyToManyField(Watcher, related_name='certificates', blank=True)
+    watchers = models.ManyToManyField(Watcher, related_name="certificates", blank=True)
 
-    ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
-                           verbose_name=_('Certificate Authority'))
-    csr = models.TextField(verbose_name=_('CSR'), blank=True)
+    ca = models.ForeignKey(
+        CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
+    )
+    csr = models.TextField(verbose_name=_("CSR"), blank=True)
 
     # Note: We don't set choices here because the available profiles might be changed by the user.
-    profile = models.CharField(blank=True, default='', max_length=32,
-                               help_text=_('Profile that was used to generate this certificate.'))
+    profile = models.CharField(
+        blank=True,
+        default="",
+        max_length=32,
+        help_text=_("Profile that was used to generate this certificate."),
+    )
 
-    autogenerated = models.BooleanField(default=False,
-                                        help_text=_("If this certificate was automatically generated."))
+    autogenerated = models.BooleanField(
+        default=False, help_text=_("If this certificate was automatically generated.")
+    )
 
     @property
     def bundle(self):
@@ -1107,9 +1203,9 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
     STATUS_DEACTIVATED = Status.DEACTIVATED.value  # deactivated by user
     STATUS_REVOKED = Status.REVOKED.value  # revoked by server
     STATUS_CHOICES = (
-        (STATUS_VALID, _('Valid')),
-        (STATUS_DEACTIVATED, _('Deactivated')),
-        (STATUS_REVOKED, _('Revoked')),
+        (STATUS_VALID, _("Valid")),
+        (STATUS_DEACTIVATED, _("Deactivated")),
+        (STATUS_REVOKED, _("Revoked")),
     )
 
     objects = AcmeAccountManager.from_queryset(AcmeAccountQuerySet)()
@@ -1119,37 +1215,37 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     # Account information
-    ca = models.ForeignKey(CertificateAuthority, on_delete=models.CASCADE,
-                           verbose_name=_('Certificate Authority'))
+    ca = models.ForeignKey(
+        CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
+    )
     # Full public key of the account
-    pem = models.TextField(verbose_name=_('Public key'), unique=True, blank=False, validators=[pem_validator])
+    pem = models.TextField(verbose_name=_("Public key"), unique=True, blank=False, validators=[pem_validator])
     # JSON Web Key thumbprint - a hash of the public key, see RFC 7638.
     #   NOTE: Only unique for the given CA to make hash collisions less likely
     thumbprint = models.CharField(max_length=64)
     slug = models.SlugField(unique=True, default=acme_slug)
-    kid = models.URLField(unique=True, validators=[URLValidator(schemes=('http', 'https'))],
-                          verbose_name=_('Key ID'))
+    kid = models.URLField(
+        unique=True, validators=[URLValidator(schemes=("http", "https"))], verbose_name=_("Key ID")
+    )
 
     # Fields according to RFC 8555, 7.1.2
     # RFC 8555, 7.1.6: "Account objects are created in the "valid" state"
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default=STATUS_VALID)
-    contact = models.TextField(blank=True, help_text=_('Contact addresses for this account, one per line.'))
+    contact = models.TextField(blank=True, help_text=_("Contact addresses for this account, one per line."))
     terms_of_service_agreed = models.BooleanField(default=False)
     # NOTE: externalAccountBinding is not yet supported
     # NOTE: orders property is provided by reverse relation of the AcmeOrder model
 
     class Meta:
-        verbose_name = _('ACME Account')
-        verbose_name_plural = _('ACME Accounts')
-        unique_together = (
-            ('ca', 'thumbprint'),
-        )
+        verbose_name = _("ACME Account")
+        verbose_name_plural = _("ACME Accounts")
+        unique_together = (("ca", "thumbprint"),)
 
     def __str__(self):
         try:
-            return self.contact.split('\n')[0].split(':', 1)[1]
+            return self.contact.split("\n")[0].split(":", 1)[1]
         except IndexError:
-            return ''
+            return ""
 
     @property
     def serial(self):
@@ -1162,7 +1258,7 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
         Note that `slug` and `ca` must be already set when using this method.
         """
         self.kid = request.build_absolute_uri(
-            reverse('django_ca:acme-account', kwargs={'slug': self.slug, 'serial': self.ca.serial})
+            reverse("django_ca:acme-account", kwargs={"slug": self.slug, "serial": self.ca.serial})
         )
 
     @property
@@ -1182,6 +1278,7 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
 
         `RFC 8555, 7.1.3 <https://tools.ietf.org/html/rfc8555#section-7.1.3>`_
     """
+
     # RFC 8555, 7.1.3: "Possible values are "pending", "ready", "processing", "valid", and "invalid"."
     STATUS_PENDING = Status.PENDING.value
     STATUS_READY = Status.READY.value
@@ -1190,16 +1287,16 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
     STATUS_INVALID = Status.INVALID.value
 
     STATUS_CHOICES = (
-        (STATUS_INVALID, _('Invalid')),
-        (STATUS_PENDING, _('Pending')),
-        (STATUS_PROCESSING, _('Processing')),
-        (STATUS_READY, _('Ready')),
-        (STATUS_VALID, _('Valid')),
+        (STATUS_INVALID, _("Invalid")),
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_PROCESSING, _("Processing")),
+        (STATUS_READY, _("Ready")),
+        (STATUS_VALID, _("Valid")),
     )
 
     objects = AcmeOrderManager.from_queryset(AcmeOrderQuerySet)()
 
-    account = models.ForeignKey(AcmeAccount, on_delete=models.CASCADE, related_name='orders')
+    account = models.ForeignKey(AcmeAccount, on_delete=models.CASCADE, related_name="orders")
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 7.1.3
@@ -1215,21 +1312,21 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
     # NOTE: certificate property is provided by reverse relation of the AcmeCertificate model
 
     class Meta:
-        verbose_name = _('ACME Order')
-        verbose_name_plural = _('ACME Orders')
+        verbose_name = _("ACME Order")
+        verbose_name_plural = _("ACME Orders")
 
     def __str__(self):
-        return '%s (%s)' % (self.slug, self.account)
+        return "%s (%s)" % (self.slug, self.account)
 
     @property
     def acme_url(self):
         """Get the ACME url path for this order."""
-        return reverse('django_ca:acme-order', kwargs={'slug': self.slug, 'serial': self.serial})
+        return reverse("django_ca:acme-order", kwargs={"slug": self.slug, "serial": self.serial})
 
     @property
     def acme_finalize_url(self):
         """Get the ACME "finalize" url path for this order."""
-        return reverse('django_ca:acme-order-finalize', kwargs={'slug': self.slug, 'serial': self.serial})
+        return reverse("django_ca:acme-order-finalize", kwargs={"slug": self.slug, "serial": self.serial})
 
     def add_authorizations(self, identifiers):
         """Add :py:class:`~django_ca.models.AcmeAuthorization` instances for the given identifiers.
@@ -1254,9 +1351,9 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
 
         list of :py:class:`~django_ca.models.AcmeAuthorization`
         """
-        return self.authorizations.bulk_create([
-            AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers
-        ])
+        return self.authorizations.bulk_create(
+            [AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers]
+        )
 
     @property
     def serial(self):
@@ -1269,8 +1366,9 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
 
         An order is usable if it is in the "pending" status, has not expired and the account is usable.
         """
-        return self.status == AcmeOrder.STATUS_PENDING and self.expires > timezone.now() \
-            and self.account.usable
+        return (
+            self.status == AcmeOrder.STATUS_PENDING and self.expires > timezone.now() and self.account.usable
+        )
 
 
 class AcmeAuthorization(DjangoCAModelMixin, models.Model):
@@ -1280,11 +1378,10 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
 
         `RFC 8555, 7.1.4 <https://tools.ietf.org/html/rfc8555#section-7.1.4>`_
     """
+
     # Choices from RFC 8555, section 9.7.7.
     TYPE_DNS = IdentifierType.DNS.value
-    TYPE_CHOICES = (
-        (TYPE_DNS, _('DNS')),
-    )
+    TYPE_CHOICES = ((TYPE_DNS, _("DNS")),)
 
     # RFC 8555, 7.1.4: "Possible values are "pending", "valid", "invalid", "deactivated", "expired", and
     #                   "revoked"."
@@ -1295,17 +1392,17 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
     STATUS_EXPIRED = Status.EXPIRED.value
     STATUS_REVOKED = Status.REVOKED.value
     STATUS_CHOICES = (
-        (STATUS_PENDING, _('Pending')),
-        (STATUS_VALID, _('Valid')),
-        (STATUS_INVALID, _('Invalid')),
-        (STATUS_DEACTIVATED, _('Deactivated')),
-        (STATUS_EXPIRED, _('Expired')),
-        (STATUS_REVOKED, _('Revoked')),
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_VALID, _("Valid")),
+        (STATUS_INVALID, _("Invalid")),
+        (STATUS_DEACTIVATED, _("Deactivated")),
+        (STATUS_EXPIRED, _("Expired")),
+        (STATUS_REVOKED, _("Revoked")),
     )
 
     objects = AcmeAuthorizationManager.from_queryset(AcmeAuthorizationQuerySet)()
 
-    order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE, related_name='authorizations')
+    order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE, related_name="authorizations")
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 7.1.4:
@@ -1319,14 +1416,12 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
     wildcard = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = (
-            ('order', 'type', 'value'),
-        )
-        verbose_name = _('ACME Authorization')
-        verbose_name_plural = _('ACME Authorizations')
+        unique_together = (("order", "type", "value"),)
+        verbose_name = _("ACME Authorization")
+        verbose_name_plural = _("ACME Authorizations")
 
     def __str__(self):
-        return '%s: %s' % (self.type, self.value)
+        return "%s: %s" % (self.type, self.value)
 
     @property
     def account(self):
@@ -1336,7 +1431,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
     @property
     def acme_url(self):
         """Get the ACME url path for this account authorization."""
-        return reverse('django_ca:acme-authz', kwargs={'slug': self.slug, 'serial': self.serial})
+        return reverse("django_ca:acme-authz", kwargs={"slug": self.slug, "serial": self.serial})
 
     @property
     def expires(self):
@@ -1353,11 +1448,11 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         identifier : :py:class:`acme:acme.messages.Identifier`
         """
         # Programatic import to make sure that the acme library is an optional dependency
-        messages = importlib.import_module('acme.messages')
+        messages = importlib.import_module("acme.messages")
 
         if self.type == AcmeAuthorization.TYPE_DNS:
             return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
-        raise ValueError('Unknown identifier type: %s' % self.type)
+        raise ValueError("Unknown identifier type: %s" % self.type)
 
     @property
     def serial(self):
@@ -1371,7 +1466,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         This method is intended to be used when creating the
         :py:class:`~django_ca.extensions.SubjectAlternativeName` extension for a certificate to be signed.
         """
-        return '%s:%s' % (self.type, self.value)
+        return "%s:%s" % (self.type, self.value)
 
     def get_challenges(self):
         """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
@@ -1402,13 +1497,13 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
     """
 
     # Possible challenges
-    TYPE_HTTP_01 = 'http-01'
-    TYPE_DNS_01 = 'dns-01'
-    TYPE_TLS_ALPN_01 = 'tls-alpn-01'
+    TYPE_HTTP_01 = "http-01"
+    TYPE_DNS_01 = "dns-01"
+    TYPE_TLS_ALPN_01 = "tls-alpn-01"
     TYPE_CHOICES = (
-        (TYPE_HTTP_01, _('HTTP Challenge')),
-        (TYPE_DNS_01, _('DNS Challenge')),
-        (TYPE_TLS_ALPN_01, _('TLS ALPN Challenge')),
+        (TYPE_HTTP_01, _("HTTP Challenge")),
+        (TYPE_DNS_01, _("DNS Challenge")),
+        (TYPE_TLS_ALPN_01, _("TLS ALPN Challenge")),
     )
 
     # RFC 8555, 8: "Possible values are "pending", "processing", "valid", and "invalid"."
@@ -1417,15 +1512,15 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
     STATUS_VALID = Status.VALID.value
     STATUS_INVALID = Status.INVALID.value
     STATUS_CHOICES = (
-        (STATUS_PENDING, _('Pending')),
-        (STATUS_PROCESSING, _('Processing')),
-        (STATUS_VALID, _('Valid')),
-        (STATUS_INVALID, _('Name')),
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_PROCESSING, _("Processing")),
+        (STATUS_VALID, _("Valid")),
+        (STATUS_INVALID, _("Name")),
     )
 
     objects = AcmeChallengeManager.from_queryset(AcmeChallengeQuerySet)()
 
-    auth = models.ForeignKey(AcmeAuthorization, on_delete=models.CASCADE, related_name='challenges')
+    auth = models.ForeignKey(AcmeAuthorization, on_delete=models.CASCADE, related_name="challenges")
     slug = models.SlugField(unique=True, default=acme_slug)
 
     # Fields according to RFC 8555, 8:
@@ -1441,19 +1536,17 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
     token = models.CharField(blank=True, max_length=64, default=acme_token)
 
     class Meta:
-        unique_together = (
-            ('auth', 'type'),
-        )
-        verbose_name = _('ACME Challenge')
-        verbose_name_plural = _('ACME Challenges')
+        unique_together = (("auth", "type"),)
+        verbose_name = _("ACME Challenge")
+        verbose_name_plural = _("ACME Challenges")
 
     def __str__(self):
-        return '%s (%s)' % (self.auth.value, self.type)
+        return "%s (%s)" % (self.auth.value, self.type)
 
     @property
     def acme_url(self):
         """Get the ACME url path for this challenge."""
-        return reverse('django_ca:acme-challenge', kwargs={'slug': self.slug, 'serial': self.serial})
+        return reverse("django_ca:acme-challenge", kwargs={"slug": self.slug, "serial": self.serial})
 
     @property
     def acme_challenge(self):
@@ -1466,7 +1559,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
             The acme representation of this class.
         """
         # Programatic import to make sure that the acme library is an optional dependency
-        challenges = importlib.import_module('acme.challenges')
+        challenges = importlib.import_module("acme.challenges")
 
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
@@ -1476,7 +1569,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         if self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
             return challenges.TLSALPN01(token=token)
 
-        raise ValueError('%s: Unsupported challenge type.' % self.type)
+        raise ValueError("%s: Unsupported challenge type." % self.type)
 
     @property
     def acme_validated(self):
@@ -1504,14 +1597,15 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         """
 
         # Programatic import to make sure that the acme library is an optional dependency
-        messages = importlib.import_module('acme.messages')
+        messages = importlib.import_module("acme.messages")
 
         url = request.build_absolute_uri(self.acme_url)
 
         # NOTE: RFC855, section 7.5 shows challenges *without* a status, but this object always includes it.
         #       It does not seem to hurt, but might be a slight spec-violation.
-        return messages.ChallengeBody(chall=self.acme_challenge, _url=url, status=self.status,
-                                      validated=self.acme_validated)
+        return messages.ChallengeBody(
+            chall=self.acme_challenge, _url=url, status=self.status, validated=self.acme_validated
+        )
 
     @property
     def serial(self):
@@ -1536,16 +1630,16 @@ class AcmeCertificate(DjangoCAModelMixin, models.Model):
     slug = models.SlugField(unique=True, default=acme_slug)
     order = models.OneToOneField(AcmeOrder, on_delete=models.CASCADE)
     cert = models.OneToOneField(Certificate, on_delete=models.CASCADE, null=True)
-    csr = models.TextField(verbose_name=_('CSR'))
+    csr = models.TextField(verbose_name=_("CSR"))
 
     class Meta:
-        verbose_name = _('ACME Certificate')
-        verbose_name_plural = _('ACME Certificate')
+        verbose_name = _("ACME Certificate")
+        verbose_name_plural = _("ACME Certificate")
 
     @property
     def acme_url(self):
         """Get the ACME url path for this certificate."""
-        return reverse('django_ca:acme-cert', kwargs={'slug': self.slug, 'serial': self.order.serial})
+        return reverse("django_ca:acme-cert", kwargs={"slug": self.slug, "serial": self.order.serial})
 
     def parse_csr(self):
         """Load the CSR into a cryptography object.
@@ -1565,5 +1659,8 @@ class AcmeCertificate(DjangoCAModelMixin, models.Model):
         An ACME certificate is considered usable if no actuall certificate has yet been issued, the order is
         not expired and in the "processing" state.
         """
-        return self.cert is None and self.order.expires > timezone.now() \
+        return (
+            self.cert is None
+            and self.order.expires > timezone.now()
             and self.order.status == AcmeOrder.STATUS_PROCESSING
+        )
