@@ -17,7 +17,6 @@
 
 import sys
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -28,6 +27,15 @@ from typing import Union
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
+
+# pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
+if sys.version_info >= (3, 8):  # pragma: only py>=3.8
+    from typing import SupportsIndex as SupportsIndex
+    from typing import TypedDict as TypedDict
+else:
+    from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401
+    from typing_extensions import TypedDict as TypedDict
+# pylint: enable=useless-import-alias
 
 DistributionPointType = Dict[str, Union[List[str], str]]
 
@@ -79,106 +87,103 @@ else:
         TLSFeatureExtensionType
     ) = UnrecognizedExtensionType = PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
-if sys.version_info >= (3, 8):  # pragma: only py>=3.8
-    # NOTE: without the "as SupportsIndex", mypy won't consider this as "re-exported"
-    from typing import SupportsIndex as SupportsIndex  # pylint: disable=useless-import-alias
-    from typing import TypedDict
 
-    BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
+BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
+ParsableAuthorityInformationAccess = TypedDict("ParsableAuthorityInformationAccess", {
+    'ocsp': Optional[ParsableGeneralNameList],
+    'issuers': Optional[ParsableGeneralNameList],
+})
+ParsableAuthorityKeyIdentifierDict = TypedDict("ParsableAuthorityKeyIdentifierDict", {
+    "key_identifier": Optional[bytes],
+    "authority_cert_issuer": Iterable[str],
+    "authority_cert_serial_number": Optional[int],
+}, total=False)
+ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
 
-    class ParsableBasicConstraints(BasicConstraintsBase, total=False):
-        """Serialized representation of a BasicConstraints extension.
 
-        A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-        has a ``"pathlen"`` value that is either ``None`` or an int.
-        """
+class ParsableBasicConstraints(BasicConstraintsBase, total=False):
+    """Serialized representation of a BasicConstraints extension.
 
-        # pylint: disable=too-few-public-methods; just a TypedDict
-        pathlen: Union[int, str]
+    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
+    has a ``"pathlen"`` value that is either ``None`` or an int.
+    """
 
-    ParsableNameConstraints = TypedDict("ParsableNameConstraints", {
-        "permitted": ParsableGeneralNameList,
-        "excluded": ParsableGeneralNameList,
-    }, total=False)
-    ParsableNullExtension = TypedDict("ParsableNullExtension", {
+    # pylint: disable=too-few-public-methods; just a TypedDict
+    pathlen: Union[int, str]
+
+
+ParsableNameConstraints = TypedDict("ParsableNameConstraints", {
+    "permitted": ParsableGeneralNameList,
+    "excluded": ParsableGeneralNameList,
+}, total=False)
+ParsableNullExtension = TypedDict("ParsableNullExtension", {
+    "critical": bool,
+}, total=False)
+ParsablePolicyConstraints = TypedDict("ParsablePolicyConstraints", {
+    "require_explicit_policy": int,
+    "inhibit_policy_mapping": int,
+}, total=False)
+
+
+class SerializedBasicConstraints(BasicConstraintsBase, total=False):
+    """Serialized representation of a BasicConstraints extension.
+
+    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
+    has a ``"pathlen"`` value that is either ``None`` or an int.
+    """
+
+    # pylint: disable=too-few-public-methods; just a TypedDict
+    pathlen: Optional[int]
+
+
+SerializedAuthorityInformationAccess = TypedDict(
+    "SerializedAuthorityInformationAccess",
+    {
+        "issuers": List[str],
+        "ocsp": List[str],
+    },
+    total=False,
+)
+SerializedAuthorityKeyIdentifier = TypedDict(
+    "SerializedAuthorityKeyIdentifier",
+    {
+        "key_identifier": str,
+        "authority_cert_issuer": List[str],
+        "authority_cert_serial_number": int,
+    },
+    total=False,
+)
+SerializedCRLDistributionPoints = TypedDict(
+    "SerializedCRLDistributionPoints",
+    {
         "critical": bool,
-    }, total=False)
-    ParsablePolicyConstraints = TypedDict("ParsablePolicyConstraints", {
-        "require_explicit_policy": int,
+        "value": List[DistributionPointType],
+    },
+)
+SerializedNameConstraints = TypedDict(
+    "SerializedNameConstraints",
+    {
+        "permitted": List[str],
+        "excluded": List[str],
+    },
+)
+SerializedPolicyConstraints = TypedDict(
+    "SerializedPolicyConstraints",
+    {
         "inhibit_policy_mapping": int,
-    }, total=False)
-
-    class SerializedBasicConstraints(BasicConstraintsBase, total=False):
-        """Serialized representation of a BasicConstraints extension.
-
-        A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-        has a ``"pathlen"`` value that is either ``None`` or an int.
-        """
-
-        # pylint: disable=too-few-public-methods; just a TypedDict
-        pathlen: Optional[int]
-
-    SerializedAuthorityInformationAccess = TypedDict(
-        "SerializedAuthorityInformationAccess",
-        {
-            "issuers": List[str],
-            "ocsp": List[str],
-        },
-        total=False,
-    )
-    SerializedAuthorityKeyIdentifier = TypedDict(
-        "SerializedAuthorityKeyIdentifier",
-        {
-            "key_identifier": str,
-            "authority_cert_issuer": List[str],
-            "authority_cert_serial_number": int,
-        },
-        total=False,
-    )
-    SerializedCRLDistributionPoints = TypedDict(
-        "SerializedCRLDistributionPoints",
-        {
-            "critical": bool,
-            "value": List[DistributionPointType],
-        },
-    )
-    SerializedNameConstraints = TypedDict(
-        "SerializedNameConstraints",
-        {
-            "permitted": List[str],
-            "excluded": List[str],
-        },
-    )
-    SerializedPolicyConstraints = TypedDict(
-        "SerializedPolicyConstraints",
-        {
-            "inhibit_policy_mapping": int,
-            "require_explicit_policy": int,
-        },
-        total=False,
-    )
-    SerializedSignedCertificateTimestamp = TypedDict(
-        "SerializedSignedCertificateTimestamp",
-        {
-            "log_id": str,
-            "timestamp": str,
-            "type": str,
-            "version": str,
-        },
-    )
-    """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
-else:  # pragma: only py<3.8
-    SupportsIndex = Any
-    ParsableExtension = Dict[str, Union[bool, ParsableValue]]
-    ParsableNameConstraints = Dict[str, ParsableGeneralNameList]
-    ParsableNullExtension = Dict[str, bool]
-    ParsablePolicyConstraints = Dict[str, int]
-
-    SerializedAuthorityInformationAccess = SerializedNameConstraints = Dict[str, List[str]]
-    SerializedAuthorityKeyIdentifier = Dict[str, Union[str, int, List[str]]]
-    SerializedBasicConstraints = ParsableBasicConstraints = Dict[str, Union[bool, str, None]]
-    SerializedCRLDistributionPoints = Dict[str, Union[bool, List[Any]]]
-    SerializedPolicyConstraints = Dict[str, int]
-    SerializedSignedCertificateTimestamp = Dict[str, str]
+        "require_explicit_policy": int,
+    },
+    total=False,
+)
+SerializedSignedCertificateTimestamp = TypedDict(
+    "SerializedSignedCertificateTimestamp",
+    {
+        "log_id": str,
+        "timestamp": str,
+        "type": str,
+        "version": str,
+    },
+)
+"""A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 
 ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]

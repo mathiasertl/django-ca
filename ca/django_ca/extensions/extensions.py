@@ -40,6 +40,8 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
+from ..typehints import ParsableAuthorityInformationAccess
+from ..typehints import ParsableAuthorityKeyIdentifier
 from ..typehints import ParsableBasicConstraints
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableNameConstraints
@@ -66,12 +68,11 @@ from .base import OrderedSetExtension
 from .utils import PolicyInformation
 
 # Placeholder until we fill in something good
-SerializedDummy = str
 ParsableValueDummy = str
 
 
 class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
-                                           ParsableValueDummy,
+                                           ParsableAuthorityInformationAccess,
                                            SerializedAuthorityInformationAccess]):
     """Class representing a AuthorityInformationAccess extension.
 
@@ -129,13 +130,11 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
 
         return text.strip()
 
-    @property
-    def issuers(self) -> GeneralNameList:
+    def _get_issuers(self) -> GeneralNameList:
         """Issuers named by this extension."""
         return self._issuers
 
-    @issuers.setter
-    def issuers(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+    def _set_issuers(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._issuers = value
@@ -153,31 +152,33 @@ class AuthorityInformationAccess(Extension[x509.AuthorityInformationAccess,
         self.ocsp = [v.access_location for v in value
                      if v.access_method == AuthorityInformationAccessOID.OCSP]
 
-    def from_dict(self, value):
+    def from_dict(self, value: ParsableAuthorityInformationAccess) -> None:
         self.issuers = value.get('issuers')
         self.ocsp = value.get('ocsp')
 
-    @property
-    def ocsp(self) -> GeneralNameList:
+    def _get_ocsp(self) -> GeneralNameList:
         """OCSP endpoints described by this extension."""
         return self._ocsp
 
-    @ocsp.setter
-    def ocsp(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+    def _set_ocsp(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._ocsp = value
 
     def serialize_value(self) -> SerializedAuthorityInformationAccess:
-        value = {}
+        value: SerializedAuthorityInformationAccess = {}
         if self._issuers:
             value['issuers'] = self._issuers.serialize()
         if self._ocsp:
             value['ocsp'] = self._ocsp.serialize()
         return value
 
+    issuers = property(_get_issuers, _set_issuers)
+    ocsp = property(_get_ocsp, _set_ocsp)
 
-class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValueDummy,
+
+class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier,
+                                       ParsableAuthorityKeyIdentifier,
                                        SerializedAuthorityKeyIdentifier]):
     """Class representing a AuthorityKeyIdentifier extension.
 
@@ -217,7 +218,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
     def hash_value(self) -> Tuple[Optional[bytes], Tuple[x509.GeneralName, ...], Optional[int]]:
         return self.key_identifier, tuple(self.authority_cert_issuer), self.authority_cert_serial_number
 
-    def repr_value(self):
+    def repr_value(self) -> str:
         values = []
         if self.key_identifier is not None:
             values.append('keyid: %s' % bytes_to_hex(self.key_identifier))
@@ -228,7 +229,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
 
         return ', '.join(values)
 
-    def as_text(self):
+    def as_text(self) -> str:
         values = []
         if self.key_identifier is not None:
             values.append('* KeyID: %s' % bytes_to_hex(self.key_identifier))
@@ -242,7 +243,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
 
     @property
     def extension_type(self) -> x509.AuthorityKeyIdentifier:
-        issuer = self.authority_cert_issuer
+        issuer: Optional[GeneralNameList] = self.authority_cert_issuer
         if not issuer:
             issuer = None
 
@@ -251,8 +252,8 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
             authority_cert_issuer=issuer,
             authority_cert_serial_number=self.authority_cert_serial_number)
 
-    def from_dict(self, value) -> None:
-        if isinstance(value, (bytes, str)) is True:
+    def from_dict(self, value: ParsableAuthorityKeyIdentifier) -> None:
+        if isinstance(value, (bytes, str)):
             self.key_identifier = self.parse_keyid(value)
             self.authority_cert_issuer = GeneralNameList()
         else:
@@ -265,7 +266,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
         self.authority_cert_issuer = GeneralNameList(value.authority_cert_issuer)
         self.authority_cert_serial_number = value.authority_cert_serial_number
 
-    def from_other(self, value):
+    def from_other(self, value: 'SubjectKeyIdentifier') -> None:
         if isinstance(value, SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.from_subject_key_identifier(value)
@@ -273,7 +274,7 @@ class AuthorityKeyIdentifier(Extension[x509.AuthorityKeyIdentifier, ParsableValu
         else:
             super().from_other(value)
 
-    def from_subject_key_identifier(self, ext) -> None:
+    def from_subject_key_identifier(self, ext: 'SubjectKeyIdentifier') -> None:
         """Create an extension based on SubjectKeyIdentifier extension."""
         # pylint: disable=attribute-defined-outside-init; func is designed to be called by init
         self.key_identifier = ext.value
@@ -479,7 +480,8 @@ class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL, ParsableValueDummy
         return x509.FreshestCRL(distribution_points=[dp.for_extension_type for dp in self.value])
 
 
-class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName, ParsableValueDummy, str]):
+class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName,
+                                                     ParsableGeneralNameList, str]):
     """Class representing an Issuer Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -503,7 +505,7 @@ class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName,
         return x509.IssuerAlternativeName(self.value)
 
 
-class KeyUsage(OrderedSetExtension[x509.KeyUsage, ParsableValueDummy, str]):
+class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
     This extension is usually marked as critical and RFC 5280 defines that conforming CAs SHOULD mark it as
@@ -594,7 +596,7 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, ParsableValueDummy, str]):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
-class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, ParsableValueDummy, str]):
+class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str]):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = 'extended_key_usage'
@@ -1096,7 +1098,8 @@ class PrecertificateSignedCertificateTimestamps(
         }
 
 
-class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName, ParsableValueDummy, str]):
+class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName,
+                                                      ParsableGeneralNameList, str]):
     """Class representing an Subject Alternative Name extension.
 
     This extension is usually marked as non-critical.
@@ -1133,7 +1136,7 @@ class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeNam
         return x509.SubjectAlternativeName(self.value)
 
 
-class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableValueDummy, str]):
+class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectKeyIdentifier, str]):
     """Class representing a SubjectKeyIdentifier extension.
 
     This extension identifies the certificate, so it is not usually defined in a profile or instantiated by a
@@ -1183,7 +1186,7 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableValueDum
         return bytes_to_hex(self.value)
 
 
-class TLSFeature(OrderedSetExtension[x509.TLSFeature, ParsableValueDummy, str]):
+class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str], str]):
     """Class representing a TLSFeature extension.
 
     As a :py:class:`~django_ca.extensions.base.OrderedSetExtension`, this extension handles much like it's
