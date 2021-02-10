@@ -391,7 +391,7 @@ class IterableExtension(
     def as_text(self) -> str:
         return "\n".join(["* %s" % v for v in self.serialize_value()])
 
-    def parse_value(self, value):
+    def parse_value(self, value: ParsableItem):
         """Parse a single value (presumably from an iterable)."""
         return value
 
@@ -439,11 +439,11 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
 
     # Implement functions provided by list(). Class mentions that this provides the same methods.
 
-    def append(self, value):
+    def append(self, value) -> None:
         self.value.append(self.parse_value(value))
         self._test_value()
 
-    def clear(self):
+    def clear(self) -> None:
         self.value.clear()
 
     def count(self, value: ParsableItem):
@@ -513,7 +513,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
         self.value -= self.parse_iterable(other)
         return self
 
-    def __ixor__(self, other):  # ^= operator == symmetric_difference_update()
+    def __ixor__(self, other: Iterable[ParsableItem]) -> None:  # ^= operator == symmetric_difference_update()
         self.value ^= self.parse_iterable(other)
 
     def __le__(self, other) -> bool:  # <= relation == issubset()
@@ -530,79 +530,88 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
         value = self.value - self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
-    def __xor__(self, other):  # ^ operator == symmetric_difference()
+    # ^ operator == symmetric_difference()
+    def __xor__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":
         value = self.value ^ self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
     def repr_value(self):
         return [str(v) for v in super().repr_value()]
 
-    def parse_iterable(self, iterable):
+    def parse_iterable(self, iterable: Iterable[ParsableItem]):
         """Parse values from the given iterable."""
         return set(self.parse_value(i) for i in iterable)
 
-    def from_dict(self, value):
+    def from_dict(self, value: Iterable[ParsableItem]) -> None:
         # pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
         self.value = self.parse_iterable(value)
 
-    def serialize_value(self):
+    def serialize_value(self) -> List[SerializedItem]:
         return list(sorted(self.serialize_item(v) for v in self.value))
 
     # Implement functions provided by set(). Class mentions that this provides the same methods.
 
-    def add(self, elem):
+    def add(self, elem: ParsableItem) -> None:
         self.value.add(self.parse_value(elem))
 
-    def clear(self):
+    def clear(self) -> None:
         self.value.clear()
 
-    def copy(self):
+    def copy(self) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":
         value = self.value.copy()
         return self.__class__({"critical": self.critical, "value": value})
 
-    def difference(self, *others):  # equivalent to & operator
+    def difference(
+        self, *others: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to & operator
         value = self.value.difference(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
-    def difference_update(self, *others):  # equivalent to &= operator
+    def difference_update(self, *others: Iterable[ParsableItem]) -> None:  # equivalent to &= operator
         self.value.difference_update(*[self.parse_iterable(o) for o in others])
 
-    def discard(self, elem):
+    def discard(self, elem: ParsableItem) -> None:
         self.value.discard(self.parse_value(elem))
 
     def intersection(self, *others):  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
-    def intersection_update(self, *others):  # equivalent to &= operator
+    def intersection_update(self, *others) -> None:  # equivalent to &= operator
         self.value.intersection_update(*[self.parse_iterable(o) for o in others])
 
-    def isdisjoint(self, other):
+    def isdisjoint(self, other: Iterable[ParsableItem]) -> bool:
         return self.value.isdisjoint(self.parse_iterable(other))
 
-    def issubset(self, other):
+    def issubset(self, other: Iterable[ParsableItem]) -> bool:
         return self.value.issubset(self.parse_iterable(other))
 
-    def issuperset(self, other):
+    def issuperset(self, other: Iterable[ParsableItem]) -> bool:
         return self.value.issuperset(self.parse_iterable(other))
 
     def pop(self):
         return self.value.pop()
 
-    def remove(self, elem):
+    def remove(self, elem: ParsableItem):
         return self.value.remove(self.parse_value(elem))
 
-    def symmetric_difference(self, other):  # equivalent to ^ operator
+    def symmetric_difference(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to ^ operator
         return self ^ other
 
-    def symmetric_difference_update(self, other):
+    def symmetric_difference_update(self, other: Iterable[ParsableItem]) -> None:
         self ^= other
 
-    def union(self, *others):
+    def union(
+        self, *others: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":
         value = self.value.union(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
-    def update(self, *others):
+    def update(self, *others: Iterable[ParsableItem]) -> None:
         for elem in others:
             self.value.update(self.parse_iterable(elem))
 
@@ -670,7 +679,7 @@ class CRLDistributionPointsBase(
 
     def repr_value(self) -> str:
         # Overwritten so that we can use repr() of utils.DistributionPoint
-        return '[%s]' % ', '.join([repr(v) for v in self.value])
+        return "[%s]" % ", ".join([repr(v) for v in self.value])
 
     def serialize(self) -> SerializedDistributionPoints:
         return {
