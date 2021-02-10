@@ -44,6 +44,7 @@ from ..typehints import ParsableNullExtension
 from ..typehints import ParsableValue
 from ..typehints import SerializedDistributionPoint
 from ..typehints import SerializedDistributionPoints
+from ..typehints import SerializedExtension
 from ..typehints import SerializedItem
 from ..typehints import SerializedValue
 from ..typehints import UnrecognizedExtensionType
@@ -209,7 +210,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
 
         Implementing classes are expected to implement this function."""
 
-    def serialize(self) -> Dict[str, Union[bool, SerializedValue]]:
+    def serialize(self) -> SerializedExtension:
         """Serialize this extension to a string in a way that it can be passed to a constructor again.
 
         For example, this should always be True::

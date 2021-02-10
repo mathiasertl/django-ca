@@ -17,6 +17,7 @@
 
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -46,6 +47,15 @@ ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
+SerializedExtension = TypedDict(
+    'SerializedExtension',
+    {
+        "critical": bool,
+        # Value should be a generic typevar, but this is not yet supported in mypy:
+        #   https://github.com/python/mypy/issues/3863
+        "value": Any,
+    }
+)
 SerializedDistributionPoint = TypedDict(
     "SerializedDistributionPoint",
     {
