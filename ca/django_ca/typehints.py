@@ -48,13 +48,13 @@ ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
 SerializedExtension = TypedDict(
-    'SerializedExtension',
+    "SerializedExtension",
     {
         "critical": bool,
         # Value should be a generic typevar, but this is not yet supported in mypy:
         #   https://github.com/python/mypy/issues/3863
         "value": Any,
-    }
+    },
 )
 SerializedDistributionPoint = TypedDict(
     "SerializedDistributionPoint",
@@ -71,7 +71,7 @@ SerializedDistributionPoints = TypedDict(
     {
         "critical": bool,
         "value": List[SerializedDistributionPoint],
-    }
+    },
 )
 SerializedNoticeReference = Dict[str, Union[str, List[int]]]
 SerializedPolicyQualifier = Union[str, Dict[str, Union[str, SerializedNoticeReference]]]
@@ -100,6 +100,10 @@ SerializedPolicyInformation = Dict[str, Union[str, SerializedPolicyQualifiers]]
 
 ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
+
+AlternativeNameTypeVar = TypeVar(
+    "AlternativeNameTypeVar", x509.IssuerAlternativeName, x509.SubjectAlternativeName
+)
 
 ParsableItem = TypeVar("ParsableItem")
 ParsableValue = TypeVar("ParsableValue")

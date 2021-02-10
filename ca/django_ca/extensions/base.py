@@ -34,6 +34,7 @@ from typing import Union
 
 from cryptography import x509
 
+from ..typehints import AlternativeNameTypeVar
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
 from ..typehints import ParsableDistributionPoint
@@ -606,7 +607,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
             self.value.update(self.parse_iterable(elem))
 
 
-class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableGeneralName, str]):
+class AlternativeNameExtension(ListExtension[AlternativeNameTypeVar, ParsableGeneralName, str]):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -631,7 +632,7 @@ class AlternativeNameExtension(ListExtension[ExtensionTypeTypeVar, ParsableGener
         else:
             self.value = GeneralNameList(value)
 
-    def from_extension(self, value: ExtensionTypeTypeVar) -> None:
+    def from_extension(self, value: AlternativeNameTypeVar) -> None:
         self.value = GeneralNameList(value)
 
     def serialize_item(self, value: x509.GeneralName) -> str:
