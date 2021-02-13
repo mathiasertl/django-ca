@@ -412,6 +412,10 @@ class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints
     name: ClassVar[str] = "CRLDistributionPoints"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
+    @property
+    def extension_type(self) -> x509.CRLDistributionPoints:
+        return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
+
 
 class CertificatePolicies(
     ListExtension[
