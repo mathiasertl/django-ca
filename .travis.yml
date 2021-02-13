@@ -51,12 +51,13 @@ jobs:
         # pylint throws import-error, otherwise, but only on Travis
         - pip install typing-extensions
         - pylint --disable=fixme ca/django_ca/
-    - name: "Run mypy"
-      script:
-        - pip install -r requirements/requirements-core.txt
-        - pip install -r requirements/requirements-libs.txt
-        - pip install -r requirements/requirements-mypy.txt
-        - mypy --strict ca/django_ca/utils.py ca/django_ca/subject.py
+     # cryptography typing is completely broken in 3.4
+#    - name: "Run mypy"
+#      script:
+#        - pip install -r requirements/requirements-core.txt
+#        - pip install -r requirements/requirements-libs.txt
+#        - pip install -r requirements/requirements-mypy.txt
+#        - mypy --strict ca/django_ca/utils.py ca/django_ca/subject.py
     - name: "Generate documentation"
       script:
         # We need core/libs as conf.py has to call django.setup()
