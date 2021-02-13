@@ -76,7 +76,8 @@ OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType,
 def get_extension_name(ext: x509.Extension) -> str:
     """Function to get the name of an extension.
 
-    >>> ext = x509.Extension(value=x509.BasicConstraints(ca=True, path_length=3), ...)
+    >>> ext = x509.Extension(value=x509.BasicConstraints(ca=True, path_length=3), critical=True,
+    ...                      oid=ExtensionOID.BASIC_CONSTRAINTS)
     >>> get_extension_name(ext)
     'BasicConstraints'
     """

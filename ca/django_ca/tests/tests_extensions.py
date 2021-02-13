@@ -76,7 +76,9 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
             'OID_TO_EXTENSION': OID_TO_EXTENSION,
         }))
 
-    tests.addTests(doctest.DocTestSuite('django_ca.extensions'))
+    tests.addTests(doctest.DocTestSuite('django_ca.extensions', extraglobs={
+        'ExtensionOID': ExtensionOID,
+    }))
     tests.addTests(doctest.DocTestSuite('django_ca.extensions.base', extraglobs={
         'ExtendedKeyUsage': ExtendedKeyUsage,
         'ExtendedKeyUsageOID': ExtendedKeyUsageOID,
