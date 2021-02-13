@@ -32,7 +32,6 @@ from typing import Optional
 from typing import Set
 from typing import Union
 
-import cryptography
 from cryptography import x509
 
 from ..typehints import AlternativeNameTypeVar
