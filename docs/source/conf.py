@@ -459,6 +459,8 @@ qualname_overrides = {
     'cryptography.hazmat._oid.ObjectIdentifier': 'cg:cryptography.x509.ObjectIdentifier',
     'cryptography.hazmat.primitives.serialization.base.Encoding':
         'cg:cryptography.hazmat.primitives.serialization.Encoding',
+    'cryptography.hazmat.primitives._serialization.Encoding':
+        'cg:cryptography.hazmat.primitives.serialization.Encoding',
     'cryptography.x509.base.CertificateBuilder': 'cg:cryptography.x509.CertificateBuilder',
     'cryptography.x509.base.CertificateSigningRequest': 'cg:cryptography.x509.CertificateSigningRequest',
     'cryptography.x509.extensions.AuthorityInformationAccess':
