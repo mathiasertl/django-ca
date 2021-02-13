@@ -176,13 +176,12 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
 
         Example::
 
-            >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
-            >>> builder.add_extension(**kwargs)  # doctest: +SKIP
+            >>> ext = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
+            >>> builder = x509.CertificateBuilder()
+            >>> builder.add_extension(*ext.for_builder())  # doctest: +ELLIPSIS
+            <cryptography.x509.base.CertificateBuilder object at ...>
         """
-        if cryptography.__version__ < "3.4":
-            return {"extension": self.extension_type, "critical": self.critical}
-        else:
-            return {"extval": self.extension_type, "critical": self.critical}
+        return self.extension_type, self.critical
 
     @abstractmethod
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:

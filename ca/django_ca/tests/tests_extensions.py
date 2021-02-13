@@ -374,25 +374,16 @@ class ExtensionTestMixin(AbstractExtensionTestMixin):
 
     def test_for_builder(self):
         """Test the for_builder() method."""
-        if settings.CRYPTOGRAPHY_VERSION >= (3, 4):
-            key = 'extval'
-        else:
-            key = 'extension'
-
         for config in self.test_values.values():
             if config['extension_type'] is None:
                 continue  # test case is not a valid extension
 
             ext = self.ext(config['expected'])
-            self.assertEqual(
-                ext.for_builder(),
-                {key: config['extension_type'], 'critical': self.ext_class.default_critical}
-            )
+            self.assertEqual(ext.for_builder(), (config['extension_type'], self.ext_class.default_critical))
 
             for critical in self.critical_values:
                 ext = self.ext(config['expected'], critical=critical)
-                self.assertEqual(ext.for_builder(),
-                                 {key: config['extension_type'], 'critical': critical})
+                self.assertEqual(ext.for_builder(), (config['extension_type'], critical))
 
 
 class NullExtensionTestMixin(ExtensionTestMixin):

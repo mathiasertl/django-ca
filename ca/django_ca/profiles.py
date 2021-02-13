@@ -243,7 +243,7 @@ class Profile:
         builder = builder.subject_name(cert_subject.name)
 
         for _key, extension in cert_extensions.items():
-            builder = builder.add_extension(**extension.for_builder())
+            builder = builder.add_extension(*extension.for_builder())
 
         # Add the SubjectKeyIdentifier
         if SubjectKeyIdentifier.key not in cert_extensions:

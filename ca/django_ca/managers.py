@@ -79,7 +79,7 @@ class CertificateManagerMixin:
             if isinstance(ext, x509.extensions.Extension):
                 builder = builder.add_extension(ext.value, critical=ext.critical)
             elif isinstance(ext, Extension):
-                builder = builder.add_extension(**ext.for_builder())
+                builder = builder.add_extension(*ext.for_builder())
             else:
                 raise ValueError('Cannot add extension of type %s' % type(ext).__name__)
         return builder
@@ -275,7 +275,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             if not isinstance(name_constraints, NameConstraints):
                 name_constraints = NameConstraints(name_constraints)
 
-            builder = builder.add_extension(**name_constraints.for_builder())
+            builder = builder.add_extension(*name_constraints.for_builder())
 
         if extra_extensions:
             builder = self._extra_extensions(builder, extra_extensions)
