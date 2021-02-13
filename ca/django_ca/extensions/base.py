@@ -32,6 +32,7 @@ from typing import Optional
 from typing import Set
 from typing import Union
 
+import cryptography
 from cryptography import x509
 
 from ..typehints import AlternativeNameTypeVar
@@ -178,7 +179,10 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
             >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
             >>> builder.add_extension(**kwargs)  # doctest: +SKIP
         """
-        return {"extension": self.extension_type, "critical": self.critical}
+        if cryptography.__version__ < "3.4":
+            return {"extension": self.extension_type, "critical": self.critical}
+        else:
+            return {"extval": self.extension_type, "critical": self.critical}
 
     @abstractmethod
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:
@@ -491,42 +495,46 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     name = "OrderedSetExtension"
     value: Set
 
-    def __and__(self, other):  # & operator == intersection()
+    def __and__(self, other: Iterable[ParsableItem]):  # & operator == intersection()
         value = self.value & self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
-    def __ge__(self, other) -> bool:  # >= relation == issuperset()
+    def __ge__(self, other: Iterable[ParsableItem]) -> bool:  # >= relation == issuperset()
         return self.value >= self.parse_iterable(other)
 
-    def __gt__(self, other) -> bool:  # > relation
+    def __gt__(self, other: Iterable[ParsableItem]) -> bool:  # > relation
         return self.value > self.parse_iterable(other)
 
-    def __iand__(self, other):  # &= operator == intersection_update()
+    def __iand__(self, other: Iterable[ParsableItem]):  # &= operator == intersection_update()
         self.value &= self.parse_iterable(other)
         return self
 
-    def __ior__(self, other):  # |= operator == update()
+    def __ior__(self, other: Iterable[ParsableItem]):  # |= operator == update()
         self.value |= self.parse_iterable(other)
         return self
 
-    def __isub__(self, other):
+    def __isub__(self, other: Iterable[ParsableItem]):
         self.value -= self.parse_iterable(other)
         return self
 
     def __ixor__(self, other: Iterable[ParsableItem]) -> None:  # ^= operator == symmetric_difference_update()
         self.value ^= self.parse_iterable(other)
 
-    def __le__(self, other) -> bool:  # <= relation == issubset()
+    def __le__(self, other: Iterable[ParsableItem]) -> bool:  # <= relation == issubset()
         return self.value <= self.parse_iterable(other)
 
-    def __lt__(self, other) -> bool:  # < relation
+    def __lt__(self, other: Iterable[ParsableItem]) -> bool:  # < relation
         return self.value < self.parse_iterable(other)
 
-    def __or__(self, other):  # | operator == union()
+    def __or__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # | operator == union()
         value = self.value.union(self.parse_iterable(other))
         return self.__class__({"critical": self.critical, "value": value})
 
-    def __sub__(self, other):  # - operator
+    def __sub__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # - operator
         value = self.value - self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -537,7 +545,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
         value = self.value ^ self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
-    def repr_value(self):
+    def repr_value(self) -> List[str]:
         return [str(v) for v in super().repr_value()]
 
     def parse_iterable(self, iterable: Iterable[ParsableItem]):
@@ -575,11 +583,13 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     def discard(self, elem: ParsableItem) -> None:
         self.value.discard(self.parse_value(elem))
 
-    def intersection(self, *others):  # equivalent to & operator
+    def intersection(
+        self, *others: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to & operator
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
-    def intersection_update(self, *others) -> None:  # equivalent to &= operator
+    def intersection_update(self, *others: Iterable[ParsableItem]) -> None:  # equivalent to &= operator
         self.value.intersection_update(*[self.parse_iterable(o) for o in others])
 
     def isdisjoint(self, other: Iterable[ParsableItem]) -> bool:
@@ -667,10 +677,6 @@ class CRLDistributionPointsBase(
         return "\n".join(
             "* DistributionPoint:\n%s" % textwrap.indent(dp.as_text(), "  ") for dp in self.value
         )
-
-    @property
-    def extension_type(self) -> x509.CRLDistributionPoints:
-        return x509.CRLDistributionPoints(distribution_points=[dp.for_extension_type for dp in self.value])
 
     def parse_value(self, value: Union[DistributionPoint, ParsableDistributionPoint]) -> DistributionPoint:
         if isinstance(value, DistributionPoint):
