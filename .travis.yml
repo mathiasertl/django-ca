@@ -26,6 +26,8 @@ env:  # https://www.djangoproject.com/download/
 install:
   # Build/test dependencies
   - pip install -U pip setuptools wheel
+  - pip install -r requirements/requirements-core.txt
+  - pip install -r requirements/requirements-libs.txt
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
   - "Code Quality"
@@ -37,15 +39,11 @@ jobs:
     - stage: "Code Quality"
       name: "Run isort and flake8"
       script:
-        - pip install -r requirements/requirements-core.txt
-        - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-lint.txt
         - ./dev.py code-quality
     - name: "Run pylint"
       script:
         # pylint requires libs to be installed for import tests
-        - pip install -r requirements/requirements-core.txt
-        - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-test.txt
         - pip install -r requirements/requirements-lint.txt
         # pylint throws import-error, otherwise, but only on Travis
@@ -54,28 +52,20 @@ jobs:
      # cryptography typing is completely broken in 3.4
 #    - name: "Run mypy"
 #      script:
-#        - pip install -r requirements/requirements-core.txt
-#        - pip install -r requirements/requirements-libs.txt
 #        - pip install -r requirements/requirements-mypy.txt
 #        - mypy --strict ca/django_ca/utils.py ca/django_ca/subject.py
     - name: "Generate documentation"
       script:
         # We need core/libs as conf.py has to call django.setup()
-        - pip install -r requirements/requirements-core.txt
-        - pip install -r requirements/requirements-libs.txt
         - pip install -r requirements/requirements-docs.txt
         - make -C docs html-check
     - name: "Initialize demo"
       script:
         # test libs are required for recreating fixtures
-        - pip install -r requirements/requirements-core.txt termcolor
-        - pip install -r requirements/requirements-libs.txt
-        - pip install -r requirements/requirements-test.txt
+        - pip install -r requirements/requirements-test.txt termcolor
         - python dev.py init-demo
 
 script:
-  - pip install -r requirements/requirements-core.txt
-  - pip install -r requirements/requirements-libs.txt
   - pip install -r requirements/requirements-test.txt
   # download selenium driver
   - mkdir -p contrib/selenium
