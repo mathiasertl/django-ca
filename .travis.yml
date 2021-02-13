@@ -69,7 +69,7 @@ script:
   - pip install -r requirements/requirements-test.txt
   # download selenium driver
   - mkdir -p contrib/selenium
-  - wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
-  - tar xf geckodriver-v0.26.0-linux64.tar.gz -C contrib/selenium
+  - wget https://github.com/mozilla/geckodriver/releases/download/v0.29.0/geckodriver-v0.29.0-linux64.tar.gz
+  - tar xf geckodriver-v0.29.0-linux64.tar.gz -C contrib/selenium
   - python dev.py coverage --format=text
   - python setup.py install
