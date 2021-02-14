@@ -104,6 +104,11 @@ ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 AlternativeNameTypeVar = TypeVar(
     "AlternativeNameTypeVar", x509.IssuerAlternativeName, x509.SubjectAlternativeName
 )
+SignedCertificateTimestampsBaseTypeVar = TypeVar(
+    "SignedCertificateTimestampsBaseTypeVar",
+    x509.SignedCertificateTimestamps,
+    x509.PrecertificateSignedCertificateTimestamps,
+)
 
 ParsableItem = TypeVar("ParsableItem")
 ParsableValue = TypeVar("ParsableValue")

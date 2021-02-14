@@ -21,11 +21,8 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-import binascii
 import textwrap
 from typing import ClassVar
-from typing import Iterator
-from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -34,8 +31,6 @@ from typing import Union
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
 from cryptography.x509 import TLSFeatureType
-from cryptography.x509.certificate_transparency import LogEntryType
-from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
@@ -47,7 +42,6 @@ from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableNameConstraints
 from ..typehints import ParsablePolicyConstraints
 from ..typehints import ParsablePolicyInformation
-from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableSubjectKeyIdentifier
 from ..typehints import SerializedAuthorityInformationAccess
 from ..typehints import SerializedAuthorityKeyIdentifier
@@ -55,7 +49,6 @@ from ..typehints import SerializedBasicConstraints
 from ..typehints import SerializedNameConstraints
 from ..typehints import SerializedPolicyConstraints
 from ..typehints import SerializedPolicyInformation
-from ..typehints import SerializedSignedCertificateTimestamp
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import hex_to_bytes
@@ -65,6 +58,7 @@ from .base import Extension
 from .base import ListExtension
 from .base import NullExtension
 from .base import OrderedSetExtension
+from .base import SignedCertificateTimestampsBase
 from .utils import PolicyInformation
 
 # Placeholder until we fill in something good
@@ -1015,122 +1009,23 @@ class PrecertPoison(NullExtension[x509.PrecertPoison]):
 
 
 class PrecertificateSignedCertificateTimestamps(
-    ListExtension[
-        x509.PrecertificateSignedCertificateTimestamps,
-        ParsableSignedCertificateTimestamp,
-        SerializedSignedCertificateTimestamp,
-    ]
+    SignedCertificateTimestampsBase[x509.PrecertificateSignedCertificateTimestamps]
 ):
-    """Class representing signed certificate timestamps.
+    """Class representing signed certificate timestamps in a precertificate.
 
-    This extension can be used to verify that a certificate is included in a Certificate Transparency log.
+    This extension is included in certificates sent to a certificate transparency log.
 
-    .. NOTE::
-
-        Cryptography currently does not provide a way to create instances of this extension without already
-        having a certificate that provides this extension.
-
-        https://github.com/pyca/cryptography/issues/4820
-
-    .. seealso::
-
-       `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
+    This class cannot be instantiated by anything but
+    :py:class:`cg:cryptography.x509.PrecertificateSignedCertificateTimestamps`. Please see
+    :py:class:`~django_ca.extensions.base.SignedCertificateTimestampsBase` for more information.
     """
 
     key = "precertificate_signed_certificate_timestamps"
     """Key used in CA_PROFILES."""
 
+    extension_cls = x509.PrecertificateSignedCertificateTimestamps
     name: ClassVar[str] = "PrecertificateSignedCertificateTimestamps"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
-    _timeformat = "%Y-%m-%d %H:%M:%S.%f"
-    LOG_ENTRY_TYPE_MAPPING = {
-        LogEntryType.PRE_CERTIFICATE: "precertificate",
-        LogEntryType.X509_CERTIFICATE: "x509_certificate",
-    }
-    value: List[SignedCertificateTimestamp]
-
-    def __contains__(self, value: ParsableSignedCertificateTimestamp) -> bool:
-        if isinstance(value, dict):
-            return value in self.serialize_value()
-        return value in self.value
-
-    def __delitem__(self, key):  # type: ignore
-        raise NotImplementedError
-
-    def __hash__(self) -> int:
-        # serialize_iterable returns a dict, which is unhashable
-        return hash(
-            (
-                tuple(self.value),
-                self.critical,
-            )
-        )
-
-    def repr_value(self) -> str:
-        if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
-            return "1 timestamp"
-        return "%s timestamps" % len(self.value)
-
-    def __setitem__(self, key, value):  # type: ignore
-        raise NotImplementedError
-
-    def human_readable_timestamps(self) -> Iterator[SerializedSignedCertificateTimestamp]:
-        """Convert SCTs into a generator of serializable dicts."""
-        for sct in self.value:
-            if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
-                entry_type = "Precertificate"
-            elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
-                entry_type = "x509 certificate"
-            else:  # pragma: no cover
-                # we support everything that has been specified so far
-                entry_type = "unknown"
-
-            yield {
-                "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
-                "timestamp": sct.timestamp.isoformat(str(" ")),
-                "type": entry_type,
-                "version": sct.version.name,
-            }
-
-    def as_text(self) -> str:
-        lines = []
-        for val in self.human_readable_timestamps():
-            line = "* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}".format(**val)
-            lines.append(line)
-
-        return "\n".join(lines)
-
-    def count(self, value: ParsableSignedCertificateTimestamp) -> int:
-        if isinstance(value, dict):
-            return self.serialize_value().count(value)
-        return self.value.count(value)  # pylint: disable=protected-access
-
-    def extend(self, iterable):  # type: ignore
-        raise NotImplementedError
-
-    @property
-    def extension_type(self) -> x509.PrecertificateSignedCertificateTimestamps:
-        return x509.PrecertificateSignedCertificateTimestamps(self.value)
-
-    def from_extension(self, value: x509.PrecertificateSignedCertificateTimestamps) -> None:
-        self.value = list(value)
-
-    def insert(self, index, value):  # type: ignore
-        raise NotImplementedError
-
-    def pop(self, index=-1):  # type: ignore
-        raise NotImplementedError
-
-    def remove(self, value):  # type: ignore
-        raise NotImplementedError
-
-    def serialize_item(self, value: SignedCertificateTimestamp) -> SerializedSignedCertificateTimestamp:
-        return {
-            "log_id": binascii.hexlify(value.log_id).decode("utf-8"),
-            "timestamp": value.timestamp.strftime(self._timeformat),
-            "type": PrecertificateSignedCertificateTimestamps.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
-            "version": value.version.name,
-        }
 
 
 class SubjectAlternativeName(AlternativeNameExtension[x509.SubjectAlternativeName]):

@@ -16,6 +16,7 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 # pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
 
+import binascii
 import textwrap
 from abc import ABCMeta
 from abc import abstractmethod
@@ -26,6 +27,7 @@ from typing import Dict
 from typing import Generic
 from typing import Hashable
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import NoReturn
 from typing import Optional
@@ -33,6 +35,8 @@ from typing import Set
 from typing import Union
 
 from cryptography import x509
+from cryptography.x509.certificate_transparency import LogEntryType
+from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 from ..typehints import AlternativeNameTypeVar
 from ..typehints import ExtensionType
@@ -42,12 +46,15 @@ from ..typehints import ParsableGeneralName
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableItem
 from ..typehints import ParsableNullExtension
+from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableValue
 from ..typehints import SerializedDistributionPoint
 from ..typehints import SerializedDistributionPoints
 from ..typehints import SerializedExtension
 from ..typehints import SerializedItem
+from ..typehints import SerializedSignedCertificateTimestamp
 from ..typehints import SerializedValue
+from ..typehints import SignedCertificateTimestampsBaseTypeVar
 from ..typehints import UnrecognizedExtensionType
 from ..utils import GeneralNameList
 from ..utils import format_general_name
@@ -689,4 +696,117 @@ class CRLDistributionPointsBase(
         return {
             "value": [dp.serialize() for dp in self.value],
             "critical": self.critical,
+        }
+
+
+class SignedCertificateTimestampsBase(
+    ListExtension[
+        SignedCertificateTimestampsBaseTypeVar,
+        ParsableSignedCertificateTimestamp,
+        SerializedSignedCertificateTimestamp,
+    ]
+):
+    """Base class for extensions containing signed certificate timestamps.
+
+    Subclasses of this extension cannot be instantiated by any custom value, only the matching subclass of
+    :py:class:`~cg:cryptography.x509.ExtensionType` is suported. Unfortunately cryptography currently does not
+    support creating instances of ``SignedCertificateTimestamp`` (see `issue #4820
+    <https://github.com/pyca/cryptography/issues/4820>`_). This extension thus also has no way of
+    adding/removing any elements. Any attempt of updating an instance will raise ``NotImplementedError``.
+
+    .. seealso::
+
+       * `RFC 6962 <https://tools.ietf.org/html/rfc6962.html>`_
+       * https://certificate.transparency.dev/howctworks/
+    """
+
+    _timeformat = "%Y-%m-%d %H:%M:%S.%f"
+    LOG_ENTRY_TYPE_MAPPING = {
+        LogEntryType.PRE_CERTIFICATE: "precertificate",
+        LogEntryType.X509_CERTIFICATE: "x509_certificate",
+    }
+    extension_cls: SignedCertificateTimestampsBaseTypeVar
+    value: List[SignedCertificateTimestamp]
+
+    def __contains__(self, value: ParsableSignedCertificateTimestamp) -> bool:
+        if isinstance(value, dict):
+            return value in self.serialize_value()
+        return value in self.value
+
+    def __delitem__(self, key):  # type: ignore
+        raise NotImplementedError
+
+    def __hash__(self) -> int:
+        # serialize_iterable returns a dict, which is unhashable
+        return hash(
+            (
+                tuple(self.value),
+                self.critical,
+            )
+        )
+
+    def repr_value(self) -> str:
+        if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
+            return "1 timestamp"
+        return "%s timestamps" % len(self.value)
+
+    def __setitem__(self, key, value):  # type: ignore
+        raise NotImplementedError
+
+    def human_readable_timestamps(self) -> Iterator[SerializedSignedCertificateTimestamp]:
+        """Convert SCTs into a generator of serializable dicts."""
+        for sct in self.value:
+            if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
+                entry_type = "Precertificate"
+            elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
+                entry_type = "x509 certificate"
+            else:  # pragma: no cover
+                # we support everything that has been specified so far
+                entry_type = "unknown"
+
+            yield {
+                "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
+                "timestamp": sct.timestamp.isoformat(str(" ")),
+                "type": entry_type,
+                "version": sct.version.name,
+            }
+
+    def as_text(self) -> str:
+        lines = []
+        for val in self.human_readable_timestamps():
+            line = "* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}".format(**val)
+            lines.append(line)
+
+        return "\n".join(lines)
+
+    def count(self, value: ParsableSignedCertificateTimestamp) -> int:
+        if isinstance(value, dict):
+            return self.serialize_value().count(value)
+        return self.value.count(value)  # pylint: disable=protected-access
+
+    def extend(self, iterable):  # type: ignore
+        raise NotImplementedError
+
+    @property
+    def extension_type(self) -> SignedCertificateTimestampsBaseTypeVar:
+        return self.extension_cls(self.value)
+
+    def from_extension(self, value: SignedCertificateTimestampsBaseTypeVar) -> None:
+        self.value = list(value)
+
+    def insert(self, index, value):  # type: ignore
+        raise NotImplementedError
+
+    def pop(self, index=-1):  # type: ignore
+        raise NotImplementedError
+
+    def remove(self, value):  # type: ignore
+        raise NotImplementedError
+
+    def serialize_item(self, value: SignedCertificateTimestamp) -> SerializedSignedCertificateTimestamp:
+        return {
+            "log_id": binascii.hexlify(value.log_id).decode("utf-8"),
+            "timestamp": value.timestamp.strftime(self._timeformat),
+            "type": SignedCertificateTimestampsBase.LOG_ENTRY_TYPE_MAPPING[value.entry_type],
+            "version": value.version.name,
         }
