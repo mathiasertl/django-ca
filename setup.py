@@ -39,12 +39,11 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
 install_requires = [
-    'django>=2.2',
-    'asn1crypto>=1.0.1',
-    'cryptography>=2.8',
-    'django-object-actions>=1.1',
-    'idna>=2.9',
-    'packaging',
+    'django>=2.2,<3.2',
+    'asn1crypto>=1.0.1,<1.5',
+    'cryptography>=2.8,<3.4',
+    'django-object-actions>=1.1,<4',
+    'idna>=2.9,<4',
 ]
 
 package_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ca')
