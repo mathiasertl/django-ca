@@ -105,6 +105,12 @@ class TestSubject(TestCase):
         with self.assertRaisesRegex(ValueError, r'^Invalid subject: 33$'):
             Subject(33)
 
+    def test_unknown_oid(self):
+        """Test passing an unknown OID."""
+
+        with self.assertRaisesRegex(ValueError, r'^Invalid OID: UNKNOWN$'):
+            Subject([("UNKNOWN", "none")])
+
     def test_contains(self):
         """Test the ``in`` operator."""
         self.assertIn('CN', Subject('/CN=example.com'))

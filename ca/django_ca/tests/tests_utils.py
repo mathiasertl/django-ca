@@ -35,6 +35,7 @@ from .. import ca_settings
 from .. import utils
 from ..utils import NAME_RE
 from ..utils import GeneralNameList
+from ..utils import bytes_to_hex
 from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import format_relative_name
@@ -51,6 +52,7 @@ from ..utils import read_file
 from ..utils import validate_email
 from ..utils import validate_hostname
 from ..utils import validate_key_parameters
+from ..utils import x509_name
 from ..utils import x509_relative_name
 from .base import DjangoCATestCase
 from .base import dns
@@ -298,6 +300,7 @@ class RelativeNameTestCase(TestCase):
     def test_parse(self):
         """Test parsing..."""
         expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
+        self.assertEqual(x509_relative_name(expected), expected)
         self.assertEqual(x509_relative_name('/CN=example.com'), expected)
         self.assertEqual(x509_relative_name([('CN', 'example.com')]), expected)
 
@@ -558,11 +561,25 @@ class FormatNameTestCase(TestCase):
 
     def test_basic(self):
         """Some basic tests."""
-        subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
 
+        subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
         subject_dict = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Vienna'), ('O', 'O'), ('OU', 'OU'),
                         ('CN', 'example.com'), ('emailAddress', 'user@example.com'), ]
         self.assertEqual(format_name(subject_dict), subject)
+
+    def test_x509(self):
+        """Test passing a x509.Name."""
+        subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
+        name = x509.Name([
+            x509.NameAttribute(x509.NameOID.COUNTRY_NAME, 'AT'),
+            x509.NameAttribute(x509.NameOID.STATE_OR_PROVINCE_NAME, 'Vienna'),
+            x509.NameAttribute(x509.NameOID.LOCALITY_NAME, 'Vienna'),
+            x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, 'O'),
+            x509.NameAttribute(x509.NameOID.ORGANIZATIONAL_UNIT_NAME, 'OU'),
+            x509.NameAttribute(x509.NameOID.COMMON_NAME, 'example.com'),
+            x509.NameAttribute(x509.NameOID.EMAIL_ADDRESS, 'user@example.com'),
+        ])
+        self.assertEqual(format_name(name), subject)
 
 
 class Power2TestCase(TestCase):
@@ -742,6 +759,18 @@ class IntToHexTestCase(TestCase):
         self.assertEqual(utils.int_to_hex(1513282113), '5A32DA41')
 
 
+class BytesToHexTestCase(TestCase):
+    """Test :py:func:`~django_ca.utils.byutes_to_hex`."""
+
+    def test_basic(self):
+        """Some basic test cases."""
+        self.assertEqual(bytes_to_hex(b'test'), '74:65:73:74')
+        self.assertEqual(bytes_to_hex(b'foo'), '66:6F:6F')
+        self.assertEqual(bytes_to_hex(b'bar'), '62:61:72')
+        self.assertEqual(bytes_to_hex(b''), '')
+        self.assertEqual(bytes_to_hex(b'a'), '61')
+
+
 class SanitizeSerialTestCase(TestCase):
     """Test :py:func:`~django_ca.utils.sanitize_serial`."""
 
@@ -766,6 +795,30 @@ class SanitizeSerialTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, r'^ABCXY: Serial has invalid characters$'):
             utils.sanitize_serial('ABCXY')
+
+
+class X509NameTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.x509_name`."""
+    name = x509.Name([
+        x509.NameAttribute(x509.NameOID.COUNTRY_NAME, 'AT'),
+        x509.NameAttribute(x509.NameOID.STATE_OR_PROVINCE_NAME, 'Vienna'),
+        x509.NameAttribute(x509.NameOID.LOCALITY_NAME, 'Vienna'),
+        x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, 'O'),
+        x509.NameAttribute(x509.NameOID.ORGANIZATIONAL_UNIT_NAME, 'OU'),
+        x509.NameAttribute(x509.NameOID.COMMON_NAME, 'example.com'),
+        x509.NameAttribute(x509.NameOID.EMAIL_ADDRESS, 'user@example.com'),
+    ])
+
+    def test_str(self):
+        """Test passing a string."""
+        subject = '/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com'
+        self.assertEqual(x509_name(subject), self.name)
+
+    def test_tuple(self):
+        """Test passing a tuple."""
+        subject = [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Vienna'), ('O', 'O'), ('OU', 'OU'),
+                   ('CN', 'example.com'), ('emailAddress', 'user@example.com')]
+        self.assertEqual(x509_name(subject), self.name)
 
 
 class MultilineURLValidatorTestCase(TestCase):
