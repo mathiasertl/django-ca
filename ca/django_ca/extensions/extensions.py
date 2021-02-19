@@ -1020,6 +1020,8 @@ class PrecertificateSignedCertificateTimestamps(
     :py:class:`~django_ca.extensions.base.SignedCertificateTimestampsBase` for more information.
     """
 
+    # pylint: disable=abstract-method; methods that raise NotImplemented are recognized as abstract
+
     key = "precertificate_signed_certificate_timestamps"
     """Key used in CA_PROFILES."""
 
