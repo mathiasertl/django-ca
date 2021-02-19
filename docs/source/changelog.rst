@@ -4,7 +4,7 @@ ChangeLog
 
 .. _changelog-head:
 
-.. _changelog-1.17.1:
+.. _changelog-1.17.2:
 
 *******************
 1.17.2 (2021-02-19)
