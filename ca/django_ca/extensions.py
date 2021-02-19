@@ -171,10 +171,12 @@ class Extension:
 
         Example::
 
-            >>> kwargs = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']}).for_builder()
-            >>> builder.add_extension(**kwargs)  # doctest: +SKIP
+            >>> ext = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
+            >>> builder = x509.CertificateBuilder()
+            >>> builder.add_extension(*ext.for_builder())  # doctest: +ELLIPSIS
+            <cryptography.x509.base.CertificateBuilder object at ...>
         """
-        return {'extension': self.extension_type, 'critical': self.critical}
+        return self.extension_type, self.critical
 
 
 class UnrecognizedExtension(Extension):
