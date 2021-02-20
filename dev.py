@@ -235,13 +235,14 @@ elif args.command == 'docker-test':
         # Currently supported Alpine releases:
         #   https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
 
+        'python:3.6-alpine3.13',
+        'python:3.7-alpine3.13',
+        'python:3.8-alpine3.13',
+        'python:3.9-alpine3.13',
         'python:3.6-alpine3.12',
         'python:3.7-alpine3.12',
         'python:3.8-alpine3.12',
         'python:3.9-alpine3.12',
-        'python:3.6-alpine3.11',
-        'python:3.7-alpine3.11',
-        'python:3.8-alpine3.11',
     ]
 
     docker_runs = []

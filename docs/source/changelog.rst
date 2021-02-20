@@ -36,6 +36,16 @@ Deprecation notices
   removed in django-ca 1.20.0. The manpage explicitly states it "is only useful for test and demonstration
   purposes", and we can solidly run our own responders by now.
 
+.. _changelog-1.17.2:
+
+*******************
+1.17.2 (2021-02-19)
+*******************
+
+* Update for compatability with cryptography 3.4.
+* Add support for Alpine 3.13.
+* Due to cryptography requiring a relatively new version of Rust, support for Alpine<3.12 is dropped.
+
 .. _changelog-1.17.1:
 
 *******************
