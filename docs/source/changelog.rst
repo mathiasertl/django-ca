@@ -11,6 +11,8 @@ ChangeLog
 *******************
 
 * Update for compatability with cryptography 3.4.
+* Add support for Alpine 3.13.
+* Due to cryptography requiring a relatively new version of Rust, support for Alpine<3.12 is dropped.
 
 .. _changelog-1.17.1:
 
