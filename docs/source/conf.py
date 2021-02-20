@@ -492,6 +492,9 @@ qualname_overrides = {
     'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
     'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
     'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
+    'ExtensionTypeVar': 'cg:cryptography.x509.ExtensionType',
+    'Union': 'python:typing.Union',
+    'typing.S': 'django_ca.extensions.base.S',
 }
 
 text_overrides = {

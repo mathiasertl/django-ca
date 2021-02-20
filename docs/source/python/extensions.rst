@@ -92,8 +92,8 @@ In addition to extension classes, there are a few helper functions to ease handl
 
    A dictionary mapping of a unique key to an extension class::
 
-      >>> KEY_TO_EXTENSION['authority_information_access']
-      <class 'django_ca.extensions.extensions.AuthorityInformationAccess'>
+      >>> KEY_TO_EXTENSION['authority_information_access'].__name__
+      'AuthorityInformationAccess'
 
 .. autoattribute:: django_ca.extensions.OID_TO_EXTENSION
    :annotation: {<ObjectIdentifier(oid=...): <class 'django_ca.extensions...>, ...}
@@ -101,8 +101,8 @@ In addition to extension classes, there are a few helper functions to ease handl
    A dictionary mapping of OIDs to extension classes::
 
       >>> from cryptography.x509.oid import ExtensionOID
-      >>> OID_TO_EXTENSION[ExtensionOID.BASIC_CONSTRAINTS]
-      <class 'django_ca.extensions.extensions.BasicConstraints'>
+      >>> OID_TO_EXTENSION[ExtensionOID.BASIC_CONSTRAINTS].__name__
+      'BasicConstraints'
 
 ``django_ca.extensions.utils``
 ==============================
