@@ -331,7 +331,7 @@ Deprecation Notices
 Extensions
 ==========
 
-* Implement the :py:class:`~django_ca.extensions.CRLDistributionPoints` extension and 
+* Implement the :py:class:`~django_ca.extensions.CRLDistributionPoints` extension and
   :py:class:`~django_ca.extensions.CertificatePolicies` extension.
 * Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
   very rare and only occur in the "TrustID Server A52" CA.
@@ -351,7 +351,7 @@ Python API
 * Add the ``root`` property to CAs and certificates returning the root Certificate Authority.
 * ``django_ca.managers.CertificateManager.sign_cert()`` now also accepts a
   :py:class:`~cg:cryptography.x509.CertificateSigningRequest` as ``csr`` value.
-* Add the ``issuer_url``, ``crl_url``, ``ocsp_url`` and ``issuer_alternative_name`` parameter to 
+* Add the ``issuer_url``, ``crl_url``, ``ocsp_url`` and ``issuer_alternative_name`` parameter to
   ``django_ca.managers.CertificateManager.sign_cert()`` to allow overriding or disabling the default
   values from the CA. This can also be used to pass extensions that do not just contain the URL using the
   ``extra_extensions`` parameter.
@@ -418,8 +418,8 @@ store CA private keys as well as files configured for OCSP views. This allows yo
 backends (e.g. from `django-storages <https://django-storages.readthedocs.io/>`_) to store files on a
 filesystem shared between different servers, e.g. to provide a redundant setup.
 
-.. NOTE:: 
-   
+.. NOTE::
+
    The switch does require some manual intervention when upgrading. The old way of storing files is still
    supported and will continue to work until version 1.14. Please see the :ref:`upgrade notes
    <update-file-storage>` for information on how to upgrade.
@@ -449,7 +449,7 @@ OCSP
 *******************
 
 * Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
-* Filenames for downloading certificates are based on the CommonName (fixes 
+* Filenames for downloading certificates are based on the CommonName (fixes
   `#53 <https://github.com/mathiasertl/django-ca/issues/53>`_).
 * Fix certificate bundle order (fixes `#55 <https://github.com/mathiasertl/django-ca/issues/55>`_).
 * Management commands ``dump_ca`` and ``dump_cert`` can now dump whole certificate bundles.
@@ -472,9 +472,9 @@ This release will be the last release to support some software versions:
 Python API
 ==========
 
-* **BACKWARDS INCOMPATIBLE:** Renamed the ``subjectAltName`` parameter of 
+* **BACKWARDS INCOMPATIBLE:** Renamed the ``subjectAltName`` parameter of
   ``Certificate.objects.init()`` to ``subject_alternative_name`` to be consistent with other extensions.
-* Document how to use the ``name_constraints`` parameter in 
+* Document how to use the ``name_constraints`` parameter in
   :py:meth:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`
 * Extensions can now always be passed as :py:class:`~django_ca.extensions.base.Extension` subclass or as any
   value accepted by the constructor of the specific class.
@@ -482,7 +482,7 @@ Python API
 * :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal is only invoked after all parameters are verified.
-* Implement the 
+* Implement the
   :py:class:`~django_ca.extensions.AuthorityInformationAccess`,
   :py:class:`~django_ca.extensions.BasicConstraints`,
   :py:class:`~django_ca.extensions.IssuerAlternativeName`,
@@ -509,7 +509,7 @@ Testing
 * Add ability to resign existing certificates.
 * Management command ``list_cas`` now optionally supports a tree view.
 * Use more consistent naming for extensions throughout the code and documentation.
-* Renamed the ``--tls-features`` option of the ``sign_cert`` command to ``--tls-feature``, in line with the 
+* Renamed the ``--tls-features`` option of the ``sign_cert`` command to ``--tls-feature``, in line with the
   actual name of the extension.
 * Allow the ``TLSFeature`` extension in profiles.
 * Add link in the admin interface to easily download certificate bundles.
@@ -521,7 +521,7 @@ Testing
 Python API
 ==========
 
-* Add the :doc:`Python API <python/intro>` as a fully supported interface to **django-ca**. 
+* Add the :doc:`Python API <python/intro>` as a fully supported interface to **django-ca**.
 * New module :py:mod:`django_ca.extensions` to allow easy and consistent handling of X509 extensions.
 * Fully document various member attributes of :py:class:`~django_ca.models.CertificateAuthority` and
   :py:class:`~django_ca.models.Certificate`, as well :py:class:`~django_ca.subject.Subject` and
@@ -618,7 +618,7 @@ Docker
   * Refuse to add a CRL or OCSP service to root CAs. These attributes are not meaningful there.
 
 * Massively update :doc:`documentation for the command-line interface </cli/intro>`.
-* CAs can now be identified using name or serial (previously: only by serial) in 
+* CAs can now be identified using name or serial (previously: only by serial) in
   :ref:`CA_OCSP_URLS <settings-ca-ocsp-urls>`.
 * Make ``fab init_demo`` a lot more useful by signing certificates with the client CA and include CRL and OCSP
   links.

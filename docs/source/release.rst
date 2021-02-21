@@ -47,7 +47,7 @@ Make sure that the demo works::
 
    rm -rf ca/db.sqlite3 ca/files/
    ./dev.py init-demo
-   
+
    # test commands from the output:
    openssl verify -CAfile...
 
@@ -77,8 +77,8 @@ docker-compose
 **************
 
 * Verify that docker-compose uses up-to-date version of 3rd-party containers.
-* Follow :doc:`quickstart_docker_compose` to set up a CA. 
-  
+* Follow :doc:`quickstart_docker_compose` to set up a CA.
+
   * Use ``localhost`` as hostname.
   * Do not set ``NGINX_TEMPLATE`` in :file:`.env`.
   * Do not add a :file:`docker-compose.override.yml` (it's only for TLS).
@@ -120,7 +120,7 @@ Finally, verify that CRL and OCSP validation works:
    $ docker-compose exec backend manage dump_cert signed-in-backend.example.com > cert.pem
    $ openssl verify -CAfile root.pem -crl_download -crl_check cert.pem
    cert.pem: OK
-   $ openssl x509 -in cert.pem -noout -text | grep OCSP 
+   $ openssl x509 -in cert.pem -noout -text | grep OCSP
          OCSP - URI:http://localhost/django_ca/ocsp/...
    $ openssl ocsp -CAfile root.pem -issuer root.pem -cert cert.pem -resp_text \
    >     -url http://localhost/django_ca/ocsp/...

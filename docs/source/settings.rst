@@ -18,7 +18,7 @@ also documented at :file:`ca/ca/localsettings.py.example`
 
 CA_CRL_PROFILES
    Default::
-      
+
       {
           'user': {
               'algorithm': 'SHA512',
@@ -53,13 +53,13 @@ CA_DEFAULT_CA
    Default: ``""``
 
    The serial of the CA to use when no CA is explicitly given.
-   
+
    For example, if you sign a certificate using the :ref:`manage.py sign_cert <cli_sign_certs>` command and do
    not pass the ``--ca`` parameter, the CA given here will be used. You can get a list of serials from the
    admin interface or via the ``manage.py list_cas`` command.
-   
+
    .. WARNING::
-   
+
       Some parts of **django-ca** will start throwing errors when attempting to use a default CA that is
       expired or disabled. So please make sure you keep this setting up to date.
 
@@ -157,7 +157,7 @@ CA_ENABLE_CLICKJACKING_PROTECTION
 CA_FILE_STORAGE
    Default: ``'django.core.files.storage.FileSystemStorage'``
 
-   Default storage backend for files created by django-ca. The default is the same as *the default* for 
+   Default storage backend for files created by django-ca. The default is the same as *the default* for
    ``DEFAULT_FILE_STORAGE``, so django-ca will still use local filesystem storage even if you configure a
    different storage backend in ``DEFAULT_FILE_STORAGE``. The default uses :ref:`CA_FILE_STORAGE_KWARGS
    <settings-ca-file-storage-kwargs>` to store files in a different location, since the default

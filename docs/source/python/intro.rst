@@ -5,9 +5,9 @@ Python API
 **django-ca** provides a Python API for everyone that wants to extend the functionality or build your own
 solution on top.
 
-.. NOTE:: 
+.. NOTE::
 
-   This project is developed using `Python <https://www.python.org/>`_ and 
+   This project is developed using `Python <https://www.python.org/>`_ and
    `Django <https://www.djangoproject.com/>`_. Using the Python API requires knowledge in both. If you need
    help, both projects provide excellent documentation.
 
@@ -56,9 +56,9 @@ Certificates
 Certificates are represented by the :py:class:`~django_ca.models.Certificate` model, they too are a standard
 Django model::
 
-	>>> from django_ca.models import Certificate
-	>>> cert = Certificate.objects.get(serial=cert_serial)
-	>>> cert.revoke()  # this already calls save()
+   >>> from django_ca.models import Certificate
+   >>> cert = Certificate.objects.get(serial=cert_serial)
+   >>> cert.revoke()  # this already calls save()
 
 Much like with certificate authorities, creating a new certificate requires a manager method,
 :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`::

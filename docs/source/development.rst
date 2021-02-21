@@ -72,7 +72,7 @@ Verify a certificate signed by a root CA (``cert.crt`` could also be an intermed
    $ openssl verify -CAfile ca.crt cert.crt
 
 If you have an intermediate CA::
-   
+
    $ cat child.pem root.pem > cafile.pem
    $ openssl verify -CAfile cafile.pem cert.crt
 

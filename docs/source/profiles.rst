@@ -129,7 +129,7 @@ to describe the extension value and an optional ``critical`` value to describe i
 critical. For example, for the :py:class:`~django_ca.extensions.KeyUsage` extension, use::
 
    CA_PROFILES = {
-       'example': { 
+       'example': {
            # ...
            'extensions': {
                'key_usage': {
@@ -162,7 +162,7 @@ You can update an existing profile the same way as configuring a new profile. An
 values. To update the default subject for the (pre-defined) "enduser" profile::
 
    CA_PROFILES = {
-       'enduser': { 
+       'enduser': {
            'subject': '/C=AT/L=Vienna/',  # base for the subject when creating a new cert
        },
    }
@@ -198,7 +198,7 @@ django-ca 1.16, so you'll have to update any custom ``CA_PROFILES`` setting befo
 Here's an example of a changed profile defining all the new values::
 
    CA_PROFILES = {
-       # django-ca before 1.14, do *not* use anymore! 
+       # django-ca before 1.14, do *not* use anymore!
        #'example': {  # NOTE: Not a necessarily useful profile, just an example for migration
        #    'desc': _('A certificate for a client.'),
        #    'keyUsage': {

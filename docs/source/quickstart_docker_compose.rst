@@ -4,10 +4,10 @@ Quickstart with docker-compose
 
 This guide is supposed to give you a quick start for running your own CA using docker-compose. It does not
 give to many details about how to configure more stuff, please read the other documentation in more detail to
-get more information. 
+get more information.
 
 This tutorial assumes you have moderate knowledge of running servers, installing software, docker,
-docker-compose and how TLS certificates work. 
+docker-compose and how TLS certificates work.
 
 This tutorial will give you a CA with
 
@@ -80,9 +80,9 @@ Get configuration
 
 Docker-compose needs a configuration file, :download:`docker-compose.yml </_files/docker-compose.yml>`. You
 can also download the file for other versions `from github
-<https://github.com/mathiasertl/django-ca/blob/master/docker-compose.yml>`_. 
+<https://github.com/mathiasertl/django-ca/blob/master/docker-compose.yml>`_.
 
-.. NOTE:: 
+.. NOTE::
 
    Because of how docker-compose works, it is better to put the file in a subdirectory and `not` directly into
    your home directory. We assume you put all files into ``~/ca/`` from now on.
@@ -118,7 +118,7 @@ Add .env file
 =============
 
 Some settings in **django-ca** can be configured with environment variables (except where a more complex
-structure is required). Simply create a file called ``.env`` next to :file:`docker-compose.yaml`. 
+structure is required). Simply create a file called ``.env`` next to :file:`docker-compose.yaml`.
 
 For a quick start, there are only a few variables you need to specify:
 
@@ -176,12 +176,12 @@ docker-compose (and verify that everything is running):
    Creating django-ca_backend_1  ... done
    Creating django-ca_webserver_1 ... done
    user@host:~/ca/$ docker-compose ps
-   Name                       Command               State         Ports       
+   Name                       Command               State         Ports
    -----------------------------------------------------------------------------------
-   django-ca_backend_1     ./celery.sh -l info              Up                        
-   django-ca_cache_1       docker-entrypoint.sh redis ...   Up                        
-   django-ca_db_1          docker-entrypoint.sh postgres    Up                        
-   django-ca_frontend_1    /bin/sh -c ./uwsgi.sh            Up                        
+   django-ca_backend_1     ./celery.sh -l info              Up
+   django-ca_cache_1       docker-entrypoint.sh redis ...   Up
+   django-ca_db_1          docker-entrypoint.sh postgres    Up
+   django-ca_frontend_1    /bin/sh -c ./uwsgi.sh            Up
    django-ca_webserver_1   /docker-entrypoint.sh /bin ...   Up    0.0.0.0:443->443/tcp,...
 
 By now, you should be able to see the admin interface (but not log in yet - you haven't created a user yet).
@@ -221,12 +221,12 @@ Use your CA
 You now should be able to log into the admin interface you set up at https://ca.example.com/admin/ with the
 credentials you created above. In the admin interface, you can create certificates for the "Intermediate" CA
 but not for the "Root" CA (since you didn't pass ``--path=ca/shared/``). You can also use the admin interface
-to revoke any certificate. 
+to revoke any certificate.
 
 You can always use the :doc:`/cli/intro` for advanced administration operations, including creating
 certificates for any CA and revoking certificates.
 
-CRL and OCSP services are provided by default, there's nothing you need to do to enable them. 
+CRL and OCSP services are provided by default, there's nothing you need to do to enable them.
 
 Use ACME with certbot
 ======================

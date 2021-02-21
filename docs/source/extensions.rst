@@ -25,7 +25,7 @@ decipherOnly
 digitalSignature  TLS connections (client and server), email and code signing, OCSP responder
 encipherOnly
 keyAgreement      TLS server connections
-keyCertSign       
+keyCertSign
 keyEncipherment   TLS server connections, email encryption, OCSP responder
 nonRepudiation    OCSP responder
 ================= ==========================================================================================
@@ -63,7 +63,7 @@ serverAuth        TLS server connections
 clientAuth        TLS client connections
 codeSigning       Code signing
 emailProtection   Email signing/encryption
-timeStamping      
+timeStamping
 OCSPSigning       Running an OCSP responder
 smartcardLogon    Required for user certificates on smartcards for PKINIT logon on Windows
 msKDC             Required for Domain Controller certificates to authorise them for PKINIT logon on Windows
@@ -98,7 +98,7 @@ Name                      Description
 ========================= ==================================================================================
 OCSPMustStaple            TLS connections *must* include a stapled OCSP response, defined in
                           `RFC6066 <https://tools.ietf.org/html/rfc6066.html>`_.
-MultipleCertStatusRequest Not commonly used, defined in 
+MultipleCertStatusRequest Not commonly used, defined in
                           `RFC6961 <https://tools.ietf.org/html/rfc6961.html>`_.
 ========================= ==================================================================================
 

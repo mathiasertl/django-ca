@@ -32,7 +32,7 @@ Update to 1.14.0 or later
 *************************
 
 **django-ca** has changed the layout of the :ref:`CA_PROFILES <settings-ca-profiles>`, you have to update any
-any custom setting according to the :ref:`migration instructions <profiles-pre-114-migration>`. 
+any custom setting according to the :ref:`migration instructions <profiles-pre-114-migration>`.
 
 The old profile settings will be supported until (and including) version 1.16.
 
@@ -42,7 +42,7 @@ The old profile settings will be supported until (and including) version 1.16.
 Update to 1.12.0 or later
 *************************
 
-.. NOTE:: 
+.. NOTE::
 
    The ``migrate_ca`` command has been removed in django-ca 1.15.0. If you update to version 1.15.0 or later,
    you first have to upgrade to 1.14.0 and run ``manage.py migrate_ca``.
@@ -56,7 +56,7 @@ If you also want to switch to a different storage system (e.g. from `django-stor
 new storage system by configuring :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and copying all files to
 the new location.
 
-The old way of accessing files works until (and including) version 1.14. 
+The old way of accessing files works until (and including) version 1.14.
 
 Migrate CAs
 ===========

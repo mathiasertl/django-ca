@@ -80,7 +80,7 @@ don't want to set the attribute:
    $ python manage.py init_ca --pathlen=2 ...
 
    # unlimited number of intermediate CAs:
-   $ python manage.py init_ca --no-pathlen ... 
+   $ python manage.py init_ca --no-pathlen ...
 
 CRL URLs
 ========
@@ -103,11 +103,11 @@ OCSP responder
 The `Online Certificate Status Protocol <https://en.wikipedia.org/wiki/Online_Certificate_Status_Protocol>`_
 or OCSP is a service (called "OCSP responder") run by a certificate authority that allows clients to query for
 revoked certificates. It is an improvement over CRLs particulary for larger CAs because a full CRL can grow
-quite big. 
+quite big.
 
 The same restrictions as for CRLs apply: You cannot add a OCSP URL to a root CA, it runs via HTTP (not HTTPS)
 and if you decide to add such URLs, you also have to actually run that service, or clients will refuse to
-connect. 
+connect.
 
 If you have correctly configured :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>`, you can use an
 OCSP responder *almost* out of the box, the only thing you have to do is *regularly* create OCSP responder
@@ -129,7 +129,7 @@ issuing certificates for a particular set of addresses. The parsing of this synt
 <https://www.sysadmins.lv/blog-en/x509-name-constraints-certificate-extension-all-you-should-know.aspx>`_ for
 a good explanation.
 
-.. WARNING:: 
+.. WARNING::
 
    This extension is marked as "critical". Any client that does not understand this extension will refuse a
    connection.

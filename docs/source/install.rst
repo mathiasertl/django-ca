@@ -46,7 +46,7 @@ luck with older versions.
 Use docker-compose
 ******************
 
-The fastest and by far easiest way to run django-ca with :ref:`docker-compose <docker-compose>`. 
+The fastest and by far easiest way to run django-ca with :ref:`docker-compose <docker-compose>`.
 
 The docker-compose file includes everything you need for a sophisticated setup: a PostgreSQL database, an
 NGINX webserver, a uWSGI application server a distibuted Redis cache and a Celery task worker.
@@ -157,22 +157,22 @@ examples. If you just want to get started, save (and adapt) this file to ``ca/ca
 
 .. code-block:: yaml
    :caption: ca/ca/settings.yaml
-   
+
    # settings reference:
    #  https://docs.djangoproject.com/en/dev/ref/settings/
    #  https://django-ca.readthedocs.io/en/latest/settings.html
-   
+
    DEBUG: False
-   
+
    # WARNING: set this to a long random value:
    SECRET_KEY: secret123
-   
+
    # Of course, SQLite is not very suitable for production
    DATABASES:
        default:
            ENGINE: django.db.backends.sqlite3
            NAME: db.sqlite3
-   
+
    # Assumes your CA runs on localhost
    CA_DEFAULT_HOSTNAME: localhost
 
@@ -230,7 +230,8 @@ Github user `Raoul Thill <https://github.com/rthill>`_ notes that you need some 
 if you use Apache together with mod_wsgi (see `here
 <https://github.com/mathiasertl/django-ca/issues/12#issuecomment-247282915>`_)::
 
-        WSGIDaemonProcess django_ca processes=1 python-path=/opt/django-ca/ca:/opt/django-ca/ca/ca:/opt/django-ca/lib/python2.7/site-packages threads=5
+        WSGIDaemonProcess django_ca processes=1 threads=5 \
+         python-path=/opt/django-ca/ca:/opt/django-ca/ca/ca:/opt/django-ca/lib/python2.7/site-packages
         WSGIProcessGroup django_ca
         WSGIApplicationGroup %{GLOBAL}
         WSGIScriptAlias / /opt/django-ca/ca/ca/wsgi.py
@@ -241,7 +242,7 @@ Configure cache
 
 It's recommended you set up a faster in-memory cache, which will be used e.g. to cache CRLs. In general, the
 `CACHES <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-CACHES>`__ setting configures the
-cache. 
+cache.
 
 If you want to use Redis as a cache, you can install `django-redis-cache
 <https://django-redis-cache.readthedocs.io/en/latest/index.html>`__. If you run django-ca as a standalone
@@ -269,7 +270,7 @@ Configuration for a Redis cache would e.g. look like this:
 Configure Celery worker
 ***********************
 
-django-ca also supports the `Celery distributed task queue <http://www.celeryproject.org/>`_. 
+django-ca also supports the `Celery distributed task queue <http://www.celeryproject.org/>`_.
 
 This is especially useful if you want to have e.g. the private keys for a CA on one server and the web
 interface including CRLs and OCSP on a separate server: Celery tasks can run on regular intervals to generate

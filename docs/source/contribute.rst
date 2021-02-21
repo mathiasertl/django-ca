@@ -61,7 +61,7 @@ specific to a particular Python/Django/cryptography version and the code just
 never executed when using a different version.
 
 You can exclude code that is just for Python2 or Python3 using comments::
-   
+
    import six
 
    if six.PY3:  # pragma: only py3
@@ -84,7 +84,7 @@ branch* if the feature is availalable. For example, the ``source`` attribute was
 added to warning messages in Python 3.6::
 
    if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6
-      self.assertEqual(data.get('source'), msg.source) 
+      self.assertEqual(data.get('source'), msg.source)
 
    if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>3.5
       print('equivalent to the above.')

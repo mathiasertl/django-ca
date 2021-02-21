@@ -111,7 +111,7 @@ Using profiles
 
 Certificates have extensions that define certain aspects of how/why/where/when a certificate can be used. Some
 extensions are added based on how the Certificate Authority is configured, e.g. CRL/OCSP URLs. Extensions that
-define for what purposes are a certificate can be used can be configured on a per-certificate basis. 
+define for what purposes are a certificate can be used can be configured on a per-certificate basis.
 
 The easiest way is to use profiles that define what extensions are added to any certificate. **django-ca**
 adds these predefined profiles:

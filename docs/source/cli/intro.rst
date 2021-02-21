@@ -106,7 +106,7 @@ email      An email address (e.g. used when using S/MIME to sign emails).
 dirname    An LDAP-style directory name, e.g. "/C=AT/L=Vienna/CN=example.at".
 URI        A URI, e.g. https://example.com.
 IP         An IP address, both IPv4 and IPv6 are supported.
-RID        A "Registered ID". No real-world examples are known, you're on your own. 
+RID        A "Registered ID". No real-world examples are known, you're on your own.
 otherName  Anything not covered in the above values. Same restrictions as for RID apply.
 ========== =============================================================================
 

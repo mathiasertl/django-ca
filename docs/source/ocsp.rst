@@ -78,11 +78,11 @@ dictionary for the arguments of the view. For example::
        'root-ca': {
            'responder_key': '/usr/share/django-ca/ocsp.key',
            'responder_cert': '/usr/share/django-ca/ocsp.pem',
-           
+
            # optional: The name or serial of the CA. By default, the dictionary key ("Root CA" in
            #           this example is assumed to be the CA name or serial.
            #'ca': '34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F',
-            
+
            # optional: How long OCSP responses are valid
            #'expires': 3600,
        },

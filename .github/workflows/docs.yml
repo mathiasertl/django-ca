@@ -35,5 +35,8 @@ jobs:
           pip install -r requirements/requirements-libs.txt
           pip install -r requirements/requirements-docs.txt
 
+      - name: doc8 style checks
+        run: doc8 docs/source/
+
       - name: Generate documentation
         run: make -C docs html-check
