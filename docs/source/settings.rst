@@ -150,7 +150,7 @@ CA_ENABLE_CLICKJACKING_PROTECTION
    Set to ``False`` to disable `Clickjacking protection
    <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
    ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
-   already set by the webserver.
+   already set by the web server.
 
 .. _settings-ca-file-storage:
 
@@ -158,11 +158,11 @@ CA_FILE_STORAGE
    Default: ``'django.core.files.storage.FileSystemStorage'``
 
    Default storage backend for files created by django-ca. The default is the same as *the default* for
-   ``DEFAULT_FILE_STORAGE``, so django-ca will still use local filesystem storage even if you configure a
+   ``DEFAULT_FILE_STORAGE``, so django-ca will still use local file system storage even if you configure a
    different storage backend in ``DEFAULT_FILE_STORAGE``. The default uses :ref:`CA_FILE_STORAGE_KWARGS
    <settings-ca-file-storage-kwargs>` to store files in a different location, since the default
    (``MEDIA_ROOT``) is commonly used to upload user-generated files that are exposed to the web by the
-   webserver.
+   web server.
 
 .. _settings-ca-file-storage-kwargs:
 
@@ -189,7 +189,7 @@ CA_OCSP_URLS
 CA_PASSWORDS
    Default: ``{}``
 
-   A dictonary configuring passwords for the private keys of CAs. This setting is required if you create a CA
+   A dictionary configuring passwords for the private keys of CAs. This setting is required if you create a CA
    with an encrypted private key and want to automatically create CRLs and OCSP keys.
 
 .. _settings-ca-profiles:
@@ -197,7 +197,7 @@ CA_PASSWORDS
 CA_PROFILES
    Default: ``{}``
 
-   Add new profiles or change exising ones.  Please see :doc:`profiles` for more information on profiles.
+   Add new profiles or change existing ones.  Please see :doc:`profiles` for more information on profiles.
 
 .. _settings-ca-use-celery:
 
@@ -229,7 +229,7 @@ CA_ENABLE_ACME
 CA_ACME_MAX_CERT_VALIDITY
    Default: ``timedelta(days=90)``
 
-   A timedelta representing the maximum validity time any certificate issued via ACME is valid.
+   A ``timedelta`` representing the maximum validity time any certificate issued via ACME is valid.
 
 .. _settings-acme-order-validity:
 

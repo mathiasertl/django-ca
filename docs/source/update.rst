@@ -69,7 +69,7 @@ be able to migrate using a simple manage.py command:
    $ python manage.py migrate_ca
    <serial>: Updating <old path> to <new path>.
 
-If you have stored some private keys outside of the filesystem, you will need to force them being moved into
+If you have stored some private keys outside of the file system, you will need to force them being moved into
 the directory configured by :ref:`CA_DIR <settings-ca-dir>`:
 
 .. code-block:: console

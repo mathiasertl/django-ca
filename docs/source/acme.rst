@@ -126,7 +126,7 @@ CA_ENABLE_ACME
 CA_ACME_MAX_CERT_VALIDITY
    Default: ``90``
 
-   Maximum time in days that certificate via ACMEv2 can be valid. Can also be set to a timedelta object.
+   Maximum time in days that certificate via ACMEv2 can be valid. Can also be set to a ``timedelta`` object.
 
 CA_ACME_DEFAULT_CERT_VALIDITY
    Default: ``90``

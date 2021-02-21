@@ -21,7 +21,7 @@ Check versions
 Other tasks
 ===========
 
-* Check if any version of a dependency is no longer supported and we can depcreate support for it:
+* Check if any version of a dependency is no longer supported and we can deprecate support for it:
 
   * `Python <https://devguide.python.org/#status-of-python-branches>`_
   * `Django <https://www.djangoproject.com/download/>`_

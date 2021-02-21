@@ -49,7 +49,7 @@ Use docker-compose
 The fastest and by far easiest way to run django-ca with :ref:`docker-compose <docker-compose>`.
 
 The docker-compose file includes everything you need for a sophisticated setup: a PostgreSQL database, an
-NGINX webserver, a uWSGI application server a distibuted Redis cache and a Celery task worker.
+NGINX web server, a uWSGI application server a distributed Redis cache and a Celery task worker.
 
 ***********************************************
 As Django app (in your existing Django project)
@@ -144,7 +144,7 @@ Configure django-ca
 
 .. versionchanged:: 1.15.0
 
-   Until 1.14.0, django-ca imported from a file called ``localsettings.py``. This functionality is depcreated
+   Until 1.14.0, django-ca imported from a file called ``localsettings.py``. This functionality is deprecated
    and will be removed in ``django-ca>=1.18``.
 
 Before you continue, you have to configure **django-ca**. Django uses a file called ``settings.py``, but so
@@ -217,10 +217,10 @@ If you don't want to always chdir to the git checkout, activate the virtualenv a
 
    ${PYTHON} ${MANAGE} "$@"
 
-Setup a webserver
-=================
+Setup a web server
+==================
 
-Setting up a webserver and all that comes with it is really out of scope of this document. The WSGI file is
+Setting up a web server and all that comes with it is really out of scope of this document. The WSGI file is
 located in ``ca/ca/wsgi.py``. Django itself provides some info for using `Apache and mod_wsgi
 <ttps://docs.djangoproject.com/en/dev/topics/install/#install-apache-and-mod-wsgi>`_, or you could use `uWSGI
 and nginx <http://uwsgi-docs.readthedocs.org/en/latest/tutorials/Django_and_nginx.html>`_, or any of the many

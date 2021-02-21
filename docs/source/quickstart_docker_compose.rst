@@ -40,7 +40,7 @@ to the server where you want to set up your certificate authority.
 Install required software
 *************************
 
-To run **django-ca**, you need Docker and Docker Compose. You also need certbot to aquire Let's Encrypt
+To run **django-ca**, you need Docker and Docker Compose. You also need certbot to acquire Let's Encrypt
 certificates for the admin interface. OpenSSL is used to generate the DH parameter file. On Debian/Ubuntu,
 simply do:
 
@@ -64,7 +64,7 @@ log in again:
 Get initial certificates
 ************************
 
-Use certbot to aquire initial certificates. This must be done `before` you run docker-compose, as both bind to
+Use certbot to acquire initial certificates. This must be done `before` you run docker-compose, as both bind to
 port 80 (HTTP).
 
 .. code-block:: console
@@ -84,7 +84,7 @@ can also download the file for other versions `from github
 
 .. NOTE::
 
-   Because of how docker-compose works, it is better to put the file in a subdirectory and `not` directly into
+   Because of how docker-compose works, it is better to put the file in a sub-directory and `not` directly into
    your home directory. We assume you put all files into ``~/ca/`` from now on.
 
 Add docker-compose.override.yml

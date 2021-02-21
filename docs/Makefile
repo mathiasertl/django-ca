@@ -61,6 +61,9 @@ html-check:
 	cp ../docker-compose.yml source/_files/
 	$(SPHINXBUILD) -n -W -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 
+spelling:
+	$(SPHINXBUILD) -n -b spelling $(ALLSPHINXOPTS) $(BUILDDIR)/html
+
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
