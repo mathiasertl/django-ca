@@ -1,4 +1,4 @@
-name: Code quality
+name: Documentation
 on:
   push:
   pull_request:
