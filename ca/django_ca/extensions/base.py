@@ -32,6 +32,7 @@ from typing import List
 from typing import NoReturn
 from typing import Optional
 from typing import Set
+from typing import Type
 from typing import Union
 
 from cryptography import x509
@@ -725,7 +726,7 @@ class SignedCertificateTimestampsBase(
         LogEntryType.PRE_CERTIFICATE: "precertificate",
         LogEntryType.X509_CERTIFICATE: "x509_certificate",
     }
-    extension_cls: SignedCertificateTimestampsBaseTypeVar
+    extension_cls: Type[SignedCertificateTimestampsBaseTypeVar]
     value: List[SignedCertificateTimestamp]
 
     def __contains__(self, value: ParsableSignedCertificateTimestamp) -> bool:

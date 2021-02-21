@@ -22,10 +22,10 @@ import re
 from typing import Any
 from typing import Dict
 from typing import Type
-from typing import cast
 
 from cryptography import x509
 
+from ..typehints import ExtensionType
 from .base import Extension
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -73,7 +73,7 @@ OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType,
 }
 
 
-def get_extension_name(ext: x509.Extension) -> str:
+def get_extension_name(ext: ExtensionType) -> str:
     """Function to get the name of an extension.
 
     >>> ext = x509.Extension(value=x509.BasicConstraints(ca=True, path_length=3), critical=True,
@@ -86,7 +86,7 @@ def get_extension_name(ext: x509.Extension) -> str:
         return OID_TO_EXTENSION[ext.oid].name
 
     # pylint: disable=protected-access; there is no other way to get a human-readable name
-    oid_name = cast(str, ext.oid._name)
+    oid_name = ext.oid._name
 
     return re.sub("^([a-z])", lambda x: x.groups()[0].upper(), oid_name)
 

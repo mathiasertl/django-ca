@@ -907,13 +907,11 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
 
         return text
 
-    @property
-    def excluded(self) -> GeneralNameList:
+    def get_excluded(self) -> GeneralNameList:
         """The ``excluded`` value of this instance."""
         return self._excluded
 
-    @excluded.setter
-    def excluded(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+    def set_excluded(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._excluded = value
@@ -930,13 +928,11 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         self.permitted = GeneralNameList(value.get("permitted"))
         self.excluded = GeneralNameList(value.get("excluded"))
 
-    @property
-    def permitted(self) -> GeneralNameList:
+    def get_permitted(self) -> GeneralNameList:
         """The ``permitted`` value of this instance."""
         return self._permitted
 
-    @permitted.setter
-    def permitted(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+    def set_permitted(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._permitted = value
@@ -946,6 +942,11 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
             "permitted": self._permitted.serialize(),
             "excluded": self._excluded.serialize(),
         }
+
+    # Do not use @property for read/write properties where the setter has a different type
+    #   https://github.com/python/mypy/issues/3004
+    excluded = property(get_excluded, set_excluded)
+    permitted = property(get_permitted, set_permitted)
 
 
 class OCSPNoCheck(NullExtension[x509.OCSPNoCheck]):
