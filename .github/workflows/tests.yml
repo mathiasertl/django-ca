@@ -42,7 +42,6 @@ jobs:
           pip install -r requirements/requirements-core.txt
           pip install -r requirements/requirements-libs.txt
           pip install -r requirements/requirements-test.txt
-          pip install -r requirements/requirements-docs.txt
 
       - name: Install designated Django and cryptography versions
         run: |
@@ -56,6 +55,3 @@ jobs:
         run: |
           python dev.py init-demo
           python dev.py coverage --format=text
-
-      - name: Build documentation
-        run: SPHINXOPTS="-j auto" make --directory=docs html-check
