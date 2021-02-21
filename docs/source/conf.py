@@ -30,6 +30,11 @@ from sphinx.addnodes import pending_xref
 from sphinx.ext.intersphinx import missing_reference
 from sphinx.highlighting import lexers
 
+try:
+    from sphinxcontrib import spelling
+except ImportError:
+    spelling = None
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -80,13 +85,17 @@ extensions = [
     'celery.contrib.sphinx',
     'numpydoc',
     'sphinx_autodoc_typehints',
-    'sphinxcontrib.spelling',
 ]
+
+if spelling is not None:
+    extensions.append("sphinxcontrib.spelling")
+
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
