@@ -64,8 +64,8 @@ log in again:
 Get initial certificates
 ************************
 
-Use certbot to acquire initial certificates. This must be done `before` you run docker-compose, as both bind to
-port 80 (HTTP).
+Use certbot to acquire initial certificates. This must be done `before` you run docker-compose, as both bind
+to port 80 (HTTP).
 
 .. code-block:: console
 
