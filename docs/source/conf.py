@@ -80,6 +80,7 @@ extensions = [
     'celery.contrib.sphinx',
     'numpydoc',
     'sphinx_autodoc_typehints',
+    'sphinxcontrib.spelling',
 ]
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
