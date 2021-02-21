@@ -24,8 +24,8 @@ import sys
 import traceback
 import warnings
 
-import pkg_resources
 import packaging.version
+import pkg_resources
 
 import cryptography
 from cryptography import x509
