@@ -132,7 +132,7 @@ class Profile:
 
         The function will add CRL, OCSP, Issuer and IssuerAlternativeName URLs based on the CA if the profile
         has the *add_crl_url*, *add_ocsp_url* and *add_issuer_url* and *add_issuer_alternative_name* values
-        set. Parameters to this function with the same name allow you override this behaviour.
+        set. Parameters to this function with the same name allow you override this behavior.
 
         The function allows you to override profile values using the *expires* and *algorithm* values. You can
         pass additional *extensions* as a list, which will override any extensions from the profile, but the

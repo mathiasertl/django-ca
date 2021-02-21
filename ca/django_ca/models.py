@@ -1656,7 +1656,7 @@ class AcmeCertificate(DjangoCAModelMixin, models.Model):
     def usable(self):
         """Boolean defining if this instance is "usable", meaning we can use it to issue a certificate.
 
-        An ACME certificate is considered usable if no actuall certificate has yet been issued, the order is
+        An ACME certificate is considered usable if no actual certificate has yet been issued, the order is
         not expired and in the "processing" state.
         """
         return (
