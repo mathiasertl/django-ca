@@ -24,6 +24,7 @@ import sys
 import traceback
 import warnings
 
+import pkg_resources
 import packaging.version
 
 import cryptography
@@ -113,6 +114,12 @@ def test(suites):
 
     os.chdir(CADIR)
     sys.path.insert(0, CADIR)
+
+    print("Testing with:")
+    print("* Python: ", sys.version.replace("\n", ""))
+    installed_versions = {p.project_name: p.version for p in pkg_resources.working_set}
+    for pkg in sorted(["Django", "acme", "cryptography", "celery", 'idna']):
+        print(f"* {pkg}: {installed_versions[pkg]}")
 
     suites = ['django_ca.tests.%s' % s.strip('.') for s in suites]
 
