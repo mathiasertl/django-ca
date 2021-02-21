@@ -37,17 +37,17 @@ jobs:
           path: ~/.cache/pip
           key: os=${{ matrix.os }}-python=${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements-*.txt') }}
 
-      - name: Install designated Django and cryptography versions
-        run: |
-          pip install Django~=${{ matrix.django-version }}
-          pip install cryptography~=${{ matrix.cryptography-version }}
-
       - name: Install dependencies
         run: |
           pip install -r requirements/requirements-core.txt
           pip install -r requirements/requirements-libs.txt
           pip install -r requirements/requirements-test.txt
           pip install -r requirements/requirements-docs.txt
+
+      - name: Install designated Django and cryptography versions
+        run: |
+          pip install Django~=${{ matrix.django-version }}
+          pip install cryptography~=${{ matrix.cryptography-version }}
 
       - name: Install program
         run: python setup.py develop
