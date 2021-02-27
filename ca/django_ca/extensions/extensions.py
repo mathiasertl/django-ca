@@ -416,6 +416,7 @@ class CertificatePolicies(
         x509.CertificatePolicies,
         Union[PolicyInformation, ParsablePolicyInformation],
         SerializedPolicyInformation,
+        PolicyInformation,
     ]
 ):
     """Class representing a Certificate Policies extension.
@@ -522,7 +523,7 @@ class IssuerAlternativeName(AlternativeNameExtension[x509.IssuerAlternativeName]
         return x509.IssuerAlternativeName(self.value)
 
 
-class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
+class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
     """Class representing a KeyUsage extension, which defines the purpose of a certificate.
 
     This extension is usually marked as critical and RFC 5280 defines that conforming CAs SHOULD mark it as
@@ -613,7 +614,8 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str]):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
-class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str]):
+class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str,
+                                           ObjectIdentifier]):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = "extended_key_usage"
@@ -1119,7 +1121,7 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
         return bytes_to_hex(self.value)
 
 
-class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str], str]):
+class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str], str, TLSFeatureType]):
     """Class representing a TLSFeature extension.
 
     As a :py:class:`~django_ca.extensions.base.OrderedSetExtension`, this extension handles much like it's

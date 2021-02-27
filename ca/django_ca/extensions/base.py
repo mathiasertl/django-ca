@@ -17,6 +17,7 @@
 # pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
 
 import binascii
+import collections.abc
 import textwrap
 from abc import ABCMeta
 from abc import abstractmethod
@@ -34,6 +35,8 @@ from typing import Optional
 from typing import Set
 from typing import Type
 from typing import Union
+from typing import cast
+from typing import overload
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType
@@ -42,6 +45,7 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 from ..typehints import AlternativeNameTypeVar
 from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
+from ..typehints import IterableItem
 from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsableGeneralName
 from ..typehints import ParsableGeneralNameList
@@ -356,7 +360,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
 
 class IterableExtension(
     Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], List[SerializedItem]],
-    Generic[ExtensionTypeTypeVar, ParsableItem, SerializedItem],
+    Generic[ExtensionTypeTypeVar, ParsableItem, SerializedItem, IterableItem],
 ):
     """Base class for iterable extensions.
 
@@ -395,28 +399,29 @@ class IterableExtension(
     def __len__(self) -> int:
         return len(self.value)
 
+    # TODO: Make an abtract function?
     def repr_value(self) -> str:
         return self.serialize_value()
 
     def as_text(self) -> str:
         return "\n".join(["* %s" % v for v in self.serialize_value()])
 
-    def parse_value(self, value: ParsableItem):
+    def parse_value(self, value: ParsableItem) -> IterableItem:
         """Parse a single value (presumably from an iterable)."""
-        return value
+        return cast(IterableItem, value)
 
     def serialize_value(self) -> List[SerializedItem]:
         """Serialize the whole iterable contained in this extension."""
 
         return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
 
-    def serialize_item(self, value) -> SerializedItem:
+    def serialize_item(self, value: IterableItem) -> SerializedItem:
         """Serialize a single item in the iterable contained in this extension."""
 
-        return value
+        return cast(SerializedItem, value)
 
 
-class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
+class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem, IterableItem]):
     """Base class for extensions with multiple ordered values.
 
     .. versionchanged:: 1.18.0
@@ -425,58 +430,80 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
     """
 
     # pylint: disable=abstract-method; class is itself a base class
-    value: List[Any]
+    value: List[IterableItem]
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: Union[int, slice]) -> None:
         del self.value[key]
 
-    def __getitem__(self, key):
+    @overload
+    def __getitem__(self, key: int) -> SerializedItem:  # pragma: no cover
+        ...
+
+    @overload
+    def __getitem__(self, key: slice) -> List[SerializedItem]:  # pragma: no cover
+        ...
+
+    def __getitem__(self, key: Union[int, slice]) -> Union[SerializedItem, List[SerializedItem]]:
         if isinstance(key, int):
             return self.serialize_item(self.value[key])
         return [self.serialize_item(v) for v in self.value[key]]
 
-    def __setitem__(self, key, value):
-        if isinstance(key, int):
-            self.value[key] = self.parse_value(value)
-        else:
-            self.value[key] = [self.parse_value(v) for v in value]
+    @overload
+    def __setitem__(self, key: int, value: ParsableItem) -> None:  # pragma: no cover
+        ...
 
-    def from_dict(self, value):
+    @overload
+    def __setitem__(self, key: slice, value: Iterable[ParsableItem]) -> None:  # pragma: no cover
+        ...
+
+    def __setitem__(self, key: Union[int, slice], value: Union[ParsableItem, Iterable[ParsableItem]]) -> None:
+        if isinstance(key, slice) and isinstance(value, collections.abc.Iterable):
+            self.value[key] = [self.parse_value(v) for v in value]
+        elif isinstance(key, int):
+            # NOTE: cast() here b/c ParsableItem may also be an Iterable, so we cannot use isinstance() to
+            #       narrow the scope known to mypy.
+            self.value[key] = self.parse_value(cast(ParsableItem, value))
+        else:
+            raise TypeError("Can only assign int/item or slice/iterable")
+
+    def from_dict(self, value) -> None:
         self.value = [self.parse_value(v) for v in value]
 
-    def from_extension(self, value):
+    def from_extension(self, value) -> None:
         self.value = [self.parse_value(v) for v in value]
 
     # Implement functions provided by list(). Class mentions that this provides the same methods.
 
-    def append(self, value) -> None:
+    def append(self, value: ParsableItem) -> None:
         self.value.append(self.parse_value(value))
         self._test_value()
 
     def clear(self) -> None:
         self.value.clear()
 
-    def count(self, value: ParsableItem):
+    def count(self, value: ParsableItem) -> int:
         try:
             return self.value.count(self.parse_value(value))
         except ValueError:
             return 0
 
-    def extend(self, iterable):
+    def extend(self, iterable: Iterable[ParsableItem]) -> None:
         self.value.extend([self.parse_value(n) for n in iterable])
         self._test_value()
 
-    def insert(self, index: int, value):
+    def insert(self, index: int, value: ParsableItem) -> None:
         self.value.insert(index, self.parse_value(value))
 
-    def pop(self, index: int = -1):
+    def pop(self, index: int = -1) -> IterableItem:
         return self.value.pop(index)
 
-    def remove(self, value):
-        return self.value.remove(self.parse_value(value))
+    def remove(self, value: ParsableItem) -> None:
+        self.value.remove(self.parse_value(value))
 
 
-class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem]):
+class OrderedSetExtension(
+    IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem, IterableItem]
+):
     """Base class for extensions that contain a set of values.
 
     .. versionchanged:: 1.18.0
@@ -499,9 +526,12 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     # pylint: disable=abstract-method; class is itself a base class
 
     name = "OrderedSetExtension"
-    value: Set
+    value: Set[IterableItem]
 
-    def __and__(self, other: Iterable[ParsableItem]):  # & operator == intersection()
+    # & operator == intersection()
+    def __and__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value & self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -511,15 +541,23 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     def __gt__(self, other: Iterable[ParsableItem]) -> bool:  # > relation
         return self.value > self.parse_iterable(other)
 
-    def __iand__(self, other: Iterable[ParsableItem]):  # &= operator == intersection_update()
+    # &= operator == intersection_update()
+    def __iand__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         self.value &= self.parse_iterable(other)
         return self
 
-    def __ior__(self, other: Iterable[ParsableItem]):  # |= operator == update()
+    # |= operator == update()
+    def __ior__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         self.value |= self.parse_iterable(other)
         return self
 
-    def __isub__(self, other: Iterable[ParsableItem]):
+    def __isub__(
+        self, other: Iterable[ParsableItem]
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         self.value -= self.parse_iterable(other)
         return self
 
@@ -532,29 +570,30 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     def __lt__(self, other: Iterable[ParsableItem]) -> bool:  # < relation
         return self.value < self.parse_iterable(other)
 
+    # | operator == union()
     def __or__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # | operator == union()
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value.union(self.parse_iterable(other))
         return self.__class__({"critical": self.critical, "value": value})
 
     def __sub__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # - operator
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":  # - operator
         value = self.value - self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
     # ^ operator == symmetric_difference()
     def __xor__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value ^ self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
     def repr_value(self) -> List[str]:
         return [str(v) for v in super().repr_value()]
 
-    def parse_iterable(self, iterable: Iterable[ParsableItem]):
+    def parse_iterable(self, iterable: Iterable[ParsableItem]) -> Set[IterableItem]:
         """Parse values from the given iterable."""
         return set(self.parse_value(i) for i in iterable)
 
@@ -573,13 +612,14 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     def clear(self) -> None:
         self.value.clear()
 
-    def copy(self) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":
+    def copy(self) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value.copy()
         return self.__class__({"critical": self.critical, "value": value})
 
+    # equivalent to & operator
     def difference(
         self, *others: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to & operator
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value.difference(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -589,9 +629,10 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     def discard(self, elem: ParsableItem) -> None:
         self.value.discard(self.parse_value(elem))
 
+    # equivalent to & operator
     def intersection(
         self, *others: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to & operator
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -607,15 +648,16 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     def issuperset(self, other: Iterable[ParsableItem]) -> bool:
         return self.value.issuperset(self.parse_iterable(other))
 
-    def pop(self):
+    def pop(self) -> IterableItem:
         return self.value.pop()
 
-    def remove(self, elem: ParsableItem):
-        return self.value.remove(self.parse_value(elem))
+    def remove(self, elem: ParsableItem) -> None:
+        self.value.remove(self.parse_value(elem))
 
+    # equivalent to ^ operator
     def symmetric_difference(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to ^ operator
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         return self ^ other
 
     def symmetric_difference_update(self, other: Iterable[ParsableItem]) -> None:  # equivalent to ^= operator
@@ -623,7 +665,7 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
 
     def union(
         self, *others: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value.union(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -632,7 +674,9 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
             self.value.update(self.parse_iterable(elem))
 
 
-class AlternativeNameExtension(ListExtension[AlternativeNameTypeVar, ParsableGeneralName, str]):
+class AlternativeNameExtension(
+    ListExtension[AlternativeNameTypeVar, ParsableGeneralName, str, x509.GeneralName]
+):
     """Base class for extensions that contain a list of general names.
 
     This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
@@ -665,7 +709,9 @@ class AlternativeNameExtension(ListExtension[AlternativeNameTypeVar, ParsableGen
 
 
 class CRLDistributionPointsBase(
-    ListExtension[ExtensionTypeTypeVar, ParsableDistributionPoint, SerializedDistributionPoint]
+    ListExtension[
+        ExtensionTypeTypeVar, ParsableDistributionPoint, SerializedDistributionPoint, DistributionPoint
+    ]
 ):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
@@ -705,6 +751,7 @@ class SignedCertificateTimestampsBase(
         SignedCertificateTimestampsBaseTypeVar,
         ParsableSignedCertificateTimestamp,
         SerializedSignedCertificateTimestamp,
+        SignedCertificateTimestamp,
     ]
 ):
     """Base class for extensions containing signed certificate timestamps.

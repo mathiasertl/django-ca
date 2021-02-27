@@ -705,6 +705,13 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
                         func, list(config['expected']), (start_slice, values[start_slice], ),
                         set_init=ct_expected, set_value=(start_slice, ct_expected[start_slice]))
 
+    def test_setitem_typerror(self):
+        """Test setting slices without an iterable."""
+
+        ext = self.ext_class({'value': []})
+        with self.assertRaisesRegex(TypeError, r'^Can only assign int/item or slice/iterable$'):
+            ext[0:1] = 3
+
 
 class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     """Mixin for OrderedSetExtension based extensions."""
