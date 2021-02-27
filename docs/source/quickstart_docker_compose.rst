@@ -87,8 +87,8 @@ can also download the file for other versions `from github
    Because of how docker-compose works, it is better to put the file in a sub-directory and `not` directly into
    your home directory. We assume you put all files into ``~/ca/`` from now on.
 
-Add docker-compose.override.yml
-===============================
+Add ``docker-compose.override.yml``
+===================================
 
 The default :file:`docker-compose.yml` does not offer HTTPS, because to many details (cert location, etc.) are
 different from system to system. We need to add a `docker-compose override file
@@ -114,11 +114,11 @@ This will work if you get your certificates using ``certbot`` or a similar clien
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
 :file:`.env` file below.
 
-Add .env file
-=============
+Add ``.env`` file
+=================
 
 Some settings in **django-ca** can be configured with environment variables (except where a more complex
-structure is required). Simply create a file called ``.env`` next to :file:`docker-compose.yaml`.
+structure is required). Simply create a file called :file:`.env` next to :file:`docker-compose.yaml`.
 
 For a quick start, there are only a few variables you need to specify:
 
@@ -142,8 +142,8 @@ For a quick start, there are only a few variables you need to specify:
    NGINX_PRIVATE_KEY=/etc/certs/live/ca.example.com/privkey.pem
    NGINX_PUBLIC_KEY=/etc/certs/live/ca.example.com/fullchain.pem
 
-Generate dhparams
-=================
+Generate DH parameters
+======================
 
 The TLS configuration also requires that you generate a DH parameter file, used by some TLS ciphers. You can
 generate it with:
@@ -209,7 +209,8 @@ There are a few things to break down in the above commands:
 * The subject (``/CN=...``) in the CA is only used by browsers to display the name of a CA. It can be any
   human readable value and does not have to be a domain name.
 * The first positional argument to ``init_ca``, ("Root", "Intermediate") is just a human readable name used to
-  identify the CA within the cli/web interface. Unlike the CommonName, it must be unique.
+  identify the CA within the command-line interface and web interface. Unlike the CommonName, it must be
+  unique.
 * The ``--path=ca/shared/`` parameter for the intermediate CA means that you can use the admin interface to
   issue certificates. Without it, the web server has no access to the private key for your CA.
 * The ``--pathlen=1`` parameter for the root CA means that there is at most one level of intermediate CAs.

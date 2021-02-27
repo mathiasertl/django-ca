@@ -302,8 +302,8 @@ class GenericOCSPView(OCSPView):
     """View providing auto-configured OCSP functionality.
 
     This view assumes that ``ocsp/$ca_serial.(key|pem)`` point to the private/public key of a responder
-    certificate as created by :py:class:`~django_ca.tasks.generate_ocsp_keys`. The ``serial`` url kwarg must
-    be the serial for this CA.
+    certificate as created by :py:class:`~django_ca.tasks.generate_ocsp_keys`. The ``serial`` URL keyword
+    argument must be the serial for this CA.
     """
 
     def dispatch(self, request, serial, **kwargs):
