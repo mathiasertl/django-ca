@@ -618,8 +618,8 @@ class OrderedSetExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, 
     ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem]":  # equivalent to ^ operator
         return self ^ other
 
-    def symmetric_difference_update(self, other: Iterable[ParsableItem]) -> None:
-        self ^= other
+    def symmetric_difference_update(self, other: Iterable[ParsableItem]) -> None:  # equivalent to ^= operator
+        self.value ^= self.parse_iterable(other)
 
     def union(
         self, *others: Iterable[ParsableItem]
