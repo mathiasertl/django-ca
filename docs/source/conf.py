@@ -73,7 +73,6 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'sphinx.ext.autosummary',
-    #'sphinx.ext.napoleon',
 
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     'celery.contrib.sphinx',
@@ -91,9 +90,6 @@ if spelling is not None:
 
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
-
-napoleon_google_docstring = False
-napoleon_numpy_docstring = True
 
 
 # Add any paths that contain templates here, relative to this directory.
