@@ -20,20 +20,20 @@ import sys
 import sphinx_autodoc_typehints
 import sphinx_rtd_theme
 from docutils.nodes import Text as DocutilsText
-from docutils.nodes import literal
 from pygments.lexer import do_insertions
 from pygments.lexers.shell import BashLexer
 from pygments.lexers.shell import ShellSessionBaseLexer
 from pygments.token import Generic
 from pygments.token import Text
 from sphinx.addnodes import pending_xref
-from sphinx.ext.intersphinx import missing_reference
 from sphinx.highlighting import lexers
 
 try:
     from sphinxcontrib import spelling
 except ImportError:
     spelling = None
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -88,22 +88,11 @@ extensions = [
 ]
 
 if spelling is not None:
-    # Configure spell checking
-    #   https://sphinxcontrib-spelling.readthedocs.io/en/latest/customize.html
-    from enchant.tokenize import Filter
-    from enchant.tokenize import URLFilter
-
-    class URIFilter(URLFilter):
-        _pattern = re.compile(r"URI:https?://[^\s]*")
-
-    class ScriptFilter(Filter):
-        def _skip(self, word):
-            return word == "manage.py"
+    from django_ca_sphinx.spelling import URIFilter, MagicWordsFilter  # isort:skip
 
     extensions.append("sphinxcontrib.spelling")
-
     spelling_exclude_patterns = ['**/generated/*.rst']
-    spelling_filters = [URIFilter, ScriptFilter]
+    spelling_filters = [URIFilter, MagicWordsFilter]
     #spelling_show_suggestions = True
 
 numpydoc_show_class_members = False
