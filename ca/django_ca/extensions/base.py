@@ -317,6 +317,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
         <OCSPNoCheck: critical=True>
     """
 
+    ext_class: ClassVar[Type[ExtensionTypeTypeVar]]
     name: ClassVar[str]
 
     def __init__(self, value: Optional[Union[ExtensionTypeTypeVar, ParsableNullExtension]] = None) -> None:
@@ -342,7 +343,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
         return self.name
 
     @property
-    def extension_type(self):
+    def extension_type(self) -> ExtensionTypeTypeVar:
         return self.ext_class()  # pylint: disable=no-member; concrete classes are expected to set this
 
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:
@@ -377,9 +378,9 @@ class IterableExtension(
     """
 
     # pylint: disable=abstract-method; class is itself a base class
-    value: Collection
+    value: Collection[IterableItem]
 
-    def __contains__(self, value):
+    def __contains__(self, value: ParsableItem) -> bool:
         return self.parse_value(value) in self.value  # pylint: disable=unsupported-membership-test
 
     def __eq__(self, other: Any) -> bool:
@@ -393,15 +394,14 @@ class IterableExtension(
             )
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[SerializedItem]:
         return iter(self.serialize_value())
 
     def __len__(self) -> int:
         return len(self.value)
 
-    # TODO: Make an abtract function?
     def repr_value(self) -> str:
-        return self.serialize_value()
+        return "[%s]" % ", ".join([repr(v) for v in self.serialize_value()])
 
     def as_text(self) -> str:
         return "\n".join(["* %s" % v for v in self.serialize_value()])
@@ -589,9 +589,6 @@ class OrderedSetExtension(
     ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
         value = self.value ^ self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
-
-    def repr_value(self) -> List[str]:
-        return [str(v) for v in super().repr_value()]
 
     def parse_iterable(self, iterable: Iterable[ParsableItem]) -> Set[IterableItem]:
         """Parse values from the given iterable."""
