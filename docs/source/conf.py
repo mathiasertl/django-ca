@@ -20,13 +20,7 @@ import sys
 import sphinx_autodoc_typehints
 import sphinx_rtd_theme
 from docutils.nodes import Text as DocutilsText
-from pygments.lexer import do_insertions
-from pygments.lexers.shell import BashLexer
-from pygments.lexers.shell import ShellSessionBaseLexer
-from pygments.token import Generic
-from pygments.token import Text
 from sphinx.addnodes import pending_xref
-from sphinx.highlighting import lexers
 
 try:
     from sphinxcontrib import spelling
@@ -375,91 +369,6 @@ intersphinx_mapping = {
 
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-# Custom console lexer to make space part of the prompt
-line_re = re.compile('.*?\n')
-
-
-class BashSessionLexer(ShellSessionBaseLexer):
-    """
-    Lexer for Bash shell sessions, i.e. command lines, including a
-    prompt, interspersed with output.
-
-    .. versionadded:: 1.1
-    """
-
-    name = 'Bash Session'
-    aliases = ['console', 'shell-session']
-    filenames = ['*.sh-session', '*.shell-session']
-    mimetypes = ['application/x-shell-session', 'application/x-sh-session']
-
-    _innerLexerCls = BashLexer
-    _ps1rgx = re.compile(
-        r'^((?:(?:\[.*?\])|(?:\(\S+\))?(?:| |sh\S*?|\w+\S+[@:]\S+(?:\s+\S+)' \
-        r'?|\[\S+[@:][^\n]+\].+))\s*[$#%]\s*)(.*\n?)')
-    _ps2 = '> '
-
-    _venv = re.compile(r'^(\([^)]*\))(\s*)')
-
-    def get_tokens_unprocessed(self, text):
-        innerlexer = self._innerLexerCls(**self.options)
-
-        pos = 0
-        curcode = ''
-        insertions = []
-        backslash_continuation = False
-
-        for match in line_re.finditer(text):
-            line = match.group()
-            if backslash_continuation and not line.startswith(self._ps2):
-                curcode += line
-                backslash_continuation = curcode.endswith('\\\n')
-                continue
-
-            venv_match = self._venv.match(line)
-            if venv_match:
-                venv = venv_match.group(1)
-                venv_whitespace = venv_match.group(2)
-                insertions.append((len(curcode),
-                    [(0, Generic.Prompt.VirtualEnv, venv)]))
-                if venv_whitespace:
-                    insertions.append((len(curcode),
-                        [(0, Text, venv_whitespace)]))
-                line = line[venv_match.end():]
-
-            m = self._ps1rgx.match(line)
-            if m:
-                # To support output lexers (say diff output), the output
-                # needs to be broken by prompts whenever the output lexer
-                # changes.
-                if not insertions:
-                    pos = match.start()
-
-                insertions.append((len(curcode),
-                                   [(0, Generic.Prompt, m.group(1))]))
-                curcode += m.group(2)
-                backslash_continuation = curcode.endswith('\\\n')
-            elif line.startswith(self._ps2):
-                insertions.append((len(curcode),
-                                   [(0, Generic.Prompt, line[:len(self._ps2)])]))
-                curcode += line[len(self._ps2):]
-                backslash_continuation = curcode.endswith('\\\n')
-            else:
-                if insertions:
-                    toks = innerlexer.get_tokens_unprocessed(curcode)
-                    for i, t, v in do_insertions(insertions, toks):
-                        yield pos+i, t, v
-                yield match.start(), Generic.Output, line
-                insertions = []
-                curcode = ''
-        if insertions:
-            for i, t, v in do_insertions(insertions,
-                                         innerlexer.get_tokens_unprocessed(curcode)):
-                yield pos+i, t, v
-
-
-lexers['console'] = BashSessionLexer()
-lexers['shell-session'] = BashSessionLexer()
 
 # Make typehints to third-party libraries work in Shpinx:
 #   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805
