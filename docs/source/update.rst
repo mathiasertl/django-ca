@@ -2,21 +2,26 @@
 Update
 ######
 
-Since 1.0.0, this project updates like any other project. First, update the source code, if you use git::
+Since 1.0.0, this project updates like any other project. First, update the source code, if you use git:
 
-   git pull origin master
+.. code-block:: console
 
-or if you installed **django-ca** via pip::
+   $ git pull origin master
 
-   pip install -U django-ca
+or if you installed **django-ca** via pip:
 
-then upgrade with these commands::
+.. code-block:: console
 
-   pip install -U -r requirements.txt
-   python ca/manage.py migrate
+   $ pip install -U django-ca
 
-   # if you use the webinterface
-   python ca/manage.py collectstatic
+then upgrade with these commands:
+
+.. code-block:: console
+
+   $ pip install -U -r requirements.txt
+   $ python ca/manage.py migrate
+
+   $ python ca/manage.py collectstatic  # if you use the webinterface
 
 .. WARNING::
 
@@ -61,8 +66,7 @@ The old way of accessing files works until (and including) version 1.14.
 Migrate CAs
 ===========
 
-In most cases, you will
-be able to migrate using a simple manage.py command:
+In most cases, you will be able to migrate using a simple manage.py command:
 
 .. code-block:: console
 
@@ -91,7 +95,7 @@ If you have configured a manual OCSP responder, you have to move the files into 
 
 You can test your configuration change invoking ``python manage.py shell`` and running:
 
-.. code-block:: pycon
+.. code-block:: python
 
    >>> import os
    >>> from django_ca import ca_settings
@@ -121,18 +125,22 @@ To update from an earlier git-checkout, to:
 * Upgrade to version 1.0.0b2
 * Apply all migrations.
 * Upgrade to version 1.0.0
-* Remove old migrations from the database::
+* Remove old migrations from the database:
 
-      python manage.py dbshell
-      > DELETE FROM django_migrations WHERE app='django_ca';
+  .. code-block:: console
+
+     $ python manage.py dbshell
+     > DELETE FROM django_migrations WHERE app='django_ca';
 
 * Fake the first migration:
 
-  python manage.py migrate django_ca 0001 --fake
+  .. code-block:: console
 
-***********************
-Update from pre 1.0.0b1
-***********************
+     $ python manage.py migrate django_ca 0001 --fake
+
+**************************
+Update from before 1.0.0b1
+**************************
 
 Prior to 1.0.0, this app was not intended to be reusable and so had a generic name. The app was
 renamed to `django_ca`, so it can be used in other Django projects (or hopefully stand-alone,

@@ -1085,7 +1085,7 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def max_pathlen(self):
-        """The maximum pathlen for any intermediate CAs signed by this CA.
+        """The maximum `pathlen` for any intermediate CAs signed by this CA.
 
         This value is either ``None``, if this and all parent CAs don't have a ``pathlen`` attribute, or an
         ``int`` if any parent CA has the attribute.
@@ -1106,7 +1106,7 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def allows_intermediate_ca(self):
-        """Wether this CA allows creating intermediate CAs."""
+        """Whether this CA allows creating intermediate CAs."""
 
         max_pathlen = self.max_pathlen
         return max_pathlen is None or max_pathlen > 0

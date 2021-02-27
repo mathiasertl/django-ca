@@ -30,8 +30,8 @@ Other tasks
 * Make sure that ``setup.py`` has proper classifiers.
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 
-Run testsuite
-=============
+Run test suite
+==============
 
 * First, run ``./dev.py clean``.
 * Check code quality (``./dev.py code-quality``).

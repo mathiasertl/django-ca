@@ -614,8 +614,9 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
 
-class ExtendedKeyUsage(OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str,
-                                           ObjectIdentifier]):
+class ExtendedKeyUsage(
+    OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str, ObjectIdentifier]
+):
     """Class representing a ExtendedKeyUsage extension."""
 
     key = "extended_key_usage"

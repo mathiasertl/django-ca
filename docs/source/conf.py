@@ -88,7 +88,23 @@ extensions = [
 ]
 
 if spelling is not None:
+    # Configure spell checking
+    #   https://sphinxcontrib-spelling.readthedocs.io/en/latest/customize.html
+    from enchant.tokenize import Filter
+    from enchant.tokenize import URLFilter
+
+    class URIFilter(URLFilter):
+        _pattern = re.compile(r"URI:https?://[^\s]*")
+
+    class ScriptFilter(Filter):
+        def _skip(self, word):
+            return word == "manage.py"
+
     extensions.append("sphinxcontrib.spelling")
+
+    spelling_exclude_patterns = ['**/generated/*.rst']
+    spelling_filters = [URIFilter, ScriptFilter]
+    #spelling_show_suggestions = True
 
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
@@ -461,6 +477,7 @@ lexers['shell-session'] = BashSessionLexer()
 #   See also: https://github.com/sphinx-doc/sphinx/issues/4826
 qualname_overrides = {
     'ExtensionTypeTypeVar': 'cg:cryptography.x509.ExtensionType',
+    "IterableItem": ":py:data:`django_ca.typehints.IterableItem`",
     "SerializedItem": ":py:data:`django_ca.typehints.SerializedItem`",
     "SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
     "BasicConstraintsBase": ":py:data:`django_ca.typehints.BasicConstraintsBase`",

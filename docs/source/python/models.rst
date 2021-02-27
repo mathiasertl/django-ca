@@ -2,9 +2,9 @@
 ``django_ca.models`` - django-ca models
 #######################################
 
-**django-ca** uses three classes, called "models" in Django terminology, to
-store everything in the database. They are the core classes for this project, if
-you want to use this project programatically, you'll have to use these classes:
+**django-ca** uses three classes, called "models" in Django terminology, to store everything in the database.
+They are the core classes for this project, if you want to use this project programmatically, you'll have to
+use these classes:
 
 * :ref:`CertificateAuthority <models-certificate-authority>` is used to store
   certificate authorities.

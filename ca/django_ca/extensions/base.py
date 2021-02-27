@@ -754,8 +754,8 @@ class SignedCertificateTimestampsBase(
     """Base class for extensions containing signed certificate timestamps.
 
     Subclasses of this extension cannot be instantiated by any custom value, only the matching subclass of
-    :py:class:`~cg:cryptography.x509.ExtensionType` is suported. Unfortunately cryptography currently does not
-    support creating instances of ``SignedCertificateTimestamp`` (see `issue #4820
+    :py:class:`~cg:cryptography.x509.ExtensionType` is supported. Unfortunately cryptography currently does
+    not support creating instances of ``SignedCertificateTimestamp`` (see `issue #4820
     <https://github.com/pyca/cryptography/issues/4820>`_). This extension thus also has no way of
     adding/removing any elements. Any attempt of updating an instance will raise ``NotImplementedError``.
 

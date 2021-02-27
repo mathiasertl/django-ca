@@ -23,7 +23,7 @@ Requirements
 We assume you have a dedicated server that can run your CA, and a suitable DNS name that points to that
 server. The server needs to run Docker with docker-compose.
 
-The default setup binds to the privileged ports 80 and 443, so it is assumed that no other webserver runs on
+The default setup binds to the privileged ports 80 and 443, so it is assumed that no other web server runs on
 your server (or anything else listening on that port).
 
 *********
@@ -110,7 +110,7 @@ configuration file:
            ports:
                - 443:443
 
-This will work if you get your certificates using ``certbot`` or a similar client. If your private key ein
+This will work if you get your certificates using ``certbot`` or a similar client. If your private key in
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
 :file:`.env` file below.
 
@@ -211,7 +211,7 @@ There are a few things to break down in the above commands:
 * The first positional argument to ``init_ca``, ("Root", "Intermediate") is just a human readable name used to
   identify the CA within the cli/web interface. Unlike the CommonName, it must be unique.
 * The ``--path=ca/shared/`` parameter for the intermediate CA means that you can use the admin interface to
-  issue certificates. Without it, the webserver has no access to the private key for your CA.
+  issue certificates. Without it, the web server has no access to the private key for your CA.
 * The ``--pathlen=1`` parameter for the root CA means that there is at most one level of intermediate CAs.
 
 ***********

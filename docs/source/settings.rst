@@ -127,10 +127,9 @@ CA_DEFAULT_SUBJECT
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
 
-   The default digest algorithm used to sign certificates. You may want to use
-   ``"sha256"`` for older (pre-2010) clients. Note that this setting is also
-   used by the ``init_ca`` command, so if you have any clients that do not
-   understand sha512 hashes, you should change this beforehand.
+   The default digest algorithm used to sign certificates. You may want to use ``"sha256"`` for older (before
+   2010) clients. Note that this setting is also used by the ``init_ca`` command, so if you have any clients
+   that do not understand SHA-512 hashes, you should change this beforehand.
 
 .. _settings-ca-dir:
 

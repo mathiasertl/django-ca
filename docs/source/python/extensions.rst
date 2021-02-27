@@ -61,8 +61,8 @@ determined by the ``default_critical`` flag, which matches common X.509 usage fo
     >>> KeyUsage({'critical': False})
     <KeyUsage: [], critical=False>
 
-You can always serialize an extension to its ``dict`` representation and later restore it (e.g. after
-transfering it over the network)::
+You can always serialize an extension to its ``dict`` representation and later restore it (e.g. after sending
+it over the network)::
 
    >>> ku = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
    >>> ku == KeyUsage(ku.serialize())

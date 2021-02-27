@@ -319,7 +319,7 @@ def hex_to_bytes(value: str) -> bytes:
 def sanitize_serial(value: str) -> str:
     """Sanitize a serial provided by user/untrusted input.
 
-    This function is intended to be used to get a serial as used internaly by **django-ca** from untrusted
+    This function is intended to be used to get a serial as used internally by **django-ca** from untrusted
     user input. Internally, serials are stored in upper case and without ``:`` and leading zeros, but user
     output adds at least ``:``.
 
@@ -947,8 +947,8 @@ def get_cert_builder(
 def read_file(path: str) -> bytes:
     """Read the file from the given path.
 
-    If ``path`` is an absolute path, reads a file from the local filesystem. For relative paths, read the file
-    using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
+    If ``path`` is an absolute path, reads a file from the local file system. For relative paths, read the
+    file using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
     if os.path.isabs(path):
         with open(path, 'rb') as abs_stream:

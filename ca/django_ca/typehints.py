@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Various type aliases used throught different models."""
+"""Various type aliases used in throughout django-ca."""
 
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
@@ -120,6 +120,7 @@ SerializedValue = TypeVar("SerializedValue")
 """TypeVar representing a serialized value for an extension."""
 
 IterableItem = TypeVar("IterableItem")
+"""TypeVar representing a value contained in an iterable extension."""
 
 ParsableSubjectKeyIdentifier = Union[str, bytes]
 
