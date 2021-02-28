@@ -53,6 +53,7 @@ class MagicWordsFilter(Filter):
         "NGINX",  # homepage consistently uses all caps
         ".ini",
         "base64url",
+        "LibreSSL",
         "OpenSSL",
     }
 

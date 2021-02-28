@@ -27,7 +27,7 @@ Creating Certificate Authorities and managing Certificates is documented on indi
    CA management </cli/cas>
    Certificate management </cli/certs>
 
-.. NOTE:: 
+.. NOTE::
 
    Consider :ref:`creating a bash script <manage_py_shortcut>` to easily access your :command:`manage.py`
    script.

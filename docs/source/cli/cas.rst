@@ -192,7 +192,7 @@ intermediate CAs, if it is not present, a CA may have an infinite number of inte
 So for example, if you want two levels of intermediate CAs, , you'd need the following ``pathlen``
 values (the ``pathlen`` value is the minimum value, it could always be a larger number):
 
-===== ==================== ========== ========================================================
+===== ==================== =========== ========================================================
 index CA                   ``pathlen`` description
 ===== ==================== =========== ========================================================
 1     example.com          2           Your root CA.
