@@ -24,17 +24,24 @@ from tabulate import tabulate
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 
 import common
 
 common.setup_django()
 
 # pylint: disable=import-error,wrong-import-position,wrong-import-order
+from django_ca.extensions import KeyUsage  # NOQA: E402
 from django_ca.utils import bytes_to_hex  # NOQA: E402
 from django_ca.utils import format_general_name  # NOQA: E402
 from django_ca.utils import format_name  # NOQA: E402
 
 # pylint: enable=import-error,wrong-import-position,wrong-import-order
+
+HASH_NAMES = {
+    hashes.SHA1: "SHA-1",
+    hashes.SHA256: "SHA-256",
+}
 
 parser = argparse.ArgumentParser(description="Update tables for ca_examples.rst in docs.")
 args = parser.parse_args()
@@ -267,9 +274,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
         'aki': [(name_header, 'Critical', 'Key identifier', 'Issuer', 'Serial')],
         'basicconstraints': [(name_header, 'Critical', 'CA', 'Path length')],
         'eku': [(name_header, 'Critical', 'Usages')],
-        'key_usage': [[name_header, 'Critical', 'digital_signature', 'content_commitment',
-                       'key_encipherment', 'data_encipherment', 'key_agreement', 'key_cert_sign',
-                       'crl_sign', 'encipher_only', 'decipher_only', ]],
+        'key_usage': [[name_header, 'Critical'] + sorted(KeyUsage.CRYPTOGRAPHY_MAPPING.keys())],
         'ian': [(name_header, 'Critical', 'Names')],
         'ski': [(name_header, 'Critical', 'Digest')],
         'certificatepolicies': [(name_header, 'Critical', 'Policies')],
@@ -295,8 +300,8 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
         with open(os.path.join(dirname, cert_filename), 'rb') as cert_stream:
             cert = x509.load_pem_x509_certificate(cert_stream.read(), backend=default_backend())
 
-        this_cert_values['subject'] = [format_name(cert.subject)]
-        this_cert_values['issuer'] = [format_name(cert.issuer)]
+        this_cert_values['subject'] = ["``%s``" % format_name(cert.subject)]
+        this_cert_values['issuer'] = ["``%s``" % format_name(cert.issuer)]
 
         for cert_ext in cert.extensions:
             value = cert_ext.value
@@ -375,7 +380,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                 key_usages = []
                 for key in cert_values['key_usage'][0][2:]:
                     try:
-                        key_usages.append('✓' if getattr(value, key) else '✗')
+                        key_usages.append('✓' if getattr(value, KeyUsage.CRYPTOGRAPHY_MAPPING[key]) else '✗')
                     except ValueError:
                         key_usages.append('✗')
 
@@ -481,7 +486,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
         'comodo_ev_user.pem': {
             'info': 'CRL in %s end user certificates' % certs['comodo_ev.pem']['name'],
             'last': '2019-04-21',
-            'name': '%s/user' % cas['comodo_ev.pem']['name'],
+            'name': '%s (user)' % cas['comodo_ev.pem']['name'],
             'url': 'http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl',
         },
         'digicert_ha_intermediate.crl': {
@@ -550,10 +555,10 @@ def update_crl_data():  # pylint: disable=too-many-locals
         # add data row
         this_crl_values['crl_data'] = (
             crl.next_update - crl.last_update,
-            crl.signature_hash_algorithm.name,
+            HASH_NAMES[type(crl.signature_hash_algorithm)],
         )
         this_crl_values['crl_issuer'] = (
-            format_name(crl.issuer),
+            "``%s``" % format_name(crl.issuer),
         )
 
         # add extension values
@@ -574,7 +579,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
                 )
             elif isinstance(value, x509.AuthorityKeyIdentifier):
                 crl_aci = optional(value.authority_cert_issuer,
-                                   lambda v: '* '.join([format_general_name(n) for n in v]), '✗')
+                                   lambda v: '* '.join(["``%s``" % format_general_name(n) for n in v]), '✗')
                 crl_acsn = optional(value.authority_cert_serial_number, fallback='✗')
 
                 this_crl_values['crl_aki'] = (bytes_to_hex(value.key_identifier), crl_aci, crl_acsn)
