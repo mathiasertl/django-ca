@@ -23,6 +23,9 @@ from enchant.tokenize import Filter
 from enchant.tokenize import URLFilter
 
 from django_ca import typehints
+from django_ca.extensions import KEY_TO_EXTENSION
+from django_ca.extensions import ExtendedKeyUsage
+from django_ca.extensions import KeyUsage
 
 
 class URIFilter(URLFilter):
@@ -30,11 +33,33 @@ class URIFilter(URLFilter):
 
 
 class MagicWordsFilter(Filter):
+    """Filter for a few magic words.
+
+    This filter adds a few product names and keywords, as well as known extension names and
+    KeyUsage/ExtendedKeyUsage values.
+
+    Note that filters are case sensitive, so adding keys here is also more restrictive then a wordlist and
+    ensures canonical spelling. Filters are also a bit more inclusive, e.g. ``manage.py`` is not a single word
+    in a wordlist but can be dropped here.
+    """
+
     words = {
-        "manage.py",
+        "Django",
+        "Djangos",
         "IPv4",
         "IPv6",
+        "django-ca",
+        "manage.py",
+        "uWSGI",
+        "NGINX",  # homepage consistently uses all caps
+        ".ini",
     }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.words |= KeyUsage.CRYPTOGRAPHY_MAPPING.keys()
+        self.words |= ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()
+        self.words |= {e.name for e in KEY_TO_EXTENSION.values()}
 
     def _skip(self, word):
         return word in self.words
