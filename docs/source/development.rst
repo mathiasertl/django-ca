@@ -18,12 +18,12 @@ You can set up a demo using ``dev.py init-demo``. First create a minimal
 
 And then simply run ``python dev.py init-demo`` from the root directory of your project.
 
-Development webserver via SSL
-=============================
+Development web server via SSL
+==============================
 
 .. highlight:: console
 
-To test a certificate in your webserver, first install stunnel, in Debian/Ubuntu simply do::
+To test a certificate in your web server, first install :command:`stunnel4`, in Debian/Ubuntu simply do::
 
    $ sudo apt update
    $ sudo apt install stunnel4
@@ -33,12 +33,12 @@ separate shells::
 
    $ stunnel4 .stunnel4.conf
 
-There is also a second config file using a revoked certificate. If you use it, browsers will display an
+There is also a second configuration file using a revoked certificate. If you use it, browsers will display an
 error::
 
    $ stunnel4  .stunnel4-revoked.conf
 
-You can now start your development webserver normally::
+You can now start your development web server normally::
 
    $ DJANGO_SETTINGS_MODULE=ca.demosettings python manage.py runserver
 
@@ -56,7 +56,7 @@ To run the test-suite, simply execute::
 
    $ python dev.py test --suite=tests_command_dump_crl
 
-To generate a coverate report::
+To generate a coverage report::
 
    $ python dev.py coverage
 
@@ -101,7 +101,7 @@ Convert a CRL to PEM to a file::
 
    $ openssl crl -inform der -in crl.der -outform pem -out crl.pem
 
-Verify a certificate using a CRL (requires CRL in pem format)::
+Verify a certificate using a CRL (requires CRL in PEM format)::
 
    $ openssl verify -CAfile cabundle.pem -crl_check -CRLfile crl.pem cert.pem
    cert.pem: OK
@@ -114,8 +114,8 @@ Verify CRL by automatically downloading the CRL::
 OCSP
 ====
 
-Get the OCSP responder URL from the certificate (openssl cannot get it from the
-cert like with `verify -crl_download`)::
+Get the OCSP responder URL from the certificate (:command:`openssl` cannot get it from the cert like with
+``verify -crl_download``)::
 
    $ openssl x509 -in cert.pem -noout -text | grep -i ocsp
    OCSP - URI:http://ca.example.com/django_ca/ocsp/4E9D186B93AB38FBB8FA36BE4AC28098A1AA2647/cert/
@@ -141,9 +141,7 @@ Convert a PEM formatted **private** key to DER::
 
    $ openssl rsa -in priv.pem -outform der -out priv.der
 
-Convert a p7c/pkcs7 file to PEM (Let's Encrypt CA Issuer field) (see also
-:manpage:`pkcs7(1SSL)` -
-`online <https://www.openssl.org/docs/manmaster/apps/pkcs7.html>`_)::
+Convert a PKCS#7 file to PEM (Let's Encrypt CA Issuer field) (see also :manpage:`pkcs7.1ssl`)::
 
    $ openssl pkcs7 -inform der -in letsencrypt.p7c -print_certs \
    >   -outform pem -out letsencrypt.pem
@@ -160,8 +158,8 @@ Standards
 * `RFC 7517: JSON Web Key (JWK) <https://tools.ietf.org/html/rfc7515>`_
 * `RFC 7638: JSON Web Key (JWK) Thumbprint <https://tools.ietf.org/html/rfc7638>`_
 
-Tipps and tricks
-================
+Tips and tricks
+===============
 
 Query LE::
 
@@ -178,14 +176,12 @@ Use local server::
    >    --server http://localhost:8000/django_ca/acme/directory/ \
    >    -d test.example.com
 
-Saving debug log to /home/mertl/git/mati/django-ca/.certbot/logs/letsencrypt.log
-
 
 base64url encoding
 ==================
 
-The ACME library does that with `josepy <https://pypi.org/project/josepy/>`_
-(which is **not** the similar/forked? "python-jose"):
+The ACME library does that with `josepy <https://pypi.org/project/josepy/>`_ (which is **not** the
+similar/forked? `python-jose <https://pypi.org/project/python-jose/>`_):
 
 .. code-block:: python3
 

@@ -17,14 +17,14 @@ Use docker-compose
 
 .. versionadded:: 1.15.0
 
-   The docker-compose.yml file was added in django-ca 1.15.0.
+   The :file:`docker-compose.yml` file was added in django-ca 1.15.0.
 
 If you just want to run **django-ca** in a quick and efficient way, using `docker-compose
-<https://docs.docker.com/compose/>`__ is the fastest and most efficient option. The stack uses nginx for
+<https://docs.docker.com/compose/>`__ is the fastest and most efficient option. The stack uses NGINX for
 serving static files, uWSGI as WSGI application server, PostgreSQL as a database and Redis as cache and
 message broker.
 
-You can fetch tagged versions or the current development version of ``docker-compose.yml`` `from GitHub
+You can fetch tagged versions or the current development version of :file:`docker-compose.yml` `from GitHub
 <https://github.com/mathiasertl/django-ca/>`_.
 
 The only environment variable you need to pass is ``DJANGO_CA_CA_DEFAULT_HOSTNAME`` (note the double "CA"
@@ -33,15 +33,15 @@ here!), configuring the domain where your CA should be available::
    DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com docker-compose up -d
 
 ... and visit http://ca.example.com/admin/ (assuming you set up your DNS correctly). If you want SSL for the
-admin interface (you probably should) you have to :ref:`configure nginx <docker-compose-nginx>`.
+admin interface (you probably should) you have to :ref:`configure NGINX <docker-compose-nginx>`.
 
 Initial setup
 =============
 
 All you need now is to create a user for the web interface as well as CAs to create certificates. You have to
 create the CAs in the *backend* service to be able to automatically generate CRLs and OCSP keys. You can pass
-``--path=ca/shared/`` when to make its private key available to the *frontend* (= the webserver) to be able to
-create keys for the intermediate CA using the web interface:
+``--path=ca/shared/`` when to make its private key available to the *frontend* (= the web server) to be able
+to create keys for the intermediate CA using the web interface:
 
 .. code-block:: console
 
@@ -80,12 +80,12 @@ database out of the box::
 
 .. _docker-compose-nginx:
 
-Configure nginx
+Configure NGINX
 ===============
 
-By default, nginx will only listen on HTTP, but a configuration for TLS is included for your convenience.
+By default, NGINX will only listen on HTTP, but a configuration for TLS is included for your convenience.
 
-All you need to do is enable port 443, tell nginx about public and private key, and finally set the
+All you need to do is enable port 443, tell NGINX about public and private key, and finally set the
 ``NGINX_TEMPLATE=tls`` environment variable. For this example, we retrieve TLS certificates from Let's Encrypt
 **before** we run docker-compose (so that port 443 is still open):
 
@@ -125,7 +125,7 @@ have your docker-compose file:
    $ certbot certonly --webroot -w /tmp/ca.example.com/acme/ -d ca.example.com --force-renewal \
    >     --deploy-hook "docker-compose --project-directory /home/user exec -T webserver ngin -s reload"
 
-Custom nginx configuration
+Custom NGINX configuration
 ==========================
 
 If the defaults above are not good enough, you can override ``/etc/nginx/conf.d/default.template`` as a custom
@@ -268,16 +268,16 @@ interface. To replace the simple default configuration for something else, you c
    docker run -v /etc/django-ca/:/etc/django-ca \
       -e DJANGO_CA_UWSGI_INI=/etc/django-ca/uwsgi.ini ...
 
-The docker container comes with different ini files, each located in ``/usr/src/django-ca/uwsgi/``:
+The docker container comes with different .ini files, each located in ``/usr/src/django-ca/uwsgi/``:
 
-============== ===============================================================================================
-config         Description
-============== ===============================================================================================
-standalone.ini **Default**. Serves plain HTTP on port 8000, including static files.
-               Suitable for basic setups.
-uwsgi.ini      Serves the uwsgi protocol supported by NGINX and Apache. Does not serve static files, has three
-               worker processes.
-============== ===============================================================================================
+====================== =======================================================================================
+configuration file     Description
+====================== =======================================================================================
+:file:`standalone.ini` **Default**. Serves plain HTTP on port 8000, including static files.  Suitable for
+                       basic setups.
+:file:`uwsgi.ini`      Serves the uWSGI protocol supported by NGINX and Apache. Does not serve static files,
+                       has three worker processes.
+====================== =======================================================================================
 
 You can also always pass additional parameters to uWSGI using the ``DJANGO_CA_UWSGI_PARAMS`` environment
 variable. For example, to start six worker processes, simply use::
@@ -288,20 +288,20 @@ variable. For example, to start six worker processes, simply use::
 Use NGINX or Apache
 -------------------
 
-In more professional setups, uWSGI will not serve HTTP directly, but a webserver like Apache or NGINX will
-be a proxy to uWSGI communicating via a dedicated protocol. Usually, the webserver serves static files
+In more professional setups, uWSGI will not serve HTTP directly, but a web server like Apache or NGINX will
+be a proxy to uWSGI communicating via a dedicated protocol. Usually, the web server serves static files
 directly and not via uWSGI.
 
-.. NOTE:: uWSGI supports a variety of webservers: https://uwsgi-docs.readthedocs.io/en/latest/WebServers.html
+.. NOTE:: uWSGI supports a variety of web servers: https://uwsgi-docs.readthedocs.io/en/latest/WebServers.html
 
 First, you need to create a directory that you can use as a `Docker volume
 <https://docs.docker.com/storage/volumes/>`_ that will contain the static files that are served by the
-webserver.  Note that the process in the container runs with uid/gid of 9000 by default::
+web server.  Note that the process in the container runs with UID/GID of 9000 by default::
 
    sudo mkdir /usr/share/django-ca
    sudo chown 9000:9000 /usr/share/django-ca
 
-Now configure your webserver appropriately, e.g. for NGINX:
+Now configure your web server appropriately, e.g. for NGINX:
 
 .. code-block:: nginx
 
@@ -320,7 +320,7 @@ Now configure your webserver appropriately, e.g. for NGINX:
 
 
 Now all that's left is to start the container with that volume and set ``DJANGO_CA_UWSGI_INI`` to a different
-ini file (note that this file is included in the container, see above)::
+.ini file (note that this file is included in the container, see above)::
 
    docker run \
       -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
@@ -328,7 +328,7 @@ ini file (note that this file is included in the container, see above)::
       -v /usr/share/django-ca:/usr/share/django-ca \
       django-ca
 
-Note that ``/usr/share/django-ca`` on the host will now contain the static files served by your webserver. If
+Note that ``/usr/share/django-ca`` on the host will now contain the static files served by your web server. If
 you configured NGINX on port 80, you can now visit e.g. http://localhost/admin/ for the admin interface.
 
 Database configuration
@@ -340,7 +340,7 @@ access. This also works for the variables using the ``_FILE`` suffix (e.g. for D
 
    docker run -e POSTGRES_PASSWORD=password123 ...
 
-Note that as described above, the default ``docker-compose.yml`` also supports these variables::
+Note that as described above, the default :file:`docker-compose.yml` also supports these variables::
 
    POSTGRES_PASSWORD=password123 ... docker-compose up
 
@@ -368,7 +368,7 @@ that ``/var/lib/django-ca/`` is writable by that user.
    ``/var/lib/django-ca/`` contains all sensitive data including CA private keys and login credentials to the
    admin interface. Make sure you protect this directory!
 
-Assuming you want to use uid 3000 and gid 3001, set up appropriate folders on the host::
+Assuming you want to use UID 3000 and GID 3001, set up appropriate folders on the host::
 
    mkdir /var/lib/django-ca/
    chown 3000:3001 /var/lib/django-ca/
@@ -377,7 +377,7 @@ Assuming you want to use uid 3000 and gid 3001, set up appropriate folders on th
 If you want to keep any existing data, you now must copy the data for ``/var/lib/django-ca/`` in the container
 to the one on the host.
 
-Now you can run the container with the different uid/gid::
+Now you can run the container with the different UID/GID::
 
    docker run \
       -p 8000:8000 --name=django-ca \

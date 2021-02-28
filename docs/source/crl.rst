@@ -22,11 +22,11 @@ Use default CRLs
 ****************
 
 If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` and setup the
-webserver under that URL, you do not have to do anything to provide CRLs.
+web server under that URL, you do not have to do anything to provide CRLs.
 
 **django-ca** provides the generic view :py:class:`~django_ca.views.CertificateRevocationListView`
 to provide CRLs via HTTP. Since CRLs are always signed directly by the CA, it is currently required that the
-private key of the CA is available to the webserver.
+private key of the CA is available to the web server.
 
 Override default hostname
 =========================
@@ -113,5 +113,5 @@ You can generate the CRL with the ``manage.py dump_crl`` command::
 CRLs expire after a certain time (default: one day, configure with ``--expires=SECS``), so you must
 periodically regenerate it, e.g. via a cron-job.
 
-How and where to host the file is entirely up to you. If you run a Django project with a webserver
+How and where to host the file is entirely up to you. If you run a Django project with a web server
 already, one possibility is to dump it to your ``MEDIA_ROOT`` directory.

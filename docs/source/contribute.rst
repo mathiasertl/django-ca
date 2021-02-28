@@ -32,12 +32,11 @@ in at least your local Python2 and Python3 environments::
 Write tests
 ***********
 
-Please write tests for any new functionality. If you provide a bugfix, write a
-test that tests the fix, which means that the test should fail on current
-master and pass on your pull request.
+Please write tests for any new functionality. If you provide a bug fix, write a test that tests the fix, which
+means that the test should fail on current master and pass on your pull request.
 
-If a function is also covered with doctests, please consider adding an example
-there as well, if it affects handling a parameter or something.
+If a function is also covered with :py:mod:`doctests <doctest>`, please consider adding an example there as
+well, if it affects handling a parameter or something.
 
 *************
 Code coverage
@@ -77,11 +76,10 @@ available::
    else:  # pragma: cryptography<2.7
       print('sorry, no precert poison!')
 
-Sometimes you have code to check for the availability of a feature, but there is
-no "else" branch in case the feature doesn't exist. In this case you want to
-*exclude* the code if the feature is not available, but want to mark it as *no
-branch* if the feature is availalable. For example, the ``source`` attribute was
-added to warning messages in Python 3.6::
+Sometimes you have code to check for the availability of a feature, but there is no "else" branch in case the
+feature doesn't exist. In this case you want to *exclude* the code if the feature is not available, but want
+to mark it as *no branch* if the feature is available. For example, the ``source`` attribute was added to
+warning messages in Python 3.6::
 
    if hasattr(msg, 'source'):  # pragma: no branch, pragma: only py>=3.6
       self.assertEqual(data.get('source'), msg.source)

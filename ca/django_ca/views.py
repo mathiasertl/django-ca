@@ -69,7 +69,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     # parameters for the CRL itself
     type = Encoding.DER
-    """Filetype for CRL."""
+    """Encoding for CRL."""
 
     scope = 'user'
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to

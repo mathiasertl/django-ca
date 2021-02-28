@@ -10,7 +10,7 @@ certificate authority.
 Index of commands
 *****************
 
-To manage certificate, use the following manage.py commands:
+To manage certificate, use the following :command:`manage.py` commands:
 
 ===================== ===============================================================
 Command               Description
@@ -25,7 +25,7 @@ sign_cert             Sign a certificate.
 view_cert             View a certificate.
 ===================== ===============================================================
 
-Like all *manage.py* subcommands, you can run ``manage.py <subcomand> -h`` to get a list of availabble
+Like all :command:`manage.py` subcommands, you can run ``manage.py <subcomand> -h`` to get a list of available
 parameters.
 
 .. _cli_sign_certs:
@@ -34,9 +34,9 @@ parameters.
 Signing certificates
 ********************
 
-Signing certificates is done using ``manage.py sign_cert``. The only requirements are that you provide either
-a full subject and/or one or more subjectAltNames. Obviously, you also need to create at least one certificate
-authority first (:doc:`documentation </cli/cas>`).
+Signing certificates is done using :command:`manage.py sign_cert`. The only requirements are that you provide
+either a full subject and/or one or more alternative names. Obviously, you also need to create at least one
+certificate authority first (:doc:`documentation </cli/cas>`).
 
 Like any good certificate authority, **django-ca** never handles private keys of signed certificates. Instead,
 you sign certificates from a Certificate Signing Request (CSR) that you generate from the private key. Using
@@ -76,11 +76,11 @@ simply passing it via the command line. For example, to use the **client** profi
 Please see :doc:`the documentation </profiles>` the documentation on what profiles are available and how you
 can update existing profiles and even add new ones.
 
-Subject and subjectAltName
-==========================
+Subject and alternative names
+=============================
 
-The Certificate's Subject (that is, it's CommonName) and the names given in the ``subjectAltName`` extension
-define where the certificate is valid.
+The Certificate's Subject (that is, it's CommonName) and the names given in the SubjectAlternativeName
+extension define where the certificate is valid.
 
 The CommonName is usually added to the ``subjectAltName`` extension as well and vice versa. This means that
 these two will give the same CommonName and ``subjectAltName``:
@@ -90,9 +90,9 @@ these two will give the same CommonName and ``subjectAltName``:
    $ python manage.py sign_cert --subject /C=AT/.../CN=example.com
    $ python manage.py sign_cert --alt example.com
 
-A given CommonName is only added as ``subjectAltName`` if it is a valid :ref:`name <names_on_cli>`. If you
-give multiple names via ``--alt`` but no CommonName, the first one will be used as CommonName. Names passed
-via ``alt`` are parsed as :ref:`names <names_on_cli>`, so you can also use e.g.:
+A given CommonName is only added to the SubjectAlternativeName extension if it is a valid :ref:`name
+<names_on_cli>`. If you give multiple names via ``--alt`` but no CommonName, the first one will be used as
+CommonName. Names passed via ``--alt`` are parsed as :ref:`names <names_on_cli>`, so you can also use e.g.:
 
 .. code-block:: console
 
@@ -116,15 +116,15 @@ define for what purposes are a certificate can be used can be configured on a pe
 The easiest way is to use profiles that define what extensions are added to any certificate. **django-ca**
 adds these predefined profiles:
 
-========== ==========================================================================================
-Name       Purpose
-========== ==========================================================================================
-client     Allows the certificate to be used on the client-side of a TLS connection.
-server     Allows the certificate to be used on the client- and server-side of a connections.
-enduser    Allows client authentication and code and email signing.
-webserver  Allows only the server-side of a TLS connection, it can't be used as a client certificate.
-ocsp       Allows the certificate to be used for signing OCSP responses.
-========== ==========================================================================================
+============== ==========================================================================================
+Name           Purpose
+============== ==========================================================================================
+``client``     Allows the certificate to be used on the client-side of a TLS connection.
+``server``     Allows the certificate to be used on the client- and server-side of a connections.
+``enduser``    Allows client authentication and code and email signing.
+``webserver``  Allows only the server-side of a TLS connection, it can't be used as a client certificate.
+``ocsp``       Allows the certificate to be used for signing OCSP responses.
+============== ==========================================================================================
 
 You can add and modify profiles using the :ref:`CA_PROFILES <settings-ca-profiles>` setting. The default
 profile is configured by the :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` setting.

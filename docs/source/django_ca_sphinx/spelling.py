@@ -39,7 +39,7 @@ class MagicWordsFilter(Filter):
     KeyUsage/ExtendedKeyUsage values.
 
     Note that filters are case sensitive, so adding keys here is also more restrictive then a wordlist and
-    ensures canonical spelling. Filters are also a bit more inclusive, e.g. ``manage.py`` is not a single word
+    ensures canonical spelling. Filters are also a bit more inclusive, e.g. ``django-ca`` is not a single word
     in a wordlist but can be dropped here.
     """
 
@@ -49,10 +49,11 @@ class MagicWordsFilter(Filter):
         "IPv4",
         "IPv6",
         "django-ca",
-        "manage.py",
         "uWSGI",
         "NGINX",  # homepage consistently uses all caps
         ".ini",
+        "base64url",
+        "OpenSSL",
     }
 
     def __init__(self, *args, **kwargs):

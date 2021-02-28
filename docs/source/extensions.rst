@@ -10,10 +10,10 @@ in the command line.
 .. _extension-key-usage:
 
 ********
-keyUsage
+KeyUsage
 ********
 
-The ``keyUsage`` extension defines the basic purpose of the certificate. It is defined in `RFC5280, section
+The KeyUsage extension defines the basic purpose of the certificate. It is defined in `RFC5280, section
 4.2.1.3 <https://tools.ietf.org/html/rfc5280#section-4.2.1.3>`_. The extension is usually defined as critical.
 
 ================= ==========================================================================================
@@ -32,29 +32,28 @@ nonRepudiation    OCSP responder
 
 Currently, the default profiles (see :ref:`CA_PROFILES <settings-ca-profiles>` setting) use these values:
 
-================= ====== ====== ========= ======= ====
-value             client server webserver enduser ocsp
-================= ====== ====== ========= ======= ====
-cRLSign           ✗      ✗      ✗         ✗       ✗
-dataEncipherment  ✗      ✗      ✗         ✓       ✗
-decipherOnly      ✗      ✗      ✗         ✗       ✗
-digitalSignature  ✓      ✓      ✓         ✓       ✓
-encipherOnly      ✗      ✗      ✗         ✗       ✗
-keyAgreement      ✗      ✓      ✓         ✗       ✗
-keyCertSign       ✗      ✗      ✗         ✗       ✗
-keyEncipherment   ✗      ✓      ✓         ✓       ✓
-nonRepudiation    ✗      ✗      ✗         ✗       ✓
-================= ====== ====== ========= ======= ====
+================= ========== ========== ============= =========== ========
+value             ``client`` ``server`` ``webserver`` ``enduser`` ``ocsp``
+================= ========== ========== ============= =========== ========
+cRLSign           ✗          ✗          ✗             ✗           ✗
+dataEncipherment  ✗          ✗          ✗             ✓           ✗
+decipherOnly      ✗          ✗          ✗             ✗           ✗
+digitalSignature  ✓          ✓          ✓             ✓           ✓
+encipherOnly      ✗          ✗          ✗             ✗           ✗
+keyAgreement      ✗          ✓          ✓             ✗           ✗
+keyCertSign       ✗          ✗          ✗             ✗           ✗
+keyEncipherment   ✗          ✓          ✓             ✓           ✓
+nonRepudiation    ✗          ✗          ✗             ✗           ✓
+================= ========== ========== ============= =========== ========
 
 .. _extension-extended-key-usage:
 
 ****************
-extendedKeyUsage
+ExtendedKeyUsage
 ****************
 
-The ``extendedKeyUsage`` extension refines the ``keyUsage`` extension and is defined in `RFC5280, section
-4.2.1.12 <https://tools.ietf.org/html/rfc5280#section-4.2.1.12>`_. The extension is usually not defined as
-critical.
+The ExtendedKeyUsage extension refines the KeyUsage extension and is defined in `RFC5280, section 4.2.1.12
+<https://tools.ietf.org/html/rfc5280#section-4.2.1.12>`_. The extension is usually not defined as critical.
 
 ================= ==========================================================================================
 Name              Used for
@@ -65,24 +64,24 @@ codeSigning       Code signing
 emailProtection   Email signing/encryption
 timeStamping
 OCSPSigning       Running an OCSP responder
-smartcardLogon    Required for user certificates on smartcards for PKINIT logon on Windows
-msKDC             Required for Domain Controller certificates to authorise them for PKINIT logon on Windows
+smartcardLogon    Required for user certificates on smart cards for PKINIT logon on Windows
+msKDC             Required for Domain Controller certificates to authorize them for PKINIT logon on Windows
 ================= ==========================================================================================
 
 Currently, the default profiles (see :ref:`CA_PROFILES <settings-ca-profiles>` setting) use these values:
 
-================= ====== ====== ========= ======= ====
-value             client server webserver enduser ocsp
-================= ====== ====== ========= ======= ====
-serverAuth        ✗      ✓      ✓         ✓       ✗
-clientAuth        ✓      ✓      ✗         ✓       ✗
-codeSigning       ✗      ✗      ✗         ✓       ✗
-emailProtection   ✗      ✗      ✗         ✗       ✗
-timeStamping      ✗      ✗      ✗         ✗       ✗
-OCSPSigning       ✗      ✗      ✗         ✗       ✓
-smartcardLogon    ✗      ✗      ✗         ✗       ✗
-msKDC             ✗      ✗      ✗         ✗       ✗
-================= ====== ====== ========= ======= ====
+================= ========== ========== ============= =========== ========
+value             ``client`` ``server`` ``webserver`` ``enduser`` ``ocsp``
+================= ========== ========== ============= =========== ========
+serverAuth        ✗          ✓          ✓             ✓           ✗
+clientAuth        ✓          ✓          ✗             ✓           ✗
+codeSigning       ✗          ✗          ✗             ✓           ✗
+emailProtection   ✗          ✗          ✗             ✗           ✗
+timeStamping      ✗          ✗          ✗             ✗           ✗
+OCSPSigning       ✗          ✗          ✗             ✗           ✓
+smartcardLogon    ✗          ✗          ✗             ✗           ✗
+msKDC             ✗          ✗          ✗             ✗           ✗
+================= ========== ========== ============= =========== ========
 
 .. _extension-tls-feature:
 

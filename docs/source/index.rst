@@ -9,7 +9,7 @@ Welcome to django-ca's documentation!
 **django-ca** is a tool to manage TLS certificate authorities and easily issue and revoke certificates. It is
 based `cryptography <https://cryptography.io/>`_ and `Django <https://www.djangoproject.com/>`_. It can be
 used as an app in an existing Django project or stand-alone with the basic project included. Everything can be
-managed via the command line via `manage.py` commands - so no webserver is needed, if you’re happy with the
+managed via the command line via `manage.py` commands - so no web server is needed, if you’re happy with the
 command-line.
 
 Features:

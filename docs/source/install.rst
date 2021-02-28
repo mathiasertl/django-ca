@@ -91,7 +91,7 @@ and add it to your ``INSTALLED_APPS`` (and if you don't use it already, ``django
    >     /C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=ca.example.com
 
 After that, **django-ca** should show up in your admin interface (see :doc:`web_interface`) and provide
-various ``manage.py`` commands (see :doc:`/cli/intro`).
+various :command:`manage.py` commands (see :doc:`/cli/intro`).
 
 .. _as-standalone:
 
@@ -107,7 +107,7 @@ You can also install **django-ca** as a stand-alone project, if you install it v
 
    If you don't want the private keys of your CAs on the same machine as the web interface, you can also host
    the web interface on a second server that accesses the same database (CA private keys are hosted on the
-   filesystem, not in the database). You obviously will not be able to sign certificates using the web
+   file system, not in the database). You obviously will not be able to sign certificates using the web
    interface, but you can still e.g. revoke certificates or run a :doc:`OCSP responder <ocsp>`.
 
 In the following code-snippet, you'll do all necessary steps to get a basic setup:
@@ -130,10 +130,10 @@ In the following code-snippet, you'll do all necessary steps to get a basic setu
    $ pip install -r requirements.txt
 
 In the above script, you have created a `virtualenv
-<http://docs.python-guide.org/en/latest/dev/virtualenvs/>`_, meaning that all libraries you install with ``pip
-install`` are installed in the virtualenv (and don't pollute your system). It also means that before you
-execute any ``manage.py`` commands, you'll have to activate your virtualenv, by doing, in the directory of the
-git checkout:
+<http://docs.python-guide.org/en/latest/dev/virtualenvs/>`_, meaning that all libraries you install with
+:command:`pip install` are installed in the virtualenv (and don't pollute your system). It also means that
+before you execute any :command:`manage.py` commands, you'll have to activate your virtualenv, by doing, in
+the directory of the git checkout:
 
 .. code-block:: console
 
@@ -180,8 +180,8 @@ examples. If you just want to get started, save (and adapt) this file to ``ca/ca
 Initialize the project
 ======================
 
-After you have configured **django-ca**, you need to initialize the project by running a few ``manage.py``
-commands:
+After you have configured **django-ca**, you need to initialize the project by running a few
+:command:`manage.py` commands:
 
 .. code-block:: console
 
@@ -199,11 +199,11 @@ run ``init_ca`` with the ``-h`` parameter for available arguments.
 
 .. _manage_py_shortcut:
 
-Create manage.py shortcut
-=========================
+Create ``manage.py`` shortcut
+=============================
 
-If you don't want to always chdir to the git checkout, activate the virtualenv and only then run
-``manage.py``, you might want to create a shortcut shell script somewhere in your ``PATH`` (e.g.
+If you don't want to always change the directory to the git checkout, activate the virtualenv and only then
+run :command:`manage.py`, you might want to create a shortcut shell script somewhere in your ``PATH`` (e.g.
 ``/usr/local/bin``):
 
 .. code-block:: bash
@@ -226,8 +226,8 @@ located in ``ca/ca/wsgi.py``. Django itself provides some info for using `Apache
 and nginx <http://uwsgi-docs.readthedocs.org/en/latest/tutorials/Django_and_nginx.html>`_, or any of the many
 other options available.
 
-Github user `Raoul Thill <https://github.com/rthill>`_ notes that you need some special configuration variable
-if you use Apache together with mod_wsgi (see `here
+GitHub user `Raoul Thill <https://github.com/rthill>`_ notes that you need some special configuration variable
+if you use Apache together with ``mod_wsgi`` (see `here
 <https://github.com/mathiasertl/django-ca/issues/12#issuecomment-247282915>`_)::
 
         WSGIDaemonProcess django_ca processes=1 threads=5 \
@@ -307,11 +307,11 @@ Now all you have to do is to run Celery:
 
    $ celery worker -A ca -B -s /var/lib/django-ca/celerybeat-schedule
 
-****************
-Regular cronjobs
-****************
+*****************
+Regular cron jobs
+*****************
 
-Some ``manage.py`` commands are intended to be run as cronjobs::
+Some :command:`manage.py` commands are intended to be run as cron jobs::
 
    # assuming you cloned the repo at /root/:
    HOME=/root/django-ca

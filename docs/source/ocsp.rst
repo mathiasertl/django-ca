@@ -12,9 +12,10 @@ Configure OCSP with django-ca
 *****************************
 
 If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` and setup the
-webserver under that URL, you do not have to configure anything to run an OCSP responder.
+web server under that URL, you do not have to configure anything to run an OCSP responder.
 
-To run the responder you only need to create OCSP responder keys/certificates using a manage.py command:
+To run the responder you only need to create OCSP responder keys/certificates using a :command:`manage.py`
+command:
 
 .. code-block:: console
 
@@ -68,11 +69,11 @@ properties. Luckily, **django-ca** has a profile predefined for you:
 Configure generic views
 =======================
 
-The final step in configuring an OCSP responder for the CA is configuring the HTTP endpoint. If
-you've installed django-ca as a full project or include ``django_ca.urls`` in your root URL config,
-configure the ``CA_OCSP_URLS`` setting. It's a dictionary configuring instances of
-:py:class:`~django_ca.views.OCSPView`. Keys become part of the URL pattern, the value is a
-dictionary for the arguments of the view. For example::
+The final step in configuring an OCSP responder for the CA is configuring the HTTP endpoint. If you've
+installed django-ca as a full project or include ``django_ca.urls`` in your root URL configuration, configure
+the ``CA_OCSP_URLS`` setting. It's a dictionary configuring instances of
+:py:class:`~django_ca.views.OCSPView`. Keys become part of the URL pattern, the value is a dictionary for the
+arguments of the view. For example::
 
    CA_OCSP_URLS = {
        'root-ca': {
@@ -130,8 +131,8 @@ Run an OCSP responder with ``openssl ocsp``
 
 .. WARNING::
 
-   The OCSP responder provided by :manpage:`openssl-ocsp(1SSL)` is not a full OCSP responder. The manpage
-   states explicitly states:
+   The OCSP responder provided by :manpage:`openssl-ocsp(1SSL)` is not a full OCSP responder. The man page
+   states explicitly:
 
        The OCSP server is only useful for test and demonstration purposes: it is not really usable as a full OCSP responder. It contains only
        a very simple HTTP request handling and can only handle the POST form of OCSP queries. It also handles requests serially meaning it
@@ -142,7 +143,7 @@ Run an OCSP responder with ``openssl ocsp``
 
 
 OpenSSL ships with the ``openssl ocsp`` command that allows you to run an OCSP
-responder, but note that the manpage says **"only useful for test and
+responder, but note that the man page says **"only useful for test and
 demonstration purposes"**.
 
 To use the command, generate an index:

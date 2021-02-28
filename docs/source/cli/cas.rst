@@ -10,30 +10,30 @@ obviously most important that the private keys are never exposed to any attacker
 pose an unnecessary risk. Some details, like the x509 extensions used for signing certificates, can be
 configured using the web interface.
 
-For the same reason, the private key of a certificate authority is stored on the filesystem and not
-in the database. The initial location of the private key is configured by the :ref:`CA_DIR setting
-<settings-ca-dir>`. This also means that you can run your **django-ca** on two hosts, where one
-host has the private key and only uses the command line, and one with the webinterface that can
-still be used to revoke certificates.
+For the same reason, the private key of a certificate authority is stored on the file system and not in the
+database. The initial location of the private key is configured by the :ref:`CA_DIR setting
+<settings-ca-dir>`. This also means that you can run your **django-ca** on two hosts, where one host has the
+private key and only uses the command line, and one with the web interface that can still be used to revoke
+certificates.
 
 *****************
 Index of commands
 *****************
 
-To manage certificate authorities, use the following `manage.py` commands:
+To manage certificate authorities, use the following :command:`manage.py` commands:
 
-========== ======================================================
-Command    Description
-========== ======================================================
-dump_ca    Write the CA certificate to a file.
-edit_ca    Edit a certificate authority.
-import_ca  Import an existing certificate authority.
-init_ca    Create a new certificate authority.
-list_cas   List all currently configured certificate authorities.
-view_ca    View details of a certificate authority.
-========== ======================================================
+============== ======================================================
+Command        Description
+============== ======================================================
+``dump_ca``    Write the CA certificate to a file.
+``edit_ca``    Edit a certificate authority.
+``import_ca``  Import an existing certificate authority.
+``init_ca``    Create a new certificate authority.
+``list_cas``   List all currently configured certificate authorities.
+``view_ca``    View details of a certificate authority.
+============== ======================================================
 
-Like all `manage.py` subcommands, you can run ``manage.py <subcomand> -h`` to get a list of availabble
+Like all :command:`manage.py` subcommands, you can run ``manage.py <subcomand> -h`` to get a list of available
 parameters.
 
 ***************
@@ -50,7 +50,7 @@ CRLs and/or run an OCSP responder?
 Hostname
 ========
 
-Running a CA with an OCSP responder or CRLs for certificate validation requires a webserver providing HTTP.
+Running a CA with an OCSP responder or CRLs for certificate validation requires a web server providing HTTP.
 Please configure :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` accordingly. You can always
 override that setting by passing manual URLs when creating a new CA.
 
@@ -102,7 +102,7 @@ OCSP responder
 
 The `Online Certificate Status Protocol <https://en.wikipedia.org/wiki/Online_Certificate_Status_Protocol>`_
 or OCSP is a service (called "OCSP responder") run by a certificate authority that allows clients to query for
-revoked certificates. It is an improvement over CRLs particulary for larger CAs because a full CRL can grow
+revoked certificates. It is an improvement over CRLs particularly for larger CAs because a full CRL can grow
 quite big.
 
 The same restrictions as for CRLs apply: You cannot add a OCSP URL to a root CA, it runs via HTTP (not HTTPS)
@@ -152,7 +152,7 @@ obviously should never have a certificate (evil.net is good, though).
 Examples
 ========
 
-Here is a shell session that illustrates the respective manage.py commands:
+Here is a shell session that illustrates the respective :command:`manage.py` commands:
 
 .. code-block:: console
 
@@ -180,11 +180,10 @@ that still uniquely identifies the CA.
 Create intermediate CAs
 ***********************
 
-Intermediate CAs are created, just like normal CAs, using ``manage.py init_ca``. For intermediate
-CAs to be valid, CAs however must have a correct ``pathlen`` x509 extension. Its value is an
-integer describing how many levels of intermediate CAs a CA may have. A ``pathlen`` of "0" means
-that a CA cannot have any intermediate CAs, if it is not present, a CA may have an infinite number
-of intermediate CAs.
+Intermediate CAs are created, just like normal CAs, using :command:`manage.py init_ca`. For intermediate CAs
+to be valid, CAs however must have a correct ``pathlen`` x509 extension. Its value is an integer describing
+how many levels of intermediate CAs a CA may have. A ``pathlen`` of "0" means that a CA cannot have any
+intermediate CAs, if it is not present, a CA may have an infinite number of intermediate CAs.
 
 .. NOTE:: **django-ca** by default sets a ``pathlen`` of "0", as it aims to be secure by default.
    The ``pathlen`` attribute cannot be changed in hindsight (not without resigning the CA). If you
@@ -193,14 +192,14 @@ of intermediate CAs.
 So for example, if you want two levels of intermediate CAs, , you'd need the following ``pathlen``
 values (the ``pathlen`` value is the minimum value, it could always be a larger number):
 
-===== ==================== ======= ========================================================
-index CA                   pathlen description
-===== ==================== ======= ========================================================
-1     example.com          2       Your root CA.
-2     sub1.example.com     1       Your first intermediate CA, a sub-CA from (1).
-3     sub2.example.com     0       A second intermediate CA, also a sub-CA from (1).
-4     sub.sub1.example.com 0       An intermediate CA of (2).
-===== ==================== ======= ========================================================
+===== ==================== ========== ========================================================
+index CA                   ``pathlen`` description
+===== ==================== =========== ========================================================
+1     example.com          2           Your root CA.
+2     sub1.example.com     1           Your first intermediate CA, a sub-CA from (1).
+3     sub2.example.com     0           A second intermediate CA, also a sub-CA from (1).
+4     sub.sub1.example.com 0           An intermediate CA of (2).
+===== ==================== =========== ========================================================
 
 If in the above example, CA (1) had ``pathlen`` of "1" or CA (2) had a ``pathlen`` of "0", CA (4)
 would no longer be a valid CA.
