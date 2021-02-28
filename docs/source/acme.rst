@@ -71,7 +71,7 @@ The following things are known to not yet work:
 Usage
 *****
 
-Yoou can retrieve a certificate via ACMEv2 by telling your client to use our CA. For example, if you have your
+You can retrieve a certificate via ACMEv2 by telling your client to use our CA. For example, if you have your
 CA at ``https://ca.example.com``, you can get a certificate with certbot like this:
 
 .. code-block:: console
@@ -131,7 +131,7 @@ CA_ACME_MAX_CERT_VALIDITY
 CA_ACME_DEFAULT_CERT_VALIDITY
    Default: ``90``
 
-   Default time in days that certificate via ACMEv2 can be valid. Can also be set to a timedelta object.
+   Default time in days that certificate via ACMEv2 can be valid. Can also be set to a ``timedelta`` object.
 
 CA_ACME_ACCOUNT_REQUIRES_CONTACT
    Default: ``True``

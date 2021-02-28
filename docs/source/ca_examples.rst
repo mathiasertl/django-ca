@@ -6,8 +6,7 @@ This page documents the x509 extensions (e.g. for CRLs, etc.) set by other CAs. 
 here is used by **django-ca** to initialize and sign certificate authorities and certificates.
 
 Helpful descriptions of the meaning of various extensions can also be found in
-:manpage:`x509v3_config(5SSL)` (`online
-<https://www.openssl.org/docs/manmaster/apps/x509v3_config.html>`_).
+:manpage:`x509v3_config(5SSL)` (`online <https://www.openssl.org/docs/manmaster/apps/x509v3_config.html>`_).
 
 *******
 Subject
@@ -42,7 +41,7 @@ In signed certificates
 
 
 *******************
-authorityInfoAccess
+AuthorityInfoAccess
 *******************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.2.1
@@ -53,7 +52,7 @@ and has a ``Content-Type: application/x-x509-ca-cert`` header (except where note
 In CA certificates
 ==================
 
-Let's Encrypt is notable here because its CA Issuers field points to a pkcs7 file and the HTTP
+Let's Encrypt is notable here because its CA Issuers field points to a PKCS#7 file and the HTTP
 response returns a ``Content-Type: application/x-pkcs7-mime`` header.
 
 The certificate pointed to by the CA Issuers field is the root certificate (so the Comodo DV CA
@@ -91,7 +90,7 @@ Name            SubjectKeyIdentifier AuthorityKeyIdentifier
 =============== ==================== ======================
 Root CA         foo                  foo
 Intermediate CA bar                  foo
-Client Cert     bla                  bar
+Client Cert     foobar               bar
 =============== ==================== ======================
 
 In CA certificates
@@ -108,12 +107,12 @@ In signed certificates
 .. include:: generated/cert_aki.rst
 
 ****************
-basicConstraints
+BasicConstraints
 ****************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.9
 
-The ``basicConstraints`` extension specifies if the certificate can be used as a certificate authority. It is
+The BasicConstraints extension specifies if the certificate can be used as a certificate authority. It is
 always marked as critical. The ``pathlen`` attribute specifies the levels of possible intermediate CAs. If not
 present, the level of intermediate CAs is unlimited, a ``pathlen:0`` means that the CA itself can not issue
 certificates with ``CA:TRUE`` itself.
@@ -135,7 +134,7 @@ Notable here that some end-user certificates do not mark this extension as criti
 .. _ca-example-certificatePolicies:
 
 *******************
-certificatePolicies
+CertificatePolicies
 *******************
 
 In CA certificates
@@ -152,13 +151,13 @@ In signed certificates
 .. _ca-example-crlDistributionPoints:
 
 *********************
-crlDistributionPoints
+CRLDistributionPoints
 *********************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.13
 
 In theory a complex multi-valued extension, this extension usually just holds a URI pointing to a
-Certificate Revokation List (CRL).
+Certificate Revocation List (CRL).
 
 Root certificate authorities (StartSSL, GeoTrust Global, GlobalSign) do not set this field. This
 usually isn't a problem since clients have a list of trusted root certificates anyway, and browsers
@@ -176,9 +175,9 @@ In CA certificates
 In signed certificates
 ======================
 
-Let's Encrypt is so far the only CA that does not maintain a CRL for signed certificates. Major CAs
-usually don't fancy CRLs much because they are a large file (e.g. Comodos CRL is 1.5MB) containing
-all certificates and cause major traffic for CAs. OCSP is just better in every way.
+Let's Encrypt is so far the only CA that does not maintain a CRL for signed certificates. Major CAs usually
+don't fancy CRLs much because they are a large file (e.g. the CRL from Comodo is 1.5MB) containing all
+certificates and cause major traffic for CAs. OCSP is just better in every way.
 
 .. include:: generated/cert_crldp.rst
 
@@ -239,7 +238,7 @@ In signed certificates
 .. _nameConstraints:
 
 ***************
-nameConstraints
+NameConstraints
 ***************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.10
@@ -372,10 +371,10 @@ Issuer
 
 .. include:: generated/crl_issuer.rst
 
-authorityKeyIdentifier
+AuthorityKeyIdentifier
 ======================
 
-The value of this extension matches the subjectKeyIdentifier of the CA that signed the CRL.
+The value of this extension matches the SubjectKeyIdentifier of the CA that signed the CRL.
 
 .. seealso:: https://tools.ietf.org/html/rfc5280.html#section-5.2.1
 

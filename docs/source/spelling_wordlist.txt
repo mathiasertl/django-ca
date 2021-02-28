@@ -43,6 +43,8 @@ subdirectory
 submodule
 subtree
 subtrees
+themself
+Pre-Authorization
 unencrypted
 untrusted
 virtualenv

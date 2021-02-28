@@ -1,7 +1,7 @@
 =============================  ==================================================  ===============  =================  ===============  =================  =========  ==============
 CRL                            full name                                           relative name    only attr certs    only ca certs    only user certs    reasons    indirect CRL
 =============================  ==================================================  ===============  =================  ===============  =================  =========  ==============
-Comodo EV/user
+Comodo EV (user)
 DigiCert HA Intermediate/ca
 DigiCert HA Intermediate/user  URI:http://crl3.digicert.com/sha2-ha-server-g6.crl  ✗                ✗                  ✗                ✗                  ✗          ✗
 GlobalSign R2/ca

@@ -1,7 +1,7 @@
 =============================  ========
 CRL                            number
 =============================  ========
-Comodo EV/user                 2631
+Comodo EV (user)               2631
 DigiCert HA Intermediate/ca    449
 DigiCert HA Intermediate/user  537
 GlobalSign R2/ca               31

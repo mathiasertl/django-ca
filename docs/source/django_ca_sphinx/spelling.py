@@ -49,6 +49,8 @@ class MagicWordsFilter(Filter):
         "Comodo",
         "IdenTrust",
         "cRLNumber",
+        "caIssuers",
+        "Pre-Authorization",  # term from ACME, don't remove "-" here
         "Django",
         "Djangos",
         "IPv4",
