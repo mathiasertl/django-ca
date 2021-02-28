@@ -45,7 +45,7 @@ certificate authorities. The setup involves:
 
 .. _create-ocsp-cert:
 
-Create an OCSP responser certificate
+Create an OCSP responder certificate
 ====================================
 
 To run an OCSP responder, you first need a certificate with some special
@@ -121,7 +121,7 @@ certificates, obviously), either set it in the admin interface or via the comman
    >     34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F
 
 *******************************************
-Run an OCSP responser with ``openssl ocsp``
+Run an OCSP responder with ``openssl ocsp``
 *******************************************
 
 .. deprecated:: 1.18.0
@@ -142,7 +142,7 @@ Run an OCSP responser with ``openssl ocsp``
 
 
 OpenSSL ships with the ``openssl ocsp`` command that allows you to run an OCSP
-responser, but note that the manpage says **"only useful for test and
+responder, but note that the manpage says **"only useful for test and
 demonstration purposes"**.
 
 To use the command, generate an index:

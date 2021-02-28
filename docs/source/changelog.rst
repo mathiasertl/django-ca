@@ -156,8 +156,8 @@ Deprecation notices
 * The Django project included in this git repository will stop loading ``localsetttings.py`` files in
   ``django-ca>=1.18.0``.
 * The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the
-  old format will be removed in ``django-ca==1.17.0``. Please see the :ref:`migration instructions
-  <profiles-pre-114-migration>` for what to change.
+  old format will be removed in ``django-ca==1.17.0``. Please see previous versions for migrations
+  instructions.
 
 .. _changelog-1.15.0:
 
@@ -237,8 +237,8 @@ Deprecation notices
   <changelog-1.14.0>` and will be removed in ``django-ca==1.16.0``. Use
   :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
 * The format for the ``CA_PROFILES`` setting has changed in :ref:`1.14.0 <changelog-1.14.0>`. Support for the
-  old format will be removed in ``django-ca==1.17.0``. Please see the :ref:`migration instructions
-  <profiles-pre-114-migration>` for what to change.
+  old format will be removed in ``django-ca==1.17.0``. Please see previous versions for migration
+  instructions.
 
 .. _changelog-1.14.0:
 
@@ -249,8 +249,7 @@ Deprecation notices
 * ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
 * Minor changes to make the release compatible with Django 3.0a1.
 * Introduce a new, more flexible format for the The format of the :ref:`CA_PROFILES <settings-ca-profiles>`
-  setting. The new :doc:`/profiles` page provides more information and :ref:`migration instructions
-  <profiles-pre-114-migration>`.
+  setting. The new :doc:`/profiles` page provides more information.
 * New dependency: `six <https://pypi.org/project/six/>`_, since Django 3.0 no longer includes it.
 * New dependency: `asn1crypto <https://pypi.org/project/asn1crypto/>`_, since cryptography no longer depends
   on it.
@@ -295,8 +294,8 @@ Deprecation notices
   ``django-ca==1.16``.
 * ``get_cert_profile_kwargs()`` was only used by ``Certificate.objects.init()`` and will  thus also be removed
   in ``django-ca==1.16``.
-* The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``. Please see
-  :ref:`profiles-pre-114-migration` for migration instructions.
+* The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``. Please see previous versions
+  for migration instructions.
 
 .. _changelog-1.13.0:
 
