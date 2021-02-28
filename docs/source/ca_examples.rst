@@ -76,7 +76,7 @@ The CA Issuers field sometimes points to the signing certificate (e.g. StartSSL)
 .. _authorityKeyIdentifier:
 
 **********************
-authorityKeyIdentifier
+AuthorityKeyIdentifier
 **********************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.1
@@ -87,7 +87,7 @@ on the issuer name and serial number, but in the wild, all certificates referenc
 below) will reference themself, while signed certificates reference the signed CA, e.g.:
 
 =============== ==================== ======================
-Name            subjectKeyIdentifier authorityKeyIdentifier
+Name            SubjectKeyIdentifier AuthorityKeyIdentifier
 =============== ==================== ======================
 Root CA         foo                  foo
 Intermediate CA bar                  foo
@@ -183,7 +183,7 @@ all certificates and cause major traffic for CAs. OCSP is just better in every w
 .. include:: generated/cert_crldp.rst
 
 ****************
-extendedKeyUsage
+ExtendedKeyUsage
 ****************
 
 A list of purposes for which the certificate can be used for. CA certificates usually do not set
@@ -199,9 +199,9 @@ In signed certificates
 
 .. include:: generated/cert_eku.rst
 
-*************
-issuerAltName
-*************
+*********************
+IssuerAlternativeName
+*********************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.7
 
@@ -218,7 +218,7 @@ In signed certificates
 .. include:: generated/cert_ian.rst
 
 ********
-keyUsage
+KeyUsage
 ********
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.3
@@ -283,12 +283,12 @@ In signed certificates
 
 .. _subjectAltName:
 
-**************
-subjectAltName
-**************
+**********************
+SubjectAlternativeName
+**********************
 
-The ``subjectAltName`` extension is not present in any CA certificate, and of course whatever the
-customer requests in signed certificates.
+The SubjectAlternativeName extension is not present in any CA certificate, and of course whatever the customer
+requests in signed certificates.
 
 In CA certificates
 ==================
@@ -311,16 +311,16 @@ GlobalSign DV    -
 .. _subjectKeyIdentifier:
 
 ********************
-subjectKeyIdentifier
+SubjectKeyIdentifier
 ********************
 
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.2
 
-The subjectKeyIdentifier extension provides a means of identifying certificates. It is a
+The SubjectKeyIdentifier extension provides a means of identifying certificates. It is a
 mandatory extension for CA certificates. Currently only RapidSSL does not set this for signed
 certificates.
 
-The value of the subjectKeyIdentifier extension reappears in the :ref:`authorityKeyIdentifier`
+The value of the SubjectKeyIdentifier extension reappears in the :ref:`authorityKeyIdentifier`
 extension.
 
 In CA certificates
@@ -387,7 +387,7 @@ cRLNumber
 
 .. include:: generated/crl_crlnumber.rst
 
-issuingDistributionPoint
+IssuingDistributionPoint
 ========================
 
 .. include:: generated/crl_idp.rst

@@ -44,6 +44,11 @@ class MagicWordsFilter(Filter):
     """
 
     words = {
+        "GoDaddy",
+        "TrustID",
+        "Comodo",
+        "IdenTrust",
+        "cRLNumber",
         "Django",
         "Djangos",
         "IPv4",
