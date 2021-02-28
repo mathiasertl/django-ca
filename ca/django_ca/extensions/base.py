@@ -33,6 +33,7 @@ from typing import List
 from typing import NoReturn
 from typing import Optional
 from typing import Set
+from typing import Tuple
 from typing import Type
 from typing import Union
 from typing import cast
@@ -178,12 +179,12 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     @property
     @abstractmethod
     def extension_type(self) -> ExtensionTypeTypeVar:
-        """cryptography.x509.ExtensionType: The ``ExtensionType`` instance of this extension.
+        """The ``ExtensionType`` instance of this extension.
 
         Implementing classes are expected to implement this function."""
 
-    def for_builder(self) -> Dict[str, Union[bool, ExtensionTypeTypeVar]]:
-        """Return kwargs suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
+    def for_builder(self) -> Tuple[ExtensionTypeTypeVar, bool]:
+        """Return a tuple suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
 
         Example::
 
@@ -301,7 +302,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
        This class is now an abstract base class.
 
     Some extensions, like :py:class:`~django_ca.extensions.OCSPNoCheck` or
-    :py:class`~django_ca.extensions.PrecertPoison` do not encode any information, but the presence of the
+    :py:class:`~django_ca.extensions.PrecertPoison` do not encode any information, but the presence of the
     extension itself carries meaning.
 
     Extensions using this base class will ignore any ``"value"`` key in their dict, only the ``"critical"``
@@ -753,7 +754,7 @@ class SignedCertificateTimestampsBase(
 ):
     """Base class for extensions containing signed certificate timestamps.
 
-    Subclasses of this extension cannot be instantiated by any custom value, only the matching subclass of
+    Derived classes cannot be instantiated by any custom value, only the matching subclass of
     :py:class:`~cg:cryptography.x509.ExtensionType` is supported. Unfortunately cryptography currently does
     not support creating instances of ``SignedCertificateTimestamp`` (see `issue #4820
     <https://github.com/pyca/cryptography/issues/4820>`_). This extension thus also has no way of
@@ -799,7 +800,7 @@ class SignedCertificateTimestampsBase(
         raise NotImplementedError
 
     def human_readable_timestamps(self) -> Iterator[SerializedSignedCertificateTimestamp]:
-        """Convert SCTs into a generator of serializable dicts."""
+        """Convert SCTs into a generator of serializable ``dict`` instances."""
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
                 entry_type = "Precertificate"

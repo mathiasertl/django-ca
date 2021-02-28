@@ -111,7 +111,7 @@ Deprecation notices
 * Fix OCSP, Issuer and CRL URLs for intermediate CAs that are not a *direct* child of a root CA.
 * Fix AuthorityKeyIdentifier in CRLs for intermediate CAs
   (`issue 65 <https://github.com/mathiasertl/django-ca/issues/65>`_).
-* Properly handle CommonNames which are not parseable as SubjectAlternativeName in admin interface
+* Properly handle CommonNames which are not parsable as SubjectAlternativeName in admin interface
   (`issue 62 <https://github.com/mathiasertl/django-ca/issues/62>`_).
 * Minor documentation updates (`issue 63 <https://github.com/mathiasertl/django-ca/issues/63>`_).
 * Fix error in ``manage.py notify_expiring_certs`` in non-timezone aware setups.

@@ -22,8 +22,8 @@ If you plan on using this project in standalone scripts, Django has
 :ref:`some hints <django:settings-without-django-settings-module>` to get you started. But note that you still
 have to configure all of the basic Django settings and there is virtually no functionality without a database.
 
-In some environments, e.g. where **django-ca** is exclusively used with commandline scripts, it might we worth
-it to use the default SQLite database backend.
+In some environments, e.g. where **django-ca** is exclusively used with command-line scripts, it might we
+worth it to use the default SQLite database backend.
 
 ***********************
 Certificate Authorities

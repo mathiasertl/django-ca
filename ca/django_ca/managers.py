@@ -106,8 +106,8 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an instance of that
             class.
         expires : datetime, optional
-            Datetime for when this certificate authority will expire, defaults to
-            :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
+            When this certificate authority will expire, defaults to :ref:`CA_DEFAULT_EXPIRES
+            <settings-ca-default-expires>`.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate, passed to
             :py:func:`~django_ca.utils.parse_hash_algorithm`. The default is the value of the
@@ -116,7 +116,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority.
         default_hostname : str, optional
-            Override the url configured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
+            Override the URLconfigured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
         pathlen : int, optional
             Value of the path length attribute for the :py:class:`~django_ca.extensions.BasicConstraints`

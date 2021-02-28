@@ -124,7 +124,7 @@ class Profile:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
         This function is the core function used to create x509 certificates. In it's simplest form, you only
-        need to pass a ca, a csr and a subject to get a valid certificate::
+        need to pass a ca, a CSR and a subject to get a valid certificate::
 
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, csr, subject='/CN=example.com')  # doctest: +ELLIPSIS

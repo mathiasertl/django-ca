@@ -365,7 +365,7 @@ class BasicConstraints(
         return val
 
     def parse_pathlen(self, value: Optional[Union[int, str]]) -> Optional[int]:
-        """Parse a pathlen from the given value (either an int, a str of an int or None)."""
+        """Parse `value` as path length (either an int, a str of an int or None)."""
         if value is not None:
             try:
                 return int(value)
@@ -1015,7 +1015,7 @@ class PrecertPoison(NullExtension[x509.PrecertPoison]):
 class PrecertificateSignedCertificateTimestamps(
     SignedCertificateTimestampsBase[x509.PrecertificateSignedCertificateTimestamps]
 ):
-    """Class representing signed certificate timestamps in a precertificate.
+    """Class representing signed certificate timestamps in a Precertificate.
 
     This extension is included in certificates sent to a certificate transparency log.
 

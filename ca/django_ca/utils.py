@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Central functions to load CA key and cert as PKey/X509 objects."""
+"""Reusable utility functions used throughout django-ca."""
 
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
@@ -75,7 +75,7 @@ NAME_RE = re.compile(r'(?:/+|\A)\s*(?P<field>[^\s]*?)\s*'
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)', flags=re.I)
 
-#: Regular expression matching hexlified certificate serials
+#: Regular expression matching certificate serials as hex
 SERIAL_RE = re.compile('^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$')
 
 SAN_NAME_MAPPINGS = {
@@ -127,7 +127,7 @@ except ImportError:  # pragma: no cover
     # pylint: disable=invalid-name,missing-function-docstring
     class classproperty:  # type: ignore
         """
-        Decorator that converts a method with a single cls argument into a property
+        Decorator that converts a method with a single `cls` argument into a property
         that can be accessed directly from the class.
         """
         def __init__(self, method=None):  # type: ignore
@@ -242,7 +242,7 @@ def format_general_name(name: x509.GeneralName) -> str:
 
 
 def is_power2(num: int) -> bool:
-    """Return True if num is a power of 2.
+    """Return True if `num` is a power of 2.
 
     >>> is_power2(4)
     True
@@ -898,23 +898,18 @@ def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.
 def get_cert_builder(
         expires: Optional[Union[datetime, timedelta]] = None, serial: Optional[int] = None
 ) -> x509.CertificateBuilder:
-    """Get a basic X509 cert builder object.
+    """Get a basic X.509 certificate builder object.
 
     Parameters
     ----------
 
     expires : datetime or timedelta, optional
-        When the certificate will expire. This may be a timedelta for an expiry relative to "now" or a
-        datetime for an absolute expiry date.  If not given, :ref:`CA_DEFAULT_EXPIRES
+        When the certificate will expire. This may be a ``timedelta`` for an expiry relative to "now" or a
+        ``datetime`` for an absolute expiry date.  If not given, :ref:`CA_DEFAULT_EXPIRES
         <settings-ca-file-storage>` will be used.
     serial : int, optional
         Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
         to generate such a value. By default, a value will be generated.
-
-    Returns
-    -------
-
-    x509.CertificateBuilder
     """
 
     now = datetime.utcnow().replace(second=0, microsecond=0)

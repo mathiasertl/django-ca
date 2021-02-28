@@ -378,7 +378,7 @@ class PolicyInformation:
     def get_policy_identifier(self) -> Optional[x509.ObjectIdentifier]:
         """Property for the policy identifier.
 
-        Note that you can set any parseable value, it will always be an object identifier::
+        Note that you can set any parsable value, it will always be an object identifier::
 
             >>> pi = PolicyInformation()
             >>> pi.policy_identifier = '1.2.3'
