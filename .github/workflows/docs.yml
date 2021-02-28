@@ -40,3 +40,6 @@ jobs:
 
       - name: Generate documentation
         run: make -C docs html-check
+
+      - name: Spelling
+        run: make -C docs spelling
