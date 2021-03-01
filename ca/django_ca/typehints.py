@@ -219,6 +219,7 @@ class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     pathlen: Optional[int]
 
 
+SerializedNullExtension = TypedDict("SerializedNullExtension", {"critical": bool})
 SerializedAuthorityInformationAccess = TypedDict(
     "SerializedAuthorityInformationAccess",
     {

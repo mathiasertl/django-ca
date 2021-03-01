@@ -58,6 +58,7 @@ from ..typehints import SerializedDistributionPoint
 from ..typehints import SerializedDistributionPoints
 from ..typehints import SerializedExtension
 from ..typehints import SerializedItem
+from ..typehints import SerializedNullExtension
 from ..typehints import SerializedSignedCertificateTimestamp
 from ..typehints import SerializedSortableItem
 from ..typehints import SerializedValue
@@ -351,10 +352,11 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:
         pass
 
-    def from_dict(self, value) -> None:
+    def from_dict(self, value: Any) -> None:
         pass
 
-    def serialize(self):
+    # type override: only class where value is not set
+    def serialize(self) -> SerializedNullExtension:  # type: ignore[override]
         return {"critical": self.critical}
 
     def serialize_value(self) -> None:
@@ -468,11 +470,13 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
         else:
             raise TypeError("Can only assign int/item or slice/iterable")
 
-    def from_dict(self, value) -> None:
+    def from_dict(self, value: Iterable[ParsableItem]) -> None:
         self.value = [self.parse_value(v) for v in value]
 
-    def from_extension(self, value) -> None:
-        self.value = [self.parse_value(v) for v in value]
+    def from_extension(self, value: ExtensionTypeTypeVar) -> None:
+        # mypy override: It's not currently possible to augment a bound TypeVar as implementing a Protocol.
+        # As such it's impossible to tell mypy that the ExtensionType will be one that implements __iter__.
+        self.value = [self.parse_value(v) for v in value]  # type: ignore[attr-defined]
 
     # Implement functions provided by list(). Class mentions that this provides the same methods.
 
