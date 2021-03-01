@@ -59,6 +59,7 @@ from ..typehints import SerializedDistributionPoints
 from ..typehints import SerializedExtension
 from ..typehints import SerializedItem
 from ..typehints import SerializedSignedCertificateTimestamp
+from ..typehints import SerializedSortableItem
 from ..typehints import SerializedValue
 from ..typehints import SignedCertificateTimestampsBaseTypeVar
 from ..typehints import UnrecognizedExtensionType
@@ -503,7 +504,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
 
 
 class OrderedSetExtension(
-    IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem, IterableItem]
+    IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedSortableItem, IterableItem]
 ):
     """Base class for extensions that contain a set of values.
 
@@ -532,7 +533,7 @@ class OrderedSetExtension(
     # & operator == intersection()
     def __and__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value & self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -545,20 +546,20 @@ class OrderedSetExtension(
     # &= operator == intersection_update()
     def __iand__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         self.value &= self.parse_iterable(other)
         return self
 
     # |= operator == update()
     def __ior__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         self.value |= self.parse_iterable(other)
         return self
 
     def __isub__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         self.value -= self.parse_iterable(other)
         return self
 
@@ -574,20 +575,21 @@ class OrderedSetExtension(
     # | operator == union()
     def __or__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value.union(self.parse_iterable(other))
         return self.__class__({"critical": self.critical, "value": value})
 
+    # - operator
     def __sub__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":  # - operator
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value - self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
     # ^ operator == symmetric_difference()
     def __xor__(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value ^ self.parse_iterable(other)
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -599,7 +601,7 @@ class OrderedSetExtension(
         # pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
         self.value = self.parse_iterable(value)
 
-    def serialize_value(self) -> List[SerializedItem]:
+    def serialize_value(self) -> List[SerializedSortableItem]:
         return list(sorted(self.serialize_item(v) for v in self.value))
 
     # Implement functions provided by set(). Class mentions that this provides the same methods.
@@ -610,14 +612,16 @@ class OrderedSetExtension(
     def clear(self) -> None:
         self.value.clear()
 
-    def copy(self) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    def copy(
+        self,
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value.copy()
         return self.__class__({"critical": self.critical, "value": value})
 
     # equivalent to & operator
     def difference(
         self, *others: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value.difference(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -630,7 +634,7 @@ class OrderedSetExtension(
     # equivalent to & operator
     def intersection(
         self, *others: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value.intersection(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 
@@ -655,7 +659,7 @@ class OrderedSetExtension(
     # equivalent to ^ operator
     def symmetric_difference(
         self, other: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         return self ^ other
 
     def symmetric_difference_update(self, other: Iterable[ParsableItem]) -> None:  # equivalent to ^= operator
@@ -663,7 +667,7 @@ class OrderedSetExtension(
 
     def union(
         self, *others: Iterable[ParsableItem]
-    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedItem, IterableItem]":
+    ) -> "OrderedSetExtension[ExtensionTypeTypeVar,ParsableItem, SerializedSortableItem, IterableItem]":
         value = self.value.union(*[self.parse_iterable(o) for o in others])
         return self.__class__({"critical": self.critical, "value": value})
 

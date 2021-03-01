@@ -23,6 +23,7 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Protocol
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
@@ -41,6 +42,14 @@ else:  # pragma: only py<3.8
 
     # pylint: enable=import-error
 # pylint: enable=useless-import-alias
+
+
+class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; just a protocol
+    """Protocol that specifies <, making something sortable."""
+
+    def __lt__(self, __other: Any) -> bool:
+        ...
+
 
 # GeneralNameList
 ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]
@@ -115,6 +124,9 @@ ParsableValue = TypeVar("ParsableValue")
 
 SerializedItem = TypeVar("SerializedItem")
 """TypeVar representing a serialized item for an iterable extension."""
+
+SerializedSortableItem = TypeVar("SerializedSortableItem", bound=SupportsLessThan)
+"""TypeVar representing a serialized item that can be sorted  (for OrderedSetExtension)."""
 
 SerializedValue = TypeVar("SerializedValue")
 """TypeVar representing a serialized value for an extension."""
