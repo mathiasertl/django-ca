@@ -122,8 +122,8 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
 
     key = ""  # must be overwritten by actual classes
 
-    default_critical: bool = False
-    default_value: ParsableValue = {}
+    default_critical: ClassVar[bool] = False
+    default_value: Any = {}
     name: ClassVar[str]
     oid: ClassVar[x509.ObjectIdentifier]
 
@@ -138,7 +138,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
             self.from_extension(value.value)
         elif isinstance(value, dict):  # e.g. from settings
             self.critical = value.get("critical", self.default_critical)
-            self.from_dict(value.get("value", self.default_value))
+            self.from_dict(value.get("value", cast(ParsableValue, self.default_value)))
 
             self._test_value()
         else:
