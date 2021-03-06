@@ -127,7 +127,9 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     name: ClassVar[str]
     oid: ClassVar[x509.ObjectIdentifier]
 
-    def __init__(self, value: Optional[Union[ExtensionType, ParsableExtension]] = None) -> None:
+    def __init__(
+        self, value: Optional[Union["x509.Extension[ExtensionTypeTypeVar]", ParsableExtension]] = None
+    ) -> None:
         if value is None:
             value = {}
 
