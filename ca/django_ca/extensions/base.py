@@ -123,7 +123,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     key = ""  # must be overwritten by actual classes
 
     default_critical: ClassVar[bool] = False
-    default_value: Any = {}
+    default_value: ClassVar[Any] = {}
     name: ClassVar[str]
     oid: ClassVar[x509.ObjectIdentifier]
 

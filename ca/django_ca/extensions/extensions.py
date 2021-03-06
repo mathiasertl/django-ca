@@ -706,7 +706,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.INHIBIT_ANY_POLICY
     skip_certs: int
 
-    default_value: int = 0
+    default_value: ClassVar[int] = 0
     default_critical = True
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
