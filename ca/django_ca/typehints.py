@@ -47,7 +47,7 @@ else:  # pragma: only py<3.8
 class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; just a protocol
     """Protocol that specifies <, making something sortable."""
 
-    def __lt__(self, __other: Any) -> bool:
+    def __lt__(self, __other: Any) -> bool:  # pragma: nocover
         ...
 
 
