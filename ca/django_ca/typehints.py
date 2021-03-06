@@ -18,10 +18,8 @@
 import sys
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Iterable
 from typing import List
-from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import TypeVar
@@ -83,13 +81,26 @@ SerializedDistributionPoints = TypedDict(
         "value": List[SerializedDistributionPoint],
     },
 )
-SerializedNoticeReference = Dict[str, Union[str, List[int]]]
-SerializedPolicyQualifier = Union[str, Dict[str, Union[str, SerializedNoticeReference]]]
-SerializedPolicyQualifiers = Optional[List[SerializedPolicyQualifier]]
+
+SerializedNoticeReference = TypedDict(
+    "SerializedNoticeReference", {"organization": str, "notice_numbers": List[int]}, total=False
+)
+SerializedUserNotice = TypedDict(
+    "SerializedUserNotice", {"explicit_text": str, "notice_reference": SerializedNoticeReference}, total=False
+)
+
+SerializedPolicyQualifier = Union[str, SerializedUserNotice]
+SerializedPolicyQualifiers = List[SerializedPolicyQualifier]
 
 # Looser variants of the above for incoming arguments
-LooseNoticeReference = Mapping[str, Union[str, Iterable[int]]]  # List->Iterable/Dict->Mapping
-LoosePolicyQualifier = Union[str, Mapping[str, Union[str, LooseNoticeReference]]]  # Dict->Mapping
+ParsableNoticeReference = TypedDict(
+    "ParsableNoticeReference", {"organization": str, "notice_numbers": Iterable[int]}
+)
+ParsableUserNotice = TypedDict(
+    "ParsableUserNotice",
+    {"notice_reference": Union[x509.NoticeReference, ParsableNoticeReference], "explicit_text": str},
+    total=False,
+)
 
 # Parsable arguments
 ParsableDistributionPoint = TypedDict(
@@ -102,11 +113,21 @@ ParsableDistributionPoint = TypedDict(
     },
     total=False,
 )
-ParsablePolicyQualifier = Union[str, x509.UserNotice, LoosePolicyQualifier]
+ParsablePolicyQualifier = Union[str, x509.UserNotice, ParsableUserNotice]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
-ParsablePolicyInformation = Dict[str, Union[ParsablePolicyQualifier, ParsablePolicyQualifier]]
+ParsablePolicyInformation = TypedDict(
+    "ParsablePolicyInformation",
+    {
+        "policy_identifier": ParsablePolicyIdentifier,
+        "policy_qualifiers": Iterable[ParsablePolicyQualifier],
+    },
+)
+
 PolicyQualifier = Union[str, x509.UserNotice]
-SerializedPolicyInformation = Dict[str, Union[str, SerializedPolicyQualifiers]]
+SerializedPolicyInformation = TypedDict(
+    "SerializedPolicyInformation",
+    {"policy_identifier": str, "policy_qualifiers": Optional[SerializedPolicyQualifiers]},
+)
 
 ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
@@ -127,7 +148,8 @@ ParsableExtension = TypedDict(
         # Value should be a generic typevar, but this is not yet supported in mypy:
         #   https://github.com/python/mypy/issues/3863
         "value": Any,
-    }, total=False
+    },
+    total=False,
 )
 ParsableItem = TypeVar("ParsableItem")
 ParsableValue = TypeVar("ParsableValue")

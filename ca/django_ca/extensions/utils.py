@@ -21,6 +21,7 @@ from typing import FrozenSet
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Union
 from typing import cast
 
@@ -38,6 +39,7 @@ from ..typehints import SerializedDistributionPoint
 from ..typehints import SerializedPolicyInformation
 from ..typehints import SerializedPolicyQualifier
 from ..typehints import SerializedPolicyQualifiers
+from ..typehints import SerializedUserNotice
 from ..utils import GeneralNameList
 from ..utils import format_relative_name
 from ..utils import x509_relative_name
@@ -76,9 +78,11 @@ class DistributionPoint:
     full_name: Optional[GeneralNameList] = None
     relative_name: Optional[x509.RelativeDistinguishedName] = None
     crl_issuer: Optional[GeneralNameList] = None
-    reasons: Optional[FrozenSet[x509.ReasonFlags]] = None
+    reasons: Optional[Set[x509.ReasonFlags]] = None
 
-    def __init__(self, data: Union[x509.DistributionPoint, ParsableDistributionPoint] = None) -> None:
+    def __init__(
+        self, data: Optional[Union[x509.DistributionPoint, ParsableDistributionPoint]] = None
+    ) -> None:
         if data is None:
             data = {}
 
@@ -86,7 +90,8 @@ class DistributionPoint:
             self.full_name = GeneralNameList(data.full_name)
             self.relative_name = data.relative_name
             self.crl_issuer = GeneralNameList(data.crl_issuer)
-            self.reasons = data.reasons
+            if data.reasons is not None:
+                self.reasons = set(data.reasons)
         elif isinstance(data, dict):
             self.full_name = GeneralNameList(data.get('full_name'))
             self.crl_issuer = GeneralNameList(data.get("crl_issuer"))
@@ -94,7 +99,7 @@ class DistributionPoint:
             if "relative_name" in data:
                 self.relative_name = x509_relative_name(data["relative_name"])
             if "reasons" in data:
-                self.reasons = frozenset([x509.ReasonFlags[r] for r in data["reasons"]])
+                self.reasons = {self._parse_reason(r) for r in data["reasons"]}
 
             if self.full_name and self.relative_name:
                 raise ValueError('full_name and relative_name cannot both have a value')
@@ -130,6 +135,11 @@ class DistributionPoint:
     def __str__(self) -> str:
         return repr(self)
 
+    def _parse_reason(self, reason: Union[str, x509.ReasonFlags]) -> x509.ReasonFlags:
+        if isinstance(reason, str):
+            return x509.ReasonFlags[reason]
+        return reason
+
     def as_text(self) -> str:
         """Show as text."""
         if self.full_name:
@@ -155,8 +165,9 @@ class DistributionPoint:
         if not crl_issuer:
             crl_issuer = None
 
+        reasons: Optional[FrozenSet[x509.ReasonFlags]] = frozenset(self.reasons) if self.reasons else None
         return x509.DistributionPoint(full_name=full_name, relative_name=self.relative_name,
-                                      crl_issuer=crl_issuer, reasons=self.reasons)
+                                      crl_issuer=crl_issuer, reasons=reasons)
 
     def serialize(self) -> SerializedDistributionPoint:
         """Serialize this distribution point."""
@@ -210,7 +221,7 @@ class PolicyInformation:
             self.policy_identifier = data.policy_identifier
             self.policy_qualifiers = data.policy_qualifiers
         elif isinstance(data, dict):
-            self.policy_identifier = cast(ParsablePolicyIdentifier, data['policy_identifier'])
+            self.policy_identifier = data['policy_identifier']
             self.policy_qualifiers = self.parse_policy_qualifiers(
                 cast(Iterable[ParsablePolicyQualifier], data.get('policy_qualifiers'))
             )
@@ -428,18 +439,19 @@ class PolicyInformation:
         if isinstance(qualifier, str):
             return qualifier
 
-        value = {}
+        value: SerializedUserNotice = {}
         if qualifier.explicit_text:
             value['explicit_text'] = qualifier.explicit_text
 
         if qualifier.notice_reference:
             value['notice_reference'] = {
                 'notice_numbers': qualifier.notice_reference.notice_numbers,
-                'organization': qualifier.notice_reference.organization,
             }
+            if qualifier.notice_reference.organization is not None:
+                value["notice_reference"]["organization"] = qualifier.notice_reference.organization
         return value
 
-    def serialize_policy_qualifiers(self) -> SerializedPolicyQualifiers:
+    def serialize_policy_qualifiers(self) -> Optional[SerializedPolicyQualifiers]:
         """Serialize policy qualifiers."""
         if self.policy_qualifiers is None:
             return None
@@ -448,11 +460,7 @@ class PolicyInformation:
 
     def serialize(self) -> SerializedPolicyInformation:
         """Serialize this policy information."""
-        value = {
-            'policy_identifier': self.policy_identifier.dotted_string,
+        return {
+            "policy_identifier": self.policy_identifier.dotted_string,
+            "policy_qualifiers": self.serialize_policy_qualifiers(),
         }
-        qualifiers = self.serialize_policy_qualifiers()
-        if qualifiers:
-            value['policy_qualifiers'] = qualifiers
-
-        return value
