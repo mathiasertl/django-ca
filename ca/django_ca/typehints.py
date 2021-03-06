@@ -119,6 +119,15 @@ SignedCertificateTimestampsBaseTypeVar = TypeVar(
     x509.PrecertificateSignedCertificateTimestamps,
 )
 
+ParsableExtension = TypedDict(
+    "ParsableExtension",
+    {
+        "critical": bool,
+        # Value should be a generic typevar, but this is not yet supported in mypy:
+        #   https://github.com/python/mypy/issues/3863
+        "value": Any,
+    }, total=False
+)
 ParsableItem = TypeVar("ParsableItem")
 ParsableValue = TypeVar("ParsableValue")
 
@@ -188,13 +197,6 @@ ParsableNameConstraints = TypedDict(
     {
         "permitted": ParsableGeneralNameList,
         "excluded": ParsableGeneralNameList,
-    },
-    total=False,
-)
-ParsableNullExtension = TypedDict(
-    "ParsableNullExtension",
-    {
-        "critical": bool,
     },
     total=False,
 )

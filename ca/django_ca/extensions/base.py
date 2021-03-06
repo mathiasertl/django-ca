@@ -24,7 +24,6 @@ from abc import abstractmethod
 from typing import Any
 from typing import ClassVar
 from typing import Collection
-from typing import Dict
 from typing import Generic
 from typing import Hashable
 from typing import Iterable
@@ -48,10 +47,10 @@ from ..typehints import ExtensionType
 from ..typehints import ExtensionTypeTypeVar
 from ..typehints import IterableItem
 from ..typehints import ParsableDistributionPoint
+from ..typehints import ParsableExtension
 from ..typehints import ParsableGeneralName
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableItem
-from ..typehints import ParsableNullExtension
 from ..typehints import ParsableSignedCertificateTimestamp
 from ..typehints import ParsableValue
 from ..typehints import SerializedDistributionPoint
@@ -128,7 +127,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     name: ClassVar[str]
     oid: ClassVar[x509.ObjectIdentifier]
 
-    def __init__(self, value: Optional[Union[ExtensionType, Dict[str, Any]]] = None) -> None:
+    def __init__(self, value: Optional[Union[ExtensionType, ParsableExtension]] = None) -> None:
         if value is None:
             value = {}
 
@@ -322,13 +321,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
 
     ext_class: ClassVar[Type[ExtensionTypeTypeVar]]
     name: ClassVar[str]
-
-    def __init__(self, value: Optional[Union[ExtensionTypeTypeVar, ParsableNullExtension]] = None) -> None:
-        self.value = {}
-        if not value:
-            self.critical = self.default_critical
-        else:
-            super().__init__(value)
+    value: ClassVar = None
 
     def __hash__(self) -> int:
         return hash((self.critical,))
