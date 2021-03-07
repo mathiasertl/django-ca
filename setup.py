@@ -60,9 +60,10 @@ import django_ca  # NOQA: E402, pylint: disable=wrong-import-position
 def find_package_data(path):
     """Find static package data for given path."""
     data = []
+    prefix = len(package_root) + 1
     for root, _dirs, files in os.walk(os.path.join(package_root, path)):
         for file in files:
-            data.append(os.path.join(root, file).lstrip(package_root))
+            data.append(os.path.join(root, file)[prefix:])
     return data
 
 
