@@ -71,6 +71,21 @@ class DistributionPointTestCase(TestCase):
         dpoint = DistributionPoint({'full_name': 'http://example.com'})
         self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
+    def test_reasons(self):
+        dpoint = DistributionPoint({
+            'full_name': 'http://example.com',
+            'crl_issuer': 'http://example.net',
+            "reasons": ["unspecified"],
+        })
+        self.assertEqual(dpoint.reasons, {x509.ReasonFlags.unspecified, })
+
+        dpoint = DistributionPoint({
+            'full_name': 'http://example.com',
+            'crl_issuer': 'http://example.net',
+            "reasons": [x509.ReasonFlags.unspecified],
+        })
+        self.assertEqual(dpoint.reasons, {x509.ReasonFlags.unspecified, })
+
 
 class PolicyInformationTestCase(DjangoCATestCase):
     """Test PolicyInformation class."""
