@@ -411,6 +411,7 @@ qualname_overrides = {
     'cryptography.x509.extensions.TLSFeature': 'cg:cryptography.x509.TLSFeature',
     'cryptography.x509.extensions.TLSFeatureType': 'cg:cryptography.x509.TLSFeatureType',
     'cryptography.x509.extensions.UserNotice': 'cg:cryptography.x509.UserNotice',
+    "cryptography.x509.extensions.NoticeReference": "cg:cryptography.x509.NoticeReference",
     'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
     'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
     'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
