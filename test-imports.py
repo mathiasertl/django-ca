@@ -20,6 +20,7 @@
 
 import argparse
 import os
+import sys
 
 import django
 from django.conf import settings
@@ -33,16 +34,50 @@ settings.configure(
     INSTALLED_APPS=[
         'django.contrib.auth',
         'django.contrib.contenttypes',
+        "django.contrib.admin",
         'django_ca',
     ],
     BASE_DIR=os.getcwd(),
+    TEMPLATES=[
+	{
+	    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+	    'DIRS': [],
+	    'APP_DIRS': True,
+	    'OPTIONS': {
+		'context_processors': [
+		    'django.template.context_processors.debug',
+		    'django.template.context_processors.request',
+		    'django.contrib.auth.context_processors.auth',
+		    'django.contrib.messages.context_processors.messages',
+		],
+	    },
+	},
+    ],
 )
 django.setup()
+
+from django.template.loader import TemplateDoesNotExist
+from django.template.loader import get_template
 
 from django_ca.extensions import Extension
 from django_ca.acme import constants
 from django_ca import models
 from django_ca import views
+
+# Test if (some) templates can be loaded
+for template in [
+    "admin/django_ca/certificate/add_form.html",
+    "admin/django_ca/certificate/change_form.html",
+    "admin/django_ca/certificate/revoke_form.html",
+    "django_ca/admin/extensions/base/base.html",
+    "django_ca/admin/submit_line.html",
+    "django_ca/forms/widgets/profile.html",
+]:
+    try:
+        get_template(template)
+    except TemplateDoesNotExist:
+        print(f"{template}: Could not load template.")
+        sys.exit(1)
 
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
 if args.extra == 'acme':
