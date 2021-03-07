@@ -34,6 +34,7 @@ settings.configure(
     INSTALLED_APPS=[
         'django.contrib.auth',
         'django.contrib.contenttypes',
+        "django.contrib.staticfiles",
         "django.contrib.admin",
         'django_ca',
     ],
@@ -56,6 +57,7 @@ settings.configure(
 )
 django.setup()
 
+from django.contrib.staticfiles import finders
 from django.template.loader import TemplateDoesNotExist
 from django.template.loader import get_template
 
@@ -77,6 +79,14 @@ for template in [
         get_template(template)
     except TemplateDoesNotExist:
         print(f"{template}: Could not load template.")
+        sys.exit(1)
+
+for static_file in [
+    "django_ca/admin/js/profilewidget.js",
+    "django_ca/admin/css/base.css",
+]:
+    if finders.find(static_file) is None:
+        print(f"{static_file}: Could not find static file.")
         sys.exit(1)
 
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
