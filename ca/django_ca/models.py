@@ -27,6 +27,8 @@ import random
 import re
 from datetime import datetime
 from datetime import timedelta
+from typing import List
+from typing import Optional
 
 import pytz
 
@@ -1074,7 +1076,7 @@ class CertificateAuthority(X509CertMixin):
         return ca_settings.CA_PASSWORDS.get(self.serial)
 
     @property
-    def pathlen(self):
+    def pathlen(self) -> Optional[int]:
         """The ``pathlen`` attribute of the ``BasicConstraints`` extension (either an ``int`` or ``None``)."""
 
         try:
@@ -1084,7 +1086,7 @@ class CertificateAuthority(X509CertMixin):
         return ext.value.path_length
 
     @property
-    def max_pathlen(self):
+    def max_pathlen(self) -> Optional[int]:
         """The maximum `pathlen` for any intermediate CAs signed by this CA.
 
         This value is either ``None``, if this and all parent CAs don't have a ``pathlen`` attribute, or an
@@ -1105,14 +1107,14 @@ class CertificateAuthority(X509CertMixin):
         return min(self.pathlen, max_parent - 1)
 
     @property
-    def allows_intermediate_ca(self):
+    def allows_intermediate_ca(self) -> bool:
         """Whether this CA allows creating intermediate CAs."""
 
         max_pathlen = self.max_pathlen
         return max_pathlen is None or max_pathlen > 0
 
     @property
-    def bundle(self):
+    def bundle(self) -> List["CertificateAuthority"]:
         """A list of any parent CAs, including this CA.
 
         The list is ordered so the Root CA will be the first.
@@ -1126,7 +1128,7 @@ class CertificateAuthority(X509CertMixin):
         return bundle
 
     @property
-    def root(self):
+    def root(self) -> "CertificateAuthority":
         """Get the root CA for this CA."""
 
         if self.parent is None:
@@ -1138,7 +1140,7 @@ class CertificateAuthority(X509CertMixin):
         return ca
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         """True if the CA is currently usable or not."""
         return self.enabled and self.valid_from < timezone.now() < self.expires
 
@@ -1146,7 +1148,7 @@ class CertificateAuthority(X509CertMixin):
         verbose_name = _("Certificate Authority")
         verbose_name_plural = _("Certificate Authorities")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -1175,18 +1177,18 @@ class Certificate(X509CertMixin):
     )
 
     @property
-    def bundle(self):
+    def bundle(self) -> List[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
         return [self] + self.ca.bundle
 
     @property
-    def root(self):
+    def root(self) -> CertificateAuthority:
         """Get the root CA for this certificate."""
 
         return self.ca.root
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.cn
 
 
@@ -1241,14 +1243,14 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
         verbose_name_plural = _("ACME Accounts")
         unique_together = (("ca", "thumbprint"),)
 
-    def __str__(self):
+    def __str__(self) -> str:
         try:
             return self.contact.split("\n")[0].split(":", 1)[1]
         except IndexError:
             return ""
 
     @property
-    def serial(self):
+    def serial(self) -> str:
         """Serial of the CA for this account."""
         return self.ca.serial
 
@@ -1356,7 +1358,7 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
         )
 
     @property
-    def serial(self):
+    def serial(self) -> str:
         """Serial of the CA for this order."""
         return self.account.serial
 
@@ -1420,21 +1422,21 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         verbose_name = _("ACME Authorization")
         verbose_name_plural = _("ACME Authorizations")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%s: %s" % (self.type, self.value)
 
     @property
-    def account(self):
+    def account(self) -> AcmeAccount:
         """Account that this authorization belongs to."""
         return self.order.account
 
     @property
-    def acme_url(self):
+    def acme_url(self) -> str:
         """Get the ACME URL path for this account authorization."""
         return reverse("django_ca:acme-authz", kwargs={"slug": self.slug, "serial": self.serial})
 
     @property
-    def expires(self):
+    def expires(self) -> datetime:
         """When this authorization expires."""
         return self.order.expires  # so far there is no reason to have a different value here
 
@@ -1455,12 +1457,12 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         raise ValueError("Unknown identifier type: %s" % self.type)
 
     @property
-    def serial(self):
+    def serial(self) -> str:
         """Serial of the CA for this authorization."""
         return self.order.serial
 
     @property
-    def subject_alternative_name(self):
+    def subject_alternative_name(self) -> str:
         """Get the domain for this challenge as prefixed SubjectAlternativeName.
 
         This method is intended to be used when creating the
@@ -1468,7 +1470,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         """
         return "%s:%s" % (self.type, self.value)
 
-    def get_challenges(self):
+    def get_challenges(self) -> List["AcmeChallenge"]:
         """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
 
         Note that challenges will be created if they don't exist.
@@ -1480,7 +1482,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         ]
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         """Boolean defining if an authentication can still can be used in order validation.
 
         An order is usable if it is in the "pending" or "invalid" status, the order is usable. An
@@ -1540,11 +1542,11 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         verbose_name = _("ACME Challenge")
         verbose_name_plural = _("ACME Challenges")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%s (%s)" % (self.auth.value, self.type)
 
     @property
-    def acme_url(self):
+    def acme_url(self) -> str:
         """Get the ACME URL path for this challenge."""
         return reverse("django_ca:acme-challenge", kwargs={"slug": self.slug, "serial": self.serial})
 
@@ -1572,7 +1574,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         raise ValueError("%s: Unsupported challenge type." % self.type)
 
     @property
-    def acme_validated(self):
+    def acme_validated(self) -> Optional[datetime]:
         """Timestamp when this challenge was validated.
 
         This property is a wrapper around the `validated` field. It always returns `None` if the challenge is
@@ -1608,12 +1610,12 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         )
 
     @property
-    def serial(self):
+    def serial(self) -> str:
         """Serial of the CA for this challenge."""
         return self.auth.serial
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         """Boolean defining if an challenge is "usable", meaning it still can be used in order validation.
 
         A challenge is usable if it is in the "pending" or "invalid status and the authorization is usable.
@@ -1637,11 +1639,11 @@ class AcmeCertificate(DjangoCAModelMixin, models.Model):
         verbose_name_plural = _("ACME Certificate")
 
     @property
-    def acme_url(self):
+    def acme_url(self) -> str:
         """Get the ACME URL path for this certificate."""
         return reverse("django_ca:acme-cert", kwargs={"slug": self.slug, "serial": self.order.serial})
 
-    def parse_csr(self):
+    def parse_csr(self) -> x509.CertificateSigningRequest:
         """Load the CSR into a cryptography object.
 
         Returns
@@ -1653,7 +1655,7 @@ class AcmeCertificate(DjangoCAModelMixin, models.Model):
         return x509.load_pem_x509_csr(self.csr.encode(), default_backend())
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         """Boolean defining if this instance is "usable", meaning we can use it to issue a certificate.
 
         An ACME certificate is considered usable if no actual certificate has yet been issued, the order is
