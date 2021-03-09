@@ -19,7 +19,6 @@
 import base64
 import binascii
 import hashlib
-import importlib
 import itertools
 import json
 import logging
@@ -27,6 +26,7 @@ import random
 import re
 from datetime import datetime
 from datetime import timedelta
+from typing import Iterable
 from typing import List
 from typing import Optional
 
@@ -49,6 +49,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import URLValidator
 from django.db import models
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -115,6 +116,14 @@ from .utils import read_file
 from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
+
+
+try:
+    # Optional ACME imports
+    from acme import challenges
+    from acme import messages
+except ImportError:
+    challenges = messages = None
 
 
 def acme_slug():
@@ -1254,7 +1263,7 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
         """Serial of the CA for this account."""
         return self.ca.serial
 
-    def set_kid(self, request):
+    def set_kid(self, request: HttpRequest) -> None:
         """Set the ACME kid based on this accounts CA and slug.
 
         Note that `slug` and `ca` must be already set when using this method.
@@ -1264,7 +1273,7 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
         )
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         """Boolean if the account is currently usable.
 
         An account is usable if the terms of service have been agreed, the status is "valid" and the
@@ -1317,20 +1326,20 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
         verbose_name = _("ACME Order")
         verbose_name_plural = _("ACME Orders")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%s (%s)" % (self.slug, self.account)
 
     @property
-    def acme_url(self):
+    def acme_url(self) -> str:
         """Get the ACME URL path for this order."""
         return reverse("django_ca:acme-order", kwargs={"slug": self.slug, "serial": self.serial})
 
     @property
-    def acme_finalize_url(self):
+    def acme_finalize_url(self) -> str:
         """Get the ACME "finalize" URL path for this order."""
         return reverse("django_ca:acme-order-finalize", kwargs={"slug": self.slug, "serial": self.serial})
 
-    def add_authorizations(self, identifiers):
+    def add_authorizations(self, identifiers: Iterable["messages.Identifier"]) -> List["AcmeAuthorization"]:
         """Add :py:class:`~django_ca.models.AcmeAuthorization` instances for the given identifiers.
 
         Note that this method already adds the account authorization to the database. It does not verify if it
@@ -1363,7 +1372,7 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
         return self.account.serial
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         """Boolean defining if an order is "usable", meaning it can be used to issue a certificate.
 
         An order is usable if it is in the "pending" status, has not expired and the account is usable.
@@ -1441,7 +1450,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         return self.order.expires  # so far there is no reason to have a different value here
 
     @property
-    def identifier(self):
+    def identifier(self) -> "messages.Identifier":
         """Get ACME identifier for this object.
 
         Returns
@@ -1449,9 +1458,6 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
 
         identifier : :py:class:`acme:acme.messages.Identifier`
         """
-        # Programatic import to make sure that the acme library is an optional dependency
-        messages = importlib.import_module("acme.messages")
-
         if self.type == AcmeAuthorization.TYPE_DNS:
             return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
         raise ValueError("Unknown identifier type: %s" % self.type)
@@ -1551,7 +1557,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         return reverse("django_ca:acme-challenge", kwargs={"slug": self.slug, "serial": self.serial})
 
     @property
-    def acme_challenge(self):
+    def acme_challenge(self) -> "challenges.KeyAuthorizationChallenge":
         """Challenge as ACME challenge object.
 
         Returns
@@ -1560,9 +1566,6 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         :py:class:`acme:acme.challenges.Challenge`
             The acme representation of this class.
         """
-        # Programatic import to make sure that the acme library is an optional dependency
-        challenges = importlib.import_module("acme.challenges")
-
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
             return challenges.HTTP01(token=token)
@@ -1588,7 +1591,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
             return timezone.make_aware(self.validated, timezone=pytz.UTC)
         return self.validated
 
-    def get_challenge(self, request):
+    def get_challenge(self, request: HttpRequest) -> "messages.ChallengeBody":
         """Get the ACME challenge body for this challenge.
 
         Returns
@@ -1597,10 +1600,6 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         :py:class:`acme:acme.messages.ChallengeBody`
             The acme representation of this class.
         """
-
-        # Programatic import to make sure that the acme library is an optional dependency
-        messages = importlib.import_module("acme.messages")
-
         url = request.build_absolute_uri(self.acme_url)
 
         # NOTE: RFC855, section 7.5 shows challenges *without* a status, but this object always includes it.
