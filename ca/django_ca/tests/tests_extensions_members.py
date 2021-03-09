@@ -153,6 +153,17 @@ class PolicyInformationTestCase(DjangoCATestCase):
             }
         ],
     }
+    s5 = {
+        'policy_identifier': oid,
+        'policy_qualifiers': [
+            {
+                'explicit_text': 'text5',
+                'notice_reference': {
+                    'notice_numbers': [1, 2, 3],
+                }
+            }
+        ],
+    }
 
     def setUp(self):
         super().setUp()
@@ -161,6 +172,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.pi2 = PolicyInformation(self.s2)
         self.pi3 = PolicyInformation(self.s3)
         self.pi4 = PolicyInformation(self.s4)
+        self.pi5 = PolicyInformation(self.s5)
         self.pi_empty = PolicyInformation()
 
     def test_append(self):
@@ -356,12 +368,14 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(hash(self.pi2), hash(self.pi2))
         self.assertEqual(hash(self.pi3), hash(self.pi3))
         self.assertEqual(hash(self.pi4), hash(self.pi4))
+        self.assertEqual(hash(self.pi5), hash(self.pi5))
         self.assertEqual(hash(self.pi_empty), hash(self.pi_empty))
 
         self.assertEqual(hash(self.pi1), hash(PolicyInformation(self.s1)))
         self.assertEqual(hash(self.pi2), hash(PolicyInformation(self.s2)))
         self.assertEqual(hash(self.pi3), hash(PolicyInformation(self.s3)))
         self.assertEqual(hash(self.pi4), hash(PolicyInformation(self.s4)))
+        self.assertEqual(hash(self.pi5), hash(PolicyInformation(self.s5)))
         self.assertEqual(hash(self.pi_empty), hash(PolicyInformation()))
 
         self.assertNotEqual(hash(self.pi1), hash(self.pi2))
@@ -394,6 +408,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(len(self.pi2), 1)
         self.assertEqual(len(self.pi3), 1)
         self.assertEqual(len(self.pi4), 2)
+        self.assertEqual(len(self.pi5), 1)
         self.assertEqual(len(self.pi_empty), 0)
 
     def test_policy_identifier_setter(self):
@@ -461,6 +476,34 @@ class PolicyInformationTestCase(DjangoCATestCase):
     def test_repr(self):
         """Test repr()."""
         self._test_repr(repr)
+
+    def test_serialize(self):
+        self.assertEqual(self.pi1.serialize(), {
+            "policy_identifier": "2.5.29.32.0",
+            "policy_qualifiers": ["text1"]
+        })
+        self.assertEqual(self.pi2.serialize(), {
+            "policy_identifier": "2.5.29.32.0",
+            "policy_qualifiers": [{"explicit_text": "text2"}]
+        })
+        self.assertEqual(self.pi3.serialize(), {
+            "policy_identifier": "2.5.29.32.0",
+            "policy_qualifiers": [{"notice_reference": {"notice_numbers": [1], "organization": "text3"}}]
+        })
+        self.assertEqual(self.pi4.serialize(), {
+            "policy_identifier": "2.5.29.32.0",
+            "policy_qualifiers": ["text4", {
+                "explicit_text": "text5",
+                "notice_reference": {"notice_numbers": [1, 2, 3], "organization": "text6"}}
+            ],
+        })
+        self.assertEqual(self.pi5.serialize(), {
+            "policy_identifier": "2.5.29.32.0",
+            "policy_qualifiers": [{
+                "explicit_text": "text5",
+                "notice_reference": {"notice_numbers": [1, 2, 3]}
+            }],
+        })
 
     def test_str(self):
         """Test str()."""

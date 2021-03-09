@@ -28,8 +28,6 @@ from typing import cast
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
 
-from django.utils.encoding import force_str
-
 from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsablePolicyIdentifier
 from ..typehints import ParsablePolicyInformation
@@ -365,7 +363,7 @@ class PolicyInformation:
             notice_reference = qualifier.get('notice_reference')
             if isinstance(notice_reference, dict):
                 notice_reference = x509.NoticeReference(
-                    organization=force_str(notice_reference.get('organization', '')),
+                    organization=notice_reference.get('organization'),
                     notice_numbers=[int(i) for i in notice_reference.get('notice_numbers', [])]
                 )
             elif notice_reference is None:
