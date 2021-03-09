@@ -184,7 +184,7 @@ CA_DEFAULT_ENCODING: Encoding = getattr(settings, 'CA_DEFAULT_ENCODING', Encodin
 CA_DEFAULT_PROFILE = getattr(settings, 'CA_DEFAULT_PROFILE', 'webserver')
 CA_NOTIFICATION_DAYS = getattr(settings, 'CA_NOTIFICATION_DAYS', [14, 7, 3, 1, ])
 CA_CRL_PROFILES = getattr(settings, 'CA_CRL_PROFILES', _CA_CRL_PROFILES)
-CA_PASSWORDS = getattr(settings, 'CA_PASSWORDS', {})
+CA_PASSWORDS: Dict[str, str] = getattr(settings, 'CA_PASSWORDS', {})
 
 # ACME settings
 ACME_ORDER_VALIDITY = getattr(settings, 'CA_ACME_ORDER_VALIDITY', timedelta(hours=1))

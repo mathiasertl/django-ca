@@ -29,6 +29,8 @@ from datetime import timedelta
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Union
+from typing import cast
 
 import pytz
 
@@ -126,17 +128,17 @@ except ImportError:
     challenges = messages = None
 
 
-def acme_slug():
+def acme_slug() -> str:
     """Default function to get an ACME conforming slug."""
     return get_random_string(length=12)
 
 
-def acme_order_expires():
+def acme_order_expires() -> datetime:
     """Default function for the expiry of an ACME order."""
     return timezone.now() + ca_settings.ACME_ORDER_VALIDITY
 
 
-def acme_token():
+def acme_token() -> str:
     """Generate an ACME token for this challenge.
 
     Note that currently all challenges have the same requirements on tokens, except for DNS challenges
@@ -146,13 +148,13 @@ def acme_token():
     return get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
 
 
-def validate_past(value):
+def validate_past(value: datetime) -> None:
     """Validate that a given datetime is not in the future."""
     if value > timezone.now():
         raise ValidationError(_("Date must be in the past!"))
 
 
-def json_validator(value):
+def json_validator(value: Union[str, bytes, bytearray]):
     """Validated that the given data is valid JSON."""
     try:
         json.loads(value)
@@ -160,7 +162,7 @@ def json_validator(value):
         raise ValidationError(_("Must be valid JSON: %(message)s") % {"message": str(e)}) from e
 
 
-def pem_validator(value):
+def pem_validator(value: str) -> None:
     """Validator that ensures a value is a valid PEM public certificate."""
 
     if not value.startswith("-----BEGIN PUBLIC KEY-----\n"):
@@ -173,17 +175,17 @@ class DjangoCAModelMixin:
     """Mixin with shared properties for all django-ca models."""
 
     @classproperty
-    def admin_add_url(cls):  # pylint: disable=no-self-argument; false positive
+    def admin_add_url(cls) -> str:  # pylint: disable=no-self-argument; false positive
         """URL to add an instance in the admin interface."""
         return reverse("admin:%s_%s_add" % (cls._meta.app_label, cls._meta.model_name))
 
     @classproperty
-    def admin_changelist_url(cls):  # pylint: disable=no-self-argument; false positive
+    def admin_changelist_url(cls) -> str:  # pylint: disable=no-self-argument; false positive
         """Changelist URL in the admin interface for the model."""
         return reverse("admin:%s_%s_changelist" % (cls._meta.app_label, cls._meta.model_name))
 
     @property
-    def admin_change_url(self):
+    def admin_change_url(self) -> str:
         """Change URL in the admin interface for the model instance."""
         return reverse("admin:%s_%s_change" % (self._meta.app_label, self._meta.model_name), args=(self.pk,))
 
@@ -738,7 +740,7 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    def key(self, password):
+    def key(self, password: Optional[bytes]):
         """The CAs private key as private key.
 
         .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
@@ -900,7 +902,7 @@ class CertificateAuthority(X509CertMixin):
                 ca_storage.save(path, ContentFile(contents))
         return private_path, cert_path, cert
 
-    def get_authority_key_identifier(self):
+    def get_authority_key_identifier(self) -> x509.AuthorityKeyIdentifier:
         """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA.
 
         Returns
@@ -917,7 +919,7 @@ class CertificateAuthority(X509CertMixin):
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
-    def get_authority_key_identifier_extension(self):
+    def get_authority_key_identifier_extension(self) -> "x509.Extension[x509.AuthorityKeyIdentifier]":
         """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA.
 
         Returns
@@ -1080,7 +1082,7 @@ class CertificateAuthority(X509CertMixin):
 
         return builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
 
-    def get_password(self):
+    def get_password(self) -> Optional[str]:
         """Get password for the private key from the ``CA_PASSWORDS`` setting."""
         return ca_settings.CA_PASSWORDS.get(self.serial)
 
@@ -1102,15 +1104,14 @@ class CertificateAuthority(X509CertMixin):
         ``int`` if any parent CA has the attribute.
         """
 
-        pathlen = self.pathlen
         if self.parent is None:
-            return pathlen
+            return self.pathlen
 
         max_parent = self.parent.max_pathlen
 
         if max_parent is None:
-            return pathlen
-        if pathlen is None:
+            return self.pathlen
+        if self.pathlen is None:
             return max_parent - 1
 
         return min(self.pathlen, max_parent - 1)
@@ -1189,7 +1190,7 @@ class Certificate(X509CertMixin):
     def bundle(self) -> List[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
-        return [self] + self.ca.bundle
+        return [cast(X509CertMixin, self)] + cast(List[X509CertMixin], self.ca.bundle)
 
     @property
     def root(self) -> CertificateAuthority:
