@@ -124,7 +124,7 @@ try:
     # Optional ACME imports
     from acme import challenges
     from acme import messages
-except ImportError:
+except ImportError:  # pragma: nocover
     challenges = messages = None
 
 
