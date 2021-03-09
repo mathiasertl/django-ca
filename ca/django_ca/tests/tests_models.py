@@ -317,6 +317,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         """Test an getting the CRL from a CA with no AuthorityKeyIdentifier."""
         # All CAs have a authority key identifier, so we mock that this exception is not present
         def side_effect(cls):
+            # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound('mocked', x509.SubjectKeyIdentifier.oid)
 
         ca = self.cas['child']
@@ -599,6 +600,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
         def side_effect(cls):
+            # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound('mocked', x509.SubjectKeyIdentifier.oid)
 
         ca = self.cas['child']

@@ -144,7 +144,7 @@ def _load_pub(data):
     return pub_data
 
 
-cryptography_version = tuple([int(t) for t in cryptography.__version__.split('.')[:2]])
+cryptography_version = tuple(int(t) for t in cryptography.__version__.split('.')[:2])
 
 with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as cert_data_stream:
     _fixture_data = json.load(cert_data_stream)

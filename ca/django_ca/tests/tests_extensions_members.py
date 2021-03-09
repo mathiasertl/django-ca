@@ -78,6 +78,8 @@ class DistributionPointTestCase(TestCase):
         self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
     def test_reasons(self):
+        """Test DPs with different reason types."""
+
         dpoint = DistributionPoint(
             {
                 "full_name": "http://example.com",
@@ -562,6 +564,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self._test_repr(repr)
 
     def test_serialize(self):
+        """Test serialization."""
         self.assertEqual(
             self.pi1.serialize(), {"policy_identifier": "2.5.29.32.0", "policy_qualifiers": ["text1"]}
         )

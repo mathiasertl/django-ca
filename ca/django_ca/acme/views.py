@@ -648,8 +648,8 @@ class AcmeOrderView(AcmeBaseView):
         response = AcmeResponseOrder(
             status=order.status,
             expires=expires,
-            identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
-            authorizations=tuple([self.request.build_absolute_uri(a.acme_url) for a in authorizations]),
+            identifiers=tuple({'type': a.type, 'value': a.value} for a in authorizations),
+            authorizations=tuple(self.request.build_absolute_uri(a.acme_url) for a in authorizations),
             certificate=cert_url
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
@@ -761,8 +761,8 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         response = AcmeResponseOrder(
             status=order.status,
             expires=expires,
-            identifiers=tuple([{'type': a.type, 'value': a.value} for a in authorizations]),
-            authorizations=tuple([self.request.build_absolute_uri(a.acme_url) for a in authorizations]),
+            identifiers=tuple({'type': a.type, 'value': a.value} for a in authorizations),
+            authorizations=tuple(self.request.build_absolute_uri(a.acme_url) for a in authorizations),
         )
         response['Location'] = self.request.build_absolute_uri(order.acme_url)
         return response
@@ -840,7 +840,7 @@ class AcmeAuthorizationView(AcmeBaseView):
 
         resp = AcmeResponseAuthorization(
             identifier=auth.identifier,
-            challenges=tuple([c.get_challenge(self.request) for c in challenges]),
+            challenges=tuple(c.get_challenge(self.request) for c in challenges),
             status=auth.status,
             expires=expires,
         )
