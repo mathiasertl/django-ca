@@ -345,7 +345,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     def test_crl_invalid_scope(self):
         """"Try getting a CRL with an invalid scope."""
         ca = self.cas['child']
-        with self.assertRaisesRegex(ValueError, r'^Scope must be either None, "ca", "user" or "attribute"$'):
+        with self.assertRaisesRegex(ValueError, r'^scope must be either None, "ca", "user" or "attribute"$'):
             ca.get_crl(scope='foobar').public_bytes(Encoding.PEM)
 
     @override_tmpcadir()

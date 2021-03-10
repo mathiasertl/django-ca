@@ -57,6 +57,7 @@ from django.utils.translation import gettext_lazy as _
 from . import ca_settings
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
+from .typehints import ParsableHash
 from .typehints import ParsableRelativeDistinguishedName
 from .typehints import SupportsIndex
 
@@ -116,7 +117,6 @@ MULTIPLE_OIDS = (
 
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
-
 
 try:
     from django.utils.decorators import classproperty  # pylint: disable=unused-import
@@ -598,7 +598,7 @@ def generate_private_key(key_size: int, key_type: str, ecc_curve: Optional[ec.El
     raise ValueError("%s: Invalid key type." % key_type)
 
 
-def parse_general_name(name: Union[x509.GeneralName, str]) -> x509.GeneralName:
+def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
@@ -743,7 +743,7 @@ def parse_general_name(name: Union[x509.GeneralName, str]) -> x509.GeneralName:
             raise ValueError('Could not parse DNS name: %s' % name) from e
 
 
-def parse_hash_algorithm(value: Optional[Union[str, hashes.HashAlgorithm]] = None) -> hashes.HashAlgorithm:
+def parse_hash_algorithm(value: ParsableHash = None) -> hashes.HashAlgorithm:
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in

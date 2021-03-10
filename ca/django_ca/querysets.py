@@ -13,6 +13,8 @@
 
 """QuerySet classes for DjangoCA models."""
 
+from typing import TypeVar
+
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import Q
@@ -21,6 +23,9 @@ from django.utils import timezone
 from . import ca_settings
 from .acme.constants import Status
 from .utils import sanitize_serial
+
+
+T = TypeVar("T")
 
 
 class DjangoCAMixin:
@@ -52,7 +57,7 @@ class DjangoCAMixin:
         except self.model.DoesNotExist:
             return self.get(startswith_query)
 
-    def revoked(self):
+    def revoked(self: T) -> T:
         """Return revoked certificates."""
 
         return self.filter(revoked=True)

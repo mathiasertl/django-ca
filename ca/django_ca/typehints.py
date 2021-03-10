@@ -26,6 +26,7 @@ from typing import TypeVar
 from typing import Union
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
@@ -49,6 +50,8 @@ class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; jus
     def __lt__(self, __other: Any) -> bool:  # pragma: nocover
         ...
 
+
+ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
 
 # GeneralNameList
 ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]

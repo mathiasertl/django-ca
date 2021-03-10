@@ -28,6 +28,7 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Union
 from typing import cast
@@ -103,6 +104,8 @@ from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
+from .typehints import ParsableGeneralNameList
+from .typehints import ParsableHash
 from .utils import add_colons
 from .utils import ca_storage
 from .utils import classproperty
@@ -118,7 +121,6 @@ from .utils import read_file
 from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
-
 
 try:
     # Optional ACME imports
@@ -373,7 +375,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
             return "%s_bundle.%s" % (slug, ext.lower())
         return "%s.%s" % (slug, ext.lower())
 
-    def get_revocation(self):
+    def get_revocation(self) -> "x509.RevokedCertificate":
         """Get the `RevokedCertificate` instance for this certificate for CRLs.
 
         This function is just a shortcut for
@@ -919,7 +921,7 @@ class CertificateAuthority(X509CertMixin):
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
-    def get_authority_key_identifier_extension(self) -> "x509.Extension[x509.AuthorityKeyIdentifier]":
+    def get_authority_key_identifier_extension(self) -> AuthorityKeyIdentifier:
         """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA.
 
         Returns
@@ -937,7 +939,32 @@ class CertificateAuthority(X509CertMixin):
             )
         )
 
-    def get_crl(self, expires=86400, algorithm=None, password=None, scope=None, counter=None, **kwargs):
+    def get_crl_certs(
+        self, scope: Literal[None, "ca", "user", "attribute"], now: datetime
+    ) -> Iterable[X509CertMixin]:
+        ca_qs = cast(CertificateAuthorityQuerySet, self.children.filter(expires__gt=now)).revoked()
+        cert_qs = cast(CertificateQuerySet, self.certificate_set.filter(expires__gt=now)).revoked()
+
+        if scope == "ca":
+            return ca_qs
+        if scope == "user":
+            return cert_qs
+        if scope == "attribute":
+            return []  # not really supported
+        if scope is None:
+            return itertools.chain(ca_qs, cert_qs)
+        raise ValueError('scope must be either None, "ca", "user" or "attribute"')
+
+    def get_crl(
+        self,
+        expires: int = 86400,
+        algorithm: ParsableHash = None,
+        password: Optional[bytes] = None,
+        scope: Literal[None, "ca", "user", "attribute"] = None,
+        counter: Optional[str] = None,
+        full_name: Optional[ParsableGeneralNameList] = None,
+        **kwargs
+    ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
 
         The ``full_name`` and ``relative_name`` parameters describe how to retrieve the CRL and are used in
@@ -979,9 +1006,6 @@ class CertificateAuthority(X509CertMixin):
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals,too-many-arguments
         # It's not easy to create a CRL. Sorry.
 
-        if scope is not None and scope not in ["ca", "user", "attribute"]:
-            raise ValueError('Scope must be either None, "ca", "user" or "attribute"')
-
         now = now_builder = timezone.now()
         algorithm = parse_hash_algorithm(algorithm)
 
@@ -995,9 +1019,9 @@ class CertificateAuthority(X509CertMixin):
         builder = builder.last_update(now_builder)
         builder = builder.next_update(now_builder + timedelta(seconds=expires))
 
-        if kwargs.get("full_name"):
-            full_name = kwargs["full_name"]
-            full_name = [parse_general_name(n) for n in full_name]
+        parsed_full_name = None
+        if full_name is not None:
+            parsed_full_name = [parse_general_name(n) for n in full_name]
 
         # CRLs for root CAs with scope "ca" (or no scope) do not add an IssuingDistributionPoint extension by
         # default. For full path validation with CRLs, the CRL is also used for validating the Root CA (which
@@ -1005,7 +1029,7 @@ class CertificateAuthority(X509CertMixin):
         # to match. See also:
         #       https://github.com/mathiasertl/django-ca/issues/64
         elif scope in ("ca", None) and self.parent is None:
-            full_name = None
+            parsed_full_name = None
 
         # If CA_DEFAULT_HOSTNAME is set, CRLs with scope "ca" add the same URL in the IssuingDistributionPoint
         # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
@@ -1013,56 +1037,53 @@ class CertificateAuthority(X509CertMixin):
         #       https://github.com/mathiasertl/django-ca/issues/64
         elif scope == "ca" and ca_settings.CA_DEFAULT_HOSTNAME:
             crl_path = reverse("django_ca:ca-crl", kwargs={"serial": self.serial})
-            full_name = [
+            parsed_full_name = [
                 x509.UniformResourceIdentifier("http://%s%s" % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path))
             ]
         elif scope in ("user", None) and self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
-            full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
-        else:
-            full_name = None
+            parsed_full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
 
         # Keyword arguments for the IssuingDistributionPoint extension
-        idp_kwargs = {
-            "only_contains_ca_certs": False,
-            "only_contains_user_certs": False,
-            "indirect_crl": False,
-            "only_contains_attribute_certs": False,
-            "only_some_reasons": None,
-            "full_name": full_name,
-            "relative_name": kwargs.get("relative_name"),
-        }
-
-        ca_qs = self.children.filter(expires__gt=now).revoked()
-        cert_qs = self.certificate_set.filter(expires__gt=now).revoked()
+        only_contains_attribute_certs = False
+        only_contains_ca_certs = False
+        only_contains_user_certs = False
+        indirect_crl = False
+        relative_name = kwargs.get("relative_name")
 
         if scope == "ca":
-            certs = ca_qs
-            idp_kwargs["only_contains_ca_certs"] = True
+            only_contains_ca_certs = True
         elif scope == "user":
-            certs = cert_qs
-            idp_kwargs["only_contains_user_certs"] = True
+            only_contains_user_certs = True
         elif scope == "attribute":
             # sorry, nothing we support right now
-            certs = []
-            idp_kwargs["only_contains_attribute_certs"] = True
-        else:
-            certs = itertools.chain(ca_qs, cert_qs)
+            only_contains_attribute_certs = True
 
-        for cert in certs:
+        for cert in self.get_crl_certs(scope, now):
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
         # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
         add_idp = (
-            idp_kwargs["only_contains_attribute_certs"]
-            or idp_kwargs["only_contains_user_certs"]
-            or idp_kwargs["only_contains_ca_certs"]
-            or idp_kwargs["full_name"]
-            or idp_kwargs["relative_name"]
+            only_contains_attribute_certs
+            or only_contains_user_certs
+            or only_contains_ca_certs
+            or parsed_full_name
+            or relative_name
         )
 
         if add_idp:  # pragma: no branch
-            builder = builder.add_extension(x509.IssuingDistributionPoint(**idp_kwargs), critical=True)
+            builder = builder.add_extension(
+                x509.IssuingDistributionPoint(
+                    indirect_crl=indirect_crl,
+                    only_contains_attribute_certs=only_contains_attribute_certs,
+                    only_contains_ca_certs=only_contains_ca_certs,
+                    only_contains_user_certs=only_contains_user_certs,
+                    full_name=parsed_full_name,
+                    only_some_reasons=None,
+                    relative_name=relative_name,
+                ),
+                critical=True,
+            )
 
         # Add AuthorityKeyIdentifier from CA
         aki = self.get_authority_key_identifier()
