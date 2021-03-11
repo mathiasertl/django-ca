@@ -889,7 +889,7 @@ class GetCertBuilderTestCase(DjangoCATestCase):
         after = datetime(2022, 10, 23, 11, 21)
         builder = get_cert_builder(after, serial=123)
         self.assertEqual(builder._serial_number, 123)  # pylint: disable=protected-access
-        self.assertEqual(builder._not_valid_after, after)
+        self.assertEqual(builder._not_valid_after, after)  # pylint: disable=protected-access
 
     @freeze_time('2021-01-23 14:42:11')
     def test_negative_datetime(self):

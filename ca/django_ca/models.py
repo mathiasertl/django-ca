@@ -785,9 +785,9 @@ class CertificateAuthority(X509CertMixin):
             return True
         return ca_storage.exists(self.private_key_path)
 
-    def cache_crls(
+    def cache_crls(  # pylint: disable=too-many-locals
         self, password: Optional[bytes] = None, algorithm: ParsableHash = None
-    ) -> None:  # pylint: disable=too-many-locals
+    ) -> None:
         """Function to cache all CRLs for this CA."""
 
         password = password or self.get_password()
@@ -969,6 +969,7 @@ class CertificateAuthority(X509CertMixin):
     def get_crl_certs(
         self, scope: Literal[None, "ca", "user", "attribute"], now: datetime
     ) -> Iterable[X509CertMixin]:
+        """Get CRLs for the given scope."""
         ca_qs = cast(CertificateAuthorityQuerySet, self.children.filter(expires__gt=now)).revoked()
         cert_qs = cast(CertificateQuerySet, self.certificate_set.filter(expires__gt=now)).revoked()
 
