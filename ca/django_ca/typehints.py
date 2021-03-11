@@ -16,6 +16,8 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 import sys
+from datetime import datetime
+from datetime import timedelta
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterable
@@ -51,6 +53,7 @@ class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; jus
         ...
 
 
+Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
 
 # GeneralNameList

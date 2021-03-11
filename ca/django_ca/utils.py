@@ -297,7 +297,7 @@ def add_colons(value: str, pad: str = "0") -> str:
     if len(value) % 2 == 1 and pad is not None:
         value = "%s%s" % (pad, value)
 
-    return ":".join([value[i : i + 2] for i in range(0, len(value), 2)])
+    return ":".join([value[i:i + 2] for i in range(0, len(value), 2)])
 
 
 def int_to_hex(i: int) -> str:
@@ -855,6 +855,23 @@ def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
     raise ValueError("Unknown type passed: %s" % type(value).__name__)
 
 
+def parse_expires(expires: Expires = None) -> datetime:
+    """Parse a value specifying an expiry into a concrete datetime."""
+
+    now = datetime.utcnow().replace(second=0, microsecond=0)
+
+    if isinstance(expires, int):
+        return now + timedelta(days=expires)
+    if isinstance(expires, timedelta):
+        return now + expires
+    if isinstance(expires, datetime):
+        # NOTE: A datetime is passed when creating an intermediate CA and the expiry is limited by the expiry
+        # of the parent CA.
+        return expires.replace(second=0, microsecond=0)
+
+    return now + ca_settings.CA_DEFAULT_EXPIRES
+
+
 def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.EllipticCurve:
     """Parse an elliptic curve value.
 
@@ -908,17 +925,13 @@ def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.
     return curve()
 
 
-def get_cert_builder(expires: Expires = None, serial: Optional[int] = None) -> x509.CertificateBuilder:
+def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:
     """Get a basic X.509 certificate builder object.
 
     Parameters
     ----------
 
-    expires : datetime or timedelta, optional
-        When the certificate will expire. This may be a ``timedelta`` for an expiry relative to "now" or a
-        ``datetime`` for an absolute expiry date.  If not given, :ref:`CA_DEFAULT_EXPIRES
-        <settings-ca-file-storage>` will be used.
-    serial : int, optional
+    expires : datetime
         Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
         to generate such a value. By default, a value will be generated.
     """
@@ -930,17 +943,11 @@ def get_cert_builder(expires: Expires = None, serial: Optional[int] = None) -> x
     if serial is None:
         serial = x509.random_serial_number()
 
-    if expires is None:
-        expires = now + ca_settings.CA_DEFAULT_EXPIRES
-    elif isinstance(expires, timedelta):
-        expires = now + expires
-    elif isinstance(expires, datetime):
-        # NOTE: A datetime is passed when creating an intermediate CA and the expiry is limited by the expiry
-        # of the parent CA.
-        expires = expires.replace(second=0, microsecond=0)
-
     if expires <= now:
         raise ValueError("expires must be in the future")
+
+    # strip seconds and microseconds
+    expires = expires.replace(second=0, microsecond=0)
 
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)

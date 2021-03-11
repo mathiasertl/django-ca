@@ -39,11 +39,13 @@ from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .subject import Subject
+from .typehints import Expires
 from .utils import ca_storage
 from .utils import generate_private_key
 from .utils import get_cert_builder
 from .utils import int_to_hex
 from .utils import parse_csr
+from .utils import parse_expires
 from .utils import parse_hash_algorithm
 from .utils import validate_hostname
 from .utils import validate_key_parameters
@@ -88,7 +90,7 @@ class CertificateManagerMixin:
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     """Model manager for the CertificateAuthority model."""
 
-    def init(self, name, subject, expires=None, algorithm=None, parent=None, default_hostname=None,
+    def init(self, name, subject, expires: Expires = None, algorithm=None, parent=None, default_hostname=None,
              pathlen=None, issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
              ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
              password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None,
@@ -105,7 +107,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``. The value is
             actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an instance of that
             class.
-        expires : datetime, optional
+        expires : int or datetime or timedelta, optional
             When this certificate authority will expire, defaults to :ref:`CA_DEFAULT_EXPIRES
             <settings-ca-default-expires>`.
         algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
@@ -186,6 +188,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         #       directly.
         key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
         algorithm = parse_hash_algorithm(algorithm)
+        expires = parse_expires(expires)
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if not isinstance(subject, Subject):

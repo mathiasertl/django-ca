@@ -26,10 +26,12 @@ import random
 import re
 from datetime import datetime
 from datetime import timedelta
+from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Literal
 from typing import Optional
+from typing import Tuple
 from typing import Union
 from typing import cast
 
@@ -40,6 +42,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -104,6 +107,7 @@ from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
+from .typehints import Expires
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
 from .utils import add_colons
@@ -115,6 +119,7 @@ from .utils import get_crl_cache_key
 from .utils import int_to_hex
 from .utils import multiline_url_validator
 from .utils import parse_encoding
+from .utils import parse_expires
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import read_file
@@ -489,7 +494,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     ###################
 
     @cached_property
-    def _x509_extensions(self):
+    def _x509_extensions(self) -> Dict["x509.ObjectIdentifier", "x509.ExtensionType"]:
         return {e.oid: e for e in self.x509.extensions}
 
     def get_x509_extension(self, oid):
@@ -497,7 +502,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self._x509_extensions.get(oid)
 
     @cached_property
-    def _sorted_extensions(self):
+    def _sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
         return list(
@@ -505,7 +510,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         )
 
     @cached_property
-    def extension_fields(self):
+    def extension_fields(self) -> List[str]:
         """List of all extensions fields for this certificate."""
         fields = []
 
@@ -536,136 +541,156 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return exts
 
     @cached_property
-    def authority_information_access(self):  # pylint: disable=inconsistent-return-statements
+    def authority_information_access(self) -> Optional[AuthorityInformationAccess]:
         """The :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension or ``None`` if not
         present."""
         ext = self.get_x509_extension(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
         if ext is not None:
             return AuthorityInformationAccess(ext)
+        return None
 
     @cached_property
-    def authority_key_identifier(self):  # pylint: disable=inconsistent-return-statements
+    def authority_key_identifier(self) -> Optional[AuthorityKeyIdentifier]:
         """The :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` extension or ``None`` if not
         present."""
         ext = self.get_x509_extension(ExtensionOID.AUTHORITY_KEY_IDENTIFIER)
         if ext is not None:
             return AuthorityKeyIdentifier(ext)
+        return None
 
     @cached_property
-    def basic_constraints(self):  # pylint: disable=inconsistent-return-statements
+    def basic_constraints(self) -> Optional[BasicConstraints]:
         """The :py:class:`~django_ca.extensions.BasicConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.BASIC_CONSTRAINTS)
         if ext is not None:
             return BasicConstraints(ext)
+        return None
 
     @cached_property
-    def crl_distribution_points(self):  # pylint: disable=inconsistent-return-statements
+    def crl_distribution_points(self):
         """The :py:class:`~django_ca.extensions.CRLDistributionPoints` extension or ``None`` if not
         present."""
         ext = self.get_x509_extension(ExtensionOID.CRL_DISTRIBUTION_POINTS)
         if ext is not None:
             return CRLDistributionPoints(ext)
+        return None
 
     @cached_property
-    def certificate_policies(self):  # pylint: disable=inconsistent-return-statements
+    def certificate_policies(self):
         """The :py:class:`~django_ca.extensions.CertificatePolicies` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.CERTIFICATE_POLICIES)
         if ext is not None:
             return CertificatePolicies(ext)
+        return None
 
     @cached_property
-    def freshest_crl(self):  # pylint: disable=inconsistent-return-statements
+    def freshest_crl(self) -> Optional[FreshestCRL]:
         """The :py:class:`~django_ca.extensions.FreshestCRL` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.FRESHEST_CRL)
         if ext is not None:
             return FreshestCRL(ext)
+        return None
 
     @cached_property
-    def inhibit_any_policy(self):  # pylint: disable=inconsistent-return-statements
+    def inhibit_any_policy(self) -> Optional[InhibitAnyPolicy]:
         """The :py:class:`~django_ca.extensions.InhibitAnyPolicy` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.INHIBIT_ANY_POLICY)
         if ext is not None:
             return InhibitAnyPolicy(ext)
+        return None
 
     @cached_property
-    def issuer_alternative_name(self):  # pylint: disable=inconsistent-return-statements
+    def issuer_alternative_name(self) -> Optional[IssuerAlternativeName]:
         """The :py:class:`~django_ca.extensions.IssuerAlternativeName` extension or ``None`` if not
         present."""
         ext = self.get_x509_extension(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
         if ext is not None:
             return IssuerAlternativeName(ext)
+        return None
 
     @cached_property
-    def policy_constraints(self):  # pylint: disable=inconsistent-return-statements
+    def policy_constraints(self) -> Optional[PolicyConstraints]:
         """The :py:class:`~django_ca.extensions.PolicyConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.POLICY_CONSTRAINTS)
         if ext is not None:
             return PolicyConstraints(ext)
+        return None
 
     @cached_property
-    def key_usage(self):  # pylint: disable=inconsistent-return-statements
+    def key_usage(self) -> Optional[KeyUsage]:
         """The :py:class:`~django_ca.extensions.KeyUsage` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.KEY_USAGE)
         if ext is not None:
             return KeyUsage(ext)
+        return None
 
     @cached_property
-    def extended_key_usage(self):  # pylint: disable=inconsistent-return-statements
+    def extended_key_usage(self) -> Optional[ExtendedKeyUsage]:
         """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.EXTENDED_KEY_USAGE)
         if ext is not None:
             return ExtendedKeyUsage(ext)
+        return None
 
     @cached_property
-    def name_constraints(self):  # pylint: disable=inconsistent-return-statements
+    def name_constraints(self) -> Optional[NameConstraints]:
         """The :py:class:`~django_ca.extensions.NameConstraints` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.NAME_CONSTRAINTS)
         if ext is not None:
             return NameConstraints(ext)
+        return None
 
     @cached_property
-    def ocsp_no_check(self):  # pylint: disable=inconsistent-return-statements
+    def ocsp_no_check(self) -> Optional[OCSPNoCheck]:
         """The :py:class:`~django_ca.extensions.OCSPNoCheck` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.OCSP_NO_CHECK)
         if ext is not None:
             return OCSPNoCheck(ext)
+        return None
 
     @cached_property
-    def precert_poison(self):  # pylint: disable=inconsistent-return-statements
+    def precert_poison(self) -> Optional[PrecertPoison]:
         """The :py:class:`~django_ca.extensions.PrecertPoison` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.PRECERT_POISON)
         if ext is not None:
             return PrecertPoison(ext)
+        return None
 
     @cached_property
-    def precertificate_signed_certificate_timestamps(self):  # pylint: disable=inconsistent-return-statements
+    def precertificate_signed_certificate_timestamps(
+        self,
+    ) -> Optional[PrecertificateSignedCertificateTimestamps]:
         """The :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension or
         ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
         if ext is not None:
             return PrecertificateSignedCertificateTimestamps(ext)
+        return None
 
     @cached_property
-    def subject_alternative_name(self):  # pylint: disable=inconsistent-return-statements
+    def subject_alternative_name(self) -> Optional[SubjectAlternativeName]:
         """The :py:class:`~django_ca.extensions.SubjectAlternativeName` extension or ``None`` if not
         present."""
         ext = self.get_x509_extension(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         if ext is not None:
             return SubjectAlternativeName(ext)
+        return None
 
     @cached_property
-    def subject_key_identifier(self):  # pylint: disable=inconsistent-return-statements
+    def subject_key_identifier(self) -> Optional[SubjectKeyIdentifier]:
         """The :py:class:`~django_ca.extensions.SubjectKeyIdentifier` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.SUBJECT_KEY_IDENTIFIER)
         if ext is not None:
             return SubjectKeyIdentifier(ext)
+        return None
 
     @cached_property
-    def tls_feature(self):  # pylint: disable=inconsistent-return-statements
+    def tls_feature(self) -> Optional[TLSFeature]:
         """The :py:class:`~django_ca.extensions.TLSFeature` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.TLS_FEATURE)
         if ext is not None:
             return TLSFeature(ext)
+        return None
 
 
 class CertificateAuthority(X509CertMixin):
@@ -760,7 +785,9 @@ class CertificateAuthority(X509CertMixin):
             return True
         return ca_storage.exists(self.private_key_path)
 
-    def cache_crls(self, password=None, algorithm=None):  # pylint: disable=too-many-locals
+    def cache_crls(
+        self, password: Optional[bytes] = None, algorithm: ParsableHash = None
+    ) -> None:  # pylint: disable=too-many-locals
         """Function to cache all CRLs for this CA."""
 
         password = password or self.get_password()
@@ -815,15 +842,15 @@ class CertificateAuthority(X509CertMixin):
 
     def generate_ocsp_key(
         self,
-        profile="ocsp",
-        expires=3,
-        algorithm=None,
-        password=None,
-        key_size=None,
-        key_type=None,
-        ecc_curve=None,
-        autogenerated=True,
-    ):
+        profile: str = "ocsp",
+        expires: Expires = 3,
+        algorithm: ParsableHash = None,
+        password: Optional[bytes] = None,
+        key_size: Optional[int] = None,
+        key_type: Literal[None, "RSA", "DSA", "ECC"] = None,
+        ecc_curve: Optional[Union[ec.EllipticCurve, str]] = None,
+        autogenerated: bool = True,
+    ) -> Tuple[str, str, "Certificate"]:
         """Generate OCSP keys for this CA.
 
         Parameters
@@ -861,13 +888,12 @@ class CertificateAuthority(X509CertMixin):
                 key_type = "DSA"
                 algorithm = "SHA1"
 
-        key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
-        if isinstance(expires, int):
-            expires = timedelta(days=expires)
+        key_size, parsed_key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
+        expires = parse_expires(expires)
         algorithm = parse_hash_algorithm(algorithm)
 
         # generate the private key
-        private_key = generate_private_key(key_size, key_type, ecc_curve)
+        private_key = generate_private_key(key_size, parsed_key_type, ecc_curve)
         private_pem = private_key.private_bytes(
             encoding=Encoding.PEM,
             format=PrivateFormat.PKCS8,
@@ -882,6 +908,7 @@ class CertificateAuthority(X509CertMixin):
         )
 
         # TODO: The subject we pass is just a guess - see what public CAs do!?  pylint: disable=fixme
+        # TODO: We never pass expires, we must add it and test the value
         cert = Certificate.objects.create_cert(
             ca=self,
             csr=csr,
@@ -963,7 +990,7 @@ class CertificateAuthority(X509CertMixin):
         scope: Literal[None, "ca", "user", "attribute"] = None,
         counter: Optional[str] = None,
         full_name: Optional[ParsableGeneralNameList] = None,
-        **kwargs
+        relative_name: Optional[x509.RelativeDistinguishedName] = None,
     ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
 
@@ -1049,7 +1076,6 @@ class CertificateAuthority(X509CertMixin):
         only_contains_ca_certs = False
         only_contains_user_certs = False
         indirect_crl = False
-        relative_name = kwargs.get("relative_name")
 
         if scope == "ca":
             only_contains_ca_certs = True
