@@ -55,6 +55,7 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
+from .typehints import Expires
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
@@ -62,45 +63,56 @@ from .typehints import ParsableRelativeDistinguishedName
 from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
-SUBJECT_FIELDS = ['C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress', ]
+SUBJECT_FIELDS = [
+    "C",
+    "ST",
+    "L",
+    "O",
+    "OU",
+    "CN",
+    "emailAddress",
+]
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
-EXTENDED_KEY_USAGE_DESC = _('Purposes for which the certificate public key can be used for.')
-KEY_USAGE_DESC = _('Permitted key usages.')
+EXTENDED_KEY_USAGE_DESC = _("Purposes for which the certificate public key can be used for.")
+KEY_USAGE_DESC = _("Permitted key usages.")
 
 #: Regular expression to match RDNs out of a full x509 name.
-NAME_RE = re.compile(r'(?:/+|\A)\s*(?P<field>[^\s]*?)\s*'
-                     r'=(?P<quote>[\'"])?\s*(?P<content>(?(quote).*?|[^/]*))\s*'
-                     r'(?(quote)(?<!\\)(?P=quote))', re.I)
+NAME_RE = re.compile(
+    r"(?:/+|\A)\s*(?P<field>[^\s]*?)\s*"
+    r'=(?P<quote>[\'"])?\s*(?P<content>(?(quote).*?|[^/]*))\s*'
+    r"(?(quote)(?<!\\)(?P=quote))",
+    re.I,
+)
 
 #: Regular expression to match general names.
-GENERAL_NAME_RE = re.compile('^(email|URI|IP|DNS|RID|dirName|otherName):(.*)', flags=re.I)
+GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
 
 #: Regular expression matching certificate serials as hex
-SERIAL_RE = re.compile('^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$')
+SERIAL_RE = re.compile("^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$")
 
 SAN_NAME_MAPPINGS = {
-    x509.DNSName: 'DNS',
-    x509.RFC822Name: 'email',
-    x509.DirectoryName: 'dirname',
-    x509.UniformResourceIdentifier: 'URI',
-    x509.IPAddress: 'IP',
-    x509.RegisteredID: 'RID',
-    x509.OtherName: 'otherName',
+    x509.DNSName: "DNS",
+    x509.RFC822Name: "email",
+    x509.DirectoryName: "dirname",
+    x509.UniformResourceIdentifier: "URI",
+    x509.IPAddress: "IP",
+    x509.RegisteredID: "RID",
+    x509.OtherName: "otherName",
 }
 
 #: Map OID objects to IDs used in subject strings
 OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
-    NameOID.COUNTRY_NAME: 'C',
-    NameOID.STATE_OR_PROVINCE_NAME: 'ST',
-    NameOID.LOCALITY_NAME: 'L',
-    NameOID.ORGANIZATION_NAME: 'O',
-    NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
-    NameOID.COMMON_NAME: 'CN',
-    NameOID.EMAIL_ADDRESS: 'emailAddress',
-    NameOID.SERIAL_NUMBER: 'serialNumber',
-    NameOID.JURISDICTION_COUNTRY_NAME: 'jurisdictionCountryName',
-    NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: 'jurisdictionStateOrProvinceName',
+    NameOID.COUNTRY_NAME: "C",
+    NameOID.STATE_OR_PROVINCE_NAME: "ST",
+    NameOID.LOCALITY_NAME: "L",
+    NameOID.ORGANIZATION_NAME: "O",
+    NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
+    NameOID.COMMON_NAME: "CN",
+    NameOID.EMAIL_ADDRESS: "emailAddress",
+    NameOID.SERIAL_NUMBER: "serialNumber",
+    NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
+    NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
     NameOID.BUSINESS_CATEGORY: "businessCategory",
     NameOID.POSTAL_CODE: "postalCode",
     NameOID.STREET_ADDRESS: "streetAddress",
@@ -130,6 +142,7 @@ except ImportError:  # pragma: no cover
         Decorator that converts a method with a single `cls` argument into a property
         that can be accessed directly from the class.
         """
+
         def __init__(self, method=None):  # type: ignore
             self.fget = method
 
@@ -160,10 +173,10 @@ def encode_url(url: str) -> str:
     """
     parsed = urlparse(url)
     if parsed.hostname and parsed.port:
-        hostname = idna.encode(parsed.hostname).decode('utf-8')
-        parsed = parsed._replace(netloc='%s:%s' % (hostname, parsed.port))
+        hostname = idna.encode(parsed.hostname).decode("utf-8")
+        parsed = parsed._replace(netloc="%s:%s" % (hostname, parsed.port))
     else:
-        parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode('utf-8'))
+        parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode("utf-8"))
     return parsed.geturl()
 
 
@@ -181,11 +194,11 @@ def encode_dns(name: str) -> str:
         >>> encode_dns('*.exämple.com')
         '*.xn--exmple-cua.com'
     """
-    if name.startswith('*.'):
-        return '*.%s' % idna.encode(name[2:]).decode('utf-8')
-    if name.startswith('.'):
-        return '.%s' % idna.encode(name[1:]).decode('utf-8')
-    return idna.encode(name).decode('utf-8')
+    if name.startswith("*."):
+        return "*.%s" % idna.encode(name[2:]).decode("utf-8")
+    if name.startswith("."):
+        return ".%s" % idna.encode(name[1:]).decode("utf-8")
+    return idna.encode(name).decode("utf-8")
 
 
 def format_name(subject: Union[x509.Name, Iterable[Tuple[str, str]]]) -> str:
@@ -203,7 +216,7 @@ def format_name(subject: Union[x509.Name, Iterable[Tuple[str, str]]]) -> str:
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
 
-    return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in subject]))
+    return "/%s" % ("/".join(["%s=%s" % (k, v) for k, v in subject]))
 
 
 def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
@@ -221,7 +234,7 @@ def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tu
     if isinstance(name, x509.RelativeDistinguishedName):
         name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
 
-    return '/%s' % ('/'.join(['%s=%s' % (k, v) for k, v in name]))
+    return "/%s" % ("/".join(["%s=%s" % (k, v) for k, v in name]))
 
 
 def format_general_name(name: x509.GeneralName) -> str:
@@ -238,7 +251,7 @@ def format_general_name(name: x509.GeneralName) -> str:
         value = format_name(name.value)
     else:
         value = name.value
-    return '%s:%s' % (SAN_NAME_MAPPINGS[type(name)], value)
+    return "%s:%s" % (SAN_NAME_MAPPINGS[type(name)], value)
 
 
 def is_power2(num: int) -> bool:
@@ -263,7 +276,7 @@ def multiline_url_validator(value: str) -> None:
         validator(line)
 
 
-def add_colons(value: str, pad: str = '0') -> str:
+def add_colons(value: str, pad: str = "0") -> str:
     """Add colons after every second digit.
 
     This function is used in functions to prettify serials.
@@ -282,9 +295,9 @@ def add_colons(value: str, pad: str = '0') -> str:
     """
 
     if len(value) % 2 == 1 and pad is not None:
-        value = '%s%s' % (pad, value)
+        value = "%s%s" % (pad, value)
 
-    return ':'.join([value[i:i + 2] for i in range(0, len(value), 2)])
+    return ":".join([value[i : i + 2] for i in range(0, len(value), 2)])
 
 
 def int_to_hex(i: int) -> str:
@@ -302,7 +315,7 @@ def bytes_to_hex(value: bytes) -> str:
     >>> bytes_to_hex(b'test')
     '74:65:73:74'
     """
-    return add_colons(binascii.hexlify(value).upper().decode('utf-8'))
+    return add_colons(binascii.hexlify(value).upper().decode("utf-8"))
 
 
 def hex_to_bytes(value: str) -> bytes:
@@ -313,7 +326,7 @@ def hex_to_bytes(value: str) -> bytes:
     >>> hex_to_bytes('74:65:73:74')
     b'test'
     """
-    return binascii.unhexlify(value.replace(':', ''))
+    return binascii.unhexlify(value.replace(":", ""))
 
 
 def sanitize_serial(value: str) -> str:
@@ -329,17 +342,16 @@ def sanitize_serial(value: str) -> str:
         '1AB'
     """
 
-    serial = value.upper().replace(':', '')
-    if serial != '0':
-        serial = serial.lstrip('0')
-    if re.search('[^0-9A-F]', serial):
-        raise ValueError('%s: Serial has invalid characters' % value)
+    serial = value.upper().replace(":", "")
+    if serial != "0":
+        serial = serial.lstrip("0")
+    if re.search("[^0-9A-F]", serial):
+        raise ValueError("%s: Serial has invalid characters" % value)
     return serial
 
 
 def parse_csr(
-        csr: Union[x509.CertificateSigningRequest, str, bytes],
-        csr_format: Encoding
+    csr: Union[x509.CertificateSigningRequest, str, bytes], csr_format: Encoding
 ) -> x509.CertificateSigningRequest:
     """Parse a CSR in the given format.
 
@@ -359,7 +371,7 @@ def parse_csr(
     if csr_format == Encoding.DER:
         return x509.load_der_x509_csr(force_bytes(csr), default_backend())
 
-    raise ValueError('Unknown CSR format passed: %s' % csr_format)
+    raise ValueError("Unknown CSR format passed: %s" % csr_format)
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:
@@ -411,7 +423,7 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     try:
         items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_str(t[2])) for t in NAME_RE.findall(name)]
     except KeyError as e:
-        raise ValueError('Unknown x509 name field: %s' % e.args[0]) from e
+        raise ValueError("Unknown x509 name field: %s" % e.args[0]) from e
 
     # Check that no OIDs not in MULTIPLE_OIDS occur more then once
     for key, oid in NAME_OID_MAPPINGS.items():
@@ -450,9 +462,9 @@ def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.Relative
     if isinstance(name, str):
         name = parse_name(name)
 
-    return x509.RelativeDistinguishedName([
-        x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name
-    ])
+    return x509.RelativeDistinguishedName(
+        [x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name]
+    )
 
 
 def validate_email(addr: str) -> str:
@@ -468,16 +480,16 @@ def validate_email(addr: str) -> str:
     ValueError: Invalid domain: bar com
 
     """
-    if '@' not in addr:
-        raise ValueError('Invalid email address: %s' % addr)
+    if "@" not in addr:
+        raise ValueError("Invalid email address: %s" % addr)
 
-    node, domain = addr.rsplit('@', 1)
+    node, domain = addr.rsplit("@", 1)
     try:
-        domain = idna.encode(domain).decode('utf-8')
+        domain = idna.encode(domain).decode("utf-8")
     except idna.IDNAError as e:
-        raise ValueError('Invalid domain: %s' % domain) from e
+        raise ValueError("Invalid domain: %s" % domain) from e
 
-    return '%s@%s' % (node, domain)
+    return "%s@%s" % (node, domain)
 
 
 def validate_hostname(hostname: str, allow_port: bool = False) -> str:
@@ -504,31 +516,31 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
     """
     port = None
-    if allow_port is True and ':' in hostname:
-        hostname, port_str = hostname.rsplit(':', 1)
+    if allow_port is True and ":" in hostname:
+        hostname, port_str = hostname.rsplit(":", 1)
 
         try:
             port = int(port_str)
         except ValueError as e:
-            raise ValueError('%s: Port must be an integer' % port_str) from e
+            raise ValueError("%s: Port must be an integer" % port_str) from e
 
         if port < 1 or port > 65535:
-            raise ValueError('%s: Port must be between 1 and 65535' % port)
+            raise ValueError("%s: Port must be between 1 and 65535" % port)
 
     try:
-        encoded: str = idna.encode(hostname).decode('utf-8')
+        encoded: str = idna.encode(hostname).decode("utf-8")
     except idna.IDNAError as e:
-        raise ValueError('%s: Not a valid hostname' % hostname) from e
+        raise ValueError("%s: Not a valid hostname" % hostname) from e
 
     if allow_port is True and port is not None:
-        return '%s:%s' % (encoded, port)
+        return "%s:%s" % (encoded, port)
     return encoded
 
 
 def validate_key_parameters(
-        key_size: Optional[int] = None,
-        key_type: Optional[str] = 'RSA',
-        ecc_curve: Optional[ec.EllipticCurve] = None
+    key_size: Optional[int] = None,
+    key_type: Optional[str] = "RSA",
+    ecc_curve: Optional[ec.EllipticCurve] = None,
 ) -> Tuple[Optional[int], str, Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
@@ -545,28 +557,28 @@ def validate_key_parameters(
     ValueError: 4000: Key size must be a power of two
     """
     if key_type is None:
-        key_type = 'RSA'
+        key_type = "RSA"
 
-    if key_type == 'ECC':
+    if key_type == "ECC":
         key_size = None
         ecc_curve = parse_key_curve(ecc_curve)
-    elif key_type in ['DSA', 'RSA']:
+    elif key_type in ["DSA", "RSA"]:
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
 
         if not is_power2(key_size):
             raise ValueError("%s: Key size must be a power of two" % key_size)
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
-            raise ValueError("%s: Key size must be least %s bits" % (
-                key_size, ca_settings.CA_MIN_KEY_SIZE))
+            raise ValueError("%s: Key size must be least %s bits" % (key_size, ca_settings.CA_MIN_KEY_SIZE))
     else:
-        raise ValueError('%s: Unknown key type' % key_type)
+        raise ValueError("%s: Unknown key type" % key_type)
 
     return key_size, key_type, ecc_curve
 
 
-def generate_private_key(key_size: int, key_type: str, ecc_curve: Optional[ec.EllipticCurve]) \
-        -> Union[rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey]:
+def generate_private_key(
+    key_size: Optional[int], key_type: str, ecc_curve: Optional[ec.EllipticCurve]
+) -> Union[rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey]:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
@@ -588,11 +600,11 @@ def generate_private_key(key_size: int, key_type: str, ecc_curve: Optional[ec.El
     key
         A private key of the appropriate type.
     """
-    if key_type == 'DSA':
+    if key_type == "DSA":
         return dsa.generate_private_key(key_size=key_size, backend=default_backend())
-    if key_type == 'ECC' and ecc_curve is not None:
+    if key_type == "ECC" and ecc_curve is not None:
         return ec.generate_private_key(ecc_curve, default_backend())
-    if key_type == 'RSA':
+    if key_type == "RSA":
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
     raise ValueError("%s: Invalid key type." % key_type)
@@ -658,8 +670,9 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     if isinstance(name, x509.GeneralName):
         return name
     if not isinstance(name, str):
-        raise ValueError('Cannot parse general name %s: Must be of type str (was: %s).' %
-                         (name, type(name).__name__))
+        raise ValueError(
+            "Cannot parse general name %s: Must be of type str (was: %s)." % (name, type(name).__name__)
+        )
 
     typ = None
     match = GENERAL_NAME_RE.match(name)
@@ -668,19 +681,19 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         typ = typ.lower()
 
     if typ is None:
-        if re.match('[a-z0-9]{2,}://', name):  # Looks like a URI
+        if re.match("[a-z0-9]{2,}://", name):  # Looks like a URI
             try:
                 return x509.UniformResourceIdentifier(encode_url(name))
             except idna.IDNAError:
                 pass
 
-        if '@' in name:  # Looks like an Email address
+        if "@" in name:  # Looks like an Email address
             try:
                 return x509.RFC822Name(validate_email(name))
             except ValueError:
                 pass
 
-        if name.strip().startswith('/'):  # maybe it's a dirname?
+        if name.strip().startswith("/"):  # maybe it's a dirname?
             return x509.DirectoryName(x509_name(name))
 
         # Try to parse this as IPAddress/Network
@@ -697,16 +710,16 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         try:
             return x509.DNSName(encode_dns(name))
         except idna.IDNAError as e:
-            raise ValueError('Could not parse name: %s' % name) from e
+            raise ValueError("Could not parse name: %s" % name) from e
 
-    if typ == 'uri':
+    if typ == "uri":
         try:
             return x509.UniformResourceIdentifier(encode_url(name))
         except idna.IDNAError as e:
-            raise ValueError('Could not parse DNS name in URL: %s' % name) from e
-    elif typ == 'email':
+            raise ValueError("Could not parse DNS name in URL: %s" % name) from e
+    elif typ == "email":
         return x509.RFC822Name(validate_email(name))  # validate_email already raises ValueError
-    elif typ == 'ip':
+    elif typ == "ip":
         try:
             return x509.IPAddress(ip_address(name))
         except ValueError:
@@ -717,30 +730,30 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         except ValueError:
             pass
 
-        raise ValueError('Could not parse IP address.')
-    elif typ == 'rid':
+        raise ValueError("Could not parse IP address.")
+    elif typ == "rid":
         return x509.RegisteredID(x509.ObjectIdentifier(name))
-    elif typ == 'othername':
+    elif typ == "othername":
         match = re.match("(.*);(.*):(.*)", name)
         if match is not None:
             oid, asn_typ, val = match.groups()
-            if asn_typ == 'UTF8':
-                parsed_value = val.encode('utf-8')
-            elif asn_typ == 'OctetString':
+            if asn_typ == "UTF8":
+                parsed_value = val.encode("utf-8")
+            elif asn_typ == "OctetString":
                 parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
-                raise ValueError('Unsupported ASN type in otherName: %s' % asn_typ)
+                raise ValueError("Unsupported ASN type in otherName: %s" % asn_typ)
 
             return x509.OtherName(x509.ObjectIdentifier(oid), parsed_value)
 
-        raise ValueError('Incorrect otherName format: %s' % name)
-    elif typ == 'dirname':
+        raise ValueError("Incorrect otherName format: %s" % name)
+    elif typ == "dirname":
         return x509.DirectoryName(x509_name(name))
     else:
         try:
             return x509.DNSName(encode_dns(name))
         except idna.IDNAError as e:
-            raise ValueError('Could not parse DNS name: %s' % name) from e
+            raise ValueError("Could not parse DNS name: %s" % name) from e
 
 
 def parse_hash_algorithm(value: ParsableHash = None) -> hashes.HashAlgorithm:
@@ -806,9 +819,9 @@ def parse_hash_algorithm(value: ParsableHash = None) -> hashes.HashAlgorithm:
             algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
             return algo()
         except AttributeError as e:
-            raise ValueError('Unknown hash algorithm: %s' % value) from e
+            raise ValueError("Unknown hash algorithm: %s" % value) from e
 
-    raise ValueError('Unknown type passed: %s' % type(value).__name__)
+    raise ValueError("Unknown type passed: %s" % type(value).__name__)
 
 
 def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
@@ -831,15 +844,15 @@ def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
     if isinstance(value, Encoding):
         return value
     if isinstance(value, str):
-        if value == 'ASN1':
-            value = 'DER'
+        if value == "ASN1":
+            value = "DER"
 
         try:
             return getattr(Encoding, value)
         except AttributeError as e:
-            raise ValueError('Unknown encoding: %s' % value) from e
+            raise ValueError("Unknown encoding: %s" % value) from e
 
-    raise ValueError('Unknown type passed: %s' % type(value).__name__)
+    raise ValueError("Unknown type passed: %s" % type(value).__name__)
 
 
 def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.EllipticCurve:
@@ -891,13 +904,11 @@ def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.
 
     curve: Type[ec.EllipticCurve] = getattr(ec, value.strip(), type)
     if not issubclass(curve, ec.EllipticCurve):
-        raise ValueError('%s: Not a known Eliptic Curve' % value)
+        raise ValueError("%s: Not a known Eliptic Curve" % value)
     return curve()
 
 
-def get_cert_builder(
-        expires: Optional[Union[datetime, timedelta]] = None, serial: Optional[int] = None
-) -> x509.CertificateBuilder:
+def get_cert_builder(expires: Expires = None, serial: Optional[int] = None) -> x509.CertificateBuilder:
     """Get a basic X.509 certificate builder object.
 
     Parameters
@@ -946,7 +957,7 @@ def read_file(path: str) -> bytes:
     file using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
     if os.path.isabs(path):
-        with open(path, 'rb') as abs_stream:
+        with open(path, "rb") as abs_stream:
             return abs_stream.read()
 
     stream = ca_storage.open(path)
@@ -960,7 +971,7 @@ def read_file(path: str) -> bytes:
 
 
 # Note used currently, but left here for future reference
-#def write_private_file(path, data):
+# def write_private_file(path, data):
 #    """Function to write binary data to a file that will only be readable to the user."""
 #
 #    with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
@@ -1007,11 +1018,13 @@ class GeneralNameList(List[x509.GeneralName]):
         True
 
     """
+
     # pylint: disable=not-an-iterable; pylint does not detect generic iterables ("class Foo(List[Any])").
     #                                  See also: https://github.com/PyCQA/pylint/issues/2568
 
-    def __init__(self,
-                 iterable: Optional[Union[ParsableGeneralName, ParsableGeneralNameList]] = None) -> None:
+    def __init__(
+        self, iterable: Optional[Union[ParsableGeneralName, ParsableGeneralNameList]] = None
+    ) -> None:
         if iterable is None:
             iterable = []
         if isinstance(iterable, (str, x509.GeneralName)):
@@ -1023,7 +1036,7 @@ class GeneralNameList(List[x509.GeneralName]):
         """Generate a list of formatted names."""
         return [format_general_name(v) for v in self]
 
-    def __add__(self, value: ParsableGeneralNameList) -> 'GeneralNameList':
+    def __add__(self, value: ParsableGeneralNameList) -> "GeneralNameList":
         # self + other_list
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
@@ -1042,11 +1055,11 @@ class GeneralNameList(List[x509.GeneralName]):
             other = GeneralNameList(other)
         return list.__eq__(self, other)
 
-    def __iadd__(self, value: ParsableGeneralNameList) -> 'GeneralNameList':  # self += value
+    def __iadd__(self, value: ParsableGeneralNameList) -> "GeneralNameList":  # self += value
         return list.__iadd__(self, (parse_general_name(v) for v in value))
 
     def __repr__(self) -> str:
-        return '<GeneralNameList: %r>' % [format_general_name(v) for v in self]
+        return "<GeneralNameList: %r>" % [format_general_name(v) for v in self]
 
     # Overloading functions, see also:
     #   https://mypy.readthedocs.io/en/stable/more_types.html#function-overloading
@@ -1059,8 +1072,7 @@ class GeneralNameList(List[x509.GeneralName]):
         ...
 
     def __setitem__(
-            self, key: Union[SupportsIndex, slice],
-            value: Union[ParsableGeneralNameList, ParsableGeneralName]
+        self, key: Union[SupportsIndex, slice], value: Union[ParsableGeneralNameList, ParsableGeneralName]
     ) -> None:  # l[0] = 'example.com'
         if isinstance(key, slice) and isinstance(value, abc.Iterable):
             # equivalent to l[0:1] = ['example.com']
@@ -1102,11 +1114,14 @@ class GeneralNameList(List[x509.GeneralName]):
 
 
 def get_crl_cache_key(
-        serial: str, algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
-        encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
+    serial: str,
+    algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+    encoding: Encoding = Encoding.DER,
+    scope: Optional[str] = None,
+) -> str:
     """Function to get a cache key for a CRL with the given parameters."""
 
-    return 'crl_%s_%s_%s_%s' % (serial, algorithm.name, encoding.name, scope)
+    return "crl_%s_%s_%s_%s" % (serial, algorithm.name, encoding.name, scope)
 
 
 # NOTE: get_storage_class is typed to Storage (but really returns the subclass FileSystemStorage).
