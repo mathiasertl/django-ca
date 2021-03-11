@@ -24,8 +24,7 @@ from . import ca_settings
 from .acme.constants import Status
 from .utils import sanitize_serial
 
-
-T = TypeVar("T")
+QuerySetTypeVar = TypeVar("QuerySetTypeVar")
 
 
 class DjangoCAMixin:
@@ -57,7 +56,7 @@ class DjangoCAMixin:
         except self.model.DoesNotExist:
             return self.get(startswith_query)
 
-    def revoked(self: T) -> T:
+    def revoked(self: QuerySetTypeVar) -> QuerySetTypeVar:
         """Return revoked certificates."""
 
         return self.filter(revoked=True)
