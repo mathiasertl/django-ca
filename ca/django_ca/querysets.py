@@ -91,21 +91,21 @@ class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
                 ca = self.get(serial=ca_settings.CA_DEFAULT_CA)
             except self.model.DoesNotExist:
                 # pylint: disable=raise-missing-from; not useful here
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s: CA not found.' % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured("CA_DEFAULT_CA: %s: CA not found." % ca_settings.CA_DEFAULT_CA)
 
             if ca.enabled is False:
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is disabled.' % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured("CA_DEFAULT_CA: %s is disabled." % ca_settings.CA_DEFAULT_CA)
             if ca.expires < now:
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is expired.' % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured("CA_DEFAULT_CA: %s is expired." % ca_settings.CA_DEFAULT_CA)
             if ca.valid_from > now:  # OK, how could this ever happen? ;-)
-                raise ImproperlyConfigured('CA_DEFAULT_CA: %s is not yet valid.' % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured("CA_DEFAULT_CA: %s is not yet valid." % ca_settings.CA_DEFAULT_CA)
             return ca
 
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
         # will just create several CAs that all actually expire on the same day.
-        ca = self.usable().order_by('-expires', 'serial').first()  # usable == enabled and valid
+        ca = self.usable().order_by("-expires", "serial").first()  # usable == enabled and valid
         if ca is None:
-            raise ImproperlyConfigured('No CA is currently usable.')
+            raise ImproperlyConfigured("No CA is currently usable.")
         return ca
 
     def disabled(self):
@@ -163,8 +163,9 @@ class AcmeAccountQuerySet(models.QuerySet):
         also if it was revoked by the CA.
         """
         now = timezone.now()
-        return self.filter(ca__enabled=True, ca__acme_enabled=True,
-                           ca__expires__gt=now, ca__valid_from__lt=now)
+        return self.filter(
+            ca__enabled=True, ca__acme_enabled=True, ca__expires__gt=now, ca__valid_from__lt=now
+        )
 
 
 class AcmeOrderQuerySet(models.QuerySet):
@@ -181,8 +182,10 @@ class AcmeOrderQuerySet(models.QuerySet):
         """
         now = timezone.now()
         return self.filter(
-            account__ca__enabled=True, account__ca__acme_enabled=True,
-            account__ca__expires__gt=now, account__ca__valid_from__lt=now
+            account__ca__enabled=True,
+            account__ca__acme_enabled=True,
+            account__ca__expires__gt=now,
+            account__ca__valid_from__lt=now,
         ).exclude(account__status=Status.REVOKED.value)
 
 
@@ -195,7 +198,7 @@ class AcmeAuthorizationQuerySet(models.QuerySet):
 
     def url(self):
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
-        return self.select_related('order__account__ca')
+        return self.select_related("order__account__ca")
 
     def viewable(self):
         """Filter ACME authzs that can be viewed via the ACME API.
@@ -204,8 +207,10 @@ class AcmeAuthorizationQuerySet(models.QuerySet):
         """
         now = timezone.now()
         return self.filter(
-            order__account__ca__enabled=True, order__account__ca__acme_enabled=True,
-            order__account__ca__expires__gt=now, order__account__ca__valid_from__lt=now
+            order__account__ca__enabled=True,
+            order__account__ca__acme_enabled=True,
+            order__account__ca__expires__gt=now,
+            order__account__ca__valid_from__lt=now,
         ).exclude(order__account__status=Status.REVOKED.value)
 
 
@@ -218,7 +223,7 @@ class AcmeChallengeQuerySet(models.QuerySet):
 
     def url(self):
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
-        return self.select_related('auth__order__account__ca')
+        return self.select_related("auth__order__account__ca")
 
     def viewable(self):
         """Filter ACME challenges that can be viewed via the ACME API.
@@ -227,8 +232,10 @@ class AcmeChallengeQuerySet(models.QuerySet):
         """
         now = timezone.now()
         return self.filter(
-            auth__order__account__ca__enabled=True, auth__order__account__ca__acme_enabled=True,
-            auth__order__account__ca__expires__gt=now, auth__order__account__ca__valid_from__lt=now
+            auth__order__account__ca__enabled=True,
+            auth__order__account__ca__acme_enabled=True,
+            auth__order__account__ca__expires__gt=now,
+            auth__order__account__ca__valid_from__lt=now,
         ).exclude(auth__order__account__status=Status.REVOKED.value)
 
 
@@ -241,7 +248,7 @@ class AcmeCertificateQuerySet(models.QuerySet):
 
     def url(self):
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
-        return self.select_related('order__account__ca')
+        return self.select_related("order__account__ca")
 
     def viewable(self):
         """Filter ACME certificates that can be viewed via the ACME API.
@@ -250,14 +257,15 @@ class AcmeCertificateQuerySet(models.QuerySet):
         revoked and the certificate itself was not revoked.
         """
         now = timezone.now()
-        return self.filter(
-            order__account__ca__enabled=True, order__account__ca__acme_enabled=True,
-            order__account__ca__expires__gt=now, order__account__ca__valid_from__lt=now,
-            order__status=Status.VALID.value,
-        ).exclude(
-            order__account__status=Status.REVOKED.value
-        ).exclude(
-            cert__isnull=True
-        ).exclude(
-            cert__revoked=True
+        return (
+            self.filter(
+                order__account__ca__enabled=True,
+                order__account__ca__acme_enabled=True,
+                order__account__ca__expires__gt=now,
+                order__account__ca__valid_from__lt=now,
+                order__status=Status.VALID.value,
+            )
+            .exclude(order__account__status=Status.REVOKED.value)
+            .exclude(cert__isnull=True)
+            .exclude(cert__revoked=True)
         )
