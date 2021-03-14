@@ -4,6 +4,15 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.17.3:
+
+*******************
+1.17.3 (2021-02-19)
+*******************
+
+* Include templates in installations via pip (fixes `issue 72
+  <https://github.com/mathiasertl/django-ca/issues/72>`_)
+
 .. _changelog-1.17.2:
 
 *******************
