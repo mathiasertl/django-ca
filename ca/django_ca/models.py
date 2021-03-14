@@ -29,7 +29,6 @@ from datetime import timedelta
 from typing import Dict
 from typing import Iterable
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -108,6 +107,7 @@ from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
 from .typehints import Expires
+from .typehints import Literal
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
 from .utils import add_colons

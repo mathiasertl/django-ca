@@ -33,11 +33,13 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 
 # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
+    from typing import Literal
     from typing import Protocol
     from typing import SupportsIndex as SupportsIndex
     from typing import TypedDict as TypedDict
 else:  # pragma: only py<3.8
     # pylint: disable=import-error; typing_extensions is not present in newer environments
+    from typing_extensions import Literal  # NOQA: F401
     from typing_extensions import Protocol
     from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401
     from typing_extensions import TypedDict as TypedDict
