@@ -10,6 +10,7 @@ ChangeLog
 1.17.3 (2021-03-14)
 *******************
 
+* Use Alpine 3.13 and Python 3.9 in the Docker image.
 * Include templates in installations via pip (fixes `issue 72
   <https://github.com/mathiasertl/django-ca/issues/72>`_)
 
