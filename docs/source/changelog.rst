@@ -37,6 +37,16 @@ Deprecation notices
   removed in django-ca 1.20.0. The man page explicitly states it "is only useful for test and demonstration
   purposes", and we can solidly run our own responders by now.
 
+.. _changelog-1.17.3:
+
+*******************
+1.17.3 (2021-03-14)
+*******************
+
+* Use Alpine 3.13 and Python 3.9 in the Docker image.
+* Include templates in installations via pip (fixes `issue 72
+  <https://github.com/mathiasertl/django-ca/issues/72>`_)
+
 .. _changelog-1.17.2:
 
 *******************

@@ -36,7 +36,11 @@ settings.configure(
         'django.contrib.contenttypes',
         "django.contrib.staticfiles",
         "django.contrib.admin",
+<<<<<<< HEAD
         'django_ca',
+=======
+        "django_ca",
+>>>>>>> release/1.17
     ],
     BASE_DIR=os.getcwd(),
     TEMPLATES=[
@@ -74,6 +78,7 @@ for template in [
     "django_ca/admin/extensions/base/base.html",
     "django_ca/admin/submit_line.html",
     "django_ca/forms/widgets/profile.html",
+    "django_ca/forms/widgets/subjecttextinput.html",
 ]:
     try:
         get_template(template)

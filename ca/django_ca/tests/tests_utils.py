@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
+import django
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -824,6 +825,23 @@ class X509NameTestCase(TestCase):
 class MultilineURLValidatorTestCase(TestCase):
     """Test :py:func:`django_ca.utils.multiline_url_validator`."""
 
+    @contextmanager
+    def assertValidationError(self, value):
+        """Wrapper to assert a validation error.
+
+        Django 3.2 adds the value to ValidationError. This method turns into a useless one-liner as soon as we
+        drop support for Django<3.1.
+        """
+        with self.assertRaises(ValidationError) as e:
+            yield
+
+        if django.VERSION[:2] < (3, 2):
+            params = None
+        else:
+            params = {"value": value}
+
+        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', params))
+
     def test_basic(self):
         """Basic working tests."""
         multiline_url_validator('')
@@ -834,21 +852,17 @@ http://www.example.net''')
 
     def test_error(self):
         """Test various invalid cases."""
-        with self.assertRaises(ValidationError) as e:
+        with self.assertValidationError("foo"):
             multiline_url_validator('foo')
-        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
-        with self.assertRaises(ValidationError):
+        with self.assertValidationError("foo"):
             multiline_url_validator('foo\nhttp://www.example.com')
-        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
-        with self.assertRaises(ValidationError):
+        with self.assertValidationError("foo"):
             multiline_url_validator('http://www.example.com\nfoo')
-        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
         with self.assertRaises(ValidationError):
             multiline_url_validator('http://www.example.com\nfoo\nhttp://example.org')
-        self.assertEqual(e.exception.args, ('Enter a valid URL.', 'invalid', None))
 
 
 class GetCertBuilderTestCase(DjangoCATestCase):
