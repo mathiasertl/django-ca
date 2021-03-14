@@ -7,7 +7,7 @@ ChangeLog
 .. _changelog-1.17.3:
 
 *******************
-1.17.3 (2021-02-19)
+1.17.3 (2021-03-14)
 *******************
 
 * Include templates in installations via pip (fixes `issue 72
