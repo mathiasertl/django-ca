@@ -384,7 +384,9 @@ qualname_overrides = {
     'cryptography.hazmat.primitives._serialization.Encoding':
         'cg:cryptography.hazmat.primitives.serialization.Encoding',
     'cryptography.x509.base.CertificateBuilder': 'cg:cryptography.x509.CertificateBuilder',
+    "cryptography.x509.base.CertificateRevocationList": "cg:cryptography.x509.CertificateRevocationList",
     'cryptography.x509.base.CertificateSigningRequest': 'cg:cryptography.x509.CertificateSigningRequest',
+    "cryptography.x509.base.RevokedCertificate": "cg:cryptography.x509.RevokedCertificate",
     'cryptography.x509.extensions.AuthorityInformationAccess':
         'cg:cryptography.x509.AuthorityInformationAccess',
     'cryptography.x509.extensions.AuthorityKeyIdentifier': 'cg:cryptography.x509.AuthorityKeyIdentifier',
@@ -415,6 +417,7 @@ qualname_overrides = {
     'cryptography.x509.general_name.GeneralName': 'cg:cryptography.x509.GeneralName',
     'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
     'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
+    "django_ca.extensions.extensions.AuthorityKeyIdentifier": "django_ca.extensions.AuthorityKeyIdentifier",
     'ExtensionTypeVar': 'cg:cryptography.x509.ExtensionType',
     'Union': 'python:typing.Union',
     'typing.S': 'django_ca.extensions.base.S',
