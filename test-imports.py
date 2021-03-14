@@ -36,7 +36,7 @@ settings.configure(
         'django.contrib.contenttypes',
         "django.contrib.staticfiles",
         "django.contrib.admin",
-        'django_ca',
+        "django_ca",
     ],
     BASE_DIR=os.getcwd(),
     TEMPLATES=[
@@ -73,7 +73,7 @@ for template in [
     "admin/django_ca/certificate/revoke_form.html",
     "django_ca/admin/extensions/base/base.html",
     "django_ca/admin/submit_line.html",
-    "django_ca/forms/widgets/profile.html",
+    "django_ca/forms/widgets/subjecttextinput.html",
 ]:
     try:
         get_template(template)
