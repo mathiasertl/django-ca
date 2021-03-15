@@ -59,6 +59,8 @@ from .typehints import Expires
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
+from .typehints import ParsableKeyCurve
+from .typehints import ParsableKeyType
 from .typehints import ParsableRelativeDistinguishedName
 from .typehints import SupportsIndex
 
@@ -539,8 +541,8 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
 def validate_key_parameters(
     key_size: Optional[int] = None,
-    key_type: Optional[str] = "RSA",
-    ecc_curve: Optional[ec.EllipticCurve] = None,
+    key_type: ParsableKeyType = "RSA",
+    ecc_curve: ParsableKeyCurve = None,
 ) -> Tuple[Optional[int], str, Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
@@ -872,7 +874,7 @@ def parse_expires(expires: Expires = None) -> datetime:
     return now + ca_settings.CA_DEFAULT_EXPIRES
 
 
-def parse_key_curve(value: Optional[Union[ec.EllipticCurve, str]] = None) -> ec.EllipticCurve:
+def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
     """Parse an elliptic curve value.
 
     This function uses a value identifying an elliptic curve to return an

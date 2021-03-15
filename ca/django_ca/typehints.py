@@ -29,17 +29,19 @@ from typing import Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
+# NOTE: Explicit re-export (... import foo as foo) to make classes usable in other modules
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
-    from typing import Literal
+    from typing import Literal as Literal
     from typing import Protocol
     from typing import SupportsIndex as SupportsIndex
     from typing import TypedDict as TypedDict
 else:  # pragma: only py<3.8
     # pylint: disable=import-error; typing_extensions is not present in newer environments
-    from typing_extensions import Literal  # NOQA: F401
+    from typing_extensions import Literal as Literal  # NOQA: F401
     from typing_extensions import Protocol
     from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401
     from typing_extensions import TypedDict as TypedDict
@@ -57,6 +59,8 @@ class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; jus
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
+ParsableKeyType = Optional[Literal["RSA", "DSA", "ECC"]]
+ParsableKeyCurve = Optional[Union[ec.EllipticCurve, str]]
 
 # GeneralNameList
 ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]
