@@ -567,16 +567,16 @@ class CertificateTests(DjangoCAWithCertTestCase):
     def test_digest(self):
         """Test getting the digest value."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.get_digest('md5'), certs[name]['md5'])
-            self.assertEqual(ca.get_digest('sha1'), certs[name]['sha1'])
-            self.assertEqual(ca.get_digest('sha256'), certs[name]['sha256'])
-            self.assertEqual(ca.get_digest('sha512'), certs[name]['sha512'])
+            self.assertEqual(ca.get_digest('MD5'), certs[name]['md5'])
+            self.assertEqual(ca.get_digest('SHA1'), certs[name]['sha1'])
+            self.assertEqual(ca.get_digest('SHA256'), certs[name]['sha256'])
+            self.assertEqual(ca.get_digest('SHA512'), certs[name]['sha512'])
 
         for name, cert in self.certs.items():
-            self.assertEqual(cert.get_digest('md5'), certs[name]['md5'])
-            self.assertEqual(cert.get_digest('sha1'), certs[name]['sha1'])
-            self.assertEqual(cert.get_digest('sha256'), certs[name]['sha256'])
-            self.assertEqual(cert.get_digest('sha512'), certs[name]['sha512'])
+            self.assertEqual(cert.get_digest('MD5'), certs[name]['md5'])
+            self.assertEqual(cert.get_digest('SHA1'), certs[name]['sha1'])
+            self.assertEqual(cert.get_digest('SHA256'), certs[name]['sha256'])
+            self.assertEqual(cert.get_digest('SHA512'), certs[name]['sha512'])
 
     def test_hpkp_pin(self):
         """Test getting a HPKP pin for a certificate."""

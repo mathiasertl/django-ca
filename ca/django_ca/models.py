@@ -17,7 +17,6 @@
 """
 
 import base64
-import binascii
 import hashlib
 import itertools
 import json
@@ -90,6 +89,7 @@ from .extensions import SubjectAlternativeName
 from .extensions import SubjectKeyIdentifier
 from .extensions import TLSFeature
 from .extensions import get_extension_name
+from .extensions.base import Extension
 from .managers import AcmeAccountManager
 from .managers import AcmeAuthorizationManager
 from .managers import AcmeCertificateManager
@@ -109,12 +109,15 @@ from .signals import pre_revoke_cert
 from .subject import Subject
 from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
+from .typehints import ExtensionTypeTypeVar
 from .typehints import Literal
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
 from .typehints import ParsableKeyCurve
 from .typehints import ParsableKeyType
-from .utils import add_colons
+from .typehints import ParsableValue
+from .typehints import SerializedValue
+from .utils import bytes_to_hex
 from .utils import ca_storage
 from .utils import classproperty
 from .utils import format_name
@@ -320,7 +323,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self.revoked_date
 
     @property
-    def x509(self):
+    def x509(self) -> "x509.Certificate":
         """The underlying :py:class:`cg:cryptography.x509.Certificate`."""
         if self._x509 is None:
             backend = default_backend()
@@ -328,7 +331,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self._x509
 
     @x509.setter
-    def x509(self, value):
+    def x509(self, value: "x509.Certificate") -> None:
         """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
@@ -346,11 +349,11 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     ##########################
 
     @property
-    def algorithm(self):
+    def algorithm(self) -> Optional[hashes.HashAlgorithm]:
         """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
         return self.x509.signature_hash_algorithm
 
-    def dump_certificate(self, encoding=Encoding.PEM):
+    def dump_certificate(self, encoding: Encoding = Encoding.PEM) -> bytes:
         """Get the certificate as bytes in the requested format.
 
         Parameters
@@ -362,12 +365,12 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 
         return self.x509.public_bytes(encoding=encoding)
 
-    def get_digest(self, algo):
+    def get_digest(self, algo: ParsableHash) -> str:
         """Get the digest for a certificate as string, including colons."""
-        algo = getattr(hashes, algo.upper())()
-        return add_colons(binascii.hexlify(self.x509.fingerprint(algo)).upper().decode("utf-8"))
+        algo = parse_hash_algorithm(algo)
+        return bytes_to_hex(self.x509.fingerprint(algo))
 
-    def get_filename(self, ext, bundle=False):
+    def get_filename(self, ext: str, bundle: bool = False) -> str:
         """Get a filename safe for any file system and OS for this certificate based on the common name.
 
         Parameters
@@ -531,7 +534,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return fields
 
     @cached_property
-    def extensions(self):
+    def extensions(self) -> List[Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue]]:
         """List of all extensions for this certificate."""
         exts = []
 

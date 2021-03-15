@@ -18,6 +18,7 @@
 
 from datetime import datetime
 
+from ...utils import parse_hash_algorithm
 from ..base import CertCommand
 
 
@@ -67,8 +68,9 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
             self.stdout.write('* %s' % watcher)
 
         self.stdout.write('Digest:')
-        for algo in ['md5', 'sha1', 'sha256', 'sha512']:
-            self.stdout.write('    %s: %s' % (algo, cert.get_digest(algo)))
+        for algorithm_key in ['MD5', 'SHA1', 'SHA256', 'SHA512']:
+            algo = parse_hash_algorithm(algorithm_key)
+            self.stdout.write('    %s: %s' % (algo.name, cert.get_digest(algo)))
 
         self.stdout.write('HPKP pin: %s' % cert.hpkp_pin)
 
