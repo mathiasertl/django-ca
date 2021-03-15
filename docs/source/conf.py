@@ -383,6 +383,7 @@ qualname_overrides = {
         'cg:cryptography.hazmat.primitives.serialization.Encoding',
     'cryptography.hazmat.primitives._serialization.Encoding':
         'cg:cryptography.hazmat.primitives.serialization.Encoding',
+    "cryptography.x509.base.Certificate": "cg:cryptography.x509.Certificate",
     'cryptography.x509.base.CertificateBuilder': 'cg:cryptography.x509.CertificateBuilder',
     "cryptography.x509.base.CertificateRevocationList": "cg:cryptography.x509.CertificateRevocationList",
     'cryptography.x509.base.CertificateSigningRequest': 'cg:cryptography.x509.CertificateSigningRequest',
@@ -396,6 +397,7 @@ qualname_overrides = {
     'cryptography.x509.extensions.DistributionPoint': 'cg:cryptography.x509.DistributionPoint',
     'cryptography.x509.extensions.ExtendedKeyUsage': 'cg:cryptography.x509.ExtendedKeyUsage',
     'cryptography.x509.extensions.Extension': 'cg:cryptography.x509.Extension',
+    "cryptography.x509.extensions.ExtensionType": "cg:cryptography.x509.ExtensionType",
     'cryptography.x509.extensions.FreshestCRL': 'cg:cryptography.x509.FreshestCRL',
     'cryptography.x509.extensions.InhibitAnyPolicy': 'cg:cryptography.x509.InhibitAnyPolicy',
     'cryptography.x509.extensions.IssuerAlternativeName': 'cg:cryptography.x509.IssuerAlternativeName',
