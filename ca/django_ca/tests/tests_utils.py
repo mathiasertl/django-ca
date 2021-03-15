@@ -826,7 +826,7 @@ class MultilineURLValidatorTestCase(TestCase):
     """Test :py:func:`django_ca.utils.multiline_url_validator`."""
 
     @contextmanager
-    def assertValidationError(self, value):
+    def assertValidationError(self, value):  # pylint: disable=invalid-name; unittest standard
         """Wrapper to assert a validation error.
 
         Django 3.2 adds the value to ValidationError. This method turns into a useless one-liner as soon as we

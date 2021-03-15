@@ -59,7 +59,7 @@ class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; jus
         ...
 
 
-PRIVATE_KEY_TYPES = Union[
+PrivateKeyTypes = Union[
     rsa.RSAPrivateKey,
     dsa.DSAPrivateKey,
     ec.EllipticCurvePrivateKey,

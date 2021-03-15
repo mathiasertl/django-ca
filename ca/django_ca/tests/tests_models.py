@@ -142,6 +142,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     def test_key_str_password(self):
+        """Test accessing the private key with a string password."""
         ca = self.usable_cas["pwd"]
         pwd = certs["pwd"]["password"].decode("utf-8")
 

@@ -107,7 +107,6 @@ from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
-from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import ExtensionTypeTypeVar
 from .typehints import Literal
@@ -116,6 +115,7 @@ from .typehints import ParsableHash
 from .typehints import ParsableKeyCurve
 from .typehints import ParsableKeyType
 from .typehints import ParsableValue
+from .typehints import PrivateKeyTypes
 from .typehints import SerializedValue
 from .utils import bytes_to_hex
 from .utils import ca_storage
@@ -774,7 +774,7 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    def key(self, password: Optional[Union[str, bytes]]) -> PRIVATE_KEY_TYPES:
+    def key(self, password: Optional[Union[str, bytes]]) -> PrivateKeyTypes:
         """The CAs private key as private key.
 
         .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
