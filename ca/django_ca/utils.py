@@ -1124,7 +1124,7 @@ class GeneralNameList(List[x509.GeneralName]):
 
 def get_crl_cache_key(
     serial: str,
-    algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+    algorithm: hashes.HashAlgorithm = hashes.SHA512,
     encoding: Encoding = Encoding.DER,
     scope: Optional[str] = None,
 ) -> str:

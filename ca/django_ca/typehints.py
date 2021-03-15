@@ -29,7 +29,9 @@ from typing import Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
@@ -56,6 +58,12 @@ class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; jus
     def __lt__(self, __other: Any) -> bool:  # pragma: nocover
         ...
 
+
+PRIVATE_KEY_TYPES = Union[
+    rsa.RSAPrivateKey,
+    dsa.DSAPrivateKey,
+    ec.EllipticCurvePrivateKey,
+]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]

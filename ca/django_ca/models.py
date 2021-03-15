@@ -41,6 +41,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ed448
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -105,6 +107,7 @@ from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
 from .subject import Subject
+from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import Literal
 from .typehints import ParsableGeneralNameList
@@ -498,7 +501,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     def _x509_extensions(self) -> Dict["x509.ObjectIdentifier", "x509.ExtensionType"]:
         return {e.oid: e for e in self.x509.extensions}
 
-    def get_x509_extension(self, oid):
+    def get_x509_extension(self, oid: "x509.ObjectIdentifier") -> "x509.ExtensionType":
         """Get extension by a cryptography OID."""
         return self._x509_extensions.get(oid)
 
@@ -568,7 +571,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return None
 
     @cached_property
-    def crl_distribution_points(self):
+    def crl_distribution_points(self) -> Optional[CRLDistributionPoints]:
         """The :py:class:`~django_ca.extensions.CRLDistributionPoints` extension or ``None`` if not
         present."""
         ext = self.get_x509_extension(ExtensionOID.CRL_DISTRIBUTION_POINTS)
@@ -577,7 +580,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return None
 
     @cached_property
-    def certificate_policies(self):
+    def certificate_policies(self) -> Optional[CertificatePolicies]:
         """The :py:class:`~django_ca.extensions.CertificatePolicies` extension or ``None`` if not present."""
         ext = self.get_x509_extension(ExtensionOID.CERTIFICATE_POLICIES)
         if ext is not None:
@@ -768,26 +771,34 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    def key(self, password: Optional[bytes]):
+    def key(self, password: Optional[Union[str, bytes]]) -> PRIVATE_KEY_TYPES:
         """The CAs private key as private key.
 
         .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
         """
+        if isinstance(password, str):
+            password = password.encode("utf-8")
+
         if self._key is None:
             key_data = read_file(self.private_key_path)
 
             self._key = load_pem_private_key(key_data, password, default_backend())
+
+        if isinstance(self._key, ed25519.Ed25519PrivateKey):
+            raise ValueError("Ed25519 private keys are not supported.")
+        if isinstance(self._key, ed448.Ed448PrivateKey):
+            raise ValueError("Ed25519 private keys are not supported.")
         return self._key
 
     @property
-    def key_exists(self):
+    def key_exists(self) -> bool:
         """``True`` if the private key is locally accessible."""
         if self._key is not None:
             return True
         return ca_storage.exists(self.private_key_path)
 
     def cache_crls(  # pylint: disable=too-many-locals
-        self, password: Optional[bytes] = None, algorithm: ParsableHash = None
+        self, password: Optional[Union[str, bytes]] = None, algorithm: ParsableHash = None
     ) -> None:
         """Function to cache all CRLs for this CA."""
 
@@ -795,6 +806,8 @@ class CertificateAuthority(X509CertMixin):
         ca_key = self.key(password)
         if isinstance(ca_key, dsa.DSAPrivateKey) and algorithm is None:
             algorithm = hashes.SHA1()
+        elif algorithm is not None:
+            algorithm = parse_hash_algorithm(algorithm)
 
         for config in ca_settings.CA_CRL_PROFILES.values():
             overrides = config.get("OVERRIDES", {}).get(self.serial, {})
@@ -846,7 +859,7 @@ class CertificateAuthority(X509CertMixin):
         profile: str = "ocsp",
         expires: Expires = 3,
         algorithm: ParsableHash = None,
-        password: Optional[bytes] = None,
+        password: Optional[Union[str, bytes]] = None,
         key_size: Optional[int] = None,
         key_type: ParsableKeyType = "RSA",
         ecc_curve: ParsableKeyCurve = None,
@@ -988,7 +1001,7 @@ class CertificateAuthority(X509CertMixin):
         self,
         expires: int = 86400,
         algorithm: ParsableHash = None,
-        password: Optional[bytes] = None,
+        password: Optional[Union[str, bytes]] = None,
         scope: Optional[Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,
         full_name: Optional[ParsableGeneralNameList] = None,
