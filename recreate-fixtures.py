@@ -627,7 +627,7 @@ if not args.only_contrib:
             parent = data[name].get('parent')
             if parent:
                 kwargs['parent'] = CertificateAuthority.objects.get(name=parent)
-                kwargs['ca_crl_url'] = data[parent]['ca_crl_url']
+                kwargs['ca_crl_url'] = [data[parent]['ca_crl_url']]
 
                 # also update data
                 data[name]['crl'] = data[parent]['ca_crl_url']
