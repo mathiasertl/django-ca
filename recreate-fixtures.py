@@ -147,10 +147,10 @@ def update_cert_data(cert, data):
     data['valid_from'] = cert.x509.not_valid_before.strftime(_timeformat)
     data['valid_until'] = cert.x509.not_valid_after.strftime(_timeformat)
 
-    data['md5'] = cert.get_digest('md5')
-    data['sha1'] = cert.get_digest('sha1')
-    data['sha256'] = cert.get_digest('sha256')
-    data['sha512'] = cert.get_digest('sha512')
+    data['md5'] = cert.get_digest('MD5')
+    data['sha1'] = cert.get_digest('SHA1')
+    data['sha256'] = cert.get_digest('SHA256')
+    data['sha512'] = cert.get_digest('SHA512')
 
     aki = cert.authority_key_identifier
     if aki is not None:
@@ -264,10 +264,10 @@ def update_contrib(data, cert, name, filename):
         'serial': cert.serial,
         'subject': cert.distinguished_name,
         'hpkp': cert.hpkp_pin,
-        'md5': cert.get_digest('md5'),
-        'sha1': cert.get_digest('sha1'),
-        'sha256': cert.get_digest('sha256'),
-        'sha512': cert.get_digest('sha512'),
+        'md5': cert.get_digest('MD5'),
+        'sha1': cert.get_digest('SHA1'),
+        'sha256': cert.get_digest('SHA256'),
+        'sha512': cert.get_digest('SHA512'),
     }
 
     for ext in cert.extensions:
