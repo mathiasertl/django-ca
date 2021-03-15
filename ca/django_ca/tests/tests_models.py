@@ -140,6 +140,13 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             # NOTE: assertLogs() fails if there are *no* log messages, so we cannot test that
             self.assertTrue(ca.key_exists)
 
+    @override_tmpcadir()
+    def test_key_str_password(self):
+        ca = self.usable_cas["pwd"]
+        pwd = certs["pwd"]["password"].decode("utf-8")
+
+        self.assertIsNotNone(ca.key(pwd))
+
     def test_pathlen(self):
         """Test the pathlen attribute."""
         for name, ca in self.cas.items():
@@ -406,6 +413,34 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             self.assertIsNone(cache.get(pem_ca_key))
             self.assertIsNone(cache.get(der_user_key))
             self.assertIsNone(cache.get(pem_user_key))
+
+    @override_tmpcadir()
+    def test_cache_crls_algorithm(self):
+        """Test passing an explicit hash algorithm."""
+
+        crl_profiles = self.crl_profiles
+        for config in crl_profiles.values():
+            config['encodings'] = ['DER', 'PEM', ]
+
+        ca = self.cas["root"]
+        algo = hashes.SHA256()
+        der_user_key = get_crl_cache_key(ca.serial, algo, Encoding.DER, 'user')
+        pem_user_key = get_crl_cache_key(ca.serial, algo, Encoding.PEM, 'user')
+        der_ca_key = get_crl_cache_key(ca.serial, algo, Encoding.DER, 'ca')
+        pem_ca_key = get_crl_cache_key(ca.serial, algo, Encoding.PEM, 'ca')
+
+        self.assertIsNone(cache.get(der_ca_key))
+        self.assertIsNone(cache.get(pem_ca_key))
+        self.assertIsNone(cache.get(der_user_key))
+        self.assertIsNone(cache.get(pem_user_key))
+
+        with self.settings(CA_CRL_PROFILES=crl_profiles):
+            ca.cache_crls(algorithm=algo)
+
+        der_user_crl = cache.get(der_user_key)
+        pem_user_crl = cache.get(pem_user_key)
+        self.assertIsInstance(der_user_crl, bytes)
+        self.assertIsInstance(pem_user_crl, bytes)
 
 
 class CertificateTests(DjangoCAWithCertTestCase):

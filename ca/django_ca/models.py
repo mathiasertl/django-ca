@@ -787,9 +787,10 @@ class CertificateAuthority(X509CertMixin):
 
             self._key = load_pem_private_key(key_data, password, default_backend())
 
-        if isinstance(self._key, ed25519.Ed25519PrivateKey):
+        # type checks only exist to make mypy happy
+        if isinstance(self._key, ed25519.Ed25519PrivateKey):  # pragma: nocover
             raise ValueError("Ed25519 private keys are not supported.")
-        if isinstance(self._key, ed448.Ed448PrivateKey):
+        if isinstance(self._key, ed448.Ed448PrivateKey):  # pragma: nocover
             raise ValueError("Ed25519 private keys are not supported.")
         return self._key
 
