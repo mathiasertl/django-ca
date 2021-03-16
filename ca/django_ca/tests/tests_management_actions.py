@@ -296,7 +296,7 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
         """Test matching multiple certs with abbreviation."""
         # Manually set almost the same serial on second cert
         cert = Certificate(ca=self.cas['root'])
-        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs['root-cert']['pub']['parsed']
         cert.serial = cert.serial[:-1] + 'X'
         cert.save()
 
@@ -336,7 +336,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
     def test_multiple(self):
         """Test an abbreviation matching multiple CAs."""
         ca2 = CertificateAuthority(name='child-duplicate')
-        ca2.x509 = certs['child']['pub']['parsed']
+        ca2.x509_cert = certs['child']['pub']['parsed']
         ca2.serial = ca2.serial[:-1] + 'X'
         ca2.save()
 

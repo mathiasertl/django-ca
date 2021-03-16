@@ -75,7 +75,7 @@ class ProfileTestCase(DjangoCATestCase):
     def create_cert(self, prof, *args, **kwargs):  # pylint: disable=arguments-differ
         """Shortcut to create a cert with the given profile."""
         cert = Certificate()
-        cert.x509 = prof.create_cert(*args, **kwargs)
+        cert.x509_cert = prof.create_cert(*args, **kwargs)
         return cert
 
     def test_copy(self):

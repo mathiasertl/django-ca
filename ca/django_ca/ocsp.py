@@ -59,7 +59,7 @@ def get_index(ca):
         # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
         yield '%s\n' % '\t'.join([
             status,
-            cert.x509.not_valid_after.strftime(DATE_FORMAT),
+            cert.x509_cert.not_valid_after.strftime(DATE_FORMAT),
             revocation,
             cert.serial.replace(':', ''),
             'unknown',  # we don't save to any file

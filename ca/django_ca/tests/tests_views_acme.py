@@ -1412,7 +1412,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """Test viewing a an order with a valid certificate"""
 
         cert = Certificate(ca=self.ca)
-        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs['root-cert']['pub']['parsed']
         cert.save()
 
         self.order.status = AcmeOrder.STATUS_VALID
@@ -1471,7 +1471,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """
 
         cert = Certificate(ca=self.ca)
-        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs['root-cert']['pub']['parsed']
         cert.save()
 
         self.order.status = AcmeOrder.STATUS_PROCESSING
@@ -1543,7 +1543,7 @@ class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWith
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
 
         cert = Certificate(ca=self.ca)
-        cert.x509 = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs['root-cert']['pub']['parsed']
         cert.save()
         self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
 

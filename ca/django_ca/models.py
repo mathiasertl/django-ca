@@ -323,15 +323,15 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self.revoked_date
 
     @property
-    def x509(self) -> "x509.Certificate":
+    def x509_cert(self) -> "x509.Certificate":
         """The underlying :py:class:`cg:cryptography.x509.Certificate`."""
         if self._x509 is None:
             backend = default_backend()
             self._x509 = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
         return self._x509
 
-    @x509.setter
-    def x509(self, value: "x509.Certificate") -> None:
+    @x509_cert.setter
+    def x509_cert(self, value: "x509.Certificate") -> None:
         """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
@@ -351,7 +351,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     @property
     def algorithm(self) -> Optional[hashes.HashAlgorithm]:
         """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
-        return self.x509.signature_hash_algorithm
+        return self.x509_cert.signature_hash_algorithm
 
     def dump_certificate(self, encoding: Encoding = Encoding.PEM) -> bytes:
         """Get the certificate as bytes in the requested format.
@@ -363,12 +363,12 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
             The format to return, defaults to ``Encoding.PEM``.
         """
 
-        return self.x509.public_bytes(encoding=encoding)
+        return self.x509_cert.public_bytes(encoding=encoding)
 
     def get_digest(self, algo: ParsableHash) -> str:
         """Get the digest for a certificate as string, including colons."""
         algo = parse_hash_algorithm(algo)
-        return bytes_to_hex(self.x509.fingerprint(algo))
+        return bytes_to_hex(self.x509_cert.fingerprint(algo))
 
     def get_filename(self, ext: str, bundle: bool = False) -> str:
         """Get a filename safe for any file system and OS for this certificate based on the common name.
@@ -411,7 +411,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 
         revoked_cert = (
             x509.RevokedCertificateBuilder()
-            .serial_number(self.x509.serial_number)
+            .serial_number(self.x509_cert.serial_number)
             .revocation_date(self.revoked_date)
         )
 
@@ -437,7 +437,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         .. seealso:: https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning
         """
 
-        public_key_raw = self.x509.public_key().public_bytes(
+        public_key_raw = self.x509_cert.public_key().public_bytes(
             encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo
         )
         public_key_hash = hashlib.sha256(public_key_raw).digest()
@@ -446,17 +446,17 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     @property
     def issuer(self) -> Subject:
         """The certificate issuer field as :py:class:`~django_ca.subject.Subject`."""
-        return Subject([(s.oid, s.value) for s in self.x509.issuer])
+        return Subject([(s.oid, s.value) for s in self.x509_cert.issuer])
 
     @property
     def not_before(self) -> datetime:
         """Date/Time this certificate was created"""
-        return self.x509.not_valid_before
+        return self.x509_cert.not_valid_before
 
     @property
     def not_after(self) -> datetime:
         """Date/Time this certificate expires."""
-        return self.x509.not_valid_after
+        return self.x509_cert.not_valid_after
 
     def revoke(
         self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
@@ -486,12 +486,12 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     @property
     def subject(self) -> Subject:
         """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
-        return Subject([(s.oid, s.value) for s in self.x509.subject])
+        return Subject([(s.oid, s.value) for s in self.x509_cert.subject])
 
     @property
     def distinguished_name(self) -> str:
         """The certificates distinguished name formatted as string."""
-        return format_name(self.x509.subject)
+        return format_name(self.x509_cert.subject)
 
     distinguished_name.fget.short_description = "Distinguished Name"
 
@@ -501,7 +501,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 
     @cached_property
     def _x509_extensions(self) -> Dict["x509.ObjectIdentifier", "x509.ExtensionType"]:
-        return {e.oid: e for e in self.x509.extensions}
+        return {e.oid: e for e in self.x509_cert.extensions}
 
     def get_x509_extension(self, oid: "x509.ObjectIdentifier") -> "x509.ExtensionType":
         """Get extension by a cryptography OID."""
@@ -920,7 +920,7 @@ class CertificateAuthority(X509CertMixin):
 
         csr = (
             x509.CertificateSigningRequestBuilder()
-            .subject_name(self.x509.subject)
+            .subject_name(self.x509_cert.subject)
             .sign(private_key, hashes.SHA256(), default_backend())
         )
 
@@ -959,9 +959,9 @@ class CertificateAuthority(X509CertMixin):
         """
 
         try:
-            ski = self.x509.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+            ski = self.x509_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
         except x509.ExtensionNotFound:
-            return x509.AuthorityKeyIdentifier.from_issuer_public_key(self.x509.public_key())
+            return x509.AuthorityKeyIdentifier.from_issuer_public_key(self.x509_cert.public_key())
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
@@ -1060,7 +1060,7 @@ class CertificateAuthority(X509CertMixin):
             now_builder = datetime.utcnow()
 
         builder = x509.CertificateRevocationListBuilder()
-        builder = builder.issuer_name(self.x509.subject)
+        builder = builder.issuer_name(self.x509_cert.subject)
         builder = builder.last_update(now_builder)
         builder = builder.next_update(now_builder + timedelta(seconds=expires))
 
@@ -1156,7 +1156,7 @@ class CertificateAuthority(X509CertMixin):
         """The ``pathlen`` attribute of the ``BasicConstraints`` extension (either an ``int`` or ``None``)."""
 
         try:
-            ext = self.x509.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+            ext = self.x509_cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return None
         return ext.value.path_length

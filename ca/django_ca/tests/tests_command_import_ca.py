@@ -59,7 +59,7 @@ class ImportCATest(DjangoCATestCase):
 
             if not data.get('parent'):
                 self.assertSignature([ca], ca)
-            self.assertBasic(ca.x509, algo=data['algorithm'])
+            self.assertBasic(ca.x509_cert, algo=data['algorithm'])
 
             # test the private key
             key = ca.key(data['password'])
@@ -95,7 +95,7 @@ class ImportCATest(DjangoCATestCase):
             if not data.get('parent'):
                 self.assertSignature(reversed(ca.bundle), ca)
 
-            self.assertBasic(ca.x509, algo=data['algorithm'])
+            self.assertBasic(ca.x509_cert, algo=data['algorithm'])
 
             # test the private key
             key = ca.key(None)
@@ -123,7 +123,7 @@ class ImportCATest(DjangoCATestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509, algo=certs['root']['algorithm'])
+        self.assertBasic(ca.x509_cert, algo=certs['root']['algorithm'])
 
         # test the private key
         with self.assertRaisesRegex(TypeError, '^Password was not given but private key is encrypted$'):

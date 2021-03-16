@@ -253,7 +253,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.load_all_certs()
         for name, cert in list(self.cas.items()) + list(self.certs.items()):
             try:
-                ext = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+                ext = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
             except x509.ExtensionNotFound:
                 continue
 
@@ -267,7 +267,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.load_all_certs()
         for _name, cert in list(self.cas.items()) + list(self.certs.items()):
             try:
-                val = cert.x509.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+                val = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
             except x509.ExtensionNotFound:
                 continue
 

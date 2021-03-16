@@ -494,14 +494,14 @@ VQIDAQAB
             crl = x509.load_der_x509_crl(crl, default_backend())
 
         self.assertIsInstance(crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(crl.is_signature_valid(signer.x509.public_key()))
-        self.assertEqual(crl.issuer, signer.x509.subject)
+        self.assertTrue(crl.is_signature_valid(signer.x509_cert.public_key()))
+        self.assertEqual(crl.issuer, signer.x509_cert.subject)
         self.assertEqual(crl.last_update, datetime.utcnow())
         self.assertEqual(crl.next_update, expires)
         self.assertCountEqual(list(crl.extensions), extensions)
 
         entries = {e.serial_number: e for e in crl}
-        expected = {c.x509.serial_number: c for c in expected}
+        expected = {c.x509_cert.serial_number: c for c in expected}
         self.assertCountEqual(entries, expected)
         for entry in entries.values():
             self.assertEqual(entry.revocation_date, datetime.utcnow())
@@ -536,7 +536,7 @@ VQIDAQAB
         extensions = {e.key: e for e in extensions}
 
         if isinstance(cert, X509CertMixin):
-            pubkey = cert.x509.public_key()
+            pubkey = cert.x509_cert.public_key()
             actual = {e.key: e for e in cert.extensions}
 
             if isinstance(cert, Certificate):
@@ -835,7 +835,7 @@ VQIDAQAB
         kwargs.setdefault('issuer_url', certs[name].get('issuer_url', ''))
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
-        ca.x509 = parsed  # calculates serial etc
+        ca.x509_cert = parsed  # calculates serial etc
         ca.save()
         return ca
 
@@ -863,7 +863,7 @@ VQIDAQAB
     def load_cert(cls, ca, parsed, csr='', profile=''):
         """Load a certificate from the given data."""
         cert = Certificate(ca=ca, csr=csr, profile=profile)
-        cert.x509 = parsed
+        cert.x509_cert = parsed
         cert.save()
         return cert
 

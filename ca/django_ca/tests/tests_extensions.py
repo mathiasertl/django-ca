@@ -2151,9 +2151,9 @@ class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase
         cert1 = self.certs[self.name1]
         cert2 = self.certs[self.name2]
 
-        self.cgx1 = cert1.x509.extensions.get_extension_for_oid(
+        self.cgx1 = cert1.x509_cert.extensions.get_extension_for_oid(
             ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
-        self.cgx2 = cert2.x509.extensions.get_extension_for_oid(
+        self.cgx2 = cert2.x509_cert.extensions.get_extension_for_oid(
             ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS)
         self.ext1 = PrecertificateSignedCertificateTimestamps(self.cgx1)
         self.ext2 = PrecertificateSignedCertificateTimestamps(self.cgx2)

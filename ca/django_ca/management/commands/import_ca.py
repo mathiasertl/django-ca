@@ -96,7 +96,7 @@ Note that the private key will be copied to the directory configured by the CA_D
                 pem_loaded = x509.load_der_x509_certificate(pem_data, default_backend())
             except Exception as ex:
                 raise CommandError('Unable to load public key.') from ex
-        ca.x509 = pem_loaded
+        ca.x509_cert = pem_loaded
         ca.private_key_path = ca_storage.generate_filename('%s.key' % ca.serial.replace(':', ''))
 
         # load private key

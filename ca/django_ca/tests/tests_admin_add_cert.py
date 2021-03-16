@@ -96,7 +96,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cname)])
+        self.assertSubject(cert.x509_cert, [('C', 'US'), ('CN', cname)])
         self.assertIssuer(ca, cert)
         self.assertExtensions(cert, [
             ExtendedKeyUsage({'value': ['clientAuth', 'serverAuth']}),
@@ -213,7 +213,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cname)])
+        self.assertSubject(cert.x509_cert, [('C', 'US'), ('CN', cname)])
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr, csr)
@@ -301,7 +301,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, [('C', 'US'), ('CN', cname)])
+        self.assertSubject(cert.x509_cert, [('C', 'US'), ('CN', cname)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name,

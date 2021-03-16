@@ -67,7 +67,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
         self.load_generated_certs()
 
         self.assertExtensions(self.certs['no-extensions'], [], expect_defaults=False)
-        self.assertExtensions(self.certs['no-extensions'].x509, [], expect_defaults=False)
+        self.assertExtensions(self.certs['no-extensions'].x509_cert, [], expect_defaults=False)
 
         cert_key = 'all-extensions'
         cert = self.certs[cert_key]
@@ -94,13 +94,13 @@ class TestDjangoCATestCase(DjangoCATestCase):
             data[CRLDistributionPoints.key],
             data[AuthorityInformationAccess.key],
         ]
-        self.assertExtensions(cert.x509, all_extensions, signer=cert.ca)
+        self.assertExtensions(cert.x509_cert, all_extensions, signer=cert.ca)
 
         # Now, we need even the AuthorityKeyIdentifier extension
         all_extensions += [
             data[AuthorityKeyIdentifier.key],
         ]
-        self.assertExtensions(cert.x509, all_extensions)
+        self.assertExtensions(cert.x509_cert, all_extensions)
 
         # now test root and child ca
         cert_key = 'root'

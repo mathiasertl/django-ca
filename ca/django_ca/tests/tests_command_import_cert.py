@@ -43,7 +43,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
         self.assertSignature([self.cas['root']], cert)
         self.assertEqual(cert.ca, self.cas['root'])
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(cert.x509, algo=certs['root-cert']['algorithm'])
+        self.assertBasic(cert.x509_cert, algo=certs['root-cert']['algorithm'])
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self):
@@ -58,7 +58,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
         self.assertSignature([self.cas['root']], cert)
         self.assertEqual(cert.ca, self.cas['root'])
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(cert.x509, algo=certs['root-cert']['algorithm'])
+        self.assertBasic(cert.x509_cert, algo=certs['root-cert']['algorithm'])
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self):

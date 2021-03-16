@@ -407,7 +407,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         """Test fetching without a nonce."""
         cert = self.certs['child-cert']
         builder = ocsp.OCSPRequestBuilder()
-        builder = builder.add_certificate(cert.x509, cert.ca.x509, hashes.SHA1())
+        builder = builder.add_certificate(cert.x509_cert, cert.ca.x509_cert, hashes.SHA1())
         data = base64.b64encode(builder.build().public_bytes(serialization.Encoding.DER))
 
         response = self.client.get(reverse('get', kwargs={'data': data.decode('utf-8')}))
@@ -418,8 +418,8 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         """Test fetching without a nonce, test using asn1crypto."""
         cert = self.certs['child-cert']
         builder = ocspbuilder.OCSPRequestBuilder(
-            certificate=asn1crypto.x509.Certificate.load(cert.x509.public_bytes(Encoding.DER)),
-            issuer=asn1crypto.x509.Certificate.load(cert.ca.x509.public_bytes(Encoding.DER))
+            certificate=asn1crypto.x509.Certificate.load(cert.x509_cert.public_bytes(Encoding.DER)),
+            issuer=asn1crypto.x509.Certificate.load(cert.ca.x509_cert.public_bytes(Encoding.DER))
         )
         builder.nonce = False
         data = base64.b64encode(builder.build().dump()).decode('utf-8')

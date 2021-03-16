@@ -203,4 +203,4 @@ class GenericCAIssuersViewTests(DjangoCAWithGeneratedCAsTestCase):
             url = reverse('django_ca:issuer', kwargs={'serial': ca.root.serial})
             resp = client.get(url)
             self.assertEqual(resp['Content-Type'], 'application/pkix-cert')
-            self.assertEqual(resp.content, ca.root.x509.public_bytes(encoding=Encoding.DER))
+            self.assertEqual(resp.content, ca.root.x509_cert.public_bytes(encoding=Encoding.DER))

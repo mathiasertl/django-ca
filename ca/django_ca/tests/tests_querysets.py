@@ -79,7 +79,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertIsInstance(ca.key(None).public_key(), RSAPublicKey)
 
         # verity public key propertiesa
-        self.assertBasic(ca.x509)
+        self.assertBasic(ca.x509_cert)
         self.assertEqual(ca.subject, Subject({'CN': 'ca.example.com'}))
 
         # verify X509 properties

@@ -69,7 +69,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.first()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.x509, subject)
+        self.assertSubject(cert.x509_cert, subject)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
         self.assertEqual(cert.key_usage, KeyUsage({
@@ -99,7 +99,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             cert = Certificate.objects.get(ca=ca, cn=cname)
             self.assertPostIssueCert(post, cert)
             self.assertSignature(reversed(ca.bundle), cert)
-            self.assertSubject(cert.x509, subject)
+            self.assertSubject(cert.x509_cert, subject)
             self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
 
             self.assertEqual(cert.key_usage,
@@ -129,7 +129,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertPostIssueCert(post, cert)
             self.assertSignature([self.ca], cert)
 
-            self.assertSubject(cert.x509, subject)
+            self.assertSubject(cert.x509_cert, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.key_usage,
                              KeyUsage({'critical': True,
@@ -200,7 +200,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertSignature([self.ca], cert)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertSubject(cert.x509, [('CN', 'example.net')])
+        self.assertSubject(cert.x509_cert, [('CN', 'example.net')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subject_alternative_name,
@@ -219,7 +219,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.first()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.x509, subject)
+        self.assertSubject(cert.x509_cert, subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
@@ -251,7 +251,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.first()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.x509, ca_settings.CA_DEFAULT_SUBJECT)
+        self.assertSubject(cert.x509_cert, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
@@ -274,7 +274,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         cert = Certificate.objects.get(cn='CommonName2')
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509, subject)
+        self.assertSubject(cert.x509_cert, subject)
 
     @override_tmpcadir()
     def test_extensions(self):
@@ -301,7 +301,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         cert = Certificate.objects.first()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.x509, [('CN', 'example.com')])
+        self.assertSubject(cert.x509_cert, [('CN', 'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(cert.key_usage, KeyUsage({'critical': True, 'value': ['keyCertSign']}))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({'value': ['clientAuth']}))
@@ -324,7 +324,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.x509, [('CN', 'example.com')])
+        self.assertSubject(cert.x509_cert, [('CN', 'example.com')])
         self.assertEqual(stdout, 'Please paste the CSR:\n%s' % cert.pub)
         self.assertEqual(stderr, '')
         self.assertEqual(cert.subject_alternative_name,
@@ -411,7 +411,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertPostIssueCert(post, cert)
             self.assertSignature([self.ca], cert)
 
-            self.assertSubject(cert.x509, subject)
+            self.assertSubject(cert.x509_cert, subject)
             self.assertEqual(stdout, cert.pub)
             self.assertEqual(cert.key_usage,
                              KeyUsage({'critical': True,

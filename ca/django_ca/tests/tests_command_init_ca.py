@@ -63,18 +63,18 @@ class InitCATest(DjangoCATestCase):
         self.assertSerial(ca.serial)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509, algo='sha512')
+        self.assertBasic(ca.x509_cert, algo='sha512')
 
         # test the private key
         key = ca.key(None)
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
-        self.assertSubject(ca.x509, [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Vienna'),
-                                     ('O', 'Org'), ('OU', 'OrgUnit'), ('CN', 'Test CA')])
+        self.assertSubject(ca.x509_cert, [('C', 'AT'), ('ST', 'Vienna'), ('L', 'Vienna'), ('O', 'Org'),
+                                          ('OU', 'OrgUnit'), ('CN', 'Test CA')])
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
-        self.assertEqual(ca.serial, int_to_hex(ca.x509.serial_number))
+        self.assertEqual(ca.serial, int_to_hex(ca.x509_cert.serial_number))
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self):
@@ -129,8 +129,8 @@ class InitCATest(DjangoCATestCase):
         self.assertIsInstance(key, dsa.DSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
-        self.assertTrue(isinstance(ca.x509.signature_hash_algorithm, hashes.SHA1))
-        self.assertTrue(isinstance(ca.x509.public_key(), dsa.DSAPublicKey))
+        self.assertTrue(isinstance(ca.x509_cert.signature_hash_algorithm, hashes.SHA1))
+        self.assertTrue(isinstance(ca.x509_cert.public_key(), dsa.DSAPublicKey))
         self.assertIsNone(ca.crl_distribution_points)
         self.assertEqual(ca.authority_information_access, AuthorityInformationAccess(
             {'value': {'issuers': ['URI:http://ca.issuer.ca.example.com']}}))
@@ -299,7 +299,7 @@ class InitCATest(DjangoCATestCase):
         self.assertPostCreateCa(post, ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertSubject(ca.x509, [('CN', 'test')])
+        self.assertSubject(ca.x509_cert, [('CN', 'test')])
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -315,7 +315,7 @@ class InitCATest(DjangoCATestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertPrivateKey(ca)
-        self.assertSubject(ca.x509, [('OU', 'smth'), ('CN', 'test')])
+        self.assertSubject(ca.x509_cert, [('OU', 'smth'), ('CN', 'test')])
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 

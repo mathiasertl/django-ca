@@ -311,7 +311,7 @@ class Profile:
         if self.issuer_name:
             return self.issuer_name.name
 
-        return ca.x509.subject
+        return ca.x509_cert.subject
 
     def _update_san_from_cn(self, cn_in_san, subject, extensions):
         if subject.get('CN') and cn_in_san is True:

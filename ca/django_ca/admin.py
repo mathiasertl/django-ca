@@ -125,7 +125,7 @@ class CertificateMixin:
         elif filetype == 'DER':
             if bundle is True:
                 return HttpResponseBadRequest(_('DER/ASN.1 certificates cannot be downloaded as a bundle.'))
-            data = obj.x509.public_bytes(encoding=Encoding.DER)
+            data = obj.x509_cert.public_bytes(encoding=Encoding.DER)
         else:
             return HttpResponseBadRequest()
 
@@ -212,7 +212,7 @@ class CertificateMixin:
 
     def unknown_oid(self, oid, obj):
         """Generic display for extensions that we do not know about and cannot display."""
-        ext = obj.x509.extensions.get_extension_for_oid(oid)
+        ext = obj.x509_cert.extensions.get_extension_for_oid(oid)
         html = ''
         if ext.critical is True:
             text = _('Critical')
@@ -615,7 +615,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                 reason = form.cleaned_data['revoked_reason']
                 if reason:
                     reason = ReasonFlags[reason]
-
+                else:
+                    reason = ReasonFlags.unspecified
                 obj.revoke(
                     reason=reason,
                     compromised=form.cleaned_data['compromised'] or None
@@ -709,9 +710,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
                     extensions[key] = None
 
             obj.profile = profile.name
-            obj.x509 = profile.create_cert(data['ca'], parsed_csr, subject=data['subject'], expires=expires,
-                                           algorithm=data['algorithm'], cn_in_san=cn_in_san,
-                                           password=data['password'], extensions=extensions)
+            obj.x509_cert = profile.create_cert(data['ca'], parsed_csr, subject=data['subject'],
+                                                expires=expires, algorithm=data['algorithm'],
+                                                cn_in_san=cn_in_san, password=data['password'],
+                                                extensions=extensions)
             obj.save()
             post_issue_cert.send(sender=self.model, cert=obj)
         else:
