@@ -418,7 +418,7 @@ Please create %(localsettings)s from %(example)s and try again.""" % {
 
         with open(os.path.join(ca_settings.CA_DIR, cert_data['pub_filename']), 'rb') as stream:
             pem = stream.read()
-        c.x509 = x509.load_pem_x509_certificate(pem, default_backend())
+        c.x509_cert = x509.load_pem_x509_certificate(pem, default_backend())
 
         c.save()
 
