@@ -323,7 +323,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self.revoked_date
 
     @property
-    def x509_cert(self) -> "x509.Certificate":
+    def x509_cert(self) -> x509.Certificate:
         """The underlying :py:class:`cg:cryptography.x509.Certificate`."""
         if self._x509 is None:
             backend = default_backend()
@@ -331,7 +331,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self._x509
 
     @x509_cert.setter
-    def x509_cert(self, value: "x509.Certificate") -> None:
+    def x509_cert(self, value: x509.Certificate) -> None:
         """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
@@ -387,7 +387,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
             return "%s_bundle.%s" % (slug, ext.lower())
         return "%s.%s" % (slug, ext.lower())
 
-    def get_revocation(self) -> "x509.RevokedCertificate":
+    def get_revocation(self) -> x509.RevokedCertificate:
         """Get the `RevokedCertificate` instance for this certificate for CRLs.
 
         This function is just a shortcut for
@@ -500,15 +500,15 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     ###################
 
     @cached_property
-    def _x509_extensions(self) -> Dict["x509.ObjectIdentifier", "x509.ExtensionType"]:
+    def _x509_extensions(self) -> Dict[x509.ObjectIdentifier, x509.ExtensionType]:
         return {e.oid: e for e in self.x509_cert.extensions}
 
-    def get_x509_extension(self, oid: "x509.ObjectIdentifier") -> "x509.ExtensionType":
+    def get_x509_extension(self, oid: x509.ObjectIdentifier) -> x509.ExtensionType:
         """Get extension by a cryptography OID."""
         return self._x509_extensions.get(oid)
 
     @cached_property
-    def _sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
+    def _sorted_extensions(self) -> List[x509.Extension[x509.ExtensionType]]:
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
         return list(
