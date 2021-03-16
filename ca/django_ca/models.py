@@ -508,7 +508,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return self._x509_extensions.get(oid)
 
     @cached_property
-    def _sorted_extensions(self) -> List[x509.Extension[x509.ExtensionType]]:
+    def _sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
         return list(
