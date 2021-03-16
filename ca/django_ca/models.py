@@ -290,14 +290,14 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     class Meta:
         abstract = True
 
-    def get_revocation_reason(self):
+    def get_revocation_reason(self) -> Optional[x509.ReasonFlags]:
         """Get the revocation reason of this certificate."""
         if self.revoked is False:
             return None
 
         return x509.ReasonFlags[self.revoked_reason]
 
-    def get_compromised_time(self):
+    def get_compromised_time(self) -> Optional[datetime]:
         """Return when this certificate was compromised as a *naive* datetime.
 
         Returns ``None`` if the time is not known **or** if the certificate is not revoked.
@@ -311,7 +311,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 
         return self.compromised
 
-    def get_revocation_time(self):
+    def get_revocation_time(self) -> Optional[datetime]:
         """Get the revocation time as naive datetime."""
         if self.revoked is False:
             return None
@@ -516,9 +516,9 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         )
 
     @cached_property
-    def extension_fields(self) -> List[str]:
+    def extension_fields(self) -> List[Union["x509.Extension[x509.ExtensionType]", str]]:
         """List of all extensions fields for this certificate."""
-        fields = []
+        fields: List[Union["x509.Extension[x509.ExtensionType]", str]] = []
 
         for ext in self._sorted_extensions:
             if ext.oid in OID_TO_EXTENSION:
