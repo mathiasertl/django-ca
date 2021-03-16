@@ -144,8 +144,8 @@ def create_csr(key_path, path, subject='/CN=ignored.example.com'):
 def update_cert_data(cert, data):
     data['serial'] = cert.serial
     data['hpkp'] = cert.hpkp_pin
-    data['valid_from'] = cert.x509.not_valid_before.strftime(_timeformat)
-    data['valid_until'] = cert.x509.not_valid_after.strftime(_timeformat)
+    data['valid_from'] = cert.x509_cert.not_valid_before.strftime(_timeformat)
+    data['valid_until'] = cert.x509_cert.not_valid_after.strftime(_timeformat)
 
     data['md5'] = cert.get_digest('MD5')
     data['sha1'] = cert.get_digest('SHA1')
