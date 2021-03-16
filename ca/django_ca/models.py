@@ -429,7 +429,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return revoked_cert.build(default_backend())
 
     @property
-    def hpkp_pin(self):
+    def hpkp_pin(self) -> str:
         """The HPKP public key pin for this certificate.
 
         Inspired by https://github.com/luisgf/hpkp-python/blob/master/hpkp.py.
@@ -444,21 +444,23 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         return base64.b64encode(public_key_hash).decode("utf-8")
 
     @property
-    def issuer(self):
+    def issuer(self) -> Subject:
         """The certificate issuer field as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.issuer])
 
     @property
-    def not_before(self):
+    def not_before(self) -> datetime:
         """Date/Time this certificate was created"""
         return self.x509.not_valid_before
 
     @property
-    def not_after(self):
+    def not_after(self) -> datetime:
         """Date/Time this certificate expires."""
         return self.x509.not_valid_after
 
-    def revoke(self, reason="", compromised=None):
+    def revoke(
+        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
+    ) -> None:
         """Revoke the current certificate.
 
         This function emits the ``pre_revoke_cert`` and ``post_revoke_cert`` signals.
@@ -471,9 +473,6 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         compromised : datetime, optional
             When this certificate was compromised.
         """
-        if not reason:
-            reason = ReasonFlags.unspecified
-
         pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
 
         self.revoked = True
@@ -485,12 +484,12 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         post_revoke_cert.send(sender=self.__class__, cert=self)
 
     @property
-    def subject(self):
+    def subject(self) -> Subject:
         """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
         return Subject([(s.oid, s.value) for s in self.x509.subject])
 
     @property
-    def distinguished_name(self):
+    def distinguished_name(self) -> str:
         """The certificates distinguished name formatted as string."""
         return format_name(self.x509.subject)
 
