@@ -252,6 +252,7 @@ class ReasonAction(argparse.Action):
 
     def __init__(self, *args, **kwargs):
         kwargs['choices'] = sorted([r.name for r in ReasonFlags])
+        kwargs.setdefault("default", ReasonFlags.unspecified)
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
