@@ -192,7 +192,7 @@ class Subject:
 
     def get(self,
             key: Union[x509.ObjectIdentifier, str],
-            default: Optional[List[str]] = None) -> Optional[Union[List[str], str]]:
+            default: Optional[Union[List[str], str]] = None) -> Optional[Union[List[str], str]]:
         """Return the value for key if key is in the subject, else default."""
         try:
             return self[key]
