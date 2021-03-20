@@ -928,12 +928,12 @@ class CertificateAuthority(X509CertMixin):
                 key_type = "DSA"
                 algorithm = "SHA1"
 
-        key_size, parsed_key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
+        priv_key_params = validate_key_parameters(key_size, key_type, ecc_curve)
         expires = parse_expires(expires)
         algorithm = parse_hash_algorithm(algorithm)
 
         # generate the private key
-        private_key = generate_private_key(key_size, parsed_key_type, ecc_curve)
+        private_key = generate_private_key(*priv_key_params)
         private_pem = private_key.private_bytes(
             encoding=Encoding.PEM,
             format=PrivateFormat.PKCS8,

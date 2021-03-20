@@ -546,7 +546,7 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 def validate_key_parameters(
     key_size: Optional[int],
     key_type: Literal["DSA"],
-    ecc_curve: Optional[ec.EllipticCurve]
+    ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[int, Literal["DSA"], None]:
     ...
 
@@ -554,8 +554,8 @@ def validate_key_parameters(
 @overload
 def validate_key_parameters(
     key_size: Optional[int],
-    key_type: Literal["RSA"],
-    ecc_curve: Optional[ec.EllipticCurve]
+    key_type: Optional[Literal["RSA"]],
+    ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[int, Literal["RSA"], None]:
     ...
 
@@ -564,8 +564,8 @@ def validate_key_parameters(
 def validate_key_parameters(
     key_size: Optional[int],
     key_type: Literal["ECC"],
-    ecc_curve: Optional[ec.EllipticCurve]
-) -> Tuple[None, Literal["DSA"], ec.EllipticCurve]:
+    ecc_curve: ParsableKeyCurve = None
+) -> Tuple[None, Literal["ECC"], ec.EllipticCurve]:
     ...
 
 
@@ -573,7 +573,7 @@ def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: ParsableKeyType = "RSA",
     ecc_curve: ParsableKeyCurve = None,
-) -> Tuple[Optional[int], str, Optional[ec.EllipticCurve]]:
+) -> Tuple[Optional[int], Literal["RSA", "DSA", "ECC"], Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
@@ -610,12 +610,12 @@ def validate_key_parameters(
 
 
 @overload
-def generate_private_key(key_size: int, key_type: Literal["RSA"], ecc_curve: None) -> rsa.RSAPrivateKey:
+def generate_private_key(key_size: int, key_type: Literal["DSA"], ecc_curve: None) -> dsa.DSAPrivateKey:
     ...
 
 
 @overload
-def generate_private_key(key_size: int, key_type: Literal["DSA"], ecc_curve: None) -> dsa.DSAPrivateKey:
+def generate_private_key(key_size: int, key_type: Literal["RSA"], ecc_curve: None) -> rsa.RSAPrivateKey:
     ...
 
 

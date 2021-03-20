@@ -93,6 +93,7 @@ def get_extension_name(ext: ExtensionType) -> str:
 
 __all__ = [
     "get_extension_name",
+    "Extension",
     "AuthorityInformationAccess",
     "AuthorityKeyIdentifier",
     "BasicConstraints",

@@ -16,6 +16,7 @@
 from copy import deepcopy
 from datetime import timedelta
 from threading import local
+from typing import Any
 from typing import Optional
 from typing import Union
 
@@ -330,7 +331,7 @@ class Profile:
                 subject['CN'] = common_name
 
 
-def get_profile(name=None):
+def get_profile(name: Optional[str] = None) -> Profile:
     """Get profile by the given name.
 
     Raises ``KeyError`` if the profile is not defined.
@@ -350,10 +351,10 @@ def get_profile(name=None):
 class Profiles:  # pylint: disable=too-few-public-methods
     """A profile handler similar to Djangos CacheHandler."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._profiles = local()
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Profile:
         if name is None:
             name = ca_settings.CA_DEFAULT_PROFILE
 
@@ -367,7 +368,7 @@ class Profiles:  # pylint: disable=too-few-public-methods
         self._profiles.profiles[name] = get_profile(name)
         return self._profiles.profiles[name]
 
-    def _reset(self):
+    def _reset(self) -> None:
         self._profiles = local()
 
 
@@ -380,16 +381,18 @@ class DefaultProfileProxy:
     .. NOTE:: We don't implement setattr/delattr, because Profiles are supposed to be read-only anyway.
     """
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(profiles[ca_settings.CA_DEFAULT_PROFILE], name)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Profile):
+            return False
         return profiles[ca_settings.CA_DEFAULT_PROFILE] == other
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<DefaultProfile: %r>' % self.name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
 
