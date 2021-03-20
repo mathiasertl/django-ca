@@ -18,7 +18,6 @@ import re
 from datetime import timedelta
 from typing import Any
 from typing import Dict
-from typing import Union
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
