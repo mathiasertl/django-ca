@@ -25,6 +25,7 @@ import random
 import re
 from datetime import datetime
 from datetime import timedelta
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -138,7 +139,7 @@ try:
     from acme import challenges
     from acme import messages
 except ImportError:  # pragma: nocover
-    challenges = messages = None
+    challenges = messages = None  # type: ignore[assignment]
 
 
 def acme_slug() -> str:
@@ -167,7 +168,7 @@ def validate_past(value: datetime) -> None:
         raise ValidationError(_("Date must be in the past!"))
 
 
-def json_validator(value: Union[str, bytes, bytearray]):
+def json_validator(value: Union[str, bytes, bytearray]) -> None:
     """Validated that the given data is valid JSON."""
     try:
         json.loads(value)
@@ -186,6 +187,10 @@ def pem_validator(value: str) -> None:
 
 class DjangoCAModelMixin:
     """Mixin with shared properties for all django-ca models."""
+
+    if TYPE_CHECKING:
+        _meta: models.options.Options[models.Model]
+        pk: int
 
     @classproperty
     def admin_add_url(cls) -> str:  # pylint: disable=no-self-argument; false positive
@@ -210,7 +215,7 @@ class Watcher(models.Model):
     mail = models.EmailField(verbose_name=_("E-Mail"), unique=True)
 
     @classmethod
-    def from_addr(cls, addr):
+    def from_addr(cls, addr: str) -> "Watcher":
         """Class constructor that creates an instance from an email address."""
         name = ""
         match = re.match(r"(.*?)\s*<(.*)>", addr)
@@ -229,7 +234,7 @@ class Watcher(models.Model):
 
         return watcher
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.name:
             return "%s <%s>" % (self.name, self.mail)
         return self.mail
@@ -337,7 +342,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
         self._x509 = value
         self.pub = force_str(self.dump_certificate(Encoding.PEM))
-        self.cn = self.subject.get("CN", "")  # pylint: disable=invalid-name
+        self.cn = cast(str, self.subject.get("CN", ""))  # pylint: disable=invalid-name
         self.expires = self.not_after
         self.valid_from = self.not_before
         if settings.USE_TZ:
@@ -496,8 +501,6 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     def distinguished_name(self) -> str:
         """The certificates distinguished name formatted as string."""
         return format_name(self.x509_cert.subject)
-
-    distinguished_name.fget.short_description = "Distinguished Name"
 
     ###################
     # X509 extensions #
