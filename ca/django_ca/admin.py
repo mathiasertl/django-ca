@@ -76,6 +76,7 @@ from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import add_colons
+from .utils import format_name
 from .utils import parse_csr
 
 log = logging.getLogger(__name__)
@@ -133,6 +134,11 @@ class CertificateMixin:
         response = HttpResponse(data, content_type='application/pkix-cert')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
+
+    def distinguished_name(self, obj) -> str:
+        """The certificates distinguished name formatted as string."""
+        return format_name(obj.x509_cert.subject)
+    distinguished_name.short_description = _("Distinguished Name")
 
     def download_view(self, request, pk):
         """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
