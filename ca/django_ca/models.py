@@ -302,7 +302,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 
         Returns ``None`` if the time is not known **or** if the certificate is not revoked.
         """
-        if self.revoked is False or not self.compromised:
+        if self.revoked is False or self.compromised is None:
             return None
 
         if timezone.is_aware(self.compromised):
@@ -314,6 +314,9 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     def get_revocation_time(self) -> Optional[datetime]:
         """Get the revocation time as naive datetime."""
         if self.revoked is False:
+            return None
+        if self.revoked_date is None:
+            log.warning("Inconsistent model state found: revoked=True and revoked_date=None.")
             return None
 
         if timezone.is_aware(self.revoked_date):
@@ -408,6 +411,8 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         """
         if self.revoked is False:
             raise ValueError("Certificate is not revoked.")
+        if self.revoked_date is None:
+            raise ValueError("Certificate has no revocation date")
 
         revoked_cert = (
             x509.RevokedCertificateBuilder()
@@ -416,7 +421,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         )
 
         reason = self.get_revocation_reason()
-        if reason != x509.ReasonFlags.unspecified:
+        if reason != x509.ReasonFlags.unspecified and reason is not None:
             # RFC 5270, 5.3.1: "reason code CRL entry extension SHOULD be absent instead of using the
             # unspecified (0) reasonCode value"
             revoked_cert = revoked_cert.add_extension(x509.CRLReason(reason), critical=False)
@@ -500,10 +505,12 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
     ###################
 
     @cached_property
-    def _x509_extensions(self) -> Dict[x509.ObjectIdentifier, x509.ExtensionType]:
+    def _x509_extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
         return {e.oid: e for e in self.x509_cert.extensions}
 
-    def get_x509_extension(self, oid: x509.ObjectIdentifier) -> x509.ExtensionType:
+    def get_x509_extension(
+        self, oid: x509.ObjectIdentifier
+    ) -> Optional["x509.Extension[x509.ExtensionType]"]:
         """Get extension by a cryptography OID."""
         return self._x509_extensions.get(oid)
 
@@ -1156,7 +1163,7 @@ class CertificateAuthority(X509CertMixin):
         """The ``pathlen`` attribute of the ``BasicConstraints`` extension (either an ``int`` or ``None``)."""
 
         try:
-            ext = self.x509_cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+            ext = self.x509_cert.extensions.get_extension_for_class(x509.BasicConstraints)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
             return None
         return ext.value.path_length
