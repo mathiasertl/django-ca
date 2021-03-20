@@ -173,6 +173,7 @@ ParsableExtension = TypedDict(
 )
 ParsableItem = TypeVar("ParsableItem")
 ParsableValue = TypeVar("ParsableValue")
+"""A value that can be parsed to a valid extension."""
 
 SerializedItem = TypeVar("SerializedItem")
 """TypeVar representing a serialized item for an iterable extension."""

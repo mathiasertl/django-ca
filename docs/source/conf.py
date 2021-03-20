@@ -373,6 +373,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 qualname_overrides = {
     'ExtensionTypeTypeVar': 'cg:cryptography.x509.ExtensionType',
     "IterableItem": ":py:data:`django_ca.typehints.IterableItem`",
+    "ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
     "SerializedItem": ":py:data:`django_ca.typehints.SerializedItem`",
     "SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
     "BasicConstraintsBase": ":py:data:`django_ca.typehints.BasicConstraintsBase`",
@@ -423,6 +424,9 @@ qualname_overrides = {
     'ExtensionTypeVar': 'cg:cryptography.x509.ExtensionType',
     'Union': 'python:typing.Union',
     'typing.S': 'django_ca.extensions.base.S',
+    "DSA": "str",
+    "RSA": "str",
+    "ECC": "str",
 }
 
 text_overrides = {
