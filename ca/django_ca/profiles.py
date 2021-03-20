@@ -450,7 +450,7 @@ class DefaultProfileProxy:
         return getattr(profiles[ca_settings.CA_DEFAULT_PROFILE], name)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Profile):
+        if not isinstance(other, (DefaultProfileProxy, Profile)):
             return False
         return profiles[ca_settings.CA_DEFAULT_PROFILE] == other
 
