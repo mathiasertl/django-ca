@@ -104,6 +104,8 @@ class ProfileTestCase(DjangoCATestCase):
             self.assertNotEqual(prof, None)
             self.assertNotEqual(prof, -1)
 
+        self.assertNotEqual(profile, None)
+
     def test_init_django_ca_values(self):
         """Test django-ca extensions as extensions."""
         prof1 = Profile('test', subject=Subject('/C=AT/CN=example.com'), extensions={
