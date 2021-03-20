@@ -17,8 +17,10 @@ from copy import deepcopy
 from datetime import timedelta
 from threading import local
 from typing import Any
+from typing import Dict
 from typing import Optional
 from typing import Union
+from typing import cast
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -72,7 +74,7 @@ class Profile:
         add_ocsp_url=True,
         add_issuer_url=True,
         add_issuer_alternative_name=True,
-    ):
+    ) -> None:
         # pylint: disable=too-many-locals,too-many-arguments
         self.name = name
 
@@ -107,7 +109,7 @@ class Profile:
         # set some sane extension defaults
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints())
 
-    def __eq__(self, o):
+    def __eq__(self, o: object) -> bool:
         if isinstance(o, (Profile, DefaultProfileProxy)) is False:
             return False
         algo = isinstance(o.algorithm, type(self.algorithm))
@@ -138,10 +140,10 @@ class Profile:
 
         return KEY_TO_EXTENSION[key](value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Profile: %r>" % self.name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
 
     def create_cert(
@@ -372,7 +374,9 @@ class Profile:
 
         return ca.x509_cert.subject
 
-    def _update_san_from_cn(self, cn_in_san, subject, extensions):
+    def _update_san_from_cn(
+        self, cn_in_san: bool, subject: Subject, extensions: Dict[str, Extension]
+    ) -> None:
         if subject.get("CN") and cn_in_san is True:
             try:
                 common_name = parse_general_name(subject["CN"])
@@ -382,12 +386,14 @@ class Profile:
                 ) from e
 
             extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName())
-            if common_name not in extensions[SubjectAlternativeName.key]:
-                extensions[SubjectAlternativeName.key].append(common_name)
+            san_ext = cast(SubjectAlternativeName, extensions[SubjectAlternativeName.key])
+            if common_name not in san_ext:
+                san_ext.append(common_name)
         elif not subject.get("CN") and SubjectAlternativeName.key in extensions:
-            common_name = extensions[SubjectAlternativeName.key].get_common_name()
-            if common_name is not None:
-                subject["CN"] = common_name
+            san_ext = cast(SubjectAlternativeName, extensions[SubjectAlternativeName.key])
+            cn_from_san = san_ext.get_common_name()
+            if cn_from_san is not None:
+                subject["CN"] = cn_from_san
 
 
 def get_profile(name: Optional[str] = None) -> Profile:
@@ -413,19 +419,19 @@ class Profiles:  # pylint: disable=too-few-public-methods
     def __init__(self) -> None:
         self._profiles = local()
 
-    def __getitem__(self, name: str) -> Profile:
+    def __getitem__(self, name: Optional[str]) -> Profile:
         if name is None:
             name = ca_settings.CA_DEFAULT_PROFILE
 
         try:
-            return self._profiles.profiles[name]
+            return cast(Profile, self._profiles.profiles[name])
         except AttributeError:
             self._profiles.profiles = {}
         except KeyError:
             pass
 
         self._profiles.profiles[name] = get_profile(name)
-        return self._profiles.profiles[name]
+        return cast(Profile, self._profiles.profiles[name])
 
     def _reset(self) -> None:
         self._profiles = local()
