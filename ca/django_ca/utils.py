@@ -28,7 +28,6 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -57,6 +56,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .typehints import Expires
+from .typehints import Literal
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
