@@ -33,7 +33,7 @@ if 'CA_DIR' in os.environ:  # pragma: no cover
 else:
     CA_DIR = getattr(settings, 'CA_DIR', os.path.join(settings.BASE_DIR, 'files'))
 
-CA_DEFAULT_KEY_SIZE = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
+CA_DEFAULT_KEY_SIZE: int = getattr(settings, 'CA_DEFAULT_KEY_SIZE', 4096)
 
 CA_PROFILES: Dict[str, Dict[str, Any]] = {
     'client': {

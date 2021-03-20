@@ -28,6 +28,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -541,6 +542,33 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     return encoded
 
 
+@overload
+def validate_key_parameters(
+    key_size: Optional[int],
+    key_type: Literal["DSA"],
+    ecc_curve: Optional[ec.EllipticCurve]
+) -> Tuple[int, Literal["DSA"], None]:
+    ...
+
+
+@overload
+def validate_key_parameters(
+    key_size: Optional[int],
+    key_type: Literal["RSA"],
+    ecc_curve: Optional[ec.EllipticCurve]
+) -> Tuple[int, Literal["RSA"], None]:
+    ...
+
+
+@overload
+def validate_key_parameters(
+    key_size: Optional[int],
+    key_type: Literal["ECC"],
+    ecc_curve: Optional[ec.EllipticCurve]
+) -> Tuple[None, Literal["DSA"], ec.EllipticCurve]:
+    ...
+
+
 def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: ParsableKeyType = "RSA",
@@ -567,6 +595,7 @@ def validate_key_parameters(
         key_size = None
         ecc_curve = parse_key_curve(ecc_curve)
     elif key_type in ["DSA", "RSA"]:
+        ecc_curve = None
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
 
@@ -580,8 +609,27 @@ def validate_key_parameters(
     return key_size, key_type, ecc_curve
 
 
+@overload
+def generate_private_key(key_size: int, key_type: Literal["RSA"], ecc_curve: None) -> rsa.RSAPrivateKey:
+    ...
+
+
+@overload
+def generate_private_key(key_size: int, key_type: Literal["DSA"], ecc_curve: None) -> dsa.DSAPrivateKey:
+    ...
+
+
+@overload
 def generate_private_key(
-    key_size: Optional[int], key_type: str, ecc_curve: Optional[ec.EllipticCurve]
+    key_size: None,
+    key_type: Literal["ECC"],
+    ecc_curve: ec.EllipticCurve
+) -> ec.EllipticCurvePrivateKey:
+    ...
+
+
+def generate_private_key(
+    key_size: Optional[int], key_type: Literal["RSA", "DSA", "ECC"], ecc_curve: Optional[ec.EllipticCurve]
 ) -> Union[rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey]:
     """Generate a private key.
 
@@ -604,11 +652,11 @@ def generate_private_key(
     key
         A private key of the appropriate type.
     """
-    if key_type == "DSA":
+    if key_type == "DSA" and key_size is not None:
         return dsa.generate_private_key(key_size=key_size, backend=default_backend())
     if key_type == "ECC" and ecc_curve is not None:
         return ec.generate_private_key(ecc_curve, default_backend())
-    if key_type == "RSA":
+    if key_type == "RSA" and key_size is not None:
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
     raise ValueError("%s: Invalid key type." % key_type)
@@ -1126,7 +1174,7 @@ class GeneralNameList(List[x509.GeneralName]):
 
 def get_crl_cache_key(
     serial: str,
-    algorithm: hashes.HashAlgorithm = hashes.SHA512,
+    algorithm: hashes.HashAlgorithm = hashes.SHA512(),
     encoding: Encoding = Encoding.DER,
     scope: Optional[str] = None,
 ) -> str:
