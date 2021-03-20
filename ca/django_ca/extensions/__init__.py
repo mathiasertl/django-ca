@@ -93,4 +93,22 @@ def get_extension_name(ext: ExtensionType) -> str:
 
 __all__ = [
     "get_extension_name",
-] + [c.__name__ for c in KEY_TO_EXTENSION.values()]
+    "AuthorityInformationAccess",
+    "AuthorityKeyIdentifier",
+    "BasicConstraints",
+    "CRLDistributionPoints",
+    "CertificatePolicies",
+    "ExtendedKeyUsage",
+    "FreshestCRL",
+    "InhibitAnyPolicy",
+    "IssuerAlternativeName",
+    "KeyUsage",
+    "NameConstraints",
+    "OCSPNoCheck",
+    "PolicyConstraints",
+    "PrecertPoison",
+    "PrecertificateSignedCertificateTimestamps",
+    "SubjectAlternativeName",
+    "SubjectKeyIdentifier",
+    "TLSFeature",
+]
