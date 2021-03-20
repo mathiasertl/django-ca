@@ -133,7 +133,8 @@ MULTIPLE_OIDS = (
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 try:
-    # pylint: disable=unused-import
+    # pylint: disable=unused-import,useless-import-alias
+    #         Import alias is for mypy (explicit re-export)
     from django.utils.decorators import classproperty as classproperty
 except ImportError:  # pragma: no cover
     # NOTE: Official Django documentation states that this decorator is new in Django 3.1, but in reality
