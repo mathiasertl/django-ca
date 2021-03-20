@@ -320,7 +320,7 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
         if self.revoked is False:
             return None
         if self.revoked_date is None:
-            log.warning("Inconsistent model state found: revoked=True and revoked_date=None.")
+            log.warning("Inconsistent model state: revoked=True and revoked_date=None.")
             return None
 
         if timezone.is_aware(self.revoked_date):

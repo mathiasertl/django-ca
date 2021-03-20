@@ -681,6 +681,22 @@ class CertificateTests(DjangoCAWithCertTestCase):
             else:
                 self.assertIsNone(ext)
 
+    def test_inconsistent_model_states(self):
+        """Test exceptions raised for an inconsistent model state."""
+        cert = self.certs["child-cert"]
+        cert.revoked = True
+        cert.save()
+
+        with self.assertRaisesRegex(ValueError, r"^Certificate has no revocation date$"):
+            cert.get_revocation()
+
+        with self.assertLogs("django_ca.models", level="WARNING") as logcm:
+            self.assertIsNone(cert.get_revocation_time())
+            self.assertEqual(
+                logcm.output,
+                ["WARNING:django_ca.models:Inconsistent model state: revoked=True and revoked_date=None."]
+            )
+
 
 class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeAccount`."""
