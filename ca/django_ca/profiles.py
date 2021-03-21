@@ -16,6 +16,7 @@
 from copy import deepcopy
 from datetime import timedelta
 from threading import local
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -28,7 +29,6 @@ from cryptography.hazmat.backends import default_backend
 # Circular import to models so that Sphinx can deal with documenting typehints:
 #    https://github.com/agronholm/sphinx-autodoc-typehints#dealing-with-circular-imports
 from . import ca_settings
-from . import models  # pylint: disable=cyclic-import; for autodoc typehints, see above
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -48,6 +48,9 @@ from .utils import parse_expires
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import shlex_split
+
+if TYPE_CHECKING:
+    from .models import CertificateAuthority
 
 
 class Profile:
@@ -152,7 +155,7 @@ class Profile:
 
     def create_cert(
         self,
-        ca: "models.CertificateAuthority",
+        ca: "CertificateAuthority",
         csr,
         subject=None,
         expires: Expires = None,
@@ -335,7 +338,7 @@ class Profile:
 
     def _update_from_ca(
         self,
-        ca: "models.CertificateAuthority",
+        ca: "CertificateAuthority",
         extensions: Dict[str, Extension[Any, Any, Any]],  # pylint: disable=unsubscriptable-object
         add_crl_url: bool,
         add_ocsp_url: bool,

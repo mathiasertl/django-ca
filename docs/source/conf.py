@@ -77,8 +77,9 @@ extensions = [
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     'celery.contrib.sphinx',
     'numpydoc',
-    'sphinx_autodoc_typehints',
 ]
+
+autodoc_typehints = 'none'
 
 if spelling is not None:
     from django_ca_sphinx.spelling import URIFilter, MagicWordsFilter, TypeHintsFilter  # isort:skip
@@ -113,6 +114,7 @@ copyright = '2016 - 2020, Mathias Ertl'
 author = 'Mathias Ertl'
 
 import django_ca  # NOQA
+from django_ca.models import CertificateAuthority  # NOQA: [E402]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -373,6 +375,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 qualname_overrides = {
     'ExtensionTypeTypeVar': 'cg:cryptography.x509.ExtensionType',
     "IterableItem": ":py:data:`django_ca.typehints.IterableItem`",
+    "ParsableItem": ":py:data:`django_ca.typehints.ParsableItem`",
     "ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
     "SerializedItem": ":py:data:`django_ca.typehints.SerializedItem`",
     "SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
@@ -421,12 +424,23 @@ qualname_overrides = {
     'cryptography.x509.name.Name': 'cg:cryptography.x509.Name',
     'cryptography.x509.name.RelativeDistinguishedName': 'cg:cryptography.x509.RelativeDistinguishedName',
     "django_ca.extensions.extensions.AuthorityKeyIdentifier": "django_ca.extensions.AuthorityKeyIdentifier",
+    "django_ca.extensions.extensions.SubjectKeyIdentifier": "django_ca.extensions.SubjectKeyIdentifier",
+    "django_ca.extensions.extensions.IssuerAlternativeName": "django_ca.extensions.IssuerAlternativeName",
+    "django_ca.extensions.extensions.NameConstraints": "django_ca.extensions.NameConstraints",
     'ExtensionTypeVar': 'cg:cryptography.x509.ExtensionType',
     'Union': 'python:typing.Union',
     'typing.S': 'django_ca.extensions.base.S',
+
+    "django.http.request.HttpRequest": "django:django.http.HttpRequest",
+    "CertificateAuthority": "django_ca.models.CertificateAuthority",
+
+    # Literal types also sometimes want to be resolved
     "DSA": "str",
     "RSA": "str",
     "ECC": "str",
+    "ca": "str",
+    "user": "str",
+    "attribute": "str",
 }
 
 text_overrides = {

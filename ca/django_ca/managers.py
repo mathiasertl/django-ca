@@ -35,14 +35,11 @@ from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django.core.files.base import ContentFile
-from django.db import models as django_models
+from django.db import models
 from django.urls import reverse
 from django.utils.encoding import force_str
 
-# Circular import to models so that Sphinx can deal with documenting typehints:
-#    https://github.com/agronholm/sphinx-autodoc-typehints#dealing-with-circular-imports
 from . import ca_settings
-from . import models  # pylint: disable=cyclic-import; for autodoc typehints, see above
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
@@ -69,15 +66,22 @@ from .utils import validate_key_parameters
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
 if TYPE_CHECKING:
-    AcmeAccountManagerBase = django_models.Manager[models.AcmeAccount]
-    AcmeAuthorizationManagerBase = django_models.Manager[models.AcmeAuthorization]
-    AcmeCertificateManagerBase = django_models.Manager[models.AcmeCertificate]
-    AcmeChallengeManagerBase = django_models.Manager[models.AcmeChallenge]
-    AcmeOrderManagerBase = django_models.Manager[models.AcmeOrder]
-    CertificateAuthorityManagerBase = django_models.Manager[models.CertificateAuthority]
-    CertificateManagerBase = django_models.Manager[models.Certificate]
-else:
+    from .models import AcmeAccount
+    from .models import AcmeAuthorization
+    from .models import AcmeCertificate
+    from .models import AcmeChallenge
+    from .models import AcmeOrder
+    from .models import Certificate
+    from .models import CertificateAuthority
 
+    AcmeAccountManagerBase = models.Manager[AcmeAccount]
+    AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]
+    AcmeCertificateManagerBase = models.Manager[AcmeCertificate]
+    AcmeChallengeManagerBase = models.Manager[AcmeChallenge]
+    AcmeOrderManagerBase = models.Manager[AcmeOrder]
+    CertificateAuthorityManagerBase = models.Manager[CertificateAuthority]
+    CertificateManagerBase = models.Manager[Certificate]
+else:
     AcmeAccountManagerBase = (
         AcmeAuthorizationManagerBase
     ) = (
@@ -86,7 +90,7 @@ else:
         AcmeChallengeManagerBase
     ) = (
         AcmeOrderManagerBase
-    ) = CertificateAuthorityManagerBase = CertificateManagerBase = django_models.Manager
+    ) = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
 
 
 class CertificateManagerMixin:

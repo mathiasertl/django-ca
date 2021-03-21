@@ -192,6 +192,8 @@ ParsableExtension = TypedDict(
     total=False,
 )
 ParsableItem = TypeVar("ParsableItem")
+"""TypeVar representing a parsable list item."""
+
 ParsableValue = TypeVar("ParsableValue")
 """A value that can be parsed to a valid extension."""
 
