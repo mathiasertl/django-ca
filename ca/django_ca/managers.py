@@ -60,18 +60,24 @@ class CertificateManagerMixin:
         extensions = []
         if crl_url:
             urls = [x509.UniformResourceIdentifier(force_str(c)) for c in crl_url]
-            dps = [x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
-                   for c in urls]
+            dps = [
+                x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
+                for c in urls
+            ]
             extensions.append((False, x509.CRLDistributionPoints(dps)))
         auth_info_access = []
         if ocsp_url:
             uri = x509.UniformResourceIdentifier(force_str(ocsp_url))
-            auth_info_access.append(x509.AccessDescription(
-                access_method=AuthorityInformationAccessOID.OCSP, access_location=uri))
+            auth_info_access.append(
+                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=uri)
+            )
         if issuer_url:
             uri = x509.UniformResourceIdentifier(force_str(issuer_url))
-            auth_info_access.append(x509.AccessDescription(
-                access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri))
+            auth_info_access.append(
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri
+                )
+            )
         if auth_info_access:
             extensions.append((False, x509.AuthorityInformationAccess(auth_info_access)))
         return extensions
@@ -83,19 +89,43 @@ class CertificateManagerMixin:
             elif isinstance(ext, Extension):
                 builder = builder.add_extension(*ext.for_builder())
             else:
-                raise ValueError('Cannot add extension of type %s' % type(ext).__name__)
+                raise ValueError("Cannot add extension of type %s" % type(ext).__name__)
         return builder
 
 
 class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
     """Model manager for the CertificateAuthority model."""
 
-    def init(self, name, subject, expires: Expires = None, algorithm=None, parent=None, default_hostname=None,
-             pathlen=None, issuer_url=None, issuer_alt_name='', crl_url=None, ocsp_url=None,
-             ca_issuer_url=None, ca_crl_url=None, ca_ocsp_url=None, name_constraints=None,
-             password=None, parent_password=None, ecc_curve=None, key_type='RSA', key_size=None,
-             extra_extensions=None, path='ca',
-             caa='', website='', terms_of_service='', acme_enabled=False, acme_requires_contact=True):
+    def init(
+        self,
+        name,
+        subject,
+        expires: Expires = None,
+        algorithm=None,
+        parent=None,
+        default_hostname=None,
+        pathlen=None,
+        issuer_url=None,
+        issuer_alt_name="",
+        crl_url=None,
+        ocsp_url=None,
+        ca_issuer_url=None,
+        ca_crl_url=None,
+        ca_ocsp_url=None,
+        name_constraints=None,
+        password=None,
+        parent_password=None,
+        ecc_curve=None,
+        key_type="RSA",
+        key_size=None,
+        extra_extensions=None,
+        path="ca",
+        caa="",
+        website="",
+        terms_of_service="",
+        acme_enabled=False,
+        acme_requires_contact=True,
+    ):
         """Create a new certificate authority.
 
         Parameters
@@ -194,7 +224,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if not isinstance(subject, Subject):
             subject = Subject(subject)
         if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
-            issuer_alt_name = IssuerAlternativeName({'value': [issuer_alt_name]})
+            issuer_alt_name = IssuerAlternativeName({"value": [issuer_alt_name]})
         if crl_url is None:
             crl_url = []
 
@@ -214,35 +244,54 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
             # Set OCSP urls
             if not ocsp_url:
-                ocsp_path = reverse('django_ca:ocsp-cert-post', kwargs={'serial': hex_serial})
-                ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
+                ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": hex_serial})
+                ocsp_url = "http://%s%s" % (default_hostname, ocsp_path)
             if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
-                ocsp_path = reverse('django_ca:ocsp-ca-post', kwargs={'serial': root_serial})
-                ca_ocsp_url = 'http://%s%s' % (default_hostname, ocsp_path)
+                ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": root_serial})
+                ca_ocsp_url = "http://%s%s" % (default_hostname, ocsp_path)
 
             # Set issuer path
-            issuer_path = reverse('django_ca:issuer', kwargs={'serial': root_serial})
+            issuer_path = reverse("django_ca:issuer", kwargs={"serial": root_serial})
             if parent and not ca_issuer_url:
-                ca_issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
+                ca_issuer_url = "http://%s%s" % (default_hostname, issuer_path)
             if not issuer_url:
-                issuer_url = 'http://%s%s' % (default_hostname, issuer_path)
+                issuer_url = "http://%s%s" % (default_hostname, issuer_path)
 
             # Set CRL URLs
             if not crl_url:
-                crl_path = reverse('django_ca:crl', kwargs={'serial': hex_serial})
-                crl_url = ['http://%s%s' % (default_hostname, crl_path)]
+                crl_path = reverse("django_ca:crl", kwargs={"serial": hex_serial})
+                crl_url = ["http://%s%s" % (default_hostname, crl_path)]
             if parent and not ca_crl_url:  # CRL for CA only makes sense in intermediate CAs
-                ca_crl_path = reverse('django_ca:ca-crl', kwargs={'serial': root_serial})
-                ca_crl_url = ['http://%s%s' % (default_hostname, ca_crl_path)]
+                ca_crl_path = reverse("django_ca:ca-crl", kwargs={"serial": root_serial})
+                ca_crl_url = ["http://%s%s" % (default_hostname, ca_crl_path)]
 
         pre_create_ca.send(
-            sender=self.model, name=name, key_size=key_size, key_type=key_type, algorithm=algorithm,
-            expires=expires, parent=parent, subject=subject, pathlen=pathlen, issuer_url=issuer_url,
-            issuer_alt_name=issuer_alt_name, crl_url=crl_url, ocsp_url=ocsp_url, ca_issuer_url=ca_issuer_url,
-            ca_crl_url=ca_crl_url, ca_ocsp_url=ca_ocsp_url, name_constraints=name_constraints,
-            password=password, parent_password=parent_password, extra_extensions=extra_extensions, caa=caa,
-            website=website, terms_of_service=terms_of_service, acme_enabled=acme_enabled,
-            acme_requires_contact=acme_requires_contact)
+            sender=self.model,
+            name=name,
+            key_size=key_size,
+            key_type=key_type,
+            algorithm=algorithm,
+            expires=expires,
+            parent=parent,
+            subject=subject,
+            pathlen=pathlen,
+            issuer_url=issuer_url,
+            issuer_alt_name=issuer_alt_name,
+            crl_url=crl_url,
+            ocsp_url=ocsp_url,
+            ca_issuer_url=ca_issuer_url,
+            ca_crl_url=ca_crl_url,
+            ca_ocsp_url=ca_ocsp_url,
+            name_constraints=name_constraints,
+            password=password,
+            parent_password=parent_password,
+            extra_extensions=extra_extensions,
+            caa=caa,
+            website=website,
+            terms_of_service=terms_of_service,
+            acme_enabled=acme_enabled,
+            acme_requires_contact=acme_requires_contact,
+        )
 
         private_key = generate_private_key(key_size, key_type, ecc_curve)
         public_key = private_key.public_key()
@@ -253,10 +302,20 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
 
         builder = builder.subject_name(subject)
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
-        builder = builder.add_extension(x509.KeyUsage(
-            key_cert_sign=True, crl_sign=True, digital_signature=False, content_commitment=False,
-            key_encipherment=False, data_encipherment=False, key_agreement=False, encipher_only=False,
-            decipher_only=False), critical=True)
+        builder = builder.add_extension(
+            x509.KeyUsage(
+                key_cert_sign=True,
+                crl_sign=True,
+                digital_signature=False,
+                content_commitment=False,
+                key_encipherment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                encipher_only=False,
+                decipher_only=False,
+            ),
+            critical=True,
+        )
 
         subject_key_id = x509.SubjectKeyIdentifier.from_public_key(public_key)
         builder = builder.add_extension(subject_key_id, critical=False)
@@ -283,16 +342,26 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         if extra_extensions:
             builder = self._extra_extensions(builder, extra_extensions)
 
-        certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm,
-                                   backend=default_backend())
+        certificate = builder.sign(
+            private_key=private_sign_key, algorithm=algorithm, backend=default_backend()
+        )
 
         # Normalize extensions for create()
-        crl_url = '\n'.join(crl_url)
+        crl_url = "\n".join(crl_url)
 
-        ca = self.model(name=name, issuer_url=issuer_url, issuer_alt_name=','.join(issuer_alt_name),
-                        ocsp_url=ocsp_url, crl_url=crl_url, parent=parent, caa_identity=caa, website=website,
-                        terms_of_service=terms_of_service, acme_enabled=acme_enabled,
-                        acme_requires_contact=acme_requires_contact)
+        ca = self.model(
+            name=name,
+            issuer_url=issuer_url,
+            issuer_alt_name=",".join(issuer_alt_name),
+            ocsp_url=ocsp_url,
+            crl_url=crl_url,
+            parent=parent,
+            caa_identity=caa,
+            website=website,
+            terms_of_service=terms_of_service,
+            acme_enabled=acme_enabled,
+            acme_requires_contact=acme_requires_contact,
+        )
         ca.x509_cert = certificate
 
         if password is None:
@@ -300,11 +369,12 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         else:
             encryption = serialization.BestAvailableEncryption(password)
 
-        pem = private_key.private_bytes(encoding=Encoding.PEM, format=PrivateFormat.PKCS8,
-                                        encryption_algorithm=encryption)
+        pem = private_key.private_bytes(
+            encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
+        )
 
         # write private key to file
-        path = path / pathlib.PurePath('%s.key' % ca.serial.replace(':', ''))
+        path = path / pathlib.PurePath("%s.key" % ca.serial.replace(":", ""))
         ca.private_key_path = ca_storage.save(str(path), ContentFile(pem))
         ca.save()
 
@@ -345,7 +415,7 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         csr = parse_csr(csr, csr_format=csr_format)
         cert = profile.create_cert(ca, csr, **kwargs)
 
-        obj = self.model(ca=ca, csr=csr.public_bytes(Encoding.PEM).decode('utf-8'), profile=profile.name)
+        obj = self.model(ca=ca, csr=csr.public_bytes(Encoding.PEM).decode("utf-8"), profile=profile.name)
         obj.x509_cert = cert
         if autogenerated is None:
             obj.autogenerated = profile.autogenerated
