@@ -1,6 +1,5 @@
 Sphinx==3.5.3
 numpydoc==1.1.0
-sphinx-autodoc-typehints==1.11.1
 sphinx_rtd_theme==0.5.1
 sphinxcontrib-spelling==7.1.0
 doc8==0.8.1
