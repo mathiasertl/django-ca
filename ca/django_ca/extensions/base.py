@@ -393,7 +393,7 @@ class IterableExtension(
             )
         )
 
-    def __iter__(self) -> Iterable[SerializedItem]:
+    def __iter__(self) -> Iterator[SerializedItem]:
         return iter(self.serialize_value())
 
     def __len__(self) -> int:
