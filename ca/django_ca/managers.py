@@ -16,10 +16,20 @@
 # pylint: disable=too-few-public-methods; some managers are just placeholders for future methods
 
 import pathlib
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Iterable
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Tuple
+from typing import Union
+from typing import cast
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -40,6 +50,10 @@ from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .subject import Subject
 from .typehints import Expires
+from .typehints import ParsableExtension
+from .typehints import ParsableHash
+from .typehints import ParsableSubject
+from .typehints import PrivateKeyTypes
 from .utils import ca_storage
 from .utils import generate_private_key
 from .utils import get_cert_builder
@@ -50,14 +64,45 @@ from .utils import parse_hash_algorithm
 from .utils import validate_hostname
 from .utils import validate_key_parameters
 
+# https://mypy.readthedocs.io/en/latest/runtime_troubles.html
+if TYPE_CHECKING:
+    from .models import AcmeAccount
+    from .models import AcmeAuthorization
+    from .models import AcmeCertificate
+    from .models import AcmeChallenge
+    from .models import AcmeOrder
+    from .models import Certificate
+    from .models import CertificateAuthority
+
+    AcmeAccountManagerBase = models.Manager[AcmeAccount]
+    AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]
+    AcmeCertificateManagerBase = models.Manager[AcmeCertificate]
+    AcmeChallengeManagerBase = models.Manager[AcmeChallenge]
+    AcmeOrderManagerBase = models.Manager[AcmeOrder]
+    CertificateAuthorityManagerBase = models.Manager[CertificateAuthority]
+    CertificateManagerBase = models.Manager[Certificate]
+else:
+    AcmeAccountManagerBase = (
+        AcmeAuthorizationManagerBase
+    ) = (
+        AcmeCertificateManagerBase
+    ) = (
+        AcmeChallengeManagerBase
+    ) = AcmeOrderManagerBase = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
+
 
 class CertificateManagerMixin:
     """Mixin for model managers."""
 
-    def get_common_extensions(self, issuer_url=None, crl_url=None, ocsp_url=None):
+    def get_common_extensions(
+        self,
+        issuer_url: Optional[str] = None,
+        crl_url: Optional[Iterable[str]] = None,
+        ocsp_url: Optional[str] = None,
+    ) -> List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]]:
         """Add extensions potentially common to both CAs and certs."""
 
-        extensions = []
+        extensions: List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]] = []
         if crl_url:
             urls = [x509.UniformResourceIdentifier(force_str(c)) for c in crl_url]
             dps = [
@@ -82,9 +127,13 @@ class CertificateManagerMixin:
             extensions.append((False, x509.AuthorityInformationAccess(auth_info_access)))
         return extensions
 
-    def _extra_extensions(self, builder, extra_extensions):
+    def _extra_extensions(
+        self,
+        builder: x509.CertificateBuilder,
+        extra_extensions: Iterable[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]],
+    ) -> x509.CertificateBuilder:
         for ext in extra_extensions:
-            if isinstance(ext, x509.extensions.Extension):
+            if isinstance(ext, x509.Extension):
                 builder = builder.add_extension(ext.value, critical=ext.critical)
             elif isinstance(ext, Extension):
                 builder = builder.add_extension(*ext.for_builder())
@@ -93,39 +142,41 @@ class CertificateManagerMixin:
         return builder
 
 
-class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
+class CertificateAuthorityManager(CertificateManagerMixin, CertificateAuthorityManagerBase):
     """Model manager for the CertificateAuthority model."""
 
     def init(
         self,
-        name,
-        subject,
+        name: str,
+        subject: Union[ParsableSubject, Subject],
         expires: Expires = None,
-        algorithm=None,
-        parent=None,
-        default_hostname=None,
-        pathlen=None,
-        issuer_url=None,
-        issuer_alt_name="",
-        crl_url=None,
-        ocsp_url=None,
-        ca_issuer_url=None,
-        ca_crl_url=None,
-        ca_ocsp_url=None,
-        name_constraints=None,
-        password=None,
-        parent_password=None,
-        ecc_curve=None,
-        key_type="RSA",
-        key_size=None,
-        extra_extensions=None,
-        path="ca",
-        caa="",
-        website="",
-        terms_of_service="",
-        acme_enabled=False,
-        acme_requires_contact=True,
-    ):
+        algorithm: ParsableHash = None,
+        parent: Optional["CertificateAuthority"] = None,
+        default_hostname: Optional[str] = None,
+        pathlen: Optional[int] = None,
+        issuer_url: Optional[str] = None,
+        issuer_alt_name: Union[str, IssuerAlternativeName] = "",
+        crl_url: Optional[Iterable[str]] = None,
+        ocsp_url: Optional[str] = None,
+        ca_issuer_url: Optional[str] = None,
+        ca_crl_url: Optional[List[str]] = None,
+        ca_ocsp_url: Optional[str] = None,
+        name_constraints: Optional[Union[ParsableExtension, NameConstraints]] = None,
+        password: Optional[bytes] = None,
+        parent_password: Optional[Union[str, bytes]] = None,
+        ecc_curve: Optional[ec.EllipticCurve] = None,
+        key_type: Literal["RSA", "DSA", "ECC"] = "RSA",
+        key_size: Optional[int] = None,
+        extra_extensions: Optional[Iterable[
+            Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]
+        ]] = None,
+        path: Union[pathlib.PurePath, str] = "ca",
+        caa: str = "",
+        website: str = "",
+        terms_of_service: str = "",
+        acme_enabled: bool = False,
+        acme_requires_contact: bool = True,
+    ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
         Parameters
@@ -216,7 +267,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly.
-        key_size, key_type, ecc_curve = validate_key_parameters(key_size, key_type, ecc_curve)
+        generate_key_args = validate_key_parameters(key_size, key_type, ecc_curve)
         algorithm = parse_hash_algorithm(algorithm)
         expires = parse_expires(expires)
 
@@ -293,7 +344,10 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
             acme_requires_contact=acme_requires_contact,
         )
 
-        private_key = generate_private_key(key_size, key_type, ecc_curve)
+        # NOTE: Since priv_key_params is a union of tuples, mypy is unable to determine that all overloaded
+        # variants for generate_private_key() potentially match, and thus matches the first variant. See:
+        #   https://mypy.readthedocs.io/en/latest/more_types.html#type-checking-calls-to-overloads
+        private_key = cast(PrivateKeyTypes, generate_private_key(*generate_key_args))
         public_key = private_key.public_key()
 
         builder = get_cert_builder(expires, serial=serial)
@@ -365,7 +419,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         ca.x509_cert = certificate
 
         if password is None:
-            encryption = serialization.NoEncryption()
+            encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
         else:
             encryption = serialization.BestAvailableEncryption(password)
 
@@ -382,10 +436,18 @@ class CertificateAuthorityManager(CertificateManagerMixin, models.Manager):
         return ca
 
 
-class CertificateManager(CertificateManagerMixin, models.Manager):
+class CertificateManager(CertificateManagerMixin, CertificateManagerBase):
     """Model manager for the Certificate model."""
 
-    def create_cert(self, ca, csr, csr_format=Encoding.PEM, profile=None, autogenerated=None, **kwargs):
+    def create_cert(
+        self,
+        ca: "CertificateAuthority",
+        csr: Union[x509.CertificateSigningRequest, str, bytes],
+        csr_format: Encoding = Encoding.PEM,
+        profile: Optional[Union[str, Profile]] = None,
+        autogenerated: Optional[bool] = None,
+        **kwargs: Any,
+    ) -> "Certificate":
         """Create and sign a new certificate based on the given profile.
 
         Parameters
@@ -428,21 +490,21 @@ class CertificateManager(CertificateManagerMixin, models.Manager):
         return obj
 
 
-class AcmeAccountManager(models.Manager):
+class AcmeAccountManager(AcmeAccountManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeAccount`."""
 
 
-class AcmeOrderManager(models.Manager):
+class AcmeOrderManager(AcmeOrderManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeOrder`."""
 
 
-class AcmeAuthorizationManager(models.Manager):
+class AcmeAuthorizationManager(AcmeAuthorizationManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
 
-class AcmeChallengeManager(models.Manager):
+class AcmeChallengeManager(AcmeChallengeManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeChallenge`."""
 
 
-class AcmeCertificateManager(models.Manager):
+class AcmeCertificateManager(AcmeCertificateManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeCertificate`."""
