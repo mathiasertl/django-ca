@@ -17,7 +17,6 @@ import abc
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
-from typing import Type
 from typing import TypeVar
 
 from django.core.exceptions import ImproperlyConfigured
