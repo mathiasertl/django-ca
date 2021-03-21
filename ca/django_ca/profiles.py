@@ -16,6 +16,7 @@
 from copy import deepcopy
 from datetime import timedelta
 from threading import local
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -39,11 +40,16 @@ from .extensions.utils import DistributionPoint
 from .signals import pre_issue_cert
 from .subject import Subject
 from .typehints import Expires
+from .typehints import SerializedProfile
 from .utils import get_cert_builder
 from .utils import parse_expires
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import shlex_split
+
+if TYPE_CHECKING:
+    from .models import Certificate
+    from .models import CertificateAuthority
 
 
 class Profile:
@@ -160,7 +166,7 @@ class Profile:
         add_issuer_url=None,
         add_issuer_alternative_name=None,
         password=None,
-    ):
+    ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
         This function is the core function used to create x509 certificates. In it's simplest form, you only
@@ -310,11 +316,11 @@ class Profile:
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm, backend=default_backend())
 
-    def copy(self):
+    def copy(self) -> "Profile":
         """Create a deep copy of a profile."""
         return deepcopy(self)
 
-    def serialize(self):
+    def serialize(self) -> SerializedProfile:
         """Function to serialize a profile.
 
         This is function is called by the admin interface to retrieve profile information to the browser, so
@@ -331,13 +337,13 @@ class Profile:
 
     def _update_from_ca(
         self,
-        ca,
-        extensions,
-        add_crl_url=None,
-        add_ocsp_url=None,
-        add_issuer_url=None,
-        add_issuer_alternative_name=None,
-    ):
+        ca: "CertificateAuthority",
+        extensions: Dict[str, Extension[Any, Any, Any]],
+        add_crl_url: bool,
+        add_ocsp_url: bool,
+        add_issuer_url: bool,
+        add_issuer_alternative_name: bool,
+    ) -> x509.Name:
         """Update data from the given CA.
 
         * Sets the AuthorityKeyIdentifier extension
@@ -375,11 +381,14 @@ class Profile:
         return ca.x509_cert.subject
 
     def _update_san_from_cn(
-        self, cn_in_san: bool, subject: Subject, extensions: Dict[str, Extension]
+        self,
+        cn_in_san: bool,
+        subject: Subject,
+        extensions: Dict[str, Extension[Any, Any, Any]],
     ) -> None:
         if subject.get("CN") and cn_in_san is True:
             try:
-                common_name = parse_general_name(subject["CN"])
+                common_name = parse_general_name(cast(str, subject["CN"]))
             except ValueError as e:
                 raise ValueError(
                     "%s: Could not parse CommonName as subjectAlternativeName." % subject["CN"]

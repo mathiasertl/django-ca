@@ -20,6 +20,7 @@ from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -99,6 +100,15 @@ SerializedDistributionPoints = TypedDict(
     {
         "critical": bool,
         "value": List[SerializedDistributionPoint],
+    },
+)
+SerializedProfile = TypedDict(
+    "SerializedProfile",
+    {
+        "cn_in_san": bool,
+        "description": str,
+        "subject": Dict[str, Union[str, List[str]]],
+        "extensions": Dict[str, Any],
     },
 )
 
