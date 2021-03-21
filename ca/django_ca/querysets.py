@@ -13,6 +13,11 @@
 
 """QuerySet classes for DjangoCA models."""
 
+import abc
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Generic
+from typing import Type
 from typing import TypeVar
 
 from django.core.exceptions import ImproperlyConfigured
@@ -22,15 +27,57 @@ from django.utils import timezone
 
 from . import ca_settings
 from .acme.constants import Status
+from .typehints import Protocol
 from .utils import sanitize_serial
 
-QuerySetTypeVar = TypeVar("QuerySetTypeVar")
+if TYPE_CHECKING:
+    from .models import AcmeAccount
+    from .models import AcmeAuthorization
+    from .models import AcmeCertificate
+    from .models import AcmeChallenge
+    from .models import AcmeOrder
+    from .models import Certificate
+    from .models import CertificateAuthority
+    from .models import X509CertMixin
+
+    AcmeAccountQuerySetBase = models.QuerySet[AcmeAccount]
+    AcmeAuthorizationQuerySetBase = models.QuerySet[AcmeAuthorization]
+    AcmeCertificateQuerySetBase = models.QuerySet[AcmeCertificate]
+    AcmeChallengeQuerySetBase = models.QuerySet[AcmeChallenge]
+    AcmeOrderQuerySetBase = models.QuerySet[AcmeOrder]
+    CertificateAuthorityQuerySetBase = models.QuerySet[CertificateAuthority]
+    CertificateQuerySetBase = models.QuerySet[Certificate]
+
+    QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet[X509CertMixin])
+    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
+    T = TypeVar("T", bound=X509CertMixin)
+else:
+    AcmeAccountQuerySetBase = (
+        AcmeAuthorizationQuerySetBase
+    ) = (
+        AcmeCertificateQuerySetBase
+    ) = (
+        AcmeChallengeQuerySetBase
+    ) = AcmeOrderQuerySetBase = CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
+
+    QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
+    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
+    T = TypeVar("T")
 
 
-class DjangoCAMixin:
+class QuerySetProtocol(Protocol[T]):
+    model: T
+
+    def get(self, *args: Any, **kwargs: Any) -> T:
+        ...
+
+
+class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
     """Mixin with common methods for CertificateAuthority and Certificate models."""
 
-    def get_by_serial_or_cn(self, identifier):
+    def get_by_serial_or_cn(
+        self: QuerySetProtocol[X509CertMixinTypeVar], identifier: str
+    ) -> X509CertMixinTypeVar:
         """Get a model by serial *or* by common name.
 
         This method is meant to get a CA from a user input value. If `identifier` is a serial, colons (``:``)
@@ -56,20 +103,15 @@ class DjangoCAMixin:
         except self.model.DoesNotExist:
             return self.get(startswith_query)
 
-    def revoked(self: QuerySetTypeVar) -> QuerySetTypeVar:
-        """Return revoked certificates."""
 
-        return self.filter(revoked=True)
-
-
-class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
+class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], CertificateAuthorityQuerySetBase):
     """QuerySet for the CertificateAuthority model."""
 
-    def acme(self):
+    def acme(self) -> "CertificateAuthorityQuerySet":
         """Return usable CAs that have support for the ACME protocol enabled."""
         return self.filter(acme_enabled=True)
 
-    def default(self):
+    def default(self) -> "CertificateAuthority":
         """Return the default CA to use when no CA is selected.
 
         This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
@@ -103,60 +145,70 @@ class CertificateAuthorityQuerySet(models.QuerySet, DjangoCAMixin):
 
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
         # will just create several CAs that all actually expire on the same day.
-        ca = self.usable().order_by("-expires", "serial").first()  # usable == enabled and valid
-        if ca is None:
+        first_ca = self.usable().order_by("-expires", "serial").first()  # usable == enabled and valid
+        if first_ca is None:
             raise ImproperlyConfigured("No CA is currently usable.")
-        return ca
+        return first_ca
 
-    def disabled(self):
+    def disabled(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are disabled."""
         return self.filter(enabled=False)
 
-    def enabled(self):
+    def enabled(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are enabled."""
         return self.filter(enabled=True)
 
-    def valid(self):
+    def valid(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are currently valid."""
         now = timezone.now()
         return self.filter(expires__gt=now, valid_from__lt=now)
 
-    def invalid(self):
+    def invalid(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are either expired or not yet valid."""
         now = timezone.now()
         return self.exclude(expires__gt=now, valid_from__lt=now)
 
-    def usable(self):
+    def revoked(self) -> "CertificateAuthorityQuerySet":
+        """Return revoked certificates."""
+
+        return self.filter(revoked=True)
+
+    def usable(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are enabled and currently valid."""
         return self.enabled().valid()
 
 
-class CertificateQuerySet(models.QuerySet, DjangoCAMixin):
+class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase):
     """QuerySet for the Certificate model."""
 
-    def not_yet_valid(self):
+    def not_yet_valid(self) -> "CertificateQuerySet":
         """Return certificates that are not yet valid."""
 
         return self.filter(revoked=False, valid_from__gt=timezone.now())
 
-    def valid(self):
+    def valid(self) -> "CertificateQuerySet":
         """Return valid certificates."""
 
         now = timezone.now()
         return self.filter(revoked=False, expires__gt=now, valid_from__lt=now)
 
-    def expired(self):
+    def expired(self) -> "CertificateQuerySet":
         """Returns expired certificates.
 
         Note that this method does not return revoked certificates that would otherwise be expired.
         """
         return self.filter(revoked=False, expires__lt=timezone.now())
 
+    def revoked(self) -> "CertificateQuerySet":
+        """Return revoked certificates."""
 
-class AcmeAccountQuerySet(models.QuerySet):
+        return self.filter(revoked=True)
+
+
+class AcmeAccountQuerySet(AcmeAccountQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
 
-    def viewable(self):
+    def viewable(self) -> "AcmeAccountQuerySet":
         """Filter ACME accounts that can be viewed via the ACME API.
 
         An account is considered viewable if the associated CA is usable. Note that an account is *viewable*
@@ -168,14 +220,14 @@ class AcmeAccountQuerySet(models.QuerySet):
         )
 
 
-class AcmeOrderQuerySet(models.QuerySet):
+class AcmeOrderQuerySet(AcmeOrderQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeOrder`."""
 
-    def account(self, account):
+    def account(self, account: "AcmeAccount") -> "AcmeOrderQuerySet":
         """Filter orders belonging to the given account."""
         return self.filter(account=account)
 
-    def viewable(self):
+    def viewable(self) -> "AcmeOrderQuerySet":
         """Filter ACME orders that can be viewed via the ACME API.
 
         An order is considered viewable if the associated CA is usable and the account is not revoked.
@@ -189,18 +241,18 @@ class AcmeOrderQuerySet(models.QuerySet):
         ).exclude(account__status=Status.REVOKED.value)
 
 
-class AcmeAuthorizationQuerySet(models.QuerySet):
+class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
-    def account(self, account):
+    def account(self, account: "AcmeAccount") -> "AcmeAuthorizationQuerySet":
         """Filter authorizations belonging to the given account."""
         return self.filter(order__account=account)
 
-    def url(self):
+    def url(self) -> "AcmeAuthorizationQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
         return self.select_related("order__account__ca")
 
-    def viewable(self):
+    def viewable(self) -> "AcmeAuthorizationQuerySet":
         """Filter ACME authzs that can be viewed via the ACME API.
 
         An authz is considered viewable if the associated CA is usable and the account is not revoked.
@@ -214,18 +266,18 @@ class AcmeAuthorizationQuerySet(models.QuerySet):
         ).exclude(order__account__status=Status.REVOKED.value)
 
 
-class AcmeChallengeQuerySet(models.QuerySet):
+class AcmeChallengeQuerySet(AcmeChallengeQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeChallenge`."""
 
-    def account(self, account):
+    def account(self, account: "AcmeAccount") -> "AcmeChallengeQuerySet":
         """Filter challenges belonging to the given account."""
         return self.filter(auth__order__account=account)
 
-    def url(self):
+    def url(self) -> "AcmeChallengeQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
         return self.select_related("auth__order__account__ca")
 
-    def viewable(self):
+    def viewable(self) -> "AcmeChallengeQuerySet":
         """Filter ACME challenges that can be viewed via the ACME API.
 
         An authz is considered viewable if the associated CA is usable and the account is not revoked.
@@ -239,18 +291,18 @@ class AcmeChallengeQuerySet(models.QuerySet):
         ).exclude(auth__order__account__status=Status.REVOKED.value)
 
 
-class AcmeCertificateQuerySet(models.QuerySet):
+class AcmeCertificateQuerySet(AcmeCertificateQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeCertificate`."""
 
-    def account(self, account):
+    def account(self, account: "AcmeAccount") -> "AcmeCertificateQuerySet":
         """Filter certificates belonging to the given account."""
         return self.filter(order__account=account)
 
-    def url(self):
+    def url(self) -> "AcmeCertificateQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
         return self.select_related("order__account__ca")
 
-    def viewable(self):
+    def viewable(self) -> "AcmeCertificateQuerySet":
         """Filter ACME certificates that can be viewed via the ACME API.
 
         An authz is considered viewable if the associated CA is usable, the order is ready, the account is not
