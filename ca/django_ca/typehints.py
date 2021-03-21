@@ -23,6 +23,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import TypeVar
@@ -70,6 +71,15 @@ Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
 ParsableKeyType = Optional[Literal["RSA", "DSA", "ECC"]]
 ParsableKeyCurve = Optional[Union[ec.EllipticCurve, str]]
+ParsableSubject = Union[
+    str,
+    Mapping[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]],
+    x509.Name,
+    Iterable[Tuple[
+        Union[x509.ObjectIdentifier, str],
+        Union[str, Iterable[str]]
+    ]]
+]
 
 # GeneralNameList
 ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]

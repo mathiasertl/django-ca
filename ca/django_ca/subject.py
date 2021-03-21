@@ -33,6 +33,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_str
 
 from . import ca_settings
+from .typehints import ParsableSubject
 from .utils import MULTIPLE_OIDS
 from .utils import NAME_OID_MAPPINGS
 from .utils import OID_NAME_MAPPINGS
@@ -70,15 +71,7 @@ class Subject:
 
     _data: Dict[x509.ObjectIdentifier, List[str]]
 
-    def __init__(self, subject: Optional[Union[
-            str,
-            Mapping[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]],
-            x509.Name,
-            Iterable[Tuple[
-                Union[x509.ObjectIdentifier, str],
-                Union[str, Iterable[str]]
-            ]]
-    ]] = None) -> None:
+    def __init__(self, subject: Optional[ParsableSubject] = None) -> None:
         self._data = {}
 
         iterable: Iterable[Tuple[
