@@ -12,12 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import inspect
 import os
 import re
 import sys
 
-import sphinx_autodoc_typehints
 import sphinx_rtd_theme
 from docutils.nodes import Text as DocutilsText
 from sphinx.addnodes import pending_xref
@@ -449,21 +447,6 @@ text_overrides = {
     'cryptography.x509.extensions.UserNotice': 'cryptography.x509.UserNotice',
     'cryptography.hazmat._oid.ObjectIdentifier': 'cryptography.x509.ObjectIdentifier',
 }
-
-fa_orig = sphinx_autodoc_typehints.format_annotation
-
-
-def format_annotation(annotation, fully_qualified: bool = False):
-    if inspect.isclass(annotation):
-        full_name = f'{annotation.__module__}.{annotation.__qualname__}'
-        override = qualname_overrides.get(full_name)
-        if override is not None:
-            return f':py:class:`~{override}`'
-    return fa_orig(annotation, fully_qualified=fully_qualified)
-
-
-# Appears to be covered by doctree-reload hook, leaving here for future reference
-#sphinx_autodoc_typehints.format_annotation = format_annotation
 
 
 def resolve_internal_aliases(app, doctree):
