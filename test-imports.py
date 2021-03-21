@@ -36,11 +36,7 @@ settings.configure(
         'django.contrib.contenttypes',
         "django.contrib.staticfiles",
         "django.contrib.admin",
-<<<<<<< HEAD
-        'django_ca',
-=======
         "django_ca",
->>>>>>> release/1.17
     ],
     BASE_DIR=os.getcwd(),
     TEMPLATES=[
