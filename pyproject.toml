@@ -63,7 +63,14 @@ max-module-lines = 3000
 [tool.pylint.messages_control]
 # https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
 disable = [
+    # pylint==2.7.2 has problems with generic types:
+    # https://github.com/PyCQA/pylint/issues/3882
+    # https://github.com/PyCQA/pylint/issues/2822 
+    "unsubscriptable-object",
+
+    # This is just annoying:
     "no-self-use",
+
     # covered by isort:
     "wrong-import-order",
 
