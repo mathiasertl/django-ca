@@ -91,7 +91,7 @@ class DistributionPoint:
             if data.reasons is not None:
                 self.reasons = set(data.reasons)
         elif isinstance(data, dict):
-            self.full_name = GeneralNameList(data.get('full_name'))
+            self.full_name = GeneralNameList(data.get("full_name"))
             self.crl_issuer = GeneralNameList(data.get("crl_issuer"))
 
             if "relative_name" in data:
@@ -100,25 +100,29 @@ class DistributionPoint:
                 self.reasons = {self._parse_reason(r) for r in data["reasons"]}
 
             if self.full_name and self.relative_name:
-                raise ValueError('full_name and relative_name cannot both have a value')
+                raise ValueError("full_name and relative_name cannot both have a value")
         else:
-            raise ValueError('data must be x509.DistributionPoint or dict')
+            raise ValueError("data must be x509.DistributionPoint or dict")
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, DistributionPoint) and self.full_name == other.full_name \
-            and self.relative_name == other.relative_name and self.crl_issuer == other.crl_issuer \
+        return (
+            isinstance(other, DistributionPoint)
+            and self.full_name == other.full_name
+            and self.relative_name == other.relative_name
+            and self.crl_issuer == other.crl_issuer
             and self.reasons == other.reasons
+        )
 
     def __get_values(self) -> List[str]:
         values: List[str] = []
         if self.full_name:
-            values.append('full_name=%r' % list(self.full_name.serialize()))
+            values.append("full_name=%r" % list(self.full_name.serialize()))
         if self.relative_name:
             values.append("relative_name='%s'" % format_relative_name(self.relative_name))
         if self.crl_issuer:
-            values.append('crl_issuer=%r' % list(self.crl_issuer.serialize()))
+            values.append("crl_issuer=%r" % list(self.crl_issuer.serialize()))
         if self.reasons:
-            values.append('reasons=%s' % sorted([r.name for r in self.reasons]))
+            values.append("reasons=%s" % sorted([r.name for r in self.reasons]))
         return values
 
     def __hash__(self) -> int:
@@ -128,7 +132,7 @@ class DistributionPoint:
         return hash((full_name, self.relative_name, crl_issuer, reasons))
 
     def __repr__(self) -> str:
-        return '<DistributionPoint: %s>' % ', '.join(self.__get_values())
+        return "<DistributionPoint: %s>" % ", ".join(self.__get_values())
 
     def __str__(self) -> str:
         return repr(self)
@@ -141,16 +145,16 @@ class DistributionPoint:
     def as_text(self) -> str:
         """Show as text."""
         if self.full_name:
-            names = [textwrap.indent('* %s' % s, '  ') for s in self.full_name.serialize()]
-            text = '* Full Name:\n%s' % '\n'.join(names)
+            names = [textwrap.indent("* %s" % s, "  ") for s in self.full_name.serialize()]
+            text = "* Full Name:\n%s" % "\n".join(names)
         elif self.relative_name is not None:  # pragma: no branch
-            text = '* Relative Name: %s' % format_relative_name(self.relative_name)
+            text = "* Relative Name: %s" % format_relative_name(self.relative_name)
 
         if self.crl_issuer:
-            names = [textwrap.indent('* %s' % s, '  ') for s in self.crl_issuer.serialize()]
-            text += '\n* CRL Issuer:\n%s' % '\n'.join(names)
+            names = [textwrap.indent("* %s" % s, "  ") for s in self.crl_issuer.serialize()]
+            text += "\n* CRL Issuer:\n%s" % "\n".join(names)
         if self.reasons:
-            text += '\n* Reasons: %s' % ', '.join(sorted([r.name for r in self.reasons]))
+            text += "\n* Reasons: %s" % ", ".join(sorted([r.name for r in self.reasons]))
         return text
 
     @property
@@ -164,21 +168,22 @@ class DistributionPoint:
             crl_issuer = None
 
         reasons: Optional[FrozenSet[x509.ReasonFlags]] = frozenset(self.reasons) if self.reasons else None
-        return x509.DistributionPoint(full_name=full_name, relative_name=self.relative_name,
-                                      crl_issuer=crl_issuer, reasons=reasons)
+        return x509.DistributionPoint(
+            full_name=full_name, relative_name=self.relative_name, crl_issuer=crl_issuer, reasons=reasons
+        )
 
     def serialize(self) -> SerializedDistributionPoint:
         """Serialize this distribution point."""
         val: SerializedDistributionPoint = {}
 
         if self.full_name:
-            val['full_name'] = list(self.full_name.serialize())
+            val["full_name"] = list(self.full_name.serialize())
         if self.relative_name is not None:
-            val['relative_name'] = format_relative_name(self.relative_name)
+            val["relative_name"] = format_relative_name(self.relative_name)
         if self.crl_issuer:
-            val['crl_issuer'] = list(self.crl_issuer.serialize())
+            val["crl_issuer"] = list(self.crl_issuer.serialize())
         if self.reasons is not None:
-            val['reasons'] = list(sorted([r.name for r in self.reasons]))
+            val["reasons"] = list(sorted([r.name for r in self.reasons]))
         return val
 
 
@@ -213,21 +218,21 @@ class PolicyInformation:
     policy_qualifiers: Optional[List[PolicyQualifier]]
 
     def __init__(
-            self, data: Optional[Union[x509.PolicyInformation, ParsablePolicyInformation]] = None
+        self, data: Optional[Union[x509.PolicyInformation, ParsablePolicyInformation]] = None
     ) -> None:
         if isinstance(data, x509.PolicyInformation):
             self.policy_identifier = data.policy_identifier
             self.policy_qualifiers = data.policy_qualifiers
         elif isinstance(data, dict):
-            self.policy_identifier = data['policy_identifier']
+            self.policy_identifier = data["policy_identifier"]
             self.policy_qualifiers = self.parse_policy_qualifiers(
-                cast(Iterable[ParsablePolicyQualifier], data.get('policy_qualifiers'))
+                cast(Iterable[ParsablePolicyQualifier], data.get("policy_qualifiers"))
             )
         elif data is None:
             self.policy_identifier = None
             self.policy_qualifiers = None
         else:
-            raise ValueError('PolicyInformation data must be either x509.PolicyInformation or dict')
+            raise ValueError("PolicyInformation data must be either x509.PolicyInformation or dict")
 
     def __contains__(self, value: ParsablePolicyQualifier) -> bool:
         if self.policy_qualifiers is None:
@@ -236,22 +241,25 @@ class PolicyInformation:
 
     def __delitem__(self, key: Union[int, slice]) -> None:
         if self.policy_qualifiers is None:
-            raise IndexError('list assignment index out of range')
+            raise IndexError("list assignment index out of range")
         del self.policy_qualifiers[key]
         if not self.policy_qualifiers:
             self.policy_qualifiers = None
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, PolicyInformation) and self.policy_identifier == other.policy_identifier \
+        return (
+            isinstance(other, PolicyInformation)
+            and self.policy_identifier == other.policy_identifier
             and self.policy_qualifiers == other.policy_qualifiers
+        )
 
     def __getitem__(
-            self, key: Union[int, slice]
+        self, key: Union[int, slice]
     ) -> Union[List[SerializedPolicyQualifier], SerializedPolicyQualifier]:
         """Implement item getter (e.g ``pi[0]`` or ``pi[0:1]``)."""
 
         if self.policy_qualifiers is None:
-            raise IndexError('list index out of range')
+            raise IndexError("list index out of range")
         if isinstance(key, int):
             return self._serialize_policy_qualifier(self.policy_qualifiers[key])
 
@@ -272,11 +280,11 @@ class PolicyInformation:
 
     def __repr__(self) -> str:
         if self.policy_identifier is None:
-            ident = 'None'
+            ident = "None"
         else:
             ident = self.policy_identifier.dotted_string
 
-        return '<PolicyInformation(oid=%s, qualifiers=%r)>' % (ident, self.serialize_policy_qualifiers())
+        return "<PolicyInformation(oid=%s, qualifiers=%r)>" % (ident, self.serialize_policy_qualifiers())
 
     def __str__(self) -> str:
         return repr(self)
@@ -290,29 +298,36 @@ class PolicyInformation:
     def as_text(self, width: int = 76) -> str:
         """Show as text."""
         if self.policy_identifier is None:
-            text = 'Policy Identifier: %s\n' % None
+            text = "Policy Identifier: %s\n" % None
         else:
-            text = 'Policy Identifier: %s\n' % self.policy_identifier.dotted_string
+            text = "Policy Identifier: %s\n" % self.policy_identifier.dotted_string
 
         if self.policy_qualifiers:
-            text += 'Policy Qualifiers:\n'
+            text += "Policy Qualifiers:\n"
             for qualifier in self.policy_qualifiers:
                 if isinstance(qualifier, str):
-                    lines = textwrap.wrap(qualifier, initial_indent='* ', subsequent_indent='  ', width=width)
-                    text += '%s\n' % '\n'.join(lines)
+                    lines = textwrap.wrap(qualifier, initial_indent="* ", subsequent_indent="  ", width=width)
+                    text += "%s\n" % "\n".join(lines)
                 else:
-                    text += '* UserNotice:\n'
+                    text += "* UserNotice:\n"
                     if qualifier.explicit_text:
-                        text += '\n'.join(textwrap.wrap(
-                            'Explicit text: %s\n' % qualifier.explicit_text,
-                            initial_indent='  * ', subsequent_indent='    ', width=width - 2
-                        )) + '\n'
+                        text += (
+                            "\n".join(
+                                textwrap.wrap(
+                                    "Explicit text: %s\n" % qualifier.explicit_text,
+                                    initial_indent="  * ",
+                                    subsequent_indent="    ",
+                                    width=width - 2,
+                                )
+                            )
+                            + "\n"
+                        )
                     if qualifier.notice_reference:
-                        text += '  * Reference:\n'
-                        text += '    * Organiziation: %s\n' % qualifier.notice_reference.organization
-                        text += '    * Notice Numbers: %s\n' % qualifier.notice_reference.notice_numbers
+                        text += "  * Reference:\n"
+                        text += "    * Organiziation: %s\n" % qualifier.notice_reference.organization
+                        text += "    * Notice Numbers: %s\n" % qualifier.notice_reference.notice_numbers
         else:
-            text += 'No Policy Qualifiers'
+            text += "No Policy Qualifiers"
 
         return text.strip()
 
@@ -342,8 +357,9 @@ class PolicyInformation:
     @property
     def for_extension_type(self) -> x509.PolicyInformation:
         """Convert instance to a suitable cryptography class."""
-        return x509.PolicyInformation(policy_identifier=self.policy_identifier,
-                                      policy_qualifiers=self.policy_qualifiers)
+        return x509.PolicyInformation(
+            policy_identifier=self.policy_identifier, policy_qualifiers=self.policy_qualifiers
+        )
 
     def insert(self, index: int, value: ParsablePolicyQualifier) -> None:
         """Insert qualifier at given index."""
@@ -358,26 +374,26 @@ class PolicyInformation:
         if isinstance(qualifier, x509.UserNotice):
             return qualifier
         if isinstance(qualifier, dict):
-            explicit_text = qualifier.get('explicit_text')
+            explicit_text = qualifier.get("explicit_text")
 
-            notice_reference = qualifier.get('notice_reference')
+            notice_reference = qualifier.get("notice_reference")
             if isinstance(notice_reference, dict):
                 notice_reference = x509.NoticeReference(
-                    organization=notice_reference.get('organization'),
-                    notice_numbers=[int(i) for i in notice_reference.get('notice_numbers', [])]
+                    organization=notice_reference.get("organization"),
+                    notice_numbers=[int(i) for i in notice_reference.get("notice_numbers", [])],
                 )
             elif notice_reference is None:
                 pass  # extra branch to ensure test coverage
             elif isinstance(notice_reference, x509.NoticeReference):
                 pass  # extra branch to ensure test coverage
             else:
-                raise ValueError('NoticeReference must be either None, a dict or an x509.NoticeReference')
+                raise ValueError("NoticeReference must be either None, a dict or an x509.NoticeReference")
 
             return x509.UserNotice(explicit_text=explicit_text, notice_reference=notice_reference)
-        raise ValueError('PolicyQualifier must be string, dict or x509.UserNotice')
+        raise ValueError("PolicyQualifier must be string, dict or x509.UserNotice")
 
     def parse_policy_qualifiers(
-            self, qualifiers: Optional[Iterable[ParsablePolicyQualifier]]
+        self, qualifiers: Optional[Iterable[ParsablePolicyQualifier]]
     ) -> Optional[List[PolicyQualifier]]:
         """Parse given list of policy qualifiers."""
         if qualifiers is None:
@@ -423,7 +439,7 @@ class PolicyInformation:
         """
         if self.policy_qualifiers is None:
             # Shortcut to raise the same Value error as if the element is not in the list
-            raise ValueError('%s: not in list.' % value)
+            raise ValueError("%s: not in list." % value)
 
         parsed_value = self._parse_policy_qualifier(value)
         self.policy_qualifiers.remove(parsed_value)
@@ -439,11 +455,11 @@ class PolicyInformation:
 
         value: SerializedUserNotice = {}
         if qualifier.explicit_text:
-            value['explicit_text'] = qualifier.explicit_text
+            value["explicit_text"] = qualifier.explicit_text
 
         if qualifier.notice_reference:
-            value['notice_reference'] = {
-                'notice_numbers': qualifier.notice_reference.notice_numbers,
+            value["notice_reference"] = {
+                "notice_numbers": qualifier.notice_reference.notice_numbers,
             }
             if qualifier.notice_reference.organization is not None:
                 value["notice_reference"]["organization"] = qualifier.notice_reference.organization

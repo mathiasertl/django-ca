@@ -22,45 +22,46 @@ from ..base import BaseCommand
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
-    help = 'List available certificate authorities.'
+    help = "List available certificate authorities."
 
     def add_arguments(self, parser):
-        parser.add_argument('-t', '--tree', default=False, action='store_true',
-                            help="Output data in a tree view.")
+        parser.add_argument(
+            "-t", "--tree", default=False, action="store_true", help="Output data in a tree view."
+        )
 
     def qs(self, qs):
         """Order given queryset appropriately."""
-        return qs.order_by('expires', 'name')
+        return qs.order_by("expires", "name")
 
-    def list_ca(self, ca, indent=''):
+    def list_ca(self, ca, indent=""):
         """Output list line for a given CA."""
 
-        text = '%s%s - %s' % (indent, add_colons(ca.serial), ca.name)
+        text = "%s%s - %s" % (indent, add_colons(ca.serial), ca.name)
         if ca.enabled is False:
-            text += ' (disabled)'
+            text += " (disabled)"
 
         self.stdout.write(text)
 
-    def list_children(self, ca, indent=''):
+    def list_children(self, ca, indent=""):
         """Output list lines for children of the given CA."""
 
         children = list(enumerate(self.qs(ca.children.all()), 1))
         for index, child in children:
             if index == len(children):  # last element
-                self.list_ca(child, indent=indent + '└───')
+                self.list_ca(child, indent=indent + "└───")
             else:
-                self.list_ca(child, indent=indent + '│───')
+                self.list_ca(child, indent=indent + "│───")
 
             children_left = len(children) - index
             if children_left:
-                child_indent = indent + '│   '
+                child_indent = indent + "│   "
             else:
-                child_indent = indent + '    '
+                child_indent = indent + "    "
 
             self.list_children(child, child_indent)
 
     def handle(self, **options):  # pylint: disable=arguments-differ
-        if options['tree']:
+        if options["tree"]:
             for ca in self.qs(CertificateAuthority.objects.filter(parent__isnull=True)):
                 self.list_ca(ca)
                 self.list_children(ca)

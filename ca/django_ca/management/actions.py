@@ -39,7 +39,7 @@ def _parse_timedelta(value):
     except ValueError as ex:
         raise argparse.ArgumentTypeError('Value must be an integer: "%s"' % value) from ex
     if value <= 0:
-        raise argparse.ArgumentTypeError('Value must not be negative.')
+        raise argparse.ArgumentTypeError("Value must not be negative.")
 
     return timedelta(days=value)
 
@@ -77,9 +77,9 @@ class CertificateAction(argparse.Action):
         try:
             setattr(namespace, self.dest, queryset.get_by_serial_or_cn(value))
         except Certificate.DoesNotExist as ex:
-            raise parser.error('%s: Certificate not found.' % value) from ex
+            raise parser.error("%s: Certificate not found." % value) from ex
         except Certificate.MultipleObjectsReturned as ex:
-            raise parser.error('%s: Multiple certificates match.' % value) from ex
+            raise parser.error("%s: Multiple certificates match." % value) from ex
 
 
 class CertificateAuthorityAction(argparse.Action):
@@ -98,13 +98,13 @@ class CertificateAuthorityAction(argparse.Action):
         try:
             value = qs.get_by_serial_or_cn(value)
         except CertificateAuthority.DoesNotExist:
-            parser.error('%s: Certificate authority not found.' % value)
+            parser.error("%s: Certificate authority not found." % value)
         except CertificateAuthority.MultipleObjectsReturned:
-            parser.error('%s: Multiple Certificate authorities match.' % value)
+            parser.error("%s: Multiple Certificate authorities match." % value)
 
         # verify that the private key exists
         if not self.allow_unusable and not value.key_exists:
-            parser.error('%s: %s: Private key does not exist.' % (value, value.private_key_path))
+            parser.error("%s: %s: Private key does not exist." % (value, value.private_key_path))
 
         setattr(namespace, self.dest, value)
 
@@ -121,8 +121,8 @@ class ExpiresAction(argparse.Action):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['type'] = _parse_timedelta
-        kwargs.setdefault('default', ca_settings.CA_DEFAULT_EXPIRES)
+        kwargs["type"] = _parse_timedelta
+        kwargs.setdefault("default", ca_settings.CA_DEFAULT_EXPIRES)
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
@@ -174,21 +174,20 @@ class KeySizeAction(argparse.Action):
     Namespace(size=4096)
     """
 
-    metavar = '{2048,4096,8192,...}'
+    metavar = "{2048,4096,8192,...}"
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('type', int)
-        kwargs.setdefault('metavar', self.metavar)
+        kwargs.setdefault("type", int)
+        kwargs.setdefault("metavar", self.metavar)
         super().__init__(**kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
-        option_string = option_string or 'key size'
+        option_string = option_string or "key size"
 
         if not is_power2(value):
-            parser.error('%s must be a power of two (2048, 4096, ...)' % option_string)
+            parser.error("%s must be a power of two (2048, 4096, ...)" % option_string)
         elif value < ca_settings.CA_MIN_KEY_SIZE:
-            parser.error('%s must be at least %s bits.'
-                         % (option_string, ca_settings.CA_MIN_KEY_SIZE))
+            parser.error("%s must be at least %s bits." % (option_string, ca_settings.CA_MIN_KEY_SIZE))
         setattr(namespace, self.dest, value)
 
 
@@ -202,8 +201,8 @@ class MultipleURLAction(argparse.Action):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('default', [])
-        kwargs.setdefault('metavar', 'URL')
+        kwargs.setdefault("default", [])
+        kwargs.setdefault("metavar", "URL")
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
@@ -211,7 +210,7 @@ class MultipleURLAction(argparse.Action):
         try:
             validator(value)
         except ValidationError:
-            parser.error('%s: Not a valid URL.' % value)
+            parser.error("%s: Not a valid URL." % value)
 
         getattr(namespace, self.dest).append(value)
 
@@ -235,10 +234,10 @@ class PasswordAction(argparse.Action):
         if value is None:
             kwargs = {}
             if self.prompt:
-                kwargs['prompt'] = self.prompt
+                kwargs["prompt"] = self.prompt
             value = getpass.getpass(**kwargs)
 
-        setattr(namespace, self.dest, value.encode('utf-8'))
+        setattr(namespace, self.dest, value.encode("utf-8"))
 
 
 class ReasonAction(argparse.Action):
@@ -251,7 +250,7 @@ class ReasonAction(argparse.Action):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['choices'] = sorted([r.name for r in ReasonFlags])
+        kwargs["choices"] = sorted([r.name for r in ReasonFlags])
         kwargs.setdefault("default", ReasonFlags.unspecified)
         super().__init__(*args, **kwargs)
 
@@ -291,7 +290,7 @@ class URLAction(argparse.Action):
         try:
             validator(value)
         except ValidationError:
-            parser.error('%s: Not a valid URL.' % value)
+            parser.error("%s: Not a valid URL." % value)
         setattr(namespace, self.dest, value)
 
 
@@ -318,8 +317,8 @@ class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method,too-f
     """
 
     def __init__(self, *args, **kwargs):
-        self.extension = kwargs.pop('extension')
-        kwargs['dest'] = self.extension.key
+        self.extension = kwargs.pop("extension")
+        kwargs["dest"] = self.extension.key
         super().__init__(*args, **kwargs)
 
 
@@ -340,8 +339,8 @@ class OrderedSetExtensionAction(ExtensionAction):
     def __call__(self, parser, namespace, value, option_string=None):
         ext = self.extension()
 
-        values = shlex_split(value, ', ')
-        if values[0] == 'critical':
+        values = shlex_split(value, ", ")
+        if values[0] == "critical":
             values = values[1:]
             ext.critical = True
         else:
@@ -350,7 +349,7 @@ class OrderedSetExtensionAction(ExtensionAction):
         try:
             ext |= values
         except ValueError as e:
-            parser.error('Invalid extension value: %s: %s' % (value, e))
+            parser.error("Invalid extension value: %s: %s" % (value, e))
 
         setattr(namespace, self.dest, ext)
 
@@ -370,4 +369,4 @@ class AlternativeNameAction(ExtensionAction):
     """
 
     def __call__(self, parser, namespace, value, option_string=None):
-        setattr(namespace, self.dest, self.extension({'value': [value]}))
+        setattr(namespace, self.dest, self.extension({"value": [value]}))

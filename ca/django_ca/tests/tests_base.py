@@ -66,10 +66,10 @@ class TestDjangoCATestCase(DjangoCATestCase):
         self.load_usable_cas()
         self.load_generated_certs()
 
-        self.assertExtensions(self.certs['no-extensions'], [], expect_defaults=False)
-        self.assertExtensions(self.certs['no-extensions'].x509_cert, [], expect_defaults=False)
+        self.assertExtensions(self.certs["no-extensions"], [], expect_defaults=False)
+        self.assertExtensions(self.certs["no-extensions"].x509_cert, [], expect_defaults=False)
 
-        cert_key = 'all-extensions'
+        cert_key = "all-extensions"
         cert = self.certs[cert_key]
         data = certs[cert_key]
         all_extensions = [
@@ -103,7 +103,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
         self.assertExtensions(cert.x509_cert, all_extensions)
 
         # now test root and child ca
-        cert_key = 'root'
+        cert_key = "root"
         ca = self.cas[cert_key]
         data = certs[cert_key]
 
@@ -113,7 +113,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
         ]
         self.assertExtensions(ca, root_extensions)
 
-        cert_key = 'child'
+        cert_key = "child"
         ca = self.cas[cert_key]
         data = certs[cert_key]
 
@@ -187,10 +187,11 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         self.seen_dirs.add(ca_settings.CA_DIR)
 
     def test_no_classes(self):
-        msg = r'^Only functions can use override_tmpcadir\(\)$'
+        msg = r"^Only functions can use override_tmpcadir\(\)$"
         with self.assertRaisesRegex(ValueError, msg):
+
             @override_tmpcadir()
-            class Foo():  # pylint: disable=missing-class-docstring,too-few-public-methods,unused-variable
+            class Foo:  # pylint: disable=missing-class-docstring,too-few-public-methods,unused-variable
                 pass
 
 
@@ -199,4 +200,4 @@ class CommandTestCase(DjangoCAWithCATestCase):
 
     def test_basic(self):
         """Trivial basic test."""
-        self.cmd_e2e(['list_cas'])
+        self.cmd_e2e(["list_cas"])

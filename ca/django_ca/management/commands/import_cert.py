@@ -34,8 +34,9 @@ The authority that that signed the certificate must exist in the database."""
 
     def add_arguments(self, parser):
         self.add_ca(parser, allow_disabled=False)
-        parser.add_argument('pub', help='Path to the public key (PEM or DER format).',
-                            type=argparse.FileType('rb'))
+        parser.add_argument(
+            "pub", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
+        )
 
     def handle(self, pub, **options):  # pylint: disable=arguments-differ
         pub_data = pub.read()
@@ -50,8 +51,8 @@ The authority that that signed the certificate must exist in the database."""
             try:
                 pub_loaded = x509.load_der_x509_certificate(pub_data, default_backend())
             except Exception as ex:
-                raise CommandError('Unable to load public key.') from ex
+                raise CommandError("Unable to load public key.") from ex
 
-        cert = Certificate(ca=options['ca'])
+        cert = Certificate(ca=options["ca"])
         cert.x509_cert = pub_loaded
         cert.save()

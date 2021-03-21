@@ -32,32 +32,36 @@ from ...models import Watcher
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
-    help = """Sign a CSR and output signed certificate. The defaults depend on the configured
-default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
+    help = (
+        """Sign a CSR and output signed certificate. The defaults depend on the configured
+default profile, currently %s."""
+        % ca_settings.CA_DEFAULT_PROFILE
+    )
 
-    add_extensions_help = 'TODO'
-    subject_help = 'TODO'
+    add_extensions_help = "TODO"
+    subject_help = "TODO"
 
     def add_arguments(self, parser):
         self.add_base_args(parser, no_default_ca=True)
-        parser.add_argument('cert', action=CertificateAction, allow_revoked=True,
-                            help='The certificate to resign.')
+        parser.add_argument(
+            "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
+        )
 
     def handle(self, *args, **options):  # pylint: disable=arguments-differ
-        cert = options['cert']
-        ca = options['ca']
+        cert = options["cert"]
+        ca = options["ca"]
         if not ca:
-            ca = options['ca'] = cert.ca
+            ca = options["ca"] = cert.ca
         self.test_options(*args, **options)
 
         # get list of watchers
-        if options['watch']:
-            watchers = [Watcher.from_addr(addr) for addr in options['watch']]
+        if options["watch"]:
+            watchers = [Watcher.from_addr(addr) for addr in options["watch"]]
         else:
             watchers = list(cert.watchers.all())
 
-        if options['subject']:
-            subject = options['subject']
+        if options["subject"]:
+            subject = options["subject"]
         else:
             subject = cert.subject
 
@@ -82,32 +86,32 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
             san = options[SubjectAlternativeName.key]
 
         kwargs = {
-            'subject': subject,
-            'password': options['password'],
-            'csr_format': Encoding.PEM,
-            'key_usage': key_usage,
-            'extended_key_usage': ext_key_usage,
-            'tls_feature': tls_feature,
-            'algorithm': options['algorithm'],
-            'expires': options['expires'],
-            'subject_alternative_name': san,
-            'cn_in_san': False,
+            "subject": subject,
+            "password": options["password"],
+            "csr_format": Encoding.PEM,
+            "key_usage": key_usage,
+            "extended_key_usage": ext_key_usage,
+            "tls_feature": tls_feature,
+            "algorithm": options["algorithm"],
+            "expires": options["expires"],
+            "subject_alternative_name": san,
+            "cn_in_san": False,
         }
         kwargs = {
-            'algorithm': options['algorithm'],
-            'csr_format': Encoding.PEM,
-            'expires': options['expires'],
-            'extensions': [],
-            'password': options['password'],
-            'subject': subject,
-            'cn_in_san': False,  # we already copy the SAN/CN from the original cert
+            "algorithm": options["algorithm"],
+            "csr_format": Encoding.PEM,
+            "expires": options["expires"],
+            "extensions": [],
+            "password": options["password"],
+            "subject": subject,
+            "cn_in_san": False,  # we already copy the SAN/CN from the original cert
         }
 
         for ext in [key_usage, ext_key_usage, tls_feature, san]:
             if ext is not None:
-                kwargs['extensions'].append(ext)
+                kwargs["extensions"].append(ext)
 
-        if 'CN' not in kwargs['subject'] and not san:
+        if "CN" not in kwargs["subject"] and not san:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
@@ -117,8 +121,8 @@ default profile, currently %s.""" % ca_settings.CA_DEFAULT_PROFILE
 
         cert.watchers.add(*watchers)
 
-        if options['out']:
-            with open(options['out'], 'w') as stream:
+        if options["out"]:
+            with open(options["out"], "w") as stream:
                 stream.write(cert.pub)
         else:
             self.stdout.write(cert.pub)

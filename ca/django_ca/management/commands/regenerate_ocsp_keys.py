@@ -34,14 +34,18 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'serial', nargs='*',
-            help="Generate OCSP keys only for the given CA. If omitted, generate keys for all CAs.")
+            "serial",
+            nargs="*",
+            help="Generate OCSP keys only for the given CA. If omitted, generate keys for all CAs.",
+        )
 
         parser.add_argument(
-            '--expires', default=timedelta(days=2), action=ExpiresAction,
-            help='Sign the certificate for DAYS days (default: %(default)s)')
-        parser.add_argument(
-            '--quiet', action='store_true', default=False, help='Do not output warnings.')
+            "--expires",
+            default=timedelta(days=2),
+            action=ExpiresAction,
+            help="Sign the certificate for DAYS days (default: %(default)s)",
+        )
+        parser.add_argument("--quiet", action="store_true", default=False, help="Do not output warnings.")
 
         self.add_algorithm(parser)
         self.add_key_size(parser)
@@ -50,34 +54,35 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.add_password(parser)
 
         self.add_profile(
-            parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.')
+            parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
+        )
 
     def handle(self, **options):  # pylint: disable=arguments-differ
-        serials = options['serial']
-        profile = options['profile'] or 'ocsp'
+        serials = options["serial"]
+        profile = options["profile"] or "ocsp"
 
         # Check if the profile exists. Note that this shouldn't really happen, since valid parameters match
         # existing profiles. The only case is when the user undefines the "ocsp" profile, which is the
         # default.
         if profile not in ca_settings.CA_PROFILES:
-            raise CommandError('%s: Undefined profile.' % profile)
+            raise CommandError("%s: Undefined profile." % profile)
 
         if not serials:
-            serials = CertificateAuthority.objects.all().order_by('serial').values_list('serial', flat=True)
+            serials = CertificateAuthority.objects.all().order_by("serial").values_list("serial", flat=True)
 
         for serial in serials:
-            serial = serial.replace(':', '').strip().upper()
+            serial = serial.replace(":", "").strip().upper()
             hr_serial = add_colons(serial)
             try:
                 ca = CertificateAuthority.objects.get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                self.stderr.write(self.style.ERROR('%s: Unknown CA.' % hr_serial))
+                self.stderr.write(self.style.ERROR("%s: Unknown CA." % hr_serial))
                 continue
 
             if not ca.key_exists:
-                if options['quiet'] is False:  # pragma: no branch
+                if options["quiet"] is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.
-                    self.stderr.write(self.style.WARNING('%s: CA has no private key.' % hr_serial))
+                    self.stderr.write(self.style.WARNING("%s: CA has no private key." % hr_serial))
 
                 continue
 
@@ -85,10 +90,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 generate_ocsp_key,
                 ca.serial,
                 profile=profile,
-                expires=options['expires'],
-                algorithm=options['algorithm'],
-                key_size=options['key_size'],
-                key_type=options['key_type'],
-                ecc_curve=options['ecc_curve'],
-                password=options['password'],
+                expires=options["expires"],
+                algorithm=options["algorithm"],
+                key_size=options["key_size"],
+                key_type=options["key_type"],
+                ecc_curve=options["ecc_curve"],
+                password=options["password"],
             )

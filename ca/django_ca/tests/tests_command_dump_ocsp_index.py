@@ -93,58 +93,61 @@ E\t{all-extensions[ocsp-expires]}\t\t{all-extensions[ocsp-serial]}\tunknown\t{al
 
 ECC_CA = "V\t{ecc-cert[ocsp-expires]}\t\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"
 
-REVOKED_FIRST = "R\t{ecc-cert[ocsp-expires]}\t{revoked}\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
+REVOKED_FIRST = (
+    "R\t{ecc-cert[ocsp-expires]}\t{revoked}\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
+)
 REVOKED_SECOND = "R\t{ecc-cert[ocsp-expires]}\t{revoked},key_compromise\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
 
 
 class OCSPIndexTestCase(DjangoCAWithCertTestCase):
     """Test the ``dump_ocsp_index`` management command."""
-    timeformat = '%y%m%d%H%M%SZ'
+
+    timeformat = "%y%m%d%H%M%SZ"
 
     @contextmanager
     def assertDeprecation(self):  # pylint: disable=invalid-name; unittest standard
         """Context manager to assert the deprecation message."""
         with self.assertWarnsRegex(
-                RemovedInDjangoCA120Warning,
-                r'^Creating an OCSP index is deprecated and will be removed in 1\.20\.0\.$'
+            RemovedInDjangoCA120Warning,
+            r"^Creating an OCSP index is deprecated and will be removed in 1\.20\.0\.$",
         ) as warn_cm:
             yield warn_cm
 
-    def assertIndex(self, ca=None, expected='', **context):  # pylint: disable=invalid-name; unittest standard
+    def assertIndex(self, ca=None, expected="", **context):  # pylint: disable=invalid-name; unittest standard
         if ca is None:
-            ca = self.cas['child']
+            ca = self.cas["child"]
 
         context.update(certs)
         with self.assertDeprecation():
-            stdout, stderr = self.cmd('dump_ocsp_index', ca=ca)
+            stdout, stderr = self.cmd("dump_ocsp_index", ca=ca)
         self.assertEqual(stdout, expected.format(**context))
-        self.assertEqual(stderr, '')
+        self.assertEqual(stderr, "")
 
-    @freeze_time(timestamps['ca_certs_valid'])
+    @freeze_time(timestamps["ca_certs_valid"])
     def test_ca_certs_valid(self):
         self.assertIndex(expected=CA_CERTS)
 
-    @freeze_time(timestamps['profile_certs_valid'])
+    @freeze_time(timestamps["profile_certs_valid"])
     def test_profile_certs_valid(self):
         self.assertIndex(expected=PROFILE_CERTS)
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_all_certs_valid(self):
         self.assertIndex(expected=BASIC)
 
-    @freeze_time(timestamps['everything_expired'])
+    @freeze_time(timestamps["everything_expired"])
     def test_all_expired(self):
         # All certificates are expired by now, so no certs here
         self.assertIndex()
 
-    @freeze_time(timestamps['before_everything'])
+    @freeze_time(timestamps["before_everything"])
     def test_before_everything(self):
         # Certs are not yet valid, so we get no certs
         self.assertIndex()
 
     def test_ca_certs_expired(self):
         # CA certs are the first to expire, since they just expired an hour ago, they still show up in index
-        with freeze_time(timestamps['ca_certs_expired']) as frozen_time:
+        with freeze_time(timestamps["ca_certs_expired"]) as frozen_time:
             self.assertIndex(expected=CA_CERTS_EXPIRED)
 
             # a day later, they're gone
@@ -153,29 +156,29 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
 
     def test_profile_certs_expired(self):
         # CA certs are the first to expire, since they just expired an hour ago, they still show up in index
-        with freeze_time(timestamps['profile_certs_expired']) as frozen_time:
+        with freeze_time(timestamps["profile_certs_expired"]) as frozen_time:
             self.assertIndex(expected=PROFILE_CERTS_EXPIRED)
 
             # a day later, they're gone
             frozen_time.tick(timedelta(days=1))
             self.assertIndex(expected=PROFILE_CERTS_GONE)
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_ecc_ca(self):
         # test another CA
-        self.assertIndex(ca=self.cas['ecc'], expected=ECC_CA)
+        self.assertIndex(ca=self.cas["ecc"], expected=ECC_CA)
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_file(self):
         tmpdir = tempfile.mkdtemp()
 
         try:
-            path = os.path.join(tmpdir, 'ocsp-index.txt')
+            path = os.path.join(tmpdir, "ocsp-index.txt")
 
             with self.assertDeprecation():
-                stdout, stderr = self.cmd('dump_ocsp_index', path, ca=self.cas['child'])
-            self.assertEqual(stdout, '')
-            self.assertEqual(stderr, '')
+                stdout, stderr = self.cmd("dump_ocsp_index", path, ca=self.cas["child"])
+            self.assertEqual(stdout, "")
+            self.assertEqual(stderr, "")
 
             with open(path) as stream:
                 data = stream.read()
@@ -184,15 +187,15 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             shutil.rmtree(tmpdir)
 
     def test_revoked(self):
-        with freeze_time(timestamps['everything_valid']) as frozen_timestamp:
+        with freeze_time(timestamps["everything_valid"]) as frozen_timestamp:
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
-            cert = self.certs['ecc-cert']
+            cert = self.certs["ecc-cert"]
             cert.revoke()
 
-            self.assertIndex(expected=REVOKED_FIRST, ca=self.cas['ecc'], revoked=revoked_timestamp)
+            self.assertIndex(expected=REVOKED_FIRST, ca=self.cas["ecc"], revoked=revoked_timestamp)
 
             frozen_timestamp.tick(timedelta(seconds=3600))
 
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
             cert.revoke(ReasonFlags.key_compromise)
-            self.assertIndex(expected=REVOKED_SECOND, ca=self.cas['ecc'], revoked=revoked_timestamp)
+            self.assertIndex(expected=REVOKED_SECOND, ca=self.cas["ecc"], revoked=revoked_timestamp)

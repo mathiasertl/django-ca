@@ -31,8 +31,8 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, Djan
 
     model = CertificateAuthority
     media_css = (
-        'django_ca/admin/css/base.css',
-        'django_ca/admin/css/certificateauthorityadmin.css',
+        "django_ca/admin/css/base.css",
+        "django_ca/admin/css/certificateauthorityadmin.css",
     )
 
     @override_settings(CA_ENABLE_ACME=False)
@@ -43,46 +43,47 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, Djan
 
 class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
     """Tests for downloading the certificate bundle."""
+
     model = CertificateAuthority
 
     def get_url(self, ca):
         """Function to get the bundle URL for the given CA."""
-        return reverse('admin:django_ca_certificateauthority_download_bundle', kwargs={'pk': ca.pk})
+        return reverse("admin:django_ca_certificateauthority_download_bundle", kwargs={"pk": ca.pk})
 
     @property
     def url(self):
         """Shortcut property to get the bundle URL for the root CA."""
-        return self.get_url(ca=self.cas['root'])
+        return self.get_url(ca=self.cas["root"])
 
     def test_root(self):
         """Test downloading the bundle for the root CA."""
-        filename = 'root_example_com_bundle.pem'
-        self.assertBundle(self.client.get('%s?format=PEM' % self.url), filename, certs['root']['pub']['pem'])
+        filename = "root_example_com_bundle.pem"
+        self.assertBundle(self.client.get("%s?format=PEM" % self.url), filename, certs["root"]["pub"]["pem"])
 
     def test_child(self):
         """Test downloading the bundle for a child CA."""
-        filename = 'child_example_com_bundle.pem'
-        content = '%s\n%s' % (certs['child']['pub']['pem'].strip(), certs['root']['pub']['pem'].strip())
-        response = self.client.get('%s?format=PEM' % self.get_url(self.cas['child']))
+        filename = "child_example_com_bundle.pem"
+        content = "%s\n%s" % (certs["child"]["pub"]["pem"].strip(), certs["root"]["pub"]["pem"].strip())
+        response = self.client.get("%s?format=PEM" % self.get_url(self.cas["child"]))
         self.assertBundle(response, filename, content)
 
     def test_invalid_format(self):
         """Test downloading the bundle in an invalid format."""
-        response = self.client.get('%s?format=INVALID' % self.url)
+        response = self.client.get("%s?format=INVALID" % self.url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertEqual(response.content, b'')
+        self.assertEqual(response.content, b"")
 
         # DER is not supported for bundles
-        response = self.client.get('%s?format=DER' % self.url)
+        response = self.client.get("%s?format=DER" % self.url)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, b'DER/ASN.1 certificates cannot be downloaded as a bundle.')
+        self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")
 
     def test_permission_denied(self):
         """Test downloading without permissions fails."""
         self.user.is_superuser = False
         self.user.save()
 
-        response = self.client.get('%s?format=PEM' % self.url)
+        response = self.client.get("%s?format=PEM" % self.url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_unauthorized(self):

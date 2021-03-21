@@ -20,7 +20,7 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 
-BASE = '../../../docs/source'
+BASE = "../../../docs/source"
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
@@ -29,26 +29,27 @@ class DocumentationTestCase(DjangoCATestCase):
 
     def setUp(self):
         super().setUp()
-        self.ca = self.load_ca(name=certs['root']['name'], parsed=certs['root']['pub']['parsed'])
-        self.cert = self.load_cert(self.ca, parsed=certs['root-cert']['pub']['parsed'],
-                                   csr=certs['root-cert']['csr']['pem'])
+        self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
+        self.cert = self.load_cert(
+            self.ca, parsed=certs["root-cert"]["pub"]["parsed"], csr=certs["root-cert"]["csr"]["pem"]
+        )
 
     def get_globs(self):
         """Get globs for test cases."""
         return {
-            'ca': self.ca,
-            'ca_serial': self.ca.serial,
-            'cert': self.cert,
-            'cert_serial': self.cert.serial,
-            'csr': certs['root-cert']['csr']['pem'],
+            "ca": self.ca,
+            "ca_serial": self.ca.serial,
+            "cert": self.cert,
+            "cert_serial": self.cert.serial,
+            "csr": certs["root-cert"]["csr"]["pem"],
         }
 
     @override_tmpcadir()
     def test_python_intro(self):
         """Test python/intro.rst."""
-        doctest.testfile('%s/python/intro.rst' % BASE, globs=self.get_globs())
+        doctest.testfile("%s/python/intro.rst" % BASE, globs=self.get_globs())
 
     @override_tmpcadir()
     def test_python_models(self):
         """Test python/models.rst."""
-        doctest.testfile('%s/python/models.rst' % BASE, globs=self.get_globs())
+        doctest.testfile("%s/python/models.rst" % BASE, globs=self.get_globs())

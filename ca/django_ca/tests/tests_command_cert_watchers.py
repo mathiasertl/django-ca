@@ -21,20 +21,20 @@ class CertWatchersTestCase(DjangoCAWithGeneratedCertsTestCase):
 
     def test_basic(self):
         """Just some basic tests here."""
-        cert = self.certs['root-cert']
-        stdout, stderr = self.cmd('cert_watchers', cert.serial, add=['user-added@example.com'])
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-        self.assertTrue(cert.watchers.filter(mail='user-added@example.com').exists())
+        cert = self.certs["root-cert"]
+        stdout, stderr = self.cmd("cert_watchers", cert.serial, add=["user-added@example.com"])
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertTrue(cert.watchers.filter(mail="user-added@example.com").exists())
 
         # remove user again
-        stdout, stderr = self.cmd('cert_watchers', cert.serial, rm=['user-added@example.com'])
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-        self.assertFalse(cert.watchers.filter(mail='user-added@example.com').exists())
+        stdout, stderr = self.cmd("cert_watchers", cert.serial, rm=["user-added@example.com"])
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertFalse(cert.watchers.filter(mail="user-added@example.com").exists())
 
         # removing again does nothing, but doesn't throw an error either
-        stdout, stderr = self.cmd('cert_watchers', cert.serial, rm=['user-added@example.com'])
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
-        self.assertFalse(cert.watchers.filter(mail='user-added@example.com').exists())
+        stdout, stderr = self.cmd("cert_watchers", cert.serial, rm=["user-added@example.com"])
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertFalse(cert.watchers.filter(mail="user-added@example.com").exists())

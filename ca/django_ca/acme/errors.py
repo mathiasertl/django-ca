@@ -21,6 +21,7 @@ from .responses import AcmeResponseUnauthorized
 
 class AcmeException(Exception):
     """Base class for all ACME exceptions."""
+
     response = AcmeResponseError
 
     def __init__(self, *args, **kwargs):
@@ -34,11 +35,13 @@ class AcmeException(Exception):
 
 class AcmeMalformed(AcmeException):
     """Exception when the request was malformed."""
+
     response = AcmeResponseMalformed
 
 
 class AcmeUnauthorized(AcmeException):
     """Exception when the request is unauthorized."""
+
     response = AcmeResponseUnauthorized
 
 

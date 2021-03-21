@@ -35,8 +35,8 @@ class Order(messages.Order):
     This class adds the not_before/not_after field to :py:class:`acme:acme.messages.Order`.
     """
 
-    not_before = fields.RFC3339Field('notBefore', omitempty=True)
-    not_after = fields.RFC3339Field('notAfter', omitempty=True)
+    not_before = fields.RFC3339Field("notBefore", omitempty=True)
+    not_after = fields.RFC3339Field("notAfter", omitempty=True)
 
 
 class NewOrder(messages.ResourceBody):
@@ -48,11 +48,11 @@ class NewOrder(messages.ResourceBody):
 
     .. seealso:: `RFC 8555, section 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`__
     """
+
     resource_type = messages.NewOrder.resource_type
 
     identifiers: IdentifiersType = jose.Field(
-        'identifiers', omitempty=False,
-        decoder=messages.Order._fields['identifiers'].fdec
+        "identifiers", omitempty=False, decoder=messages.Order._fields["identifiers"].fdec
     )
-    not_before = fields.RFC3339Field('notBefore', omitempty=True)
-    not_after = fields.RFC3339Field('notAfter', omitempty=True)
+    not_before = fields.RFC3339Field("notBefore", omitempty=True)
+    not_after = fields.RFC3339Field("notAfter", omitempty=True)

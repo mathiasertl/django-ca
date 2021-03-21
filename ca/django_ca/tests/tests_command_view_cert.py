@@ -30,7 +30,7 @@ from .base import override_tmpcadir
 from .base import timestamps
 
 output = {
-    'root-cert': '''Common Name: {cn}
+    "root-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -65,9 +65,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'child-cert': '''Common Name: {cn}
+""",
+    "child-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -102,9 +101,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'ecc-cert': '''Common Name: {cn}
+""",
+    "ecc-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -139,9 +137,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'pwd-cert': '''Common Name: {cn}
+""",
+    "pwd-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -176,9 +173,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'dsa-cert': '''Common Name: {cn}
+""",
+    "dsa-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -213,9 +209,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'profile-client': '''Common Name: {cn}
+""",
+    "profile-client": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -247,9 +242,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'profile-server': '''Common Name: {cn}
+""",
+    "profile-server": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -284,9 +278,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'profile-webserver': '''Common Name: {cn}
+""",
+    "profile-webserver": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -320,9 +313,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'profile-enduser': '''Common Name: {cn}
+""",
+    "profile-enduser": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -356,9 +348,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'profile-ocsp': '''Common Name: {cn}
+""",
+    "profile-ocsp": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -390,9 +381,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'no-extensions': '''Common Name: {cn}
+""",
+    "no-extensions": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -403,9 +393,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'all-extensions': '''Common Name: {cn}
+""",
+    "all-extensions": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -465,9 +454,8 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
-
-    'alt-extensions': '''Common Name: {cn}
+""",
+    "alt-extensions": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -525,7 +513,7 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''',
+""",
 }
 
 
@@ -535,26 +523,28 @@ class ViewCertTestCase(DjangoCAWithCertTestCase):
 
     def _get_format(self, cert):
         return {
-            'cn': cert.cn,
-            'from': cert.not_before.strftime('%Y-%m-%d %H:%M'),
-            'until': cert.not_after.strftime('%Y-%m-%d %H:%M'),
-            'pub': cert.pub,
-            'md5': cert.get_digest('MD5'),
-            'sha1': cert.get_digest('SHA1'),
-            'sha256': cert.get_digest('SHA256'),
-            'sha512': cert.get_digest('SHA512'),
-            'subjectKeyIdentifier': cert.subject_key_identifier.as_text(),
-            'authorityKeyIdentifier': cert.ca.subject_key_identifier.as_text(),
-            'hpkp': cert.hpkp_pin,
-            'san': cert.subject_alternative_name,
+            "cn": cert.cn,
+            "from": cert.not_before.strftime("%Y-%m-%d %H:%M"),
+            "until": cert.not_after.strftime("%Y-%m-%d %H:%M"),
+            "pub": cert.pub,
+            "md5": cert.get_digest("MD5"),
+            "sha1": cert.get_digest("SHA1"),
+            "sha256": cert.get_digest("SHA256"),
+            "sha512": cert.get_digest("SHA512"),
+            "subjectKeyIdentifier": cert.subject_key_identifier.as_text(),
+            "authorityKeyIdentifier": cert.ca.subject_key_identifier.as_text(),
+            "hpkp": cert.hpkp_pin,
+            "san": cert.subject_alternative_name,
         }
 
     def assertBasic(self, status):  # pylint: disable=arguments-differ
         """Test basic properties of output."""
         for key, cert in self.ca_certs.items():
-            stdout, stderr = self.cmd('view_cert', cert.serial, stdout=BytesIO(), stderr=BytesIO())
+            stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())
             if cert.subject_alternative_name is None:
-                self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+                self.assertEqual(
+                    stdout.decode("utf-8"),
+                    """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
@@ -566,11 +556,16 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 
-{pub[pem]}'''.format(status=status, **self.get_cert_context(key)))
+{pub[pem]}""".format(
+                        status=status, **self.get_cert_context(key)
+                    ),
+                )
             elif len(cert.subject_alternative_name) != 1:
                 continue  # no need to duplicate this here
             else:
-                self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+                self.assertEqual(
+                    stdout.decode("utf-8"),
+                    """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
@@ -584,14 +579,20 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 
-{pub[pem]}'''.format(status=status, **self.get_cert_context(key)))
-            self.assertEqual(stderr, b'')
+{pub[pem]}""".format(
+                        status=status, **self.get_cert_context(key)
+                    ),
+                )
+            self.assertEqual(stderr, b"")
 
         # test with no pem but with extensions
         for key, cert in self.ca_certs.items():
-            stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
-                                      stdout=BytesIO(), stderr=BytesIO())
-            self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+            stdout, stderr = self.cmd(
+                "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
+            )
+            self.assertEqual(
+                stdout.decode("utf-8"),
+                """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
@@ -626,37 +627,42 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-'''.format(status=status, **self.get_cert_context(key)))
-            self.assertEqual(stderr, b'')
+""".format(
+                    status=status, **self.get_cert_context(key)
+                ),
+            )
+            self.assertEqual(stderr, b"")
 
-    @freeze_time(timestamps['before_everything'])
+    @freeze_time(timestamps["before_everything"])
     def test_basic_not_yet_valid(self):
         """Basic tests when all certs are not yet valid."""
-        self.assertBasic(status='Not yet valid')
+        self.assertBasic(status="Not yet valid")
 
-    @freeze_time(timestamps['everything_expired'])
+    @freeze_time(timestamps["everything_expired"])
     def test_basic_expired(self):
         """Basic tests when all certs are expired."""
-        self.assertBasic(status='Expired')
+        self.assertBasic(status="Expired")
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_certs(self):
         """Test main certs."""
         for name, cert in self.generated_certs.items():
-            stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
-                                      stdout=BytesIO(), stderr=BytesIO())
-            self.assertEqual(stderr, b'')
+            stdout, stderr = self.cmd(
+                "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
+            )
+            self.assertEqual(stderr, b"")
 
             context = self.get_cert_context(name)
-            self.assertEqual(stdout.decode('utf-8'), output[name].format(**context))
+            self.assertEqual(stdout.decode("utf-8"), output[name].format(**context))
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_der(self):
         """Test viewing a cert as DER."""
-        cert = self.certs['child-cert']
-        stdout, stderr = self.cmd('view_cert', cert.serial, format=Encoding.DER,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        expected = '''Common Name: {cn}
+        cert = self.certs["child-cert"]
+        stdout, stderr = self.cmd(
+            "view_cert", cert.serial, format=Encoding.DER, stdout=BytesIO(), stderr=BytesIO()
+        )
+        expected = """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -670,19 +676,23 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 
-'''.format(**self.get_cert_context('child-cert'))
-        expected = force_bytes(expected) + certs['child-cert']['pub']['der'] + b'\n'
+""".format(
+            **self.get_cert_context("child-cert")
+        )
+        expected = force_bytes(expected) + certs["child-cert"]["pub"]["der"] + b"\n"
 
         self.assertEqual(stdout, expected)
-        self.assertEqual(stderr, b'')
+        self.assertEqual(stderr, b"")
 
     def test_revoked(self):
         """Test viewing a revoked cert."""
-        cert = self.certs['child-cert']
+        cert = self.certs["child-cert"]
         cert.revoked = True
         cert.save()
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: {cn}
+        stdout, stderr = self.cmd("view_cert", cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(
+            stdout.decode("utf-8"),
+            """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Revoked
@@ -695,20 +705,25 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-'''.format(**certs['child-cert']))
-        self.assertEqual(stderr, b'')
+""".format(
+                **certs["child-cert"]
+            ),
+        )
+        self.assertEqual(stderr, b"")
 
     @override_tmpcadir()
     def test_no_san_with_watchers(self):
         """Test a cert with no subjectAltNames but with watchers."""
-        ca = self.cas['root']
-        csr = certs['root-cert']['csr']['pem']
-        cert = self.create_cert(ca, csr, subject=Subject({'CN': 'example.com'}), cn_in_san=False)
-        watcher = Watcher.from_addr('user@example.com')
+        ca = self.cas["root"]
+        csr = certs["root-cert"]["csr"]["pem"]
+        cert = self.create_cert(ca, csr, subject=Subject({"CN": "example.com"}), cn_in_san=False)
+        watcher = Watcher.from_addr("user@example.com")
         cert.watchers.add(watcher)
 
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout.decode('utf-8'), '''Common Name: %(cn)s
+        stdout, stderr = self.cmd("view_cert", cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(
+            stdout.decode("utf-8"),
+            """Common Name: %(cn)s
 Valid from: %(from)s
 Valid until: %(until)s
 Status: Valid
@@ -720,17 +735,20 @@ Digest:
     sha256: %(sha256)s
     sha512: %(sha512)s
 HPKP pin: %(hpkp)s
-''' % self._get_format(cert))
-        self.assertEqual(stderr, b'')
+"""
+            % self._get_format(cert),
+        )
+        self.assertEqual(stderr, b"")
 
     def assertContrib(self, name, expected, **context):  # pylint: disable=invalid-name
         """Assert basic contrib output."""
         cert = self.certs[name]
-        stdout, stderr = self.cmd('view_cert', cert.serial, no_pem=True, extensions=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd(
+            "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
+        )
         context.update(self.get_cert_context(name))
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout.decode('utf-8'), expected.format(**context))
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout.decode("utf-8"), expected.format(**context))
 
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self):
@@ -746,7 +764,9 @@ HPKP pin: %(hpkp)s
         Timestamp: 2019-03-27 09:13:56.485000
         Log ID: 4494652eb0eeceafc44007d8a8fe28c0dae682bed8cb31b53fd33396b5b681a8"""
 
-        self.assertContrib('godaddy_g2_intermediate-cert', '''Common Name: {cn}
+        self.assertContrib(
+            "godaddy_g2_intermediate-cert",
+            """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -835,22 +855,28 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''', sct=sct)
+""",
+            sct=sct,
+        )
 
     @freeze_time("2019-07-05")
     def test_contrib_letsencrypt_jabber_at(self):
         """Test contrib letsencrypt cert."""
-        name = 'letsencrypt_x3-cert'
+        name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
-        sct = '''PrecertificateSignedCertificateTimestamps{sct_critical}:
+        sct = """PrecertificateSignedCertificateTimestamps{sct_critical}:
     * Precertificate ({sct_values[0][version]}):
         Timestamp: {sct_values[0][timestamp]}
         Log ID: {sct_values[0][log_id]}
     * Precertificate ({sct_values[1][version]}):
         Timestamp: {sct_values[1][timestamp]}
-        Log ID: {sct_values[1][log_id]}'''.format(**context)
+        Log ID: {sct_values[1][log_id]}""".format(
+            **context
+        )
 
-        self.assertContrib('letsencrypt_x3-cert', '''Common Name: {cn}
+        self.assertContrib(
+            "letsencrypt_x3-cert",
+            """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -896,12 +922,16 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''', sct=sct)
+""",
+            sct=sct,
+        )
 
     @freeze_time("2018-12-01")
     def test_contrib_cloudflare_1(self):
         """Test contrib cloudflare cert."""
-        self.assertContrib('cloudflare_1', '''Common Name: {cn}
+        self.assertContrib(
+            "cloudflare_1",
+            """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -1025,11 +1055,16 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-'''.format(**self.get_cert_context('cloudflare_1')))
+""".format(
+                **self.get_cert_context("cloudflare_1")
+            ),
+        )
 
     def test_contrib_multiple_ous(self):
         """Test special contrib case with multiple OUs."""
-        self.assertContrib('multiple_ous', '''Common Name: {cn}
+        self.assertContrib(
+            "multiple_ous",
+            """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
@@ -1040,13 +1075,14 @@ Digest:
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
-''')
+""",
+        )
 
     def test_unknown_cert(self):
         """Test viewing an unknown certificate."""
-        name = 'foobar'
-        with self.assertCommandError(r'^Error: %s: Certificate not found\.$' % name):
-            self.cmd('view_cert', name, no_pem=True)
+        name = "foobar"
+        with self.assertCommandError(r"^Error: %s: Certificate not found\.$" % name):
+            self.cmd("view_cert", name, no_pem=True)
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, USE_TZ=True)

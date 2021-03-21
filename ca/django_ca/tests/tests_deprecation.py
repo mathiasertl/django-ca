@@ -24,9 +24,10 @@ from ..deprecation import RemovedInNextVersionWarning
 
 class TestDjangoCATestCase(TestCase):
     """Test :py:mod:`django_ca.deprecation`."""
-    msg_in_119 = 'deprecated in 1.19'
-    msg_in_120 = 'deprecated in 1.20'
-    msg_in_next = 'deprecated in next version'
+
+    msg_in_119 = "deprecated in 1.19"
+    msg_in_120 = "deprecated in 1.20"
+    msg_in_next = "deprecated in next version"
 
     def deprecated_in_119(self):
         """Emit a message about deprecation in 1.19."""
@@ -43,9 +44,9 @@ class TestDjangoCATestCase(TestCase):
     def test_base(self):
         """Test warning messages."""
 
-        with self.assertWarnsRegex(RemovedInDjangoCA119Warning, r'^%s$' % self.msg_in_119):
+        with self.assertWarnsRegex(RemovedInDjangoCA119Warning, r"^%s$" % self.msg_in_119):
             self.deprecated_in_119()
-        with self.assertWarnsRegex(RemovedInDjangoCA120Warning, r'^%s$' % self.msg_in_120):
+        with self.assertWarnsRegex(RemovedInDjangoCA120Warning, r"^%s$" % self.msg_in_120):
             self.deprecated_in_120()
-        with self.assertWarnsRegex(RemovedInNextVersionWarning, r'^%s$' % self.msg_in_next):
+        with self.assertWarnsRegex(RemovedInNextVersionWarning, r"^%s$" % self.msg_in_next):
             self.deprecated_in_next()

@@ -32,7 +32,7 @@ class CacheCRLsTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Main test class for this command."""
 
     @override_tmpcadir()
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_basic(self):
         """Test the basic command.
 
@@ -41,36 +41,36 @@ class CacheCRLsTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         hash_cls = hashes.SHA512
         enc_cls = Encoding.DER
-        stdout, stderr = self.cmd('cache_crls')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("cache_crls")
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
 
         for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, 'ca')
+            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsNotNone(crl)
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, 'user')
+            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsNotNone(crl)
 
     @override_tmpcadir()
     def test_serial(self):
         """Test passing an explicit serial."""
-        ca = self.cas['root']
+        ca = self.cas["root"]
 
         hash_cls = hashes.SHA512
         enc_cls = Encoding.DER
-        stdout, stderr = self.cmd('cache_crls', ca.serial)
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("cache_crls", ca.serial)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
 
-        key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, 'ca')
+        key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "ca")
         crl = x509.load_der_x509_crl(cache.get(key), default_backend())
         self.assertIsNotNone(crl)
         self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
-        key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, 'user')
+        key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "user")
         crl = x509.load_der_x509_crl(cache.get(key), default_backend())
         self.assertIsNotNone(crl)

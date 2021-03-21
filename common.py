@@ -24,12 +24,13 @@ import django
 try:
     from termcolor import colored
 except ImportError:
+
     def colored(msg, *args, **kwargs):
         return msg
 
 
 ROOTDIR = os.path.dirname(os.path.realpath(__file__))
-CADIR = os.path.join(ROOTDIR, 'ca')
+CADIR = os.path.join(ROOTDIR, "ca")
 
 if CADIR not in sys.path:
     sys.path.insert(0, CADIR)
@@ -41,19 +42,19 @@ def setup_django(settings_module="ca.test_settings"):
 
 
 def error(msg, **kwargs):
-    print(colored(msg, 'red'), **kwargs)
+    print(colored(msg, "red"), **kwargs)
 
 
 def warn(msg, **kwargs):
-    print(colored(msg, 'yellow'), **kwargs)
+    print(colored(msg, "yellow"), **kwargs)
 
 
-def ok(msg=' OK.', **kwargs):
-    print(colored(msg, 'green'), **kwargs)
+def ok(msg=" OK.", **kwargs):
+    print(colored(msg, "green"), **kwargs)
 
 
 def bold(msg):
-    return colored(msg, attrs=['bold'])
+    return colored(msg, attrs=["bold"])
 
 
 def abort(msg):

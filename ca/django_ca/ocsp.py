@@ -22,7 +22,7 @@ from .constants import ReasonFlags
 from .deprecation import RemovedInDjangoCA120Warning
 
 # We need a two-letter year, otherwise OCSP doesn't work
-DATE_FORMAT = '%y%m%d%H%M%SZ'
+DATE_FORMAT = "%y%m%d%H%M%SZ"
 
 
 def get_index(ca):
@@ -35,33 +35,36 @@ def get_index(ca):
        This function will be removed in django-ca 1.20.0.
     """
 
-    warnings.warn("Creating an OCSP index is deprecated and will be removed in 1.20.0.",
-                  RemovedInDjangoCA120Warning)
+    warnings.warn(
+        "Creating an OCSP index is deprecated and will be removed in 1.20.0.", RemovedInDjangoCA120Warning
+    )
 
     now = timezone.now()
     yesterday = now - timedelta(seconds=86400)
-    certs = ca.certificate_set.order_by('expires', 'cn', 'serial')
+    certs = ca.certificate_set.order_by("expires", "cn", "serial")
 
     # Write index file (required by "openssl ocsp")
     for cert in certs.filter(expires__gt=yesterday, valid_from__lt=now):
-        revocation = ''
+        revocation = ""
         if cert.expires < now:
-            status = 'E'
+            status = "E"
         elif cert.revoked:
-            status = 'R'
+            status = "R"
 
             revocation = cert.revoked_date.strftime(DATE_FORMAT)
             if cert.revoked_reason != ReasonFlags.unspecified.name:
-                revocation += ',%s' % cert.revoked_reason
+                revocation += ",%s" % cert.revoked_reason
         else:
-            status = 'V'
+            status = "V"
 
         # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
-        yield '%s\n' % '\t'.join([
-            status,
-            cert.x509_cert.not_valid_after.strftime(DATE_FORMAT),
-            revocation,
-            cert.serial.replace(':', ''),
-            'unknown',  # we don't save to any file
-            cert.distinguished_name,
-        ])
+        yield "%s\n" % "\t".join(
+            [
+                status,
+                cert.x509_cert.not_valid_after.strftime(DATE_FORMAT),
+                revocation,
+                cert.serial.replace(":", ""),
+                "unknown",  # we don't save to any file
+                cert.distinguished_name,
+            ]
+        )

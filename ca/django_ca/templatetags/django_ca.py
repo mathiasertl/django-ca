@@ -28,8 +28,8 @@ from ..utils import int_to_hex
 register = template.Library()
 
 
-register.filter('format_name', format_name)
-register.filter('format_relative_name', format_relative_name)
+register.filter("format_name", format_name)
+register.filter("format_relative_name", format_relative_name)
 
 
 @register.filter
@@ -62,7 +62,7 @@ def is_user_notice(value):
     return isinstance(value, x509.UserNotice)
 
 
-@register.inclusion_tag('django_ca/admin/submit_line.html', takes_context=True)
+@register.inclusion_tag("django_ca/admin/submit_line.html", takes_context=True)
 def django_ca_certificate_submit_row(context):
     """Submit row for certificate change view."""
     return submit_row(context)

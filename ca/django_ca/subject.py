@@ -74,10 +74,12 @@ class Subject:
     def __init__(self, subject: Optional[ParsableSubject] = None) -> None:
         self._data = {}
 
-        iterable: Iterable[Tuple[
-            Union[x509.ObjectIdentifier, str],
-            Union[str, Iterable[str]],
-        ]]
+        iterable: Iterable[
+            Tuple[
+                Union[x509.ObjectIdentifier, str],
+                Union[str, Iterable[str]],
+            ]
+        ]
 
         # Normalize input data to a list
         if subject is None:
@@ -90,18 +92,18 @@ class Subject:
             iterable = [(n.oid, n.value) for n in subject]
         elif isinstance(subject, abc.Iterable):
             # TODO: cast should not be necessary, but mypy infers the top-level Union here
-            iterable = cast(Iterable[Tuple[
-                Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]
-            ]], subject)
+            iterable = cast(
+                Iterable[Tuple[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]]], subject
+            )
         else:
-            raise ValueError('Invalid subject: %s' % subject)
+            raise ValueError("Invalid subject: %s" % subject)
 
         for oid, value in iterable:
             if isinstance(oid, str):
                 try:
                     oid = NAME_OID_MAPPINGS[oid]
                 except KeyError as ex:
-                    raise ValueError('Invalid OID: %s' % oid) from ex
+                    raise ValueError("Invalid OID: %s" % oid) from ex
 
             if not value:
                 continue
@@ -109,7 +111,7 @@ class Subject:
             if oid not in self._data:
                 self._data[oid] = [value]
             elif oid not in MULTIPLE_OIDS:
-                raise ValueError('%s: Must not occur multiple times' % OID_NAME_MAPPINGS[oid])
+                raise ValueError("%s: Must not occur multiple times" % OID_NAME_MAPPINGS[oid])
             else:
                 self._data[oid].append(value)
 
@@ -139,9 +141,7 @@ class Subject:
     def __len__(self) -> int:
         return len(self._data)
 
-    def __setitem__(self,
-                    key: Union[x509.ObjectIdentifier, str],
-                    value: Union[str, List[str]]) -> None:
+    def __setitem__(self, key: Union[x509.ObjectIdentifier, str], value: Union[str, List[str]]) -> None:
         if isinstance(key, str):
             key = NAME_OID_MAPPINGS[key]
 
@@ -152,10 +152,10 @@ class Subject:
             value = [value]
 
         elif not isinstance(value, list):
-            raise ValueError('Value must be str or list')
+            raise ValueError("Value must be str or list")
 
         if len(value) > 1 and key not in MULTIPLE_OIDS:
-            raise ValueError('%s: Must not occur multiple times' % OID_NAME_MAPPINGS[key])
+            raise ValueError("%s: Must not occur multiple times" % OID_NAME_MAPPINGS[key])
 
         self._data[key] = value
 
@@ -168,8 +168,8 @@ class Subject:
             for val in values:
                 data.append((OID_NAME_MAPPINGS[oid], val))
 
-        joined_data = ['%s=%s' % (k, v) for k, v in sort_name(data)]
-        return '/%s' % '/'.join(joined_data)
+        joined_data = ["%s=%s" % (k, v) for k, v in sort_name(data)]
+        return "/%s" % "/".join(joined_data)
 
     @property
     def _iter(self) -> List[Tuple[x509.ObjectIdentifier, List[str]]]:
@@ -179,13 +179,13 @@ class Subject:
         """Clear the subject."""
         self._data.clear()
 
-    def copy(self) -> 'Subject':
+    def copy(self) -> "Subject":
         """Create a copy of the subject."""
         return Subject(list(self.items()))
 
-    def get(self,
-            key: Union[x509.ObjectIdentifier, str],
-            default: Optional[Union[List[str], str]] = None) -> Optional[Union[List[str], str]]:
+    def get(
+        self, key: Union[x509.ObjectIdentifier, str], default: Optional[Union[List[str], str]] = None
+    ) -> Optional[Union[List[str], str]]:
         """Return the value for key if key is in the subject, else default."""
         try:
             return self[key]
@@ -204,10 +204,9 @@ class Subject:
         for key in self:
             yield key
 
-    def setdefault(self,
-                   oid: Union[x509.ObjectIdentifier, str],
-                   value: Union[str, Iterable[str]]
-                   ) -> List[str]:
+    def setdefault(
+        self, oid: Union[x509.ObjectIdentifier, str], value: Union[str, Iterable[str]]
+    ) -> List[str]:
         """Insert key with a value of default if key is not in the subject.
 
         Return the value for key if key is in the subject, else default.
@@ -222,19 +221,25 @@ class Subject:
         if isinstance(value, str):
             value = [value]
         elif not isinstance(value, list):
-            raise ValueError('Value must be str or list')
+            raise ValueError("Value must be str or list")
 
         if len(value) > 1 and oid not in MULTIPLE_OIDS:
-            raise ValueError('%s: Must not occur multiple times' % OID_NAME_MAPPINGS[oid])
+            raise ValueError("%s: Must not occur multiple times" % OID_NAME_MAPPINGS[oid])
 
         self._data[oid] = value
         return value
 
-    def update(self, e: Optional[Union[
-            'Subject',
-            Mapping[Union[str, x509.ObjectIdentifier], Union[str, List[str]]],
-            Iterable[Tuple[Union[str, x509.ObjectIdentifier], Union[str, List[str]]]],
-    ]] = None, **f: Union[str, List[str]]) -> None:
+    def update(
+        self,
+        e: Optional[
+            Union[
+                "Subject",
+                Mapping[Union[str, x509.ObjectIdentifier], Union[str, List[str]]],
+                Iterable[Tuple[Union[str, x509.ObjectIdentifier], Union[str, List[str]]]],
+            ]
+        ] = None,
+        **f: Union[str, List[str]]
+    ) -> None:
         """Update S from subject/dict/iterable E and F."""
         if e is None:
             e = {}
@@ -288,4 +293,4 @@ def get_default_subject() -> Subject:
     try:
         return Subject(ca_settings.CA_DEFAULT_SUBJECT)
     except (ValueError, KeyError) as ex:
-        raise ImproperlyConfigured('CA_DEFAULT_SUBJECT: %s' % ex) from ex
+        raise ImproperlyConfigured("CA_DEFAULT_SUBJECT: %s" % ex) from ex

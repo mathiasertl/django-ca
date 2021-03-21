@@ -26,33 +26,33 @@ import django
 from django.conf import settings
 
 parser = argparse.ArgumentParser("Test imports.")
-parser.add_argument('--extra', help="Test extras_require.")
+parser.add_argument("--extra", help="Test extras_require.")
 args = parser.parse_args()
 
 settings.configure(
-    SECRET_KEY='dummy',
+    SECRET_KEY="dummy",
     INSTALLED_APPS=[
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
+        "django.contrib.auth",
+        "django.contrib.contenttypes",
         "django.contrib.staticfiles",
         "django.contrib.admin",
         "django_ca",
     ],
     BASE_DIR=os.getcwd(),
     TEMPLATES=[
-	{
-	    'BACKEND': 'django.template.backends.django.DjangoTemplates',
-	    'DIRS': [],
-	    'APP_DIRS': True,
-	    'OPTIONS': {
-		'context_processors': [
-		    'django.template.context_processors.debug',
-		    'django.template.context_processors.request',
-		    'django.contrib.auth.context_processors.auth',
-		    'django.contrib.messages.context_processors.messages',
-		],
-	    },
-	},
+        {
+            "BACKEND": "django.template.backends.django.DjangoTemplates",
+            "DIRS": [],
+            "APP_DIRS": True,
+            "OPTIONS": {
+                "context_processors": [
+                    "django.template.context_processors.debug",
+                    "django.template.context_processors.request",
+                    "django.contrib.auth.context_processors.auth",
+                    "django.contrib.messages.context_processors.messages",
+                ],
+            },
+        },
     ],
 )
 django.setup()
@@ -91,13 +91,13 @@ for static_file in [
         sys.exit(1)
 
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
-if args.extra == 'acme':
+if args.extra == "acme":
     from django_ca.acme import messages
     from django_ca.acme import utils
     from django_ca.acme import views
-elif args.extra == 'celery':
+elif args.extra == "celery":
     from django_ca import tasks
-elif args.extra == 'redis':
+elif args.extra == "redis":
     import redis_cache
 elif args.extra:
-    print('Error: %s: Unknown extra.' % args.extra)
+    print("Error: %s: Unknown extra." % args.extra)

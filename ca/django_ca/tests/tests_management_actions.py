@@ -41,9 +41,9 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
 
     # Trick so that every doctest in module gets completely new argument parser
     def set_up(self):
-        self.globs['parser'] = argparse.ArgumentParser()
+        self.globs["parser"] = argparse.ArgumentParser()
 
-    tests.addTests(doctest.DocTestSuite('django_ca.management.actions', setUp=set_up))
+    tests.addTests(doctest.DocTestSuite("django_ca.management.actions", setUp=set_up))
     return tests
 
 
@@ -53,34 +53,35 @@ class SubjectActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--subject', action=actions.SubjectAction)
+        self.parser.add_argument("--subject", action=actions.SubjectAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        namespace = self.parser.parse_args(['--subject=/CN=example.com'])
-        self.assertEqual(namespace.subject, Subject([('CN', 'example.com')]))
+        namespace = self.parser.parse_args(["--subject=/CN=example.com"])
+        self.assertEqual(namespace.subject, Subject([("CN", "example.com")]))
 
-        namespace = self.parser.parse_args(['--subject=/ST=foo/CN=example.com'])
-        self.assertEqual(namespace.subject, Subject([('ST', 'foo'), ('CN', 'example.com')]))
+        namespace = self.parser.parse_args(["--subject=/ST=foo/CN=example.com"])
+        self.assertEqual(namespace.subject, Subject([("ST", "foo"), ("CN", "example.com")]))
 
-        namespace = self.parser.parse_args(['--subject=/ST=/CN=example.com'])
-        self.assertEqual(namespace.subject, Subject([('ST', ''), ('CN', 'example.com')]))
+        namespace = self.parser.parse_args(["--subject=/ST=/CN=example.com"])
+        self.assertEqual(namespace.subject, Subject([("ST", ""), ("CN", "example.com")]))
 
     def test_order(self):
         """Test that order is always consistent."""
-        namespace = self.parser.parse_args(['--subject=/CN=example.com/ST=foo'])
-        self.assertEqual(namespace.subject, Subject([('ST', 'foo'), ('CN', 'example.com')]))
+        namespace = self.parser.parse_args(["--subject=/CN=example.com/ST=foo"])
+        self.assertEqual(namespace.subject, Subject([("ST", "foo"), ("CN", "example.com")]))
 
     def test_multiple(self):
         """Test that we can pass multiple OUs."""
-        namespace = self.parser.parse_args(['--subject=/C=AT/OU=foo/OU=bar'])
-        self.assertEqual(namespace.subject, Subject([('C', 'AT'), ('OU', 'foo'), ('OU', 'bar')]))
+        namespace = self.parser.parse_args(["--subject=/C=AT/OU=foo/OU=bar"])
+        self.assertEqual(namespace.subject, Subject([("C", "AT"), ("OU", "foo"), ("OU", "bar")]))
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['--subject=/WRONG=foobar'],
-                               'usage: {script} [-h] [--subject SUBJECT]\n'
-                               '{script}: error: Unknown x509 name field: WRONG\n')
+        self.assertParserError(
+            ["--subject=/WRONG=foobar"],
+            "usage: {script} [-h] [--subject SUBJECT]\n" "{script}: error: Unknown x509 name field: WRONG\n",
+        )
 
 
 class OrderedSetExtensionActionTestCase(DjangoCATestCase):
@@ -89,27 +90,29 @@ class OrderedSetExtensionActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-e', action=actions.OrderedSetExtensionAction, extension=TLSFeature)
+        self.parser.add_argument("-e", action=actions.OrderedSetExtensionAction, extension=TLSFeature)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        args = self.parser.parse_args(['-e=OCSPMustStaple'])
-        self.assertEqual(args.tls_feature, TLSFeature({'critical': False, 'value': ['OCSPMustStaple']}))
+        args = self.parser.parse_args(["-e=OCSPMustStaple"])
+        self.assertEqual(args.tls_feature, TLSFeature({"critical": False, "value": ["OCSPMustStaple"]}))
 
-        args = self.parser.parse_args(['-e=critical,OCSPMustStaple'])
-        self.assertEqual(args.tls_feature, TLSFeature({'critical': True, 'value': ['OCSPMustStaple']}))
+        args = self.parser.parse_args(["-e=critical,OCSPMustStaple"])
+        self.assertEqual(args.tls_feature, TLSFeature({"critical": True, "value": ["OCSPMustStaple"]}))
 
-        args = self.parser.parse_args(['-e=critical,OCSPMustStaple,MultipleCertStatusRequest'])
-        self.assertEqual(args.tls_feature, TLSFeature({
-            'critical': True,
-            'value': ['OCSPMustStaple', 'MultipleCertStatusRequest']
-        }))
+        args = self.parser.parse_args(["-e=critical,OCSPMustStaple,MultipleCertStatusRequest"])
+        self.assertEqual(
+            args.tls_feature,
+            TLSFeature({"critical": True, "value": ["OCSPMustStaple", "MultipleCertStatusRequest"]}),
+        )
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['-e=foobar'],
-                               'usage: {script} [-h] [-e TLS_FEATURE]\n'
-                               '{script}: error: Invalid extension value: foobar: Unknown value: foobar\n')
+        self.assertParserError(
+            ["-e=foobar"],
+            "usage: {script} [-h] [-e TLS_FEATURE]\n"
+            "{script}: error: Invalid extension value: foobar: Unknown value: foobar\n",
+        )
 
 
 class FormatActionTestCase(DjangoCATestCase):
@@ -118,24 +121,25 @@ class FormatActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--action', action=actions.FormatAction)
+        self.parser.add_argument("--action", action=actions.FormatAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        args = self.parser.parse_args(['--action=DER'])
+        args = self.parser.parse_args(["--action=DER"])
         self.assertEqual(args.action, Encoding.DER)
 
-        args = self.parser.parse_args(['--action=ASN1'])
+        args = self.parser.parse_args(["--action=ASN1"])
         self.assertEqual(args.action, Encoding.DER)
 
-        args = self.parser.parse_args(['--action=PEM'])
+        args = self.parser.parse_args(["--action=PEM"])
         self.assertEqual(args.action, Encoding.PEM)
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['--action=foo'],
-                               'usage: {script} [-h] [--action ACTION]\n'
-                               '{script}: error: Unknown encoding: foo\n')
+        self.assertParserError(
+            ["--action=foo"],
+            "usage: {script} [-h] [--action ACTION]\n" "{script}: error: Unknown encoding: foo\n",
+        )
 
 
 class KeyCurveActionTestCase(DjangoCATestCase):
@@ -144,21 +148,22 @@ class KeyCurveActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--curve', action=actions.KeyCurveAction)
+        self.parser.add_argument("--curve", action=actions.KeyCurveAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        args = self.parser.parse_args(['--curve=SECT409K1'])
+        args = self.parser.parse_args(["--curve=SECT409K1"])
         self.assertIsInstance(args.curve, ec.SECT409K1)
 
-        args = self.parser.parse_args(['--curve=SECT409R1'])
+        args = self.parser.parse_args(["--curve=SECT409R1"])
         self.assertIsInstance(args.curve, ec.SECT409R1)
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['--curve=foo'],
-                               'usage: {script} [-h] [--curve CURVE]\n'
-                               '{script}: error: foo: Not a known Eliptic Curve\n')
+        self.assertParserError(
+            ["--curve=foo"],
+            "usage: {script} [-h] [--curve CURVE]\n" "{script}: error: foo: Not a known Eliptic Curve\n",
+        )
 
 
 class AlgorithmActionTestCase(DjangoCATestCase):
@@ -167,24 +172,25 @@ class AlgorithmActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--algo', action=actions.AlgorithmAction)
+        self.parser.add_argument("--algo", action=actions.AlgorithmAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        args = self.parser.parse_args(['--algo=SHA256'])
+        args = self.parser.parse_args(["--algo=SHA256"])
         self.assertIsInstance(args.algo, hashes.SHA256)
 
-        args = self.parser.parse_args(['--algo=MD5'])
+        args = self.parser.parse_args(["--algo=MD5"])
         self.assertIsInstance(args.algo, hashes.MD5)
 
-        args = self.parser.parse_args(['--algo=SHA512'])
+        args = self.parser.parse_args(["--algo=SHA512"])
         self.assertIsInstance(args.algo, hashes.SHA512)
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['--algo=foo'],
-                               'usage: {script} [-h] [--algo ALGO]\n'
-                               '{script}: error: Unknown hash algorithm: foo\n')
+        self.assertParserError(
+            ["--algo=foo"],
+            "usage: {script} [-h] [--algo ALGO]\n" "{script}: error: Unknown hash algorithm: foo\n",
+        )
 
 
 class KeySizeActionTestCase(DjangoCATestCase):
@@ -196,35 +202,35 @@ class KeySizeActionTestCase(DjangoCATestCase):
         self.parser = argparse.ArgumentParser()
         # NOTE: explicitly set metavar here, because the default has curly braces causing troubles with
         #       string formatting in assertParserError.
-        self.parser.add_argument('--size', action=actions.KeySizeAction, metavar='SIZE')
+        self.parser.add_argument("--size", action=actions.KeySizeAction, metavar="SIZE")
 
     def test_basic(self):
         """Test basic functionality of action."""
-        args = self.parser.parse_args(['--size=2048'])
+        args = self.parser.parse_args(["--size=2048"])
         self.assertEqual(args.size, 2048)
 
-        args = self.parser.parse_args(['--size=4096'])
+        args = self.parser.parse_args(["--size=4096"])
         self.assertEqual(args.size, 4096)
 
     def test_no_power_two(self):
         """Test giving values that are not the power of two."""
-        expected = '''usage: {script} [-h] [--size SIZE]
-{script}: error: --size must be a power of two (2048, 4096, ...)\n'''
+        expected = """usage: {script} [-h] [--size SIZE]
+{script}: error: --size must be a power of two (2048, 4096, ...)\n"""
 
-        self.assertParserError(['--size=2047'], expected)
-        self.assertParserError(['--size=2049'], expected)
-        self.assertParserError(['--size=3084'], expected)
-        self.assertParserError(['--size=4095'], expected)
+        self.assertParserError(["--size=2047"], expected)
+        self.assertParserError(["--size=2049"], expected)
+        self.assertParserError(["--size=3084"], expected)
+        self.assertParserError(["--size=4095"], expected)
 
     @override_settings(CA_MIN_KEY_SIZE=2048, CA_DEFAULT_KEY_SIZE=4096)
     def test_to_small(self):
         """Test giving values that are to small."""
-        expected = '''usage: {script} [-h] [--size SIZE]
-{script}: error: --size must be at least 2048 bits.\n'''
+        expected = """usage: {script} [-h] [--size SIZE]
+{script}: error: --size must be at least 2048 bits.\n"""
 
-        self.assertParserError(['--size=1024'], expected)
-        self.assertParserError(['--size=512'], expected)
-        self.assertParserError(['--size=256'], expected)
+        self.assertParserError(["--size=1024"], expected)
+        self.assertParserError(["--size=512"], expected)
+        self.assertParserError(["--size=256"], expected)
 
 
 class PasswordActionTestCase(DjangoCATestCase):
@@ -234,7 +240,7 @@ class PasswordActionTestCase(DjangoCATestCase):
         super().setUp()
 
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--password', nargs='?', action=actions.PasswordAction)
+        self.parser.add_argument("--password", nargs="?", action=actions.PasswordAction)
 
     def test_none(self):
         """Test passing no password option at all."""
@@ -243,26 +249,26 @@ class PasswordActionTestCase(DjangoCATestCase):
 
     def test_given(self):
         """Test giving a password on the command line."""
-        args = self.parser.parse_args(['--password=foobar'])
-        self.assertEqual(args.password, b'foobar')
+        args = self.parser.parse_args(["--password=foobar"])
+        self.assertEqual(args.password, b"foobar")
 
-    @mock.patch('getpass.getpass', return_value='prompted')
+    @mock.patch("getpass.getpass", return_value="prompted")
     def test_output(self, getpass):
         """Test prompting the user for a password."""
-        prompt = 'new prompt: '
+        prompt = "new prompt: "
         parser = argparse.ArgumentParser()
-        parser.add_argument('--password', nargs='?', action=actions.PasswordAction, prompt=prompt)
-        args = parser.parse_args(['--password'])
-        self.assertEqual(args.password, b'prompted')
+        parser.add_argument("--password", nargs="?", action=actions.PasswordAction, prompt=prompt)
+        args = parser.parse_args(["--password"])
+        self.assertEqual(args.password, b"prompted")
         getpass.assert_called_once_with(prompt=prompt)
 
     @mock.patch("getpass.getpass", return_value="prompted")
     def test_prompt(self, getpass):
         """Test using a custom prompt."""
         parser = argparse.ArgumentParser()
-        parser.add_argument('--password', nargs='?', action=actions.PasswordAction)
-        args = parser.parse_args(['--password'])
-        self.assertEqual(args.password, b'prompted')
+        parser.add_argument("--password", nargs="?", action=actions.PasswordAction)
+        args = parser.parse_args(["--password"])
+        self.assertEqual(args.password, b"prompted")
         getpass.assert_called_once()
 
 
@@ -272,38 +278,42 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('cert', action=actions.CertificateAction)
+        self.parser.add_argument("cert", action=actions.CertificateAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
         for name, cert in self.certs.items():
-            args = self.parser.parse_args([certs[name]['serial']])
+            args = self.parser.parse_args([certs[name]["serial"]])
             self.assertEqual(args.cert, cert)
 
     def test_abbreviation(self):
         """Test using an abbreviation."""
-        args = self.parser.parse_args([certs['root-cert']['serial'][:6]])
-        self.assertEqual(args.cert, self.certs['root-cert'])
+        args = self.parser.parse_args([certs["root-cert"]["serial"][:6]])
+        self.assertEqual(args.cert, self.certs["root-cert"])
 
     def test_missing(self):
         """Test giving an unknown cert."""
-        serial = 'foo'
-        self.assertParserError([serial],
-                               'usage: {script} [-h] cert\n'
-                               '{script}: error: {serial}: Certificate not found.\n', serial=serial)
+        serial = "foo"
+        self.assertParserError(
+            [serial],
+            "usage: {script} [-h] cert\n" "{script}: error: {serial}: Certificate not found.\n",
+            serial=serial,
+        )
 
     def test_multiple(self):
         """Test matching multiple certs with abbreviation."""
         # Manually set almost the same serial on second cert
-        cert = Certificate(ca=self.cas['root'])
-        cert.x509_cert = certs['root-cert']['pub']['parsed']
-        cert.serial = cert.serial[:-1] + 'X'
+        cert = Certificate(ca=self.cas["root"])
+        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
+        cert.serial = cert.serial[:-1] + "X"
         cert.save()
 
         serial = cert.serial[:8]
-        self.assertParserError([serial],
-                               'usage: {script} [-h] cert\n'
-                               '{script}: error: {serial}: Multiple certificates match.\n', serial=serial)
+        self.assertParserError(
+            [serial],
+            "usage: {script} [-h] cert\n" "{script}: error: {serial}: Multiple certificates match.\n",
+            serial=serial,
+        )
 
 
 class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
@@ -312,39 +322,42 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('ca', action=actions.CertificateAuthorityAction)
+        self.parser.add_argument("ca", action=actions.CertificateAuthorityAction)
 
     @override_tmpcadir()
     def test_basic(self):
         """Test basic functionality of action."""
         for name, ca in self.usable_cas.items():
-            args = self.parser.parse_args([certs[name]['serial']])
+            args = self.parser.parse_args([certs[name]["serial"]])
             self.assertEqual(args.ca, ca)
 
     @override_tmpcadir()
     def test_abbreviation(self):
         """Test using an abbreviation."""
-        args = self.parser.parse_args([certs['ecc']['serial'][:6]])
-        self.assertEqual(args.ca, self.cas['ecc'])
+        args = self.parser.parse_args([certs["ecc"]["serial"][:6]])
+        self.assertEqual(args.ca, self.cas["ecc"])
 
     def test_missing(self):
         """Test giving an unknown CA."""
-        self.assertParserError(['foo'],
-                               '''usage: {script} [-h] ca\n'''
-                               '''{script}: error: foo: Certificate authority not found.\n''')
+        self.assertParserError(
+            ["foo"],
+            """usage: {script} [-h] ca\n""" """{script}: error: foo: Certificate authority not found.\n""",
+        )
 
     def test_multiple(self):
         """Test an abbreviation matching multiple CAs."""
-        ca2 = CertificateAuthority(name='child-duplicate')
-        ca2.x509_cert = certs['child']['pub']['parsed']
-        ca2.serial = ca2.serial[:-1] + 'X'
+        ca2 = CertificateAuthority(name="child-duplicate")
+        ca2.x509_cert = certs["child"]["pub"]["parsed"]
+        ca2.serial = ca2.serial[:-1] + "X"
         ca2.save()
 
         serial = ca2.serial[:8]
-        self.assertParserError([serial],
-                               'usage: {script} [-h] ca\n'
-                               '{script}: error: {serial}: Multiple Certificate authorities match.\n',
-                               serial=serial)
+        self.assertParserError(
+            [serial],
+            "usage: {script} [-h] ca\n"
+            "{script}: error: {serial}: Multiple Certificate authorities match.\n",
+            serial=serial,
+        )
 
     @override_tmpcadir()
     def test_disabled(self):
@@ -353,14 +366,14 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
         ca.enabled = False
         ca.save()
 
-        expected = '''usage: {script} [-h] ca
-{script}: error: {serial}: Certificate authority not found.\n'''
+        expected = """usage: {script} [-h] ca
+{script}: error: {serial}: Certificate authority not found.\n"""
 
         self.assertParserError([ca.serial], expected, serial=ca.serial)
 
         # test allow_disabled=True
         parser = argparse.ArgumentParser()
-        parser.add_argument('ca', action=actions.CertificateAuthorityAction, allow_disabled=True)
+        parser.add_argument("ca", action=actions.CertificateAuthorityAction, allow_disabled=True)
 
         args = parser.parse_args([ca.serial])
         self.assertEqual(args.ca, ca)
@@ -368,19 +381,21 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
     def test_pkey_doesnt_exists(self):
         """Test error case where private key for CA does not exist."""
         ca = CertificateAuthority.objects.first()
-        ca.private_key_path = 'does-not-exist'
+        ca.private_key_path = "does-not-exist"
         ca.save()
 
-        self.assertParserError([ca.serial],
-                               'usage: {script} [-h] ca\n'
-                               '{script}: error: {name}: {path}: Private key does not exist.\n',
-                               name=ca.name, path=ca.private_key_path)
+        self.assertParserError(
+            [ca.serial],
+            "usage: {script} [-h] ca\n" "{script}: error: {name}: {path}: Private key does not exist.\n",
+            name=ca.name,
+            path=ca.private_key_path,
+        )
 
     @override_tmpcadir()
     def test_password(self):
         """Test that the action works with a password-encrypted CA."""
-        args = self.parser.parse_args([certs['pwd']['serial']])
-        self.assertEqual(args.ca, self.cas['pwd'])
+        args = self.parser.parse_args([certs["pwd"]["serial"]])
+        self.assertEqual(args.ca, self.cas["pwd"])
 
 
 class URLActionTestCase(DjangoCATestCase):
@@ -389,18 +404,19 @@ class URLActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--url', action=actions.URLAction)
+        self.parser.add_argument("--url", action=actions.URLAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        for url in ['http://example.com', 'https://www.example.org']:
-            args = self.parser.parse_args(['--url=%s' % url])
+        for url in ["http://example.com", "https://www.example.org"]:
+            args = self.parser.parse_args(["--url=%s" % url])
             self.assertEqual(args.url, url)
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['--url=foo'], 'usage: {script} [-h] [--url URL]\n'
-                                              '{script}: error: foo: Not a valid URL.\n')
+        self.assertParserError(
+            ["--url=foo"], "usage: {script} [-h] [--url URL]\n" "{script}: error: foo: Not a valid URL.\n"
+        )
 
 
 class ExpiresActionTestCase(DjangoCATestCase):
@@ -409,35 +425,39 @@ class ExpiresActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--expires', action=actions.ExpiresAction)
+        self.parser.add_argument("--expires", action=actions.ExpiresAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
         expires = timedelta(days=30)
-        args = self.parser.parse_args(['--expires=30'])
+        args = self.parser.parse_args(["--expires=30"])
         self.assertEqual(args.expires, expires)
 
     def test_default(self):
         """Test using the default value."""
         delta = timedelta(days=100)
         parser = argparse.ArgumentParser()
-        parser.add_argument('--expires', action=actions.ExpiresAction, default=delta)
+        parser.add_argument("--expires", action=actions.ExpiresAction, default=delta)
         args = parser.parse_args([])
         self.assertEqual(args.expires, delta)
 
     def test_negative(self):
         """Test passing a negative value."""
         # this always is one day more, because N days jumps to the next midnight.
-        self.assertParserError(['--expires=-1'], 'usage: {script} [-h] [--expires EXPIRES]\n'
-                               '{script}: error: argument --expires: Value must not be negative.\n')
+        self.assertParserError(
+            ["--expires=-1"],
+            "usage: {script} [-h] [--expires EXPIRES]\n"
+            "{script}: error: argument --expires: Value must not be negative.\n",
+        )
 
     def test_error(self):
         """Test false option values."""
-        value = 'foobar'
+        value = "foobar"
         self.assertParserError(
-            ['--expires=%s' % value],
-            'usage: dev.py [-h] [--expires EXPIRES]\n'
-            '{script}: error: argument --expires: Value must be an integer: "%s"\n' % value)
+            ["--expires=%s" % value],
+            "usage: dev.py [-h] [--expires EXPIRES]\n"
+            '{script}: error: argument --expires: Value must be an integer: "%s"\n' % value,
+        )
 
 
 class ReasonActionTestCase(DjangoCATestCase):
@@ -446,7 +466,7 @@ class ReasonActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('reason', action=actions.ReasonAction)
+        self.parser.add_argument("reason", action=actions.ReasonAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
@@ -456,14 +476,15 @@ class ReasonActionTestCase(DjangoCATestCase):
     def test_error(self):
         """Test false option values."""
         self.assertParserError(
-            ['foo'],
-            'usage: {script} [-h]\n'
-            '              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,'
-            'cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,'
-            'unspecified}}\n'
+            ["foo"],
+            "usage: {script} [-h]\n"
+            "              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,"
+            "cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,"
+            "unspecified}}\n"
             "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', "
             "'affiliation_changed', 'ca_compromise', 'certificate_hold', 'cessation_of_operation', "
-            "'key_compromise', 'privilege_withdrawn', 'remove_from_crl', 'superseded', 'unspecified')\n")
+            "'key_compromise', 'privilege_withdrawn', 'remove_from_crl', 'superseded', 'unspecified')\n",
+        )
 
 
 class MultipleURLActionTestCase(DjangoCATestCase):
@@ -472,22 +493,22 @@ class MultipleURLActionTestCase(DjangoCATestCase):
     def setUp(self):
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--url', action=actions.MultipleURLAction)
+        self.parser.add_argument("--url", action=actions.MultipleURLAction)
 
     def test_basic(self):
         """Test basic functionality of action."""
-        urls = ['http://example.com', 'https://www.example.org']
+        urls = ["http://example.com", "https://www.example.org"]
 
         for url in urls:
             parser = argparse.ArgumentParser()
-            parser.add_argument('--url', action=actions.MultipleURLAction)
+            parser.add_argument("--url", action=actions.MultipleURLAction)
 
-            args = parser.parse_args(['--url=%s' % url])
+            args = parser.parse_args(["--url=%s" % url])
             self.assertEqual(args.url, [url])
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('--url', action=actions.MultipleURLAction)
-        args = parser.parse_args(['--url=%s' % urls[0], '--url=%s' % urls[1]])
+        parser.add_argument("--url", action=actions.MultipleURLAction)
+        args = parser.parse_args(["--url=%s" % urls[0], "--url=%s" % urls[1]])
         self.assertEqual(args.url, urls)
 
     def test_none(self):
@@ -497,5 +518,6 @@ class MultipleURLActionTestCase(DjangoCATestCase):
 
     def test_error(self):
         """Test false option values."""
-        self.assertParserError(['--url=foo'], 'usage: {script} [-h] [--url URL]\n'
-                                              '{script}: error: foo: Not a valid URL.\n')
+        self.assertParserError(
+            ["--url=foo"], "usage: {script} [-h] [--url URL]\n" "{script}: error: foo: Not a valid URL.\n"
+        )

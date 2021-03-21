@@ -88,9 +88,7 @@ else:
         AcmeCertificateManagerBase
     ) = (
         AcmeChallengeManagerBase
-    ) = (
-        AcmeOrderManagerBase
-    ) = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
+    ) = AcmeOrderManagerBase = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
 
 
 class CertificateManagerMixin:

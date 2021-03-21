@@ -75,10 +75,7 @@ ParsableSubject = Union[
     str,
     Mapping[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]],
     x509.Name,
-    Iterable[Tuple[
-        Union[x509.ObjectIdentifier, str],
-        Union[str, Iterable[str]]
-    ]]
+    Iterable[Tuple[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]]],
 ]
 
 # GeneralNameList

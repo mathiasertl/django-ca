@@ -28,58 +28,64 @@ class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.cert = self.certs['root-cert']
+        self.cert = self.certs["root-cert"]
 
     def test_basic(self):
         """Basic test of this command."""
-        stdout, stderr = self.cmd('dump_cert', self.cert.serial,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.cert.pub.encode('utf-8'))
+        stdout, stderr = self.cmd("dump_cert", self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, self.cert.pub.encode("utf-8"))
 
     def test_format(self):
         """Test various formats."""
-        for option in ['PEM', 'DER']:
+        for option in ["PEM", "DER"]:
             encoding = getattr(Encoding, option)
-            stdout, stderr = self.cmd('dump_cert', self.cert.serial, format=encoding,
-                                      stdout=BytesIO(), stderr=BytesIO())
-            self.assertEqual(stderr, b'')
+            stdout, stderr = self.cmd(
+                "dump_cert", self.cert.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
+            )
+            self.assertEqual(stderr, b"")
             self.assertEqual(stdout, self.cert.dump_certificate(encoding))
 
     def test_explicit_stdout(self):
         """Test writing to stdout."""
-        stdout, stderr = self.cmd('dump_cert', self.cert.serial, '-',
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.cert.pub.encode('utf-8'))
+        stdout, stderr = self.cmd("dump_cert", self.cert.serial, "-", stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, self.cert.pub.encode("utf-8"))
 
     def test_bundle(self):
         """Test getting the bundle."""
-        stdout, stderr = self.cmd('dump_cert', self.cert.serial, bundle=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.cert.pub.encode('utf-8') + self.cas['root'].pub.encode('utf-8'))
+        stdout, stderr = self.cmd(
+            "dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO()
+        )
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, self.cert.pub.encode("utf-8") + self.cas["root"].pub.encode("utf-8"))
 
     @override_tmpcadir()
     def test_file_output(self):
         """Test writing to a file."""
-        path = os.path.join(ca_settings.CA_DIR, 'test_cert.pem')
-        stdout, stderr = self.cmd('dump_cert', self.cert.serial, path,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, b'')
+        path = os.path.join(ca_settings.CA_DIR, "test_cert.pem")
+        stdout, stderr = self.cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, b"")
 
         with open(path) as stream:
             self.assertEqual(stream.read(), self.cert.pub)
 
     def test_errors(self):
         """Test some error conditions."""
-        path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_cert.pem')
+        path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_cert.pem")
         msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_cert\.pem'$" % (
-            ca_settings.CA_DIR)
+            ca_settings.CA_DIR
+        )
         with self.assertCommandError(msg):
-            self.cmd('dump_cert', self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
+            self.cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
         with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
-            self.cmd('dump_cert', self.cert.serial, format=Encoding.DER, bundle=True,
-                     stdout=BytesIO(), stderr=BytesIO())
+            self.cmd(
+                "dump_cert",
+                self.cert.serial,
+                format=Encoding.DER,
+                bundle=True,
+                stdout=BytesIO(),
+                stderr=BytesIO(),
+            )

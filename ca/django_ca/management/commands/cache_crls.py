@@ -25,8 +25,11 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Cache CRLs"
 
     def add_arguments(self, parser):
-        parser.add_argument('serial', nargs='*',
-                            help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.")
+        parser.add_argument(
+            "serial",
+            nargs="*",
+            help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.",
+        )
 
     def handle(self, **options):  # pylint: disable=arguments-differ
-        run_task(cache_crls, options['serial'])
+        run_task(cache_crls, options["serial"])

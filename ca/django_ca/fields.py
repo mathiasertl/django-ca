@@ -39,7 +39,7 @@ class SubjectField(forms.MultiValueField):
 
         # NOTE: do not pass initial here as this is done on webserver invocation
         #       This screws up tests.
-        kwargs.setdefault('widget', SubjectWidget)
+        kwargs.setdefault("widget", SubjectWidget)
         super().__init__(fields=fields, require_all_fields=False, *args, **kwargs)
 
     def compress(self, data_list):
@@ -55,8 +55,8 @@ class SubjectAltNameField(forms.MultiValueField):
             forms.CharField(required=False),
             forms.BooleanField(required=False),
         )
-        kwargs.setdefault('widget', SubjectAltNameWidget)
-        kwargs.setdefault('initial', ['', profile.cn_in_san])
+        kwargs.setdefault("widget", SubjectAltNameWidget)
+        kwargs.setdefault("initial", ["", profile.cn_in_san])
         super().__init__(fields=fields, require_all_fields=False, *args, **kwargs)
 
     def compress(self, data_list):
@@ -68,11 +68,11 @@ class MultiValueExtensionField(forms.MultiValueField):
 
     def __init__(self, extension, *args, **kwargs):
         self.extension = extension
-        kwargs.setdefault('label', extension.name)
+        kwargs.setdefault("label", extension.name)
         ext = profile.extensions.get(self.extension.key)
         if ext:
             ext = ext.serialize()
-            kwargs.setdefault('initial', [ext['value'], ext['critical']])
+            kwargs.setdefault("initial", [ext["value"], ext["critical"]])
 
         fields = (
             forms.MultipleChoiceField(required=False, choices=extension.CHOICES),
@@ -83,7 +83,9 @@ class MultiValueExtensionField(forms.MultiValueField):
         super().__init__(fields=fields, require_all_fields=False, widget=widget, *args, **kwargs)
 
     def compress(self, data_list):
-        return self.extension({
-            'critical': data_list[1],
-            'value': data_list[0],
-        })
+        return self.extension(
+            {
+                "critical": data_list[1],
+                "value": data_list[0],
+            }
+        )

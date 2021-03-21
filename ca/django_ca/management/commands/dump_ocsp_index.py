@@ -29,14 +29,15 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
     def add_arguments(self, parser):
         self.add_ca(parser, allow_disabled=True)
-        parser.add_argument('path', type=str, default='-', nargs='?',
-                            help="Where to write the index (default: stdout)")
+        parser.add_argument(
+            "path", type=str, default="-", nargs="?", help="Where to write the index (default: stdout)"
+        )
 
     def handle(self, ca, path, **options):  # pylint: disable=arguments-differ
-        if path == '-':
+        if path == "-":
             for line in get_index(ca):
                 self.stdout.write(line)
         else:
-            with open(path, 'w') as stream:
+            with open(path, "w") as stream:
                 for line in get_index(ca):
                     stream.write(line)

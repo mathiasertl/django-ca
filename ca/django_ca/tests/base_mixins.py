@@ -46,42 +46,42 @@ class AdminTestCaseMixin:
     def assertBundle(self, response, filename, content):  # pylint: disable=invalid-name
         """Assert a given bundle response."""
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response['Content-Type'], 'application/pkix-cert')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename=%s' % filename)
-        self.assertEqual(response.content.decode('utf-8').strip(), content.strip())
+        self.assertEqual(response["Content-Type"], "application/pkix-cert")
+        self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
+        self.assertEqual(response.content.decode("utf-8").strip(), content.strip())
 
     def assertCSS(self, response, path):  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
-        self.assertInHTML(css, response.content.decode('utf-8'), 1)
+        self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
-    def assertChangeResponse(self,  # pylint: disable=invalid-name
-                             response, status=HTTPStatus.OK):
+    def assertChangeResponse(self, response, status=HTTPStatus.OK):  # pylint: disable=invalid-name
         """Assert that the passed response is a model change view."""
         self.assertEqual(response.status_code, status)
         templates = [t.name for t in response.templates]
-        self.assertIn('admin/change_form.html', templates)
-        self.assertIn('admin/base.html', templates)
+        self.assertIn("admin/change_form.html", templates)
+        self.assertIn("admin/base.html", templates)
 
         for css in self.media_css:
             self.assertCSS(response, css)
 
-    def assertChangelistResponse(self, response, *objects,  # pylint: disable=invalid-name
-                                 status=HTTPStatus.OK):
+    def assertChangelistResponse(
+        self, response, *objects, status=HTTPStatus.OK  # pylint: disable=invalid-name
+    ):
         """Assert that the passed response is a model changelist view."""
         self.assertEqual(response.status_code, status)
-        self.assertCountEqual(response.context['cl'].result_list, objects)
+        self.assertCountEqual(response.context["cl"].result_list, objects)
 
         templates = [t.name for t in response.templates]
-        self.assertIn('admin/base.html', templates)
-        self.assertIn('admin/change_list.html', templates)
+        self.assertIn("admin/base.html", templates)
+        self.assertIn("admin/change_list.html", templates)
 
         for css in self.media_css:
             self.assertCSS(response, css)
 
     def assertRequiresLogin(self, response, **kwargs):  # pylint: disable=invalid-name
         """Assert that the given response is a redirect to the login page."""
-        expected = '%s?next=%s' % (reverse('admin:login'), quote(response.wsgi_request.get_full_path()))
+        expected = "%s?next=%s" % (reverse("admin:login"), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
 
     def change_url(self, obj=None):

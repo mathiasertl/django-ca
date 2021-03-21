@@ -44,14 +44,16 @@ class ListCertsTestCase(DjangoCATestCase):
         """Assert the output of this command."""
         context.update(certs)
         for ca_name in self.cas:
-            context.setdefault('%s_state' % ca_name, '')
+            context.setdefault("%s_state" % ca_name, "")
         self.assertEqual(output, expected.format(**context))
 
     def test_all_cas(self):
         """Test list with all CAs."""
         self.load_all_cas()
-        stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, """{letsencrypt_x1[serial_colons]} - {letsencrypt_x1[name]}
+        stdout, stderr = self.cmd("list_cas")
+        self.assertEqual(
+            stdout,
+            """{letsencrypt_x1[serial_colons]} - {letsencrypt_x1[name]}
 {dsa[serial_colons]} - {dsa[name]}
 {ecc[serial_colons]} - {ecc[name]}
 {pwd[serial_colons]} - {pwd[name]}
@@ -79,66 +81,79 @@ class ListCertsTestCase(DjangoCATestCase):
 {startssl_root[serial_colons]} - {startssl_root[name]}
 {godaddy_g2_root[serial_colons]} - {godaddy_g2_root[name]}
 {comodo[serial_colons]} - {comodo[name]}
-""".format(**certs))
-        self.assertEqual(stderr, '')
+""".format(
+                **certs
+            ),
+        )
+        self.assertEqual(stderr, "")
 
     def test_no_cas(self):
         """Test the command if no CAs are defined."""
 
         CertificateAuthority.objects.all().delete()
-        stdout, stderr = self.cmd('list_cas')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("list_cas")
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
 
     def test_basic(self):
         """Basic test of the command."""
 
-        stdout, stderr = self.cmd('list_cas')
+        stdout, stderr = self.cmd("list_cas")
         self.assertOutput(stdout, EXPECTED)
-        self.assertEqual(stderr, '')
+        self.assertEqual(stderr, "")
 
     def test_disabled(self):
         """Test the command if some CA is disabled."""
 
-        ca = self.cas['root']
+        ca = self.cas["root"]
         ca.enabled = False
         ca.save()
 
-        stdout, stderr = self.cmd('list_cas')
-        self.assertOutput(stdout, EXPECTED, root_state=' (disabled)')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("list_cas")
+        self.assertOutput(stdout, EXPECTED, root_state=" (disabled)")
+        self.assertEqual(stderr, "")
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_tree(self):
         """Test the tree output.
 
         NOTE: freeze_time b/c we create some fake CA objects and order in the tree depends on validity.
         """
 
-        stdout, stderr = self.cmd('list_cas', tree=True)
-        self.assertEqual(stdout, """{dsa[serial_colons]} - {dsa[name]}
+        stdout, stderr = self.cmd("list_cas", tree=True)
+        self.assertEqual(
+            stdout,
+            """{dsa[serial_colons]} - {dsa[name]}
 {ecc[serial_colons]} - {ecc[name]}
 {pwd[serial_colons]} - {pwd[name]}
 {root[serial_colons]} - {root[name]}
 └───{child[serial_colons]} - {child[name]}
-""".format(**certs))
-        self.assertEqual(stderr, '')
+""".format(
+                **certs
+            ),
+        )
+        self.assertEqual(stderr, "")
 
         # manually create Certificate objects
         expires = timezone.now() + timedelta(days=3)
         valid_from = timezone.now() - timedelta(days=3)
-        root = self.cas['root']
-        child3 = CertificateAuthority.objects.create(name='child3', serial='child3',
-                                                     parent=root, expires=expires, valid_from=valid_from)
-        CertificateAuthority.objects.create(name='child4', serial='child4', parent=root, expires=expires,
-                                            valid_from=valid_from)
-        CertificateAuthority.objects.create(name='child3.1', serial='child3.1', parent=child3,
-                                            expires=expires, valid_from=valid_from)
+        root = self.cas["root"]
+        child3 = CertificateAuthority.objects.create(
+            name="child3", serial="child3", parent=root, expires=expires, valid_from=valid_from
+        )
+        CertificateAuthority.objects.create(
+            name="child4", serial="child4", parent=root, expires=expires, valid_from=valid_from
+        )
+        CertificateAuthority.objects.create(
+            name="child3.1", serial="child3.1", parent=child3, expires=expires, valid_from=valid_from
+        )
 
-        stdout, stderr = self.cmd('list_cas', tree=True)
+        stdout, stderr = self.cmd("list_cas", tree=True)
         context = {}
         context.update(certs)
-        self.assertEqual(stdout, """{dsa[serial_colons]} - {dsa[name]}
+        self.assertEqual(
+            stdout,
+            """{dsa[serial_colons]} - {dsa[name]}
 {ecc[serial_colons]} - {ecc[name]}
 {pwd[serial_colons]} - {pwd[name]}
 {root[serial_colons]} - {root[name]}
@@ -146,7 +161,10 @@ class ListCertsTestCase(DjangoCATestCase):
 │   └───ch:il:d3:.1 - child3.1
 │───ch:il:d4 - child4
 └───{child[serial_colons]} - {child[name]}
-""".format(**context))
+""".format(
+                **context
+            ),
+        )
 
 
 @override_settings(USE_TZ=True)

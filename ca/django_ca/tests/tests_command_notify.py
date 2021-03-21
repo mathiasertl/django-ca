@@ -29,52 +29,51 @@ from .base import timestamps
 class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_no_certs(self):
         """Try notificy command when all certs are still valid."""
-        stdout, stderr = self.cmd('notify_expiring_certs')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("notify_expiring_certs")
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 0)
 
-    @freeze_time(timestamps['ca_certs_expiring'])
+    @freeze_time(timestamps["ca_certs_expiring"])
     def test_no_watchers(self):
         """Try expiring certs, but with no watchers."""
         # certs have no watchers by default, so we get no mails
-        stdout, stderr = self.cmd('notify_expiring_certs')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("notify_expiring_certs")
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 0)
 
-    @freeze_time(timestamps['ca_certs_expiring'])
+    @freeze_time(timestamps["ca_certs_expiring"])
     def test_one_watcher(self):
         """Test one expiring certificate."""
-        cert = self.certs['root-cert']
-        email = 'user1@example.com'
-        watcher = Watcher.from_addr('First Last <%s>' % email)
+        cert = self.certs["root-cert"]
+        email = "user1@example.com"
+        watcher = Watcher.from_addr("First Last <%s>" % email)
         cert.watchers.add(watcher)
-        timestamp = cert.expires.strftime('%Y-%m-%d')
+        timestamp = cert.expires.strftime("%Y-%m-%d")
 
-        stdout, stderr = self.cmd('notify_expiring_certs')
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        stdout, stderr = self.cmd("notify_expiring_certs")
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject,
-                         'Certificate expiration for %s on %s' % (cert.cn, timestamp))
+        self.assertEqual(mail.outbox[0].subject, "Certificate expiration for %s on %s" % (cert.cn, timestamp))
         self.assertEqual(mail.outbox[0].to, [email])
 
     def test_notification_days(self):
         """Test that user gets multiple notifications of expiring certs."""
-        cert = self.certs['root-cert']
-        email = 'user1@example.com'
-        watcher = Watcher.from_addr('First Last <%s>' % email)
+        cert = self.certs["root-cert"]
+        email = "user1@example.com"
+        watcher = Watcher.from_addr("First Last <%s>" % email)
         cert.watchers.add(watcher)
 
         with freeze_time(cert.expires - timedelta(days=20)) as frozen_time:
             for _i in reversed(range(0, 20)):
-                stdout, stderr = self.cmd('notify_expiring_certs', days=14)
-                self.assertEqual(stdout, '')
-                self.assertEqual(stderr, '')
+                stdout, stderr = self.cmd("notify_expiring_certs", days=14)
+                self.assertEqual(stdout, "")
+                self.assertEqual(stderr, "")
                 frozen_time.tick(timedelta(days=1))
 
         self.assertEqual(len(mail.outbox), 4)

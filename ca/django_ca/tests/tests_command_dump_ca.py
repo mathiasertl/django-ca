@@ -28,55 +28,56 @@ class DumpCATestCase(DjangoCAWithCATestCase):
 
     def setUp(self):
         super().setUp()
-        self.ca = self.cas['root']
+        self.ca = self.cas["root"]
 
     @override_tmpcadir()
     def test_basic(self):
         """Basic test of this command."""
-        stdout, stderr = self.cmd('dump_ca', self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
+        stdout, stderr = self.cmd("dump_ca", self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
     def test_format(self):
         """Test various formats."""
-        for option in ['PEM', 'DER']:
+        for option in ["PEM", "DER"]:
             encoding = getattr(Encoding, option)
-            stdout, stderr = self.cmd('dump_ca', self.ca.serial, format=encoding,
-                                      stdout=BytesIO(), stderr=BytesIO())
-            self.assertEqual(stderr, b'')
+            stdout, stderr = self.cmd(
+                "dump_ca", self.ca.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
+            )
+            self.assertEqual(stderr, b"")
             self.assertEqual(stdout, self.ca.dump_certificate(encoding))
 
     @override_tmpcadir()
     def test_explicit_stdout(self):
         """Test piping to stdout."""
-        stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-',
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
+        stdout, stderr = self.cmd("dump_ca", self.ca.serial, "-", stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
     def test_bundle(self):
         """Test getting the bundle."""
-        stdout, stderr = self.cmd('dump_ca', self.ca.serial, '-', bundle=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, self.ca.pub.encode('utf-8'))
+        stdout, stderr = self.cmd(
+            "dump_ca", self.ca.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
+        )
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
 
-        child = self.cas['child']
-        stdout, stderr = self.cmd('dump_ca', child.serial, '-', bundle=True,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, child.pub.encode('utf-8') + self.ca.pub.encode('utf-8'))
+        child = self.cas["child"]
+        stdout, stderr = self.cmd(
+            "dump_ca", child.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
+        )
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, child.pub.encode("utf-8") + self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
     def test_file_output(self):
         """Test writing to file."""
-        path = os.path.join(ca_settings.CA_DIR, 'test_ca.pem')
-        stdout, stderr = self.cmd('dump_ca', self.ca.serial, path,
-                                  stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b'')
-        self.assertEqual(stdout, b'')
+        path = os.path.join(ca_settings.CA_DIR, "test_ca.pem")
+        stdout, stderr = self.cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+        self.assertEqual(stdout, b"")
 
         with open(path) as stream:
             self.assertEqual(stream.read(), self.ca.pub)
@@ -84,13 +85,20 @@ class DumpCATestCase(DjangoCAWithCATestCase):
     @override_tmpcadir()
     def test_errors(self):
         """Test some error conditions."""
-        path = os.path.join(ca_settings.CA_DIR, 'does-not-exist', 'test_ca.pem')
+        path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_ca.pem")
         msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$" % (
-            ca_settings.CA_DIR)
+            ca_settings.CA_DIR
+        )
 
         with self.assertCommandError(msg):
-            self.cmd('dump_ca', self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
+            self.cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
-        with self.assertCommandError(r'^Cannot dump bundle when using DER format\.$'):
-            self.cmd('dump_ca', self.ca.serial, format=Encoding.DER, bundle=True,
-                     stdout=BytesIO(), stderr=BytesIO())
+        with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
+            self.cmd(
+                "dump_ca",
+                self.ca.serial,
+                format=Encoding.DER,
+                bundle=True,
+                stdout=BytesIO(),
+                stderr=BytesIO(),
+            )

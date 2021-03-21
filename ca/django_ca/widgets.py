@@ -24,7 +24,7 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     This is necessary because widgets in MultiValueFields don't render with a label."""
 
-    template_name = 'django_ca/forms/widgets/labeledcheckboxinput.html'
+    template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 
     def __init__(self, label, *args, **kwargs):
         self.label = label
@@ -32,12 +32,12 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     def get_context(self, *args, **kwargs):
         ctx = super().get_context(*args, **kwargs)
-        ctx['widget']['label'] = self.label
+        ctx["widget"]["label"] = self.label
         return ctx
 
     class Media:
         css = {
-            'all': ('django_ca/admin/css/labeledcheckboxinput.css', ),
+            "all": ("django_ca/admin/css/labeledcheckboxinput.css",),
         }
 
 
@@ -46,7 +46,7 @@ class LabeledTextInput(widgets.TextInput):
 
     This is necessary because widgets in MultiValueFields don't render with a label."""
 
-    template_name = 'django_ca/forms/widgets/labeledtextinput.html'
+    template_name = "django_ca/forms/widgets/labeledtextinput.html"
 
     def __init__(self, label, *args, **kwargs):
         self.label = label
@@ -54,44 +54,45 @@ class LabeledTextInput(widgets.TextInput):
 
     def get_context(self, *args, **kwargs):
         ctx = super().get_context(*args, **kwargs)
-        ctx['widget']['label'] = self.label
-        ctx['widget']['cssid'] = self.label.lower().replace(' ', '-')
+        ctx["widget"]["label"] = self.label
+        ctx["widget"]["cssid"] = self.label.lower().replace(" ", "-")
         return ctx
 
     class Media:
         css = {
-            'all': ('django_ca/admin/css/labeledtextinput.css', ),
+            "all": ("django_ca/admin/css/labeledtextinput.css",),
         }
 
 
 class SubjectTextInput(LabeledTextInput):
     """Widget used in :py:class:`~django_ca.widgets.SubjectWidget`."""
 
-    template_name = 'django_ca/forms/widgets/subjecttextinput.html'
+    template_name = "django_ca/forms/widgets/subjecttextinput.html"
 
 
 class ProfileWidget(widgets.Select):
     """Widget for profile selection."""
 
-    template_name = 'django_ca/forms/widgets/profile.html'
+    template_name = "django_ca/forms/widgets/profile.html"
 
     def get_context(self, *args, **kwargs):
         ctx = super().get_context(*args, **kwargs)
-        ctx['desc'] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
-            'description', ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get('desc', ''))
+        ctx["desc"] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
+            "description", ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("desc", "")
+        )
         return ctx
 
     class Media:
         js = (
-            'admin/js/jquery.init.js',
-            'django_ca/admin/js/profilewidget.js',
+            "admin/js/jquery.init.js",
+            "django_ca/admin/js/profilewidget.js",
         )
 
 
 class CustomMultiWidget(widgets.MultiWidget):  # pylint: disable=abstract-method; decompress() in subclasses
     """Wraps the multi widget into a <p> element (base class for other widgets)."""
 
-    template_name = 'django_ca/forms/widgets/custommultiwidget.html'
+    template_name = "django_ca/forms/widgets/custommultiwidget.html"
 
 
 class SubjectWidget(CustomMultiWidget):
@@ -99,34 +100,34 @@ class SubjectWidget(CustomMultiWidget):
 
     def __init__(self, attrs=None):
         _widgets = (
-            SubjectTextInput(label=_('Country'), attrs={'placeholder': '2 character country code'}),
-            SubjectTextInput(label=_('State')),
-            SubjectTextInput(label=_('Location')),
-            SubjectTextInput(label=_('Organization')),
-            SubjectTextInput(label=_('Organizational Unit')),
-            SubjectTextInput(label=_('CommonName'), attrs={'required': True}),
-            SubjectTextInput(label=_('E-Mail')),
+            SubjectTextInput(label=_("Country"), attrs={"placeholder": "2 character country code"}),
+            SubjectTextInput(label=_("State")),
+            SubjectTextInput(label=_("Location")),
+            SubjectTextInput(label=_("Organization")),
+            SubjectTextInput(label=_("Organizational Unit")),
+            SubjectTextInput(label=_("CommonName"), attrs={"required": True}),
+            SubjectTextInput(label=_("E-Mail")),
         )
         super().__init__(_widgets, attrs)
 
     def decompress(self, value):
         if value is None:  # pragma: no cover
-            return ('', '', '', '', '', '')
+            return ("", "", "", "", "", "")
 
         # Multiple OUs are not supported in webinterface
-        org_unit = value.get('OU', '')
+        org_unit = value.get("OU", "")
         if isinstance(org_unit, list) and org_unit:
             org_unit = org_unit[0]
 
         # Used e.g. for initial form data (e.g. resigning a cert)
         return [
-            value.get('C', ''),
-            value.get('ST', ''),
-            value.get('L', ''),
-            value.get('O', ''),
+            value.get("C", ""),
+            value.get("ST", ""),
+            value.get("L", ""),
+            value.get("O", ""),
             org_unit,
-            value.get('CN', ''),
-            value.get('emailAddress', ''),
+            value.get("CN", ""),
+            value.get("emailAddress", ""),
         ]
 
 
@@ -134,16 +135,13 @@ class SubjectAltNameWidget(CustomMultiWidget):
     """Widget for a Subject Alternative Name extension."""
 
     def __init__(self, attrs=None):
-        _widgets = (
-            widgets.TextInput(),
-            LabeledCheckboxInput(label="Include CommonName")
-        )
+        _widgets = (widgets.TextInput(), LabeledCheckboxInput(label="Include CommonName"))
         super().__init__(_widgets, attrs)
 
     def decompress(self, value):  # pragma: no cover
         if value:
             return value
-        return ('', True)
+        return ("", True)
 
 
 class MultiValueExtensionWidget(CustomMultiWidget):
@@ -152,7 +150,7 @@ class MultiValueExtensionWidget(CustomMultiWidget):
     def __init__(self, choices, attrs=None):
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),
-            LabeledCheckboxInput(label=_('critical')),
+            LabeledCheckboxInput(label=_("critical")),
         )
         super().__init__(_widgets, attrs)
 

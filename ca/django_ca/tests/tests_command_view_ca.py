@@ -18,7 +18,7 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 expected = {
-    'ecc': '''{name} (enabled):
+    "ecc": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:
   {key_path}
@@ -48,8 +48,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-    'child': '''{name} (enabled):
+{pub[pem]}""",
+    "child": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:
   {key_path}
@@ -88,8 +88,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-    'root': '''{name} (enabled):
+{pub[pem]}""",
+    "root": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:
   {key_path}
@@ -120,8 +120,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-    'root-properties': '''{name} (enabled):
+{pub[pem]}""",
+    "root-properties": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:
   {key_path}
@@ -156,8 +156,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-    'root-acme-disabled': '''{name} (enabled):
+{pub[pem]}""",
+    "root-acme-disabled": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:
   {key_path}
@@ -185,9 +185,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'globalsign': '''{name} (enabled):
+{pub[pem]}""",
+    "globalsign": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -214,9 +213,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'digicert_ev_root': '''{name} (enabled):
+{pub[pem]}""",
+    "digicert_ev_root": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -246,9 +244,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'comodo': '''{name} (enabled):
+{pub[pem]}""",
+    "comodo": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -275,9 +272,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'identrust_root_1': '''{name} (enabled):
+{pub[pem]}""",
+    "identrust_root_1": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -304,9 +300,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'globalsign_r2_root': '''{name} (enabled):
+{pub[pem]}""",
+    "globalsign_r2_root": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -339,9 +334,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'comodo_dv': '''{name} (enabled):
+{pub[pem]}""",
+    "comodo_dv": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -388,9 +382,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'rapidssl_g3': '''{name} (enabled):
+{pub[pem]}""",
+    "rapidssl_g3": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -430,9 +423,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'geotrust': '''{name} (enabled):
+{pub[pem]}""",
+    "geotrust": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -458,9 +450,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'comodo_ev': '''{name} (enabled):
+{pub[pem]}""",
+    "comodo_ev": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -502,9 +493,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'digicert_ha_intermediate': '''{name} (enabled):
+{pub[pem]}""",
+    "digicert_ha_intermediate": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -548,9 +538,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'dst_root_x3': '''{name} (enabled):
+{pub[pem]}""",
+    "dst_root_x3": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -577,9 +566,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'globalsign_dv': '''{name} (enabled):
+{pub[pem]}""",
+    "globalsign_dv": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -619,9 +607,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'godaddy_g2_intermediate': '''{name} (enabled):
+{pub[pem]}""",
+    "godaddy_g2_intermediate": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -661,9 +648,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'godaddy_g2_root': '''{name} (enabled):
+{pub[pem]}""",
+    "godaddy_g2_root": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -690,9 +676,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'google_g3': '''{name} (enabled):
+{pub[pem]}""",
+    "google_g3": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -736,9 +721,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'letsencrypt_x1': '''{name} (enabled):
+{pub[pem]}""",
+    "letsencrypt_x1": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -786,9 +770,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'letsencrypt_x3': '''{name} (enabled):
+{pub[pem]}""",
+    "letsencrypt_x3": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -833,9 +816,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'startssl_root': '''{name} (enabled):
+{pub[pem]}""",
+    "startssl_root": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -878,8 +860,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-    'startssl_class2': '''{name} (enabled):
+{pub[pem]}""",
+    "startssl_class2": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -921,9 +903,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'startssl_class3': '''{name} (enabled):
+{pub[pem]}""",
+    "startssl_class3": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -968,9 +949,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'trustid_server_a52': '''{name} (enabled):
+{pub[pem]}""",
+    "trustid_server_a52": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -1026,9 +1006,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'digicert_global_root': '''{name} (enabled):
+{pub[pem]}""",
+    "digicert_global_root": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -1058,9 +1037,8 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
-
-    'digicert_sha2': '''{name} (enabled):
+{pub[pem]}""",
+    "digicert_sha2": """{name} (enabled):
 * Serial: {serial_colons}
 * Private key not available locally.
 * Is a root CA.
@@ -1104,12 +1082,12 @@ X509 v3 certificate extensions for signed certificates:
 * OCSP URL: None
 * Issuer Alternative Name: None
 
-{pub[pem]}''',
+{pub[pem]}""",
 }
 
 # Root CAs with no children can always use the same template (since they all use the same extensions)
-expected['dsa'] = expected['ecc']
-expected['pwd'] = expected['ecc']
+expected["dsa"] = expected["ecc"]
+expected["pwd"] = expected["ecc"]
 
 
 class ViewCATestCase(DjangoCAWithCATestCase):
@@ -1119,53 +1097,55 @@ class ViewCATestCase(DjangoCAWithCATestCase):
     def test_all_cas(self):
         """Test viewing all CAs."""
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
-            stdout, stderr = self.cmd('view_ca', ca.serial)
+            stdout, stderr = self.cmd("view_ca", ca.serial)
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data))
-            self.assertEqual(stderr, '')
+            self.assertEqual(stderr, "")
 
     @override_tmpcadir()
     def test_properties(self):
         """Test viewing of various optional properties."""
-        ca = self.cas['root']
-        hostname = 'ca.example.com'
-        ca.website = f'https://website.{hostname}'
-        ca.terms_of_service = f'{ca.website}/tos/'
+        ca = self.cas["root"]
+        hostname = "ca.example.com"
+        ca.website = f"https://website.{hostname}"
+        ca.terms_of_service = f"{ca.website}/tos/"
         ca.caa_identity = hostname
         ca.acme_enabled = True
         ca.acme_requires_contact = False
         ca.save()
 
-        stdout, stderr = self.cmd('view_ca', ca.serial)
-        self.assertEqual(stderr, '')
-        data = self.get_cert_context('root')
-        self.assertMultiLineEqual(stdout, expected['root-properties'].format(ca=ca, **data))
+        stdout, stderr = self.cmd("view_ca", ca.serial)
+        self.assertEqual(stderr, "")
+        data = self.get_cert_context("root")
+        self.assertMultiLineEqual(stdout, expected["root-properties"].format(ca=ca, **data))
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_acme_disabled(self):
         """Test viewing when ACME is disabled."""
-        stdout, stderr = self.cmd('view_ca', self.cas['root'].serial)
-        self.assertEqual(stderr, '')
-        data = self.get_cert_context('root')
-        self.assertMultiLineEqual(stdout, expected['root-acme-disabled'].format(**data))
+        stdout, stderr = self.cmd("view_ca", self.cas["root"].serial)
+        self.assertEqual(stderr, "")
+        data = self.get_cert_context("root")
+        self.assertMultiLineEqual(stdout, expected["root-acme-disabled"].format(**data))
 
     @override_tmpcadir()
     def test_no_implemented(self):
         """Test viewing when we have no private key."""
+
         def side_effect(cls):
             raise NotImplementedError
 
-        ca_storage = 'django_ca.management.commands.view_ca.ca_storage.%s'
-        with self.patch(ca_storage % 'path', side_effect=side_effect) as path_mock, \
-                self.patch(ca_storage % 'exists', return_value=True) as exists_mock:
-            stdout, stderr = self.cmd('view_ca', self.cas['root'].serial)
+        ca_storage = "django_ca.management.commands.view_ca.ca_storage.%s"
+        with self.patch(ca_storage % "path", side_effect=side_effect) as path_mock, self.patch(
+            ca_storage % "exists", return_value=True
+        ) as exists_mock:
+            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial)
 
-        path_mock.assert_called_once_with(self.cas['root'].private_key_path)
-        exists_mock.assert_called_once_with(self.cas['root'].private_key_path)
-        data = self.get_cert_context('root')
-        data['key_path'] = self.cas['root'].private_key_path
-        self.assertMultiLineEqual(stdout, expected['root'].format(**data))
-        self.assertEqual(stderr, '')
+        path_mock.assert_called_once_with(self.cas["root"].private_key_path)
+        exists_mock.assert_called_once_with(self.cas["root"].private_key_path)
+        data = self.get_cert_context("root")
+        data["key_path"] = self.cas["root"].private_key_path
+        self.assertMultiLineEqual(stdout, expected["root"].format(**data))
+        self.assertEqual(stderr, "")
 
 
 @override_settings(USE_TZ=True)

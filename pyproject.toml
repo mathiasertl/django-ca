@@ -1,5 +1,6 @@
 [tool.black]
 line-length = 110
+exclude = "migrations"
 
 [tool.isort]
 line_length = 110

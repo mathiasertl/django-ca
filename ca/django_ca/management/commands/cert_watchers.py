@@ -21,25 +21,35 @@ from django_ca.models import Watcher
 
 
 class Command(CertCommand):  # pylint: disable=missing-class-docstring
-    help = '''Add/remove addresses to be notified of an expiring certificate. The
+    help = """Add/remove addresses to be notified of an expiring certificate. The
         "list_certs" command lists all known certificates.
 
         E-Mail addresses can be verbatim ("user@example.com") or with a name, e.g. "Your Name
         <user@example.com>", the latter case must be quoted on the shell.
-        '''
+        """
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-a', '--add', metavar='EMAIL', default=[], action='append',
-            help='''Address that now should be notified when the certificate expires. Add an email
-                to be notified of an expiring certificate (may be given multiple times).''')
+            "-a",
+            "--add",
+            metavar="EMAIL",
+            default=[],
+            action="append",
+            help="""Address that now should be notified when the certificate expires. Add an email
+                to be notified of an expiring certificate (may be given multiple times).""",
+        )
         parser.add_argument(
-            '-r', '--rm', metavar='EMAIL', default=[], action='append',
-            help='''Address that shoult no longer be notified when the certificate expires
-                (may be given multiple times).''')
+            "-r",
+            "--rm",
+            metavar="EMAIL",
+            default=[],
+            action="append",
+            help="""Address that shoult no longer be notified when the certificate expires
+                (may be given multiple times).""",
+        )
         super().add_arguments(parser)
 
     def handle(self, cert, **options):  # pylint: disable=arguments-differ
         # add/remove users:
-        cert.watchers.add(*[Watcher.from_addr(addr) for addr in options['add']])
-        cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options['rm']])
+        cert.watchers.add(*[Watcher.from_addr(addr) for addr in options["add"]])
+        cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options["rm"]])

@@ -38,13 +38,15 @@ log = logging.getLogger(__name__)
 try:
     from celery import shared_task
 except ImportError:
+
     def shared_task(func):
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
-        #func.delay = lambda *a, **kw: func(*a, **kw)
-        #func.apply_async = lambda *a, **kw: func(*a, **kw)
+        # func.delay = lambda *a, **kw: func(*a, **kw)
+        # func.apply_async = lambda *a, **kw: func(*a, **kw)
         return func
+
 
 # requests and josepy are optional dependencies for acme tasks
 try:
@@ -56,7 +58,7 @@ except ImportError:  # pragma: no cover
 
 def run_task(task, *args, **kwargs):
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
-    eager = kwargs.pop('eager', False)
+    eager = kwargs.pop("eager", False)
 
     if ca_settings.CA_USE_CELERY is True and eager is False:
         return task.delay(*args, **kwargs)
@@ -75,7 +77,7 @@ def cache_crl(serial, **kwargs):
 def cache_crls(serials=None):
     """Task to cache the CRLs for all CAs."""
     if not serials:
-        serials = CertificateAuthority.objects.usable().values_list('serial', flat=True)
+        serials = CertificateAuthority.objects.usable().values_list("serial", flat=True)
 
     for serial in serials:
         run_task(cache_crl, serial)
@@ -93,7 +95,7 @@ def generate_ocsp_key(serial, **kwargs):
 def generate_ocsp_keys(**kwargs):
     """Task to generate an OCSP keys for all usable CAs."""
     keys = []
-    for serial in CertificateAuthority.objects.usable().values_list('serial', flat=True):
+    for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):
         keys.append(generate_ocsp_key(serial, **kwargs))
     return keys
 
@@ -103,44 +105,45 @@ def generate_ocsp_keys(**kwargs):
 def acme_validate_challenge(challenge_pk):
     """Validate an ACME challenge."""
     if not ca_settings.CA_ENABLE_ACME:
-        log.error('ACME is not enabled.')
+        log.error("ACME is not enabled.")
         return
 
     if jose is None:  # pragma: no cover
-        log.error('josepy is not installed, cannot do challenge validation.')
+        log.error("josepy is not installed, cannot do challenge validation.")
         return
 
     try:
         challenge = AcmeChallenge.objects.url().get(pk=challenge_pk)
     except AcmeChallenge.DoesNotExist:
-        log.error('Challenge with id=%s not found', challenge_pk)
+        log.error("Challenge with id=%s not found", challenge_pk)
         return
 
     # Whoever is invoking this task is responsible for setting the status to "processing" first.
     if challenge.status != AcmeChallenge.STATUS_PROCESSING:
-        log.error('%s: %s: Invalid state (must be %s)', challenge, challenge.status,
-                  AcmeChallenge.STATUS_PROCESSING)
+        log.error(
+            "%s: %s: Invalid state (must be %s)", challenge, challenge.status, AcmeChallenge.STATUS_PROCESSING
+        )
         return
 
     # If the auth cannot be used for validation, neither can this challenge. We check auth.usable instead of
     # challenge.usable b/c a challenge in the "processing" state is not "usable" (= it is already being used).
     if challenge.auth.usable is False:
-        log.error('%s: Authentication is not usable', challenge)
+        log.error("%s: Authentication is not usable", challenge)
         return
 
     # General data for challenge validation
     token = challenge.token
     value = challenge.auth.value
-    encoded = jose.encode_b64jose(token.encode('utf-8'))
+    encoded = jose.encode_b64jose(token.encode("utf-8"))
     thumbprint = challenge.auth.order.account.thumbprint
-    expected = f'{encoded}.{thumbprint}'
+    expected = f"{encoded}.{thumbprint}"
 
     if challenge.type == AcmeChallenge.TYPE_HTTP_01:
         if requests is None:  # pragma: no cover
-            log.error('requests is not installed, cannot do http-01 challenge validation.')
+            log.error("requests is not installed, cannot do http-01 challenge validation.")
             return
 
-        url = f'http://{value}/.well-known/acme-challenge/{encoded}'
+        url = f"http://{value}/.well-known/acme-challenge/{encoded}"
 
         # Validate HTTP challenge (only thing supported so far)
         try:
@@ -182,7 +185,7 @@ def acme_validate_challenge(challenge_pk):
         auths = AcmeAuthorization.objects.filter(order=challenge.auth.order)
         auths = auths.exclude(status=AcmeAuthorization.STATUS_VALID)
         if not auths.exclude(pk=challenge.auth.pk).exists():
-            log.info('Order is now valid')
+            log.info("Order is now valid")
             challenge.auth.order.status = AcmeOrder.STATUS_READY
     else:
         challenge.status = AcmeChallenge.STATUS_INVALID
@@ -198,7 +201,7 @@ def acme_validate_challenge(challenge_pk):
         #   If an error occurs at any of these stages, the order moves to the "invalid" state.
         challenge.auth.order.status = AcmeOrder.STATUS_INVALID
 
-    log.info('Challenge %s is %s', challenge.pk, challenge.status)
+    log.info("Challenge %s is %s", challenge.pk, challenge.status)
     challenge.save()
     challenge.auth.save()
     challenge.auth.order.save()
@@ -209,27 +212,25 @@ def acme_validate_challenge(challenge_pk):
 def acme_issue_certificate(acme_certificate_pk):
     """Actually issue an ACME certificate."""
     if not ca_settings.CA_ENABLE_ACME:
-        log.error('ACME is not enabled.')
+        log.error("ACME is not enabled.")
         return
 
     try:
-        acme_cert = AcmeCertificate.objects.select_related('order__account__ca').get(pk=acme_certificate_pk)
+        acme_cert = AcmeCertificate.objects.select_related("order__account__ca").get(pk=acme_certificate_pk)
     except AcmeCertificate.DoesNotExist:
-        log.error('Certificate with id=%s not found', acme_certificate_pk)
+        log.error("Certificate with id=%s not found", acme_certificate_pk)
         return
 
     if acme_cert.usable is False:
-        log.error('%s: Cannot issue certificate for this order', acme_cert.order)
+        log.error("%s: Cannot issue certificate for this order", acme_cert.order)
         return
 
     subject_alternative_names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
-    log.info('%s: Issuing certificate for %s', acme_cert.order, ',' .join(subject_alternative_names))
+    log.info("%s: Issuing certificate for %s", acme_cert.order, ",".join(subject_alternative_names))
 
-    extensions = {
-        SubjectAlternativeName.key: SubjectAlternativeName({'value': subject_alternative_names})
-    }
+    extensions = {SubjectAlternativeName.key: SubjectAlternativeName({"value": subject_alternative_names})}
 
-    profile = profiles['server']
+    profile = profiles["server"]
 
     # Honor not_after from the order if set
     if acme_cert.order.not_after:
@@ -241,7 +242,8 @@ def acme_issue_certificate(acme_certificate_pk):
 
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(
-        acme_cert.order.account.ca, csr=csr, profile=profile, expires=expires, extensions=extensions)
+        acme_cert.order.account.ca, csr=csr, profile=profile, expires=expires, extensions=extensions
+    )
 
     acme_cert.cert = cert
     acme_cert.order.status = AcmeOrder.STATUS_VALID
@@ -256,7 +258,7 @@ def acme_cleanup():
 
     if not ca_settings.CA_ENABLE_ACME:
         # NOTE: Since this task does only cleanup, log message is only info.
-        log.info('ACME is not enabled, not doing anything.')
+        log.info("ACME is not enabled, not doing anything.")
         return
 
     # Delete orders that expired more then a day ago.

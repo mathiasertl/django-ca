@@ -91,235 +91,297 @@ User = get_user_model()
 
 
 def _load_key(data):
-    basedir = data.get('basedir', settings.FIXTURES_DIR)
-    path = os.path.join(basedir, data['key_filename'])
+    basedir = data.get("basedir", settings.FIXTURES_DIR)
+    path = os.path.join(basedir, data["key_filename"])
 
-    with open(path, 'rb') as stream:
+    with open(path, "rb") as stream:
         raw = stream.read()
 
-    parsed = serialization.load_pem_private_key(raw, password=data.get('password'), backend=default_backend())
+    parsed = serialization.load_pem_private_key(raw, password=data.get("password"), backend=default_backend())
     return {
-        'pem': raw.decode('utf-8'),
-        'parsed': parsed,
+        "pem": raw.decode("utf-8"),
+        "parsed": parsed,
     }
 
 
 def _load_csr(data):
-    basedir = data.get('basedir', settings.FIXTURES_DIR)
-    path = os.path.join(basedir, data['csr_filename'])
+    basedir = data.get("basedir", settings.FIXTURES_DIR)
+    path = os.path.join(basedir, data["csr_filename"])
 
-    with open(path, 'rb') as stream:
+    with open(path, "rb") as stream:
         raw = stream.read().strip()
 
     csr_data = {
-        'pem': raw.decode('utf-8'),
-        'parsed': x509.load_pem_x509_csr(raw, default_backend()),
+        "pem": raw.decode("utf-8"),
+        "parsed": x509.load_pem_x509_csr(raw, default_backend()),
     }
 
-    csr_data['der'] = csr_data['parsed'].public_bytes(Encoding.DER)
+    csr_data["der"] = csr_data["parsed"].public_bytes(Encoding.DER)
 
     return csr_data
 
 
 def _load_pub(data):
-    basedir = data.get('basedir', settings.FIXTURES_DIR)
-    path = os.path.join(basedir, data['pub_filename'])
+    basedir = data.get("basedir", settings.FIXTURES_DIR)
+    path = os.path.join(basedir, data["pub_filename"])
 
-    with open(path, 'rb') as stream:
-        pem = stream.read().replace(b'\r\n', b'\n')
+    with open(path, "rb") as stream:
+        pem = stream.read().replace(b"\r\n", b"\n")
 
     pub_data = {
-        'pem': pem.decode('utf-8'),
-        'parsed': x509.load_pem_x509_certificate(pem, default_backend()),
+        "pem": pem.decode("utf-8"),
+        "parsed": x509.load_pem_x509_certificate(pem, default_backend()),
     }
 
-    if data.get('pub_der_filename'):
-        der_path = os.path.join(basedir, data['pub_der_filename'])
-        with open(der_path, 'rb') as stream:
-            der = stream.read().replace(b'\r\n', b'\n')
-        pub_data['der'] = der
+    if data.get("pub_der_filename"):
+        der_path = os.path.join(basedir, data["pub_der_filename"])
+        with open(der_path, "rb") as stream:
+            der = stream.read().replace(b"\r\n", b"\n")
+        pub_data["der"] = der
         # Failes for alt-extensions since alternative AKI was added
-        #pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
+        # pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
 
     return pub_data
 
 
-cryptography_version = tuple(int(t) for t in cryptography.__version__.split('.')[:2])
+cryptography_version = tuple(int(t) for t in cryptography.__version__.split(".")[:2])
 
-with open(os.path.join(settings.FIXTURES_DIR, 'cert-data.json')) as cert_data_stream:
+with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json")) as cert_data_stream:
     _fixture_data = json.load(cert_data_stream)
-certs = _fixture_data.get('certs')
+certs = _fixture_data.get("certs")
 
 # Update some data from contrib (data is not in cert-data.json, since we don't generate them)
-certs['multiple_ous'] = {
-    'name': 'multiple_ous',
-    'cn': '',
-    'key_filename': False,
-    'csr_filename': False,
-    'pub_filename': os.path.join('contrib', 'multiple_ous_and_no_ext.pem'),
-    'cat': 'contrib',
-    'type': 'cert',
-    'valid_from': '1998-05-18 00:00:00',
-    'valid_until': '2028-08-01 23:59:59',
-    'ca': 'root',
-    'serial': '7DD9FE07CFA81EB7107967FBA78934C6',
-    'hpkp': 'AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=',
-    'md5': 'A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9',
-    'sha1': '85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F',
-    'sha256': '83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B',  # NOQA
-    'sha512': '86:20:07:9F:8B:06:80:43:44:98:F6:7A:A4:22:DE:7E:2B:33:10:9B:65:72:79:C4:EB:F3:F3:0F:66:C8:6E:89:1D:4C:6C:09:1C:83:45:D1:25:6C:F8:65:EB:9A:B9:50:8F:26:A8:85:AE:3A:E4:8A:58:60:48:65:BB:44:B6:CE',  # NOQA
+certs["multiple_ous"] = {
+    "name": "multiple_ous",
+    "cn": "",
+    "key_filename": False,
+    "csr_filename": False,
+    "pub_filename": os.path.join("contrib", "multiple_ous_and_no_ext.pem"),
+    "cat": "contrib",
+    "type": "cert",
+    "valid_from": "1998-05-18 00:00:00",
+    "valid_until": "2028-08-01 23:59:59",
+    "ca": "root",
+    "serial": "7DD9FE07CFA81EB7107967FBA78934C6",
+    "hpkp": "AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=",
+    "md5": "A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9",
+    "sha1": "85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F",
+    "sha256": "83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B",  # NOQA
+    "sha512": "86:20:07:9F:8B:06:80:43:44:98:F6:7A:A4:22:DE:7E:2B:33:10:9B:65:72:79:C4:EB:F3:F3:0F:66:C8:6E:89:1D:4C:6C:09:1C:83:45:D1:25:6C:F8:65:EB:9A:B9:50:8F:26:A8:85:AE:3A:E4:8A:58:60:48:65:BB:44:B6:CE",  # NOQA
 }
-certs['cloudflare_1'] = {
-    'name': 'cloudflare_1',
-    'cn': 'sni24142.cloudflaressl.com',
-    'key_filename': False,
-    'csr_filename': False,
-    'pub_filename': os.path.join('contrib', 'cloudflare_1.pem'),
-    'cat': 'contrib',
-    'type': 'cert',
-    'valid_from': '2018-07-18 00:00:00',
-    'valid_until': '2019-01-24 23:59:59',
-    'ca': 'root',
-    'serial': '92529ABD85F0A6A4D6C53FD1C91011C1',
-    'hpkp': 'bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=',
-    'md5': 'D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A',
-    'sha1': '71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3',
-    'sha256': '1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1',  # NOQA
-    'sha512': 'FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA',  # NOQA
+certs["cloudflare_1"] = {
+    "name": "cloudflare_1",
+    "cn": "sni24142.cloudflaressl.com",
+    "key_filename": False,
+    "csr_filename": False,
+    "pub_filename": os.path.join("contrib", "cloudflare_1.pem"),
+    "cat": "contrib",
+    "type": "cert",
+    "valid_from": "2018-07-18 00:00:00",
+    "valid_until": "2019-01-24 23:59:59",
+    "ca": "root",
+    "serial": "92529ABD85F0A6A4D6C53FD1C91011C1",
+    "hpkp": "bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=",
+    "md5": "D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A",
+    "sha1": "71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3",
+    "sha256": "1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1",  # NOQA
+    "sha512": "FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA",  # NOQA
     "authority_information_access": {
         "critical": False,
         "value": {
-            "issuers": [
-                "URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt"
-            ],
-            "ocsp": [
-                "URI:http://ocsp.comodoca4.com"
-            ],
-        }
+            "issuers": ["URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt"],
+            "ocsp": ["URI:http://ocsp.comodoca4.com"],
+        },
     },
-    'authority_key_identifier': {
-        'critical': False,
-        'value': '40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96',
+    "authority_key_identifier": {
+        "critical": False,
+        "value": "40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96",
     },
     "basic_constraints": {
-        'critical': True,
-        'value': {'ca': False},
+        "critical": True,
+        "value": {"ca": False},
     },
     "crl_distribution_points": {
         "value": [
             {
                 "full_name": [
-                    'URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl',
+                    "URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl",
                 ],
             }
         ],
         "critical": False,
     },
     "extended_key_usage": {
-        'critical': False,
-        'value': ['serverAuth', 'clientAuth'],
+        "critical": False,
+        "value": ["serverAuth", "clientAuth"],
     },
     "key_usage": {
-        'critical': True,
-        'value': ['digitalSignature'],
+        "critical": True,
+        "value": ["digitalSignature"],
     },
-    'precert_poison': {'critical': True},
-    'subject_alternative_name': {'value': [
-        'DNS:sni24142.cloudflaressl.com', 'DNS:*.animereborn.com', 'DNS:*.beglideas.ga', 'DNS:*.chroma.ink',
-        'DNS:*.chuckscleanings.ga', 'DNS:*.clipvuigiaitris.ga', 'DNS:*.cmvsjns.ga', 'DNS:*.competegraphs.ga',
-        'DNS:*.consoleprints.ga', 'DNS:*.copybreezes.ga', 'DNS:*.corphreyeds.ga', 'DNS:*.cyanigees.ga',
-        'DNS:*.dadpbears.ga', 'DNS:*.dahuleworldwides.ga', 'DNS:*.dailyopeningss.ga', 'DNS:*.daleylexs.ga',
-        'DNS:*.danajweinkles.ga', 'DNS:*.dancewthyogas.ga', 'DNS:*.darkmoosevpss.ga', 'DNS:*.daurat.com.ar',
-        'DNS:*.deltaberg.com', 'DNS:*.drjahanobgyns.ga', 'DNS:*.drunkgirliess.ga', 'DNS:*.duhiepkys.ga',
-        'DNS:*.dujuanjsqs.ga', 'DNS:*.dumbiseasys.ga', 'DNS:*.dumpsoftdrinkss.ga', 'DNS:*.dunhavenwoodss.ga',
-        'DNS:*.durabiliteas.ga', 'DNS:*.duxmangroups.ga', 'DNS:*.dvpdrivewayss.ga', 'DNS:*.dwellwizes.ga',
-        'DNS:*.dwwkouis.ga', 'DNS:*.entertastic.com', 'DNS:*.estudiogolber.com.ar', 'DNS:*.letsretro.team',
-        'DNS:*.maccuish.org.uk', 'DNS:*.madamsquiggles.com', 'DNS:*.sftw.ninja', 'DNS:*.spangenberg.io',
-        'DNS:*.timmutton.com.au', 'DNS:*.wyomingsexbook.com', 'DNS:*.ych.bid', 'DNS:animereborn.com',
-        'DNS:beglideas.ga', 'DNS:chroma.ink', 'DNS:chuckscleanings.ga', 'DNS:clipvuigiaitris.ga',
-        'DNS:cmvsjns.ga', 'DNS:competegraphs.ga', 'DNS:consoleprints.ga', 'DNS:copybreezes.ga',
-        'DNS:corphreyeds.ga', 'DNS:cyanigees.ga', 'DNS:dadpbears.ga', 'DNS:dahuleworldwides.ga',
-        'DNS:dailyopeningss.ga', 'DNS:daleylexs.ga', 'DNS:danajweinkles.ga', 'DNS:dancewthyogas.ga',
-        'DNS:darkmoosevpss.ga', 'DNS:daurat.com.ar', 'DNS:deltaberg.com', 'DNS:drjahanobgyns.ga',
-        'DNS:drunkgirliess.ga', 'DNS:duhiepkys.ga', 'DNS:dujuanjsqs.ga', 'DNS:dumbiseasys.ga',
-        'DNS:dumpsoftdrinkss.ga', 'DNS:dunhavenwoodss.ga', 'DNS:durabiliteas.ga', 'DNS:duxmangroups.ga',
-        'DNS:dvpdrivewayss.ga', 'DNS:dwellwizes.ga', 'DNS:dwwkouis.ga', 'DNS:entertastic.com',
-        'DNS:estudiogolber.com.ar', 'DNS:letsretro.team', 'DNS:maccuish.org.uk', 'DNS:madamsquiggles.com',
-        'DNS:sftw.ninja', 'DNS:spangenberg.io', 'DNS:timmutton.com.au', 'DNS:wyomingsexbook.com',
-        'DNS:ych.bid',
-    ]},
-    'subject_key_identifier': {
-        'critical': False,
-        'value': '05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2',
+    "precert_poison": {"critical": True},
+    "subject_alternative_name": {
+        "value": [
+            "DNS:sni24142.cloudflaressl.com",
+            "DNS:*.animereborn.com",
+            "DNS:*.beglideas.ga",
+            "DNS:*.chroma.ink",
+            "DNS:*.chuckscleanings.ga",
+            "DNS:*.clipvuigiaitris.ga",
+            "DNS:*.cmvsjns.ga",
+            "DNS:*.competegraphs.ga",
+            "DNS:*.consoleprints.ga",
+            "DNS:*.copybreezes.ga",
+            "DNS:*.corphreyeds.ga",
+            "DNS:*.cyanigees.ga",
+            "DNS:*.dadpbears.ga",
+            "DNS:*.dahuleworldwides.ga",
+            "DNS:*.dailyopeningss.ga",
+            "DNS:*.daleylexs.ga",
+            "DNS:*.danajweinkles.ga",
+            "DNS:*.dancewthyogas.ga",
+            "DNS:*.darkmoosevpss.ga",
+            "DNS:*.daurat.com.ar",
+            "DNS:*.deltaberg.com",
+            "DNS:*.drjahanobgyns.ga",
+            "DNS:*.drunkgirliess.ga",
+            "DNS:*.duhiepkys.ga",
+            "DNS:*.dujuanjsqs.ga",
+            "DNS:*.dumbiseasys.ga",
+            "DNS:*.dumpsoftdrinkss.ga",
+            "DNS:*.dunhavenwoodss.ga",
+            "DNS:*.durabiliteas.ga",
+            "DNS:*.duxmangroups.ga",
+            "DNS:*.dvpdrivewayss.ga",
+            "DNS:*.dwellwizes.ga",
+            "DNS:*.dwwkouis.ga",
+            "DNS:*.entertastic.com",
+            "DNS:*.estudiogolber.com.ar",
+            "DNS:*.letsretro.team",
+            "DNS:*.maccuish.org.uk",
+            "DNS:*.madamsquiggles.com",
+            "DNS:*.sftw.ninja",
+            "DNS:*.spangenberg.io",
+            "DNS:*.timmutton.com.au",
+            "DNS:*.wyomingsexbook.com",
+            "DNS:*.ych.bid",
+            "DNS:animereborn.com",
+            "DNS:beglideas.ga",
+            "DNS:chroma.ink",
+            "DNS:chuckscleanings.ga",
+            "DNS:clipvuigiaitris.ga",
+            "DNS:cmvsjns.ga",
+            "DNS:competegraphs.ga",
+            "DNS:consoleprints.ga",
+            "DNS:copybreezes.ga",
+            "DNS:corphreyeds.ga",
+            "DNS:cyanigees.ga",
+            "DNS:dadpbears.ga",
+            "DNS:dahuleworldwides.ga",
+            "DNS:dailyopeningss.ga",
+            "DNS:daleylexs.ga",
+            "DNS:danajweinkles.ga",
+            "DNS:dancewthyogas.ga",
+            "DNS:darkmoosevpss.ga",
+            "DNS:daurat.com.ar",
+            "DNS:deltaberg.com",
+            "DNS:drjahanobgyns.ga",
+            "DNS:drunkgirliess.ga",
+            "DNS:duhiepkys.ga",
+            "DNS:dujuanjsqs.ga",
+            "DNS:dumbiseasys.ga",
+            "DNS:dumpsoftdrinkss.ga",
+            "DNS:dunhavenwoodss.ga",
+            "DNS:durabiliteas.ga",
+            "DNS:duxmangroups.ga",
+            "DNS:dvpdrivewayss.ga",
+            "DNS:dwellwizes.ga",
+            "DNS:dwwkouis.ga",
+            "DNS:entertastic.com",
+            "DNS:estudiogolber.com.ar",
+            "DNS:letsretro.team",
+            "DNS:maccuish.org.uk",
+            "DNS:madamsquiggles.com",
+            "DNS:sftw.ninja",
+            "DNS:spangenberg.io",
+            "DNS:timmutton.com.au",
+            "DNS:wyomingsexbook.com",
+            "DNS:ych.bid",
+        ]
     },
-    'policy_texts': [
-        '''Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7
+    "subject_key_identifier": {
+        "critical": False,
+        "value": "05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2",
+    },
+    "policy_texts": [
+        """Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7
 Policy Qualifiers:
-* https://secure.comodo.com/CPS''',
-        '''Policy Identifier: 2.23.140.1.2.1
-No Policy Qualifiers''',
+* https://secure.comodo.com/CPS""",
+        """Policy Identifier: 2.23.140.1.2.1
+No Policy Qualifiers""",
     ],
-    'certificate_policies': {
-        'value': [{
-            'policy_identifier': '1.3.6.1.4.1.6449.1.2.2.7',
-            'policy_qualifiers': ['https://secure.comodo.com/CPS'],
-        }, {
-            'policy_identifier': '2.23.140.1.2.1'},
+    "certificate_policies": {
+        "value": [
+            {
+                "policy_identifier": "1.3.6.1.4.1.6449.1.2.2.7",
+                "policy_qualifiers": ["https://secure.comodo.com/CPS"],
+            },
+            {"policy_identifier": "2.23.140.1.2.1"},
         ],
-        'critical': False,
-    }
+        "critical": False,
+    },
 }
 
-SPHINX_FIXTURES_DIR = os.path.join(os.path.dirname(settings.BASE_DIR), 'docs', 'source', '_files')
+SPHINX_FIXTURES_DIR = os.path.join(os.path.dirname(settings.BASE_DIR), "docs", "source", "_files")
 for cert_name, cert_data in certs.items():
-    cert_data['serial_colons'] = add_colons(cert_data['serial'])
-    if cert_data.get('password'):
-        cert_data['password'] = cert_data['password'].encode('utf-8')
-    if cert_data['cat'] == 'sphinx-contrib':
-        cert_data['basedir'] = os.path.join(SPHINX_FIXTURES_DIR, cert_data['type'])
+    cert_data["serial_colons"] = add_colons(cert_data["serial"])
+    if cert_data.get("password"):
+        cert_data["password"] = cert_data["password"].encode("utf-8")
+    if cert_data["cat"] == "sphinx-contrib":
+        cert_data["basedir"] = os.path.join(SPHINX_FIXTURES_DIR, cert_data["type"])
 
-    if cert_data['type'] == 'ca':
-        cert_data.setdefault('children', [])
+    if cert_data["type"] == "ca":
+        cert_data.setdefault("children", [])
 
     # Load data from files
-    if cert_data['key_filename'] is not False:
-        cert_data['key'] = _load_key(cert_data)
-    if cert_data['csr_filename'] is not False:
-        cert_data['csr'] = _load_csr(cert_data)
-    cert_data['pub'] = _load_pub(cert_data)
+    if cert_data["key_filename"] is not False:
+        cert_data["key"] = _load_key(cert_data)
+    if cert_data["csr_filename"] is not False:
+        cert_data["csr"] = _load_csr(cert_data)
+    cert_data["pub"] = _load_pub(cert_data)
 
     # parse some data from the dict
-    cert_data['valid_from'] = datetime.strptime(cert_data['valid_from'], '%Y-%m-%d %H:%M:%S')
-    cert_data['valid_until'] = datetime.strptime(cert_data['valid_until'], '%Y-%m-%d %H:%M:%S')
-    cert_data['valid_from_short'] = cert_data['valid_from'].strftime('%Y-%m-%d %H:%M')
-    cert_data['valid_until_short'] = cert_data['valid_until'].strftime('%Y-%m-%d %H:%M')
+    cert_data["valid_from"] = datetime.strptime(cert_data["valid_from"], "%Y-%m-%d %H:%M:%S")
+    cert_data["valid_until"] = datetime.strptime(cert_data["valid_until"], "%Y-%m-%d %H:%M:%S")
+    cert_data["valid_from_short"] = cert_data["valid_from"].strftime("%Y-%m-%d %H:%M")
+    cert_data["valid_until_short"] = cert_data["valid_until"].strftime("%Y-%m-%d %H:%M")
 
-    cert_data['ocsp-serial'] = cert_data['serial'].replace(':', '')
-    cert_data['ocsp-expires'] = cert_data['valid_until'].strftime('%y%m%d%H%M%SZ')
+    cert_data["ocsp-serial"] = cert_data["serial"].replace(":", "")
+    cert_data["ocsp-expires"] = cert_data["valid_until"].strftime("%y%m%d%H%M%SZ")
 
     # parse extensions
     for ext_key, ext_cls in KEY_TO_EXTENSION.items():
         if cert_data.get(ext_key):
-            cert_data['%s_serialized' % ext_key] = cert_data[ext_key]
+            cert_data["%s_serialized" % ext_key] = cert_data[ext_key]
             cert_data[ext_key] = ext_cls(cert_data[ext_key])
 
 # Calculate some fixted timestamps that we reuse throughout the tests
 timestamps = {
-    'base': datetime.strptime(_fixture_data['timestamp'], '%Y-%m-%d %H:%M:%S'),
+    "base": datetime.strptime(_fixture_data["timestamp"], "%Y-%m-%d %H:%M:%S"),
 }
-timestamps['before_everything'] = datetime(1990, 1, 1)
-timestamps['before_cas'] = timestamps['base'] - timedelta(days=1)
-timestamps['before_child'] = timestamps['base'] + timedelta(days=1)
-timestamps['after_child'] = timestamps['base'] + timedelta(days=4)
-timestamps['ca_certs_valid'] = timestamps['base'] + timedelta(days=7)
-timestamps['profile_certs_valid'] = timestamps['base'] + timedelta(days=12)
-timestamps['everything_valid'] = timestamps['base'] + timedelta(days=60)
-timestamps['cas_expired'] = timestamps['base'] + timedelta(days=731, seconds=3600)
-timestamps['ca_certs_expiring'] = certs['root-cert']['valid_until'] - timedelta(days=3)
-timestamps['ca_certs_expired'] = certs['root-cert']['valid_until'] + timedelta(seconds=3600)
-timestamps['profile_certs_expired'] = certs['profile-server']['valid_until'] + timedelta(seconds=3600)
-timestamps['everything_expired'] = timestamps['base'] + timedelta(days=365 * 20)
-ocsp_data = _fixture_data['ocsp']
+timestamps["before_everything"] = datetime(1990, 1, 1)
+timestamps["before_cas"] = timestamps["base"] - timedelta(days=1)
+timestamps["before_child"] = timestamps["base"] + timedelta(days=1)
+timestamps["after_child"] = timestamps["base"] + timedelta(days=4)
+timestamps["ca_certs_valid"] = timestamps["base"] + timedelta(days=7)
+timestamps["profile_certs_valid"] = timestamps["base"] + timedelta(days=12)
+timestamps["everything_valid"] = timestamps["base"] + timedelta(days=60)
+timestamps["cas_expired"] = timestamps["base"] + timedelta(days=731, seconds=3600)
+timestamps["ca_certs_expiring"] = certs["root-cert"]["valid_until"] - timedelta(days=3)
+timestamps["ca_certs_expired"] = certs["root-cert"]["valid_until"] + timedelta(seconds=3600)
+timestamps["profile_certs_expired"] = certs["profile-server"]["valid_until"] + timedelta(seconds=3600)
+timestamps["everything_expired"] = timestamps["base"] + timedelta(days=365 * 20)
+ocsp_data = _fixture_data["ocsp"]
 
 
 def dns(name):  # just a shortcut
@@ -340,9 +402,9 @@ def rdn(name):  # just a shortcut
 @contextmanager
 def mock_cadir(path):
     """Contextmanager to set the CA_DIR to a given path without actually creating it."""
-    with override_settings(CA_DIR=path), \
-            patch.object(ca_storage, 'location', path), \
-            patch.object(ca_storage, '_location', path):
+    with override_settings(CA_DIR=path), patch.object(ca_storage, "location", path), patch.object(
+        ca_storage, "_location", path
+    ):
         yield
 
 
@@ -358,19 +420,20 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         return super().__call__(test_func)
 
     def enable(self):
-        self.options['CA_DIR'] = tempfile.mkdtemp()
+        self.options["CA_DIR"] = tempfile.mkdtemp()
 
         # copy CAs
-        for filename in [v['key_filename'] for v in certs.values() if v['key_filename'] is not False]:
-            shutil.copy(os.path.join(settings.FIXTURES_DIR, filename), self.options['CA_DIR'])
+        for filename in [v["key_filename"] for v in certs.values() if v["key_filename"] is not False]:
+            shutil.copy(os.path.join(settings.FIXTURES_DIR, filename), self.options["CA_DIR"])
 
         # Copy OCSP public key (required for OCSP tests)
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, certs['profile-ocsp']['pub_filename']),
-                    self.options['CA_DIR'])
+        shutil.copy(
+            os.path.join(settings.FIXTURES_DIR, certs["profile-ocsp"]["pub_filename"]), self.options["CA_DIR"]
+        )
 
         # pylint: disable=attribute-defined-outside-init
-        self.mock = patch.object(ca_storage, 'location', self.options['CA_DIR'])
-        self.mock_ = patch.object(ca_storage, '_location', self.options['CA_DIR'])
+        self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
+        self.mock_ = patch.object(ca_storage, "_location", self.options["CA_DIR"])
         # pylint: enable=attribute-defined-outside-init
         self.mock.start()
         self.mock_.start()
@@ -381,7 +444,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         super().disable()
         self.mock.stop()
         self.mock_.stop()
-        shutil.rmtree(self.options['CA_DIR'])
+        shutil.rmtree(self.options["CA_DIR"])
 
 
 class DjangoCATestCaseMixin:
@@ -390,9 +453,9 @@ class DjangoCATestCaseMixin:
     # pylint: disable=too-many-public-methods
 
     # ACME data present in all mixins
-    ACME_THUMBPRINT_1 = 'U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8'
-    ACME_THUMBPRINT_2 = 's_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo'
-    ACME_PEM_1 = '''-----BEGIN PUBLIC KEY-----
+    ACME_THUMBPRINT_1 = "U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8"
+    ACME_THUMBPRINT_2 = "s_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo"
+    ACME_PEM_1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
 tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
 tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
@@ -400,8 +463,8 @@ MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
 s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
 lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
 XwIDAQAB
------END PUBLIC KEY-----'''
-    ACME_PEM_2 = '''-----BEGIN PUBLIC KEY-----
+-----END PUBLIC KEY-----"""
+    ACME_PEM_2 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
 Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
 RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
@@ -409,9 +472,9 @@ NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
 MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
 /Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
 VQIDAQAB
------END PUBLIC KEY-----'''
-    ACME_SLUG_1 = 'Mr6FfdD68lzp'
-    ACME_SLUG_2 = 'DzW4PQ6L76PE'
+-----END PUBLIC KEY-----"""
+    ACME_SLUG_1 = "Mr6FfdD68lzp"
+    ACME_SLUG_2 = "DzW4PQ6L76PE"
 
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
@@ -443,24 +506,34 @@ VQIDAQAB
         if hostname is None:
             hostname = settings.ALLOWED_HOSTS[0]
 
-        if name.startswith('/'):
-            return 'http://%s%s' % (hostname, name)
-        if name.startswith(':'):  # pragma: no branch
-            name = 'django_ca%s' % name
-        return 'http://%s%s' % (hostname, reverse(name, kwargs=kwargs))
+        if name.startswith("/"):
+            return "http://%s%s" % (hostname, name)
+        if name.startswith(":"):  # pragma: no branch
+            name = "django_ca%s" % name
+        return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
 
     def assertAuthorityKeyIdentifier(self, issuer, cert):  # pylint: disable=invalid-name
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
 
-    def assertBasic(self, cert, algo='SHA256'):  # pylint: disable=invalid-name
+    def assertBasic(self, cert, algo="SHA256"):  # pylint: disable=invalid-name
         """Assert some basic key properties."""
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertCRL(self, crl, expected=None, signer=None, expires=86400,  # pylint: disable=invalid-name
-                  algorithm=None, encoding=Encoding.PEM, idp=None, extensions=None, crl_number=0):
+    def assertCRL(
+        self,
+        crl,
+        expected=None,
+        signer=None,
+        expires=86400,  # pylint: disable=invalid-name
+        algorithm=None,
+        encoding=Encoding.PEM,
+        idp=None,
+        extensions=None,
+        crl_number=0,
+    ):
         """Test the given CRL.
 
         Parameters
@@ -472,21 +545,25 @@ VQIDAQAB
             List of CAs/certs to be expected in this CRL
         """
         expected = expected or []
-        signer = signer or self.cas['child']
+        signer = signer or self.cas["child"]
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
         extensions = extensions or []
         expires = datetime.utcnow() + timedelta(seconds=expires)
 
         if idp is not None:  # pragma: no branch
             extensions.append(idp)
-        extensions.append(x509.Extension(
-            value=x509.CRLNumber(crl_number=crl_number),
-            critical=False, oid=ExtensionOID.CRL_NUMBER
-        ))
-        extensions.append(x509.Extension(
-            value=signer.get_authority_key_identifier(),
-            oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False
-        ))
+        extensions.append(
+            x509.Extension(
+                value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=ExtensionOID.CRL_NUMBER
+            )
+        )
+        extensions.append(
+            x509.Extension(
+                value=signer.get_authority_key_identifier(),
+                oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                critical=False,
+            )
+        )
 
         if encoding == Encoding.PEM:
             crl = x509.load_pem_x509_crl(crl, default_backend())
@@ -530,8 +607,9 @@ VQIDAQAB
         with self.assertRaisesRegex(CommandError, msg):
             yield
 
-    def assertExtensions(self, cert, extensions, signer=None,  # pylint: disable=invalid-name
-                         expect_defaults=True):
+    def assertExtensions(
+        self, cert, extensions, signer=None, expect_defaults=True  # pylint: disable=invalid-name
+    ):
         """Assert that `cert` has the given extensions."""
         extensions = {e.key: e for e in extensions}
 
@@ -547,19 +625,24 @@ VQIDAQAB
                 signer = cert.parent
         else:  # cg cert
             pubkey = cert.public_key()
-            actual = {e.key: e for e in [OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e
-                                         for e in cert.extensions]}
+            actual = {
+                e.key: e
+                for e in [
+                    OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e for e in cert.extensions
+                ]
+            }
 
         if expect_defaults is True:
             if isinstance(cert, Certificate):
                 extensions.setdefault(BasicConstraints.key, BasicConstraints())
             if signer is not None:
-                extensions.setdefault(AuthorityKeyIdentifier.key,
-                                      signer.get_authority_key_identifier_extension())
+                extensions.setdefault(
+                    AuthorityKeyIdentifier.key, signer.get_authority_key_identifier_extension()
+                )
 
                 if isinstance(cert, Certificate) and signer.crl_url:
                     urls = signer.crl_url.split()
-                    ext = CRLDistributionPoints({'value': [{'full_name': urls}]})
+                    ext = CRLDistributionPoints({"value": [{"full_name": urls}]})
                     extensions.setdefault(CRLDistributionPoints.key, ext)
 
                 aia = AuthorityInformationAccess()
@@ -598,16 +681,16 @@ VQIDAQAB
             cert = Certificate.objects.get(serial=cert.serial)
 
         self.assertFalse(cert.revoked)
-        self.assertEqual(cert.revoked_reason, '')
+        self.assertEqual(cert.revoked_reason, "")
 
     def assertParserError(self, args, expected, **kwargs):  # pylint: disable=invalid-name
         """Assert that given args throw a parser error."""
 
-        kwargs.setdefault('script', os.path.basename(sys.argv[0]))
+        kwargs.setdefault("script", os.path.basename(sys.argv[0]))
         expected = expected.format(**kwargs)
 
         buf = StringIO()
-        with self.assertRaises(SystemExit), patch('sys.stderr', buf):
+        with self.assertRaises(SystemExit), patch("sys.stderr", buf):
             self.parser.parse_args(args)
 
         output = buf.getvalue()
@@ -648,7 +731,7 @@ VQIDAQAB
 
     def assertSerial(self, serial):  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""
-        self.assertIsNotNone(re.match('^[0-9A-F:]*$', serial), serial)
+        self.assertIsNotNone(re.match("^[0-9A-F:]*$", serial), serial)
 
     @contextmanager
     def assertSignal(self, signal):  # pylint: disable=invalid-name
@@ -696,13 +779,13 @@ VQIDAQAB
 
     def cmd(self, *args, **kwargs):
         """Call to a manage.py command using call_command."""
-        kwargs.setdefault('stdout', StringIO())
-        kwargs.setdefault('stderr', StringIO())
-        stdin = kwargs.pop('stdin', StringIO())
+        kwargs.setdefault("stdout", StringIO())
+        kwargs.setdefault("stderr", StringIO())
+        stdin = kwargs.pop("stdin", StringIO())
 
-        with patch('sys.stdin', stdin):
+        with patch("sys.stdin", stdin):
             call_command(*args, **kwargs)
-        return kwargs['stdout'].getvalue(), kwargs['stderr'].getvalue()
+        return kwargs["stdout"].getvalue(), kwargs["stderr"].getvalue()
 
     def cmd_e2e(self, cmd, stdin=None, stdout=None, stderr=None):
         """Call a management command the way manage.py does.
@@ -714,8 +797,13 @@ VQIDAQAB
         if stdin is None:
             stdin = StringIO()
 
-        with patch('sys.stdin', stdin), patch('sys.stdout', stdout), patch('sys.stderr', stderr):
-            util = ManagementUtility(['manage.py', ] + list(cmd))
+        with patch("sys.stdin", stdin), patch("sys.stdout", stdout), patch("sys.stderr", stderr):
+            util = ManagementUtility(
+                [
+                    "manage.py",
+                ]
+                + list(cmd)
+            )
             util.execute()
 
         return stdout.getvalue(), stderr.getvalue()
@@ -725,12 +813,12 @@ VQIDAQAB
         """Return a list of CRL profiles."""
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
         for config in profiles.values():
-            config.setdefault('OVERRIDES', {})
+            config.setdefault("OVERRIDES", {})
 
-            for data in [d for d in certs.values() if d.get('type') == 'ca']:
-                config['OVERRIDES'][data['serial']] = {}
-                if data.get('password'):
-                    config['OVERRIDES'][data['serial']]['password'] = data['password']
+            for data in [d for d in certs.values() if d.get("type") == "ca"]:
+                config["OVERRIDES"][data["serial"]] = {}
+                if data.get("password"):
+                    config["OVERRIDES"][data["serial"]]["password"] = data["password"]
 
         return profiles
 
@@ -751,49 +839,49 @@ VQIDAQAB
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx = {}
         for key, value in certs[name].items():
-            if key == 'precert_poison':
-                ctx['precert_poison'] = 'PrecertPoison (critical): Yes'
-            elif key == 'precertificate_signed_certificate_timestamps_serialized':
-                ctx['sct_critical'] = ' (critical)' if value['critical'] else ''
-                ctx['sct_values'] = []
-                for val in value['value']:
-                    ctx['sct_values'].append(val)
-            elif key == 'precertificate_signed_certificate_timestamps':
+            if key == "precert_poison":
+                ctx["precert_poison"] = "PrecertPoison (critical): Yes"
+            elif key == "precertificate_signed_certificate_timestamps_serialized":
+                ctx["sct_critical"] = " (critical)" if value["critical"] else ""
+                ctx["sct_values"] = []
+                for val in value["value"]:
+                    ctx["sct_values"].append(val)
+            elif key == "precertificate_signed_certificate_timestamps":
                 continue  # special extension b/c it cannot be created
-            elif key == 'pathlen':
+            elif key == "pathlen":
                 ctx[key] = value
-                ctx['%s_text' % key] = 'unlimited' if value is None else value
+                ctx["%s_text" % key] = "unlimited" if value is None else value
             elif isinstance(value, Extension):
                 ctx[key] = value
 
                 if isinstance(value, ListExtension):
                     for i, val in enumerate(value):
-                        ctx['%s_%s' % (key, i)] = val
+                        ctx["%s_%s" % (key, i)] = val
 
                 else:
-                    ctx['%s_text' % key] = value.as_text()
+                    ctx["%s_text" % key] = value.as_text()
 
                 if value.critical:
-                    ctx['%s_critical' % key] = ' (critical)'
+                    ctx["%s_critical" % key] = " (critical)"
                 else:
-                    ctx['%s_critical' % key] = ''
+                    ctx["%s_critical" % key] = ""
             else:
                 ctx[key] = value
 
             if isinstance(value, CRLDistributionPointsBase):
                 for i, ext_value in enumerate(value.value):
-                    ctx['%s_%s' % (key, i)] = ext_value
+                    ctx["%s_%s" % (key, i)] = ext_value
             elif isinstance(value, IterableExtension):
                 for i, ext_value in enumerate(value.serialize_value()):
-                    ctx['%s_%s' % (key, i)] = ext_value
+                    ctx["%s_%s" % (key, i)] = ext_value
 
-        if certs[name].get('parent'):
-            parent = certs[certs[name]['parent']]
-            ctx['parent_name'] = parent['name']
-            ctx['parent_serial'] = parent['serial']
+        if certs[name].get("parent"):
+            parent = certs[certs[name]["parent"]]
+            ctx["parent_name"] = parent["name"]
+            ctx["parent_serial"] = parent["serial"]
 
-        if certs[name]['key_filename'] is not False:
-            ctx['key_path'] = ca_storage.path(certs[name]['key_filename'])
+        if certs[name]["key_filename"] is not False:
+            ctx["key_path"] = ca_storage.path(certs[name]["key_filename"])
         return ctx
 
     def get_idp_full_name(self, ca):
@@ -801,9 +889,16 @@ VQIDAQAB
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
 
-    def get_idp(self, full_name=None, indirect_crl=False, only_contains_attribute_certs=False,
-                only_contains_ca_certs=False, only_contains_user_certs=False, only_some_reasons=None,
-                relative_name=None):
+    def get_idp(
+        self,
+        full_name=None,
+        indirect_crl=False,
+        only_contains_attribute_certs=False,
+        only_contains_ca_certs=False,
+        only_contains_user_certs=False,
+        only_some_reasons=None,
+        relative_name=None,
+    ):
         """Get an IssuingDistributionPoint extension."""
         return x509.Extension(
             oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
@@ -814,8 +909,10 @@ VQIDAQAB
                 only_contains_ca_certs=only_contains_ca_certs,
                 only_contains_user_certs=only_contains_user_certs,
                 only_some_reasons=only_some_reasons,
-                relative_name=relative_name
-            ), critical=True)
+                relative_name=relative_name,
+            ),
+            critical=True,
+        )
 
     @classmethod
     def expires(cls, days):
@@ -826,13 +923,13 @@ VQIDAQAB
     @classmethod
     def load_ca(cls, name, parsed, enabled=True, parent=None, **kwargs):
         """Load a CA from one of the preloaded files."""
-        path = '%s.key' % name
+        path = "%s.key" % name
 
         # set some default values
-        kwargs.setdefault('issuer_alt_name', certs[name].get('issuer_alternative_name', ''))
-        kwargs.setdefault('crl_url', certs[name].get('crl_url', ''))
-        kwargs.setdefault('ocsp_url', certs[name].get('ocsp_url', ''))
-        kwargs.setdefault('issuer_url', certs[name].get('issuer_url', ''))
+        kwargs.setdefault("issuer_alt_name", certs[name].get("issuer_alternative_name", ""))
+        kwargs.setdefault("crl_url", certs[name].get("crl_url", ""))
+        kwargs.setdefault("ocsp_url", certs[name].get("ocsp_url", ""))
+        kwargs.setdefault("issuer_url", certs[name].get("issuer_url", ""))
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
         ca.x509_cert = parsed  # calculates serial etc
@@ -843,7 +940,8 @@ VQIDAQAB
     def create_csr(cls, subject):
         """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=1024, backend=default_backend())
+            public_exponent=65537, key_size=1024, backend=default_backend()
+        )
         builder = x509.CertificateSigningRequestBuilder()
 
         builder = builder.subject_name(x509_name(subject))
@@ -860,57 +958,77 @@ VQIDAQAB
         return cert
 
     @classmethod
-    def load_cert(cls, ca, parsed, csr='', profile=''):
+    def load_cert(cls, ca, parsed, csr="", profile=""):
         """Load a certificate from the given data."""
         cert = Certificate(ca=ca, csr=csr, profile=profile)
         cert.x509_cert = parsed
         cert.save()
         return cert
 
-    def create_superuser(self, username='admin', password='admin', email='user@example.com'):
+    def create_superuser(self, username="admin", password="admin", email="user@example.com"):
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
 
     def load_usable_cas(self):
         """Load CAs generated as fixture data."""
-        self.cas.update({k: self.load_ca(name=v['name'], parsed=v['pub']['parsed']) for k, v in certs.items()
-                        if v.get('type') == 'ca' and k not in self.cas and v['key_filename'] is not False})
-        self.cas['child'].parent = self.cas['root']
-        self.cas['child'].save()
+        self.cas.update(
+            {
+                k: self.load_ca(name=v["name"], parsed=v["pub"]["parsed"])
+                for k, v in certs.items()
+                if v.get("type") == "ca" and k not in self.cas and v["key_filename"] is not False
+            }
+        )
+        self.cas["child"].parent = self.cas["root"]
+        self.cas["child"].save()
         self.usable_cas = self.cas
 
     def load_all_cas(self):
         """Load all known CAs."""
-        self.cas.update({k: self.load_ca(name=v['name'], parsed=v['pub']['parsed']) for k, v in certs.items()
-                        if v.get('type') == 'ca' and k not in self.cas})
-        self.cas['child'].parent = self.cas['root']
-        self.cas['child'].save()
-        self.usable_cas = {name: ca for name, ca in self.cas.items()
-                           if certs[name]['key_filename'] is not False}
+        self.cas.update(
+            {
+                k: self.load_ca(name=v["name"], parsed=v["pub"]["parsed"])
+                for k, v in certs.items()
+                if v.get("type") == "ca" and k not in self.cas
+            }
+        )
+        self.cas["child"].parent = self.cas["root"]
+        self.cas["child"].save()
+        self.usable_cas = {
+            name: ca for name, ca in self.cas.items() if certs[name]["key_filename"] is not False
+        }
 
     def load_generated_certs(self):
         """Load certificates created as fixture data."""
-        for name, data in [(k, v) for k, v in certs.items()
-                           if v['type'] == 'cert' and v['cat'] == 'generated' and k not in self.certs]:
-            ca = self.cas[data['ca']]
-            csr = data.get('csr', {}).get('pem', '')
-            self.certs[name] = self.load_cert(ca, parsed=data['pub']['parsed'], csr=csr)
+        for name, data in [
+            (k, v)
+            for k, v in certs.items()
+            if v["type"] == "cert" and v["cat"] == "generated" and k not in self.certs
+        ]:
+            ca = self.cas[data["ca"]]
+            csr = data.get("csr", {}).get("pem", "")
+            self.certs[name] = self.load_cert(ca, parsed=data["pub"]["parsed"], csr=csr)
 
         self.generated_certs = self.certs
-        self.ca_certs = {k: v for k, v in self.certs.items()
-                         if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
+        self.ca_certs = {
+            k: v
+            for k, v in self.certs.items()
+            if k in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]
+        }
 
     def load_all_certs(self):
         """Load all known certs."""
-        for name, data in [(k, v) for k, v in certs.items() if v['type'] == 'cert' and k not in self.certs]:
-            ca = self.cas[data['ca']]
-            csr = data.get('csr', {}).get('pem', '')
-            profile = data.get('profile', ca_settings.CA_DEFAULT_PROFILE)
-            self.certs[name] = self.load_cert(ca, parsed=data['pub']['parsed'], csr=csr, profile=profile)
+        for name, data in [(k, v) for k, v in certs.items() if v["type"] == "cert" and k not in self.certs]:
+            ca = self.cas[data["ca"]]
+            csr = data.get("csr", {}).get("pem", "")
+            profile = data.get("profile", ca_settings.CA_DEFAULT_PROFILE)
+            self.certs[name] = self.load_cert(ca, parsed=data["pub"]["parsed"], csr=csr, profile=profile)
 
-        self.generated_certs = {k: v for k, v in self.certs.items() if certs[k]['cat'] == 'generated'}
-        self.ca_certs = {k: v for k, v in self.certs.items()
-                         if k in ['root-cert', 'child-cert', 'ecc-cert', 'dsa-cert', 'pwd-cert']}
+        self.generated_certs = {k: v for k, v in self.certs.items() if certs[k]["cat"] == "generated"}
+        self.ca_certs = {
+            k: v
+            for k, v in self.certs.items()
+            if k in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]
+        }
 
     @contextmanager
     def patch(self, *args, **kwargs):
@@ -927,12 +1045,12 @@ VQIDAQAB
     @contextmanager
     def mute_celery(self):
         """Mock celery invocations."""
-        with patch('celery.app.task.Task.apply_async') as mock:
+        with patch("celery.app.task.Task.apply_async") as mock:
             yield mock
 
     def reverse(self, name, *args, **kwargs):
         """Shortcut to reverse an URI name."""
-        return reverse('django_ca:%s' % name, args=args, kwargs=kwargs)
+        return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
 
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
@@ -970,6 +1088,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
     This class really loads all certificates that we know of. This includes certificates generated as test
     fixture, certificates retrieved from the interned as example data and certificates from bug reports.
     """
+
     def setUp(self):
         super().setUp()
         self.load_all_certs()
@@ -998,6 +1117,7 @@ class DjangoCAWithGeneratedCAsTransactionTestCase(DjangoCATransactionTestCase):
 
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
     """TestCase with some helper functions for Selenium."""
+
     # NOTE: coverage has weird issues all over this class
 
     @classmethod
@@ -1011,8 +1131,7 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
             cls.vdisplay.start()
 
         cls.selenium = WebDriver(
-            executable_path=settings.GECKODRIVER_PATH,
-            service_log_path=settings.GECKODRIVER_LOG_PATH
+            executable_path=settings.GECKODRIVER_PATH, service_log_path=settings.GECKODRIVER_LOG_PATH
         )
         cls.selenium.implicitly_wait(10)
 
@@ -1032,14 +1151,14 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
 
         return self.selenium.find_element_by_css_selector(selector)
 
-    def login(self, username='admin', password='admin'):
+    def login(self, username="admin", password="admin"):
         """Login the given user."""
-        self.selenium.get('%s%s' % (self.live_server_url, reverse('admin:login')))
-        self.find('#id_username').send_keys(username)
-        self.find('#id_password').send_keys(password)
+        self.selenium.get("%s%s" % (self.live_server_url, reverse("admin:login")))
+        self.find("#id_username").send_keys(username)
+        self.find("#id_password").send_keys(password)
         self.find('input[type="submit"]').click()
         self.wait_for_page_load()
 
     def wait_for_page_load(self, wait=2):
         """Wait for the page to load."""
-        WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name('body'))
+        WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))

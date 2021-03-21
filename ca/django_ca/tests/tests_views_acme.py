@@ -62,29 +62,33 @@ from .base import timestamps
 
 class DirectoryTestCase(DjangoCAWithCATestCase):
     """Test basic ACMEv2 directory view."""
-    url = reverse('django_ca:acme-directory')
 
-    @freeze_time(timestamps['everything_valid'])
+    url = reverse("django_ca:acme-directory")
+
+    @freeze_time(timestamps["everything_valid"])
     def test_default(self):
         """Test the default directory view."""
         ca = CertificateAuthority.objects.default()
         ca.acme_enabled = True
         ca.save()
 
-        with mock.patch('secrets.token_bytes', return_value=b'foobar'):
+        with mock.patch("secrets.token_bytes", return_value=b"foobar"):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         req = response.wsgi_request
-        self.assertEqual(response.json(), {
-            'Zm9vYmFy': 'https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417',
-            'keyChange': 'http://localhost:8000/django_ca/acme/todo/key-change',
-            'revokeCert': 'http://localhost:8000/django_ca/acme/todo/revoke-cert',
-            'newAccount': req.build_absolute_uri('/django_ca/acme/%s/new-account/' % ca.serial),
-            'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
-            'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
-        })
+        self.assertEqual(
+            response.json(),
+            {
+                "Zm9vYmFy": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+                "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+                "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
+                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % ca.serial),
+                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % ca.serial),
+            },
+        )
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_named_ca(self):
         """Test getting directory for named CA."""
 
@@ -92,192 +96,216 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         ca.acme_enabled = True
         ca.save()
 
-        url = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
-        with mock.patch('secrets.token_bytes', return_value=b'foobar'):
+        url = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
+        with mock.patch("secrets.token_bytes", return_value=b"foobar"):
             response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertEqual(response["Content-Type"], "application/json")
         req = response.wsgi_request
-        self.assertEqual(response.json(), {
-            'Zm9vYmFy': 'https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417',
-            'keyChange': 'http://localhost:8000/django_ca/acme/todo/key-change',
-            'revokeCert': 'http://localhost:8000/django_ca/acme/todo/revoke-cert',
-            'newAccount': req.build_absolute_uri('/django_ca/acme/%s/new-account/' % ca.serial),
-            'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
-            'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
-        })
+        self.assertEqual(
+            response.json(),
+            {
+                "Zm9vYmFy": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+                "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+                "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
+                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % ca.serial),
+                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % ca.serial),
+            },
+        )
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_meta(self):
         """Test the meta property."""
         ca = CertificateAuthority.objects.default()
         ca.acme_enabled = True
-        ca.website = 'http://ca.example.com'
-        ca.terms_of_service = 'http://ca.example.com/acme/tos'
-        ca.caa_identity = 'ca.example.com'
+        ca.website = "http://ca.example.com"
+        ca.terms_of_service = "http://ca.example.com/acme/tos"
+        ca.caa_identity = "ca.example.com"
         ca.save()
 
-        url = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
-        with mock.patch('secrets.token_bytes', return_value=b'foobar'):
+        url = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
+        with mock.patch("secrets.token_bytes", return_value=b"foobar"):
             response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertEqual(response["Content-Type"], "application/json")
         req = response.wsgi_request
-        self.assertEqual(response.json(), {
-            'Zm9vYmFy': 'https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417',
-            'keyChange': 'http://localhost:8000/django_ca/acme/todo/key-change',
-            'revokeCert': 'http://localhost:8000/django_ca/acme/todo/revoke-cert',
-            'newAccount': req.build_absolute_uri('/django_ca/acme/%s/new-account/' % ca.serial),
-            'newNonce': req.build_absolute_uri('/django_ca/acme/%s/new-nonce/' % ca.serial),
-            'newOrder': req.build_absolute_uri('/django_ca/acme/%s/new-order/' % ca.serial),
-            'meta': {
-                'termsOfService': ca.terms_of_service,
-                'caaIdentities': [
-                    ca.caa_identity,
-                ],
-                'website': ca.website,
+        self.assertEqual(
+            response.json(),
+            {
+                "Zm9vYmFy": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+                "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+                "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
+                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % ca.serial),
+                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % ca.serial),
+                "meta": {
+                    "termsOfService": ca.terms_of_service,
+                    "caaIdentities": [
+                        ca.caa_identity,
+                    ],
+                    "website": ca.website,
+                },
             },
-        })
+        )
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_acme_default_disabled(self):
         """Test that fetching the default CA with ACME disabled doesn't work."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertEqual(response.json(), {
-            'detail': 'No (usable) default CA configured.',
-            'status': 404,
-            'type': 'urn:ietf:params:acme:error:not-found',
-        })
+        self.assertEqual(response["Content-Type"], "application/problem+json")
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "No (usable) default CA configured.",
+                "status": 404,
+                "type": "urn:ietf:params:acme:error:not-found",
+            },
+        )
 
-    @freeze_time(timestamps['everything_valid'])
+    @freeze_time(timestamps["everything_valid"])
     def test_acme_disabled(self):
         """Test that fetching the default CA with ACME disabled doesn't work."""
         ca = CertificateAuthority.objects.default()
-        url = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
+        url = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
         response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertEqual(response.json(), {
-            'detail': '%s: CA not found.' % ca.serial,
-            'status': 404,
-            'type': 'urn:ietf:params:acme:error:not-found',
-        })
+        self.assertEqual(response["Content-Type"], "application/problem+json")
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "%s: CA not found." % ca.serial,
+                "status": 404,
+                "type": "urn:ietf:params:acme:error:not-found",
+            },
+        )
 
     def test_no_ca(self):
         """Test using default CA when **no** CA exists."""
         CertificateAuthority.objects.all().delete()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertEqual(response.json(), {
-            'detail': 'No (usable) default CA configured.',
-            'status': 404,
-            'type': 'urn:ietf:params:acme:error:not-found',
-        })
+        self.assertEqual(response["Content-Type"], "application/problem+json")
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "No (usable) default CA configured.",
+                "status": 404,
+                "type": "urn:ietf:params:acme:error:not-found",
+            },
+        )
 
-    @freeze_time(timestamps['everything_expired'])
+    @freeze_time(timestamps["everything_expired"])
     def test_expired_ca(self):
         """Test using default CA when all CAs are expired."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertEqual(response.json(), {
-            'detail': 'No (usable) default CA configured.',
-            'status': 404,
-            'type': 'urn:ietf:params:acme:error:not-found',
-        })
+        self.assertEqual(response["Content-Type"], "application/problem+json")
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "No (usable) default CA configured.",
+                "status": 404,
+                "type": "urn:ietf:params:acme:error:not-found",
+            },
+        )
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
+        self.assertEqual(response["Content-Type"], "text/html")  # --> coming from Django
 
     def test_unknown_serial(self):
         """Test explicitly naming an unknown serial."""
-        serial = 'ABCDEF'
-        url = reverse('django_ca:acme-directory', kwargs={'serial': serial})
+        serial = "ABCDEF"
+        url = reverse("django_ca:acme-directory", kwargs={"serial": serial})
         response = self.client.get(url)
 
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
-        self.assertEqual(response.json(), {
-            'detail': 'ABCDEF: CA not found.',
-            'status': 404,
-            'type': 'urn:ietf:params:acme:error:not-found',
-        })
+        self.assertEqual(response["Content-Type"], "application/problem+json")
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "ABCDEF: CA not found.",
+                "status": 404,
+                "type": "urn:ietf:params:acme:error:not-found",
+            },
+        )
 
 
 class AcmeTestCaseMixin:
     """TestCase mixin with various common utility functions."""
 
-    hostname = 'example.com'  # what we want a certificate for
-    SERVER_NAME = 'example.com'
-    PEM = '''-----BEGIN PUBLIC KEY-----
+    hostname = "example.com"  # what we want a certificate for
+    SERVER_NAME = "example.com"
+    PEM = """-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDF9BgQzTqQQnCLTcniyO++uDyb
 RWtl+pCaG18whZOFa5ei+Sf0Qv9Z0cvOtZpxs3fE/IBVExKvZExtSf7JiBvh8Jv1
 85svKEiZOhlkxB3sSem1xTdkPIr/kpgswK1BoWqX0pP5EQuVn483jXNNFWvaYM6H
 KSAr5SU7IyM/9M95oQIDAQAB
------END PUBLIC KEY-----'''
+-----END PUBLIC KEY-----"""
 
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
-        self.ca = self.cas['root']
-        self.cert = self.cas['child']  # actually a ca, but doesn't matter
+        self.ca = self.cas["root"]
+        self.cert = self.cas["child"]  # actually a ca, but doesn't matter
         self.ca.acme_enabled = True
         self.ca.save()
-        self.client.defaults['SERVER_NAME'] = self.SERVER_NAME
+        self.client.defaults["SERVER_NAME"] = self.SERVER_NAME
 
     def absolute_uri(self, name, **kwargs):
         """Override to set a default for `hostname`."""
 
-        kwargs.setdefault('hostname', self.SERVER_NAME)
+        kwargs.setdefault("hostname", self.SERVER_NAME)
         return super().absolute_uri(name, **kwargs)
 
-    def assertAcmeProblem(self, response, typ, status, message, ca=None,  # pylint: disable=invalid-name
-                          link_relations=None):
+    def assertAcmeProblem(
+        self, response, typ, status, message, ca=None, link_relations=None  # pylint: disable=invalid-name
+    ):
         """Assert that a HTTP response confirms to an ACME problem report.
 
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
         """
         link_relations = link_relations or {}
-        self.assertEqual(response['Content-Type'], 'application/problem+json')
+        self.assertEqual(response["Content-Type"], "application/problem+json")
         self.assertLinkRelations(response, ca=ca, **link_relations)
         data = response.json()
-        self.assertEqual(data['type'], 'urn:ietf:params:acme:error:%s' % typ)
-        self.assertEqual(data['status'], status)
-        self.assertEqual(data['detail'], message)
-        self.assertIn('Replay-Nonce', response)
+        self.assertEqual(data["type"], "urn:ietf:params:acme:error:%s" % typ)
+        self.assertEqual(data["status"], status)
+        self.assertEqual(data["detail"], message)
+        self.assertIn("Replay-Nonce", response)
 
     def assertAcmeResponse(self, response, ca=None, link_relations=None):  # pylint: disable=invalid-name
         """Assert basic Acme Response properties (Content-Type & Link header)."""
         link_relations = link_relations or {}
         self.assertLinkRelations(response, ca=ca, **link_relations)
-        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertEqual(response["Content-Type"], "application/json")
 
     def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
         """Assert Link relations for a given request."""
         if ca is None:
             ca = self.ca
 
-        directory = reverse('django_ca:acme-directory', kwargs={'serial': ca.serial})
-        kwargs.setdefault('index', response.wsgi_request.build_absolute_uri(directory))
+        directory = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
+        kwargs.setdefault("index", response.wsgi_request.build_absolute_uri(directory))
 
-        expected = [{'rel': k, 'url': v} for k, v in kwargs.items()]
-        actual = parse_header_links(response['Link'])
+        expected = [{"rel": k, "url": v} for k, v in kwargs.items()]
+        actual = parse_header_links(response["Link"])
         self.assertEqual(expected, actual)
 
-    def assertMalformed(self, resp, message='', typ='malformed', **kwargs):  # pylint: disable=invalid-name
+    def assertMalformed(self, resp, message="", typ="malformed", **kwargs):  # pylint: disable=invalid-name
         """Assert an unauthorized response."""
         self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
 
-    def assertUnauthorized(self, resp,    # pylint: disable=invalid-name
-                           message=AcmeResponseUnauthorized.message, **kwargs):
+    def assertUnauthorized(
+        self, resp, message=AcmeResponseUnauthorized.message, **kwargs  # pylint: disable=invalid-name
+    ):
         """Assert an unauthorized response."""
-        self.assertAcmeProblem(resp, 'unauthorized', status=HTTPStatus.UNAUTHORIZED, message=message,
-                               **kwargs)
+        self.assertAcmeProblem(
+            resp, "unauthorized", status=HTTPStatus.UNAUTHORIZED, message=message, **kwargs
+        )
 
     def get_nonce(self, ca=None):
         """Get a nonce with an actual request.
@@ -289,24 +317,24 @@ KSAr5SU7IyM/9M95oQIDAQAB
             The decoded bytes of the nonce.
         """
         if ca is None:
-            ca = self.cas['root']
+            ca = self.cas["root"]
 
-        url = reverse('django_ca:acme-new-nonce', kwargs={'serial': ca.serial})
+        url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)
         self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
-        return jose.decode_b64jose(response['replay-nonce'])
+        return jose.decode_b64jose(response["replay-nonce"])
 
     @contextmanager
     def mock_slug(self):
         """Mock random slug generation, yields the static value."""
 
         slug = get_random_string(length=12)
-        with mock.patch('django_ca.models.get_random_string', return_value=slug):
+        with mock.patch("django_ca.models.get_random_string", return_value=slug):
             yield slug
 
     def post(self, url, data, **kwargs):
         """Make a post request with some ACME specific default data."""
-        kwargs.setdefault('content_type', 'application/jose+json')
+        kwargs.setdefault("content_type", "application/jose+json")
         return self.client.post(url, json.dumps(data), **kwargs)
 
 
@@ -315,14 +343,14 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
 
     def setUp(self):
         super().setUp()
-        self.url = reverse('django_ca:acme-new-nonce', kwargs={'serial': self.cas['root'].serial})
+        self.url = reverse("django_ca:acme-new-nonce", kwargs={"serial": self.cas["root"].serial})
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         response = self.client.head(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
+        self.assertEqual(response["Content-Type"], "text/html")  # --> coming from Django
 
     def test_get_nonce(self):
         """Test that getting multiple nonces returns unique nonces."""
@@ -331,9 +359,9 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
         for _i in range(1, 5):
             response = self.client.head(self.url)
             self.assertEqual(response.status_code, HTTPStatus.OK)
-            self.assertEqual(len(response['replay-nonce']), 43)
-            self.assertEqual(response['cache-control'], 'no-store')
-            nonces.append(response['replay-nonce'])
+            self.assertEqual(len(response["replay-nonce"]), 43)
+            self.assertEqual(response["cache-control"], "no-store")
+            nonces.append(response["replay-nonce"])
 
         self.assertEqual(len(nonces), len(set(nonces)))
 
@@ -342,8 +370,8 @@ class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
-        self.assertEqual(len(response['replay-nonce']), 43)
-        self.assertEqual(response['cache-control'], 'no-store')
+        self.assertEqual(len(response["replay-nonce"]), 43)
+        self.assertEqual(response["cache-control"], "no-store")
 
 
 class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
@@ -355,9 +383,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     def setUp(self):
         super().setUp()
         self.account_slug = acme_slug()
-        self.kid = 'http://%s%s' % (self.SERVER_NAME, self.absolute_uri(
-            ':acme-account', serial=self.ca.serial, slug=self.account_slug
-        ))
+        self.kid = "http://%s%s" % (
+            self.SERVER_NAME,
+            self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.account_slug),
+        )
 
     def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None, post_kwargs=None):
         """Do a generic ACME request.
@@ -380,12 +409,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             payload = msg.to_json()
             if payload_cb is not None:
                 payload = payload_cb(payload)
-            payload = json.dumps(payload).encode('utf-8')
+            payload = json.dumps(payload).encode("utf-8")
         else:
             payload = msg
 
-        jws = acme.jws.JWS.sign(payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri),
-                                kid=kid)
+        jws = acme.jws.JWS.sign(
+            payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
+        )
         return self.post(uri, jws.to_json(), **post_kwargs)
 
     def get_message(self, **kwargs):
@@ -395,28 +425,26 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         that it violates the ACME spec.
         """
         if self.post_as_get:
-            return b''
+            return b""
 
         return self.message_cls(**kwargs)
 
     def get_url(self, **kwargs):
         """Get a URL for this view with the given kwargs."""
-        return reverse('django_ca:%s' % self.view_name, kwargs=kwargs)
+        return reverse("django_ca:%s" % self.view_name, kwargs=kwargs)
 
     @property
     def message(self):
-        """Property for sending the default message.
-
-        """
+        """Property for sending the default message."""
         if self.post_as_get:
-            return b''
+            return b""
 
         return self.get_message()
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_disabled_acme(self):
         """Test that we get HTTP 404 if ACME is disabled."""
-        resp = self.acme(self.url, self.message, nonce=b'foo')
+        resp = self.acme(self.url, self.message, nonce=b"foo")
         self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)
 
     @override_tmpcadir()
@@ -425,9 +453,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         .. seealso:: RFC 8555, 6.2
         """
-        resp = self.acme(self.url, self.message, post_kwargs={'CONTENT_TYPE': 'FOO'})
-        self.assertAcmeProblem(resp, 'malformed', status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
-                               message='Requests must use the application/jose+json content type.')
+        resp = self.acme(self.url, self.message, post_kwargs={"CONTENT_TYPE": "FOO"})
+        self.assertAcmeProblem(
+            resp,
+            "malformed",
+            status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+            message="Requests must use the application/jose+json content type.",
+        )
 
     @override_tmpcadir()
     def test_jwk_and_kid(self):
@@ -437,28 +469,29 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         def sign_mock(*args, **kwargs):
             """Mock function to set include_jwk to true."""
-            kwargs['include_jwk'] = True
+            kwargs["include_jwk"] = True
             return sign(*args, **kwargs)
 
-        with mock.patch('acme.jws.Signature.sign', side_effect=sign_mock):
-            resp = self.acme(self.url, self.message, kid='foo')
-        self.assertMalformed(resp, 'jwk and kid are mutually exclusive.')
+        with mock.patch("acme.jws.Signature.sign", side_effect=sign_mock):
+            resp = self.acme(self.url, self.message, kid="foo")
+        self.assertMalformed(resp, "jwk and kid are mutually exclusive.")
 
     @override_tmpcadir()
     def test_invalid_ca(self):
         """Test a request where the CA cannot be found."""
         CertificateAuthority.objects.all().update(acme_enabled=False)
         resp = self.acme(self.url, self.message)
-        self.assertAcmeProblem(resp, 'not-found', status=HTTPStatus.NOT_FOUND,
-                               message="The requested CA cannot be found.")
+        self.assertAcmeProblem(
+            resp, "not-found", status=HTTPStatus.NOT_FOUND, message="The requested CA cannot be found."
+        )
 
     @override_tmpcadir()
     def test_wrong_jwk_or_kid(self):
         """Send a KID where a JWK is required and vice-versa."""
         kid = self.kid
-        expected = 'Request requires a full JWK key.'
+        expected = "Request requires a full JWK key."
         if self.requires_kid:
-            expected = 'Request requires a JWK key ID.'
+            expected = "Request requires a JWK key ID."
             kid = None
 
         self.assertMalformed(self.acme(self.url, self.message, kid=kid), expected)
@@ -467,13 +500,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     def test_invalid_jws(self):
         """Test invalid JWS signature."""
         kid = self.kid if self.requires_kid else None
-        with self.patch('acme.jws.JWS.verify', return_value=False) as verify_mock:
-            self.assertMalformed(self.acme(self.url, self.message, kid=kid), 'JWS signature invalid.')
+        with self.patch("acme.jws.JWS.verify", return_value=False) as verify_mock:
+            self.assertMalformed(self.acme(self.url, self.message, kid=kid), "JWS signature invalid.")
         verify_mock.assert_called_once()
 
         # function might also raise an exception
-        with self.patch('acme.jws.JWS.verify', side_effect=Exception('foo')) as verify_mock:
-            self.assertMalformed(self.acme(self.url, self.message, kid=kid), 'JWS signature invalid.')
+        with self.patch("acme.jws.JWS.verify", side_effect=Exception("foo")) as verify_mock:
+            self.assertMalformed(self.acme(self.url, self.message, kid=kid), "JWS signature invalid.")
         verify_mock.assert_called_once()
 
     @override_tmpcadir()
@@ -484,28 +517,28 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         def sign_mock(*args, **kwargs):
             """Mock function so that JWS has neither jwk nor kid"""
-            kwargs.pop('kid')
-            kwargs['include_jwk'] = False
+            kwargs.pop("kid")
+            kwargs["include_jwk"] = False
             return sign(*args, **kwargs)
 
-        with mock.patch('acme.jws.Signature.sign', side_effect=sign_mock):
-            resp = self.acme(self.url, self.message, kid='foo')
-        self.assertMalformed(resp, 'JWS contained neither key nor key ID.')
+        with mock.patch("acme.jws.Signature.sign", side_effect=sign_mock):
+            resp = self.acme(self.url, self.message, kid="foo")
+        self.assertMalformed(resp, "JWS contained neither key nor key ID.")
 
     def test_invalid_json(self):
         """Test sending invalid JSON to the server."""
 
-        resp = self.client.post(self.url, '{', content_type='application/jose+json')
-        self.assertMalformed(resp, 'Could not parse JWS token.')
+        resp = self.client.post(self.url, "{", content_type="application/jose+json")
+        self.assertMalformed(resp, "Could not parse JWS token.")
 
     @override_tmpcadir()
     def test_wrong_url(self):
         """Test sending the wrong URL."""
 
         kid = self.kid if self.requires_kid else None
-        with self.patch('django.http.request.HttpRequest.build_absolute_uri', return_value='foo'):
+        with self.patch("django.http.request.HttpRequest.build_absolute_uri", return_value="foo"):
             resp = self.acme(self.url, self.message, kid=kid)
-        self.assertUnauthorized(resp, 'URL does not match.', link_relations={'index': 'foo'})
+        self.assertUnauthorized(resp, "URL does not match.", link_relations={"index": "foo"})
 
     @override_tmpcadir()
     def test_payload_in_post_as_get(self):
@@ -514,41 +547,43 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             return
 
         # just some bogus data
-        message = acme.messages.Registration(contact=('user@example.com', ), terms_of_service_agreed=True)
+        message = acme.messages.Registration(contact=("user@example.com",), terms_of_service_agreed=True)
         resp = self.acme(self.url, message, kid=self.kid)
-        self.assertMalformed(resp, 'Non-empty payload in get-as-post request.')
+        self.assertMalformed(resp, "Non-empty payload in get-as-post request.")
 
 
 class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):  # pylint: disable=too-few-public-methods
     """Mixin that also adds an account to the database."""
+
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, kid=self.kid, pem=self.PEM)
+            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, kid=self.kid, pem=self.PEM
+        )
 
     @override_tmpcadir()
     def test_unknown_account(self):
         """Test doing requeist with an unknown kid."""
-        self.assertUnauthorized(self.acme(self.url, self.message, kid='unknown'), 'Account not found.')
+        self.assertUnauthorized(self.acme(self.url, self.message, kid="unknown"), "Account not found.")
 
     @override_tmpcadir()
     def test_unusable_account(self):
         """Test doing a request with an unusable account."""
         self.account.status = AcmeAccount.STATUS_REVOKED
         self.account.save()
-        self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), 'Account not usable.')
+        self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), "Account not usable.")
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
-    contact = 'mailto:user@example.com'
-    url = reverse('django_ca:acme-new-account', kwargs={'serial': certs['root']['serial']})
-    message = acme.messages.Registration(contact=(contact, ), terms_of_service_agreed=True)
+    contact = "mailto:user@example.com"
+    url = reverse("django_ca:acme-new-account", kwargs={"serial": certs["root"]["serial"]})
+    message = acme.messages.Registration(contact=(contact,), terms_of_service_agreed=True)
     message_cls = acme.messages.Registration
     requires_kid = False
-    view_name = 'acme-new-account'
+    view_name = "acme-new-account"
 
     @override_tmpcadir()
     def test_basic(self):
@@ -569,44 +604,62 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.assertEqual(acc.pem, self.PEM)
 
         # Test the response body
-        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             slug=acc.slug))
-        self.assertEqual(resp.json(), {
-            'contact': [self.contact],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp["location"], self.absolute_uri(":acme-account", serial=self.ca.serial, slug=acc.slug)
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [self.contact],
+                "orders": self.absolute_uri(":acme-account-orders", serial=self.ca.serial, slug=acc.slug),
+                "status": "valid",
+            },
+        )
 
         # Test making a request where we already have a key
-        resp = self.acme(self.url, self.get_message(
-            contact=('mailto:other@example.net', ),  # make sure that we do not update the user
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            self.get_message(
+                contact=("mailto:other@example.net",),  # make sure that we do not update the user
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.OK)
         self.assertAcmeResponse(resp)
-        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             slug=acc.slug))
-        self.assertEqual(resp.json(), {
-            'contact': [self.contact],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp["location"], self.absolute_uri(":acme-account", serial=self.ca.serial, slug=acc.slug)
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [self.contact],
+                "orders": self.absolute_uri(":acme-account-orders", serial=self.ca.serial, slug=acc.slug),
+                "status": "valid",
+            },
+        )
         self.assertEqual(AcmeAccount.objects.count(), 1)
 
         # test only_return existing:
-        resp = self.acme(self.url, self.get_message(
-            contact=('mailto:other@example.net', ),  # make sure that we do not update the user
-            only_return_existing=True,
-        ))
+        resp = self.acme(
+            self.url,
+            self.get_message(
+                contact=("mailto:other@example.net",),  # make sure that we do not update the user
+                only_return_existing=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.OK)
         self.assertAcmeResponse(resp)
-        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             slug=acc.slug))
-        self.assertEqual(resp.json(), {
-            'contact': [self.contact],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp["location"], self.absolute_uri(":acme-account", serial=self.ca.serial, slug=acc.slug)
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [self.contact],
+                "orders": self.absolute_uri(":acme-account-orders", serial=self.ca.serial, slug=acc.slug),
+                "status": "valid",
+            },
+        )
         self.assertEqual(AcmeAccount.objects.count(), 1)
 
         # Test object properties one last time
@@ -633,26 +686,31 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         acc = AcmeAccount.objects.get(slug=slug)
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
-        self.assertEqual(acc.contact, '')
+        self.assertEqual(acc.contact, "")
         self.assertTrue(acc.terms_of_service_agreed)
 
         # Test the response body
-        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             slug=acc.slug))
-        self.assertEqual(resp.json(), {
-            'contact': [],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp["location"], self.absolute_uri(":acme-account", serial=self.ca.serial, slug=acc.slug)
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [],
+                "orders": self.absolute_uri(":acme-account-orders", serial=self.ca.serial, slug=acc.slug),
+                "status": "valid",
+            },
+        )
 
     @override_tmpcadir()
     def test_multiple_contacts(self):
         """Test for creating an account with multiple email addresses."""
 
-        contact_2 = 'mailto:user@example.net'
+        contact_2 = "mailto:user@example.net"
         with self.mock_slug() as slug:
-            resp = self.acme(self.url, self.get_message(contact=(self.contact, contact_2),
-                                                        terms_of_service_agreed=True))
+            resp = self.acme(
+                self.url, self.get_message(contact=(self.contact, contact_2), terms_of_service_agreed=True)
+            )
         self.assertEqual(resp.status_code, HTTPStatus.CREATED)
         self.assertAcmeResponse(resp)
 
@@ -660,17 +718,21 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         acc = AcmeAccount.objects.get(slug=slug)
         self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
         self.assertEqual(acc.ca, self.ca)
-        self.assertCountEqual(acc.contact.split('\n'), [self.contact, contact_2])
+        self.assertCountEqual(acc.contact.split("\n"), [self.contact, contact_2])
         self.assertTrue(acc.terms_of_service_agreed)
 
         # Test the response body
-        self.assertEqual(resp['location'], self.absolute_uri(':acme-account', serial=self.ca.serial,
-                                                             slug=acc.slug))
-        self.assertEqual(resp.json(), {
-            'contact': [self.contact, contact_2],
-            'orders': self.absolute_uri(':acme-account-orders', serial=self.ca.serial, slug=acc.slug),
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp["location"], self.absolute_uri(":acme-account", serial=self.ca.serial, slug=acc.slug)
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [self.contact, contact_2],
+                "orders": self.absolute_uri(":acme-account-orders", serial=self.ca.serial, slug=acc.slug),
+                "status": "valid",
+            },
+        )
 
     @override_tmpcadir()
     def test_contacts_required(self):
@@ -678,64 +740,102 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         self.ca.acme_requires_contact = True
         self.ca.save()
 
-        resp = self.acme(self.url, acme.messages.Registration(
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.UNAUTHORIZED)
-        self.assertUnauthorized(resp, 'Must provide at least one contact address.')
+        self.assertUnauthorized(resp, "Must provide at least one contact address.")
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
     @override_tmpcadir()
     def test_unsupported_contact(self):
         """Test that creating an account with a phone number fails."""
 
-        resp = self.acme(self.url, acme.messages.Registration(
-            contact=('tel:1234567', self.contact),
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                contact=("tel:1234567", self.contact),
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertAcmeProblem(resp, 'unsupportedContact', status=HTTPStatus.BAD_REQUEST,
-                               message='tel:1234567: Unsupported address scheme.')
+        self.assertAcmeProblem(
+            resp,
+            "unsupportedContact",
+            status=HTTPStatus.BAD_REQUEST,
+            message="tel:1234567: Unsupported address scheme.",
+        )
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
     @override_tmpcadir()
     def test_invalid_email(self):
         """Test that creating an account with a phone number fails."""
 
-        resp = self.acme(self.url, acme.messages.Registration(
-            contact=('mailto:"with spaces"@example.com', ),
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                contact=('mailto:"with spaces"@example.com',),
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
-                               message='Quoted local part in email is not allowed.')
+        self.assertAcmeProblem(
+            resp,
+            "invalidContact",
+            status=HTTPStatus.BAD_REQUEST,
+            message="Quoted local part in email is not allowed.",
+        )
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
-        resp = self.acme(self.url, acme.messages.Registration(
-            contact=('mailto:user@example.com,user@example.net', ),
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                contact=("mailto:user@example.com,user@example.net",),
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
-                               message='More than one addr-spec is not allowed.')
+        self.assertAcmeProblem(
+            resp,
+            "invalidContact",
+            status=HTTPStatus.BAD_REQUEST,
+            message="More than one addr-spec is not allowed.",
+        )
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
-        resp = self.acme(self.url, acme.messages.Registration(
-            contact=('mailto:user@example.com?who-uses=this', ),
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                contact=("mailto:user@example.com?who-uses=this",),
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
-                               message='example.com?who-uses=this: hfields are not allowed.')
+        self.assertAcmeProblem(
+            resp,
+            "invalidContact",
+            status=HTTPStatus.BAD_REQUEST,
+            message="example.com?who-uses=this: hfields are not allowed.",
+        )
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
-        resp = self.acme(self.url, acme.messages.Registration(
-            contact=('mailto:user@example..com', ),
-            terms_of_service_agreed=True,
-        ))
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                contact=("mailto:user@example..com",),
+                terms_of_service_agreed=True,
+            ),
+        )
         self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertAcmeProblem(resp, 'invalidContact', status=HTTPStatus.BAD_REQUEST,
-                               message='example..com: Not a valid email address.')
+        self.assertAcmeProblem(
+            resp,
+            "invalidContact",
+            status=HTTPStatus.BAD_REQUEST,
+            message="example..com: Not a valid email address.",
+        )
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
     @override_tmpcadir()
@@ -743,11 +843,15 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         """Test making an only_existing request for an account that does not exist."""
 
         # test only_return existing:
-        resp = self.acme(self.url, acme.messages.Registration(
-            only_return_existing=True,
-        ))
-        self.assertAcmeProblem(resp, 'accountDoesNotExist', status=HTTPStatus.BAD_REQUEST,
-                               message='Account does not exist.')
+        resp = self.acme(
+            self.url,
+            acme.messages.Registration(
+                only_return_existing=True,
+            ),
+        )
+        self.assertAcmeProblem(
+            resp, "accountDoesNotExist", status=HTTPStatus.BAD_REQUEST, message="Account does not exist."
+        )
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
     @override_tmpcadir()
@@ -757,23 +861,26 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
         Note that at present it's probably inpossible to have such an error in real life as no fields have any
         validation of user-generated input that would not be captured before model validation.
         """
-        with mock.patch('josepy.jwk.JWKRSA.thumbprint', return_value=b'abc' * 64):
-            resp = self.acme(self.url, acme.messages.Registration(
-                contact=(self.contact, ),
-                terms_of_service_agreed=True,
-            ))
-            self.assertMalformed(resp, 'Account cannot be stored.')
+        with mock.patch("josepy.jwk.JWKRSA.thumbprint", return_value=b"abc" * 64):
+            resp = self.acme(
+                self.url,
+                acme.messages.Registration(
+                    contact=(self.contact,),
+                    terms_of_service_agreed=True,
+                ),
+            )
+            self.assertMalformed(resp, "Account cannot be stored.")
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
-    url = reverse('django_ca:acme-new-order', kwargs={'serial': certs['root']['serial']})
+    url = reverse("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
     message_cls = NewOrder
 
     def get_message(self, **kwargs):
-        kwargs.setdefault('identifiers', [{'type': 'dns', 'value': self.SERVER_NAME}])
+        kwargs.setdefault("identifiers", [{"type": "dns", "value": self.SERVER_NAME}])
         return super().get_message(**kwargs)
 
     @override_tmpcadir()
@@ -785,20 +892,23 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
 
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                self.absolute_uri(':acme-authz', serial=self.ca.serial, slug=slug),
-            ],
-            'expires': pyrfc3339.generate(expires, accept_naive=accept_naive),
-            'finalize': self.absolute_uri(':acme-order-finalize', serial=self.ca.serial, slug=slug),
-            'identifiers': [{'type': 'dns', 'value': self.SERVER_NAME}],
-            'status': 'pending'
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": [
+                    self.absolute_uri(":acme-authz", serial=self.ca.serial, slug=slug),
+                ],
+                "expires": pyrfc3339.generate(expires, accept_naive=accept_naive),
+                "finalize": self.absolute_uri(":acme-order-finalize", serial=self.ca.serial, slug=slug),
+                "identifiers": [{"type": "dns", "value": self.SERVER_NAME}],
+                "status": "pending",
+            },
+        )
 
         order = AcmeOrder.objects.get(account=self.account)
         self.assertEqual(order.account, self.account)
         self.assertEqual(order.slug, slug)
-        self.assertEqual(order.status, 'pending')
+        self.assertEqual(order.status, "pending")
         self.assertEqual(order.expires, expires)
         self.assertIsNone(order.not_before)
         self.assertIsNone(order.not_after)
@@ -807,7 +917,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
         authz = order.authorizations.all()
         self.assertEqual(len(authz), 1)
         self.assertEqual(authz[0].order, order)
-        self.assertEqual(authz[0].type, 'dns')
+        self.assertEqual(authz[0].type, "dns")
         self.assertEqual(authz[0].value, self.SERVER_NAME)
         self.assertEqual(authz[0].status, AcmeAuthorization.STATUS_PENDING)
         self.assertFalse(authz[0].wildcard)
@@ -835,22 +945,25 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
 
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                self.absolute_uri(':acme-authz', serial=self.ca.serial, slug=slug),
-            ],
-            'expires': pyrfc3339.generate(expires, accept_naive=accept_naive),
-            'finalize': self.absolute_uri(':acme-order-finalize', serial=self.ca.serial, slug=slug),
-            'identifiers': [{'type': 'dns', 'value': self.SERVER_NAME}],
-            'status': 'pending',
-            'notBefore': pyrfc3339.generate(not_before, accept_naive=accept_naive),
-            'notAfter': pyrfc3339.generate(not_after, accept_naive=accept_naive),
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": [
+                    self.absolute_uri(":acme-authz", serial=self.ca.serial, slug=slug),
+                ],
+                "expires": pyrfc3339.generate(expires, accept_naive=accept_naive),
+                "finalize": self.absolute_uri(":acme-order-finalize", serial=self.ca.serial, slug=slug),
+                "identifiers": [{"type": "dns", "value": self.SERVER_NAME}],
+                "status": "pending",
+                "notBefore": pyrfc3339.generate(not_before, accept_naive=accept_naive),
+                "notAfter": pyrfc3339.generate(not_after, accept_naive=accept_naive),
+            },
+        )
 
         order = AcmeOrder.objects.get(account=self.account)
         self.assertEqual(order.account, self.account)
         self.assertEqual(order.slug, slug)
-        self.assertEqual(order.status, 'pending')
+        self.assertEqual(order.status, "pending")
         self.assertEqual(order.expires, expires)
 
         if settings.USE_TZ:
@@ -864,7 +977,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
         authz = order.authorizations.all()
         self.assertEqual(len(authz), 1)
         self.assertEqual(authz[0].order, order)
-        self.assertEqual(authz[0].type, 'dns')
+        self.assertEqual(authz[0].type, "dns")
         self.assertEqual(authz[0].value, self.SERVER_NAME)
         self.assertEqual(authz[0].status, AcmeAuthorization.STATUS_PENDING)
         self.assertFalse(authz[0].wildcard)
@@ -879,12 +992,16 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
         """Test sending no identifiers."""
 
         resp = self.acme(self.url, acme.messages.NewOrder(), kid=self.kid)
-        self.assertMalformed(resp, 'Malformed payload.')
+        self.assertMalformed(resp, "Malformed payload.")
 
         # try empty tuple too
-        resp = self.acme(self.url, acme.messages.NewOrder(identifiers=tuple()), kid=self.kid,
-                         payload_cb=lambda d: dict(d, identifiers=()))
-        self.assertMalformed(resp, 'Malformed payload.')
+        resp = self.acme(
+            self.url,
+            acme.messages.NewOrder(identifiers=tuple()),
+            kid=self.kid,
+            payload_cb=lambda d: dict(d, identifiers=()),
+        )
+        self.assertMalformed(resp, "Malformed payload.")
 
         self.assertEqual(AcmeOrder.objects.all().count(), 0)
 
@@ -894,34 +1011,33 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
 
         past = timezone.now() - timedelta(days=1)
         resp = self.acme(self.url, self.get_message(not_before=past), kid=self.kid)
-        self.assertMalformed(resp, 'Certificate cannot be valid before now.')
+        self.assertMalformed(resp, "Certificate cannot be valid before now.")
 
         far_future = timezone.now() + timedelta(days=3650)
         resp = self.acme(self.url, self.get_message(not_after=far_future), kid=self.kid)
-        self.assertMalformed(resp, 'Certificate cannot be valid that long.')
+        self.assertMalformed(resp, "Certificate cannot be valid that long.")
 
         not_before = timezone.now() + timedelta(days=10)
         not_after = timezone.now() + timedelta(days=1)
 
-        resp = self.acme(self.url, self.get_message(
-            not_before=not_before, not_after=not_after), kid=self.kid)
-        self.assertMalformed(resp, 'notBefore must be before notAfter.')
+        resp = self.acme(self.url, self.get_message(not_before=not_before, not_after=not_after), kid=self.kid)
+        self.assertMalformed(resp, "notBefore must be before notAfter.")
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     post_as_get = True
-    view_name = 'acme-authz'
+    view_name = "acme-authz"
 
     def setUp(self):
         super().setUp()
         self.order = AcmeOrder.objects.create(account=self.account)
-        self.order.add_authorizations([
-            acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value='example.com')
-        ])
-        self.authz = AcmeAuthorization.objects.get(order=self.order, value='example.com')
+        self.order.add_authorizations(
+            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value="example.com")]
+        )
+        self.authz = AcmeAuthorization.objects.get(order=self.order, value="example.com")
 
     @property
     def url(self):
@@ -940,33 +1056,39 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.assertEqual(len(challenges), 2)
 
         resp_data = resp.json()
-        resp_challenges = resp_data.pop('challenges')
-        self.assertCountEqual(resp_challenges, [
-            {
-                'type': challenges[0].type,
-                'status': 'pending',
-                'token': jose.encode_b64jose(challenges[0].token.encode('utf-8')),
-                'url': 'http://%s/django_ca/acme/%s/chall/%s/' % (
-                    self.SERVER_NAME, self.ca.serial, challenges[0].slug),
-            },
-            {
-                'type': challenges[1].type,
-                'status': 'pending',
-                'token': jose.encode_b64jose(challenges[1].token.encode('utf-8')),
-                'url': 'http://%s/django_ca/acme/%s/chall/%s/' % (
-                    self.SERVER_NAME, self.ca.serial, challenges[1].slug),
-            }
-        ])
+        resp_challenges = resp_data.pop("challenges")
+        self.assertCountEqual(
+            resp_challenges,
+            [
+                {
+                    "type": challenges[0].type,
+                    "status": "pending",
+                    "token": jose.encode_b64jose(challenges[0].token.encode("utf-8")),
+                    "url": "http://%s/django_ca/acme/%s/chall/%s/"
+                    % (self.SERVER_NAME, self.ca.serial, challenges[0].slug),
+                },
+                {
+                    "type": challenges[1].type,
+                    "status": "pending",
+                    "token": jose.encode_b64jose(challenges[1].token.encode("utf-8")),
+                    "url": "http://%s/django_ca/acme/%s/chall/%s/"
+                    % (self.SERVER_NAME, self.ca.serial, challenges[1].slug),
+                },
+            ],
+        )
 
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp_data, {
-            'expires': pyrfc3339.generate(expires, accept_naive=accept_naive),
-            'identifier': {
-                'type': 'dns',
-                'value': 'example.com',
+        self.assertEqual(
+            resp_data,
+            {
+                "expires": pyrfc3339.generate(expires, accept_naive=accept_naive),
+                "identifier": {
+                    "type": "dns",
+                    "value": "example.com",
+                },
+                "status": "pending",
             },
-            'status': 'pending',
-        })
+        )
 
     @override_settings(USE_TZ=True)
     def test_basic_with_tz(self):
@@ -981,7 +1103,8 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
         self.authz.challenges.filter(type=AcmeChallenge.TYPE_HTTP_01).update(
-            status=AcmeChallenge.STATUS_VALID, validated=timezone.now())
+            status=AcmeChallenge.STATUS_VALID, validated=timezone.now()
+        )
 
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
@@ -991,27 +1114,33 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.assertEqual(len(challenges), 1)
 
         resp_data = resp.json()
-        resp_challenges = resp_data.pop('challenges')
-        self.assertCountEqual(resp_challenges, [
-            {
-                'type': challenges[0].type,
-                'status': 'valid',
-                'validated': pyrfc3339.generate(timezone.now()),  # time is frozen anyway
-                'token': jose.encode_b64jose(challenges[0].token.encode('utf-8')),
-                'url': 'http://%s/django_ca/acme/%s/chall/%s/' % (
-                    self.SERVER_NAME, self.ca.serial, challenges[0].slug),
-            },
-        ])
+        resp_challenges = resp_data.pop("challenges")
+        self.assertCountEqual(
+            resp_challenges,
+            [
+                {
+                    "type": challenges[0].type,
+                    "status": "valid",
+                    "validated": pyrfc3339.generate(timezone.now()),  # time is frozen anyway
+                    "token": jose.encode_b64jose(challenges[0].token.encode("utf-8")),
+                    "url": "http://%s/django_ca/acme/%s/chall/%s/"
+                    % (self.SERVER_NAME, self.ca.serial, challenges[0].slug),
+                },
+            ],
+        )
 
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp_data, {
-            'expires': pyrfc3339.generate(expires),
-            'identifier': {
-                'type': 'dns',
-                'value': 'example.com',
+        self.assertEqual(
+            resp_data,
+            {
+                "expires": pyrfc3339.generate(expires),
+                "identifier": {
+                    "type": "dns",
+                    "value": "example.com",
+                },
+                "status": "valid",
             },
-            'status': 'valid',
-        })
+        )
 
     @override_tmpcadir(USE_TZ=True)
     def test_no_challenges(self):
@@ -1032,38 +1161,41 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.assertEqual(len(challenges), 0)
 
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'expires': pyrfc3339.generate(expires),
-            'identifier': {
-                'type': 'dns',
-                'value': 'example.com',
+        self.assertEqual(
+            resp.json(),
+            {
+                "expires": pyrfc3339.generate(expires),
+                "identifier": {
+                    "type": "dns",
+                    "value": "example.com",
+                },
+                "status": "valid",
             },
-            'status': 'valid',
-        })
+        )
 
     @override_tmpcadir()
     def test_unknown_auth(self):
         """Test fetching unknown auth object."""
-        resp = self.acme(self.get_url(serial=self.ca.serial, slug='abc'), self.message, kid=self.kid)
-        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
+        resp = self.acme(self.get_url(serial=self.ca.serial, slug="abc"), self.message, kid=self.kid)
+        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
 
     post_as_get = True
-    view_name = 'acme-challenge'
+    view_name = "acme-challenge"
 
     def setUp(self):
         super().setUp()
         self.order = AcmeOrder.objects.create(account=self.account)
-        self.order.add_authorizations([
-            acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value='example.com')
-        ])
-        self.authz = AcmeAuthorization.objects.get(order=self.order, value='example.com')
+        self.order.add_authorizations(
+            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value="example.com")]
+        )
+        self.authz = AcmeAuthorization.objects.get(order=self.order, value="example.com")
         self.challenge = self.authz.get_challenges()[0]
-        self.challenge.token = 'foobar'
+        self.challenge.token = "foobar"
         self.challenge.save()
 
     @property
@@ -1075,22 +1207,28 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
     def test_basic(self):
         """Basic test for creating an account via ACME."""
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
 
         self.assertEqual(mockcm.call_args_list, [mock.call(acme_validate_challenge, self.challenge.pk)])
 
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(resp, link_relations={
-            'up': 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url),
-        })
+        self.assertAcmeResponse(
+            resp,
+            link_relations={
+                "up": "http://%s%s" % (self.SERVER_NAME, self.authz.acme_url),
+            },
+        )
 
-        self.assertEqual(resp.json(), {
-            'status': 'processing',
-            'type': self.challenge.type,
-            'token': jose.encode_b64jose(self.challenge.token.encode()),
-            'url': 'http://%s%s' % (self.SERVER_NAME, self.challenge.acme_url),
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "status": "processing",
+                "type": self.challenge.type,
+                "token": jose.encode_b64jose(self.challenge.token.encode()),
+                "url": "http://%s%s" % (self.SERVER_NAME, self.challenge.acme_url),
+            },
+        )
 
     @override_tmpcadir()
     def test_no_state_change(self):
@@ -1103,74 +1241,82 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
         self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
 
         mockcm.assert_not_called()  # no validation task was triggerd
 
         # ... but response is still ok
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(resp, link_relations={
-            'up': 'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url),
-        })
+        self.assertAcmeResponse(
+            resp,
+            link_relations={
+                "up": "http://%s%s" % (self.SERVER_NAME, self.authz.acme_url),
+            },
+        )
 
-        self.assertEqual(resp.json(), {
-            'status': 'valid',
-            'type': self.challenge.type,
-            'token': jose.encode_b64jose(self.challenge.token.encode()),
-            'url': 'http://%s%s' % (self.SERVER_NAME, self.challenge.acme_url),
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "status": "valid",
+                "type": self.challenge.type,
+                "token": jose.encode_b64jose(self.challenge.token.encode()),
+                "url": "http://%s%s" % (self.SERVER_NAME, self.challenge.acme_url),
+            },
+        )
 
     @override_tmpcadir()
     def test_not_found(self):
         """Basic test for creating an account via ACME."""
 
-        url = self.get_url(serial=self.challenge.serial, slug='abc')
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        url = self.get_url(serial=self.challenge.serial, slug="abc")
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(url, self.message, kid=self.kid)
         mockcm.assert_not_called()
-        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
 
     def test_payload_in_post_as_get(self):
         """Do nothing, since we ignore the body."""
         return
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
     """Test retrieving a challenge."""
 
-    slug = '92MPyl7jm0zw'
-    url = reverse('django_ca:acme-order-finalize', kwargs={'serial': certs['root']['serial'], 'slug': slug})
+    slug = "92MPyl7jm0zw"
+    url = reverse("django_ca:acme-order-finalize", kwargs={"serial": certs["root"]["serial"], "slug": slug})
 
     def setUp(self):
         super().setUp()
 
         # Create a CSR based on root-cert
         # NOTE: certbot CSRs have an empty subject
-        self.csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
+        self.csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(x509.Name([]))
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
 
-        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_READY,
-                                              slug=self.slug)
-        self.order.add_authorizations([
-            acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value=self.hostname)
-        ])
+        self.order = AcmeOrder.objects.create(
+            account=self.account, status=AcmeOrder.STATUS_READY, slug=self.slug
+        )
+        self.order.add_authorizations(
+            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value=self.hostname)]
+        )
         self.authz = AcmeAuthorization.objects.get(order=self.order, value=self.hostname)
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
 
     def assertBadCSR(self, resp, message):  # pylint: disable=invalid-name
         """Assert a badCSR error."""
-        self.assertAcmeProblem(resp, 'badCSR', status=HTTPStatus.BAD_REQUEST, message=message)
+        self.assertAcmeProblem(resp, "badCSR", status=HTTPStatus.BAD_REQUEST, message=message)
 
     def get_message(self, csr):  # pylint: disable=arguments-differ
         """Get a message for the given cryptography CSR object."""
         req = X509Req.from_cryptography(csr)
-        return acme.messages.CertificateRequest(
-            csr=jose.util.ComparableX509(req)
-        )
+        return acme.messages.CertificateRequest(csr=jose.util.ComparableX509(req))
 
     @property
     def message(self):
@@ -1180,23 +1326,25 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
     def test_basic(self, accept_naive=True):
         """Basic test for creating an account via ACME."""
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
 
         order = AcmeOrder.objects.get(pk=self.order.pk)
         cert = order.acmecertificate
-        self.assertEqual(mockcm.call_args_list,
-                         [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)])
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
-            ],
-            'expires': pyrfc3339.generate(order.expires, accept_naive=accept_naive),
-            'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'processing',
-        })
+        self.assertEqual(
+            mockcm.call_args_list, [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "expires": pyrfc3339.generate(order.expires, accept_naive=accept_naive),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "processing",
+            },
+        )
 
     @override_settings(USE_TZ=True)
     def test_basic_with_tz(self):
@@ -1206,25 +1354,26 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
     @override_tmpcadir()
     def test_not_found(self):
         """Test an order that does not exist."""
-        url = reverse('django_ca:acme-order-finalize', kwargs={'serial': self.ca.serial, 'slug': 'foo'})
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        url = reverse("django_ca:acme-order-finalize", kwargs={"serial": self.ca.serial, "slug": "foo"})
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(url, self.message, kid=self.kid)
         mockcm.assert_not_called()
-        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
 
     @override_tmpcadir()
     def test_wrong_account(self):
         """Test an order for a different account."""
 
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
+            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+        )
         self.order.account = account
         self.order.save()
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
-        self.assertUnauthorized(resp, 'You are not authorized to perform this request.')
+        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
 
     @override_tmpcadir()
     def test_not_ready(self):
@@ -1233,11 +1382,12 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.order.status = AcmeOrder.STATUS_INVALID
         self.order.save()
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
-        self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
-                               message='This order is not yet ready.')
+        self.assertAcmeProblem(
+            resp, "orderNotReady", status=HTTPStatus.FORBIDDEN, message="This order is not yet ready."
+        )
 
     @override_tmpcadir()
     def test_invalid_auth(self):
@@ -1246,11 +1396,12 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         self.authz.status = AcmeAuthorization.STATUS_INVALID
         self.authz.save()
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
-        self.assertAcmeProblem(resp, 'orderNotReady', status=HTTPStatus.FORBIDDEN,
-                               message='This order is not yet ready.')
+        self.assertAcmeProblem(
+            resp, "orderNotReady", status=HTTPStatus.FORBIDDEN, message="This order is not yet ready."
+        )
 
     @override_tmpcadir()
     def test_csr_invalid_signature(self):
@@ -1262,118 +1413,151 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
         # attach to type: https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
         type(csr_mock).is_signature_valid = mock.PropertyMock(return_value=False)
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm, self.patch(
-                'django_ca.acme.views.parse_acme_csr', return_value=csr_mock):
+        with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
+            "django_ca.acme.views.parse_acme_csr", return_value=csr_mock
+        ):
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
-        self.assertBadCSR(resp, 'CSR signature is not valid.')
+        self.assertBadCSR(resp, "CSR signature is not valid.")
 
     @override_tmpcadir()
     def test_csr_bad_algorithm(self):
         """Test posting a CSR with a bad algorithm."""
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.MD5(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(x509.Name([]))
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.MD5(), default_backend())
+        )
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
-        self.assertBadCSR(resp, 'md5: Insecure hash algorithm.')
+        self.assertBadCSR(resp, "md5: Insecure hash algorithm.")
 
     @override_tmpcadir()
     def test_csr_valid_subject(self):
         """Test posting a CSR where the CommonName was in the order."""
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
-        ])).add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
+                    ]
+                )
+            )
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
 
         order = AcmeOrder.objects.get(pk=self.order.pk)
         cert = order.acmecertificate
-        self.assertEqual(mockcm.call_args_list,
-                         [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)])
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
-            ],
-            'expires': pyrfc3339.generate(order.expires, accept_naive=True),
-            'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'processing',
-        })
+        self.assertEqual(
+            mockcm.call_args_list, [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "expires": pyrfc3339.generate(order.expires, accept_naive=True),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "processing",
+            },
+        )
 
     @override_tmpcadir()
     def test_csr_subject_no_domain(self):
         """Test posting a CSR where the CommonName is not a domain name."""
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, "user@example.com"),
-        ])).add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COMMON_NAME, "user@example.com"),
+                    ]
+                )
+            )
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
-        self.assertBadCSR(resp, 'CommonName was not in order.')
+        self.assertBadCSR(resp, "CommonName was not in order.")
 
     @override_tmpcadir()
     def test_csr_subject_not_in_order(self):
         """Test posting a CSR where the CommonName was not in the order."""
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, "example.net"),
-        ])).add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COMMON_NAME, "example.net"),
+                    ]
+                )
+            )
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
-        self.assertBadCSR(resp, 'CommonName was not in order.')
+        self.assertBadCSR(resp, "CommonName was not in order.")
 
     @override_tmpcadir()
     def test_csr_no_san(self):
         """Test posting a CSR with no SubjectAlternativeName extension."""
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(
-            certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(x509.Name([]))
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
-        self.assertBadCSR(resp, 'No subject alternative names found in CSR.')
+        self.assertBadCSR(resp, "No subject alternative names found in CSR.")
 
     @override_tmpcadir()
     def test_csr_different_names(self):
         """Test posting a CSR with different names in the SubjectAlternativeName extesion."""
 
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).add_extension(
-            x509.SubjectAlternativeName([
-                x509.DNSName(self.hostname),
-                x509.DNSName('example.net')
-            ]), critical=False
-        ).sign(certs['root-cert']['key']['parsed'], hashes.SHA256(), default_backend())
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(x509.Name([]))
+            .add_extension(
+                x509.SubjectAlternativeName([x509.DNSName(self.hostname), x509.DNSName("example.net")]),
+                critical=False,
+            )
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
 
-        with self.patch('django_ca.acme.views.run_task') as mockcm:
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "Names in CSR do not match.")
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving an order."""
 
     post_as_get = True
-    view_name = 'acme-order'
+    view_name = "acme-order"
 
     def setUp(self):
         super().setUp()
@@ -1393,14 +1577,15 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
-            ],
-            'expires': pyrfc3339.generate(expires, accept_naive=accept_naive),
-            'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'pending',
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "expires": pyrfc3339.generate(expires, accept_naive=accept_naive),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "pending",
+            },
+        )
 
     @override_settings(USE_TZ=True)
     def test_basic_with_tz(self):
@@ -1412,7 +1597,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """Test viewing a an order with a valid certificate"""
 
         cert = Certificate(ca=self.ca)
-        cert.x509_cert = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
         cert.save()
 
         self.order.status = AcmeOrder.STATUS_VALID
@@ -1425,15 +1610,16 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
-            ],
-            'certificate': 'http://%s%s' % (self.SERVER_NAME, acmecert.acme_url),
-            'expires': pyrfc3339.generate(expires, accept_naive=True),
-            'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "certificate": "http://%s%s" % (self.SERVER_NAME, acmecert.acme_url),
+                "expires": pyrfc3339.generate(expires, accept_naive=True),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "valid",
+            },
+        )
 
     @override_tmpcadir()
     def test_cert_not_yet_issued(self):
@@ -1453,14 +1639,15 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
-            ],
-            'expires': pyrfc3339.generate(expires, accept_naive=True),
-            'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'valid',
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "expires": pyrfc3339.generate(expires, accept_naive=True),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "valid",
+            },
+        )
 
     @override_tmpcadir()
     def test_cert_not_yet_valid(self):
@@ -1471,7 +1658,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """
 
         cert = Certificate(ca=self.ca)
-        cert.x509_cert = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
         cert.save()
 
         self.order.status = AcmeOrder.STATUS_PROCESSING
@@ -1484,21 +1671,23 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
         expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
-        self.assertEqual(resp.json(), {
-            'authorizations': [
-                'http://%s%s' % (self.SERVER_NAME, self.authz.acme_url)
-            ],
-            'expires': pyrfc3339.generate(expires, accept_naive=True),
-            'identifiers': [{'type': 'dns', 'value': self.hostname}],
-            'status': 'processing',
-        })
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "expires": pyrfc3339.generate(expires, accept_naive=True),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "processing",
+            },
+        )
 
     @override_tmpcadir()
     def test_wrong_account(self):
         """Test viewing for the wrong account"""
 
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
+            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+        )
         self.order.account = account
         self.order.save()
 
@@ -1510,7 +1699,8 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         """Test viewing an order that simply does not exist."""
 
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
+            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+        )
         self.order.account = account
         self.order.save()
 
@@ -1525,25 +1715,26 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         We have to mock this, as at present this is not usually done.
         """
 
-        with self.patch('django_ca.acme.views.AcmeOrderView.acme_request',
-                        side_effect=AcmeUnauthorized(message='foo')):
+        with self.patch(
+            "django_ca.acme.views.AcmeOrderView.acme_request", side_effect=AcmeUnauthorized(message="foo")
+        ):
             resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp, 'foo')
+        self.assertUnauthorized(resp, "foo")
 
 
-@freeze_time(timestamps['everything_valid'])
+@freeze_time(timestamps["everything_valid"])
 class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a certificate."""
 
     post_as_get = True
-    view_name = 'acme-cert'
+    view_name = "acme-cert"
 
     def setUp(self):
         super().setUp()
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
 
         cert = Certificate(ca=self.ca)
-        cert.x509_cert = certs['root-cert']['pub']['parsed']
+        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
         cert.save()
         self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
 
@@ -1561,14 +1752,15 @@ class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWith
     @override_tmpcadir()
     def test_not_found(self):
         """Test fetching a cert that simply does not exist."""
-        resp = self.acme(self.get_url(serial=self.ca.serial, slug='abc'), self.message, kid=self.kid)
+        resp = self.acme(self.get_url(serial=self.ca.serial, slug="abc"), self.message, kid=self.kid)
         self.assertUnauthorized(resp)
 
     @override_tmpcadir()
     def test_wrong_account(self):
         """Test fetching a certificate for a different account."""
         account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug='def', kid='kid', pem='bar', thumbprint='foo')
+            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+        )
         self.order.account = account
         self.order.save()
 

@@ -303,7 +303,7 @@ def add_colons(value: str, pad: str = "0") -> str:
     if len(value) % 2 == 1 and pad is not None:
         value = "%s%s" % (pad, value)
 
-    return ":".join([value[i:i + 2] for i in range(0, len(value), 2)])
+    return ":".join([value[i : i + 2] for i in range(0, len(value), 2)])
 
 
 def int_to_hex(i: int) -> str:
@@ -545,27 +545,21 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
 @overload
 def validate_key_parameters(
-    key_size: Optional[int],
-    key_type: Literal["DSA"],
-    ecc_curve: ParsableKeyCurve = None
+    key_size: Optional[int], key_type: Literal["DSA"], ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[int, Literal["DSA"], None]:  # pragma: nocover
     ...
 
 
 @overload
 def validate_key_parameters(
-    key_size: Optional[int],
-    key_type: Optional[Literal["RSA"]],
-    ecc_curve: ParsableKeyCurve = None
+    key_size: Optional[int], key_type: Optional[Literal["RSA"]], ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[int, Literal["RSA"], None]:  # pragma: nocover
     ...
 
 
 @overload
 def validate_key_parameters(
-    key_size: Optional[int],
-    key_type: Literal["ECC"],
-    ecc_curve: ParsableKeyCurve = None
+    key_size: Optional[int], key_type: Literal["ECC"], ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[None, Literal["ECC"], ec.EllipticCurve]:  # pragma: nocover
     ...
 
@@ -612,27 +606,21 @@ def validate_key_parameters(
 
 @overload
 def generate_private_key(
-    key_size: int,
-    key_type: Literal["DSA"],
-    ecc_curve: None
+    key_size: int, key_type: Literal["DSA"], ecc_curve: None
 ) -> dsa.DSAPrivateKey:  # pragma: nocover
     ...
 
 
 @overload
 def generate_private_key(
-    key_size: int,
-    key_type: Literal["RSA"],
-    ecc_curve: None
+    key_size: int, key_type: Literal["RSA"], ecc_curve: None
 ) -> rsa.RSAPrivateKey:  # pragma: nocover
     ...
 
 
 @overload
 def generate_private_key(
-    key_size: None,
-    key_type: Literal["ECC"],
-    ecc_curve: ec.EllipticCurve
+    key_size: None, key_type: Literal["ECC"], ecc_curve: ec.EllipticCurve
 ) -> ec.EllipticCurvePrivateKey:  # pragma: nocover
     ...
 

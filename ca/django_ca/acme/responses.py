@@ -40,18 +40,21 @@ class AcmeResponseAccount(AcmeResponse):
     def __init__(self, request, account):
         contact = []
         if account.contact:
-            contact = account.contact.split('\n')
+            contact = account.contact.split("\n")
 
         data = {
-            'status': account.status,
-            'contact': contact,
-            'orders': request.build_absolute_uri(
-                reverse('django_ca:acme-account-orders', kwargs={'slug': account.slug,
-                                                                 'serial': account.ca.serial})),
+            "status": account.status,
+            "contact": contact,
+            "orders": request.build_absolute_uri(
+                reverse(
+                    "django_ca:acme-account-orders",
+                    kwargs={"slug": account.slug, "serial": account.ca.serial},
+                )
+            ),
         }
 
         super().__init__(data)
-        self['Location'] = account.kid
+        self["Location"] = account.kid
 
 
 class AcmeResponseAccountCreated(AcmeResponseAccount):
@@ -87,31 +90,34 @@ class AcmeResponseChallenge(AcmeSimpleResponse):
 class AcmeResponseError(AcmeResponse):
     """Base class for all ACME error responses."""
 
-    message = 'Internal server error'
+    message = "Internal server error"
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR  # 500
-    type = 'serverInternal'
+    type = "serverInternal"
 
-    def __init__(self, typ=None, message=''):
-        super().__init__({
-            'type': 'urn:ietf:params:acme:error:%s' % (typ or self.type),
-            'status': self.status_code,
-            'detail': message or self.message,
-        }, content_type='application/problem+json')
+    def __init__(self, typ=None, message=""):
+        super().__init__(
+            {
+                "type": "urn:ietf:params:acme:error:%s" % (typ or self.type),
+                "status": self.status_code,
+                "detail": message or self.message,
+            },
+            content_type="application/problem+json",
+        )
 
 
 class AcmeResponseMalformed(AcmeResponseError):
     """ACME response with type malformed."""
 
-    message = 'Malformed request'
+    message = "Malformed request"
     status_code = HTTPStatus.BAD_REQUEST  # 400
-    type = 'malformed'
+    type = "malformed"
 
 
 class AcmeResponseBadCSR(AcmeResponseMalformed):
     """ACME response for an invalid CSR."""
 
-    type = 'badCSR'
-    message = 'CSR is not acceptable.'
+    type = "badCSR"
+    message = "CSR is not acceptable."
 
 
 class AcmeResponseMalformedPayload(AcmeResponseMalformed):
@@ -120,6 +126,7 @@ class AcmeResponseMalformedPayload(AcmeResponseMalformed):
     This class is reserved for cases where the payload cannot even be processed, e.g. it's missing a required
     key, or a value is invalid.
     """
+
     message = "Malformed payload."
 
 
@@ -127,14 +134,15 @@ class AcmeResponseUnauthorized(AcmeResponseError):
     """ACME response with type unauthorized."""
 
     status_code = HTTPStatus.UNAUTHORIZED  # 401
-    type = 'unauthorized'
+    type = "unauthorized"
     message = "You are not authorized to perform this request."
 
 
 class AcmeResponseForbidden(AcmeResponseError):
     """ACME response with HTTP status code 403 (Forbidden)."""
+
     status_code = HTTPStatus.FORBIDDEN  # 403
-    type = 'forbidden'
+    type = "forbidden"
     message = "You are forbidden from accessing this resource."
 
 
@@ -142,7 +150,7 @@ class AcmeResponseNotFound(AcmeResponseError):
     """ACME response when a requested entity cannot be found."""
 
     status_code = HTTPStatus.NOT_FOUND  # 404
-    type = 'not-found'
+    type = "not-found"
     message = "The requested entity could not be found."
 
 
@@ -157,8 +165,9 @@ class AcmeResponseBadNonce(AcmeResponseError):
        Replay-Nonce header field with a fresh nonce that the server will accept in a retry of the original
        query (and possibly in other requests, according to the server's nonce scoping policy)."
     """
+
     status_code = HTTPStatus.BAD_REQUEST  # 400
-    type = 'badNonce'
+    type = "badNonce"
     message = "Bad or invalid nonce."
 
 
@@ -166,4 +175,4 @@ class AcmeResponseUnsupportedMediaType(AcmeResponseMalformed):
     """Acme response for unsupported media type."""
 
     status_code = HTTPStatus.UNSUPPORTED_MEDIA_TYPE
-    message = 'Requests must use the application/jose+json content type.'
+    message = "Requests must use the application/jose+json content type."

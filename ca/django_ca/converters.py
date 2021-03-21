@@ -24,7 +24,8 @@ from .utils import sanitize_serial
 
 class HexConverter:
     """Converter that accepts colon-separated hex values."""
-    regex = '[0-9A-F:]+'
+
+    regex = "[0-9A-F:]+"
 
     def to_python(self, value):
         return value
@@ -42,7 +43,8 @@ class SerialConverter(HexConverter):
 
 class Base64Converter:
     """Converter that accepts Base64 encoded data."""
-    regex = '[a-zA-Z0-9=+/]+'
+
+    regex = "[a-zA-Z0-9=+/]+"
 
     def to_python(self, value):
         return value
@@ -53,4 +55,5 @@ class Base64Converter:
 
 class AcmeSlugConverter(SlugConverter):
     """ACME slugs consist of alphanumeric characters only."""
-    regex = '[a-zA-Z0-9]+'
+
+    regex = "[a-zA-Z0-9]+"

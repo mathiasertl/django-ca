@@ -25,17 +25,17 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.cert = self.certs['root-cert']
+        self.cert = self.certs["root-cert"]
 
     def test_no_reason(self):
         """Test revoking without a reason."""
         self.assertFalse(self.cert.revoked)
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            stdout, stderr = self.cmd('revoke_cert', self.cert.serial)
+            stdout, stderr = self.cmd("revoke_cert", self.cert.serial)
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(stdout, '')
-        self.assertEqual(stderr, '')
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertPostRevoke(post, cert)
@@ -49,10 +49,10 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
 
         for reason in ReasonFlags:
             with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-                stdout, stderr = self.cmd_e2e(['revoke_cert', self.cert.serial, '--reason', reason.name])
+                stdout, stderr = self.cmd_e2e(["revoke_cert", self.cert.serial, "--reason", reason.name])
             self.assertEqual(pre.call_count, 1)
-            self.assertEqual(stdout, '')
-            self.assertEqual(stderr, '')
+            self.assertEqual(stdout, "")
+            self.assertEqual(stderr, "")
 
             cert = Certificate.objects.get(serial=self.cert.serial)
             self.assertPostRevoke(post, cert)
@@ -63,7 +63,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
             # unrevoke for next iteration of loop
             cert.revoked = False
             cert.revoked_date = None
-            cert.revoked_reason = ''
+            cert.revoked_reason = ""
             cert.save()
 
     def test_revoked(self):
@@ -72,16 +72,17 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertFalse(self.cert.revoked)
 
         with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            self.cmd('revoke_cert', self.cert.serial)
+            self.cmd("revoke_cert", self.cert.serial)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertEqual(pre.call_count, 1)
         self.assertPostRevoke(post, cert)
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
-        with self.assertCommandError(r'^%s: Certificate is already revoked\.$' % self.cert.serial), \
-                self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
-            self.cmd('revoke_cert', self.cert.serial, reason=ReasonFlags.key_compromise)
+        with self.assertCommandError(
+            r"^%s: Certificate is already revoked\.$" % self.cert.serial
+        ), self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            self.cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 

@@ -37,9 +37,9 @@ from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
 from .tests_views_acme import AcmeTestCaseMixin
 
-ACCOUNT_SLUG = 'DzW4PQ6L76PE'
+ACCOUNT_SLUG = "DzW4PQ6L76PE"
 
-with open(os.path.join(settings.FIXTURES_DIR, 'prepared-acme-requests.json')) as stream:
+with open(os.path.join(settings.FIXTURES_DIR, "prepared-acme-requests.json")) as stream:
     prepared_requests = json.load(stream)
 
 
@@ -47,7 +47,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     """Mixin for testing requests recorded from actual certbot sessions."""
 
     # The serial of the CA that was used when recording requests
-    ca_serial = '3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E'
+    ca_serial = "3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E"
     expected_status_code = HTTPStatus.OK
 
     def setUp(self):  # pylint: disable=invalid-name, missing-function-docstring; unittest standard
@@ -57,10 +57,18 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
 
     def add_account(self, data):
         """Add an account with the given test data."""
-        return AcmeAccount.objects.get_or_create(thumbprint=data['thumbprint'], defaults={
-            'pk': data['account_pk'], 'contact': 'user@localhost', 'ca': self.ca, 'kid': data['kid'],
-            'terms_of_service_agreed': True, 'pem': data['pem'], 'slug': data['account_pk'],
-        })[0]
+        return AcmeAccount.objects.get_or_create(
+            thumbprint=data["thumbprint"],
+            defaults={
+                "pk": data["account_pk"],
+                "contact": "user@localhost",
+                "ca": self.ca,
+                "kid": data["kid"],
+                "terms_of_service_agreed": True,
+                "pem": data["pem"],
+                "slug": data["account_pk"],
+            },
+        )[0]
 
     def before_prepared_request(self, data):
         """Any action to take **before** sending a prepared request."""
@@ -79,7 +87,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         return self.url
 
     def post(self, url, data, **kwargs):
-        kwargs.setdefault('SERVER_NAME', 'localhost:8000')
+        kwargs.setdefault("SERVER_NAME", "localhost:8000")
         return super().post(url, data, **kwargs)
 
     @property
@@ -91,10 +99,10 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         """Test requests collected from certbot."""
 
         for data in self.requests:
-            cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
+            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
             self.before_prepared_request(data)
             with self.mute_celery() as celery_mock:
-                response = self.post(self.get_url(data), data['body'])
+                response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, self.expected_status_code, response.content)
             self.assertAcmeResponse(response)
             self.assertPreparedResponse(data, response, celery_mock)
@@ -108,79 +116,84 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def test_disabled(self):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         for data in self.requests:
-            cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
+            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
             self.before_prepared_request(data)
-            response = self.post(self.get_url(data), data['body'])
+            response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-            self.assertEqual(response['Content-Type'], 'text/html')  # --> coming from Django
+            self.assertEqual(response["Content-Type"], "text/html")  # --> coming from Django
             self.assertFailedPreparedResponse(data, response)
 
     def test_invalid_content_type(self):
         """Test sending an invalid content type."""
         for data in self.requests:
-            cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
+            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
             self.before_prepared_request(data)
-            response = self.post(self.get_url(data), data['body'], content_type='application/json')
-            self.assertAcmeProblem(response, typ='malformed', status=415,
-                                   message='Requests must use the application/jose+json content type.')
+            response = self.post(self.get_url(data), data["body"], content_type="application/json")
+            self.assertAcmeProblem(
+                response,
+                typ="malformed",
+                status=415,
+                message="Requests must use the application/jose+json content type.",
+            )
             self.assertFailedPreparedResponse(data, response)
 
     def test_generic_exception(self):
         """Test the dispatch function raising a generic exception."""
 
         for data in self.requests:
-            cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
+            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
             self.before_prepared_request(data)
 
-            with mock.patch('django.views.generic.base.View.dispatch', side_effect=Exception('foo')):
-                response = self.post(self.get_url(data), data['body'], content_type='application/json')
+            with mock.patch("django.views.generic.base.View.dispatch", side_effect=Exception("foo")):
+                response = self.post(self.get_url(data), data["body"], content_type="application/json")
             self.assertEqual(response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
-            self.assertEqual(response.json(), {
-                'detail': 'Internal server error',
-                'status': HTTPStatus.INTERNAL_SERVER_ERROR,
-                'type': 'urn:ietf:params:acme:error:serverInternal',
-            })
+            self.assertEqual(
+                response.json(),
+                {
+                    "detail": "Internal server error",
+                    "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                    "type": "urn:ietf:params:acme:error:serverInternal",
+                },
+            )
 
     def test_duplicate_nonce_use(self):
         """Test that a Nonce can really only be used once."""
         for data in self.requests:
-            cache.set('acme-nonce-%s-%s' % (self.ca.serial, data['nonce']), 0)
+            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
             self.before_prepared_request(data)
             with self.mute_celery() as celery_mock:
-                response = self.post(self.get_url(data), data['body'])
+                response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, self.expected_status_code)
             self.assertAcmeResponse(response)
             self.assertPreparedResponse(data, response, celery_mock)
 
             # Do the request again to validate that the nonce is now invalid
-            response = self.post(self.get_url(data), data['body'])
+            response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-            self.assertAcmeProblem(response, typ='badNonce', status=400,
-                                   message='Bad or invalid nonce.')
+            self.assertAcmeProblem(response, typ="badNonce", status=400, message="Bad or invalid nonce.")
             self.assertDuplicateNoncePreparedResponse(data, response)
 
     def test_unknown_nonce_use(self):
         """Test that an unknown nonce does not work."""
         for data in self.requests:
             self.before_prepared_request(data)
-            response = self.post(self.get_url(data), data['body'])
+            response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-            self.assertAcmeProblem(response, typ='badNonce', status=400,
-                                   message='Bad or invalid nonce.')
+            self.assertAcmeProblem(response, typ="badNonce", status=400, message="Bad or invalid nonce.")
             self.assertFailedPreparedResponse(data, response)
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new account."""
 
     expected_status_code = HTTPStatus.CREATED
-    view_name = 'AcmeNewAccountView'
+    view_name = "AcmeNewAccountView"
 
     def setUp(self):
         super().setUp()
-        self.url = reverse('django_ca:acme-new-account', kwargs={'serial': self.ca_serial})
+        self.url = reverse("django_ca:acme-new-account", kwargs={"serial": self.ca_serial})
 
     def assertFailedPreparedResponse(self, data, response):
         # Test that *no* account was created
@@ -189,40 +202,41 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
     def get_nonce(self, ca=None):
         """Get a nonce with an actualy request."""
         if ca is None:
-            ca = self.cas['root']
+            ca = self.cas["root"]
 
-        url = reverse('django_ca:acme-new-nonce', kwargs={'serial': ca.serial})
+        url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        return response['replay-nonce']
+        return response["replay-nonce"]
 
     def assertPreparedResponse(self, data, response, celery_mock):
-        account = AcmeAccount.objects.get(thumbprint=data['thumbprint'])
+        account = AcmeAccount.objects.get(thumbprint=data["thumbprint"])
         uri = response.wsgi_request.build_absolute_uri
-        kwargs = {'serial': self.ca.serial, 'slug': account.slug}
-        self.assertEqual(response['Location'], uri(
-            reverse('django_ca:acme-account', kwargs=kwargs)
-        ))
+        kwargs = {"serial": self.ca.serial, "slug": account.slug}
+        self.assertEqual(response["Location"], uri(reverse("django_ca:acme-account", kwargs=kwargs)))
         # An example response can be found in RFC 8555, section 7.3
         # https://tools.ietf.org/html/rfc8555#section-7.3
-        self.assertEqual(response.json(), {
-            'status': 'valid',
-            'contact': ['mailto:user@localhost'],
-            'orders': uri(reverse('django_ca:acme-account-orders', kwargs=kwargs))
-        })
+        self.assertEqual(
+            response.json(),
+            {
+                "status": "valid",
+                "contact": ["mailto:user@localhost"],
+                "orders": uri(reverse("django_ca:acme-account-orders", kwargs=kwargs)),
+            },
+        )
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
     expected_status_code = HTTPStatus.CREATED
-    view_name = 'AcmeNewOrderView'
+    view_name = "AcmeNewOrderView"
 
     def setUp(self):
         super().setUp()
-        self.url = reverse('django_ca:acme-new-order', kwargs={'serial': self.ca_serial})
+        self.url = reverse("django_ca:acme-new-order", kwargs={"serial": self.ca_serial})
         self.done = {}
 
     def before_prepared_request(self, data):
@@ -233,15 +247,16 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
         self.assertEqual(list(AcmeAccount.objects.all()), [self.account])
 
         order = AcmeOrder.objects.exclude(pk__in=[o.pk for o in self.done.values()]).get(account=self.account)
-        self.done[data['nonce']] = order
+        self.done[data["nonce"]] = order
 
         self.assertEqual(order.account, self.account)
-        self.assertEqual(order.status, 'pending')
+        self.assertEqual(order.status, "pending")
         self.assertEqual(order.expires, timezone.now() + ca_settings.ACME_ORDER_VALIDITY)
         self.assertIsNone(order.not_before)
         self.assertIsNone(order.not_after)
-        self.assertEqual(order.acme_finalize_url,
-                         f'/django_ca/acme/{self.ca_serial}/order/{order.slug}/finalize/')
+        self.assertEqual(
+            order.acme_finalize_url, f"/django_ca/acme/{self.ca_serial}/order/{order.slug}/finalize/"
+        )
         # pylint: disable=no-member
         with self.assertRaises(AcmeOrder.acmecertificate.RelatedObjectDoesNotExist):
             self.assertIsNone(order.acmecertificate)
@@ -250,9 +265,9 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
         auths = order.authorizations.all()
         self.assertEqual(len(auths), 1)
         auth = auths[0]
-        self.assertEqual(auth.status, 'pending')
-        self.assertEqual(auth.type, 'dns')
-        self.assertEqual(auth.value, 'localhost')
+        self.assertEqual(auth.status, "pending")
+        self.assertEqual(auth.type, "dns")
+        self.assertEqual(auth.value, "localhost")
         self.assertEqual(auth.expires, order.expires)
         self.assertFalse(auth.wildcard)
 
@@ -260,110 +275,124 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
         self.assertFalse(auth.challenges.exists())
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
-    view_name = 'AcmeAuthorizationView'
+    view_name = "AcmeAuthorizationView"
 
     def before_prepared_request(self, data):
         acc = self.add_account(data)
-        order = AcmeOrder.objects.get_or_create(account=acc, slug=data['order'])[0]
-        AcmeAuthorization.objects.get_or_create(order=order, slug=data['auth'], defaults={
-            'value': 'localhost'
-        })
+        order = AcmeOrder.objects.get_or_create(account=acc, slug=data["order"])[0]
+        AcmeAuthorization.objects.get_or_create(
+            order=order, slug=data["auth"], defaults={"value": "localhost"}
+        )
 
     def get_url(self, data):
-        return reverse('django_ca:acme-authz', kwargs={'serial': self.ca_serial, 'slug': data['auth']})
+        return reverse("django_ca:acme-authz", kwargs={"serial": self.ca_serial, "slug": data["auth"]})
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
-    view_name = 'AcmeChallengeView'
+    view_name = "AcmeChallengeView"
 
     def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
         if response.status_code < HTTPStatus.BAD_REQUEST:
-            kwargs.setdefault('up', response.wsgi_request.build_absolute_uri(self.challenge.auth.acme_url))
+            kwargs.setdefault("up", response.wsgi_request.build_absolute_uri(self.challenge.auth.acme_url))
         super().assertLinkRelations(response=response, ca=ca, **kwargs)
 
     def before_prepared_request(self, data):
         acc = self.add_account(data)
-        order = AcmeOrder.objects.create(account=acc, slug=data['order'])
-        auth = AcmeAuthorization.objects.create(order=order, slug=data['auth'], value='localhost')
+        order = AcmeOrder.objects.create(account=acc, slug=data["order"])
+        auth = AcmeAuthorization.objects.create(order=order, slug=data["auth"], value="localhost")
 
         self.challenge = AcmeChallenge.objects.create(  # pylint: disable=attribute-defined-outside-init
-            slug=data['challenge'], auth=auth, type=AcmeChallenge.TYPE_HTTP_01
+            slug=data["challenge"], auth=auth, type=AcmeChallenge.TYPE_HTTP_01
         )
 
     def get_url(self, data):
-        return reverse('django_ca:acme-challenge', kwargs={
-            'serial': self.ca_serial,
-            'slug': data['challenge'],
-        })
+        return reverse(
+            "django_ca:acme-challenge",
+            kwargs={
+                "serial": self.ca_serial,
+                "slug": data["challenge"],
+            },
+        )
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
-    view_name = 'AcmeOrderFinalizeView'
+    view_name = "AcmeOrderFinalizeView"
 
     def before_prepared_request(self, data):
         acc = self.add_account(data)
-        order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
-        AcmeAuthorization.objects.create(order=order, value='localhost',
-                                         status=AcmeAuthorization.STATUS_VALID)
+        order = AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_READY)
+        AcmeAuthorization.objects.create(
+            order=order, value="localhost", status=AcmeAuthorization.STATUS_VALID
+        )
 
     def get_url(self, data):
-        return reverse('django_ca:acme-order-finalize', kwargs={
-            'serial': self.ca_serial,
-            'slug': data['order'],
-        })
+        return reverse(
+            "django_ca:acme-order-finalize",
+            kwargs={
+                "serial": self.ca_serial,
+                "slug": data["order"],
+            },
+        )
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
     """Test retrieving a challenge."""
 
-    view_name = 'AcmeOrderView'
+    view_name = "AcmeOrderView"
 
     def before_prepared_request(self, data):
         acc = self.add_account(data)
-        AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_READY)
+        AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_READY)
 
     def get_url(self, data):
-        return reverse('django_ca:acme-order', kwargs={
-            'serial': self.ca_serial,
-            'slug': data['order'],
-        })
+        return reverse(
+            "django_ca:acme-order",
+            kwargs={
+                "serial": self.ca_serial,
+                "slug": data["order"],
+            },
+        )
 
 
-@override_settings(ALLOWED_HOSTS=['localhost'])
+@override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
 class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCertTestCase):
     """Test retrieving a challenge."""
 
-    view_name = 'AcmeCertificateView'
+    view_name = "AcmeCertificateView"
 
     def assertAcmeResponse(self, response, **kwargs):  # pylint: disable=arguments-differ
         """This view does not return normal ACME responses but a certificate bundle."""
         self.assertLinkRelations(response, **kwargs)
-        self.assertEqual(response['Content-Type'], 'application/pem-certificate-chain')
+        self.assertEqual(response["Content-Type"], "application/pem-certificate-chain")
 
     def before_prepared_request(self, data):
         acc = self.add_account(data)
-        order = AcmeOrder.objects.create(account=acc, slug=data['order'], status=AcmeOrder.STATUS_VALID)
-        AcmeCertificate.objects.create(slug=data['cert'], order=order, cert=self.certs['root-cert'],
-                                       csr=data['csr'])
+        order = AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_VALID)
+        AcmeCertificate.objects.create(
+            slug=data["cert"], order=order, cert=self.certs["root-cert"], csr=data["csr"]
+        )
 
     def get_url(self, data):
-        return reverse('django_ca:acme-cert', kwargs={
-            'serial': self.ca_serial,
-            'slug': data['cert'],
-        })
+        return reverse(
+            "django_ca:acme-cert",
+            kwargs={
+                "serial": self.ca_serial,
+                "slug": data["cert"],
+            },
+        )

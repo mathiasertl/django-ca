@@ -27,6 +27,10 @@ class ReasonFlagsTestCase(TestCase):
         """Test that our list completely mirrors the cryptography list."""
         # pylint: disable=no-member; some false positives from pylint
         self.assertEqual(
-            list(sorted([(k, v.value) for k, v in ReasonFlags.__members__.items()])),      # pylint: disable=E1101  # noqa: E501
-            list(sorted([(k, v.value) for k, v in x509.ReasonFlags.__members__.items()]))  # pylint: disable=E1101  # noqa: E501
+            list(
+                sorted([(k, v.value) for k, v in ReasonFlags.__members__.items()])
+            ),  # pylint: disable=E1101  # noqa: E501
+            list(
+                sorted([(k, v.value) for k, v in x509.ReasonFlags.__members__.items()])
+            ),  # pylint: disable=E1101  # noqa: E501
         )

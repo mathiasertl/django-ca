@@ -23,10 +23,10 @@ from ..base import BaseCommand
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
-    help = 'View details of a certificate authority.'
+    help = "View details of a certificate authority."
 
     def add_arguments(self, parser):
-        self.add_ca(parser, arg='ca', allow_disabled=True, allow_unusable=True)
+        self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
 
     def handle(self, ca, **options):  # pylint: disable=arguments-differ
         try:
@@ -37,58 +37,58 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
             path = ca.private_key_path
 
-        self.stdout.write('%s (%s):' % (ca.name, 'enabled' if ca.enabled else 'disabled'))
-        self.stdout.write('* Serial: %s' % add_colons(ca.serial))
+        self.stdout.write("%s (%s):" % (ca.name, "enabled" if ca.enabled else "disabled"))
+        self.stdout.write("* Serial: %s" % add_colons(ca.serial))
 
         if ca_storage.exists(ca.private_key_path):
-            self.stdout.write('* Path to private key:\n  %s' % path)
+            self.stdout.write("* Path to private key:\n  %s" % path)
         else:
-            self.stdout.write('* Private key not available locally.')
+            self.stdout.write("* Private key not available locally.")
 
         if ca.parent:
-            self.stdout.write('* Parent: %s (%s)' % (ca.parent.name, ca.parent.serial))
+            self.stdout.write("* Parent: %s (%s)" % (ca.parent.name, ca.parent.serial))
         else:
-            self.stdout.write('* Is a root CA.')
+            self.stdout.write("* Is a root CA.")
 
         children = ca.children.all()
         if children:
-            self.stdout.write('* Children:')
+            self.stdout.write("* Children:")
             for child in children:
-                self.stdout.write('  * %s (%s)' % (child.name, child.serial))
+                self.stdout.write("  * %s (%s)" % (child.name, child.serial))
         else:
-            self.stdout.write('* Has no children.')
+            self.stdout.write("* Has no children.")
 
         pathlen = ca.pathlen
         if pathlen is None:
-            pathlen = 'unlimited'
+            pathlen = "unlimited"
 
-        self.stdout.write('* Distinguished Name: %s' % ca.distinguished_name)
-        self.stdout.write('* Maximum levels of sub-CAs (pathlen): %s' % pathlen)
-        self.stdout.write('* HPKP pin: %s' % ca.hpkp_pin)
+        self.stdout.write("* Distinguished Name: %s" % ca.distinguished_name)
+        self.stdout.write("* Maximum levels of sub-CAs (pathlen): %s" % pathlen)
+        self.stdout.write("* HPKP pin: %s" % ca.hpkp_pin)
 
         if ca.website:
-            self.stdout.write('* Website: %s' % ca.website)
+            self.stdout.write("* Website: %s" % ca.website)
         if ca.terms_of_service:
-            self.stdout.write('* Terms of service: %s' % ca.terms_of_service)
+            self.stdout.write("* Terms of service: %s" % ca.terms_of_service)
         if ca.caa_identity:
-            self.stdout.write('* CAA identity: %s' % ca.caa_identity)
+            self.stdout.write("* CAA identity: %s" % ca.caa_identity)
 
         if ca_settings.CA_ENABLE_ACME:
-            self.stdout.write('')
-            self.stdout.write('ACMEv2 support:')
-            self.stdout.write('* Enabled: %s' % ca.acme_enabled)
+            self.stdout.write("")
+            self.stdout.write("ACMEv2 support:")
+            self.stdout.write("* Enabled: %s" % ca.acme_enabled)
             if ca.acme_enabled:
-                self.stdout.write('* Requires contact: %s' % ca.acme_requires_contact)
+                self.stdout.write("* Requires contact: %s" % ca.acme_requires_contact)
 
-        self.stdout.write('')
-        self.stdout.write('X509 v3 certificate extensions for CA:')
+        self.stdout.write("")
+        self.stdout.write("X509 v3 certificate extensions for CA:")
 
         self.print_extensions(ca)
 
-        self.stdout.write('')
-        self.stdout.write('X509 v3 certificate extensions for signed certificates:')
-        self.stdout.write('* Certificate Revokation List (CRL): %s' % (ca.crl_url or None))
-        self.stdout.write('* Issuer URL: %s' % (ca.issuer_url or None))
-        self.stdout.write('* OCSP URL: %s' % (ca.ocsp_url or None))
-        self.stdout.write('* Issuer Alternative Name: %s' % (ca.issuer_alt_name or None))
-        self.stdout.write('\n%s' % ca.pub)
+        self.stdout.write("")
+        self.stdout.write("X509 v3 certificate extensions for signed certificates:")
+        self.stdout.write("* Certificate Revokation List (CRL): %s" % (ca.crl_url or None))
+        self.stdout.write("* Issuer URL: %s" % (ca.issuer_url or None))
+        self.stdout.write("* OCSP URL: %s" % (ca.ocsp_url or None))
+        self.stdout.write("* Issuer Alternative Name: %s" % (ca.issuer_alt_name or None))
+        self.stdout.write("\n%s" % ca.pub)

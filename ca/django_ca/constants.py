@@ -23,6 +23,7 @@ class ReasonFlags(Enum):
     in the enumeration would trigger a database migration, so up/downgrading cryptography might cause problems
     with your Django project.
     """
+
     # pylint: disable=invalid-name; check was added in pylint 2.7.2, cannot be updated without db migration
 
     unspecified = "unspecified"

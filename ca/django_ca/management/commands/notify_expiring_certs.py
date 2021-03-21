@@ -31,12 +31,13 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Send notifications about expiring certificates to watchers."
 
     def add_arguments(self, parser):
-        parser.add_argument('--days', type=int, default=14,
-                            help='Warn DAYS days ahead of time (default: %(default)s).')
+        parser.add_argument(
+            "--days", type=int, default=14, help="Warn DAYS days ahead of time (default: %(default)s)."
+        )
 
     def handle(self, *args, **options):  # pylint: disable=arguments-differ
         now = timezone.now()
-        expires = now + timedelta(days=options['days'] + 1)  # add a day to avoid one-of errors
+        expires = now + timedelta(days=options["days"] + 1)  # add a day to avoid one-of errors
 
         qs = Certificate.objects.valid().filter(expires__lt=expires)
         for cert in qs:
@@ -45,8 +46,8 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             if days not in ca_settings.CA_NOTIFICATION_DAYS:
                 continue
 
-            timestamp = cert.expires.strftime('%Y-%m-%d')
-            subj = 'Certificate expiration for %s on %s' % (cert.cn, timestamp)
-            msg = 'The certificate for %s will expire on %s.' % (cert.cn, timestamp)
-            recipient = list(cert.watchers.values_list('mail', flat=True))
+            timestamp = cert.expires.strftime("%Y-%m-%d")
+            subj = "Certificate expiration for %s on %s" % (cert.cn, timestamp)
+            msg = "The certificate for %s will expire on %s." % (cert.cn, timestamp)
+            recipient = list(cert.watchers.values_list("mail", flat=True))
             send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, recipient)

@@ -59,9 +59,9 @@ log = logging.getLogger(__name__)
 class CertificateRevocationListView(View, SingleObjectMixin):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
 
-    slug_field = 'serial'
-    slug_url_kwarg = 'serial'
-    queryset = CertificateAuthority.objects.all().prefetch_related('certificate_set')
+    slug_field = "serial"
+    slug_url_kwarg = "serial"
+    queryset = CertificateAuthority.objects.all().prefetch_related("certificate_set")
 
     password = None
     """Password used to load the private key of the certificate authority. If not set, the private key is
@@ -71,7 +71,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     type = Encoding.DER
     """Encoding for CRL."""
 
-    scope = 'user'
+    scope = "user"
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
     include both."""
 
@@ -87,24 +87,25 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
     def get(self, request, serial):
         # pylint: disable=missing-function-docstring; standard Django view function
-        encoding = parse_encoding(request.GET.get('encoding', self.type))
+        encoding = parse_encoding(request.GET.get("encoding", self.type))
         cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=encoding, scope=self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
             encoding = parse_encoding(self.type)
-            crl = ca.get_crl(expires=self.expires, algorithm=self.digest, password=self.password,
-                             scope=self.scope)
+            crl = ca.get_crl(
+                expires=self.expires, algorithm=self.digest, password=self.password, scope=self.scope
+            )
             crl = crl.public_bytes(encoding)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type
         if content_type is None:
             if self.type == Encoding.DER:
-                content_type = 'application/pkix-crl'
+                content_type = "application/pkix-crl"
             elif self.type == Encoding.PEM:
-                content_type = 'text/plain'
+                content_type = "text/plain"
             else:  # pragma: no cover
                 # DER/PEM are all known encoding types, so this shouldn't happen
                 return HttpResponseServerError()
@@ -112,7 +113,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
         return HttpResponse(crl, content_type=content_type)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(csrf_exempt, name="dispatch")
 class OCSPView(View):
     """View to provide an OCSP responder."""
 
@@ -175,8 +176,11 @@ class OCSPView(View):
     def get_responder_key_data(self):
         """Read the file containing the private key used to sign OCSP responses."""
         if os.path.isabs(self.responder_key):
-            log.warning('%s: OCSP responder uses absolute path to private key. Please see %s.',
-                        self.responder_key, ca_settings.CA_FILE_STORAGE_URL)
+            log.warning(
+                "%s: OCSP responder uses absolute path to private key. Please see %s.",
+                self.responder_key,
+                ca_settings.CA_FILE_STORAGE_URL,
+            )
 
         return read_file(self.responder_key)
 
@@ -191,16 +195,19 @@ class OCSPView(View):
 
     def get_responder_cert_data(self):
         """Read the file containing the public key used to sign OCSP responses."""
-        if self.responder_cert.startswith('-----BEGIN CERTIFICATE-----\n'):
-            return self.responder_cert.encode('utf-8')
+        if self.responder_cert.startswith("-----BEGIN CERTIFICATE-----\n"):
+            return self.responder_cert.encode("utf-8")
 
         if SERIAL_RE.match(self.responder_cert):
-            serial = self.responder_cert.replace(':', '')
-            return Certificate.objects.get(serial=serial).pub.encode('utf-8')
+            serial = self.responder_cert.replace(":", "")
+            return Certificate.objects.get(serial=serial).pub.encode("utf-8")
 
         if os.path.isabs(self.responder_cert):
-            log.warning('%s: OCSP responder uses absolute path to certificate. Please see %s.',
-                        self.responder_cert, ca_settings.CA_FILE_STORAGE_URL)
+            log.warning(
+                "%s: OCSP responder uses absolute path to certificate. Please see %s.",
+                self.responder_cert,
+                ca_settings.CA_FILE_STORAGE_URL,
+            )
 
         return read_file(self.responder_cert)
 
@@ -217,7 +224,7 @@ class OCSPView(View):
 
     def http_response(self, data, status=200):
         """Get a HTTP OCSP response with given status and data."""
-        return HttpResponse(data, status=status, content_type='application/ocsp-response')
+        return HttpResponse(data, status=status, content_type="application/ocsp-response")
 
     def malformed_request(self):
         """Get a response for a malformed request."""
@@ -242,16 +249,16 @@ class OCSPView(View):
         try:
             ca = self.get_ca()
         except CertificateAuthority.DoesNotExist:
-            log.error('%s: Certificate Authority could not be found.', self.ca)
+            log.error("%s: Certificate Authority could not be found.", self.ca)
             return self.fail()
 
         try:
             cert = self.get_cert(ca, int_to_hex(ocsp_req.serial_number))
         except Certificate.DoesNotExist:
-            log.warning('OCSP request for unknown cert received.')
+            log.warning("OCSP request for unknown cert received.")
             return self.fail()
         except CertificateAuthority.DoesNotExist:
-            log.warning('OCSP request for unknown CA received.')
+            log.warning("OCSP request for unknown CA received.")
             return self.fail()
 
         # get key/cert for OCSP responder
@@ -259,7 +266,7 @@ class OCSPView(View):
             responder_key = self.get_responder_key()
             responder_cert = self.get_responder_cert()
         except Exception:  # pylint: disable=broad-except; we really need to catch everything here
-            log.error('Could not read responder key/cert.')
+            log.error("Could not read responder key/cert.")
             return self.fail()
 
         # get the certificate status
@@ -272,15 +279,15 @@ class OCSPView(View):
         builder = ocsp.OCSPResponseBuilder()
         expires = datetime.utcnow() + timedelta(seconds=self.expires)
         builder = builder.add_response(
-            cert=cert.x509_cert, issuer=ca.x509_cert, algorithm=hashes.SHA1(),
+            cert=cert.x509_cert,
+            issuer=ca.x509_cert,
+            algorithm=hashes.SHA1(),
             cert_status=status,
             this_update=now,
             next_update=expires,
             revocation_time=cert.get_revocation_time(),
-            revocation_reason=cert.get_revocation_reason()
-        ).responder_id(
-            ocsp.OCSPResponderEncoding.HASH, responder_cert
-        )
+            revocation_reason=cert.get_revocation_reason(),
+        ).responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
 
         # Add the responder cert to the response, necessary because we (so far) always use delegate
         # certificates
@@ -297,7 +304,7 @@ class OCSPView(View):
         return self.http_response(response.public_bytes(Encoding.DER))
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(csrf_exempt, name="dispatch")
 class GenericOCSPView(OCSPView):
     """View providing auto-configured OCSP functionality.
 
@@ -309,9 +316,9 @@ class GenericOCSPView(OCSPView):
     def dispatch(self, request, serial, **kwargs):
         # pylint: disable=arguments-differ; more concrete parameters
         # pylint: disable=missing-function-docstring; standard Django view function
-        if request.method == 'GET' and 'data' not in kwargs:
+        if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
-        if request.method == 'POST' and 'data' in kwargs:
+        if request.method == "POST" and "data" in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         self.ca = CertificateAuthority.objects.get(serial=serial)
         return super().dispatch(request, **kwargs)
@@ -320,10 +327,10 @@ class GenericOCSPView(OCSPView):
         return self.ca
 
     def get_responder_key_data(self):
-        return read_file('ocsp/%s.key' % self.ca.serial.replace(':', ''))
+        return read_file("ocsp/%s.key" % self.ca.serial.replace(":", ""))
 
     def get_responder_cert_data(self):
-        return read_file('ocsp/%s.pem' % self.ca.serial.replace(':', ''))
+        return read_file("ocsp/%s.pem" % self.ca.serial.replace(":", ""))
 
 
 class GenericCAIssuersView(View):
@@ -337,4 +344,4 @@ class GenericCAIssuersView(View):
         # pylint: disable=missing-function-docstring; standard Django view function
         ca = CertificateAuthority.objects.get(serial=serial)
         data = ca.x509_cert.public_bytes(encoding=Encoding.DER)
-        return HttpResponse(data, content_type='application/pkix-cert')
+        return HttpResponse(data, content_type="application/pkix-cert")

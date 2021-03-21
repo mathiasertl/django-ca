@@ -42,18 +42,19 @@ from .base import override_tmpcadir
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
 class DocumentationTestCase(DjangoCATestCase):
     """Test sphinx docs."""
+
     def setUp(self):
         super().setUp()
-        self.ca = self.load_ca(name=certs['root']['name'], parsed=certs['root']['pub']['parsed'])
+        self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
 
     def get_globs(self):
         """Get globals for doctests."""
         return {
-            'Profile': Profile,
-            'get_profile': get_profile,
-            'ca': self.ca,
-            'ca_serial': self.ca.serial,
-            'csr': certs['root-cert']['csr']['parsed'],
+            "Profile": Profile,
+            "get_profile": get_profile,
+            "ca": self.ca,
+            "ca_serial": self.ca.serial,
+            "csr": certs["root-cert"]["csr"]["parsed"],
         }
 
     @override_tmpcadir()
@@ -61,12 +62,13 @@ class DocumentationTestCase(DjangoCATestCase):
         """Test doctests from main module."""
         # pylint: disable=redefined-outer-name,import-outside-toplevel; we need the top-level module
         from .. import profiles
+
         doctest.testmod(profiles, globs=self.get_globs())
 
     @override_tmpcadir()
     def test_python_intro(self):
         """Test python/profiles.rst."""
-        doctest.testfile('../../../docs/source/python/profiles.rst', globs=self.get_globs())
+        doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
 
 class ProfileTestCase(DjangoCATestCase):
@@ -80,18 +82,18 @@ class ProfileTestCase(DjangoCATestCase):
 
     def test_copy(self):
         """Test copying a profile."""
-        prof1 = Profile('example')
+        prof1 = Profile("example")
         prof2 = prof1.copy()
         self.assertIsNot(prof1, prof2)
         self.assertEqual(prof1, prof2)
-        prof2.extensions[SubjectAlternativeName.key] = SubjectAlternativeName({'value': ['example.com']})
+        prof2.extensions[SubjectAlternativeName.key] = SubjectAlternativeName({"value": ["example.com"]})
         self.assertNotEqual(prof1, prof2)
         self.assertNotIn(SubjectAlternativeName.key, prof1.extensions)
         self.assertIn(SubjectAlternativeName.key, prof2.extensions)
 
         # test algorithm b/c cryptography does not compare this properly
         prof2 = prof1.copy()
-        prof2.algorithm = parse_hash_algorithm('MD5')
+        prof2.algorithm = parse_hash_algorithm("MD5")
         self.assertNotEqual(prof1, prof2)
 
     def test_eq(self):
@@ -108,306 +110,442 @@ class ProfileTestCase(DjangoCATestCase):
 
     def test_init_django_ca_values(self):
         """Test django-ca extensions as extensions."""
-        prof1 = Profile('test', subject=Subject('/C=AT/CN=example.com'), extensions={
-            OCSPNoCheck.key: {},
-        })
-        prof2 = Profile('test', subject='/C=AT/CN=example.com', extensions={
-            OCSPNoCheck.key: OCSPNoCheck(),
-        })
+        prof1 = Profile(
+            "test",
+            subject=Subject("/C=AT/CN=example.com"),
+            extensions={
+                OCSPNoCheck.key: {},
+            },
+        )
+        prof2 = Profile(
+            "test",
+            subject="/C=AT/CN=example.com",
+            extensions={
+                OCSPNoCheck.key: OCSPNoCheck(),
+            },
+        )
         self.assertEqual(prof1, prof2)
 
     def test_init_no_subject(self):
         """Test with no default subject."""
         # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
         # subject. But it still seems sensible to support this
-        default_subject = {'CN': 'testcase'}
+        default_subject = {"CN": "testcase"}
 
         with override_settings(CA_DEFAULT_SUBJECT=default_subject):
-            prof = Profile('test')
+            prof = Profile("test")
         self.assertEqual(prof.subject, Subject(default_subject))
 
     def test_init_expires(self):
         """Test the expire parameter."""
-        prof = Profile('example', expires=30)
+        prof = Profile("example", expires=30)
         self.assertEqual(prof.expires, timedelta(days=30))
 
         exp = timedelta(hours=3)
-        prof = Profile('example', expires=exp)
+        prof = Profile("example", expires=exp)
         self.assertEqual(prof.expires, exp)
 
     def test_serialize(self):
         """Test profile serialization."""
 
-        desc = 'foo bar'
-        kusage = ['digitalSignature']
-        subject = {'CN': 'example.com'}
-        prof = Profile('test', cn_in_san=True, description=desc, subject=Subject(subject), extensions={
-            KeyUsage.key: {'value': kusage},
-        })
-        self.assertEqual(prof.serialize(), {
-            'cn_in_san': True,
-            'subject': subject,
-            'description': desc,
-            'extensions': {
-                BasicConstraints.key: {
-                    'value': {'ca': False},
-                    'critical': BasicConstraints.default_critical,
-                },
-                KeyUsage.key: {
-                    'value': kusage,
-                    'critical': KeyUsage.default_critical,
-                }
+        desc = "foo bar"
+        kusage = ["digitalSignature"]
+        subject = {"CN": "example.com"}
+        prof = Profile(
+            "test",
+            cn_in_san=True,
+            description=desc,
+            subject=Subject(subject),
+            extensions={
+                KeyUsage.key: {"value": kusage},
             },
-        })
+        )
+        self.assertEqual(
+            prof.serialize(),
+            {
+                "cn_in_san": True,
+                "subject": subject,
+                "description": desc,
+                "extensions": {
+                    BasicConstraints.key: {
+                        "value": {"ca": False},
+                        "critical": BasicConstraints.default_critical,
+                    },
+                    KeyUsage.key: {
+                        "value": kusage,
+                        "critical": KeyUsage.default_critical,
+                    },
+                },
+            },
+        )
 
     @override_tmpcadir()
     def test_create_cert_minimal(self):
         """Create a certificate with minimal parameters."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        subject = Subject({'CN': 'example.com'})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"CN": "example.com"})
 
-        prof = Profile('example', subject=Subject())
+        prof = Profile("example", subject=Subject())
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
-                                    add_issuer_url=False, add_issuer_alternative_name=False)
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
     @override_tmpcadir()
     def test_alternative_values(self):
         """Test overriding most values."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        ca.issuer_alt_name = 'https://example.com'
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        ca.issuer_alt_name = "https://example.com"
         ca.save()
-        csr = certs['child-cert']['csr']['parsed']
-        subject = Subject({'C': 'AT', 'CN': 'example.com'})
-        issuer = Subject('/CN=issuer.example.com')
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"C": "AT", "CN": "example.com"})
+        issuer = Subject("/CN=issuer.example.com")
 
-        prof = Profile('example', subject=Subject(), issuer_name=issuer)
+        prof = Profile("example", subject=Subject(), issuer_name=issuer)
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject='/C=AT', algorithm='SHA256',
-                                    expires=timedelta(days=30), extensions=[
-                                        SubjectAlternativeName({'value': ['example.com']})
-                                    ])
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject="/C=AT",
+                algorithm="SHA256",
+                expires=timedelta(days=30),
+                extensions=[SubjectAlternativeName({"value": ["example.com"]})],
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            AuthorityInformationAccess({'value': {
-                'issuers': [ca.issuer_url],
-                'ocsp': [ca.ocsp_url],
-            }}),
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            CRLDistributionPoints({'value': [{'full_name': [ca.crl_url]}]}),
-            IssuerAlternativeName({'value': [ca.issuer_alt_name]}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                AuthorityInformationAccess(
+                    {
+                        "value": {
+                            "issuers": [ca.issuer_url],
+                            "ocsp": [ca.ocsp_url],
+                        }
+                    }
+                ),
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                CRLDistributionPoints({"value": [{"full_name": [ca.crl_url]}]}),
+                IssuerAlternativeName({"value": [ca.issuer_alt_name]}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
     @override_tmpcadir()
     def test_overrides(self):
         """Test other overrides."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        cname = 'example.com'
-        subject = Subject({'C': 'AT', 'CN': cname})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        cname = "example.com"
+        subject = Subject({"C": "AT", "CN": cname})
 
-        prof = Profile('example', subject=Subject({'C': 'AT'}), add_crl_url=False, add_ocsp_url=False,
-                       add_issuer_url=False, add_issuer_alternative_name=False)
+        prof = Profile(
+            "example",
+            subject=Subject({"C": "AT"}),
+            add_crl_url=False,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+            add_issuer_alternative_name=False,
+        )
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=Subject({'CN': cname}))
+            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=subject, add_crl_url=True, add_ocsp_url=True,
-                                    add_issuer_url=True, add_issuer_alternative_name=True)
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=True,
+                add_ocsp_url=True,
+                add_issuer_url=True,
+                add_issuer_alternative_name=True,
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            AuthorityInformationAccess({'value': {
-                'issuers': [ca.issuer_url],
-                'ocsp': [ca.ocsp_url],
-            }}),
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            CRLDistributionPoints({'value': [{'full_name': [ca.crl_url]}]}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                AuthorityInformationAccess(
+                    {
+                        "value": {
+                            "issuers": [ca.issuer_url],
+                            "ocsp": [ca.ocsp_url],
+                        }
+                    }
+                ),
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                CRLDistributionPoints({"value": [{"full_name": [ca.crl_url]}]}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
     @override_tmpcadir()
     def test_cn_in_san(self):
         """Test writing the common name into the SAN."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        cname = 'example.com'
-        subject = Subject({'C': 'AT', 'CN': cname})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        cname = "example.com"
+        subject = Subject({"C": "AT", "CN": cname})
 
-        prof = Profile('example', subject=Subject({'C': 'AT'}), add_crl_url=False, add_ocsp_url=False,
-                       add_issuer_url=False, add_issuer_alternative_name=False, cn_in_san=False)
+        prof = Profile(
+            "example",
+            subject=Subject({"C": "AT"}),
+            add_crl_url=False,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+            add_issuer_alternative_name=False,
+            cn_in_san=False,
+        )
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=Subject({'CN': cname}))
+            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
         # Create the same cert, but pass cn_in_san=True to create_cert
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=Subject({'CN': cname}), cn_in_san=True)
+            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}), cn_in_san=True)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
         # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
         with self.assertSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
-                prof, ca, csr, subject=Subject({'CN': cname}), cn_in_san=True, extensions=[
-                    SubjectAlternativeName({'value': ['DNS:example.com']}),
-                ]
+                prof,
+                ca,
+                csr,
+                subject=Subject({"CN": cname}),
+                cn_in_san=True,
+                extensions=[
+                    SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                ],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
         # test that the first SAN is added as CN if we don't have A CN
         with self.assertSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
-                prof, ca, csr, cn_in_san=True, extensions=[
-                    SubjectAlternativeName({'value': ['DNS:example.com']}),
-                ]
+                prof,
+                ca,
+                csr,
+                cn_in_san=True,
+                extensions=[
+                    SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                ],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
     @override_tmpcadir()
     def test_override_ski(self):
         """Test overriding the subject key identifier."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        subject = Subject({'CN': 'example.com'})
-        ski = SubjectKeyIdentifier({'value': b'333333'})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"CN": "example.com"})
+        ski = SubjectKeyIdentifier({"value": b"333333"})
 
-        prof = Profile('example', subject=Subject())
+        prof = Profile("example", subject=Subject())
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
-                                    add_issuer_url=False, add_issuer_alternative_name=False,
-                                    extensions=[ski])
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                extensions=[ski],
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            ski,
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                ski,
+            ],
+        )
 
     @override_tmpcadir()
     def test_extensions_dict(self):
         """Test with a dict for an extension."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        subject = Subject({'CN': 'example.com'})
-        ski = SubjectKeyIdentifier({'value': b'333333'})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"CN": "example.com"})
+        ski = SubjectKeyIdentifier({"value": b"333333"})
 
-        prof = Profile('example', subject=Subject())
+        prof = Profile("example", subject=Subject())
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
-                                    add_issuer_url=False, add_issuer_alternative_name=False,
-                                    extensions={ski.key: ski})
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                extensions={ski.key: ski},
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            ski,
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                ski,
+            ],
+        )
 
     @override_tmpcadir()
     def test_hide_extension(self):
         """Test with hiding extensions from the profile."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        subject = Subject({'CN': 'example.com'})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"CN": "example.com"})
 
-        prof = Profile('example', subject=Subject(), extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
-                                    add_issuer_url=False, add_issuer_alternative_name=False,
-                                    extensions={OCSPNoCheck.key: None})
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                extensions={OCSPNoCheck.key: None},
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
     @override_tmpcadir()
     def test_extension_as_cryptography(self):
         """Test with a profile that has cryptography extensions."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        subject = Subject({'CN': 'example.com'})
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"CN": "example.com"})
 
-        prof = Profile('example', subject=Subject(), extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
         with self.assertSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
-                                    add_issuer_url=False, add_issuer_alternative_name=False,
-                                    extensions={OCSPNoCheck.key: OCSPNoCheck().as_extension()})
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                extensions={OCSPNoCheck.key: OCSPNoCheck().as_extension()},
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertEqual(cert.extensions, [
-            ca.get_authority_key_identifier_extension(),
-            BasicConstraints({'value': {'ca': False}}),
-            OCSPNoCheck(),
-            SubjectAlternativeName({'value': ['DNS:example.com']}),
-            certs['child-cert']['subject_key_identifier'],
-        ])
+        self.assertEqual(
+            cert.extensions,
+            [
+                ca.get_authority_key_identifier_extension(),
+                BasicConstraints({"value": {"ca": False}}),
+                OCSPNoCheck(),
+                SubjectAlternativeName({"value": ["DNS:example.com"]}),
+                certs["child-cert"]["subject_key_identifier"],
+            ],
+        )
 
     @override_tmpcadir()
     def test_no_cn_no_san(self):
         """Test creating a cert with no cn in san."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile('example', subject=Subject({'C': 'AT'}))
-        msg = r'^Must name at least a CN or a subjectAlternativeName\.$'
+        prof = Profile("example", subject=Subject({"C": "AT"}))
+        msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=Subject())
         self.assertEqual(pre.call_count, 0)
@@ -420,14 +558,14 @@ class ProfileTestCase(DjangoCATestCase):
     @override_tmpcadir()
     def test_unparsable_cn(self):
         """Try creating a profile with an unparseable Common Name."""
-        ca = self.load_ca(name='root', parsed=certs['root']['pub']['parsed'])
-        csr = certs['child-cert']['csr']['parsed']
-        cname = 'foo bar'
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        cname = "foo bar"
 
-        prof = Profile('example', subject=Subject({'C': 'AT'}))
-        msg = r'^%s: Could not parse CommonName as subjectAlternativeName\.$' % cname
+        prof = Profile("example", subject=Subject({"C": "AT"}))
+        msg = r"^%s: Could not parse CommonName as subjectAlternativeName\.$" % cname
         with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, subject=Subject({'CN': cname}))
+            self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 0)
 
     def test_str(self):

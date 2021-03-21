@@ -30,19 +30,21 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     def add_arguments(self, parser):
         super().add_arguments(parser)
         self.add_format(parser)
-        self.add_ca(parser, arg='ca', allow_disabled=True)
-        parser.add_argument('-b', '--bundle', default=False, action='store_true',
-                            help='Dump the whole certificate bundle.')
-        parser.add_argument('path', nargs='?', default='-',
-                            help='Path where to dump the certificate. Use "-" for stdout.')
+        self.add_ca(parser, arg="ca", allow_disabled=True)
+        parser.add_argument(
+            "-b", "--bundle", default=False, action="store_true", help="Dump the whole certificate bundle."
+        )
+        parser.add_argument(
+            "path", nargs="?", default="-", help='Path where to dump the certificate. Use "-" for stdout.'
+        )
 
     def handle(self, ca, path, **options):  # pylint: disable=arguments-differ
-        if options['bundle'] and options['format'] == Encoding.DER:
-            raise CommandError('Cannot dump bundle when using DER format.')
+        if options["bundle"] and options["format"] == Encoding.DER:
+            raise CommandError("Cannot dump bundle when using DER format.")
 
-        if options['bundle']:
+        if options["bundle"]:
             certs = ca.bundle
         else:
             certs = [ca]
 
-        self.dump(path, b''.join([c.dump_certificate(options['format']) for c in certs]))
+        self.dump(path, b"".join([c.dump_certificate(options["format"]) for c in certs]))

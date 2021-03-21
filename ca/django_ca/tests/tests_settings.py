@@ -28,16 +28,16 @@ class SettingsTestCase(DjangoCATestCase):
 
     def test_none_profiles(self):
         """Test removing a profile by setting it to None."""
-        self.assertIn('client', ca_settings.CA_PROFILES)
+        self.assertIn("client", ca_settings.CA_PROFILES)
 
-        with self.settings(CA_PROFILES={'client': None}):
-            self.assertNotIn('client', ca_settings.CA_PROFILES)
+        with self.settings(CA_PROFILES={"client": None}):
+            self.assertNotIn("client", ca_settings.CA_PROFILES)
 
     def test_ca_profile_update(self):
         """Test adding a profile in settings."""
-        desc = 'testdesc'
-        with self.settings(CA_PROFILES={'client': {'desc': desc}}):
-            self.assertEqual(ca_settings.CA_PROFILES['client']['desc'], desc)
+        desc = "testdesc"
+        with self.settings(CA_PROFILES={"client": {"desc": desc}}):
+            self.assertEqual(ca_settings.CA_PROFILES["client"]["desc"], desc)
 
     def test_acme_order_validity(self):
         """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
@@ -64,9 +64,9 @@ class SettingsTestCase(DjangoCATestCase):
             self.assertTrue(ca_settings.CA_USE_CELERY)
 
         # mock a missing Celery installation
-        with mock.patch.dict('sys.modules', celery=None), self.settings(CA_USE_CELERY=None):
+        with mock.patch.dict("sys.modules", celery=None), self.settings(CA_USE_CELERY=None):
             self.assertFalse(ca_settings.CA_USE_CELERY)
-        with mock.patch.dict('sys.modules', celery=None), self.settings(CA_USE_CELERY=False):
+        with mock.patch.dict("sys.modules", celery=None), self.settings(CA_USE_CELERY=False):
             self.assertFalse(ca_settings.CA_USE_CELERY)
 
 
@@ -75,18 +75,18 @@ class DefaultCATestCase(DjangoCATestCase):
 
     def test_no_setting(self):
         """Test empty setting."""
-        with self.settings(CA_DEFAULT_CA=''):
-            self.assertEqual(ca_settings.CA_DEFAULT_CA, '')
+        with self.settings(CA_DEFAULT_CA=""):
+            self.assertEqual(ca_settings.CA_DEFAULT_CA, "")
 
     def test_unsanitized_setting(self):
         """Test that values are sanitized properly."""
-        with self.settings(CA_DEFAULT_CA='0a:bc'):
-            self.assertEqual(ca_settings.CA_DEFAULT_CA, 'ABC')
+        with self.settings(CA_DEFAULT_CA="0a:bc"):
+            self.assertEqual(ca_settings.CA_DEFAULT_CA, "ABC")
 
     def test_serial_zero(self):
         """Test that a '0' serial is not stripped."""
-        with self.settings(CA_DEFAULT_CA='0'):
-            self.assertEqual(ca_settings.CA_DEFAULT_CA, '0')
+        with self.settings(CA_DEFAULT_CA="0"):
+            self.assertEqual(ca_settings.CA_DEFAULT_CA, "0")
 
 
 class ImproperlyConfiguredTestCase(DjangoCATestCase):
@@ -98,43 +98,44 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
 
     def test_default_ecc_curve(self):
         """Test invalid ``CA_DEFAULT_ECC_CURVE``."""
-        with self.assertImproperlyConfigured(r'^Unkown CA_DEFAULT_ECC_CURVE: foo$'):
-            with self.settings(CA_DEFAULT_ECC_CURVE='foo'):
+        with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_ECC_CURVE: foo$"):
+            with self.settings(CA_DEFAULT_ECC_CURVE="foo"):
                 pass
 
-        with self.assertImproperlyConfigured(r'^ECDH: Not an EllipticCurve\.$'):
-            with self.settings(CA_DEFAULT_ECC_CURVE='ECDH'):
+        with self.assertImproperlyConfigured(r"^ECDH: Not an EllipticCurve\.$"):
+            with self.settings(CA_DEFAULT_ECC_CURVE="ECDH"):
                 pass
 
-        with self.assertImproperlyConfigured('^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$'):
+        with self.assertImproperlyConfigured("^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$"):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass
 
     def test_digest_algorithm(self):
         """Test invalid ``CA_DIGEST_ALGORITHM``."""
-        with self.assertImproperlyConfigured(r'^Unkown CA_DIGEST_ALGORITHM: FOO$'):
-            with self.settings(CA_DIGEST_ALGORITHM='foo'):
+        with self.assertImproperlyConfigured(r"^Unkown CA_DIGEST_ALGORITHM: FOO$"):
+            with self.settings(CA_DIGEST_ALGORITHM="foo"):
                 pass
 
     def test_default_expires(self):
         """Test invalid ``CA_DEFAULT_EXPIRES``."""
-        with self.assertImproperlyConfigured(r'^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$'):
-            with self.settings(CA_DEFAULT_EXPIRES='foo'):
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$"):
+            with self.settings(CA_DEFAULT_EXPIRES="foo"):
                 pass
 
         with self.assertImproperlyConfigured(
-                r'^CA_DEFAULT_EXPIRES: -3 days, 0:00:00: Must have positive value$'):
+            r"^CA_DEFAULT_EXPIRES: -3 days, 0:00:00: Must have positive value$"
+        ):
             with self.settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
                 pass
 
     def test_default_subject(self):
         """Test invalid ``CA_DEFAULT_SUBJECT``."""
-        with self.assertImproperlyConfigured(r'^CA_DEFAULT_SUBJECT: Invalid subject: True$'):
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid subject: True$"):
             with self.settings(CA_DEFAULT_SUBJECT=True):
                 get_default_subject()
 
-        with self.assertImproperlyConfigured(r'^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$'):
-            with self.settings(CA_DEFAULT_SUBJECT={'XYZ': 'error'}):
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$"):
+            with self.settings(CA_DEFAULT_SUBJECT={"XYZ": "error"}):
                 get_default_subject()
 
     def test_use_celery(self):
@@ -143,14 +144,14 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
         # to trigger an import error:
         #   https://medium.com/python-pandemonium/how-to-test-your-imports-1461c1113be1
         #   https://docs.python.org/3.8/reference/import.html#the-module-cache
-        with mock.patch.dict('sys.modules', celery=None):
-            msg = r'^CA_USE_CELERY set to True, but Celery is not installed$'
+        with mock.patch.dict("sys.modules", celery=None):
+            msg = r"^CA_USE_CELERY set to True, but Celery is not installed$"
 
             with self.assertImproperlyConfigured(msg), self.settings(CA_USE_CELERY=True):
                 pass
 
     def test_invalid_setting(self):
         """Test setting an invalid CA."""
-        with self.assertImproperlyConfigured(r'^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$'):
-            with self.settings(CA_DEFAULT_CA='0a:bc:x'):
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$"):
+            with self.settings(CA_DEFAULT_CA="0a:bc:x"):
                 pass
