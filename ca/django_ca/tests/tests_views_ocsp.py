@@ -252,11 +252,11 @@ class OCSPViewTestMixin:
         self.assertEqual(got, {})
         self.assertEqual(Subject(translated), expected)
 
-    def assertOCSP(
+    def assertOCSP(  # pylint: disable=invalid-name
         self,
         http_response,
         requested,
-        status="successful",  # pylint: disable=invalid-name
+        status="successful",
         nonce=None,
         expires=600,
         ocsp_cert=None,

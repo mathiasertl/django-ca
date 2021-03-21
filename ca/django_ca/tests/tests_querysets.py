@@ -246,8 +246,8 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, DjangoCAWithGeneratedCe
             self.assertQuerySet(Certificate.objects.valid(), *valid)
 
 
-class AcmeQuerySetTestCase(
-    QuerySetTestCaseMixin,  # pylint: disable=too-many-instance-attributes
+class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
+    QuerySetTestCaseMixin,
     DjangoCAWithGeneratedCAsTransactionTestCase,
 ):
     """Base class for ACME querysets (creates different instances)."""

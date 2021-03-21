@@ -445,13 +445,13 @@ class IterableExtensionTestMixin:
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
 
-    def assertEqualFunction(
+    def assertEqualFunction(  # pylint: disable=invalid-name
         self,
         func,
         init,
         value,
         update=True,
-        infix=True,  # pylint: disable=invalid-name
+        infix=True,
         set_init=None,
         set_value=None,
         raises=None,

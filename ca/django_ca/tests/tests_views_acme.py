@@ -262,8 +262,8 @@ KSAr5SU7IyM/9M95oQIDAQAB
         kwargs.setdefault("hostname", self.SERVER_NAME)
         return super().absolute_uri(name, **kwargs)
 
-    def assertAcmeProblem(
-        self, response, typ, status, message, ca=None, link_relations=None  # pylint: disable=invalid-name
+    def assertAcmeProblem(  # pylint: disable=invalid-name
+        self, response, typ, status, message, ca=None, link_relations=None
     ):
         """Assert that a HTTP response confirms to an ACME problem report.
 
@@ -300,8 +300,8 @@ KSAr5SU7IyM/9M95oQIDAQAB
         """Assert an unauthorized response."""
         self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
 
-    def assertUnauthorized(
-        self, resp, message=AcmeResponseUnauthorized.message, **kwargs  # pylint: disable=invalid-name
+    def assertUnauthorized(  # pylint: disable=invalid-name
+        self, resp, message=AcmeResponseUnauthorized.message, **kwargs
     ):
         """Assert an unauthorized response."""
         self.assertAcmeProblem(

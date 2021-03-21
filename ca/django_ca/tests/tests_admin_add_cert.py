@@ -699,12 +699,12 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
             return profile.extensions[extension_class.key].serialize()
         return {"value": default, "critical": extension_class.default_critical}
 
-    def assertProfile(
+    def assertProfile(  # pylint: disable=invalid-name
         self,
         profile,
         ku_select,
         ku_critical,
-        eku_select,  # pylint: disable=invalid-name
+        eku_select,
         eku_critical,
         tf_select,
         tf_critical,

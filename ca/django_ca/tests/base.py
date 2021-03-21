@@ -522,12 +522,12 @@ VQIDAQAB
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertCRL(
+    def assertCRL(  # pylint: disable=invalid-name
         self,
         crl,
         expected=None,
         signer=None,
-        expires=86400,  # pylint: disable=invalid-name
+        expires=86400,
         algorithm=None,
         encoding=Encoding.PEM,
         idp=None,
@@ -607,8 +607,8 @@ VQIDAQAB
         with self.assertRaisesRegex(CommandError, msg):
             yield
 
-    def assertExtensions(
-        self, cert, extensions, signer=None, expect_defaults=True  # pylint: disable=invalid-name
+    def assertExtensions(  # pylint: disable=invalid-name
+        self, cert, extensions, signer=None, expect_defaults=True
     ):
         """Assert that `cert` has the given extensions."""
         extensions = {e.key: e for e in extensions}

@@ -65,8 +65,8 @@ class AdminTestCaseMixin:
         for css in self.media_css:
             self.assertCSS(response, css)
 
-    def assertChangelistResponse(
-        self, response, *objects, status=HTTPStatus.OK  # pylint: disable=invalid-name
+    def assertChangelistResponse(  # pylint: disable=invalid-name
+        self, response, *objects, status=HTTPStatus.OK
     ):
         """Assert that the passed response is a model changelist view."""
         self.assertEqual(response.status_code, status)
