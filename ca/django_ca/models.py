@@ -933,7 +933,10 @@ class CertificateAuthority(X509CertMixin):
         algorithm = parse_hash_algorithm(algorithm)
 
         # generate the private key
-        private_key = generate_private_key(*priv_key_params)
+        # NOTE: Since priv_key_params is a union of tuples, mypy is unable to determine that all overloaded
+        # variants for generate_private_key() potentially match, and thus matches the first variant. See:
+        #   https://mypy.readthedocs.io/en/latest/more_types.html#type-checking-calls-to-overloads
+        private_key = cast(PrivateKeyTypes, generate_private_key(*priv_key_params))
         private_pem = private_key.private_bytes(
             encoding=Encoding.PEM,
             format=PrivateFormat.PKCS8,
