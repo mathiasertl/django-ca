@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterable
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -50,6 +49,7 @@ from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .subject import Subject
 from .typehints import Expires
+from .typehints import Literal
 from .typehints import ParsableExtension
 from .typehints import ParsableHash
 from .typehints import ParsableSubject
