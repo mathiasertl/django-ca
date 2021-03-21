@@ -63,6 +63,7 @@ from .typehints import ParsableHash
 from .typehints import ParsableKeyCurve
 from .typehints import ParsableKeyType
 from .typehints import ParsableRelativeDistinguishedName
+from .typehints import PrivateKeyTypes
 from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
@@ -638,7 +639,7 @@ def generate_private_key(
 
 def generate_private_key(
     key_size: Optional[int], key_type: Literal["RSA", "DSA", "ECC"], ecc_curve: Optional[ec.EllipticCurve]
-) -> Union[rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey]:
+) -> PrivateKeyTypes:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
