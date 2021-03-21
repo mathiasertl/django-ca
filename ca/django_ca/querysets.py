@@ -49,7 +49,6 @@ if TYPE_CHECKING:
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet[X509CertMixin])
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
-    T = TypeVar("T", bound=X509CertMixin)
 else:
     AcmeAccountQuerySetBase = (
         AcmeAuthorizationQuerySetBase
@@ -61,17 +60,32 @@ else:
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
-    T = TypeVar("T")
 
 
-class QuerySetProtocol(Protocol[T]):
-    model: T
+class QuerySetProtocol(
+    Protocol[X509CertMixinTypeVar]
+):  # pragma: nocover; pylint: disable=too-few-public-methods,missing-function-docstring
+    """Protocol used for a generic-self in mixins.
 
-    def get(self, *args: Any, **kwargs: Any) -> T:
+    Note that I couldn't get this to work in functions that should return the same type as well. So::
+
+        def filter(self: QuerySetProtocol) -> QuerySetProtocol:
+            ...
+
+    ... doesn't work, unfortunately.
+
+    .. seealso:: https://mypy.readthedocs.io/en/latest/more_types.html#mixin-classes
+    """
+
+    model: X509CertMixinTypeVar
+
+    def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar:
         ...
 
 
-class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
+class DjangoCAMixin(
+    Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
+):  # pylint: disable=too-few-public-methods
     """Mixin with common methods for CertificateAuthority and Certificate models."""
 
     def get_by_serial_or_cn(
@@ -204,7 +218,7 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
         return self.filter(revoked=True)
 
 
-class AcmeAccountQuerySet(AcmeAccountQuerySetBase):
+class AcmeAccountQuerySet(AcmeAccountQuerySetBase):  # pylint: disable=too-few-public-methods
     """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
 
     def viewable(self) -> "AcmeAccountQuerySet":
