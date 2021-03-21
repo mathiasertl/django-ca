@@ -64,6 +64,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
     """Test basic ACMEv2 directory view."""
 
     url = reverse("django_ca:acme-directory")
+    random_url = "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417"
 
     @freeze_time(timestamps["everything_valid"])
     def test_default(self):
@@ -79,7 +80,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         self.assertEqual(
             response.json(),
             {
-                "Zm9vYmFy": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+                "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
                 "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
@@ -105,7 +106,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         self.assertEqual(
             response.json(),
             {
-                "Zm9vYmFy": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+                "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
                 "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
@@ -133,7 +134,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         self.assertEqual(
             response.json(),
             {
-                "Zm9vYmFy": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+                "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
                 "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),

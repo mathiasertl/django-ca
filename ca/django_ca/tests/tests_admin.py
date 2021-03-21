@@ -292,6 +292,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
         """Test fetching basic profile information."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+        enduser_desc = "A certificate for an enduser, allows client authentication, code and email signing."
         self.assertEqual(
             json.loads(response.content.decode("utf-8")),
             {
@@ -316,7 +317,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
                 },
                 "enduser": {
                     "cn_in_san": False,
-                    "description": "A certificate for an enduser, allows client authentication, code and email signing.",
+                    "description": enduser_desc,
                     "extensions": {
                         "basic_constraints": {
                             "critical": True,
