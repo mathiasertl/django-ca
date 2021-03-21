@@ -26,8 +26,6 @@ from typing import cast
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-# Circular import to models so that Sphinx can deal with documenting typehints:
-#    https://github.com/agronholm/sphinx-autodoc-typehints#dealing-with-circular-imports
 from . import ca_settings
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
