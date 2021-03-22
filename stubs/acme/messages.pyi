@@ -11,8 +11,12 @@ from .challenges import ChallengeResponse
 
 class _Constant(jose.JSONDeSerializable, Hashable):
     POSSIBLE_NAMES: Dict[str, "_Constant"]
+    name: str
 
     def __init__(self, name: str) -> None:
+        ...
+
+    def __hash__(self) -> int:
         ...
 
 

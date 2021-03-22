@@ -1,4 +1,5 @@
 # pylint: skip-file
+import abc
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -31,3 +32,7 @@ class Field(Generic[T]):
 
 class JSONObjectWithFields:
     _fields: Dict[str, Field[Any]]
+
+
+class JSONDeSerializable(abc.ABC):
+    ...
