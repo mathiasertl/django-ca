@@ -113,7 +113,9 @@ class Profile:
         # cast extensions to their respective classes
         self.extensions = {}
         for key, extension in deepcopy(extensions).items():
-            if not isinstance(extension, Extension):
+            if isinstance(extension, Extension):
+                self.extensions[key] = extension
+            else:
                 self.extensions[key] = KEY_TO_EXTENSION[key](extension)
 
         # set some sane extension defaults
@@ -244,7 +246,9 @@ class Profile:
         if extensions is None:
             extensions_update: Dict[str, Extension[Any, Any, Any]] = {}
         elif isinstance(extensions, dict):
-            extensions_update = {k: self._parse_extension_value(k, v) for k, v in extensions.items()}
+            extensions_update = {
+                k: self._parse_extension_value(k, v) for k, v in extensions.items() if v is not None
+            }
         else:
             extensions_update = {e.key: e for e in extensions}
 
@@ -264,6 +268,12 @@ class Profile:
         cert_extensions.update(extensions_update)
         cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
         cert_subject = deepcopy(self.subject)
+
+        # If extensions is a dict, filter any extenions where the value is None
+        if isinstance(extensions, dict):
+            for key, value in extensions.items():
+                if value is None:
+                    del cert_extensions[key]
 
         issuer_name = self._update_from_ca(
             ca,
