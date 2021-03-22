@@ -42,7 +42,7 @@ jobs:
       - name: Install program
         run: python setup.py develop
 
-      - name: Run isort and flake8
+      - name: Run black, isort and flake8
         run: python dev.py code-quality
 
       - name: Run pylint
