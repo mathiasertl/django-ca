@@ -16,6 +16,7 @@
 """Various commands used in development."""
 
 import argparse
+import glob
 import json
 import os
 import shutil
@@ -242,12 +243,15 @@ elif args.command == "coverage":
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == "code-quality":
-    files = ["ca/", "setup.py", "dev.py", "recreate-fixtures.py"]
+    files = ["ca/"] + glob.glob("*.py")
     print("isort --check-only --diff %s" % " ".join(files))
     subprocess.run(["isort", "--check-only", "--diff"] + files, check=True)
 
     print("flake8 %s" % " ".join(files))
     subprocess.run(["flake8"] + files, check=True)
+
+    print("black --check %s" % " ".join(files))
+    subprocess.run(["black", "--check"] + files, check=True)
 
     print("python -Wd manage.py check")
     subprocess.run(

@@ -42,9 +42,6 @@ jobs:
       - name: Install program
         run: python setup.py develop
 
-      - name: Run black
-        run: black --check *.py ca/django_ca/
-
       - name: Run isort and flake8
         run: python dev.py code-quality
 
