@@ -271,9 +271,8 @@ class Profile:
 
         # If extensions is a dict, filter any extenions where the value is None
         if isinstance(extensions, dict):
-            for key, value in extensions.items():
-                if value is None:
-                    del cert_extensions[key]
+            for key in {k for k, v in extensions.items() if v is None and k in cert_extensions}:
+                del cert_extensions[key]
 
         issuer_name = self._update_from_ca(
             ca,
