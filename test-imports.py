@@ -61,10 +61,10 @@ from django.contrib.staticfiles import finders
 from django.template.loader import TemplateDoesNotExist
 from django.template.loader import get_template
 
-from django_ca.extensions import Extension
-from django_ca.acme import constants
 from django_ca import models
 from django_ca import views
+from django_ca.acme import constants
+from django_ca.extensions import Extension
 
 # Test if (some) templates can be loaded
 for template in [

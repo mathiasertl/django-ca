@@ -324,7 +324,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                         [
                             "* %s: %s"
                             % (
-                                v.access_method._name,  # pylint: disable=protected-access; only way to get name
+                                v.access_method._name,  # pylint: disable=protected-access
                                 format_general_name(v.access_location),
                             )
                             for v in value
