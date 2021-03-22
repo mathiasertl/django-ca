@@ -568,6 +568,82 @@ class ProfileTestCase(DjangoCATestCase):
             self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 0)
 
+    @override_tmpcadir()
+    def test_invalid_extensions(self):
+        """Test with a dict with extensions of the wrong type."""
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        ca.issuer_url = "https://issuer.example.com"
+        ca.issuer_alt_name = "https://ian.example.com"
+        ca.save()
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = Subject({"CN": "example.com"})
+        ski = SubjectKeyIdentifier({"value": b"333333"})
+        prof = Profile("example", subject=Subject())
+
+        msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
+        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_ocsp_url=False,
+                add_issuer_url=True,
+                extensions={AuthorityInformationAccess.key: ski},
+            )
+        self.assertEqual(pre.call_count, 0)
+
+        msg = r"^extensions\[crl_distribution_points\] is not of type CRLDistributionPoints"
+        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_crl_url=True,
+                extensions={CRLDistributionPoints.key: ski},
+            )
+        self.assertEqual(pre.call_count, 0)
+
+        msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
+        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_ocsp_url=True,
+                extensions={AuthorityInformationAccess.key: ski},
+            )
+        self.assertEqual(pre.call_count, 0)
+
+        msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
+        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_ocsp_url=False,
+                add_issuer_url=True,
+                extensions={AuthorityInformationAccess.key: ski},
+            )
+        self.assertEqual(pre.call_count, 0)
+
+        msg = r"^extensions\[issuer_alternative_name\] is not of type IssuerAlternativeName"
+        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=subject,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=True,
+                extensions={IssuerAlternativeName.key: ski},
+            )
+        self.assertEqual(pre.call_count, 0)
+
     def test_str(self):
         """Test str()."""
         for name in ca_settings.CA_PROFILES:
