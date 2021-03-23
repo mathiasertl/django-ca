@@ -6,7 +6,7 @@ from typing import Dict
 from typing import Optional
 
 import josepy as jose
-from .challenges import ChallengeResponse
+from .challenges import Challenge
 
 
 class _Constant(jose.JSONDeSerializable, Hashable):
@@ -39,7 +39,7 @@ class ResourceBody(jose.JSONObjectWithFields):
 class ChallengeBody(ResourceBody):
     def __init__(
         self,
-        chall: ChallengeResponse,
+        chall: Challenge,
         status: Optional[str] = None,
         validated: Optional[datetime] = None,
         error: Optional[Any] = None,

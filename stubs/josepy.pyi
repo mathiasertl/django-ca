@@ -36,3 +36,7 @@ class JSONObjectWithFields:
 
 class JSONDeSerializable(abc.ABC):
     ...
+
+
+class TypedJSONObjectWithFields(JSONObjectWithFields):
+    ...
