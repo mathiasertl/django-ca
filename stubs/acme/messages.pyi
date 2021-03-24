@@ -6,7 +6,9 @@ from typing import Dict
 from typing import Optional
 
 import josepy as jose
+
 from .challenges import Challenge
+from .mixins import ResourceMixin
 
 
 class _Constant(jose.JSONDeSerializable, Hashable):
@@ -50,6 +52,10 @@ class ChallengeBody(ResourceBody):
 
 
 class Authorization(ResourceBody):
+    ...
+
+
+class CertificateRequest(ResourceMixin, jose.JSONObjectWithFields):
     ...
 
 

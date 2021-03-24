@@ -22,6 +22,8 @@
 import logging
 import secrets
 from http import HTTPStatus
+from typing import Iterable
+from typing import Set
 
 import acme.jws
 import josepy as jose
@@ -32,7 +34,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -63,6 +64,7 @@ from ..tasks import run_task
 from ..utils import validate_email
 from .errors import AcmeBadCSR
 from .errors import AcmeException
+from .errors import AcmeForbidden
 from .errors import AcmeMalformed
 from .errors import AcmeUnauthorized
 from .messages import NewOrder
@@ -72,7 +74,6 @@ from .responses import AcmeResponseAuthorization
 from .responses import AcmeResponseBadNonce
 from .responses import AcmeResponseChallenge
 from .responses import AcmeResponseError
-from .responses import AcmeResponseForbidden
 from .responses import AcmeResponseMalformed
 from .responses import AcmeResponseMalformedPayload
 from .responses import AcmeResponseNotFound
@@ -680,7 +681,9 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
     message_cls = messages.CertificateRequest
 
-    def validate_csr(self, message, authorizations) -> bytes:
+    def validate_csr(
+        self, message: messages.CertificateRequest, authorizations: Iterable[messages.CertificateRequest]
+    ) -> str:
         """Parse and validate the CSR, returns the PEM as str."""
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
@@ -705,12 +708,13 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         # Test if any subject Common Name is in the names for this order
         # NOTE: certbot does *not* set name in the subject
         csr_subject = Subject(csr.subject)
-        if csr_subject.get("CN") and x509.DNSName(csr_subject.get("CN")) not in names_from_order:
+        common_name = csr_subject.get("CN")
+        if isinstance(common_name, str) and x509.DNSName(common_name) not in names_from_order:
             raise AcmeBadCSR(message="CommonName was not in order.")
 
         try:
-            names_from_csr = set(
-                csr.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
+            names_from_csr: Set[x509.Name] = set(
+                csr.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
             )
         except x509.ExtensionNotFound as ex:
             raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
@@ -720,7 +724,9 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
         return csr.public_bytes(Encoding.PEM).decode("utf-8")
 
-    def acme_request(self, message, slug):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ; more concrete here
+        self, message: messages.CertificateRequest, slug: str
+    ) -> AcmeResponseOrder:
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
@@ -744,7 +750,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             # processing state, but it's not entirely clear if that request should go here or the normal order
             # resource.
             # Further investigation is on what LE and certbot do is needed here.
-            return AcmeResponseForbidden(typ="orderNotReady", message="This order is not yet ready.")
+            raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
 
         expires = order.expires
         if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
@@ -755,7 +761,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
             if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
-                return AcmeResponseForbidden(typ="orderNotReady", message="This order is not yet ready.")
+                raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
 
         # Parse and validate the CSR
         csr = self.validate_csr(message, authorizations)
@@ -791,7 +797,9 @@ class AcmeCertificateView(AcmeBaseView):
 
     post_as_get = True
 
-    def acme_request(self, slug: str) -> HttpResponse:  # pylint: disable=arguments-differ
+    def acme_request(  # type: ignore[override] #pylint: disable=arguments-differ
+        self, slug: str
+    ) -> HttpResponse:
         try:
             cert = AcmeCertificate.objects.viewable().account(self.account).get(slug=slug)
         except AcmeCertificate.DoesNotExist as ex:
@@ -825,7 +833,9 @@ class AcmeAuthorizationView(AcmeBaseView):
 
     post_as_get = True
 
-    def acme_request(self, slug: str) -> AcmeResponseAuthorization:  # pylint: disable=arguments-differ
+    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, slug: str
+    ) -> AcmeResponseAuthorization:
         # TODO: implement deactivating an authorization (section 7.5.2)
 
         try:

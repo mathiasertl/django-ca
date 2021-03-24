@@ -19,6 +19,8 @@
 import logging
 from datetime import timedelta
 from http import HTTPStatus
+from typing import Any
+from typing import Callable
 
 from django.db import transaction
 from django.utils import timezone
@@ -56,7 +58,7 @@ except ImportError:  # pragma: no cover
     jose = requests = None
 
 
-def run_task(task, *args, **kwargs):
+def run_task(task: Callable[..., None], *args: Any, **kwargs: Any):
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 

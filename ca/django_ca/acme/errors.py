@@ -18,6 +18,7 @@ from typing import Type
 
 from .responses import AcmeResponseBadCSR
 from .responses import AcmeResponseError
+from .responses import AcmeResponseForbidden
 from .responses import AcmeResponseMalformed
 from .responses import AcmeResponseUnauthorized
 
@@ -45,7 +46,13 @@ class AcmeMalformed(AcmeException):
 class AcmeUnauthorized(AcmeException):
     """Exception when the request is unauthorized."""
 
-    response = AcmeResponseUnauthorized
+    response = AcmeResponseUnauthorized  # 401
+
+
+class AcmeForbidden(AcmeException):
+    """Exception when the request is unauthorized."""
+
+    response = AcmeResponseForbidden  # 403
 
 
 class AcmeBadCSR(AcmeException):

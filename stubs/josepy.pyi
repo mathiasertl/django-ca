@@ -41,6 +41,9 @@ class JSONObjectWithFields(JSONDeSerializable):
     def __init__(self, **kwargs: Any) -> None:
         ...
 
+    def encode(self, name: str) -> Any:
+        ...
+
 
 class TypedJSONObjectWithFields(JSONObjectWithFields):
     ...
