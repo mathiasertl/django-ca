@@ -14,12 +14,17 @@
 """Collection of Django HTTP response subclasses representing ACME responses."""
 
 from http import HTTPStatus
+from typing import Any
+from typing import Optional
+from typing import Type
 
 from acme import messages
 
+from django.http import HttpRequest
 from django.http import JsonResponse
 from django.urls import reverse
 
+from ..models import AcmeAccount
 from .messages import Order
 
 
@@ -30,14 +35,16 @@ class AcmeResponse(JsonResponse):
 class AcmeSimpleResponse(AcmeResponse):
     """Base class for all responses returning an ACME recourses (accounts, etc.)."""
 
-    def __init__(self, **kwargs):
+    message_cls: Type[messages.ResourceBody]
+
+    def __init__(self, **kwargs: Any):
         super().__init__(self.message_cls(**kwargs).to_json())  # pylint: disable=no-member
 
 
 class AcmeResponseAccount(AcmeResponse):
     """Response containing an ACME account."""
 
-    def __init__(self, request, account):
+    def __init__(self, request: HttpRequest, account: AcmeAccount) -> None:
         contact = []
         if account.contact:
             contact = account.contact.split("\n")
@@ -94,7 +101,7 @@ class AcmeResponseError(AcmeResponse):
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR  # 500
     type = "serverInternal"
 
-    def __init__(self, typ=None, message=""):
+    def __init__(self, typ: Optional[str] = None, message: str = "") -> None:
         super().__init__(
             {
                 "type": "urn:ietf:params:acme:error:%s" % (typ or self.type),

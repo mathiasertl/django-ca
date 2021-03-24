@@ -30,12 +30,16 @@ class Field(Generic[T]):
         ...
 
 
-class JSONObjectWithFields:
+class JSONDeSerializable(abc.ABC):
+    def to_json(self) -> Any:
+        ...
+
+
+class JSONObjectWithFields(JSONDeSerializable):
     _fields: Dict[str, Field[Any]]
 
-
-class JSONDeSerializable(abc.ABC):
-    ...
+    def __init__(self, **kwargs: Any) -> None:
+        ...
 
 
 class TypedJSONObjectWithFields(JSONObjectWithFields):

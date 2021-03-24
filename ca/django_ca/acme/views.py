@@ -200,7 +200,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         # pylint: disable=unused-argument; kwargs is not usually used
         return self.message_cls
 
-    def set_link_relations(self, response, **kwargs):
+    def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
         """Set Link releations headers according to RFC8288.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
@@ -680,7 +680,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
     message_cls = messages.CertificateRequest
 
-    def validate_csr(self, message, authorizations):
+    def validate_csr(self, message, authorizations) -> bytes:
         """Parse and validate the CSR, returns the PEM as str."""
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
@@ -723,10 +723,10 @@ class AcmeOrderFinalizeView(AcmeBaseView):
     def acme_request(self, message, slug):  # pylint: disable=arguments-differ; more concrete here
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
-        except AcmeOrder.DoesNotExist:
+        except AcmeOrder.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
-            return AcmeResponseUnauthorized()
+            raise AcmeUnauthorized() from ex
         # self.prepared['order'] = order.slug
 
         # RFC 8555, section 7.4:
@@ -791,11 +791,11 @@ class AcmeCertificateView(AcmeBaseView):
 
     post_as_get = True
 
-    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(self, slug: str) -> HttpResponse:  # pylint: disable=arguments-differ
         try:
             cert = AcmeCertificate.objects.viewable().account(self.account).get(slug=slug)
-        except AcmeCertificate.DoesNotExist:
-            return AcmeResponseUnauthorized()
+        except AcmeCertificate.DoesNotExist as ex:
+            raise AcmeUnauthorized() from ex
 
         # self.prepared['cert'] = slug
         # self.prepared['csr'] = cert.csr
@@ -825,15 +825,15 @@ class AcmeAuthorizationView(AcmeBaseView):
 
     post_as_get = True
 
-    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(self, slug: str) -> AcmeResponseAuthorization:  # pylint: disable=arguments-differ
         # TODO: implement deactivating an authorization (section 7.5.2)
 
         try:
             auth = AcmeAuthorization.objects.viewable().account(account=self.account).url().get(slug=slug)
-        except AcmeAuthorization.DoesNotExist:
+        except AcmeAuthorization.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
-            return AcmeResponseUnauthorized()
+            raise AcmeUnauthorized() from ex
 
         # self.prepared['order'] = auth.order.slug
         # self.prepared['auth'] = auth.slug
@@ -879,7 +879,7 @@ class AcmeChallengeView(AcmeBaseView):
 
     ignore_body = True
 
-    def set_link_relations(self, response, **kwargs):
+    def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
         """Set the "up" link header to the matching authorization.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
@@ -890,9 +890,11 @@ class AcmeChallengeView(AcmeBaseView):
         if response.status_code < HTTPStatus.BAD_REQUEST:
             # Only return an up relation if no error is thrown
             kwargs["up"] = self.auth.acme_url
-        return super().set_link_relations(response, **kwargs)
+        super().set_link_relations(response, **kwargs)
 
-    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, slug: str
+    ) -> AcmeResponseChallenge:
         try:
             challenge = AcmeChallenge.objects.viewable().account(self.account).url().get(slug=slug)
         except AcmeChallenge.DoesNotExist:

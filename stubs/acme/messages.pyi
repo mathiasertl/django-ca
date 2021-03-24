@@ -49,6 +49,10 @@ class ChallengeBody(ResourceBody):
         ...
 
 
+class Authorization(ResourceBody):
+    ...
+
+
 class Order(ResourceBody):
     ...
 
