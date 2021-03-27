@@ -5,12 +5,26 @@ from typing import Callable
 from typing import Dict
 from typing import Generic
 from typing import Optional
+from typing import Type
 from typing import TypeVar
 
 T = TypeVar('T')
+JSONDeSerializableTypeVar = TypeVar('JSONDeSerializableTypeVar')
 
 
 def decode_b64jose(data: str, size: Optional[int] = None, minimum: Optional[bool] = False) -> bytes:
+    ...
+
+
+def encode_b64jose(data: bytes) -> str:
+    ...
+
+
+class Error(Exception):
+    ...
+
+
+class DeserializationError(Error):
     ...
 
 
@@ -31,6 +45,10 @@ class Field(Generic[T]):
 
 
 class JSONDeSerializable(abc.ABC):
+    @classmethod
+    def json_loads(cls: Type[JSONDeSerializableTypeVar], json_string: str) -> JSONDeSerializableTypeVar:
+        ...
+
     def to_json(self) -> Any:
         ...
 

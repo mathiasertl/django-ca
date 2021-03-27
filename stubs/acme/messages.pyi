@@ -2,8 +2,10 @@
 from collections.abc import Hashable
 from datetime import datetime
 from typing import Any
+from typing import ClassVar
 from typing import Dict
 from typing import Optional
+from typing import Tuple
 
 import josepy as jose
 
@@ -36,6 +38,19 @@ class Identifier(jose.JSONObjectWithFields):
 
 class ResourceBody(jose.JSONObjectWithFields):
     resource_type: str
+
+
+class Registration(ResourceBody):
+    contact: Tuple[str, ...]
+    only_return_existing: bool
+    terms_of_service_agreed: bool
+
+    phone_prefix: ClassVar[str]
+    email_prefix: ClassVar[str]
+
+    @property
+    def emails(self) -> Tuple[str, ...]:
+        ...
 
 
 class ChallengeBody(ResourceBody):
