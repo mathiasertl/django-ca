@@ -21,9 +21,13 @@
 
 import logging
 import secrets
+from datetime import datetime
 from http import HTTPStatus
 from typing import Iterable
+from typing import Optional
 from typing import Set
+from typing import Type
+from typing import cast
 
 import acme.jws
 import josepy as jose
@@ -41,6 +45,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import Http404
+from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.urls import reverse
@@ -68,6 +73,7 @@ from .errors import AcmeForbidden
 from .errors import AcmeMalformed
 from .errors import AcmeUnauthorized
 from .messages import NewOrder
+from .responses import AcmeResponse
 from .responses import AcmeResponseAccount
 from .responses import AcmeResponseAccountCreated
 from .responses import AcmeResponseAuthorization
@@ -151,7 +157,7 @@ class AcmeGetNonceViewMixin:
     nonce_length = 32
     """Length of generated Nonces."""
 
-    def get_nonce(self):
+    def get_nonce(self) -> str:
         """Get a random Nonce and add it to the cache."""
 
         data = secrets.token_bytes(self.nonce_length)
@@ -160,7 +166,7 @@ class AcmeGetNonceViewMixin:
         cache.set(cache_key, 0)
         return nonce
 
-    def validate_nonce(self, nonce):
+    def validate_nonce(self, nonce: str) -> bool:
         """Validate that the given nonce was issued and was not used before."""
         cache_key = "acme-nonce-%s-%s" % (self.kwargs["serial"], nonce)
         try:
@@ -182,9 +188,11 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
     ignore_body = False  # True if we want to ignore the message body
     post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
-    message_cls = None  # Set to class parsing the request body if post_as_get=False.
+    message_cls: Type[jose.JSONObjectWithFields]  # class for request body if post_as_get=False.
 
-    def acme_request(self, **kwargs):
+    def acme_request(
+        self, slug: Optional[str] = None, message: Optional[jose.JSONObjectWithFields] = None
+    ) -> AcmeResponse:
         """Function to handle the given ACME request. Views are expected to implement this function.
 
         Parameters
@@ -195,11 +203,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
             specified in ``message_cls`` is passed as the ``message`` keyword argument.
         """
         raise NotImplementedError  # pragma: no cover
-
-    def get_message_cls(self, request, **kwargs):
-        """Get the message class used for parsing the request body."""
-        # pylint: disable=unused-argument; kwargs is not usually used
-        return self.message_cls
 
     def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
         """Set Link releations headers according to RFC8288.
@@ -232,13 +235,15 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(  # type: ignore[override]
+        self, request: HttpRequest, serial: str, slug: Optional[str] = None
+    ) -> HttpResponse:
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
         # self.prepared = OrderedDict()  # pylint: disable=attribute-defined-outside-init
         try:
-            response = super().dispatch(request, *args, **kwargs)
+            response = super().dispatch(request, serial=serial, slug=slug)
             self.set_link_relations(response)
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
@@ -253,7 +258,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
         response["replay-nonce"] = self.get_nonce()
         return response
 
-    def post(self, request, serial, **kwargs):
+    def post(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> AcmeResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
         # pylint: disable=too-many-return-statements,too-many-branches; b/c of the many checks
@@ -271,7 +276,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
 
         try:
             self.jws = acme.jws.JWS.json_loads(request.body)
-        except (jose.errors.DeserializationError, TypeError):
+        except (jose.DeserializationError, TypeError):
             return AcmeResponseMalformed(message="Could not parse JWS token.")
 
         combined = self.jws.signature.combined
@@ -344,24 +349,22 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
                 return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
 
             try:
-                response = self.acme_request(**kwargs)
+                response = self.acme_request(slug=slug)
             except AcmeException as e:
                 response = e.get_response()
         elif self.ignore_body is True:
             try:
-                response = self.acme_request(**kwargs)
+                response = self.acme_request(slug=slug)
             except AcmeException as e:
                 response = e.get_response()
         else:
-            message_cls = self.get_message_cls(request, **kwargs)
-
             try:
-                message = message_cls.json_loads(self.jws.payload)
-            except jose.errors.DeserializationError:
+                message = self.message_cls.json_loads(self.jws.payload)
+            except jose.DeserializationError:
                 return AcmeResponseMalformedPayload()
 
             try:
-                response = self.acme_request(message=message, **kwargs)
+                response = self.acme_request(slug=slug, message=message)
             except AcmeException as e:
                 response = e.get_response()
 
@@ -379,11 +382,13 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
        * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(  # type: ignore[override] # pylint: disable=arguments-differ; more concrete here
+        self, request: HttpRequest, serial: str
+    ) -> HttpResponse:
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
-        response = super().dispatch(request, *args, **kwargs)
+        response = super().dispatch(request, serial)
         response["replay-nonce"] = self.get_nonce()
 
         # RFC 8555, section 7.2:
@@ -392,13 +397,13 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
         response["cache-control"] = "no-store"
         return response
 
-    def head(self, request, serial):
+    def head(self, request: HttpRequest, serial: str) -> HttpResponse:
         """Get a new Nonce with a HEAD request."""
         # pylint: disable=method-hidden; false positive - View.setup() sets head as property if not defined
         # pylint: disable=unused-argument; false positive - really used by AcmeGetNonceViewMixin
         return HttpResponse()
 
-    def get(self, request, serial):
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         """Get a new Nonce with a GET request.
 
         Note that certbot always does a HEAD request, but RFC 8555, section 7.2 mandates support for GET
@@ -419,7 +424,7 @@ class AcmeNewAccountView(AcmeBaseView):
     message_cls = messages.Registration
     requires_key = True
 
-    def validate_contacts(self, message):
+    def validate_contacts(self, message: messages.Registration) -> None:
         """Validate the contact information for this message."""
 
         for contact in message.contact:
@@ -459,7 +464,9 @@ class AcmeNewAccountView(AcmeBaseView):
                 #   error of type "unsupportedContact", ...
                 raise AcmeMalformed("unsupportedContact", "%s: Unsupported address scheme." % contact)
 
-    def acme_request(self, message):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(
+        self, message: messages.Registration, slug: Optional[str] = None
+    ) -> AcmeResponseAccount:
         pem = (
             self.jwk["key"]
             .public_bytes(encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
@@ -482,7 +489,7 @@ class AcmeNewAccountView(AcmeBaseView):
                 #
                 #   ... account does not exist, then the server MUST return an error response with status code
                 #   400 (Bad Request) and type "urn:ietf:params:acme:error:accountDoesNotExist".
-                return AcmeResponseMalformed(typ="accountDoesNotExist", message="Account does not exist.")
+                raise AcmeMalformed(typ="accountDoesNotExist", message="Account does not exist.")
 
         # RFC 8555, section 7.3.1
         #
@@ -498,7 +505,7 @@ class AcmeNewAccountView(AcmeBaseView):
 
         if self.ca.acme_requires_contact and not message.emails:
             # NOTE: RFC 8555 does not specify an error code in this case
-            return AcmeResponseUnauthorized(message="Must provide at least one contact address.")
+            raise AcmeUnauthorized(message="Must provide at least one contact address.")
 
         # Make sure that contact addresses are valid
         self.validate_contacts(message)
@@ -518,7 +525,7 @@ class AcmeNewAccountView(AcmeBaseView):
             account.full_clean()
             account.save()
         except ValidationError:
-            return AcmeResponseMalformed(message="Account cannot be stored.")
+            raise AcmeMalformed(message="Account cannot be stored.")
 
         # self.prepared['thumbprint'] = account.thumbprint
         # self.prepared['pem'] = account.pem
@@ -562,26 +569,28 @@ class AcmeNewOrderView(AcmeBaseView):
     message_cls = NewOrder
 
     @transaction.atomic
-    def acme_request(self, message):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
         now = timezone.now()
         if timezone.is_naive(now):
             now = timezone.make_aware(now, timezone=pytz.utc)
 
-        if message.not_before and message.not_before < now:
-            return AcmeResponseMalformed(message="Certificate cannot be valid before now.")
-        if message.not_after and message.not_after > now + ca_settings.ACME_MAX_CERT_VALIDITY:
-            return AcmeResponseMalformed(message="Certificate cannot be valid that long.")
-        if message.not_before and message.not_after and message.not_before > message.not_after:
-            return AcmeResponseMalformed(message="notBefore must be before notAfter.")
+        # josepy message classes define field names as class variables, but instance attributes are of the
+        # same type (similar to Django). So we cast fields detected as RFC3339Field to datetime.
+        not_before = cast(Optional[datetime], message.not_before)
+        not_after = cast(Optional[datetime], message.not_after)
+
+        if not_before and not_before < now:
+            raise AcmeMalformed(message="Certificate cannot be valid before now.")
+        if not_after and not_after > now + ca_settings.ACME_MAX_CERT_VALIDITY:
+            raise AcmeMalformed(message="Certificate cannot be valid that long.")
+        if not_before and not_after and not_before > not_after:
+            raise AcmeMalformed(message="notBefore must be before notAfter.")
         if not message.identifiers:
-            return AcmeResponseMalformedPayload()
+            raise AcmeMalformed(message="Malformed payload.")
 
-        not_before = message.not_before
-        not_after = message.not_after
-
-        if not settings.USE_TZ and message.not_before:
+        if not settings.USE_TZ and not_before:
             not_before = timezone.make_naive(not_before)
-        if not settings.USE_TZ and message.not_after:
+        if not settings.USE_TZ and not_after:
             not_after = timezone.make_naive(not_after)
 
         # TODO: test if identifiers are acceptable
@@ -623,13 +632,15 @@ class AcmeOrderView(AcmeBaseView):
 
     post_as_get = True
 
-    def acme_request(self, slug):  # pylint: disable=arguments-differ; more concrete here
+    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ; more concrete here
+        self, slug: str
+    ) -> AcmeResponseOrder:
         try:
             order = AcmeOrder.objects.viewable().account(self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
-            return AcmeResponseUnauthorized()
+            raise AcmeUnauthorized()
         # self.prepared['order'] = order.slug
 
         expires = order.expires
@@ -682,7 +693,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
     message_cls = messages.CertificateRequest
 
     def validate_csr(
-        self, message: messages.CertificateRequest, authorizations: Iterable[messages.CertificateRequest]
+        self, message: messages.CertificateRequest, authorizations: Iterable[AcmeAuthorization]
     ) -> str:
         """Parse and validate the CSR, returns the PEM as str."""
 
