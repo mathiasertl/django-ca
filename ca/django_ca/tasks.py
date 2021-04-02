@@ -69,7 +69,7 @@ def run_task(task: Callable[..., None], *args: Any, **kwargs: Any):
 
 
 @shared_task
-def cache_crl(serial, **kwargs):
+def cache_crl(serial: str, **kwargs: Any) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
     ca.cache_crls(**kwargs)
@@ -104,7 +104,7 @@ def generate_ocsp_keys(**kwargs):
 
 @shared_task
 @transaction.atomic
-def acme_validate_challenge(challenge_pk):
+def acme_validate_challenge(challenge_pk: int) -> None:
     """Validate an ACME challenge."""
     if not ca_settings.CA_ENABLE_ACME:
         log.error("ACME is not enabled.")
@@ -211,7 +211,7 @@ def acme_validate_challenge(challenge_pk):
 
 @shared_task
 @transaction.atomic
-def acme_issue_certificate(acme_certificate_pk):
+def acme_issue_certificate(acme_certificate_pk: int) -> None:
     """Actually issue an ACME certificate."""
     if not ca_settings.CA_ENABLE_ACME:
         log.error("ACME is not enabled.")
@@ -255,7 +255,7 @@ def acme_issue_certificate(acme_certificate_pk):
 
 @shared_task
 @transaction.atomic
-def acme_cleanup():
+def acme_cleanup() -> None:
     """Cleanup expired ACME orders."""
 
     if not ca_settings.CA_ENABLE_ACME:
