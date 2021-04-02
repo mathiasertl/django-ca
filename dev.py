@@ -218,8 +218,6 @@ elif args.command == "coverage":
         version_str = ".".join([str(v) for v in ver])
         exclude_versions(cov, "cryptography", this_version, ver, version_str)
 
-    cov.exclude(r"^\s*if TYPE_CHECKING:")
-
     cov.start()
 
     setup_django()

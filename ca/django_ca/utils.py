@@ -546,21 +546,21 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 @overload
 def validate_key_parameters(
     key_size: Optional[int], key_type: Literal["DSA"], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[int, Literal["DSA"], None]:  # pragma: nocover
+) -> Tuple[int, Literal["DSA"], None]:
     ...
 
 
 @overload
 def validate_key_parameters(
     key_size: Optional[int], key_type: Optional[Literal["RSA"]], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[int, Literal["RSA"], None]:  # pragma: nocover
+) -> Tuple[int, Literal["RSA"], None]:
     ...
 
 
 @overload
 def validate_key_parameters(
     key_size: Optional[int], key_type: Literal["ECC"], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[None, Literal["ECC"], ec.EllipticCurve]:  # pragma: nocover
+) -> Tuple[None, Literal["ECC"], ec.EllipticCurve]:
     ...
 
 
@@ -607,21 +607,21 @@ def validate_key_parameters(
 @overload
 def generate_private_key(
     key_size: int, key_type: Literal["DSA"], ecc_curve: None
-) -> dsa.DSAPrivateKey:  # pragma: nocover
+) -> dsa.DSAPrivateKey:
     ...
 
 
 @overload
 def generate_private_key(
     key_size: int, key_type: Literal["RSA"], ecc_curve: None
-) -> rsa.RSAPrivateKey:  # pragma: nocover
+) -> rsa.RSAPrivateKey:
     ...
 
 
 @overload
 def generate_private_key(
     key_size: None, key_type: Literal["ECC"], ecc_curve: ec.EllipticCurve
-) -> ec.EllipticCurvePrivateKey:  # pragma: nocover
+) -> ec.EllipticCurvePrivateKey:
     ...
 
 

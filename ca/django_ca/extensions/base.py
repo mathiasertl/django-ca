@@ -16,11 +16,10 @@
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 # pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
 
+import abc
 import binascii
 import collections.abc
 import textwrap
-from abc import ABCMeta
-from abc import abstractmethod
 from typing import Any
 from typing import ClassVar
 from typing import Collection
@@ -68,7 +67,7 @@ from ..utils import format_general_name
 from .utils import DistributionPoint
 
 
-class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=ABCMeta):
+class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=abc.ABCMeta):
     """Convenience class to handle X509 Extensions.
 
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
@@ -180,7 +179,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         return self.repr_value()
 
     @property
-    @abstractmethod
+    @abc.abstractmethod
     def extension_type(self) -> ExtensionTypeTypeVar:
         """The ``ExtensionType`` instance of this extension.
 
@@ -198,13 +197,13 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         """
         return self.extension_type, self.critical
 
-    @abstractmethod
+    @abc.abstractmethod
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:
         """Load a wrapper class from a cryptography extension instance.
 
         Implementing classes are expected to implement this function."""
 
-    @abstractmethod
+    @abc.abstractmethod
     def from_dict(self, value: ParsableValue) -> None:
         """Load class from a dictionary.
 
@@ -223,7 +222,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         operator.
         """
 
-    @abstractmethod
+    @abc.abstractmethod
     def repr_value(self) -> str:
         """String representation of the current value for this extension.
 
@@ -244,7 +243,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
             "value": self.serialize_value(),
         }
 
-    @abstractmethod
+    @abc.abstractmethod
     def serialize_value(self) -> SerializedValue:
         """Serialize the value for this extension.
 
@@ -435,11 +434,11 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
         del self.value[key]
 
     @overload
-    def __getitem__(self, key: int) -> SerializedItem:  # pragma: no cover
+    def __getitem__(self, key: int) -> SerializedItem:
         ...
 
     @overload
-    def __getitem__(self, key: slice) -> List[SerializedItem]:  # pragma: no cover
+    def __getitem__(self, key: slice) -> List[SerializedItem]:
         ...
 
     def __getitem__(self, key: Union[int, slice]) -> Union[SerializedItem, List[SerializedItem]]:
@@ -448,11 +447,11 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
         return [self.serialize_item(v) for v in self.value[key]]
 
     @overload
-    def __setitem__(self, key: int, value: ParsableItem) -> None:  # pragma: no cover
+    def __setitem__(self, key: int, value: ParsableItem) -> None:
         ...
 
     @overload
-    def __setitem__(self, key: slice, value: Iterable[ParsableItem]) -> None:  # pragma: no cover
+    def __setitem__(self, key: slice, value: Iterable[ParsableItem]) -> None:
         ...
 
     def __setitem__(self, key: Union[int, slice], value: Union[ParsableItem, Iterable[ParsableItem]]) -> None:

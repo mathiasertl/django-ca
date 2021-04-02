@@ -2,6 +2,14 @@
 line-length = 110
 exclude = "migrations"
 
+[tool.coverage.report]
+exclude_lines = [
+    "^\\s*@abc.abstractmethod",
+    "^\\s*@overload",
+    "^\\s*if TYPE_CHECKING:",
+    "pragma: no ?cover",
+]
+
 [tool.isort]
 line_length = 110
 skip = ["migrations", "stubs"]
