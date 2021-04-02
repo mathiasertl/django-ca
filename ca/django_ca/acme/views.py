@@ -24,12 +24,14 @@ import logging
 import secrets
 from datetime import datetime
 from http import HTTPStatus
+from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import Optional
 from typing import Set
 from typing import Type
 from typing import TypeVar
+from typing import Union
 from typing import cast
 
 import acme.jws
@@ -94,6 +96,7 @@ from .utils import parse_acme_csr
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
+DirectoryMetaAlias = Dict[str, Union[str, list[str]]]
 
 
 class AcmeDirectory(View):
@@ -128,7 +131,7 @@ class AcmeDirectory(View):
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
         rnd = jose.encode_b64jose(secrets.token_bytes(16))
 
-        directory = {
+        directory: Dict[str, Union[str, DirectoryMetaAlias]] = {
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
             "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
             "newAccount": self._url(request, "acme-new-account", ca),
@@ -139,7 +142,7 @@ class AcmeDirectory(View):
 
         # Construct a "meta" object if and add it if any fields are defined. Note that the meta object is
         # optional (RFC 8555, section 7.1.1: "The object MAY additionally contain a "meta" field.").
-        meta = {}
+        meta: DirectoryMetaAlias = {}
         if ca.website:
             meta["website"] = ca.website
         if ca.terms_of_service:
@@ -158,6 +161,7 @@ class AcmeGetNonceViewMixin:
     Note that thix mixin depends on the presence of a ``serial`` argument to the URL resolver.
     """
 
+    kwargs: Dict[str, str]
     nonce_length = 32
     """Length of generated Nonces."""
 
@@ -186,26 +190,17 @@ class AcmeGetNonceViewMixin:
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class AcmeBaseView(AcmeGetNonceViewMixin, View, Generic[MessageTypeVar], metaclass=abc.ABCMeta):
+class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     """Base class for all ACME views."""
 
-    ignore_body = False  # True if we want to ignore the message body
-    post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
-    message_cls: Optional[Type[MessageTypeVar]] = None  # class for request body if post_as_get=False.
 
     @abc.abstractmethod
-    def acme_request(
-        self, message: Optional[MessageTypeVar] = None, slug: Optional[str] = None
-    ) -> AcmeResponse:
-        """Function to handle the given ACME request. Views are expected to implement this function.
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+        """Abstract method expected to implement processing a message.
 
-        Parameters
-        ----------
-
-        **kwargs : dict
-            The arguments as passed by the resolver. If ``post_as_get`` is True, an instance of the class
-            specified in ``message_cls`` is passed as the ``message`` keyword argument.
+        The `slug` argument is the URL slug that identifies an ACME object and is None for requests that
+        either create an object or do not process any object.
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -349,31 +344,51 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, Generic[MessageTypeVar], metacla
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized(message="URL does not match.")
 
-        if self.post_as_get is True:
-            if self.jws.payload != b"":
-                return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
+        try:
+            return self.process_acme_request(slug=slug)
+        except AcmeException as e:
+            return e.get_response()
 
-            try:
-                response = self.acme_request(slug=slug)
-            except AcmeException as e:
-                response = e.get_response()
-        elif self.ignore_body is True:
-            try:
-                response = self.acme_request(slug=slug)
-            except AcmeException as e:
-                response = e.get_response()
-        else:
-            try:
-                message = self.message_cls.json_loads(self.jws.payload)
-            except jose.DeserializationError:
-                return AcmeResponseMalformedPayload()
 
-            try:
-                response = self.acme_request(slug=slug, message=message)
-            except AcmeException as e:
-                response = e.get_response()
+class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
+    """Base class for ACME post-as-get requests."""
+    ignore_body = False  # True if we want to ignore the message body
 
-        return response
+    @abc.abstractmethod
+    def acme_request(self, slug: str) -> AcmeResponse:
+        """Process post-as-get request.
+
+        Note that the `slug` argument is never ``None`` for post-as-get requests, as the request would then
+        contain no information.
+        """
+        raise NotImplementedError
+
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+        if self.ignore_body is False and self.jws.payload != b"":
+            return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
+        if slug is None:
+            return AcmeResponseError(message="PostAsGet view called with slug.")
+
+        return self.acme_request(slug=slug)
+
+
+class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.ABCMeta):
+    """Base class for ACME requests with a message payload."""
+
+    message_cls: Type[MessageTypeVar]
+
+    @abc.abstractmethod
+    def acme_request(self, message: MessageTypeVar, str: Optional[str]) -> AcmeResponse:
+        """Process ACME request."""
+        raise NotImplementedError
+
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+        try:
+            message = self.message_cls.json_loads(self.jws.payload)
+        except jose.DeserializationError:
+            return AcmeResponseMalformedPayload()
+
+        return self.acme_request(message, slug)
 
 
 class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
@@ -418,7 +433,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
         return HttpResponse(status=HTTPStatus.NO_CONTENT)  # 204, unlike HEAD, which has 200
 
 
-class AcmeNewAccountView(AcmeBaseView[messages.Registration]):
+class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
     """Implements endpoint for creating a new account, that is ``/acme/new-account``.
 
     This view is called when the ACME client tries to register a new account.
@@ -469,9 +484,8 @@ class AcmeNewAccountView(AcmeBaseView[messages.Registration]):
                 #   error of type "unsupportedContact", ...
                 raise AcmeMalformed("unsupportedContact", "%s: Unsupported address scheme." % contact)
 
-    def acme_request(  # type: ignore[override] # pylint: disable=unused-argument
-        self, message: messages.Registration, slug: Optional[str] = None
-    ) -> AcmeResponseAccount:
+    # TODO: possible to make slug non-optional?
+    def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
         pem = (
             self.jwk["key"]
             .public_bytes(encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
@@ -545,19 +559,19 @@ class AcmeNewAccountView(AcmeBaseView[messages.Registration]):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeBaseView[jose.JSONObjectWithFields]):  # pylint: disable=too-few-public-methods
+class AcmeAccountView(AcmeBaseView):  # pylint: disable=too-few-public-methods
     """View showing account details."""
 
     # TODO: implement this view
 
 
-class AcmeAccountOrdersView(AcmeBaseView[jose.JSONObjectWithFields]):  # pylint: disable=abstract-method
+class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method
     """View showing orders for an account (not yet implemented)"""
 
     # TODO: implement this view
 
 
-class AcmeNewOrderView(AcmeBaseView[NewOrder]):
+class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
     """Implements endpoint for applying for a new certificate, that is ``/acme/new-order``.
 
     This is the first request of an ACME client when requesting a new certificate.
@@ -574,9 +588,7 @@ class AcmeNewOrderView(AcmeBaseView[NewOrder]):
     message_cls = NewOrder
 
     @transaction.atomic
-    def acme_request(  # type: ignore[override] # pylint: disable=unused-argument
-        self, message: NewOrder, slug: Optional[str] = None
-    ) -> AcmeResponseOrderCreated:
+    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
         now = timezone.now()
         if timezone.is_naive(now):
             now = timezone.make_aware(now, timezone=pytz.utc)
@@ -625,7 +637,7 @@ class AcmeNewOrderView(AcmeBaseView[NewOrder]):
         return response
 
 
-class AcmeOrderView(AcmeBaseView[None]):
+class AcmeOrderView(AcmePostAsGetView):
     """Implements endpoint for viewing an order, that is ``/acme/order/<slug>/``.
 
     A client calls this view after calling :py:class:`~django_ca.views.AcmeOrderFinalizeView`, presumably
@@ -637,11 +649,7 @@ class AcmeOrderView(AcmeBaseView[None]):
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
 
-    post_as_get = True
-
-    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ; more concrete here
-        self, slug: str
-    ) -> AcmeResponseOrder:
+    def acme_request(self, slug: str) -> AcmeResponseOrder:
         try:
             order = AcmeOrder.objects.viewable().account(self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist:
@@ -685,7 +693,7 @@ class AcmeOrderView(AcmeBaseView[None]):
         return response
 
 
-class AcmeOrderFinalizeView(AcmeBaseView):
+class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
     """Implements endpoint for applying for certificate issuance, that is ``/acme/order/<slug>/finalize``.
 
     The client is supposed to call this URL to submit its CSR, once "it believes it has fulfilled the server's
@@ -742,9 +750,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
 
         return csr.public_bytes(Encoding.PEM).decode("utf-8")
 
-    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ; more concrete here
-        self, message: messages.CertificateRequest, slug: str
-    ) -> AcmeResponseOrder:
+    def acme_request(self, message: messages.CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
@@ -805,7 +811,7 @@ class AcmeOrderFinalizeView(AcmeBaseView):
         return response
 
 
-class AcmeCertificateView(AcmeBaseView):
+class AcmeCertificateView(AcmePostAsGetView):
     """Implements endpoint to download a certificate, that is ``/acme/cert/<slug>/``.
 
     This is the final view called in the certificate validation process and downloads the issued certificate.
@@ -813,11 +819,9 @@ class AcmeCertificateView(AcmeBaseView):
     .. seealso:: `RFC8555, 8555, 7.4.2 <https://tools.ietf.org/html/rfc8555#section-7.4.2>`_
     """
 
-    post_as_get = True
-
-    def acme_request(  # type: ignore[override] #pylint: disable=arguments-differ
-        self, slug: str
-    ) -> HttpResponse:
+    # This is the only view that does not return JSON, thus acme_request() returns the superclass
+    # HttpResponse, and not an AcmeResponse (which is always JSON).
+    def acme_request(self, slug: str) -> HttpResponse:  # type: ignore[override]
         try:
             cert = AcmeCertificate.objects.viewable().account(self.account).get(slug=slug)
         except AcmeCertificate.DoesNotExist as ex:
@@ -830,7 +834,7 @@ class AcmeCertificateView(AcmeBaseView):
         return HttpResponse(bundle, content_type="application/pem-certificate-chain")
 
 
-class AcmeAuthorizationView(AcmeBaseView):
+class AcmeAuthorizationView(AcmePostAsGetView):
     """Implements endpoint for identifier authorization, that is ``/acme/authz/<slug>/``.
 
     This is the second request when a client requests a new certificate and represents an authorization
@@ -849,11 +853,7 @@ class AcmeAuthorizationView(AcmeBaseView):
     .. seealso:: `RFC 8555, 7.5 <https://tools.ietf.org/html/rfc8555#section-7.5>`_
     """
 
-    post_as_get = True
-
-    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ
-        self, slug: str
-    ) -> AcmeResponseAuthorization:
+    def acme_request(self, slug: str) -> AcmeResponseAuthorization:
         # TODO: implement deactivating an authorization (section 7.5.2)
 
         try:
@@ -889,7 +889,7 @@ class AcmeAuthorizationView(AcmeBaseView):
         return resp
 
 
-class AcmeChallengeView(AcmeBaseView[None]):
+class AcmeChallengeView(AcmePostAsGetView):
     """Implements ``/acme/chall/<slug>``, indicating to the server that the challenge can now be validated.
 
     The client calls this view to tell the server to start validation of the resource of this challenges
@@ -920,9 +920,7 @@ class AcmeChallengeView(AcmeBaseView[None]):
             kwargs["up"] = self.auth.acme_url
         super().set_link_relations(response, **kwargs)
 
-    def acme_request(  # type: ignore[override] # pylint: disable=arguments-differ
-        self, slug: str
-    ) -> AcmeResponseChallenge:
+    def acme_request(self, slug: str) -> AcmeResponseChallenge:
         try:
             challenge = AcmeChallenge.objects.viewable().account(self.account).url().get(slug=slug)
         except AcmeChallenge.DoesNotExist:
