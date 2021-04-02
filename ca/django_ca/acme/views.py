@@ -202,7 +202,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         The `slug` argument is the URL slug that identifies an ACME object and is None for requests that
         either create an object or do not process any object.
         """
-        raise NotImplementedError  # pragma: no cover
 
     def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
         """Set Link releations headers according to RFC8288.
@@ -352,21 +351,23 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
 class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
     """Base class for ACME post-as-get requests."""
+
     ignore_body = False  # True if we want to ignore the message body
 
     @abc.abstractmethod
     def acme_request(self, slug: str) -> AcmeResponse:
-        """Process post-as-get request.
+        """Abstract method to process an ACME post-as-get request.
+
+        Actual view subclasses are expected to implement this function.
 
         Note that the `slug` argument is never ``None`` for post-as-get requests, as the request would then
         contain no information.
         """
-        raise NotImplementedError
 
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         if self.ignore_body is False and self.jws.payload != b"":
             return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
-        if slug is None:
+        if slug is None:  # pragma: no cover; just a safety measure
             return AcmeResponseError(message="PostAsGet view called with slug.")
 
         return self.acme_request(slug=slug)
@@ -379,8 +380,10 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
 
     @abc.abstractmethod
     def acme_request(self, message: MessageTypeVar, str: Optional[str]) -> AcmeResponse:
-        """Process ACME request."""
-        raise NotImplementedError
+        """Process ACME request.
+
+        Actual view subclasses are expected to implement this function.
+        """
 
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         try:
