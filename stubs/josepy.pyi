@@ -12,7 +12,9 @@ from typing import Type
 from typing import TypeVar
 
 from cryptography.hazmat.backends.interfaces import Backend
+from cryptography.hazmat.primitives import _serialization
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -34,6 +36,16 @@ class Error(Exception):
 
 class DeserializationError(Error):
     ...
+
+
+class ComparableKey:
+    # NOTE: in reality, this comes from the wrapped public key
+    def public_bytes(
+        self,
+        encoding: _serialization.Encoding,
+        format: _serialization.PublicFormat = serialization.PublicFormat.SubjectPublicKeyInfo
+    ) -> bytes:
+        ...
 
 
 class ImmutableMap(Mapping[K, V], Hashable):
@@ -90,6 +102,8 @@ class TypedJSONObjectWithFields(ImmutableMap[str, Any], JSONObjectWithFields):
 
 
 class JWK(TypedJSONObjectWithFields):
+    key: ComparableKey
+
     @classmethod
     def load(
         cls: Type["JWK"],

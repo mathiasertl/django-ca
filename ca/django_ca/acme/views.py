@@ -491,7 +491,7 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
     # TODO: possible to make slug non-optional?
     def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
         pem = (
-            self.jwk["key"]
+            self.jwk.key
             .public_bytes(encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
             .decode("utf-8")
             .strip()
