@@ -13,7 +13,6 @@
 
 """Django model managers."""
 
-# pylint: disable=too-few-public-methods; some managers are just placeholders for future methods
 
 import pathlib
 from typing import TYPE_CHECKING

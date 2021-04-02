@@ -553,7 +553,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         self.assertMalformed(resp, "Non-empty payload in get-as-post request.")
 
 
-class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):  # pylint: disable=too-few-public-methods
+class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):
     """Mixin that also adds an account to the database."""
 
     def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring

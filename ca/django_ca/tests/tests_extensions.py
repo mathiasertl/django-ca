@@ -247,7 +247,7 @@ class AbstractExtensionTestMixin:
         """"Test creating an extension with a non-bool critical value."""
         class_name = "example_class"
 
-        class _Example:  # pylint: disable=too-few-public-methods
+        class _Example:
             def __str__(self):
                 return class_name
 
@@ -262,7 +262,7 @@ class AbstractExtensionTestMixin:
     def test_init_unknown_type(self):
         """Try creating an extension with a value of unknown type."""
 
-        class _Example:  # pylint: disable=too-few-public-methods
+        class _Example:
             pass
 
         with self.assertRaisesRegex(ValueError, "^Value is of unsupported type _Example$"):

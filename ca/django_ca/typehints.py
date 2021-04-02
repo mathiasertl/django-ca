@@ -54,7 +54,7 @@ else:  # pragma: only py<3.8
 # pylint: enable=useless-import-alias
 
 
-class SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods; just a protocol
+class SupportsLessThan(Protocol):
     """Protocol that specifies <, making something sortable."""
 
     def __lt__(self, __other: Any) -> bool:  # pragma: nocover
@@ -251,7 +251,6 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     has a ``"pathlen"`` value that is either ``None`` or an int.
     """
 
-    # pylint: disable=too-few-public-methods; just a TypedDict
     pathlen: Union[int, str]
 
 
@@ -280,7 +279,6 @@ class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     has a ``"pathlen"`` value that is either ``None`` or an int.
     """
 
-    # pylint: disable=too-few-public-methods; just a TypedDict
     pathlen: Optional[int]
 
 

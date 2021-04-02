@@ -91,7 +91,7 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATes
         )
 
 
-class AcmeOrderViewsTestCaseMixin:  # pylint: disable=too-few-public-methods
+class AcmeOrderViewsTestCaseMixin:
     """Mixin to create orders."""
 
     model = AcmeOrder

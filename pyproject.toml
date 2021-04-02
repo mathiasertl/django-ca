@@ -85,7 +85,8 @@ disable = [
     #   https://github.com/PyCQA/pylint/issues/2822
     "unsubscriptable-object",
 
-    # This is just annoying:
+    # These are just annoying
+    "too-few-public-methods",
     "no-self-use",
 
     # covered by isort:

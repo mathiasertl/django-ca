@@ -64,7 +64,7 @@ else:
 
 class QuerySetProtocol(
     Protocol[X509CertMixinTypeVar]
-):  # pragma: nocover; pylint: disable=too-few-public-methods,missing-function-docstring
+):  # pragma: nocover; pylint: disable=missing-function-docstring
     """Protocol used for a generic-self in mixins.
 
     Note that I couldn't get this to work in functions that should return the same type as well. So::
@@ -83,9 +83,7 @@ class QuerySetProtocol(
         ...
 
 
-class DjangoCAMixin(
-    Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
-):  # pylint: disable=too-few-public-methods
+class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
     """Mixin with common methods for CertificateAuthority and Certificate models."""
 
     def get_by_serial_or_cn(
@@ -218,7 +216,7 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
         return self.filter(revoked=True)
 
 
-class AcmeAccountQuerySet(AcmeAccountQuerySetBase):  # pylint: disable=too-few-public-methods
+class AcmeAccountQuerySet(AcmeAccountQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
 
     def viewable(self) -> "AcmeAccountQuerySet":

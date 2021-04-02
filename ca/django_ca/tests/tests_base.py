@@ -191,7 +191,7 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError, msg):
 
             @override_tmpcadir()
-            class Foo:  # pylint: disable=missing-class-docstring,too-few-public-methods,unused-variable
+            class Foo:  # pylint: disable=missing-class-docstring,unused-variable
                 pass
 
 

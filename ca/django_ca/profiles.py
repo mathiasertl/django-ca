@@ -455,7 +455,7 @@ def get_profile(name: Optional[str] = None) -> Profile:
     return Profile(name, **ca_settings.CA_PROFILES[name])
 
 
-class Profiles:  # pylint: disable=too-few-public-methods
+class Profiles:
     """A profile handler similar to Djangos CacheHandler."""
 
     def __init__(self) -> None:

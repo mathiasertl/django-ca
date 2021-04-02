@@ -299,7 +299,7 @@ class URLAction(argparse.Action):
 ##########################
 
 
-class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method,too-few-public-methods
+class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method
     """Base class for extension actions.
 
     Actions using this class as a base class **have** to pass an extra ``extension`` kwarg with a subclass of

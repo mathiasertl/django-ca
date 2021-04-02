@@ -298,7 +298,7 @@ class CertificateMixin:
 
         return fields
 
-    class Media:  # pylint: disable=too-few-public-methods,missing-class-docstring
+    class Media:  # pylint: disable=missing-class-docstring
         css = {
             "all": ("django_ca/admin/css/base.css",),
         }
@@ -415,7 +415,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
 
         return fieldsets
 
-    class Media:  # pylint: disable=too-few-public-methods,missing-class-docstring
+    class Media:  # pylint: disable=missing-class-docstring
         css = {
             "all": (
                 "django_ca/admin/css/base.css",
@@ -898,7 +898,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         else:
             obj.save()
 
-    class Media:  # pylint: disable=too-few-public-methods,missing-class-docstring
+    class Media:  # pylint: disable=missing-class-docstring
         css = {
             "all": (
                 "django_ca/admin/css/base.css",

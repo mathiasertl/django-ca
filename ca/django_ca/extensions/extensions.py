@@ -13,7 +13,6 @@
 
 # pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
 # pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
-# pylint: disable=too-few-public-methods; https://github.com/PyCQA/pylint/issues/3605
 # pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 
 """Module providing wrapper classes for various x509 extensions.

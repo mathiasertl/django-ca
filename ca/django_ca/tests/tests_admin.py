@@ -45,7 +45,7 @@ from .base_mixins import StandardAdminViewTestCaseMixin
 User = get_user_model()
 
 
-class CertificateAdminTestCaseMixin:  # pylint: disable=too-few-public-methods
+class CertificateAdminTestCaseMixin:
     """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
 
     model = Certificate
