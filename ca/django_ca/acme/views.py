@@ -196,6 +196,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
     requires_key = False  # True if we require a full key (-> new accounts)
     jwk: jose.JWK
+    jws: acme.jws.JWS
 
     @abc.abstractmethod
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
@@ -281,6 +282,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             return AcmeResponseMalformed(message="Could not parse JWS token.")
 
         combined = self.jws.signature.combined
+        print(type(combined.alg), type(combined.nonce), type(combined.url))
         if combined.jwk and combined.kid:
             # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
             # both.'
@@ -323,7 +325,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             return AcmeResponseMalformed(message="Multiple JWS signatures encountered.")
 
         # "The JWS Protected Header MUST include the following fields:...
-        if not combined.alg or combined.alg == "none":  # pragma: no cover
+        if not combined.alg:  # pragma: no cover
             # ... "alg"
             return AcmeResponseMalformed(message="No algorithm specified.")
 

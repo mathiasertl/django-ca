@@ -7,9 +7,11 @@ from typing import Callable
 from typing import Dict
 from typing import Generic
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Type
 from typing import TypeVar
+from typing import Union
 
 from cryptography.hazmat.backends.interfaces import Backend
 from cryptography.hazmat.primitives import _serialization
@@ -80,7 +82,10 @@ class Field(Generic[T]):
 
 class JSONDeSerializable(abc.ABC):
     @classmethod
-    def json_loads(cls: Type[JSONDeSerializableTypeVar], json_string: str) -> JSONDeSerializableTypeVar:
+    def json_loads(
+        cls: Type[JSONDeSerializableTypeVar],
+        json_string: Union[str, bytes]
+    ) -> JSONDeSerializableTypeVar:
         ...
 
     def to_json(self) -> Any:
@@ -114,4 +119,37 @@ class JWK(TypedJSONObjectWithFields):
         ...
 
     def thumbprint(self, hash_function: Type[hashes.HashAlgorithm] = hashes.SHA256) -> bytes:
+        ...
+
+
+class JWA(JSONDeSerializable):
+    ...
+
+
+class JWASignature(JWA, Hashable):
+    def __hash__(self) -> int:
+        ...
+
+
+class Header(JSONObjectWithFields):
+    alg: JWASignature
+    jwk: Optional[JWK]
+    kid: Optional[str]
+    nonce: bytes
+    url: str
+
+
+class Signature(JSONObjectWithFields):
+    ...
+
+
+class JWS(JSONObjectWithFields):
+    payload: bytes
+    signatures: List[Signature]
+
+    @property
+    def signature(self) -> Signature:
+        ...
+
+    def verify(self, key: Optional[JWK] = None) -> bool:
         ...
