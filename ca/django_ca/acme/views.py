@@ -19,14 +19,17 @@
    * https://django-ca.readthedocs.io/en/latest/python/views.html
 """
 
+import abc
 import logging
 import secrets
 from datetime import datetime
 from http import HTTPStatus
+from typing import Generic
 from typing import Iterable
 from typing import Optional
 from typing import Set
 from typing import Type
+from typing import TypeVar
 from typing import cast
 
 import acme.jws
@@ -90,6 +93,7 @@ from .responses import AcmeResponseUnsupportedMediaType
 from .utils import parse_acme_csr
 
 log = logging.getLogger(__name__)
+MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
 
 
 class AcmeDirectory(View):
@@ -99,10 +103,10 @@ class AcmeDirectory(View):
     .. seealso:: `RFC 8555, section 7.1.1 <https://tools.ietf.org/html/rfc8555#section-7.1.1>`_
     """
 
-    def _url(self, request, name, ca):
+    def _url(self, request: HttpRequest, name: str, ca: CertificateAuthority) -> str:
         return request.build_absolute_uri(reverse("django_ca:%s" % name, kwargs={"serial": ca.serial}))
 
-    def get(self, request, serial=None):
+    def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
@@ -182,16 +186,17 @@ class AcmeGetNonceViewMixin:
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class AcmeBaseView(AcmeGetNonceViewMixin, View):
+class AcmeBaseView(AcmeGetNonceViewMixin, View, Generic[MessageTypeVar], metaclass=abc.ABCMeta):
     """Base class for all ACME views."""
 
     ignore_body = False  # True if we want to ignore the message body
     post_as_get = False  # True if this is a POST-as-GET request (see RFC 8555, 6.3).
     requires_key = False  # True if we require a full key (-> new accounts)
-    message_cls: Type[jose.JSONObjectWithFields]  # class for request body if post_as_get=False.
+    message_cls: Optional[Type[MessageTypeVar]] = None  # class for request body if post_as_get=False.
 
+    @abc.abstractmethod
     def acme_request(
-        self, slug: Optional[str] = None, message: Optional[jose.JSONObjectWithFields] = None
+        self, message: Optional[MessageTypeVar] = None, slug: Optional[str] = None
     ) -> AcmeResponse:
         """Function to handle the given ACME request. Views are expected to implement this function.
 
@@ -235,7 +240,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
-    def dispatch(  # type: ignore[override]
+    def dispatch(  # type: ignore[override] # pylint: disable=arguments-differ
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
     ) -> HttpResponse:
         if not ca_settings.CA_ENABLE_ACME:
@@ -413,7 +418,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
         return HttpResponse(status=HTTPStatus.NO_CONTENT)  # 204, unlike HEAD, which has 200
 
 
-class AcmeNewAccountView(AcmeBaseView):
+class AcmeNewAccountView(AcmeBaseView[messages.Registration]):
     """Implements endpoint for creating a new account, that is ``/acme/new-account``.
 
     This view is called when the ACME client tries to register a new account.
@@ -464,7 +469,7 @@ class AcmeNewAccountView(AcmeBaseView):
                 #   error of type "unsupportedContact", ...
                 raise AcmeMalformed("unsupportedContact", "%s: Unsupported address scheme." % contact)
 
-    def acme_request(
+    def acme_request(  # type: ignore[override] # pylint: disable=unused-argument
         self, message: messages.Registration, slug: Optional[str] = None
     ) -> AcmeResponseAccount:
         pem = (
@@ -484,12 +489,12 @@ class AcmeNewAccountView(AcmeBaseView):
             try:
                 account = AcmeAccount.objects.get(thumbprint=thumbprint, pem=pem)
                 return AcmeResponseAccount(self.request, account)
-            except AcmeAccount.DoesNotExist:
+            except AcmeAccount.DoesNotExist as ex:
                 # RFC 8555, section 7.3:
                 #
                 #   ... account does not exist, then the server MUST return an error response with status code
                 #   400 (Bad Request) and type "urn:ietf:params:acme:error:accountDoesNotExist".
-                raise AcmeMalformed(typ="accountDoesNotExist", message="Account does not exist.")
+                raise AcmeMalformed(typ="accountDoesNotExist", message="Account does not exist.") from ex
 
         # RFC 8555, section 7.3.1
         #
@@ -524,8 +529,8 @@ class AcmeNewAccountView(AcmeBaseView):
         try:
             account.full_clean()
             account.save()
-        except ValidationError:
-            raise AcmeMalformed(message="Account cannot be stored.")
+        except ValidationError as ex:
+            raise AcmeMalformed(message="Account cannot be stored.") from ex
 
         # self.prepared['thumbprint'] = account.thumbprint
         # self.prepared['pem'] = account.pem
@@ -540,19 +545,19 @@ class AcmeNewAccountView(AcmeBaseView):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeBaseView):  # pylint: disable=abstract-method; acme_request
+class AcmeAccountView(AcmeBaseView[jose.JSONObjectWithFields]):  # pylint: disable=too-few-public-methods
     """View showing account details."""
 
     # TODO: implement this view
 
 
-class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method; acme_request
+class AcmeAccountOrdersView(AcmeBaseView[jose.JSONObjectWithFields]):  # pylint: disable=abstract-method
     """View showing orders for an account (not yet implemented)"""
 
     # TODO: implement this view
 
 
-class AcmeNewOrderView(AcmeBaseView):
+class AcmeNewOrderView(AcmeBaseView[NewOrder]):
     """Implements endpoint for applying for a new certificate, that is ``/acme/new-order``.
 
     This is the first request of an ACME client when requesting a new certificate.
@@ -569,7 +574,9 @@ class AcmeNewOrderView(AcmeBaseView):
     message_cls = NewOrder
 
     @transaction.atomic
-    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
+    def acme_request(  # type: ignore[override] # pylint: disable=unused-argument
+        self, message: NewOrder, slug: Optional[str] = None
+    ) -> AcmeResponseOrderCreated:
         now = timezone.now()
         if timezone.is_naive(now):
             now = timezone.make_aware(now, timezone=pytz.utc)
@@ -618,7 +625,7 @@ class AcmeNewOrderView(AcmeBaseView):
         return response
 
 
-class AcmeOrderView(AcmeBaseView):
+class AcmeOrderView(AcmeBaseView[None]):
     """Implements endpoint for viewing an order, that is ``/acme/order/<slug>/``.
 
     A client calls this view after calling :py:class:`~django_ca.views.AcmeOrderFinalizeView`, presumably
@@ -882,7 +889,7 @@ class AcmeAuthorizationView(AcmeBaseView):
         return resp
 
 
-class AcmeChallengeView(AcmeBaseView):
+class AcmeChallengeView(AcmeBaseView[None]):
     """Implements ``/acme/chall/<slug>``, indicating to the server that the challenge can now be validated.
 
     The client calls this view to tell the server to start validation of the resource of this challenges
