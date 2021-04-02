@@ -8,6 +8,8 @@ from typing import Optional
 from typing import Type
 from typing import TypeVar
 
+from cryptography.hazmat.backends.interfaces import Backend
+
 T = TypeVar('T')
 JSONDeSerializableTypeVar = TypeVar('JSONDeSerializableTypeVar')
 
@@ -65,3 +67,14 @@ class JSONObjectWithFields(JSONDeSerializable):
 
 class TypedJSONObjectWithFields(JSONObjectWithFields):
     ...
+
+
+class JWK(TypedJSONObjectWithFields):
+    @classmethod
+    def load(
+        cls: Type["JWK"],
+        data: bytes,
+        password: Optional[bytes] = None,
+        backend: Optional[Backend] = None
+    ) -> "JWK":
+        ...
