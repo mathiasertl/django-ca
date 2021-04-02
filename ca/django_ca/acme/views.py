@@ -380,7 +380,7 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
     message_cls: Type[MessageTypeVar]
 
     @abc.abstractmethod
-    def acme_request(self, message: MessageTypeVar, str: Optional[str]) -> AcmeResponse:
+    def acme_request(self, message: MessageTypeVar, slug: Optional[str]) -> AcmeResponse:
         """Process ACME request.
 
         Actual view subclasses are expected to implement this function.
@@ -489,10 +489,13 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
                 raise AcmeMalformed("unsupportedContact", "%s: Unsupported address scheme." % contact)
 
     # TODO: possible to make slug non-optional?
-    def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
+    def acme_request(  # pylint: disable=unused-argument
+        self, message: messages.Registration, slug: Optional[str]
+    ) -> AcmeResponseAccount:
         pem = (
-            self.jwk.key
-            .public_bytes(encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
+            self.jwk.key.public_bytes(
+                encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
             .decode("utf-8")
             .strip()
         )
@@ -563,13 +566,13 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeBaseView):  # pylint: disable=too-few-public-methods
+class AcmeAccountView(AcmeBaseView):  # pylint: disable=too-few-public-methods,abstract-method
     """View showing account details."""
 
     # TODO: implement this view
 
 
-class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method
+class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method,abstract-method
     """View showing orders for an account (not yet implemented)"""
 
     # TODO: implement this view
@@ -656,10 +659,10 @@ class AcmeOrderView(AcmePostAsGetView):
     def acme_request(self, slug: str) -> AcmeResponseOrder:
         try:
             order = AcmeOrder.objects.viewable().account(self.account).get(slug=slug)
-        except AcmeOrder.DoesNotExist:
+        except AcmeOrder.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
-            raise AcmeUnauthorized()
+            raise AcmeUnauthorized() from ex
         # self.prepared['order'] = order.slug
 
         expires = order.expires
