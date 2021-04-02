@@ -27,6 +27,7 @@ from http import HTTPStatus
 from typing import Dict
 from typing import Generic
 from typing import Iterable
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import Type
@@ -96,7 +97,7 @@ from .utils import parse_acme_csr
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
-DirectoryMetaAlias = Dict[str, Union[str, list[str]]]
+DirectoryMetaAlias = Dict[str, Union[str, List[str]]]
 
 
 class AcmeDirectory(View):
