@@ -605,16 +605,12 @@ def validate_key_parameters(
 
 
 @overload
-def generate_private_key(
-    key_size: int, key_type: Literal["DSA"], ecc_curve: None
-) -> dsa.DSAPrivateKey:
+def generate_private_key(key_size: int, key_type: Literal["DSA"], ecc_curve: None) -> dsa.DSAPrivateKey:
     ...
 
 
 @overload
-def generate_private_key(
-    key_size: int, key_type: Literal["RSA"], ecc_curve: None
-) -> rsa.RSAPrivateKey:
+def generate_private_key(key_size: int, key_type: Literal["RSA"], ecc_curve: None) -> rsa.RSAPrivateKey:
     ...
 
 
