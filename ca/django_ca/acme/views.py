@@ -194,6 +194,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     """Base class for all ACME views."""
 
     requires_key = False  # True if we require a full key (-> new accounts)
+    jwk: jose.JWK
 
     @abc.abstractmethod
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:

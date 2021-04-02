@@ -1,15 +1,21 @@
 # pylint: skip-file
 import abc
+from collections.abc import Hashable
+from collections.abc import Mapping
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generic
+from typing import Iterator
 from typing import Optional
 from typing import Type
 from typing import TypeVar
 
 from cryptography.hazmat.backends.interfaces import Backend
+from cryptography.hazmat.primitives import hashes
 
+K = TypeVar('K')
+V = TypeVar('V')
 T = TypeVar('T')
 JSONDeSerializableTypeVar = TypeVar('JSONDeSerializableTypeVar')
 
@@ -28,6 +34,20 @@ class Error(Exception):
 
 class DeserializationError(Error):
     ...
+
+
+class ImmutableMap(Mapping[K, V], Hashable):
+    def __getitem__(self, key: K) -> V:
+        ...
+
+    def __hash__(self) -> int:
+        ...
+
+    def __iter__(self) -> Iterator[K]:
+        ...
+
+    def __len__(self) -> int:
+        ...
 
 
 class Field(Generic[T]):
@@ -65,7 +85,7 @@ class JSONObjectWithFields(JSONDeSerializable):
         ...
 
 
-class TypedJSONObjectWithFields(JSONObjectWithFields):
+class TypedJSONObjectWithFields(ImmutableMap[str, Any], JSONObjectWithFields):
     ...
 
 
@@ -77,4 +97,7 @@ class JWK(TypedJSONObjectWithFields):
         password: Optional[bytes] = None,
         backend: Optional[Backend] = None
     ) -> "JWK":
+        ...
+
+    def thumbprint(self, hash_function: Type[hashes.HashAlgorithm] = hashes.SHA256) -> bytes:
         ...
