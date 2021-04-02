@@ -492,6 +492,7 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
     def acme_request(  # pylint: disable=unused-argument
         self, message: messages.Registration, slug: Optional[str]
     ) -> AcmeResponseAccount:
+        """Process ACME request."""
         pem = (
             self.jwk.key.public_bytes(
                 encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -566,13 +567,13 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeBaseView):  # pylint: disable=too-few-public-methods,abstract-method
+class AcmeAccountView(AcmeBaseView):  # pylint: disable=abstract-method
     """View showing account details."""
 
     # TODO: implement this view
 
 
-class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method,abstract-method
+class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method
     """View showing orders for an account (not yet implemented)"""
 
     # TODO: implement this view
@@ -595,7 +596,10 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
     message_cls = NewOrder
 
     @transaction.atomic
-    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
+    def acme_request(  # pylint: disable=unused-argument
+        self, message: NewOrder, slug: Optional[str] = None
+    ) -> AcmeResponseOrderCreated:
+        """Process ACME request."""
         now = timezone.now()
         if timezone.is_naive(now):
             now = timezone.make_aware(now, timezone=pytz.utc)
@@ -758,6 +762,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
         return csr.public_bytes(Encoding.PEM).decode("utf-8")
 
     def acme_request(self, message: messages.CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
+        """Process ACME request."""
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
