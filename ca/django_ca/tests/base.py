@@ -21,6 +21,7 @@ import re
 import shutil
 import sys
 import tempfile
+import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
@@ -88,6 +89,7 @@ from ..utils import ca_storage
 from ..utils import x509_name
 
 User = get_user_model()
+FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
 
 
 def _load_key(data):
@@ -414,7 +416,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
     .. NOTE: This also takes any additional settings.
     """
 
-    def __call__(self, test_func):
+    def __call__(self, test_func: FuncTypeVar) -> FuncTypeVar:
         if not inspect.isfunction(test_func):
             raise ValueError("Only functions can use override_tmpcadir()")
         return super().__call__(test_func)
@@ -496,7 +498,7 @@ VQIDAQAB
         """Shortcut to mock the ca dir to the given value."""
         return mock_cadir(path)
 
-    def absolute_uri(self, name, hostname=None, **kwargs):
+    def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
 
         The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
@@ -512,11 +514,15 @@ VQIDAQAB
             name = "django_ca%s" % name
         return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
 
-    def assertAuthorityKeyIdentifier(self, issuer, cert):  # pylint: disable=invalid-name
+    def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
+        self,
+        issuer: CertificateAuthority,
+        cert: X509CertMixin
+    ) -> None:
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
 
-    def assertBasic(self, cert, algo="SHA256"):  # pylint: disable=invalid-name
+    def assertBasic(self, cert: X509CertMixin, algo: str = "SHA256") -> None:  # pylint: disable=invalid-name
         """Assert some basic key properties."""
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
@@ -915,7 +921,7 @@ VQIDAQAB
         )
 
     @classmethod
-    def expires(cls, days):
+    def expires(cls, days: int) -> datetime:
         """Get a timestamp `days` from now."""
         now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         return now + timedelta(days + 1)
@@ -969,7 +975,7 @@ VQIDAQAB
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
 
-    def load_usable_cas(self):
+    def load_usable_cas(self) -> None:
         """Load CAs generated as fixture data."""
         self.cas.update(
             {
@@ -1162,3 +1168,8 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
     def wait_for_page_load(self, wait=2):
         """Wait for the page to load."""
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
+
+
+__all__ = (
+    "override_settings",
+)
