@@ -42,20 +42,14 @@ try:
     from celery import shared_task
     from celery.local import Proxy
 except ImportError:
-    if typing.TYPE_CHECKING:
-        from celery.local import Proxy
-    else:
-        class Proxy:
-            """Dummy class ONLY used in type casts."""
-
-    def shared_task(func: FuncTypeVar) -> Proxy[FuncTypeVar]:
+    def shared_task(func: FuncTypeVar) -> "Proxy[FuncTypeVar]":
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
         # func.delay = lambda *a, **kw: func(*a, **kw)
         # func.apply_async = lambda *a, **kw: func(*a, **kw)
         func.delay = func  # type: ignore[attr-defined]
-        return typing.cast(Proxy[FuncTypeVar], func)
+        return typing.cast("Proxy[FuncTypeVar]", func)
 
 
 # requests and josepy are optional dependencies for acme tasks
