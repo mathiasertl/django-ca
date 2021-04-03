@@ -38,6 +38,7 @@ from .profiles import profiles
 log = logging.getLogger(__name__)
 
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
+R = typing.TypeVar("R")
 
 try:
     from celery import shared_task
@@ -63,7 +64,7 @@ except ImportError:  # pragma: no cover
     jose = requests = None
 
 
-def run_task(task: F, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+def run_task(task: typing.Callable[..., R], *args: typing.Any, **kwargs: typing.Any) -> R:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
@@ -91,7 +92,7 @@ def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
 
 
 @shared_task
-def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, str, "Certificate"]:
+def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, str, Certificate]:
     """Task to generate an OCSP key for the CA named by `serial`."""
     ca = CertificateAuthority.objects.get(serial=serial)
     private_path, cert_path, cert = ca.generate_ocsp_key(**kwargs)
@@ -99,7 +100,7 @@ def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, st
 
 
 @shared_task
-def generate_ocsp_keys(**kwargs: typing.Any) -> typing.List[typing.Tuple[str, str, "Certificate"]]:
+def generate_ocsp_keys(**kwargs: typing.Any) -> typing.List[typing.Tuple[str, str, Certificate]]:
     """Task to generate an OCSP keys for all usable CAs."""
     keys = []
     for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):
