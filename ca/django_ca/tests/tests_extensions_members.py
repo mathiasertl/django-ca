@@ -29,7 +29,7 @@ from .base import uri
 class DistributionPointTestCase(TestCase):
     """Test DistributionPoint class."""
 
-    def test_init_basic(self):
+    def test_init_basic(self) -> None:
         """Test basic initialization."""
         dpoint = DistributionPoint()
         self.assertEqual(len(dpoint.full_name), 0)
@@ -59,7 +59,7 @@ class DistributionPointTestCase(TestCase):
         self.assertEqual(dpoint.crl_issuer, [uri("http://example.net")])
         self.assertIsNone(dpoint.reasons)
 
-    def test_init_errors(self):
+    def test_init_errors(self) -> None:
         """Test various invalid input values."""
         with self.assertRaisesRegex(ValueError, r"^data must be x509.DistributionPoint or dict$"):
             DistributionPoint("foobar")
@@ -72,12 +72,12 @@ class DistributionPointTestCase(TestCase):
                 }
             )
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test str()."""
         dpoint = DistributionPoint({"full_name": "http://example.com"})
         self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
-    def test_reasons(self):
+    def test_reasons(self) -> None:
         """Test DPs with different reason types."""
 
         dpoint = DistributionPoint(
@@ -189,7 +189,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         ],
     }
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.pi1 = PolicyInformation(self.s1)
@@ -199,7 +199,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.pi5 = PolicyInformation(self.s5)
         self.pi_empty = PolicyInformation()
 
-    def test_append(self):
+    def test_append(self) -> None:
         """Test PolicyInformation.append()."""
         self.pi1.append(self.q2)
         self.pi1.append(self.s3["policy_qualifiers"][0])
@@ -217,7 +217,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.pi_empty.append(self.q3)
         self.assertEqual(self.pi3, self.pi_empty)
 
-    def test_as_text(self):
+    def test_as_text(self) -> None:
         """Test as_text()."""
         self.assertEqual(self.pi1.as_text(), "Policy Identifier: 2.5.29.32.0\n" "Policy Qualifiers:\n* text1")
         self.assertEqual(
@@ -261,7 +261,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
                 pinfo = PolicyInformation(policy)
                 self.assertEqual(pinfo.as_text(), certs[name]["policy_texts"][index])
 
-    def test_certs(self):
+    def test_certs(self) -> None:
         """Test for all known certs."""
         self.load_all_cas()
         self.load_all_certs()
@@ -281,12 +281,12 @@ class PolicyInformationTestCase(DjangoCATestCase):
                 self.assertEqual(pi1.serialize(), pi2.serialize())
                 self.assertEqual(pi2.for_extension_type, policy)
 
-    def test_clear(self):
+    def test_clear(self) -> None:
         """Test PolicyInformation.clear()."""
         self.pi1.clear()
         self.assertIsNone(self.pi1.policy_qualifiers)
 
-    def test_constructor(self):
+    def test_constructor(self) -> None:
         """Test some constructors that are otherwise not called."""
         pinfo = PolicyInformation()
         self.assertIsNone(pinfo.policy_identifier)
@@ -314,7 +314,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         )
         self.assertEqual(len(pinfo), 1)
 
-    def test_constructor_errors(self):
+    def test_constructor_errors(self) -> None:
         """Test various invalid values for the constructor."""
         with self.assertRaisesRegex(
             ValueError, r"^PolicyInformation data must be either x509.PolicyInformation or dict$"
@@ -338,7 +338,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
                 }
             )
 
-    def test_contains(self):
+    def test_contains(self) -> None:
         """Test PolicyInformation.contains()."""
         self.assertIn(self.q1, self.pi1)
         self.assertIn(self.q2, self.pi2)
@@ -357,7 +357,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi1)
         self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi_empty)
 
-    def test_count(self):
+    def test_count(self) -> None:
         """Test PolicyInformation.count()."""
         self.assertEqual(self.pi1.count(self.s1["policy_qualifiers"][0]), 1)
         self.assertEqual(self.pi1.count(self.q1), 1)
@@ -366,7 +366,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(self.pi_empty.count(self.q2), 0)
         self.assertEqual(self.pi1.count(True), 0)  # pass an unparseable value
 
-    def test_delitem(self):
+    def test_delitem(self) -> None:
         """Test item deletion (e.g. ``del pi[0]``)."""
         del self.pi1[0]
         self.pi_empty.policy_identifier = self.oid
@@ -379,7 +379,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(IndexError, r"^list assignment index out of range$"):
             del self.pi1[0]
 
-    def test_extend(self):
+    def test_extend(self) -> None:
         """Test PolicyInformation.extend()."""
         self.pi1.extend([self.q2, self.q4])
         self.assertEqual(
@@ -415,7 +415,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
             ),
         )
 
-    def test_getitem(self):
+    def test_getitem(self) -> None:
         """Test item getter (e.g. ``x = ext[0]``)."""
         self.assertEqual(self.pi1[0], self.s1["policy_qualifiers"][0])
         self.assertEqual(self.pi4[0], self.s4["policy_qualifiers"][0])
@@ -427,7 +427,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(IndexError, r"^list index out of range$"):
             self.pi_empty[2:]  # pylint: disable=pointless-statement
 
-    def test_hash(self):
+    def test_hash(self) -> None:
         """Test hash()."""
         self.assertEqual(hash(self.pi1), hash(self.pi1))
         self.assertEqual(hash(self.pi2), hash(self.pi2))
@@ -450,7 +450,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertNotEqual(hash(self.pi2), hash(self.pi4))
         self.assertNotEqual(hash(self.pi3), hash(self.pi4))
 
-    def test_insert(self):
+    def test_insert(self) -> None:
         """Test PolicyInformation.insert()."""
         self.pi1.insert(0, self.q2)
         self.assertEqual(
@@ -477,7 +477,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.pi_empty.policy_identifier = self.oid
         self.assertEqual(self.pi2, self.pi_empty)
 
-    def test_len(self):
+    def test_len(self) -> None:
         """Test len(ext)."""
         self.assertEqual(len(self.pi1), 1)
         self.assertEqual(len(self.pi2), 1)
@@ -486,7 +486,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         self.assertEqual(len(self.pi5), 1)
         self.assertEqual(len(self.pi_empty), 0)
 
-    def test_policy_identifier_setter(self):
+    def test_policy_identifier_setter(self) -> None:
         """Test setting a policy identifier."""
         value = "1.2.3"
         expected = ObjectIdentifier(value)
@@ -502,7 +502,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         pinfo.policy_identifier = new_value
         self.assertEqual(pinfo.policy_identifier, new_expected)
 
-    def test_pop(self):
+    def test_pop(self) -> None:
         """Test PolicyInformation.pop()."""
         self.pi_empty.policy_identifier = self.oid
         self.assertEqual(self.pi1.pop(), self.s1["policy_qualifiers"][0])
@@ -525,7 +525,7 @@ class PolicyInformationTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(IndexError, r"^pop from empty list$"):
             self.pi_empty.pop()
 
-    def test_remove(self):
+    def test_remove(self) -> None:
         """Test PolicyInformation.remove()."""
         self.pi_empty.policy_identifier = self.oid
         self.pi1.remove(self.q1)
@@ -559,11 +559,11 @@ class PolicyInformationTestCase(DjangoCATestCase):
         func(self.pi3)
         func(self.pi4)
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         """Test repr()."""
         self._test_repr(repr)
 
-    def test_serialize(self):
+    def test_serialize(self) -> None:
         """Test serialization."""
         self.assertEqual(
             self.pi1.serialize(), {"policy_identifier": "2.5.29.32.0", "policy_qualifiers": ["text1"]}
@@ -602,6 +602,6 @@ class PolicyInformationTestCase(DjangoCATestCase):
             },
         )
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test str()."""
         self._test_repr(str)

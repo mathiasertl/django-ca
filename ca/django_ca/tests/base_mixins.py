@@ -124,16 +124,16 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin):
         """
         yield (self.model.objects.all(), {})
 
-    def test_model_count(self):
+    def test_model_count(self) -> None:
         """Test that the implementing TestCase actually creates some instances."""
         self.assertGreater(self.model.objects.all().count(), 0)
 
-    def test_changelist_view(self):
+    def test_changelist_view(self) -> None:
         """Test that the changelist view works."""
         for qs, data in self.get_changelists():
             self.assertChangelistResponse(self.get_changelist_view(data), *qs)
 
-    def test_change_view(self):
+    def test_change_view(self) -> None:
         """Test that the change view works for all instances."""
         for obj in self.model.objects.all():
             self.assertChangeResponse(self.get_change_view(obj))

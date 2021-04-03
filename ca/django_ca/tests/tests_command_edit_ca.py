@@ -29,7 +29,7 @@ class EditCATestCase(DjangoCAWithCATestCase):
     website = "https://website.example.com"
     tos = "https://tos.example.com"
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["root"]
 
@@ -42,7 +42,7 @@ class EditCATestCase(DjangoCAWithCATestCase):
         self.ca.refresh_from_db()
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test command with e2e cli argument parsing."""
 
         stdout, stderr = self.cmd_e2e(
@@ -71,7 +71,7 @@ class EditCATestCase(DjangoCAWithCATestCase):
         self.assertEqual(ca.terms_of_service, self.tos)
 
     @override_tmpcadir()
-    def test_enable_disable(self):
+    def test_enable_disable(self) -> None:
         """Test the enable/disable options."""
         self.assertTrue(self.ca.enabled)  # initial state
 
@@ -94,7 +94,7 @@ class EditCATestCase(DjangoCAWithCATestCase):
         self.assertFalse(self.ca.enabled)  # state unchanged
 
     @override_tmpcadir()
-    def test_acme_arguments(self):
+    def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
 
         self.assertFalse(self.ca.acme_enabled)  # initial state
@@ -132,7 +132,7 @@ class EditCATestCase(DjangoCAWithCATestCase):
         self.assertTrue(self.ca.acme_requires_contact)  # state unchanged
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
-    def test_acme_disabled(self):
+    def test_acme_disabled(self) -> None:
         """Test ACME arguments do not work when ACME support is disabled."""
 
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
@@ -144,7 +144,7 @@ class EditCATestCase(DjangoCAWithCATestCase):
         self.assertEqual(excm.exception.args, (2,))
 
     @override_tmpcadir()
-    def test_enable(self):
+    def test_enable(self) -> None:
         """Test enabling the CA."""
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         ca.enabled = False

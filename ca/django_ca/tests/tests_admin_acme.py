@@ -61,7 +61,7 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATes
 
     model = AcmeAccount
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.kid1 = "http://example.com%s" % self.absolute_uri(
             ":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1
@@ -106,7 +106,7 @@ class AcmeOrderViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCa
     """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
 
     @override_tmpcadir()
-    def test_expired_filter(self):
+    def test_expired_filter(self) -> None:
         """Test the "expired" list filter."""
         self.assertChangelistResponse(
             self.client.get("%s?expired=0" % self.changelist_url), self.order1, self.order2
@@ -126,7 +126,7 @@ class AcmeAuthorizationViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountVie
 
     model = AcmeAuthorization
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.auth1 = AcmeAuthorization.objects.create(
             order=self.order1,
@@ -149,7 +149,7 @@ class AcmeChallengeViewsTestCase(AcmeAuthorizationViewsTestCase):
 
     model = AcmeChallenge
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.chall1 = AcmeChallenge.objects.create(
             auth=self.auth1, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1
@@ -175,7 +175,7 @@ class AcmeCertificateViewsTestCase(AcmeChallengeViewsTestCase):
 
     model = AcmeCertificate
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.cert1 = AcmeCertificate.objects.create(order=self.order1)
         self.cert2 = AcmeCertificate.objects.create(order=self.order2, csr=CSR1)

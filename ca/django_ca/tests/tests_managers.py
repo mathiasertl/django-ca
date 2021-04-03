@@ -65,7 +65,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test creating the most basic possible CA."""
         name = "basic"
         subject = "/CN=example.com"
@@ -74,7 +74,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         self.assertProperties(ca, name, subject)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_intermediate(self):
+    def test_intermediate(self) -> None:
         """Test creating intermediate CAs."""
         # test a few properties of intermediate CAs, with multiple levels
         host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
@@ -147,7 +147,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_no_default_hostname(self):
+    def test_no_default_hostname(self) -> None:
         """Test creating a CA with no default hostname."""
         name = "ndh"
         subject = "/CN=ndh.example.com"
@@ -160,7 +160,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         self.assertEqual(ca.issuer_alt_name, "")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_extra_extensions(self):
+    def test_extra_extensions(self) -> None:
         """Test creating a CA with extra extensions."""
         subject = "/CN=example.com"
         tlsf = TLSFeature({"value": ["OCSPMustStaple"]})
@@ -182,7 +182,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
             ],
         )
 
-    def test_unknown_extension_type(self):
+    def test_unknown_extension_type(self) -> None:
         """Test that creating a CA with an unknown extension throws an error."""
         name = "unknown-extension-type"
         subject = "/CN=%s.example.com" % name
@@ -196,15 +196,15 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
 class CertificateAuthorityManagerDefaultTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["root"]
 
-    def test_default(self):
+    def test_default(self) -> None:
         """Test the correct CA is returned if CA_DEFAULT_CA is set."""
         self.assertEqual(CertificateAuthority.objects.default(), self.ca)
 
-    def test_disabled(self):
+    def test_disabled(self) -> None:
         """Test that an exception is raised if the CA is disabled."""
         self.ca.enabled = False
         self.ca.save()
@@ -213,32 +213,32 @@ class CertificateAuthorityManagerDefaultTestCase(DjangoCAWithGeneratedCAsTestCas
             CertificateAuthority.objects.default()
 
     @freeze_time(timestamps["everything_expired"])
-    def test_expired(self):
+    def test_expired(self) -> None:
         """Test that an exception is raised if CA is expired."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: %s is expired\.$" % self.ca.serial):
             CertificateAuthority.objects.default()
 
     @freeze_time(timestamps["before_everything"])
-    def test_not_yet_valid(self):
+    def test_not_yet_valid(self) -> None:
         """Test that an exception is raised if CA is not yet valid."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: %s is not yet valid\.$" % self.ca.serial):
             CertificateAuthority.objects.default()
 
     @override_settings(CA_DEFAULT_CA="")
-    def test_default_ca(self):
+    def test_default_ca(self) -> None:
         """Test what is returned when **no** CA is configured as default."""
         ca = sorted(self.cas.values(), key=lambda ca: (ca.expires, ca.serial))[-1]
         self.assertEqual(CertificateAuthority.objects.default(), ca)
 
     @override_settings(CA_DEFAULT_CA="")
     @freeze_time(timestamps["everything_expired"])
-    def test_default_ca_expired(self):
+    def test_default_ca_expired(self) -> None:
         """Test that exception is raised if no CA is currently valid."""
         with self.assertImproperlyConfigured(r"^No CA is currently usable\.$"):
             CertificateAuthority.objects.default()
 
     @override_settings(CA_DEFAULT_CA="ABC")
-    def test_unknown_ca_configured(self):
+    def test_unknown_ca_configured(self) -> None:
         """Test behavior when an unknown CA is manually configured."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: ABC: CA not found\.$"):
             CertificateAuthority.objects.default()
@@ -249,7 +249,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test creating the most basic cert possible."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -260,7 +260,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
-    def test_explicit_profile(self):
+    def test_explicit_profile(self) -> None:
         """Test creating a cert with a profile."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -273,7 +273,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
 
     @override_tmpcadir()
-    def test_no_cn_or_san(self):
+    def test_no_cn_or_san(self) -> None:
         """Test that creating a cert with no CommonName or SubjectAlternativeName is an error."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -284,7 +284,7 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             Certificate.objects.create_cert(ca, csr, subject=subject, extensions=[SubjectAlternativeName()])
 
     @override_tmpcadir(CA_PROFILES={k: None for k in ca_settings.CA_PROFILES})
-    def test_no_profile(self):
+    def test_no_profile(self) -> None:
         """Test that creating a cert with no profiles throws an error."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]

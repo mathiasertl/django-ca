@@ -40,7 +40,7 @@ from .base import timestamps
 class ResignCertTestCase(DjangoCAWithCertTestCase):
     """Main test class for this command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.cert = self.certs["root-cert"]
 
@@ -83,7 +83,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
             self.assertIsNone(new.crl_distribution_points)
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Simplest test while resigning a cert."""
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("resign_cert", self.cert.serial)
@@ -96,7 +96,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqualExt(self.cert, new)
 
     @override_tmpcadir()
-    def test_different_ca(self):
+    def test_different_ca(self) -> None:
         """Test writing with a different CA."""
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
@@ -110,7 +110,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqualExt(self.cert, new, new_ca=self.cas["child"])
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_overwrite(self):
+    def test_overwrite(self) -> None:
         """Test overwriting extensions."""
         key_usage = "cRLSign"
         ext_key_usage = "critical,emailProtection"
@@ -158,7 +158,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
     @override_tmpcadir()
-    def test_to_file(self):
+    def test_to_file(self) -> None:
         """Test writing output to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
 
@@ -177,7 +177,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqualExt(self.cert, new)
 
     @override_tmpcadir()
-    def test_no_cn(self):
+    def test_no_cn(self) -> None:
         """Test resigning with a subject that has no CN."""
         subject = "/C=AT"  # has no CN
         cert = self.certs["no-extensions"]
@@ -193,7 +193,7 @@ class ResignCertTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(post.call_count, 0)
 
     @override_tmpcadir()
-    def test_error(self):
+    def test_error(self) -> None:
         """Test resign function throwing a random exception."""
         msg = "foobar"
         msg_re = r"^%s$" % msg

@@ -51,13 +51,13 @@ from .base import timestamps
 class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Main test class for this command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["root"]
         self.csr_pem = certs["root-cert"]["csr"]["pem"]
 
     @override_tmpcadir()
-    def test_from_stdin(self):
+    def test_from_stdin(self) -> None:
         """Test reading CSR from stdin."""
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
@@ -84,7 +84,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
     @override_tmpcadir()
-    def test_usable_cas(self):
+    def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
 
         for name, ca in self.usable_cas.items():
@@ -120,7 +120,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertAuthorityKeyIdentifier(ca, cert)
 
     @override_tmpcadir()
-    def test_from_file(self):
+    def test_from_file(self) -> None:
         """Test reading CSR from file."""
         csr_path = os.path.join(ca_settings.CA_DIR, "test.csr")
         with open(csr_path, "w") as csr_stream:
@@ -153,7 +153,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             os.remove(csr_path)
 
     @override_tmpcadir()
-    def test_to_file(self):
+    def test_to_file(self) -> None:
         """Test writing PEM to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
         stdin = StringIO(self.csr_pem)
@@ -187,7 +187,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
                 os.remove(out_path)
 
     @override_tmpcadir()
-    def test_no_dns_cn(self):
+    def test_no_dns_cn(self) -> None:
         """Test using a CN that is not a vlaid DNS name."""
         # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
         # should fail.
@@ -204,7 +204,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir()
-    def test_cn_not_in_san(self):
+    def test_cn_not_in_san(self) -> None:
         """Test adding a CN that is not in the SAN."""
         stdin = StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -231,7 +231,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         )
 
     @override_tmpcadir()
-    def test_no_san(self):
+    def test_no_san(self) -> None:
         """Test signing without passing any SANs."""
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.net")])
@@ -267,7 +267,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             ("emailAddress", "user@example.com"),
         ]
     )
-    def test_profile_subject(self):
+    def test_profile_subject(self) -> None:
         """Test signing with a subject in the profile."""
         self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == "O"), "MyOrg")
         self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == "OU"), "MyOrgUnit")
@@ -322,7 +322,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertSubject(cert.x509_cert, subject)
 
     @override_tmpcadir()
-    def test_extensions(self):
+    def test_extensions(self) -> None:
         """Test setting extensions for the signed certificate."""
 
         self.ca.issuer_alt_name = "DNS:ian.example.com"
@@ -361,7 +361,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_no_subject(self):
+    def test_no_subject(self) -> None:
         """Test signing without a subject (but SANs)."""
         stdin = StringIO(self.csr_pem)
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -382,7 +382,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_with_password(self):
+    def test_with_password(self) -> None:
         """Test signing with a CA that is protected with a password."""
         password = b"testpassword"
         ca = self.cas["pwd"]
@@ -433,7 +433,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
     @unittest.skipUnless(
         isinstance(ca_storage, FileSystemStorage), "Test only makes sense with local filesystem storage."
     )
-    def test_unparseable(self):
+    def test_unparseable(self) -> None:
         """Test creating a cert where the CA private key contains bogus data."""
         key_path = os.path.join(ca_storage.location, self.ca.private_key_path)
 
@@ -458,7 +458,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(post.call_count, 0)
 
     @override_tmpcadir()
-    def test_der_csr(self):
+    def test_der_csr(self) -> None:
         """Test using a DER CSR."""
         csr_path = os.path.join(ca_settings.CA_DIR, "test.csr")
         with open(csr_path, "wb") as csr_stream:
@@ -493,7 +493,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             os.remove(csr_path)
 
     @override_tmpcadir()
-    def test_expiry_too_late(self):
+    def test_expiry_too_late(self) -> None:
         """Test signing with an expiry after the CA expires."""
         time_left = (self.ca.expires - datetime.now()).days
         expires = timedelta(days=time_left + 3)
@@ -507,7 +507,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir()
-    def test_no_cn_or_san(self):
+    def test_no_cn_or_san(self) -> None:
         """Test signing a cert that has neither CN nor SAN."""
         with self.assertCommandError(
             r"^Must give at least a CN in --subject or one or more --alt arguments\.$"
@@ -517,7 +517,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir()
-    def test_wrong_format(self):
+    def test_wrong_format(self) -> None:
         """Test signing with an invalid CSR format."""
         stdin = StringIO(self.csr_pem)
 
@@ -536,7 +536,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_revoked_ca(self):
+    def test_revoked_ca(self) -> None:
         """Test signing with a revoked CA."""
         self.ca.revoke()
         stdin = StringIO(self.csr_pem)
@@ -551,7 +551,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_unusable_ca(self):
+    def test_unusable_ca(self) -> None:
         """Test signing with an unusable CA."""
         path = ca_storage.path(self.ca.private_key_path)
         os.remove(path)
@@ -568,7 +568,7 @@ class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_expired"])
-    def test_expired_ca(self):
+    def test_expired_ca(self) -> None:
         """Test signing with an expired CA."""
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])

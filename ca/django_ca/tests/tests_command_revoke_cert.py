@@ -23,11 +23,11 @@ from .base import DjangoCAWithGeneratedCertsTestCase
 class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.cert = self.certs["root-cert"]
 
-    def test_no_reason(self):
+    def test_no_reason(self) -> None:
         """Test revoking without a reason."""
         self.assertFalse(self.cert.revoked)
 
@@ -43,7 +43,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertTrue(cert.revoked_date is not None)
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
-    def test_with_reason(self):
+    def test_with_reason(self) -> None:
         """Test revoking with a reason."""
         self.assertFalse(self.cert.revoked)
 
@@ -66,7 +66,7 @@ class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
             cert.revoked_reason = ""
             cert.save()
 
-    def test_revoked(self):
+    def test_revoked(self) -> None:
         """Test revoking a cert that is already revoked."""
 
         self.assertFalse(self.cert.revoked)

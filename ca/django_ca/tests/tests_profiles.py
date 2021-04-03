@@ -43,7 +43,7 @@ from .base import override_tmpcadir
 class DocumentationTestCase(DjangoCATestCase):
     """Test sphinx docs."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
 
@@ -58,7 +58,7 @@ class DocumentationTestCase(DjangoCATestCase):
         }
 
     @override_tmpcadir()
-    def test_module(self):
+    def test_module(self) -> None:
         """Test doctests from main module."""
         # pylint: disable=redefined-outer-name,import-outside-toplevel; we need the top-level module
         from .. import profiles
@@ -66,7 +66,7 @@ class DocumentationTestCase(DjangoCATestCase):
         doctest.testmod(profiles, globs=self.get_globs())
 
     @override_tmpcadir()
-    def test_python_intro(self):
+    def test_python_intro(self) -> None:
         """Test python/profiles.rst."""
         doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
@@ -80,7 +80,7 @@ class ProfileTestCase(DjangoCATestCase):
         cert.x509_cert = prof.create_cert(*args, **kwargs)
         return cert
 
-    def test_copy(self):
+    def test_copy(self) -> None:
         """Test copying a profile."""
         prof1 = Profile("example")
         prof2 = prof1.copy()
@@ -96,7 +96,7 @@ class ProfileTestCase(DjangoCATestCase):
         prof2.algorithm = parse_hash_algorithm("MD5")
         self.assertNotEqual(prof1, prof2)
 
-    def test_eq(self):
+    def test_eq(self) -> None:
         """Test profile equality."""
         prof = None
         for name in ca_settings.CA_PROFILES:
@@ -108,7 +108,7 @@ class ProfileTestCase(DjangoCATestCase):
 
         self.assertNotEqual(profile, None)
 
-    def test_init_django_ca_values(self):
+    def test_init_django_ca_values(self) -> None:
         """Test django-ca extensions as extensions."""
         prof1 = Profile(
             "test",
@@ -126,7 +126,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
         self.assertEqual(prof1, prof2)
 
-    def test_init_no_subject(self):
+    def test_init_no_subject(self) -> None:
         """Test with no default subject."""
         # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
         # subject. But it still seems sensible to support this
@@ -136,7 +136,7 @@ class ProfileTestCase(DjangoCATestCase):
             prof = Profile("test")
         self.assertEqual(prof.subject, Subject(default_subject))
 
-    def test_init_expires(self):
+    def test_init_expires(self) -> None:
         """Test the expire parameter."""
         prof = Profile("example", expires=30)
         self.assertEqual(prof.expires, timedelta(days=30))
@@ -145,7 +145,7 @@ class ProfileTestCase(DjangoCATestCase):
         prof = Profile("example", expires=exp)
         self.assertEqual(prof.expires, exp)
 
-    def test_serialize(self):
+    def test_serialize(self) -> None:
         """Test profile serialization."""
 
         desc = "foo bar"
@@ -180,7 +180,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_create_cert_minimal(self):
+    def test_create_cert_minimal(self) -> None:
         """Create a certificate with minimal parameters."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -211,7 +211,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_alternative_values(self):
+    def test_alternative_values(self) -> None:
         """Test overriding most values."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         ca.issuer_alt_name = "https://example.com"
@@ -254,7 +254,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_overrides(self):
+    def test_overrides(self) -> None:
         """Test other overrides."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -316,7 +316,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_cn_in_san(self):
+    def test_cn_in_san(self) -> None:
         """Test writing the common name into the SAN."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -408,7 +408,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_override_ski(self):
+    def test_override_ski(self) -> None:
         """Test overriding the subject key identifier."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -441,7 +441,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_extensions_dict(self):
+    def test_extensions_dict(self) -> None:
         """Test with a dict for an extension."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -474,7 +474,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_hide_extension(self):
+    def test_hide_extension(self) -> None:
         """Test with hiding extensions from the profile."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -506,7 +506,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_extension_as_cryptography(self):
+    def test_extension_as_cryptography(self) -> None:
         """Test with a profile that has cryptography extensions."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -539,7 +539,7 @@ class ProfileTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_no_cn_no_san(self):
+    def test_no_cn_no_san(self) -> None:
         """Test creating a cert with no cn in san."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -556,7 +556,7 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(pre.call_count, 0)
 
     @override_tmpcadir()
-    def test_unparsable_cn(self):
+    def test_unparsable_cn(self) -> None:
         """Try creating a profile with an unparseable Common Name."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -569,7 +569,7 @@ class ProfileTestCase(DjangoCATestCase):
         self.assertEqual(pre.call_count, 0)
 
     @override_tmpcadir()
-    def test_invalid_extensions(self):
+    def test_invalid_extensions(self) -> None:
         """Test with a dict with extensions of the wrong type."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         ca.issuer_url = "https://issuer.example.com"
@@ -644,12 +644,12 @@ class ProfileTestCase(DjangoCATestCase):
             )
         self.assertEqual(pre.call_count, 0)
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test str()."""
         for name in ca_settings.CA_PROFILES:
             self.assertEqual(str(profiles[name]), "<Profile: '%s'>" % name)
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         """Test repr()."""
         for name in ca_settings.CA_PROFILES:
             self.assertEqual(repr(profiles[name]), "<Profile: '%s'>" % name)
@@ -658,7 +658,7 @@ class ProfileTestCase(DjangoCATestCase):
 class GetProfileTestCase(DjangoCATestCase):
     """Test the get_profile function."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic tests."""
         for name in ca_settings.CA_PROFILES:
             prof = get_profile(name)
@@ -671,7 +671,7 @@ class GetProfileTestCase(DjangoCATestCase):
 class ProfilesTestCase(DjangoCATestCase):
     """Tests the ``profiles`` proxy."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Some basic tests."""
         for name in ca_settings.CA_PROFILES:
             prof = profiles[name]
@@ -682,11 +682,11 @@ class ProfilesTestCase(DjangoCATestCase):
             prof = profiles[name]
             self.assertEqual(prof.name, name)
 
-    def test_none(self):
+    def test_none(self) -> None:
         """Test the ``None`` key."""
         self.assertEqual(profiles[None], profile)
 
-    def test_default_proxy(self):
+    def test_default_proxy(self) -> None:
         """Test using the default proxy."""
         self.assertEqual(profile.name, ca_settings.CA_DEFAULT_PROFILE)
         self.assertEqual(str(profile), "<DefaultProfile: '%s'>" % ca_settings.CA_DEFAULT_PROFILE)

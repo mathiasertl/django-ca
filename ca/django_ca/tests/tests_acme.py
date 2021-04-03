@@ -59,14 +59,14 @@ class URLPatternTestCase(DjangoCATestCase):
             reverse(name, args, kwargs)
 
     @override_settings(CA_ENABLE_ACME=False)
-    def test_disabled(self):
+    def test_disabled(self) -> None:
         """Test that resolving URLs does **NOT** work if disabled."""
         with self.reload_urlconf():
             self.assertNoReverseMatch("django_ca:acme-directory")
             self.assertNoReverseMatch("django_ca:acme-directory", kwargs={"serial": "AB:CD"})
             self.assertNoReverseMatch("django_ca:acme-new-nonce", kwargs={"serial": "AB:CD"})
 
-    def test_enabled(self):
+    def test_enabled(self) -> None:
         """Test that resolving URLs work if enabled."""
 
         reverse("django_ca:acme-directory")
@@ -77,13 +77,13 @@ class URLPatternTestCase(DjangoCATestCase):
 class TestConstantsTestCase(DjangoCATestCase):
     """Test constants."""
 
-    def test_status_enum(self):
+    def test_status_enum(self) -> None:
         """Test that the Status Enum is equivalent to the main ACME library."""
 
         expected = list(acme.messages.Status.POSSIBLE_NAMES) + ["expired"]
         self.assertCountEqual(expected, [s.value for s in Status])
 
-    def test_identifier_enum(self):
+    def test_identifier_enum(self) -> None:
         """Test that the IdentifierType Enum is equivalent to the main ACME library."""
 
         self.assertCountEqual(acme.messages.IdentifierType.POSSIBLE_NAMES, [s.value for s in IdentifierType])

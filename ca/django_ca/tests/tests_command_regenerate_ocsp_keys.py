@@ -29,7 +29,7 @@ from .base import override_tmpcadir
 class RegenerateOCSPKeyTestCase(DjangoCATestCase):
     """Main test class for this command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_usable_cas()
         self.existing_certs = list(Certificate.objects.values_list("pk", flat=True))
@@ -65,7 +65,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
         self.assertFalse(ca_storage.exists(cert_path))
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic test."""
         stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
@@ -73,7 +73,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
         self.assertKey(self.cas["root"])
 
     @override_tmpcadir()
-    def test_all(self):
+    def test_all(self) -> None:
         """Test for all CAs."""
         # Delete pwd_ca, because it will fail, since we do not give a password
         self.cas["pwd"].delete()
@@ -86,7 +86,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
             self.assertKey(self.cas[name])
 
     @override_tmpcadir()
-    def test_overwrite(self):
+    def test_overwrite(self) -> None:
         """Test overwriting pre-generated OCSP keys."""
         stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
@@ -104,7 +104,7 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
         self.assertNotEqual(cert, new_cert)
 
     @override_tmpcadir()
-    def test_wrong_serial(self):
+    def test_wrong_serial(self) -> None:
         """Try passing an unknown CA."""
         serial = "ZZZZZ"
         stdout, stderr = self.cmd("regenerate_ocsp_keys", serial, no_color=True)
@@ -113,14 +113,14 @@ class RegenerateOCSPKeyTestCase(DjangoCATestCase):
         self.assertHasNoKey(serial)
 
     @override_tmpcadir(CA_PROFILES={"ocsp": None})
-    def test_no_ocsp_profile(self):
+    def test_no_ocsp_profile(self) -> None:
         """Try when there is no OCSP profile."""
         with self.assertCommandError(r"^ocsp: Undefined profile\.$"):
             self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertHasNoKey(certs["root"]["serial"])
 
     @override_tmpcadir()
-    def test_no_private_key(self):
+    def test_no_private_key(self) -> None:
         """Try when there is no private key."""
         ca = self.cas["root"]
         ca_storage.delete(ca.private_key_path)

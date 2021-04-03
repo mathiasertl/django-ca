@@ -30,7 +30,7 @@ from .base import override_tmpcadir
 class CRLValidationTestCase(DjangoCATestCase):
     """CRL validation tests."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.csr_pem = certs["root-cert"]["csr"]["pem"]  # just some CSR
 
@@ -93,7 +93,7 @@ class CRLValidationTestCase(DjangoCATestCase):
         return self.openssl("verify %s" % cmd, *args, **kwargs)
 
     @override_tmpcadir()
-    def test_root_ca(self):
+    def test_root_ca(self) -> None:
         """Try validating a root CA."""
         name = "Root"
         ca = self.init_ca(name)
@@ -115,7 +115,7 @@ class CRLValidationTestCase(DjangoCATestCase):
             self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl])
 
     @override_tmpcadir()
-    def test_root_ca_cert(self):
+    def test_root_ca_cert(self) -> None:
         """Try validating a cert issued by the root CA."""
         name = "Root"
         ca = self.init_ca(name)
@@ -132,7 +132,7 @@ class CRLValidationTestCase(DjangoCATestCase):
                     self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl, crl2], cert=cert)
 
     @override_tmpcadir()
-    def test_intermediate_ca(self):
+    def test_intermediate_ca(self) -> None:
         """Validate intermediate CA and its certs."""
         root = self.init_ca("Root", pathlen=2)
         child = self.init_ca("Child", parent=root, pathlen=1)

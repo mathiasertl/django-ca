@@ -26,35 +26,35 @@ from .base import DjangoCATestCase
 class SettingsTestCase(DjangoCATestCase):
     """Test some standard settings."""
 
-    def test_none_profiles(self):
+    def test_none_profiles(self) -> None:
         """Test removing a profile by setting it to None."""
         self.assertIn("client", ca_settings.CA_PROFILES)
 
         with self.settings(CA_PROFILES={"client": None}):
             self.assertNotIn("client", ca_settings.CA_PROFILES)
 
-    def test_ca_profile_update(self):
+    def test_ca_profile_update(self) -> None:
         """Test adding a profile in settings."""
         desc = "testdesc"
         with self.settings(CA_PROFILES={"client": {"desc": desc}}):
             self.assertEqual(ca_settings.CA_PROFILES["client"]["desc"], desc)
 
-    def test_acme_order_validity(self):
+    def test_acme_order_validity(self) -> None:
         """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
         with self.settings(CA_ACME_ORDER_VALIDITY=1):
             self.assertEqual(ca_settings.ACME_ORDER_VALIDITY, timedelta(days=1))
 
-    def test_acme_default_validity(self):
+    def test_acme_default_validity(self) -> None:
         """Test that CA_DEFAULT_CERT_VALIDITY can be set to an int."""
         with self.settings(CA_ACME_DEFAULT_CERT_VALIDITY=1):
             self.assertEqual(ca_settings.ACME_DEFAULT_CERT_VALIDITY, timedelta(days=1))
 
-    def test_acme_max_validity(self):
+    def test_acme_max_validity(self) -> None:
         """Test that CA_MAX_CERT_VALIDITY can be set to an int."""
         with self.settings(CA_ACME_MAX_CERT_VALIDITY=1):
             self.assertEqual(ca_settings.ACME_MAX_CERT_VALIDITY, timedelta(days=1))
 
-    def test_use_celery(self):
+    def test_use_celery(self) -> None:
         """Test CA_USE_CELERY setting."""
         with self.settings(CA_USE_CELERY=False):
             self.assertFalse(ca_settings.CA_USE_CELERY)
@@ -73,17 +73,17 @@ class SettingsTestCase(DjangoCATestCase):
 class DefaultCATestCase(DjangoCATestCase):
     """Test the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting."""
 
-    def test_no_setting(self):
+    def test_no_setting(self) -> None:
         """Test empty setting."""
         with self.settings(CA_DEFAULT_CA=""):
             self.assertEqual(ca_settings.CA_DEFAULT_CA, "")
 
-    def test_unsanitized_setting(self):
+    def test_unsanitized_setting(self) -> None:
         """Test that values are sanitized properly."""
         with self.settings(CA_DEFAULT_CA="0a:bc"):
             self.assertEqual(ca_settings.CA_DEFAULT_CA, "ABC")
 
-    def test_serial_zero(self):
+    def test_serial_zero(self) -> None:
         """Test that a '0' serial is not stripped."""
         with self.settings(CA_DEFAULT_CA="0"):
             self.assertEqual(ca_settings.CA_DEFAULT_CA, "0")
@@ -96,7 +96,7 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
         """Minor shortcut to ``assertRaisesRegex``."""
         return self.assertRaisesRegex(ImproperlyConfigured, msg)
 
-    def test_default_ecc_curve(self):
+    def test_default_ecc_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ECC_CURVE``."""
         with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_ECC_CURVE: foo$"):
             with self.settings(CA_DEFAULT_ECC_CURVE="foo"):
@@ -110,13 +110,13 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass
 
-    def test_digest_algorithm(self):
+    def test_digest_algorithm(self) -> None:
         """Test invalid ``CA_DIGEST_ALGORITHM``."""
         with self.assertImproperlyConfigured(r"^Unkown CA_DIGEST_ALGORITHM: FOO$"):
             with self.settings(CA_DIGEST_ALGORITHM="foo"):
                 pass
 
-    def test_default_expires(self):
+    def test_default_expires(self) -> None:
         """Test invalid ``CA_DEFAULT_EXPIRES``."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$"):
             with self.settings(CA_DEFAULT_EXPIRES="foo"):
@@ -128,7 +128,7 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
             with self.settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
                 pass
 
-    def test_default_subject(self):
+    def test_default_subject(self) -> None:
         """Test invalid ``CA_DEFAULT_SUBJECT``."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid subject: True$"):
             with self.settings(CA_DEFAULT_SUBJECT=True):
@@ -138,7 +138,7 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
             with self.settings(CA_DEFAULT_SUBJECT={"XYZ": "error"}):
                 get_default_subject()
 
-    def test_use_celery(self):
+    def test_use_celery(self) -> None:
         """Test that CA_USE_CELERY=True and a missing Celery installation throws an error."""
         # Setting sys.modules['celery'] (modules cache) to None will cause the next import of that module
         # to trigger an import error:
@@ -150,7 +150,7 @@ class ImproperlyConfiguredTestCase(DjangoCATestCase):
             with self.assertImproperlyConfigured(msg), self.settings(CA_USE_CELERY=True):
                 pass
 
-    def test_invalid_setting(self):
+    def test_invalid_setting(self) -> None:
         """Test setting an invalid CA."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$"):
             with self.settings(CA_DEFAULT_CA="0a:bc:x"):

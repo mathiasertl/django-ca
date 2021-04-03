@@ -63,7 +63,7 @@ from .base import timestamps
 class TestWatcher(TestCase):
     """Test :py:class:`django_ca.models.Watcher`."""
 
-    def test_from_addr(self):
+    def test_from_addr(self) -> None:
         """Basic test for the ``from_addr()`` function."""
         mail = "user@example.com"
         name = "Firstname Lastname"
@@ -72,7 +72,7 @@ class TestWatcher(TestCase):
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, name)
 
-    def test_spaces(self):
+    def test_spaces(self) -> None:
         """Test that ``from_addr() is agnostic to spaces."""
         mail = "user@example.com"
         name = "Firstname Lastname"
@@ -85,14 +85,14 @@ class TestWatcher(TestCase):
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, name)
 
-    def test_error(self):
+    def test_error(self) -> None:
         """Test some validation errors."""
         with self.assertRaises(ValidationError):
             Watcher.from_addr("foobar ")
         with self.assertRaises(ValidationError):
             Watcher.from_addr("foobar @")
 
-    def test_update(self):
+    def test_update(self) -> None:
         """Test that from_addr updates the name if passed."""
         mail = "user@example.com"
         name = "Firstname Lastname"
@@ -103,7 +103,7 @@ class TestWatcher(TestCase):
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, newname)
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test the str function."""
         mail = "user@example.com"
         name = "Firstname Lastname"
@@ -119,7 +119,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
     """Test :py:class:`django_ca.models.CertificateAuthority`."""
 
     @override_tmpcadir()
-    def test_key(self):
+    def test_key(self) -> None:
         """Test access to the private key."""
         for name, ca in self.usable_cas.items():
             self.assertTrue(ca.key_exists)
@@ -141,26 +141,26 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             self.assertTrue(ca.key_exists)
 
     @override_tmpcadir()
-    def test_key_str_password(self):
+    def test_key_str_password(self) -> None:
         """Test accessing the private key with a string password."""
         ca = self.usable_cas["pwd"]
         pwd = certs["pwd"]["password"].decode("utf-8")
 
         self.assertIsNotNone(ca.key(pwd))
 
-    def test_pathlen(self):
+    def test_pathlen(self) -> None:
         """Test the pathlen attribute."""
         for name, ca in self.cas.items():
             self.assertEqual(ca.pathlen, certs[name].get("pathlen"))
 
-    def test_root(self):
+    def test_root(self) -> None:
         """Test the root attribute."""
         self.assertEqual(self.cas["root"].root, self.cas["root"])
         self.assertEqual(self.cas["child"].root, self.cas["root"])
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
-    def test_full_crl(self):
+    def test_full_crl(self) -> None:
         """Test getting the CRL for a CertificateAuthority."""
         ca = self.cas["root"]
         child = self.cas["child"]
@@ -197,7 +197,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
-    def test_intermediate_crl(self):
+    def test_intermediate_crl(self) -> None:
         """Test getting the CRL of an intermediate CA."""
         child = self.cas["child"]
         cert = self.certs["child-cert"]
@@ -213,7 +213,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=child)
 
     @override_settings(USE_TZ=True)
-    def test_full_crl_tz(self):
+    def test_full_crl_tz(self) -> None:
         """Test full CRL but with timezone support enabled."""
         # otherwise we get TZ warnings for preloaded objects
         ca = self.cas["root"]
@@ -228,7 +228,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_ca_crl(self):
+    def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
         ca = self.cas["root"]
         idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
@@ -247,7 +247,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_intermediate_ca_crl(self):
+    def test_intermediate_ca_crl(self) -> None:
         """Test getting the CRL for an intermediate CA."""
         # Intermediate CAs have a DP in the CRL that has the CA url
         ca = self.cas["child"]
@@ -263,7 +263,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
-    def test_user_crl(self):
+    def test_user_crl(self) -> None:
         """Test getting a user CRL."""
         ca = self.cas["root"]
         idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
@@ -281,7 +281,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
-    def test_attr_crl(self):
+    def test_attr_crl(self) -> None:
         """Test getting an Attribute CRL (always an empty list)."""
         ca = self.cas["root"]
         idp = self.get_idp(only_contains_attribute_certs=True)
@@ -298,7 +298,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_no_idp(self):
+    def test_no_idp(self) -> None:
         """Test a CRL with no IDP."""
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
         ca = self.cas["child"]
@@ -309,7 +309,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_counter(self):
+    def test_counter(self) -> None:
         """Test the counter for CRLs."""
         ca = self.cas["child"]
         idp = self.get_idp(full_name=self.get_idp_full_name(ca))
@@ -323,7 +323,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_no_auth_key_identifier(self):
+    def test_no_auth_key_identifier(self) -> None:
         """Test an getting the CRL from a CA with no AuthorityKeyIdentifier."""
         # All CAs have a authority key identifier, so we mock that this exception is not present
         def side_effect(cls):
@@ -341,7 +341,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         # Note that we still get an AKI because the value comes from the public key in this case
         self.assertCRL(crl, idp=idp, signer=ca)
 
-    def test_validate_json(self):
+    def test_validate_json(self) -> None:
         """Test the json validator."""
         # Validation works if we're not revoked
         ca = self.cas["child"]
@@ -353,14 +353,14 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             ca.full_clean()
         self.assertTrue(re.match("Must be valid JSON: ", exc_cm.exception.message_dict["crl_number"][0]))
 
-    def test_crl_invalid_scope(self):
+    def test_crl_invalid_scope(self) -> None:
         """"Try getting a CRL with an invalid scope."""
         ca = self.cas["child"]
         with self.assertRaisesRegex(ValueError, r'^scope must be either None, "ca", "user" or "attribute"$'):
             ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)
 
     @override_tmpcadir()
-    def test_cache_crls(self):
+    def test_cache_crls(self) -> None:
         """Test caching of CRLs."""
         crl_profiles = self.crl_profiles
         for config in crl_profiles.values():
@@ -422,7 +422,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
             self.assertIsNone(cache.get(pem_user_key))
 
     @override_tmpcadir()
-    def test_cache_crls_algorithm(self):
+    def test_cache_crls_algorithm(self) -> None:
         """Test passing an explicit hash algorithm."""
 
         crl_profiles = self.crl_profiles
@@ -478,7 +478,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertIsInstance(ext, cls)
             self.assertEqual(ext, certs[name].get(key))
 
-    def test_dates(self):
+    def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
         for name, ca in self.cas.items():
             self.assertEqual(ca.valid_from, certs[name]["valid_from"])
@@ -488,18 +488,18 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.valid_from, certs[name]["valid_from"])
             self.assertEqual(cert.expires, certs[name]["valid_until"])
 
-    def test_max_pathlen(self):
+    def test_max_pathlen(self) -> None:
         """Test getting the maximum pathlen."""
         for name, ca in self.usable_cas.items():
             self.assertEqual(ca.max_pathlen, certs[name].get("max_pathlen"))
 
-    def test_allows_intermediate(self):
+    def test_allows_intermediate(self) -> None:
         """Test checking if this CA allows intermediate CAs."""
         self.assertTrue(self.cas["root"].allows_intermediate_ca)
         self.assertTrue(self.cas["ecc"].allows_intermediate_ca)
         self.assertFalse(self.cas["child"].allows_intermediate_ca)
 
-    def test_revocation(self):
+    def test_revocation(self) -> None:
         """Test getting a revociation for a non-revoked certificate."""
         # Never really happens in real life, but should still be checked
         cert = Certificate(revoked=False)
@@ -507,13 +507,13 @@ class CertificateTests(DjangoCAWithCertTestCase):
         with self.assertRaises(ValueError):
             cert.get_revocation()
 
-    def test_root(self):
+    def test_root(self) -> None:
         """Test the root property."""
         self.assertEqual(self.certs["root-cert"].root, self.cas["root"])
         self.assertEqual(self.certs["child-cert"].root, self.cas["root"])
 
     @override_tmpcadir()
-    def test_serial(self):
+    def test_serial(self) -> None:
         """Test getting the serial."""
         for name, ca in self.cas.items():
             self.assertEqual(ca.serial, certs[ca.name].get("serial"))
@@ -522,7 +522,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.serial, certs[name].get("serial"))
 
     @override_tmpcadir()
-    def test_subject_alternative_name(self):
+    def test_subject_alternative_name(self) -> None:
         """Test getting the subjectAlternativeName extension."""
         for name, ca in self.cas.items():
             self.assertEqual(ca.subject_alternative_name, certs[ca.name].get("subject_alternative_name"))
@@ -557,7 +557,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         self.assertEqual(full.subject_alternative_name, expected)
 
     @freeze_time("2019-02-03 15:43:12")
-    def test_get_revocation_time(self):
+    def test_get_revocation_time(self) -> None:
         """Test getting the revocation time."""
         cert = self.certs["child-cert"]
         self.assertIsNone(cert.get_revocation_time())
@@ -573,7 +573,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
     @freeze_time("2019-02-03 15:43:12")
-    def test_get_compromised_time(self):
+    def test_get_compromised_time(self) -> None:
         """Test getting the time when the certificate was compromised."""
         cert = self.certs["child-cert"]
         self.assertIsNone(cert.get_compromised_time())
@@ -588,7 +588,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             cert.compromised = timezone.now()
             self.assertEqual(cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
 
-    def test_get_revocation_reason(self):
+    def test_get_revocation_reason(self) -> None:
         """Test getting the revocation reason."""
         cert = self.certs["child-cert"]
         self.assertIsNone(cert.get_revocation_reason())
@@ -599,7 +599,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertIsInstance(got, x509.ReasonFlags)
             self.assertEqual(got.name, reason.name)
 
-    def test_validate_past(self):
+    def test_validate_past(self) -> None:
         """Test that model validation blocks revoked_date or revoked_invalidity in the future."""
         cert = self.certs["child-cert"]
         now = timezone.now()
@@ -624,7 +624,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
         ):
             cert.full_clean()
 
-    def test_digest(self):
+    def test_digest(self) -> None:
         """Test getting the digest value."""
         for name, ca in self.cas.items():
             self.assertEqual(ca.get_digest("MD5"), certs[name]["md5"])
@@ -638,7 +638,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.get_digest("SHA256"), certs[name]["sha256"])
             self.assertEqual(cert.get_digest("SHA512"), certs[name]["sha512"])
 
-    def test_hpkp_pin(self):
+    def test_hpkp_pin(self) -> None:
         """Test getting a HPKP pin for a certificate."""
         # get hpkp pins using
         #   openssl x509 -in cert1.pem -pubkey -noout \
@@ -652,7 +652,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             self.assertEqual(cert.hpkp_pin, certs[name]["hpkp"])
             self.assertIsInstance(cert.hpkp_pin, str)
 
-    def test_get_authority_key_identifier(self):
+    def test_get_authority_key_identifier(self) -> None:
         """Test getting the authority key identifier."""
         for name, ca in self.cas.items():
             self.assertEqual(
@@ -673,7 +673,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
                 certs["child"]["subject_key_identifier"].value,
             )
 
-    def test_get_authority_key_identifier_extension(self):
+    def test_get_authority_key_identifier_extension(self) -> None:
         """Test getting the authority key id extension for CAs."""
         for name, ca in self.cas.items():
             self.assertEqual(
@@ -684,7 +684,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
     ###############################################
     # Test extensions for all loaded certificates #
     ###############################################
-    def test_extensions(self):
+    def test_extensions(self) -> None:
         """Test getting extensions."""
         for key, cls in KEY_TO_EXTENSION.items():
             if key == PrecertificateSignedCertificateTimestamps.key:
@@ -701,7 +701,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
                 self.assertExtension(cert, name, key, cls)
 
     # @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
-    def test_precertificate_signed_certificate_timestamps(self):
+    def test_precertificate_signed_certificate_timestamps(self) -> None:
         """Test getting the SCT timestamp extension."""
         for name, cert in self.certs.items():
             ext = getattr(cert, PrecertificateSignedCertificateTimestamps.key)
@@ -711,7 +711,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             else:
                 self.assertIsNone(ext)
 
-    def test_inconsistent_model_states(self):
+    def test_inconsistent_model_states(self) -> None:
         """Test exceptions raised for an inconsistent model state."""
         cert = self.certs["child-cert"]
         cert.revoked = True
@@ -731,7 +731,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
 class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeAccount`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.kid1 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=self.ACME_SLUG_1)
@@ -757,13 +757,13 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
             kid=self.kid2,
         )
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test str() function."""
         self.assertEqual(str(self.account1), "user@example.com")
         self.assertEqual(str(self.account2), "user@example.net")
         self.assertEqual(str(AcmeAccount()), "")
 
-    def test_serial(self):
+    def test_serial(self) -> None:
         """Test the ``serial`` property."""
         self.assertEqual(self.account1.serial, self.cas["root"].serial)
         self.assertEqual(self.account2.serial, self.cas["child"].serial)
@@ -773,7 +773,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
             AcmeAccount().serial  # pylint: disable=expression-not-assigned
 
     @freeze_time(timestamps["everything_valid"])
-    def test_usable(self):
+    def test_usable(self) -> None:
         """Test the ``usable`` property."""
         self.assertTrue(self.account1.usable)
         self.assertFalse(self.account2.usable)
@@ -800,7 +800,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.account1.ca.enabled = False
         self.assertFalse(self.account1.usable)
 
-    def test_unique_together(self):
+    def test_unique_together(self) -> None:
         """Test that a thumbprint must be unique for the given CA."""
 
         msg = r"^UNIQUE constraint failed: django_ca_acmeaccount\.ca_id, django_ca_acmeaccount\.thumbprint$"
@@ -811,7 +811,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
         AcmeAccount.objects.create(ca=self.account2.ca, thumbprint=self.account1.thumbprint)
 
     @override_settings(ALLOWED_HOSTS=["kid-test.example.net"])
-    def test_set_kid(self):
+    def test_set_kid(self) -> None:
         """Test set_kid()."""
 
         hostname = settings.ALLOWED_HOSTS[0]
@@ -822,7 +822,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
             f"http://{hostname}/django_ca/acme/{self.account1.serial}/acct/{self.account1.slug}/",
         )
 
-    def test_validate_pem(self):
+    def test_validate_pem(self) -> None:
         """Test the PEM validator."""
         self.account1.full_clean()
 
@@ -839,7 +839,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeOrder`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
@@ -851,24 +851,24 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         )
         self.order1 = AcmeOrder.objects.create(account=self.account)
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test the str function."""
         self.assertEqual(str(self.order1), "%s (%s)" % (self.order1.slug, self.account))
 
-    def test_acme_url(self):
+    def test_acme_url(self) -> None:
         """Test the acme url function."""
         self.assertEqual(
             self.order1.acme_url, "/django_ca/acme/%s/order/%s/" % (self.account.ca.serial, self.order1.slug)
         )
 
-    def test_acme_finalize_url(self):
+    def test_acme_finalize_url(self) -> None:
         """Test the acme finalize url function."""
         self.assertEqual(
             self.order1.acme_finalize_url,
             "/django_ca/acme/%s/order/%s/finalize/" % (self.account.ca.serial, self.order1.slug),
         )
 
-    def test_add_authorizations(self):
+    def test_add_authorizations(self) -> None:
         """Test the add_authorizations method."""
         identifier = messages.Identifier(typ=messages.IDENTIFIER_FQDN, value="example.com")
         auths = self.order1.add_authorizations([identifier])
@@ -879,7 +879,7 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         with transaction.atomic(), self.assertRaisesRegex(IntegrityError, msg):
             self.order1.add_authorizations([identifier])
 
-    def test_serial(self):
+    def test_serial(self) -> None:
         """Test getting the serial of the associated CA."""
         self.assertEqual(self.order1.serial, self.cas["root"].serial)
 
@@ -887,7 +887,7 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeAuthorization`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
@@ -905,17 +905,17 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value="example.net"
         )
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test the __str__ method."""
         self.assertEqual(str(self.auth1), "dns: example.com")
         self.assertEqual(str(self.auth2), "dns: example.net")
 
-    def test_account_property(self):
+    def test_account_property(self) -> None:
         """Test the account property."""
         self.assertEqual(self.auth1.account, self.account)
         self.assertEqual(self.auth2.account, self.account)
 
-    def test_acme_url(self):
+    def test_acme_url(self) -> None:
         """Test acme_url property."""
         self.assertEqual(
             self.auth1.acme_url, "/django_ca/acme/%s/authz/%s/" % (self.cas["root"].serial, self.auth1.slug)
@@ -924,12 +924,12 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.auth2.acme_url, "/django_ca/acme/%s/authz/%s/" % (self.cas["root"].serial, self.auth2.slug)
         )
 
-    def test_expires(self):
+    def test_expires(self) -> None:
         """Test the expires property."""
         self.assertEqual(self.auth1.expires, self.order.expires)
         self.assertEqual(self.auth2.expires, self.order.expires)
 
-    def test_identifier(self):
+    def test_identifier(self) -> None:
         """Test the identifier property."""
 
         self.assertEqual(
@@ -939,14 +939,14 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.auth2.identifier, messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.auth2.value)
         )
 
-    def test_identifier_unknown_type(self):
+    def test_identifier_unknown_type(self) -> None:
         """Test that an identifier with an unknown type raises a ValueError."""
 
         self.auth1.type = "foo"
         with self.assertRaisesRegex(ValueError, r"^Unknown identifier type: foo$"):
             self.auth1.identifier  # pylint: disable=pointless-statement; access to prop raises exception
 
-    def test_subject_alternative_name(self):
+    def test_subject_alternative_name(self) -> None:
         """Test the subject_alternative_name property."""
 
         self.assertEqual(self.auth1.subject_alternative_name, "dns:example.com")
@@ -961,7 +961,7 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
             x509.SubjectAlternativeName([x509.DNSName("example.net")]),
         )
 
-    def test_get_challenges(self):
+    def test_get_challenges(self) -> None:
         """Test the get_challenges() method."""
         chall_qs = self.auth1.get_challenges()
         self.assertIsInstance(chall_qs[0], AcmeChallenge)
@@ -974,7 +974,7 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeChallenge`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
@@ -997,15 +997,15 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(challenge.typ, typ)
         self.assertEqual(challenge.token, token)
 
-    def test_str(self):
+    def test_str(self) -> None:
         """Test the __str__ method."""
         self.assertEqual(str(self.chall), "%s (%s)" % (self.hostname, self.chall.type))
 
-    def test_acme_url(self):
+    def test_acme_url(self) -> None:
         """Test acme_url property."""
         self.assertEqual(self.chall.acme_url, f"/django_ca/acme/{self.chall.serial}/chall/{self.chall.slug}/")
 
-    def test_acme_challenge(self):
+    def test_acme_challenge(self) -> None:
         """Test acme_challenge property."""
         self.assertChallenge(
             self.chall.acme_challenge, "http-01", self.chall.token.encode(), challenges.HTTP01
@@ -1024,7 +1024,7 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.chall.acme_challenge  # pylint: disable=pointless-statement
 
     @freeze_time(timestamps["everything_valid"])
-    def test_acme_validated(self):
+    def test_acme_validated(self) -> None:
         """Test acme_calidated property."""
 
         # preconditions for checks (might change them in setUp without realising it might affect this test)
@@ -1043,7 +1043,7 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.chall.validated = timezone.now()
             self.assertEqual(self.chall.acme_validated, timezone.now())
 
-    def test_get_challenge(self):
+    def test_get_challenge(self) -> None:
         """Test the get_challenge() function."""
 
         body = self.chall.get_challenge(RequestFactory().get("/"))
@@ -1053,7 +1053,7 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(body.validated, self.chall.acme_validated)
         self.assertEqual(body.uri, f"http://testserver{self.chall.acme_url}")
 
-    def test_serial(self):
+    def test_serial(self) -> None:
         """Test the serial property."""
         self.assertEqual(self.chall.serial, self.chall.auth.order.account.ca.serial)
 
@@ -1061,7 +1061,7 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeCertificate`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
@@ -1074,11 +1074,11 @@ class AcmeCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.order = AcmeOrder.objects.create(account=self.account)
         self.cert = AcmeCertificate.objects.create(order=self.order)
 
-    def test_acme_url(self):
+    def test_acme_url(self) -> None:
         """Test the acme_url property."""
         self.assertEqual(self.cert.acme_url, f"/django_ca/acme/{self.order.serial}/cert/{self.cert.slug}/")
 
-    def test_parse_csr(self):
+    def test_parse_csr(self) -> None:
         """Test the parse_csr property."""
         self.cert.csr = certs["root-cert"]["csr"]["pem"]
         self.assertIsInstance(self.cert.parse_csr(), x509.CertificateSigningRequest)

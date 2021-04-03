@@ -41,7 +41,7 @@ class TestDjangoCATestCase(TestCase):
         """Emit a message about deprecation in the next version."""
         warnings.warn(self.msg_in_next, category=RemovedInNextVersionWarning)
 
-    def test_base(self):
+    def test_base(self) -> None:
         """Test warning messages."""
 
         with self.assertWarnsRegex(RemovedInDjangoCA119Warning, r"^%s$" % self.msg_in_119):

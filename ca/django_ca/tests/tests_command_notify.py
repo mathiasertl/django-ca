@@ -30,7 +30,7 @@ class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
     @freeze_time(timestamps["everything_valid"])
-    def test_no_certs(self):
+    def test_no_certs(self) -> None:
         """Try notificy command when all certs are still valid."""
         stdout, stderr = self.cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
@@ -38,7 +38,7 @@ class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @freeze_time(timestamps["ca_certs_expiring"])
-    def test_no_watchers(self):
+    def test_no_watchers(self) -> None:
         """Try expiring certs, but with no watchers."""
         # certs have no watchers by default, so we get no mails
         stdout, stderr = self.cmd("notify_expiring_certs")
@@ -47,7 +47,7 @@ class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @freeze_time(timestamps["ca_certs_expiring"])
-    def test_one_watcher(self):
+    def test_one_watcher(self) -> None:
         """Test one expiring certificate."""
         cert = self.certs["root-cert"]
         email = "user1@example.com"
@@ -62,7 +62,7 @@ class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(mail.outbox[0].subject, "Certificate expiration for %s on %s" % (cert.cn, timestamp))
         self.assertEqual(mail.outbox[0].to, [email])
 
-    def test_notification_days(self):
+    def test_notification_days(self) -> None:
         """Test that user gets multiple notifications of expiring certs."""
         cert = self.certs["root-cert"]
         email = "user1@example.com"

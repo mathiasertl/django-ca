@@ -634,17 +634,17 @@ HPKP pin: {hpkp}
             self.assertEqual(stderr, b"")
 
     @freeze_time(timestamps["before_everything"])
-    def test_basic_not_yet_valid(self):
+    def test_basic_not_yet_valid(self) -> None:
         """Basic tests when all certs are not yet valid."""
         self.assertBasic(status="Not yet valid")
 
     @freeze_time(timestamps["everything_expired"])
-    def test_basic_expired(self):
+    def test_basic_expired(self) -> None:
         """Basic tests when all certs are expired."""
         self.assertBasic(status="Expired")
 
     @freeze_time(timestamps["everything_valid"])
-    def test_certs(self):
+    def test_certs(self) -> None:
         """Test main certs."""
         for name, cert in self.generated_certs.items():
             stdout, stderr = self.cmd(
@@ -656,7 +656,7 @@ HPKP pin: {hpkp}
             self.assertEqual(stdout.decode("utf-8"), output[name].format(**context))
 
     @freeze_time(timestamps["everything_valid"])
-    def test_der(self):
+    def test_der(self) -> None:
         """Test viewing a cert as DER."""
         cert = self.certs["child-cert"]
         stdout, stderr = self.cmd(
@@ -684,7 +684,7 @@ HPKP pin: {hpkp}
         self.assertEqual(stdout, expected)
         self.assertEqual(stderr, b"")
 
-    def test_revoked(self):
+    def test_revoked(self) -> None:
         """Test viewing a revoked cert."""
         cert = self.certs["child-cert"]
         cert.revoked = True
@@ -712,7 +712,7 @@ HPKP pin: {hpkp}
         self.assertEqual(stderr, b"")
 
     @override_tmpcadir()
-    def test_no_san_with_watchers(self):
+    def test_no_san_with_watchers(self) -> None:
         """Test a cert with no subjectAltNames but with watchers."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -751,7 +751,7 @@ HPKP pin: %(hpkp)s
         self.assertEqual(stdout.decode("utf-8"), expected.format(**context))
 
     @freeze_time("2019-04-01")
-    def test_contrib_godaddy_derstandardat(self):
+    def test_contrib_godaddy_derstandardat(self) -> None:
         """Test contrib godaddy cert for derstandard.at."""
         sct = """PrecertificateSignedCertificateTimestamps:
     * Precertificate (v1):
@@ -860,7 +860,7 @@ HPKP pin: {hpkp}
         )
 
     @freeze_time("2019-07-05")
-    def test_contrib_letsencrypt_jabber_at(self):
+    def test_contrib_letsencrypt_jabber_at(self) -> None:
         """Test contrib letsencrypt cert."""
         name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
@@ -927,7 +927,7 @@ HPKP pin: {hpkp}
         )
 
     @freeze_time("2018-12-01")
-    def test_contrib_cloudflare_1(self):
+    def test_contrib_cloudflare_1(self) -> None:
         """Test contrib cloudflare cert."""
         self.assertContrib(
             "cloudflare_1",
@@ -1060,7 +1060,7 @@ HPKP pin: {hpkp}
             ),
         )
 
-    def test_contrib_multiple_ous(self):
+    def test_contrib_multiple_ous(self) -> None:
         """Test special contrib case with multiple OUs."""
         self.assertContrib(
             "multiple_ous",
@@ -1078,7 +1078,7 @@ HPKP pin: {hpkp}
 """,
         )
 
-    def test_unknown_cert(self):
+    def test_unknown_cert(self) -> None:
         """Test viewing an unknown certificate."""
         name = "foobar"
         with self.assertCommandError(r"^Error: %s: Certificate not found\.$" % name):

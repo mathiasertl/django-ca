@@ -27,7 +27,7 @@ BASE = "../../../docs/source"
 class DocumentationTestCase(DjangoCATestCase):
     """Main testcase class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
         self.cert = self.load_cert(
@@ -45,11 +45,11 @@ class DocumentationTestCase(DjangoCATestCase):
         }
 
     @override_tmpcadir()
-    def test_python_intro(self):
+    def test_python_intro(self) -> None:
         """Test python/intro.rst."""
         doctest.testfile("%s/python/intro.rst" % BASE, globs=self.get_globs())
 
     @override_tmpcadir()
-    def test_python_models(self):
+    def test_python_models(self) -> None:
         """Test python/models.rst."""
         doctest.testfile("%s/python/models.rst" % BASE, globs=self.get_globs())

@@ -52,7 +52,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
     """Tests for adding certificates."""
 
     @override_tmpcadir()
-    def test_get(self):
+    def test_get(self) -> None:
         """Do a basic get request (to test CSS etc)."""
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -63,12 +63,12 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
 
     @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-    def test_get_dict(self):
+    def test_get_dict(self) -> None:
         """Test get with no profiles and no default subject."""
         self.test_get()
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_add(self):
+    def test_add(self) -> None:
         """Test to actually add a certificate."""
         cname = "test-add.example.com"
         ca = self.cas["root"]
@@ -129,7 +129,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir()
-    def test_required_subject(self):
+    def test_required_subject(self) -> None:
         """Test that we have to enter a complete subject value."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -168,7 +168,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
     @override_tmpcadir()
-    def test_empty_subject(self):
+    def test_empty_subject(self) -> None:
         """Test passing an empty subject."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -213,7 +213,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_add_no_key_usage(self):
+    def test_add_no_key_usage(self) -> None:
         """Test adding a cert with no (extended) key usage."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -262,7 +262,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_add_with_password(self):
+    def test_add_with_password(self) -> None:
         """Test adding with a password."""
         ca = self.cas["pwd"]
         csr = certs["pwd-cert"]["csr"]["pem"]
@@ -388,7 +388,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir()
-    def test_wrong_csr(self):
+    def test_wrong_csr(self) -> None:
         """Test passing an unparseable CSR."""
         ca = self.cas["root"]
         cname = "test-add-wrong-csr.example.com"
@@ -430,7 +430,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
-    def test_wrong_algorithm(self):
+    def test_wrong_algorithm(self) -> None:
         """Test selecting an unknown algorithm."""
         ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
@@ -474,7 +474,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
-    def test_expires_in_the_past(self):
+    def test_expires_in_the_past(self) -> None:
         """Test creating a cert that expires in the past."""
         ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
@@ -518,7 +518,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
-    def test_expires_too_late(self):
+    def test_expires_too_late(self) -> None:
         """Test that creating a cert that expires after the CA expires throws an error."""
         ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
@@ -562,7 +562,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
             Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
-    def test_invalid_cn_in_san(self):
+    def test_invalid_cn_in_san(self) -> None:
         """Test that if you submit a CommonName that is not parseable as SubjectAlternativeName, but check "CN
         in SAN", an error is thrown.
 
@@ -609,7 +609,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cname)
 
-    def test_add_no_cas(self):
+    def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
         ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
@@ -645,7 +645,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
-    def test_add_unusable_cas(self):
+    def test_add_unusable_cas(self) -> None:
         """Try adding with an unusable CA."""
         ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
@@ -771,7 +771,7 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
             field.clear()
 
     @override_tmpcadir()
-    def test_paste_csr_test(self):
+    def test_paste_csr_test(self) -> None:
         """Test that pasting a CSR shows text next to subject input fields."""
         self.load_usable_cas()
         self.login()
@@ -804,7 +804,7 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
             self.assertEqual(from_csr.text, input_elem.get_attribute("value"))
 
     @override_tmpcadir()
-    def test_select_profile(self):
+    def test_select_profile(self) -> None:
         """Test that selecting the profile modifies the extensions."""
 
         self.load_usable_cas()

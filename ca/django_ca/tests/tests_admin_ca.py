@@ -36,7 +36,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, Djan
     )
 
     @override_settings(CA_ENABLE_ACME=False)
-    def test_change_view_with_acme(self):
+    def test_change_view_with_acme(self) -> None:
         """Basic tests but with ACME support disabled."""
         self.test_change_view()
 
@@ -55,19 +55,19 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
         """Shortcut property to get the bundle URL for the root CA."""
         return self.get_url(ca=self.cas["root"])
 
-    def test_root(self):
+    def test_root(self) -> None:
         """Test downloading the bundle for the root CA."""
         filename = "root_example_com_bundle.pem"
         self.assertBundle(self.client.get("%s?format=PEM" % self.url), filename, certs["root"]["pub"]["pem"])
 
-    def test_child(self):
+    def test_child(self) -> None:
         """Test downloading the bundle for a child CA."""
         filename = "child_example_com_bundle.pem"
         content = "%s\n%s" % (certs["child"]["pub"]["pem"].strip(), certs["root"]["pub"]["pem"].strip())
         response = self.client.get("%s?format=PEM" % self.get_url(self.cas["child"]))
         self.assertBundle(response, filename, content)
 
-    def test_invalid_format(self):
+    def test_invalid_format(self) -> None:
         """Test downloading the bundle in an invalid format."""
         response = self.client.get("%s?format=INVALID" % self.url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -78,7 +78,7 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")
 
-    def test_permission_denied(self):
+    def test_permission_denied(self) -> None:
         """Test downloading without permissions fails."""
         self.user.is_superuser = False
         self.user.save()
@@ -86,7 +86,7 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
         response = self.client.get("%s?format=PEM" % self.url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-    def test_unauthorized(self):
+    def test_unauthorized(self) -> None:
         """Test viewing as unauthorized viewer."""
         client = Client()
         response = client.get(self.url)

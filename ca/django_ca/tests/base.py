@@ -1061,7 +1061,7 @@ class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
 class DjangoCAWithCATestCase(DjangoCATestCase):
     """A test class that already has all CA predefined."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_all_cas()
 
@@ -1069,7 +1069,7 @@ class DjangoCAWithCATestCase(DjangoCATestCase):
 class DjangoCAWithGeneratedCAsTestCase(DjangoCATestCase):
     """TestCase that has all generated (usable) CAs preloaded."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_usable_cas()
 
@@ -1077,7 +1077,7 @@ class DjangoCAWithGeneratedCAsTestCase(DjangoCATestCase):
 class DjangoCAWithGeneratedCertsTestCase(DjangoCAWithCATestCase):
     """TestCase that has all **generated** certificates preloaded."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_generated_certs()
 
@@ -1089,7 +1089,7 @@ class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
     fixture, certificates retrieved from the interned as example data and certificates from bug reports.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_all_certs()
 
@@ -1102,7 +1102,7 @@ class DjangoCATransactionTestCase(DjangoCATestCaseMixin, TransactionTestCase):
 class DjangoCAWithCATransactionTestCase(DjangoCATransactionTestCase):
     """Same as DjangoCAWithCATestCase but as TransactionTestCase."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_all_cas()
 
@@ -1110,7 +1110,7 @@ class DjangoCAWithCATransactionTestCase(DjangoCATransactionTestCase):
 class DjangoCAWithGeneratedCAsTransactionTestCase(DjangoCATransactionTestCase):
     """Same as DjangoCAWithGeneratedCAsTestCase but as TransactionTestCase."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_usable_cas()
 

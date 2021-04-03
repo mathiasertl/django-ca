@@ -50,7 +50,7 @@ from .base import timestamps
 class TestBasic(DjangoCAWithGeneratedCAsTestCase):
     """Test the basic handling of celery tasks."""
 
-    def test_missing_celery(self):
+    def test_missing_celery(self) -> None:
         """Test that we work even if celery is not installed."""
 
         # negative assertion to make sure that the IsInstance assertion below is actually meaningful
@@ -65,7 +65,7 @@ class TestBasic(DjangoCAWithGeneratedCAsTestCase):
             # tests* to fail, because the celery import would be cached to *not* work
             importlib.reload(tasks)
 
-    def test_run_task(self):
+    def test_run_task(self) -> None:
         """Test our run_task wrapper."""
 
         # run_task() without celery
@@ -83,7 +83,7 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
     """Test the cache_crl Celery task."""
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test caching with a specific serial."""
 
         hash_cls = hashes.SHA512
@@ -101,7 +101,7 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_cache_all_crls(self):
+    def test_cache_all_crls(self) -> None:
         """Test caching when all CAs are valid."""
         hash_cls = hashes.SHA512
         enc_cls = Encoding.DER
@@ -117,7 +117,7 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_expired"])
-    def test_cache_all_crls_expired(self):
+    def test_cache_all_crls_expired(self) -> None:
         """Test that nothing is cashed if all CAs are expired."""
 
         hash_cls = hashes.SHA512
@@ -129,14 +129,14 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
             self.assertIsNone(cache.get(key))
 
     @override_tmpcadir()
-    def test_no_password(self):
+    def test_no_password(self) -> None:
         """Test creating a CRL for a CA where we have no password."""
 
         msg = r"^Password was not given but private key is encrypted$"
         with self.settings(CA_PASSWORDS={}), self.assertRaisesRegex(TypeError, msg):
             tasks.cache_crl(self.cas["pwd"].serial)
 
-    def test_no_private_key(self):
+    def test_no_private_key(self) -> None:
         """Test creating a CRL for a CA where no private key is available."""
 
         with self.assertRaises(FileNotFoundError):
@@ -148,7 +148,7 @@ class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test the generate_ocsp_key task."""
 
     @override_tmpcadir()
-    def test_single(self):
+    def test_single(self) -> None:
         """Test creating a single key."""
 
         for ca in self.cas.values():
@@ -157,7 +157,7 @@ class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
 
     @override_tmpcadir()
-    def test_all(self):
+    def test_all(self) -> None:
         """Test creating all keys."""
 
         tasks.generate_ocsp_keys()
@@ -172,7 +172,7 @@ class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
@@ -217,14 +217,14 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_VALID)
         self.assertEqual(self.order.status, order_state)
 
-    def test_acme_disabled(self):
+    def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
 
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
 
-    def test_unknown_challenge(self):
+    def test_unknown_challenge(self) -> None:
         """Test invoking task with an unknown challenge."""
 
         AcmeChallenge.objects.all().delete()
@@ -233,7 +233,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         self.assertEqual(logcm.output, [f"ERROR:django_ca.tasks:Challenge with id={self.chall.pk} not found"])
 
-    def test_status_not_processing(self):
+    def test_status_not_processing(self) -> None:
         """Test invoking task where the status is not "processing"."""
 
         self.chall.status = AcmeChallenge.STATUS_PENDING
@@ -246,7 +246,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
             logcm.output, [f"ERROR:django_ca.tasks:{self.chall}: pending: Invalid state (must be processing)"]
         )
 
-    def test_unusable_auth(self):
+    def test_unusable_auth(self) -> None:
         """Test invoking task with an unusable authentication."""
         self.auth.status = AcmeAuthorization.STATUS_VALID
         self.auth.save()
@@ -256,14 +256,14 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         self.assertEqual(logcm.output, [f"ERROR:django_ca.tasks:{self.chall}: Authentication is not usable"])
 
-    def test_request_exception(self):
+    def test_request_exception(self) -> None:
         """Test requests throwing an exception."""
         with self.patch("requests.get", side_effect=Exception("foo")) as req_mock:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
         self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
-    def test_response_not_ok(self):
+    def test_response_not_ok(self) -> None:
         """Test the server not returning a HTTP status code 200."""
 
         with self.patch("requests.get") as req_mock:
@@ -273,7 +273,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertInvalid()
         self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
-    def test_response_wrong_content(self):
+    def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
 
         with self.patch("requests.get") as req_mock:
@@ -283,7 +283,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertInvalid()
         self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
-    def test_unsupported_challenge(self):
+    def test_unsupported_challenge(self) -> None:
         """Test what happens when challenge type is not supported."""
 
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
@@ -296,7 +296,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertInvalid()
         req_mock.assert_not_called()
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test validation actually working."""
 
         with self.patch("requests.get") as req_mock:
@@ -306,7 +306,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertValid()
         self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
-    def test_multiple_auths(self):
+    def test_multiple_auths(self) -> None:
         """If other authentications exist that are not in the valid state, order does not become valid."""
 
         AcmeAuthorization.objects.create(
@@ -325,7 +325,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
@@ -342,14 +342,14 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         # all data from the CSR is discarded anyway.
         self.cert = AcmeCertificate.objects.create(order=self.order, csr=certs["root-cert"]["csr"]["pem"])
 
-    def test_acme_disabled(self):
+    def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
 
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.cert.pk)
         self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
 
-    def test_unknown_ert(self):
+    def test_unknown_ert(self) -> None:
         """Test invoking task with an unknown cert."""
 
         AcmeCertificate.objects.all().delete()
@@ -360,7 +360,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
             logcm.output, [f"ERROR:django_ca.tasks:Certificate with id={self.cert.pk} not found"]
         )
 
-    def test_unusable_cert(self):
+    def test_unusable_cert(self) -> None:
         """Test invoking task where the order is not usable."""
 
         self.order.status = AcmeChallenge.STATUS_VALID  # usually would mean: already issued
@@ -374,7 +374,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         )
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test basic certificate issuance."""
 
         with self.assertLogs() as logcm:
@@ -394,7 +394,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(self.cert.cert.cn, self.hostname)
 
     @override_tmpcadir()
-    def test_two_hostnames(self):
+    def test_two_hostnames(self) -> None:
         """Test setting two hostnames."""
 
         hostname2 = "example.net"
@@ -421,7 +421,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertIn(self.cert.cert.cn, [self.hostname, hostname2])
 
     @override_tmpcadir()
-    def test_not_after(self):
+    def test_not_after(self) -> None:
         """Test certificate issuance with not_after attr."""
         not_after = timezone.now() + timedelta(days=20)
         self.order.not_after = not_after
@@ -448,7 +448,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
 class AcmeCleanupTestCase(DjangoCAWithGeneratedCAsTestCase):
     """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
@@ -468,7 +468,7 @@ class AcmeCleanupTestCase(DjangoCAWithGeneratedCAsTestCase):
         # all data from the CSR is discarded anyway.
         self.cert = AcmeCertificate.objects.create(order=self.order, csr=certs["root-cert"]["csr"]["pem"])
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic test."""
         tasks.acme_cleanup()  # does nothing if nothing is expired
 
@@ -485,7 +485,7 @@ class AcmeCleanupTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(AcmeChallenge.objects.all().count(), 0)
         self.assertEqual(AcmeCertificate.objects.all().count(), 0)
 
-    def test_acme_disabled(self):
+    def test_acme_disabled(self) -> None:
         """Test task when ACME is disabled."""
 
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:

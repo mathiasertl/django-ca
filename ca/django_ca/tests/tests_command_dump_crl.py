@@ -40,7 +40,7 @@ from .base import timestamps
 class DumpCRLTestCase(DjangoCAWithCertTestCase):
     """Test the dump_crl management command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["root"]
 
@@ -48,7 +48,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(revokation.get_serial(), cert.serial.encode("utf-8"))
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test basic creation of a CRL."""
 
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
@@ -59,7 +59,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(list(crl), [])
 
     @override_tmpcadir()
-    def test_file(self):
+    def test_file(self) -> None:
         """Test dumping to a file."""
 
         path = os.path.join(ca_settings.CA_DIR, "crl-test.crl")
@@ -82,7 +82,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
             self.cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()
-    def test_password(self):
+    def test_password(self) -> None:
         """Test creating a CRL with a CA with a password."""
 
         ca = self.cas["pwd"]
@@ -111,7 +111,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(list(crl), [])
 
     @override_tmpcadir()
-    def test_disabled(self):
+    def test_disabled(self) -> None:
         """Test creating a CRL with a disabled CA."""
 
         ca = self.cas["root"]
@@ -128,7 +128,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
-    def test_revoked(self):
+    def test_revoked(self) -> None:
         """Test revoked certificates
 
         NOTE: freeze time because expired certs are not in a CRL.
@@ -164,7 +164,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
-    def test_compromised(self):
+    def test_compromised(self) -> None:
         """Test creating a CRL with a compromized cert."""
 
         cert = self.certs["root-cert"]
@@ -184,7 +184,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_ca_crl(self):
+    def test_ca_crl(self) -> None:
         """Test creating a CA CRL.
 
         NOTE: freeze_time() b/c it does not work for expired CAs.
@@ -215,7 +215,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(len(crl[0].extensions), 0)
 
     @override_tmpcadir()
-    def test_ca_crl_old_option(self):
+    def test_ca_crl_old_option(self) -> None:
         """Test the old --ca-crl option."""
 
         # create a child CA
@@ -232,7 +232,7 @@ class DumpCRLTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(list(crl), [])
 
     @override_tmpcadir()
-    def test_error(self):
+    def test_error(self) -> None:
         """Test that creating a CRL fails for an unknown reason."""
 
         method = "django_ca.models.CertificateAuthority.get_crl"

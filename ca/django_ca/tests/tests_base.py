@@ -44,12 +44,12 @@ class TestDjangoCATestCase(DjangoCATestCase):
     """Test some basic stuff in the base test classes."""
 
     @override_tmpcadir()
-    def test_override_tmpcadir(self):
+    def test_override_tmpcadir(self) -> None:
         """Test override_tmpcadir as decorator."""
         ca_dir = ca_settings.CA_DIR
         self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
 
-    def test_tmpcadir(self):
+    def test_tmpcadir(self) -> None:
         """Test the tmpcadir ad context manager."""
         old_ca_dir = ca_settings.CA_DIR
 
@@ -61,7 +61,7 @@ class TestDjangoCATestCase(DjangoCATestCase):
         self.assertEqual(ca_settings.CA_DIR, old_ca_dir)  # ensure that they're equal again
 
     @override_tmpcadir()
-    def test_assert_extensions(self):
+    def test_assert_extensions(self) -> None:
         """Test some basic extension properties."""
         self.load_usable_cas()
         self.load_generated_certs()
@@ -130,7 +130,7 @@ class OverrideSettingsFuncTestCase(TestCase):
     """Test function override."""
 
     @override_settings(CA_MIN_KEY_SIZE=256)
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test that we see the overwritten key size."""
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
@@ -139,12 +139,12 @@ class OverrideSettingsFuncTestCase(TestCase):
 class OverrideSettingsClassOnlyTestCase(DjangoCATestCase):
     """Test that override_settings also updates ca_settings."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test that we see the overwritten key size."""
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 512)
 
     @override_settings(CA_MIN_KEY_SIZE=256)
-    def test_double(self):
+    def test_double(self) -> None:
         """Test multiple layers of override_settings."""
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
@@ -168,25 +168,25 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
         cls.seen_dirs = set()
 
     @override_tmpcadir()
-    def test_a(self):
+    def test_a(self) -> None:
         # add three tests to make sure that every test case sees a different dir
         self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
 
     @override_tmpcadir()
-    def test_b(self):
+    def test_b(self) -> None:
         self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
 
     @override_tmpcadir()
-    def test_c(self):
+    def test_c(self) -> None:
         self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
         self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
         self.seen_dirs.add(ca_settings.CA_DIR)
 
-    def test_no_classes(self):
+    def test_no_classes(self) -> None:
         msg = r"^Only functions can use override_tmpcadir\(\)$"
         with self.assertRaisesRegex(ValueError, msg):
 
@@ -198,6 +198,6 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
 class CommandTestCase(DjangoCAWithCATestCase):
     """Test the cmd_e2e function."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Trivial basic test."""
         self.cmd_e2e(["list_cas"])

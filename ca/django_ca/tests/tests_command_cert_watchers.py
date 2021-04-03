@@ -19,7 +19,7 @@ from .base import DjangoCAWithGeneratedCertsTestCase
 class CertWatchersTestCase(DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Just some basic tests here."""
         cert = self.certs["root-cert"]
         stdout, stderr = self.cmd("cert_watchers", cert.serial, add=["user-added@example.com"])

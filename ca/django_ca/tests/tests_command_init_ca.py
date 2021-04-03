@@ -47,7 +47,7 @@ class InitCATest(DjangoCATestCase):
         return self.cmd("init_ca", name, "/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s" % name, **kwargs)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_basic(self):
+    def test_basic(self) -> None:
         """"Basic tests for the command."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -85,13 +85,13 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.serial, int_to_hex(ca.x509_cert.serial_number))
 
     @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self):
+    def test_basic_with_use_tz(self) -> None:
         """Basic test with timezone support."""
 
         return self.test_basic()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_arguments(self):
+    def test_arguments(self) -> None:
         """Test most arguments."""
 
         hostname = "example.com"
@@ -172,7 +172,7 @@ class InitCATest(DjangoCATestCase):
         self.assertTrue(ca.acme_requires_contact)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_acme_arguments(self):
+    def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -192,7 +192,7 @@ class InitCATest(DjangoCATestCase):
         self.assertFalse(ca.acme_requires_contact)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False)
-    def test_disabled_acme_arguments(self):
+    def test_disabled_acme_arguments(self) -> None:
         """Test that ACME options don't work when ACME is disabled."""
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-enable"])
@@ -203,7 +203,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(excm.exception.args, (2,))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_ecc(self):
+    def test_ecc(self) -> None:
         """Test creating an ECC CA."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -240,7 +240,7 @@ class InitCATest(DjangoCATestCase):
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_permitted(self):
+    def test_permitted(self) -> None:
         """Test the NameConstraints extension with 'permitted'."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -261,7 +261,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.name_constraints, NameConstraints({"value": {"permitted": ["DNS:.com"]}}))
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_excluded(self):
+    def test_excluded(self) -> None:
         """Test the NameConstraints extension with 'excluded'."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -281,13 +281,13 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(ca.name_constraints, NameConstraints({"value": {"excluded": ["DNS:.com"]}}))
 
     @override_settings(USE_TZ=True)
-    def test_arguments_with_use_tz(self):
+    def test_arguments_with_use_tz(self) -> None:
         """Test arguments without NameConstraints."""
 
         self.test_arguments()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_no_pathlen(self):
+    def test_no_pathlen(self) -> None:
         """Test creating a CA with no pathlen."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -308,7 +308,7 @@ class InitCATest(DjangoCATestCase):
         self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_empty_subject_fields(self):
+    def test_empty_subject_fields(self) -> None:
         """Test creating a CA with empty subject fields."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -327,7 +327,7 @@ class InitCATest(DjangoCATestCase):
         self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_no_cn(self):
+    def test_no_cn(self) -> None:
         """Test creating a CA with no CommonName."""
 
         out, err = self.cmd("init_ca", "test", "/C=/ST=/L=/O=/OU=smth", key_size=ca_settings.CA_MIN_KEY_SIZE)
@@ -342,7 +342,7 @@ class InitCATest(DjangoCATestCase):
         self.assertAuthorityKeyIdentifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_parent(self):
+    def test_parent(self) -> None:
         """Test creating a CA and an intermediate CA."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -526,7 +526,7 @@ class InitCATest(DjangoCATestCase):
         self.assertEqual(pathlen_none_1.max_pathlen, 1)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_expires_override(self):
+    def test_expires_override(self) -> None:
         """Test that if we request an expiry after that of the parent, we override to that of the parent."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -572,7 +572,7 @@ class InitCATest(DjangoCATestCase):
         self.assertAuthorityKeyIdentifier(parent, child)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_password(self):
+    def test_password(self) -> None:
         """Test creating a CA with a password."""
 
         password = b"testpassword"
@@ -635,7 +635,7 @@ class InitCATest(DjangoCATestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     @freeze_time(timestamps["everything_valid"])
-    def test_default_hostname(self):
+    def test_default_hostname(self) -> None:
         """Test manually passing a default hostname.
 
         Note: freeze time b/c this test uses root CA as a parent.
@@ -683,7 +683,7 @@ class InitCATest(DjangoCATestCase):
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_no_default_hostname(self):
+    def test_no_default_hostname(self) -> None:
         """Disable default hostname via the command line."""
 
         name = "ca"
@@ -700,7 +700,7 @@ class InitCATest(DjangoCATestCase):
         self.assertIsNone(ca.authority_information_access)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_root_ca_crl_url(self):
+    def test_root_ca_crl_url(self) -> None:
         """Test that you cannot create a CA with a CRL URL."""
 
         with self.assertCommandError(
@@ -709,7 +709,7 @@ class InitCATest(DjangoCATestCase):
             self.init_ca(name="foobar", ca_crl_url="https://example.com")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_root_ca_ocsp_url(self):
+    def test_root_ca_ocsp_url(self) -> None:
         """Test that you cannot create a CA with a OCSP URL."""
 
         with self.assertCommandError(
@@ -718,7 +718,7 @@ class InitCATest(DjangoCATestCase):
             self.init_ca(name="foobar", ca_ocsp_url="https://example.com")
 
     @override_tmpcadir()
-    def test_small_key_size(self):
+    def test_small_key_size(self) -> None:
         """Test creating a key with a key size that is too small."""
 
         with self.assertCommandError(r"^256: Key size must be least 1024 bits$"), self.assertCreateCASignals(
@@ -727,7 +727,7 @@ class InitCATest(DjangoCATestCase):
             self.init_ca(key_size=256)
 
     @override_tmpcadir()
-    def test_key_not_power_of_two(self):
+    def test_key_not_power_of_two(self) -> None:
         """Test creating a key with invalid key size."""
 
         with self.assertCommandError(r"^2049: Key size must be a power of two$"), self.assertCreateCASignals(

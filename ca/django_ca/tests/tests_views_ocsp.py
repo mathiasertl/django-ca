@@ -357,7 +357,7 @@ class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     """Test the generic view."""
 
     @override_tmpcadir()
-    def test_get(self):
+    def test_get(self) -> None:
         """Do a basic GET request."""
         cert = self.certs["child-cert"]
         data = base64.b64encode(req1).decode("utf-8")
@@ -367,7 +367,7 @@ class OCSPTestGenericView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce)
 
     @override_tmpcadir()
-    def test_post(self):
+    def test_post(self) -> None:
         """Do a basic POST request."""
         cert = self.certs["child-cert"]
         response = self.client.post(
@@ -388,7 +388,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     """Test OCSPView."""
 
     @override_tmpcadir()
-    def test_get(self):
+    def test_get(self) -> None:
         """Basic GET test."""
         cert = self.certs["child-cert"]
         data = base64.b64encode(req1).decode("utf-8")
@@ -396,14 +396,14 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce)
 
-    def test_bad_query(self):
+    def test_bad_query(self) -> None:
         """Test sending a bad query."""
         response = self.client.get(reverse("get", kwargs={"data": "XXX"}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "malformed_request")
 
-    def test_raises_exception(self):
+    def test_raises_exception(self) -> None:
         """Generic test if the handling function throws any uncought exception."""
 
         def effect(data):
@@ -423,7 +423,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
             self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
     @override_tmpcadir()
-    def test_post(self):
+    def test_post(self) -> None:
         """Test the post request."""
         cert = self.certs["child-cert"]
         response = self.client.post(reverse("post"), req1, content_type="application/ocsp-request")
@@ -443,7 +443,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
     @override_tmpcadir()
-    def test_loaded_cryptography_cert(self):
+    def test_loaded_cryptography_cert(self) -> None:
         """Test view with loaded cryptography cert."""
         cert = self.certs["child-cert"]
         response = self.client.post(
@@ -453,7 +453,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1500)
 
     @override_tmpcadir()
-    def test_no_nonce(self):
+    def test_no_nonce(self) -> None:
         """Test fetching without a nonce."""
         cert = self.certs["child-cert"]
         builder = ocsp.OCSPRequestBuilder()
@@ -464,7 +464,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=None)
 
     @override_tmpcadir()
-    def test_no_nonce_asn1crypto(self):
+    def test_no_nonce_asn1crypto(self) -> None:
         """Test fetching without a nonce, test using asn1crypto."""
         cert = self.certs["child-cert"]
         builder = ocspbuilder.OCSPRequestBuilder(
@@ -479,7 +479,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=None)
 
     @override_tmpcadir()
-    def test_revoked(self):
+    def test_revoked(self) -> None:
         """Test fetching for revoked certificate."""
         cert = self.certs["child-cert"]
         cert.revoke()
@@ -493,7 +493,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, expires=1200)
 
-    def test_ca_ocsp(self):
+    def test_ca_ocsp(self) -> None:
         """Make a CA OCSP request."""
         data = base64.b64encode(req1).decode("utf-8")
         response = self.client.get(reverse("get-ca", kwargs={"data": data}))
@@ -501,7 +501,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         asn1crypto.ocsp.OCSPResponse.load(response.content)
         # self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
-    def test_bad_ca(self):
+    def test_bad_ca(self) -> None:
         """Fetch data for a CA that does not exist."""
         data = base64.b64encode(req1).decode("utf-8")
         with self.assertLogs() as logcm:
@@ -517,7 +517,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
-    def test_unknown(self):
+    def test_unknown(self) -> None:
         """Test fetching data for an unknown certificate."""
         data = base64.b64encode(unknown_req).decode("utf-8")
         with self.assertLogs() as logcm:
@@ -532,7 +532,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
-    def _test_bad_responder_cert(self):
+    def _test_bad_responder_cert(self) -> None:
         # TODO: can't make sense of what this is supposed to test
         data = base64.b64encode(req1).decode("utf-8")
 
@@ -543,7 +543,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
         self.assertEqual(logcm.output, ["ERROR:django_ca.views:Could not read responder key/cert."])
 
-    def test_bad_request(self):
+    def test_bad_request(self) -> None:
         """Try making a bad request."""
         data = base64.b64encode(b"foobar").decode("utf-8")
         response = self.client.get(reverse("get", kwargs={"data": data}))
@@ -551,7 +551,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "malformed_request")
 
-    def test_multiple(self):
+    def test_multiple(self) -> None:
         """Try making multiple OCSP requests (not currently supported)."""
         data = base64.b64encode(multiple_req).decode("utf-8")
         response = self.client.get(reverse("get", kwargs={"data": data}))
@@ -560,7 +560,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(ocsp_response["response_status"].native, "malformed_request")
 
     @override_tmpcadir()
-    def test_bad_ca_cert(self):
+    def test_bad_ca_cert(self) -> None:
         """Try naming an invalid CA."""
         ca = self.cas["child"]
         ca.pub = "foobar"
@@ -572,7 +572,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
-    def test_bad_responder_key(self):
+    def test_bad_responder_key(self) -> None:
         """Try configuring a bad responder key."""
         data = base64.b64encode(req1).decode("utf-8")
 
@@ -582,7 +582,7 @@ class OCSPTestView(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
     @override_tmpcadir()
-    def test_bad_responder_pem(self):
+    def test_bad_responder_pem(self) -> None:
         """Try configuring a bad responder cert."""
         data = base64.b64encode(req1).decode("utf-8")
         msg = "ERROR:django_ca.views:Could not read responder key/cert."
@@ -632,7 +632,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, DjangoCAWithCertTestCase):
     """Test generic OCSP view."""
 
     @override_tmpcadir()
-    def test_cert_get(self):
+    def test_cert_get(self) -> None:
         """Test getting OCSP responses."""
         ca = self.cas["child"]
         cert = self.certs["child-cert"]
@@ -662,7 +662,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, DjangoCAWithCertTestCase):
         self.assertOCSP(response, requested=[cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=3600)
 
     @override_tmpcadir()
-    def test_cert_method_not_allowed(self):
+    def test_cert_method_not_allowed(self) -> None:
         """Try HTTP methods that are not allowed."""
         url = reverse(
             "django_ca:ocsp-cert-post",

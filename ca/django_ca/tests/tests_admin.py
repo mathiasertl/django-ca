@@ -118,11 +118,11 @@ class CertificateAdminViewTestCase(
             yield ([self.certs["profile-ocsp"]], {"auto": "auto"})
             yield (self.model.objects.all(), {"auto": "all", "status": "all"})
 
-    def test_change_view(self):
+    def test_change_view(self) -> None:
         self.load_all_certs()
         super().test_change_view()
 
-    def test_revoked(self):
+    def test_revoked(self) -> None:
         """View a revoked certificate (fieldset should be collapsed)."""
         self.certs["root-cert"].revoke()
 
@@ -137,7 +137,7 @@ class CertificateAdminViewTestCase(
             html=True,
         )
 
-    def test_no_san(self):
+    def test_no_san(self) -> None:
         """Test viewing a certificate with no extensions."""
         cert = self.certs["no-extensions"]
         response = self.client.get(cert.admin_change_url)
@@ -161,7 +161,7 @@ class CertificateAdminViewTestCase(
             html=True,
         )
 
-    def test_unsupported_extensions(self):
+    def test_unsupported_extensions(self) -> None:
         """Test viewing a certificate with unsupported extensions."""
         cert = self.certs["all-extensions"]
         # Act as if no extensions is recognized, to see what happens if we'd encounter an unknown extension.
@@ -193,7 +193,7 @@ class CertificateAdminViewTestCase(
 
         self.assertEqual(logs.output, sorted(expected))
 
-    def test_change_watchers(self):
+    def test_change_watchers(self) -> None:
         """Test changing watchers.
 
         NOTE: This only tests standard Django functionality, BUT save_model() has special handling when
@@ -222,14 +222,14 @@ class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Djang
     url = reverse("admin:django_ca_certificate_csr_details")
     csr_pem = certs["root-cert"]["csr"]["pem"]
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test a basic CSR info retrieval."""
         for cert_data in [v for v in certs.values() if v["type"] == "cert" and v["cat"] == "generated"]:
             response = self.client.post(self.url, data={"csr": cert_data["csr"]["pem"]})
             self.assertEqual(response.status_code, 200)
             self.assertJSONEqual(response.content, {"subject": cert_data["csr_subject"]})
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
         subject = [(f, "AT" if f == "C" else "test-%s" % f) for f in SUBJECT_FIELDS]
         csr = self.create_csr(subject)[1]
@@ -252,30 +252,30 @@ class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Djang
             },
         )
 
-    def test_bad_request(self):
+    def test_bad_request(self) -> None:
         """Test posting bogus data."""
         response = self.client.post(self.url, data={"csr": "foobar"})
         self.assertEqual(response.status_code, 400)
 
-    def test_anonymous(self):
+    def test_anonymous(self) -> None:
         """Try downloading as anonymous user."""
         client = Client()
         self.assertRequiresLogin(client.post(self.url, data={"csr": self.csr_pem}))
 
-    def test_plain_user(self):
+    def test_plain_user(self) -> None:
         """Try downloading as non-superuser."""
         self.user.is_superuser = self.user.is_staff = False
         self.user.save()
         self.assertRequiresLogin(self.client.post(self.url, data={"csr": self.csr_pem}))
 
-    def test_no_perms(self):
+    def test_no_perms(self) -> None:
         """Try downloading as staff user with missing permissions."""
         self.user.is_superuser = False
         self.user.save()
         response = self.client.post(self.url, data={"csr": self.csr_pem})
         self.assertEqual(response.status_code, 403)
 
-    def test_no_staff(self):
+    def test_no_staff(self) -> None:
         """Try downloading as user that has permissions but is not staff."""
         self.user.is_superuser = self.user.is_staff = False
         self.user.save()
@@ -288,7 +288,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
 
     url = reverse("admin:django_ca_certificate_profiles")
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test fetching basic profile information."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -406,7 +406,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
             },
         )
 
-    def test_permission_denied(self):
+    def test_permission_denied(self) -> None:
         """Try fetching profiles without permissions."""
         self.user.is_superuser = False
         self.user.save()
@@ -425,7 +425,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
             },
         }
     )
-    def test_empty_profile(self):
+    def test_empty_profile(self) -> None:
         """Try fetching a simple profile."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -461,13 +461,13 @@ class CertDownloadTestCase(
         """Get URL for the default object."""
         return self.get_url(cert=self.obj)
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic bundle download."""
         filename = "root-cert_example_com.pem"
         response = self.client.get(self.url, {"format": "PEM"})
         self.assertBundle(response, filename, self.obj.pub)
 
-    def test_der(self):
+    def test_der(self) -> None:
         """Download a certificate in DER format."""
         filename = "root-cert_example_com.der"
         response = self.client.get(self.url, {"format": "DER"})
@@ -476,36 +476,36 @@ class CertDownloadTestCase(
         self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
         self.assertEqual(response.content, self.obj.dump_certificate(Encoding.DER))
 
-    def test_not_found(self):
+    def test_not_found(self) -> None:
         """Try downloading a certificate that does not exist."""
         url = reverse("admin:django_ca_certificate_download", kwargs={"pk": "123"})
         response = self.client.get("%s?format=DER" % url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    def test_bad_format(self):
+    def test_bad_format(self) -> None:
         """Try downloading an unknown format."""
         response = self.client.get("%s?format=bad" % self.url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"")
 
-    def test_anonymous(self):
+    def test_anonymous(self) -> None:
         """Try an anonymous download."""
         self.assertRequiresLogin(Client().get(self.url))
 
-    def test_plain_user(self):
+    def test_plain_user(self) -> None:
         """Try downloading as plain user."""
         self.user.is_superuser = self.user.is_staff = False
         self.user.save()
         self.assertRequiresLogin(self.client.get(self.url))
 
-    def test_no_perms(self):
+    def test_no_perms(self) -> None:
         """Try downloading as staff user with no permissions."""
         self.user.is_superuser = False
         self.user.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-    def test_no_staff(self):
+    def test_no_staff(self) -> None:
         """Try downloading with right permissions but not as staff user."""
         self.user.is_staff = False
         self.user.save()
@@ -527,7 +527,7 @@ class CertDownloadBundleTestCase(
         """Generic URL for this test."""
         return self.get_url(cert=self.obj)
 
-    def test_cert(self):
+    def test_cert(self) -> None:
         """TRy downloading a certificate bundle."""
         filename = "root-cert_example_com_bundle.pem"
         response = self.client.get("%s?format=PEM" % self.url)
@@ -539,7 +539,7 @@ class CertDownloadBundleTestCase(
         )
         self.assertEqual(self.cas["root"], self.obj.ca)  # just to be sure we test the right thing
 
-    def test_invalid_format(self):
+    def test_invalid_format(self) -> None:
         """Try downloading an invalid format."""
         response = self.client.get("%s?format=INVALID" % self.url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)

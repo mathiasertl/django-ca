@@ -23,7 +23,7 @@ from ..constants import ReasonFlags
 class ReasonFlagsTestCase(TestCase):
     """Test readon flags."""
 
-    def test_completeness(self):
+    def test_completeness(self) -> None:
         """Test that our list completely mirrors the cryptography list."""
         # pylint: disable=no-member; some false positives from pylint
         self.assertEqual(

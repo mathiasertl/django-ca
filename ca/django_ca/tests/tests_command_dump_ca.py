@@ -26,19 +26,19 @@ from .base import override_tmpcadir
 class DumpCATestCase(DjangoCAWithCATestCase):
     """Main test class for this command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["root"]
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic test of this command."""
         stdout, stderr = self.cmd("dump_ca", self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
-    def test_format(self):
+    def test_format(self) -> None:
         """Test various formats."""
         for option in ["PEM", "DER"]:
             encoding = getattr(Encoding, option)
@@ -49,14 +49,14 @@ class DumpCATestCase(DjangoCAWithCATestCase):
             self.assertEqual(stdout, self.ca.dump_certificate(encoding))
 
     @override_tmpcadir()
-    def test_explicit_stdout(self):
+    def test_explicit_stdout(self) -> None:
         """Test piping to stdout."""
         stdout, stderr = self.cmd("dump_ca", self.ca.serial, "-", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
-    def test_bundle(self):
+    def test_bundle(self) -> None:
         """Test getting the bundle."""
         stdout, stderr = self.cmd(
             "dump_ca", self.ca.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
@@ -72,7 +72,7 @@ class DumpCATestCase(DjangoCAWithCATestCase):
         self.assertEqual(stdout, child.pub.encode("utf-8") + self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
-    def test_file_output(self):
+    def test_file_output(self) -> None:
         """Test writing to file."""
         path = os.path.join(ca_settings.CA_DIR, "test_ca.pem")
         stdout, stderr = self.cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
@@ -83,7 +83,7 @@ class DumpCATestCase(DjangoCAWithCATestCase):
             self.assertEqual(stream.read(), self.ca.pub)
 
     @override_tmpcadir()
-    def test_errors(self):
+    def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_ca.pem")
         msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$" % (

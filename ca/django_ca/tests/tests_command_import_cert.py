@@ -31,7 +31,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
     """Main test class for this command."""
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Import a standard certificate."""
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root-cert"]["pub_filename"])
         out, err = self.cmd("import_cert", pem_path, ca=self.cas["root"])
@@ -46,7 +46,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
         self.assertBasic(cert.x509_cert, algo=certs["root-cert"]["algorithm"])
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_der(self):
+    def test_der(self) -> None:
         """Import a DER certificate."""
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root-cert"]["pub_der_filename"])
         out, err = self.cmd("import_cert", pem_path, ca=self.cas["root"])
@@ -61,7 +61,7 @@ class ImportCertTest(DjangoCAWithCATestCase):
         self.assertBasic(cert.x509_cert, algo=certs["root-cert"]["algorithm"])
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_bogus(self):
+    def test_bogus(self) -> None:
         """Try to import bogus data."""
         with self.assertCommandError(r"^Unable to load public key\.$"):
             self.cmd("import_cert", __file__, ca=self.cas["root"])

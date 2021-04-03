@@ -36,7 +36,7 @@ EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 class ListCertsTestCase(DjangoCATestCase):
     """Test the list_cas management command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.load_usable_cas()
 
@@ -47,7 +47,7 @@ class ListCertsTestCase(DjangoCATestCase):
             context.setdefault("%s_state" % ca_name, "")
         self.assertEqual(output, expected.format(**context))
 
-    def test_all_cas(self):
+    def test_all_cas(self) -> None:
         """Test list with all CAs."""
         self.load_all_cas()
         stdout, stderr = self.cmd("list_cas")
@@ -87,7 +87,7 @@ class ListCertsTestCase(DjangoCATestCase):
         )
         self.assertEqual(stderr, "")
 
-    def test_no_cas(self):
+    def test_no_cas(self) -> None:
         """Test the command if no CAs are defined."""
 
         CertificateAuthority.objects.all().delete()
@@ -95,14 +95,14 @@ class ListCertsTestCase(DjangoCATestCase):
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic test of the command."""
 
         stdout, stderr = self.cmd("list_cas")
         self.assertOutput(stdout, EXPECTED)
         self.assertEqual(stderr, "")
 
-    def test_disabled(self):
+    def test_disabled(self) -> None:
         """Test the command if some CA is disabled."""
 
         ca = self.cas["root"]
@@ -114,7 +114,7 @@ class ListCertsTestCase(DjangoCATestCase):
         self.assertEqual(stderr, "")
 
     @freeze_time(timestamps["everything_valid"])
-    def test_tree(self):
+    def test_tree(self) -> None:
         """Test the tree output.
 
         NOTE: freeze_time b/c we create some fake CA objects and order in the tree depends on validity.

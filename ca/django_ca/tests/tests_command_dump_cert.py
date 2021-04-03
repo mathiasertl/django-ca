@@ -26,17 +26,17 @@ from .base import override_tmpcadir
 class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.cert = self.certs["root-cert"]
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic test of this command."""
         stdout, stderr = self.cmd("dump_cert", self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, self.cert.pub.encode("utf-8"))
 
-    def test_format(self):
+    def test_format(self) -> None:
         """Test various formats."""
         for option in ["PEM", "DER"]:
             encoding = getattr(Encoding, option)
@@ -46,13 +46,13 @@ class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
             self.assertEqual(stderr, b"")
             self.assertEqual(stdout, self.cert.dump_certificate(encoding))
 
-    def test_explicit_stdout(self):
+    def test_explicit_stdout(self) -> None:
         """Test writing to stdout."""
         stdout, stderr = self.cmd("dump_cert", self.cert.serial, "-", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, self.cert.pub.encode("utf-8"))
 
-    def test_bundle(self):
+    def test_bundle(self) -> None:
         """Test getting the bundle."""
         stdout, stderr = self.cmd(
             "dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO()
@@ -61,7 +61,7 @@ class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         self.assertEqual(stdout, self.cert.pub.encode("utf-8") + self.cas["root"].pub.encode("utf-8"))
 
     @override_tmpcadir()
-    def test_file_output(self):
+    def test_file_output(self) -> None:
         """Test writing to a file."""
         path = os.path.join(ca_settings.CA_DIR, "test_cert.pem")
         stdout, stderr = self.cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
@@ -71,7 +71,7 @@ class DumpCertTestCase(DjangoCAWithGeneratedCertsTestCase):
         with open(path) as stream:
             self.assertEqual(stream.read(), self.cert.pub)
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_cert.pem")
         msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_cert\.pem'$" % (

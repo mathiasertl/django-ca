@@ -124,28 +124,28 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         self.assertEqual(stderr, "")
 
     @freeze_time(timestamps["ca_certs_valid"])
-    def test_ca_certs_valid(self):
+    def test_ca_certs_valid(self) -> None:
         self.assertIndex(expected=CA_CERTS)
 
     @freeze_time(timestamps["profile_certs_valid"])
-    def test_profile_certs_valid(self):
+    def test_profile_certs_valid(self) -> None:
         self.assertIndex(expected=PROFILE_CERTS)
 
     @freeze_time(timestamps["everything_valid"])
-    def test_all_certs_valid(self):
+    def test_all_certs_valid(self) -> None:
         self.assertIndex(expected=BASIC)
 
     @freeze_time(timestamps["everything_expired"])
-    def test_all_expired(self):
+    def test_all_expired(self) -> None:
         # All certificates are expired by now, so no certs here
         self.assertIndex()
 
     @freeze_time(timestamps["before_everything"])
-    def test_before_everything(self):
+    def test_before_everything(self) -> None:
         # Certs are not yet valid, so we get no certs
         self.assertIndex()
 
-    def test_ca_certs_expired(self):
+    def test_ca_certs_expired(self) -> None:
         # CA certs are the first to expire, since they just expired an hour ago, they still show up in index
         with freeze_time(timestamps["ca_certs_expired"]) as frozen_time:
             self.assertIndex(expected=CA_CERTS_EXPIRED)
@@ -154,7 +154,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             frozen_time.tick(timedelta(days=1))
             self.assertIndex(expected=CA_CERTS_GONE)
 
-    def test_profile_certs_expired(self):
+    def test_profile_certs_expired(self) -> None:
         # CA certs are the first to expire, since they just expired an hour ago, they still show up in index
         with freeze_time(timestamps["profile_certs_expired"]) as frozen_time:
             self.assertIndex(expected=PROFILE_CERTS_EXPIRED)
@@ -164,12 +164,12 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
             self.assertIndex(expected=PROFILE_CERTS_GONE)
 
     @freeze_time(timestamps["everything_valid"])
-    def test_ecc_ca(self):
+    def test_ecc_ca(self) -> None:
         # test another CA
         self.assertIndex(ca=self.cas["ecc"], expected=ECC_CA)
 
     @freeze_time(timestamps["everything_valid"])
-    def test_file(self):
+    def test_file(self) -> None:
         tmpdir = tempfile.mkdtemp()
 
         try:
@@ -186,7 +186,7 @@ class OCSPIndexTestCase(DjangoCAWithCertTestCase):
         finally:
             shutil.rmtree(tmpdir)
 
-    def test_revoked(self):
+    def test_revoked(self) -> None:
         with freeze_time(timestamps["everything_valid"]) as frozen_timestamp:
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
             cert = self.certs["ecc-cert"]

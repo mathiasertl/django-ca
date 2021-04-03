@@ -34,7 +34,7 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test basic import command.
 
         Note: freeze time because we verify the certificate here.
@@ -70,7 +70,7 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_der(self):
+    def test_der(self) -> None:
         """Test importing a der key.
 
         Note: freeze time because we verify the certificate here.
@@ -109,7 +109,7 @@ class ImportCATest(DjangoCATestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_password(self):
+    def test_password(self) -> None:
         """Test importing a CA with a password for the private key.
 
         Note: freeze time because we verify the certificate here.
@@ -139,7 +139,7 @@ class ImportCATest(DjangoCATestCase):
         self.assertEqual(ca.serial, certs["root"]["serial"])
 
     @override_tmpcadir()
-    def test_permission_denied(self):
+    def test_permission_denied(self) -> None:
         """Test importing a CA when we can't ready one of the files."""
 
         name = "testname"
@@ -158,7 +158,7 @@ class ImportCATest(DjangoCATestCase):
             # otherwise we might not be able to remove temporary CA_DIR
             os.chmod(settings.CA_DIR, 0o755)
 
-    def test_create_cadir(self):
+    def test_create_cadir(self) -> None:
         """Test importing a CA when the directory does not yet exist."""
 
         name = "testname"
@@ -170,7 +170,7 @@ class ImportCATest(DjangoCATestCase):
             with self.mock_cadir(ca_dir):
                 self.cmd("import_ca", name, key_path, pem_path)
 
-    def test_create_cadir_permission_denied(self):
+    def test_create_cadir_permission_denied(self) -> None:
         """Test importing a CA when the directory does not yet exist and we cannot create it."""
 
         name = "testname"
@@ -188,7 +188,7 @@ class ImportCATest(DjangoCATestCase):
             os.chmod(tempdir, 0o755)  # pragma: only py<3.8
 
     @override_tmpcadir()
-    def test_bogus_pub(self):
+    def test_bogus_pub(self) -> None:
         """Test importing a CA with a bogus public key."""
 
         name = "testname"
@@ -199,7 +199,7 @@ class ImportCATest(DjangoCATestCase):
         self.assertEqual(CertificateAuthority.objects.count(), 0)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_bogus_priv(self):
+    def test_bogus_priv(self) -> None:
         """Test importing a CA with a bogus private key."""
 
         name = "testname"

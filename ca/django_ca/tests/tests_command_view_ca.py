@@ -1094,7 +1094,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
     """Main test class for this command."""
 
     @override_tmpcadir()
-    def test_all_cas(self):
+    def test_all_cas(self) -> None:
         """Test viewing all CAs."""
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial)
@@ -1103,7 +1103,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
             self.assertEqual(stderr, "")
 
     @override_tmpcadir()
-    def test_properties(self):
+    def test_properties(self) -> None:
         """Test viewing of various optional properties."""
         ca = self.cas["root"]
         hostname = "ca.example.com"
@@ -1120,7 +1120,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
         self.assertMultiLineEqual(stdout, expected["root-properties"].format(ca=ca, **data))
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
-    def test_acme_disabled(self):
+    def test_acme_disabled(self) -> None:
         """Test viewing when ACME is disabled."""
         stdout, stderr = self.cmd("view_ca", self.cas["root"].serial)
         self.assertEqual(stderr, "")
@@ -1128,7 +1128,7 @@ class ViewCATestCase(DjangoCAWithCATestCase):
         self.assertMultiLineEqual(stdout, expected["root-acme-disabled"].format(**data))
 
     @override_tmpcadir()
-    def test_no_implemented(self):
+    def test_no_implemented(self) -> None:
         """Test viewing when we have no private key."""
 
         def side_effect(cls):

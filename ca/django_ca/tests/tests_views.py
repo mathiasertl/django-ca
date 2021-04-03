@@ -67,13 +67,13 @@ urlpatterns = [
 class GenericCRLViewTests(DjangoCAWithCertTestCase):
     """Test generic CRL view."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["child"]
         self.client = Client()
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Basic test."""
         # test the default view
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
@@ -102,7 +102,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         )
 
     @override_tmpcadir()
-    def test_full_scope(self):
+    def test_full_scope(self) -> None:
         """Test getting CRL with full scope."""
         full_name = "http://localhost/crl"
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
@@ -116,7 +116,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
     @override_tmpcadir()
-    def test_ca_crl(self):
+    def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
         root = self.cas["root"]
         child = self.cas["child"]
@@ -145,7 +145,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertCRL(response.content, expected=[child], expires=600, idp=idp, crl_number=1, signer=root)
 
     @override_tmpcadir()
-    def test_ca_crl_intermediate(self):
+    def test_ca_crl_intermediate(self) -> None:
         """Test getting CRL for an intermediate CA."""
         child = self.cas["child"]
         full_name = "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
@@ -159,7 +159,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertCRL(response.content, expires=600, idp=idp, signer=child)
 
     @override_tmpcadir()
-    def test_password(self):
+    def test_password(self) -> None:
         """Test getting a CRL with a password."""
         ca = self.cas["pwd"]
 
@@ -183,7 +183,7 @@ class GenericCRLViewTests(DjangoCAWithCertTestCase):
         self.assertCRL(response.content, encoding=Encoding.DER, idp=idp, signer=ca)
 
     @override_tmpcadir()
-    def test_overwrite(self):
+    def test_overwrite(self) -> None:
         """Test overwriting a CRL."""
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse("advanced", kwargs={"serial": self.ca.serial}))
@@ -200,7 +200,7 @@ class GenericCRLWithTZViewTests(GenericCRLViewTests):
 class GenericCAIssuersViewTests(DjangoCAWithGeneratedCAsTestCase):
     """Test issuer view."""
 
-    def test_view(self):
+    def test_view(self) -> None:
         """Basic test for the view."""
         client = Client()
 

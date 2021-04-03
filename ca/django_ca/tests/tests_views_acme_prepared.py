@@ -95,7 +95,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         """Get prepared requests for `self.view_name`."""
         return prepared_requests[self.view_name]
 
-    def test_requests(self):
+    def test_requests(self) -> None:
         """Test requests collected from certbot."""
 
         for data in self.requests:
@@ -108,12 +108,12 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertPreparedResponse(data, response, celery_mock)
 
     @override_settings(USE_TZ=True)
-    def test_requests_no_tz(self):
+    def test_requests_no_tz(self) -> None:
         """Test requests but with timezone support enabled."""
         self.test_requests()
 
     @override_settings(CA_ENABLE_ACME=False)
-    def test_disabled(self):
+    def test_disabled(self) -> None:
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         for data in self.requests:
             cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
@@ -123,7 +123,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertEqual(response["Content-Type"], "text/html")  # --> coming from Django
             self.assertFailedPreparedResponse(data, response)
 
-    def test_invalid_content_type(self):
+    def test_invalid_content_type(self) -> None:
         """Test sending an invalid content type."""
         for data in self.requests:
             cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
@@ -137,7 +137,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             )
             self.assertFailedPreparedResponse(data, response)
 
-    def test_generic_exception(self):
+    def test_generic_exception(self) -> None:
         """Test the dispatch function raising a generic exception."""
 
         for data in self.requests:
@@ -156,7 +156,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
                 },
             )
 
-    def test_duplicate_nonce_use(self):
+    def test_duplicate_nonce_use(self) -> None:
         """Test that a Nonce can really only be used once."""
         for data in self.requests:
             cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
@@ -173,7 +173,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             self.assertAcmeProblem(response, typ="badNonce", status=400, message="Bad or invalid nonce.")
             self.assertDuplicateNoncePreparedResponse(data, response)
 
-    def test_unknown_nonce_use(self):
+    def test_unknown_nonce_use(self) -> None:
         """Test that an unknown nonce does not work."""
         for data in self.requests:
             self.before_prepared_request(data)
@@ -191,7 +191,7 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
     expected_status_code = HTTPStatus.CREATED
     view_name = "AcmeNewAccountView"
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.url = reverse("django_ca:acme-new-account", kwargs={"serial": self.ca_serial})
 
@@ -234,7 +234,7 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
     expected_status_code = HTTPStatus.CREATED
     view_name = "AcmeNewOrderView"
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.url = reverse("django_ca:acme-new-order", kwargs={"serial": self.ca_serial})
         self.done = {}

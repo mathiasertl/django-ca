@@ -33,7 +33,7 @@ class CacheCRLsTestCase(DjangoCAWithGeneratedCAsTestCase):
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
-    def test_basic(self):
+    def test_basic(self) -> None:
         """Test the basic command.
 
         Note: Without an explicit serial expired CAs are excluded, that's why we need @freeze_time().
@@ -56,7 +56,7 @@ class CacheCRLsTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.assertIsNotNone(crl)
 
     @override_tmpcadir()
-    def test_serial(self):
+    def test_serial(self) -> None:
         """Test passing an explicit serial."""
         ca = self.cas["root"]
 

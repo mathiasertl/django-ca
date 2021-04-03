@@ -65,7 +65,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateAuthorityQuerySet`."""
 
     @override_tmpcadir()
-    def test_basic(self):
+    def test_basic(self) -> None:
         """some basic queryset tests."""
         key_size = ca_settings.CA_MIN_KEY_SIZE
         ca = CertificateAuthority.objects.init(
@@ -101,7 +101,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertIsNone(ca.issuer_alternative_name)
 
     @override_tmpcadir()
-    def test_pathlen(self):
+    def test_pathlen(self) -> None:
         """Test pathlen parameter in manager."""
         key_size = ca_settings.CA_MIN_KEY_SIZE
         kwargs = dict(
@@ -127,7 +127,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         )
 
     @override_tmpcadir()
-    def test_parent(self):
+    def test_parent(self) -> None:
         """Test parent parameter in manager."""
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
@@ -145,7 +145,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         self.assertAuthorityKeyIdentifier(parent, child)
 
     @override_tmpcadir()
-    def test_key_size(self):
+    def test_key_size(self) -> None:
         """Test key size validation in manager."""
         kwargs = dict(
             name="Root CA",
@@ -170,7 +170,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         with self.assertRaisesRegex(ValueError, r"^256: Key size must be least 1024 bits$"):
             CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
 
-    def test_enabled_disabled(self):
+    def test_enabled_disabled(self) -> None:
         """Test enabled/disabled filter."""
         self.load_usable_cas()
         name = "root"
@@ -185,7 +185,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
         )
         self.assertCountEqual(CertificateAuthority.objects.disabled(), [self.cas["root"]])
 
-    def test_valid(self):
+    def test_valid(self) -> None:
         """Test valid/usable/invalid filters."""
         self.load_usable_cas()
 
@@ -214,7 +214,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
 class CertificateQuerysetTestCase(QuerySetTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateQuerySet`."""
 
-    def test_validity(self):
+    def test_validity(self) -> None:
         """Test validity filter."""
 
         with freeze_time(timestamps["everything_valid"]):
@@ -252,7 +252,7 @@ class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
 ):
     """Base class for ACME querysets (creates different instances)."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["root"]
         self.ca.acme_enabled = True
@@ -292,7 +292,7 @@ class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeAccountQuerySet`."""
 
     @freeze_time(timestamps["everything_valid"])
-    def test_viewable(self):
+    def test_viewable(self) -> None:
         """Test the viewable() method."""
 
         self.assertQuerySet(AcmeAccount.objects.viewable(), self.account, self.account2)
@@ -316,13 +316,13 @@ class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
 class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeOrderQuerySet`."""
 
-    def test_account(self):
+    def test_account(self) -> None:
         """Test the account filter."""
         self.assertQuerySet(AcmeOrder.objects.account(self.account), self.order)
         self.assertQuerySet(AcmeOrder.objects.account(self.account2))
 
     @freeze_time(timestamps["everything_valid"])
-    def test_viewable(self):
+    def test_viewable(self) -> None:
         """Test the viewable() method."""
 
         self.assertQuerySet(AcmeOrder.objects.viewable(), self.order)
@@ -337,13 +337,13 @@ class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase):
 class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeAuthorizationQuerySet`."""
 
-    def test_account(self):
+    def test_account(self) -> None:
         """Test the account filter."""
         self.assertQuerySet(AcmeAuthorization.objects.account(self.account), self.auth)
         self.assertQuerySet(AcmeAuthorization.objects.account(self.account2))
 
     @freeze_time(timestamps["everything_valid"])
-    def test_url(self):
+    def test_url(self) -> None:
         """Test the url filter."""
         # pylint: disable=expression-not-assigned
 
@@ -351,7 +351,7 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
             AcmeAuthorization.objects.url().get(pk=self.auth.pk).acme_url
 
     @freeze_time(timestamps["everything_valid"])
-    def test_viewable(self):
+    def test_viewable(self) -> None:
         """Test the viewable() method."""
 
         self.assertQuerySet(AcmeAuthorization.objects.viewable(), self.auth)
@@ -363,13 +363,13 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
 class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeChallengeQuerySet`."""
 
-    def test_account(self):
+    def test_account(self) -> None:
         """Test the account filter."""
         self.assertQuerySet(AcmeChallenge.objects.account(self.account), self.chall)
         self.assertQuerySet(AcmeChallenge.objects.account(self.account2))
 
     @freeze_time(timestamps["everything_valid"])
-    def test_url(self):
+    def test_url(self) -> None:
         """Test the url filter."""
         # pylint: disable=expression-not-assigned
 
@@ -377,7 +377,7 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
             AcmeChallenge.objects.url().get(pk=self.chall.pk).acme_url
 
     @freeze_time(timestamps["everything_valid"])
-    def test_viewable(self):
+    def test_viewable(self) -> None:
         """Test the viewable() method."""
 
         self.assertQuerySet(AcmeChallenge.objects.viewable(), self.chall)
@@ -389,13 +389,13 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
 class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeCertificateQuerySet`."""
 
-    def test_account(self):
+    def test_account(self) -> None:
         """Test the account filter."""
         self.assertQuerySet(AcmeCertificate.objects.account(self.account), self.cert)
         self.assertQuerySet(AcmeCertificate.objects.account(self.account2))
 
     @freeze_time(timestamps["everything_valid"])
-    def test_url(self):
+    def test_url(self) -> None:
         """Test the url filter."""
         # pylint: disable=expression-not-assigned
 
@@ -403,7 +403,7 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
             AcmeCertificate.objects.url().get(pk=self.cert.pk).acme_url
 
     @freeze_time(timestamps["everything_valid"])
-    def test_viewable(self):
+    def test_viewable(self) -> None:
         """Test the viewable() method."""
 
         # none by default because we need a valid order and cert
