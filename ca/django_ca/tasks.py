@@ -20,7 +20,6 @@ import logging
 import typing
 from datetime import timedelta
 from http import HTTPStatus
-from types import ModuleType
 
 from django.db import transaction
 from django.utils import timezone
@@ -38,33 +37,35 @@ from .profiles import profiles
 log = logging.getLogger(__name__)
 
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
-R = typing.TypeVar("R")
 
 try:
     from celery import shared_task
 except ImportError:
+    if typing.TYPE_CHECKING:
+        from celery import TaskProtocol as Task
+    else:
+        class Task:
+            pass
 
-    def shared_task(func: F) -> F:
+    def shared_task(func: F) -> Task[F]:
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
         # func.delay = lambda *a, **kw: func(*a, **kw)
         # func.apply_async = lambda *a, **kw: func(*a, **kw)
-        return func
+        func.delay = func  # type: ignore[attr-defined]
+        return typing.cast(Task[F], func)
 
 
 # requests and josepy are optional dependencies for acme tasks
-# mypy note: Optional module declaration means that unconditionally using a module will result in an error
-jose: typing.Optional[ModuleType]
-requests: typing.Optional[ModuleType]
 try:
-    import josepy as jose  # type: ignore[no-redef]
-    import requests  # type: ignore[no-redef]
+    import josepy as jose
+    import requests
 except ImportError:  # pragma: no cover
-    jose = requests = None
+    jose = requests = None  # type: ignore[assignment]
 
 
-def run_task(task: typing.Callable[..., R], *args: typing.Any, **kwargs: typing.Any) -> R:
+def run_task(task: "Task[F]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
