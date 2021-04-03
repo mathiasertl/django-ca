@@ -17,10 +17,10 @@
 """
 
 import logging
+import typing
 from datetime import timedelta
 from http import HTTPStatus
-from typing import Any
-from typing import Callable
+from types import ModuleType
 
 from django.db import transaction
 from django.utils import timezone
@@ -37,11 +37,13 @@ from .profiles import profiles
 
 log = logging.getLogger(__name__)
 
+F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
+
 try:
     from celery import shared_task
 except ImportError:
 
-    def shared_task(func):
+    def shared_task(func: F) -> F:
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
@@ -51,14 +53,17 @@ except ImportError:
 
 
 # requests and josepy are optional dependencies for acme tasks
+# mypy note: Optional module declaration means that unconditionally using a module will result in an error
+jose: typing.Optional[ModuleType]
+requests: typing.Optional[ModuleType]
 try:
-    import josepy as jose
-    import requests
+    import josepy as jose  # type: ignore[no-redef]
+    import requests  # type: ignore[no-redef]
 except ImportError:  # pragma: no cover
     jose = requests = None
 
 
-def run_task(task: Callable[..., None], *args: Any, **kwargs: Any):
+def run_task(task: F, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
@@ -69,24 +74,24 @@ def run_task(task: Callable[..., None], *args: Any, **kwargs: Any):
 
 
 @shared_task
-def cache_crl(serial: str, **kwargs: Any) -> None:
+def cache_crl(serial: str, **kwargs: typing.Any) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
     ca.cache_crls(**kwargs)
 
 
 @shared_task
-def cache_crls(serials=None):
+def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
     """Task to cache the CRLs for all CAs."""
-    if not serials:
+    if serials is None:
         serials = CertificateAuthority.objects.usable().values_list("serial", flat=True)
 
     for serial in serials:
-        run_task(cache_crl, serial)
+        cache_crl.delay(serial)
 
 
 @shared_task
-def generate_ocsp_key(serial, **kwargs):
+def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, str, "Certificate"]:
     """Task to generate an OCSP key for the CA named by `serial`."""
     ca = CertificateAuthority.objects.get(serial=serial)
     private_path, cert_path, cert = ca.generate_ocsp_key(**kwargs)
@@ -94,7 +99,7 @@ def generate_ocsp_key(serial, **kwargs):
 
 
 @shared_task
-def generate_ocsp_keys(**kwargs):
+def generate_ocsp_keys(**kwargs: typing.Any) -> typing.List[typing.Tuple[str, str, "Certificate"]]:
     """Task to generate an OCSP keys for all usable CAs."""
     keys = []
     for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):
@@ -140,6 +145,9 @@ def acme_validate_challenge(challenge_pk: int) -> None:
     thumbprint = challenge.auth.order.account.thumbprint
     expected = f"{encoded}.{thumbprint}"
 
+    # Challenge is marked as invalid by default
+    challenge_valid = False
+
     if challenge.type == AcmeChallenge.TYPE_HTTP_01:
         if requests is None:  # pragma: no cover
             log.error("requests is not installed, cannot do http-01 challenge validation.")
@@ -152,15 +160,11 @@ def acme_validate_challenge(challenge_pk: int) -> None:
             response = requests.get(url, timeout=1)
 
             if response.status_code == HTTPStatus.OK:
-                received = response.text
-            else:
-                received = False
+                challenge_valid = response.text == expected
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
-            received = False
     else:
         log.error("%s: Only HTTP-01 challenges supported so far", challenge)
-        received = False
 
     # Transition state of the challenge depending on if the challenge is valid or not. RFC8555, Section 7.1.6:
     #
@@ -178,7 +182,7 @@ def acme_validate_challenge(challenge_pk: int) -> None:
     #
     #   "* ready: The server agrees that the requirements have been fulfilled, and is awaiting finalization.
     #   Submit a finalization request."
-    if received == expected:
+    if challenge_valid:
         challenge.status = AcmeChallenge.STATUS_VALID
         challenge.validated = timezone.now()
         challenge.auth.status = AcmeAuthorization.STATUS_VALID

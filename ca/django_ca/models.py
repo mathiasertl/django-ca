@@ -1581,7 +1581,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
 
     @property
     def usable(self) -> bool:
-        """Boolean defining if an authentication can still can be used in order validation.
+        """Boolean defining if an authorization can still can be used in order validation.
 
         An order is usable if it is in the "pending" or "invalid" status, the order is usable. An
         authorization that is in the "invalid" status is eligible to be retried by the client.
@@ -1709,7 +1709,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
     def usable(self) -> bool:
         """Boolean defining if an challenge is "usable", meaning it still can be used in order validation.
 
-        A challenge is usable if it is in the "pending" or "invalid status and the authorization is usable.
+        A challenge is usable if it is in the "pending" or "invalid" status and the authorization is usable.
         """
         states = (AcmeChallenge.STATUS_PENDING, AcmeChallenge.STATUS_INVALID)
         return self.status in states and self.auth.usable
