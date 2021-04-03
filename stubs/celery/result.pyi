@@ -1,0 +1,6 @@
+class ResultBase:
+    ...
+
+
+class AsyncResult(ResultBase):
+    ...

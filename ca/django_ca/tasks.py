@@ -40,21 +40,22 @@ F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
 try:
     from celery import shared_task
+    from celery.local import Proxy
 except ImportError:
     if typing.TYPE_CHECKING:
-        from celery import TaskProtocol as Task
+        from celery.local import Proxy
     else:
-        class Task:
+        class Proxy:
             pass
 
-    def shared_task(func: F) -> Task[F]:
+    def shared_task(func: F) -> Proxy[F]:
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
         # We do not yet need this, but might come in handy in the future:
         # func.delay = lambda *a, **kw: func(*a, **kw)
         # func.apply_async = lambda *a, **kw: func(*a, **kw)
         func.delay = func  # type: ignore[attr-defined]
-        return typing.cast(Task[F], func)
+        return typing.cast(Proxy[F], func)
 
 
 # requests and josepy are optional dependencies for acme tasks
@@ -65,7 +66,7 @@ except ImportError:  # pragma: no cover
     jose = requests = None  # type: ignore[assignment]
 
 
-def run_task(task: "Task[F]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+def run_task(task: "Proxy[F]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
