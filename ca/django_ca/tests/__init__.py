@@ -17,6 +17,8 @@
 """handle signal when reloading settings, so that ca_settings is also reloaded."""
 
 import importlib
+from typing import Any
+from typing import Type
 
 from django.test.signals import setting_changed
 
@@ -24,7 +26,11 @@ from .. import ca_settings
 from .. import profiles
 
 
-def reload_ca_settings(sender, setting, **kwargs):  # pylint: disable=unused-argument
+def reload_ca_settings(  # pylint: disable=unused-argument
+    sender: Type[Any],
+    setting: str,
+    **kwargs: Any
+) -> None:
     """Reload ca_settings module if the settings are changed."""
     # WARNING:
     # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from

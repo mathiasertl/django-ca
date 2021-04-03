@@ -61,6 +61,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from pyvirtualdisplay import Display
 from selenium.webdriver.firefox.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .. import ca_settings
@@ -1125,9 +1126,11 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
     """TestCase with some helper functions for Selenium."""
 
     # NOTE: coverage has weird issues all over this class
+    vdisplay: Display
+    selenium: WebDriver
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         super().setUpClass()
         if settings.SKIP_SELENIUM_TESTS:
             return
@@ -1142,7 +1145,7 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
         cls.selenium.implicitly_wait(10)
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         if settings.SKIP_SELENIUM_TESTS:
             super().tearDownClass()
             return
@@ -1152,12 +1155,12 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
             cls.vdisplay.stop()
         super().tearDownClass()
 
-    def find(self, selector):
+    def find(self, selector: str) -> WebElement:
         """Find an element by CSS selector."""
 
         return self.selenium.find_element_by_css_selector(selector)
 
-    def login(self, username="admin", password="admin"):
+    def login(self, username: str = "admin", password: str = "admin") -> None:
         """Login the given user."""
         self.selenium.get("%s%s" % (self.live_server_url, reverse("admin:login")))
         self.find("#id_username").send_keys(username)
@@ -1165,7 +1168,7 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
         self.find('input[type="submit"]').click()
         self.wait_for_page_load()
 
-    def wait_for_page_load(self, wait=2):
+    def wait_for_page_load(self, wait: int = 2) -> None:
         """Wait for the page to load."""
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
 
