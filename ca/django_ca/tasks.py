@@ -80,11 +80,16 @@ def cache_crl(serial: str, **kwargs: typing.Any) -> None:
 @shared_task
 def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
     """Task to cache the CRLs for all CAs."""
-    if serials is None:
-        serials = CertificateAuthority.objects.usable().values_list("serial", flat=True)
+    if serials is None:  # pragma: no cover; just to make mypy happy
+        serials = []
+
+    if not serials:
+        serials = typing.cast(
+            typing.Iterable[str], CertificateAuthority.objects.usable().values_list("serial", flat=True)
+        )
 
     for serial in serials:
-        cache_crl.delay(serial)
+        run_task(cache_crl, serial)
 
 
 @shared_task
