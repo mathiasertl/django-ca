@@ -282,7 +282,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             return AcmeResponseMalformed(message="Could not parse JWS token.")
 
         combined = self.jws.signature.combined
-        print(type(combined.alg), type(combined.nonce), type(combined.url))
         if combined.jwk and combined.kid:
             # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
             # both.'
