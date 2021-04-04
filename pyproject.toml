@@ -6,7 +6,7 @@ exclude = "migrations"
 exclude_lines = [
     "^\\s*@abc.abstractmethod",
     "^\\s*@overload",
-    "^\\s*if TYPE_CHECKING:",
+    "^\\s*if (typing.)?TYPE_CHECKING:",
     "pragma: no ?cover",
 ]
 
