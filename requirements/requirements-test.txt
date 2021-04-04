@@ -4,7 +4,7 @@ freezegun==1.1.0
 ocspbuilder==0.10.2
 oscrypto==1.2.1
 pyOpenSSL>=19
-pyvirtualdisplay==2.0
+pyvirtualdisplay==2.1
 selenium==3.141.0
 termcolor==1.1.0
 pyrfc3339==1.1
