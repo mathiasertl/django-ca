@@ -30,7 +30,8 @@ sections = [
 [tool.pylint.master]
 load-plugins = "pylint_django"
 
-class-const-naming-style = "snake_case"
+# Allow both snake-case and UPPER_CASE for class constants/enums
+class-const-rgx = "(?:(?P<snake>[a-z_]+)|(?P<upper>[A-Z_]+))"
 
 # Configure Django
 init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
