@@ -22,10 +22,12 @@ import shutil
 import sys
 import tempfile
 import typing
+import unittest
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 from io import StringIO
+from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -1050,12 +1052,12 @@ VQIDAQAB
             yield mock
 
     @contextmanager
-    def mute_celery(self):
+    def mute_celery(self) -> typing.Iterator[MagicMock]:
         """Mock celery invocations."""
         with patch("celery.app.task.Task.apply_async") as mock:
             yield mock
 
-    def reverse(self, name, *args, **kwargs):
+    def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
 
@@ -1176,3 +1178,19 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
 __all__ = (
     "override_settings",
 )
+
+
+class TestCaseProtocol(typing.Protocol):
+    if typing.TYPE_CHECKING:
+
+        def assertEqual(
+            self, first: typing.Any, second: typing.Any, msg: typing.Optional[str] = None
+        ) -> None:
+            ...
+
+
+class TestCaseMixinBase(TestCaseProtocol):
+    def __init__(self, *args, **kwargs):
+        mro = self.__class__.mro()
+        if mro.index(TestCaseMixinBase) < mro.index(unittest.TestCase):
+            unittest.TestCase.__init__(self, *args, **kwargs)

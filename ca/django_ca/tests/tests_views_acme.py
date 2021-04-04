@@ -58,6 +58,7 @@ from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCATransactionTestCase
+from .base import TestCaseMixinBase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
@@ -239,7 +240,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         )
 
 
-class AcmeTestCaseMixin:
+class AcmeTestCaseMixin(TestCaseMixinBase):
     """TestCase mixin with various common utility functions."""
 
     hostname = "example.com"  # what we want a certificate for
@@ -350,7 +351,7 @@ KSAr5SU7IyM/9M95oQIDAQAB
         with mock.patch("django_ca.models.get_random_string", return_value=slug):
             yield slug
 
-    def post(self, url, data, **kwargs):
+    def post(self, url: str, data: typing.Any, **kwargs: str) -> HttpResponse:
         """Make a post request with some ACME specific default data."""
         kwargs.setdefault("content_type", "application/jose+json")
         return self.client.post(url, json.dumps(data), **kwargs)

@@ -15,12 +15,14 @@
 
 import json
 import os
+import typing
 from datetime import datetime
 from http import HTTPStatus
 from unittest import mock
 
 from django.conf import settings
 from django.core.cache import cache
+from django.http import HttpResponse
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -33,6 +35,7 @@ from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
+from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCertTestCase
 from .tests_views_acme import AcmeTestCaseMixin
@@ -49,13 +52,15 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     # The serial of the CA that was used when recording requests
     ca_serial = "3F1E6E9B3996B26B8072E4DD2597E8B40F3FBC7E"
     expected_status_code = HTTPStatus.OK
+    view_name: str
+    url: str
 
-    def setUp(self):  # pylint: disable=invalid-name, missing-function-docstring; unittest standard
+    def setUp(self) -> None:  # pylint: disable=invalid-name, missing-function-docstring; unittest standard
         super().setUp()
         self.ca.serial = self.ca_serial
         self.ca.save()
 
-    def add_account(self, data):
+    def add_account(self, data: typing.Dict[str, str]) -> AcmeAccount:
         """Add an account with the given test data."""
         return AcmeAccount.objects.get_or_create(
             thumbprint=data["thumbprint"],
@@ -70,28 +75,29 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             },
         )[0]
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         """Any action to take **before** sending a prepared request."""
 
-    def assertFailedPreparedResponse(self, data, response):  # pylint: disable=invalid-name
+    def assertFailedPreparedResponse(  # pylint: disable=invalid-name
+        self, data: typing.Dict[str, str], response: HttpResponse
+    ) -> None:
         """Any assertions after doing a prepared request while ACME is disabled."""
 
-    def assertDuplicateNoncePreparedResponse(self, data, response):  # pylint: disable=invalid-name
-        """Any assertions after doing a prepared request twice with the same nonce."""
-
-    def assertPreparedResponse(self, data, response, celery_mock):  # pylint: disable=invalid-name
+    def assertPreparedResponse(  # pylint: disable=invalid-name
+        self, data: typing.Dict[str, str], response: HttpResponse, celery_mock: mock.MagicMock
+    ) -> None:
         """Any assertions on the response of a prepared request."""
 
-    def get_url(self, data):  # pylint: disable=unused-argument
+    def get_url(self, data: typing.Dict[str, str]) -> str:  # pylint: disable=unused-argument
         """Get URL based on given request data."""
         return self.url
 
-    def post(self, url, data, **kwargs):
+    def post(self, url: str, data: typing.Any, **kwargs: str) -> HttpResponse:
         kwargs.setdefault("SERVER_NAME", "localhost:8000")
         return super().post(url, data, **kwargs)
 
     @property
-    def requests(self):
+    def requests(self) -> typing.List[typing.Dict[str, typing.Any]]:
         """Get prepared requests for `self.view_name`."""
         return prepared_requests[self.view_name]
 
@@ -171,7 +177,6 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
             self.assertAcmeProblem(response, typ="badNonce", status=400, message="Bad or invalid nonce.")
-            self.assertDuplicateNoncePreparedResponse(data, response)
 
     def test_unknown_nonce_use(self) -> None:
         """Test that an unknown nonce does not work."""
@@ -195,11 +200,11 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
         super().setUp()
         self.url = reverse("django_ca:acme-new-account", kwargs={"serial": self.ca_serial})
 
-    def assertFailedPreparedResponse(self, data, response):
+    def assertFailedPreparedResponse(self, data: typing.Dict[str, str], response: HttpResponse) -> None:
         # Test that *no* account was created
         self.assertEqual(AcmeAccount.objects.all().count(), 0)
 
-    def get_nonce(self, ca=None):
+    def get_nonce(self, ca: typing.Optional[CertificateAuthority] = None) -> str:
         """Get a nonce with an actualy request."""
         if ca is None:
             ca = self.cas["root"]
@@ -209,7 +214,9 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
         self.assertEqual(response.status_code, HTTPStatus.OK)
         return response["replay-nonce"]
 
-    def assertPreparedResponse(self, data, response, celery_mock):
+    def assertPreparedResponse(
+        self, data: typing.Dict[str, str], response: HttpResponse, celery_mock: mock.MagicMock
+    ) -> None:
         account = AcmeAccount.objects.get(thumbprint=data["thumbprint"])
         uri = response.wsgi_request.build_absolute_uri
         kwargs = {"serial": self.ca.serial, "slug": account.slug}
@@ -237,13 +244,15 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
     def setUp(self) -> None:
         super().setUp()
         self.url = reverse("django_ca:acme-new-order", kwargs={"serial": self.ca_serial})
-        self.done = {}
+        self.done: typing.Dict[str, AcmeOrder] = {}
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         # pylint: disable=attribute-defined-outside-init
         self.account = self.add_account(data)
 
-    def assertPreparedResponse(self, data, response, celery_mock):
+    def assertPreparedResponse(
+        self, data: typing.Dict[str, str], response: HttpResponse, celery_mock: mock.MagicMock
+    ) -> None:
         self.assertEqual(list(AcmeAccount.objects.all()), [self.account])
 
         order = AcmeOrder.objects.exclude(pk__in=[o.pk for o in self.done.values()]).get(account=self.account)
@@ -282,14 +291,14 @@ class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
     view_name = "AcmeAuthorizationView"
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         acc = self.add_account(data)
         order = AcmeOrder.objects.get_or_create(account=acc, slug=data["order"])[0]
         AcmeAuthorization.objects.get_or_create(
             order=order, slug=data["auth"], defaults={"value": "localhost"}
         )
 
-    def get_url(self, data):
+    def get_url(self, data: typing.Dict[str, str]) -> str:
         return reverse("django_ca:acme-authz", kwargs={"serial": self.ca_serial, "slug": data["auth"]})
 
 
@@ -300,12 +309,14 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
 
     view_name = "AcmeChallengeView"
 
-    def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
+    def assertLinkRelations(  # pylint: disable=invalid-name
+        self, response: HttpResponse, ca: typing.Optional[CertificateAuthority] = None, **kwargs: typing.Any
+    ) -> None:
         if response.status_code < HTTPStatus.BAD_REQUEST:
             kwargs.setdefault("up", response.wsgi_request.build_absolute_uri(self.challenge.auth.acme_url))
         super().assertLinkRelations(response=response, ca=ca, **kwargs)
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data["order"])
         auth = AcmeAuthorization.objects.create(order=order, slug=data["auth"], value="localhost")
@@ -314,7 +325,7 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
             slug=data["challenge"], auth=auth, type=AcmeChallenge.TYPE_HTTP_01
         )
 
-    def get_url(self, data):
+    def get_url(self, data: typing.Dict[str, str]) -> str:
         return reverse(
             "django_ca:acme-challenge",
             kwargs={
@@ -331,14 +342,14 @@ class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
     view_name = "AcmeOrderFinalizeView"
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_READY)
         AcmeAuthorization.objects.create(
             order=order, value="localhost", status=AcmeAuthorization.STATUS_VALID
         )
 
-    def get_url(self, data):
+    def get_url(self, data: typing.Dict[str, str]) -> str:
         return reverse(
             "django_ca:acme-order-finalize",
             kwargs={
@@ -355,11 +366,11 @@ class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAW
 
     view_name = "AcmeOrderView"
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         acc = self.add_account(data)
         AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_READY)
 
-    def get_url(self, data):
+    def get_url(self, data: typing.Dict[str, str]) -> str:
         return reverse(
             "django_ca:acme-order",
             kwargs={
@@ -376,19 +387,25 @@ class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, Dja
 
     view_name = "AcmeCertificateView"
 
-    def assertAcmeResponse(self, response, **kwargs):  # pylint: disable=arguments-differ
+    def assertAcmeResponse(
+        self,
+        response: HttpResponse,
+        ca: typing.Optional[CertificateAuthority] = None,
+        link_relations: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> None:
         """This view does not return normal ACME responses but a certificate bundle."""
-        self.assertLinkRelations(response, **kwargs)
+        link_relations = link_relations or {}
+        self.assertLinkRelations(response, ca=ca, **link_relations)
         self.assertEqual(response["Content-Type"], "application/pem-certificate-chain")
 
-    def before_prepared_request(self, data):
+    def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_VALID)
         AcmeCertificate.objects.create(
             slug=data["cert"], order=order, cert=self.certs["root-cert"], csr=data["csr"]
         )
 
-    def get_url(self, data):
+    def get_url(self, data: typing.Dict[str, str]) -> str:
         return reverse(
             "django_ca:acme-cert",
             kwargs={
