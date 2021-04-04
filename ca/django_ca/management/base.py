@@ -13,6 +13,7 @@
 
 """Command subclasses and argparse helpers for django-ca."""
 
+import argparse
 import sys
 from textwrap import indent
 
@@ -364,7 +365,7 @@ class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base cl
 
     allow_revoked = False
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "cert",
             action=actions.CertificateAction,
