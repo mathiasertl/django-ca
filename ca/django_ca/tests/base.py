@@ -1180,7 +1180,7 @@ class TestCaseMixinBase:
     """
 
     if typing.TYPE_CHECKING:
-        # pylint: disable=unused-argument,missing-function-docstring
+        # pylint: disable=unused-argument,missing-function-docstring,invalid-name
 
         def assertCountEqual(
             self,

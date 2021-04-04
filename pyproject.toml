@@ -30,6 +30,8 @@ sections = [
 [tool.pylint.master]
 load-plugins = "pylint_django"
 
+class-const-naming-style = "snake_case"
+
 # Configure Django
 init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
 django-settings-module = "ca.settings"
