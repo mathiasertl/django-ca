@@ -33,16 +33,11 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..querysets import AcmeAccountQuerySet
-from ..querysets import AcmeAuthorizationQuerySet
-from ..querysets import AcmeCertificateQuerySet
-from ..querysets import AcmeChallengeQuerySet
-from ..querysets import AcmeOrderQuerySet
-from ..querysets import CertificateQuerySet
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithGeneratedCAsTransactionTestCase
 from .base import DjangoCAWithGeneratedCertsTestCase
+from .base import TestCaseMixinBase
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
@@ -51,19 +46,11 @@ ModelTypeVar = typing.TypeVar("ModelTypeVar", bound=models.Model)
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=models.QuerySet[models.Model])
 
 
-class QuerySetTestCaseMixin(typing.Generic[ModelTypeVar, QuerySetTypeVar]):
+class QuerySetTestCaseMixin(TestCaseMixinBase):
     """Mixin for QuerySet test cases."""
-    if typing.TYPE_CHECKING:
-        def assertCountEqual(
-            self,
-            first: typing.Iterable[typing.Any],
-            second: typing.Iterable[typing.Any],
-            msg: typing.Optional[str] = None,
-        ) -> None:
-            ...
 
     def assertQuerySet(  # pylint: disable=invalid-name; unittest standard
-        self, qs: QuerySetTypeVar, *items: ModelTypeVar
+        self, qs: "models.QuerySet[models.Model]", *items: typing.Sequence[models.Model]
     ) -> None:
         """Minor shortcut to test querysets."""
         self.assertCountEqual(qs, items)
@@ -233,9 +220,7 @@ class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
             self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
 
 
-class CertificateQuerysetTestCase(
-    QuerySetTestCaseMixin[Certificate, CertificateQuerySet], DjangoCAWithGeneratedCertsTestCase
-):
+class CertificateQuerysetTestCase(QuerySetTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateQuerySet`."""
 
     def test_validity(self) -> None:
@@ -271,9 +256,7 @@ class CertificateQuerysetTestCase(
 
 
 class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
-    QuerySetTestCaseMixin[ModelTypeVar, QuerySetTypeVar],
-    DjangoCAWithGeneratedCAsTransactionTestCase,
-    typing.Generic[ModelTypeVar, QuerySetTypeVar],
+    QuerySetTestCaseMixin, DjangoCAWithGeneratedCAsTransactionTestCase
 ):
     """Base class for ACME querysets (creates different instances)."""
 
@@ -313,7 +296,7 @@ class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
         self.cert = AcmeCertificate.objects.create(order=self.order)
 
 
-class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase[AcmeAccount, AcmeAccountQuerySet]):
+class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeAccountQuerySet`."""
 
     @freeze_time(timestamps["everything_valid"])
@@ -338,7 +321,7 @@ class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase[AcmeAccount, AcmeAccountQ
             self.assertQuerySet(AcmeAccount.objects.viewable())
 
 
-class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase[AcmeOrder, AcmeOrderQuerySet]):
+class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeOrderQuerySet`."""
 
     def test_account(self) -> None:
@@ -359,7 +342,7 @@ class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase[AcmeOrder, AcmeOrderQuerySe
             self.assertQuerySet(AcmeOrder.objects.viewable())
 
 
-class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase[AcmeAuthorization, AcmeAuthorizationQuerySet]):
+class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeAuthorizationQuerySet`."""
 
     def test_account(self) -> None:
@@ -385,7 +368,7 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase[AcmeAuthorization, 
             self.assertQuerySet(AcmeAuthorization.objects.viewable())
 
 
-class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase[AcmeChallenge, AcmeChallengeQuerySet]):
+class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeChallengeQuerySet`."""
 
     def test_account(self) -> None:
@@ -411,7 +394,7 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase[AcmeChallenge, AcmeChal
             self.assertQuerySet(AcmeChallenge.objects.viewable())
 
 
-class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase[AcmeCertificate, AcmeCertificateQuerySet]):
+class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeCertificateQuerySet`."""
 
     def test_account(self) -> None:

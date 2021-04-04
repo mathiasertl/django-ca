@@ -1182,6 +1182,15 @@ class TestCaseMixinBase:
     make mypy happy.
     """
     if typing.TYPE_CHECKING:
+        # pylint: disable=unused-argument,missing-function-docstring
+
+        def assertCountEqual(
+            self,
+            first: typing.Iterable[typing.Any],
+            second: typing.Iterable[typing.Any],
+            msg: typing.Optional[str] = None,
+        ) -> None:
+            ...
 
         def assertEqual(
             self, first: typing.Any, second: typing.Any, msg: typing.Optional[str] = None
