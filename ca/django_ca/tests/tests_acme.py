@@ -13,6 +13,7 @@
 
 """Test some common ACME functionality."""
 
+import typing
 from contextlib import contextmanager
 from importlib import reload
 
@@ -38,7 +39,7 @@ class URLPatternTestCase(DjangoCATestCase):
     """Test that URL patterns are not enabled when CA_ENABLE_ACME."""
 
     @contextmanager
-    def reload_urlconf(self):
+    def reload_urlconf(self) -> typing.Iterator[None]:
         """Context manager to reload the current URL configuration."""
         reload(urls)
         try:
@@ -47,8 +48,12 @@ class URLPatternTestCase(DjangoCATestCase):
         finally:
             reload(urls)
 
-    @contextmanager
-    def assertNoReverseMatch(self, name, args=None, kwargs=None):  # pylint: disable=invalid-name
+    def assertNoReverseMatch(  # pylint: disable=invalid-name
+        self,
+        name: str,
+        args: typing.Optional[typing.Sequence[typing.Any]] = None,
+        kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None
+    ) -> None:
         """Context manager asserting that the given URL pattern is **not** found."""
         urlname = name
         if ":" in name:
@@ -56,7 +61,7 @@ class URLPatternTestCase(DjangoCATestCase):
 
         msg = f"Reverse for '{urlname}' not found. '{urlname}' is not a valid view function or pattern name."
         with self.assertRaisesRegex(NoReverseMatch, msg):
-            reverse(name, args, kwargs)
+            reverse(name, args=args, kwargs=kwargs)
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self) -> None:

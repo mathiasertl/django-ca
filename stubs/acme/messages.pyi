@@ -24,6 +24,10 @@ class _Constant(jose.JSONDeSerializable, Hashable):
         ...
 
 
+class Status(_Constant):
+    ...
+
+
 class IdentifierType(_Constant):
     ...
 
