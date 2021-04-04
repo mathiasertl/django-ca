@@ -13,8 +13,8 @@
 
 """Command subclasses and argparse helpers for django-ca."""
 
-import argparse
 import sys
+import typing
 from textwrap import indent
 
 from cryptography import x509
@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.utils import timezone
@@ -70,7 +71,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         else:
             super().__init__(stdout, stderr, no_color=no_color)
 
-    def dump(self, path, data):
+    def dump(self, path: str, data: bytes) -> None:
         """Dump `data` to `path` (``-`` means stdout)."""
 
         if path == "-":
@@ -119,13 +120,13 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 
     def add_ca(
         self,
-        parser,
-        arg="--ca",
-        help_text="Certificate authority to use (default: %(default)s).",
-        allow_disabled=False,
-        no_default=False,
-        allow_unusable=False,
-    ):
+        parser: CommandParser,
+        arg: str = "--ca",
+        help_text: str = "Certificate authority to use (default: %(default)s).",
+        allow_disabled: bool = False,
+        no_default: bool = False,
+        allow_unusable: bool = False,
+    ) -> None:
         """Add the ``--ca`` action.
 
         Parameters
@@ -157,7 +158,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             action=actions.CertificateAuthorityAction,
         )
 
-    def add_ecc_curve(self, parser):
+    def add_ecc_curve(self, parser: CommandParser) -> None:
         """Add --ecc-curve option."""
         curve_help = "Elliptic Curve used for ECC keys (default: %(default)s)." % {
             "default": ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
@@ -170,12 +171,18 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             help=curve_help,
         )
 
-    def add_format(self, parser, default=Encoding.PEM, help_text=None, opts=None):
+    def add_format(
+        self,
+        parser: CommandParser,
+        default: Encoding = Encoding.PEM,
+        help_text: str = "",
+        opts: typing.Optional[typing.Sequence[str]] = None,
+    ) -> None:
         """Add the --format option."""
 
         if opts is None:
             opts = ["-f", "--format"]
-        if help_text is None:
+        if not help_text:
             help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
         help_text = help_text % {"default": default.name}
         parser.add_argument(
@@ -365,7 +372,7 @@ class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base cl
 
     allow_revoked = False
 
-    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "cert",
             action=actions.CertificateAction,

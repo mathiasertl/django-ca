@@ -16,10 +16,14 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
+from ...models import Certificate
 from ..base import CertCommand
 
 
@@ -28,7 +32,7 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
     binary_output = True
     help = "Dump a certificate to a file."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         super().add_arguments(parser)
         self.add_format(parser)
         parser.add_argument(
@@ -38,13 +42,15 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
             "path", nargs="?", default="-", help='Path where to dump the certificate. Use "-" for stdout.'
         )
 
-    def handle(self, cert, path, **options):  # pylint: disable=arguments-differ
-        if options["bundle"] and options["format"] == Encoding.DER:
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, cert: Certificate, bundle: bool, format: Encoding, path: str, **options: typing.Any
+    ) -> None:
+        if bundle and format == Encoding.DER:
             raise CommandError("Cannot dump bundle when using DER format.")
 
-        if options["bundle"]:
+        if bundle:
             certs = cert.bundle
         else:
             certs = [cert]
 
-        self.dump(path, b"".join([c.dump_certificate(options["format"]) for c in certs]))
+        self.dump(path, b"".join([c.dump_certificate(format) for c in certs]))

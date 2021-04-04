@@ -16,10 +16,14 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
+from ...models import CertificateAuthority
 from ..base import BaseCommand
 
 
@@ -27,7 +31,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Dump a certificate authority to a file."
     binary_output = True
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         super().add_arguments(parser)
         self.add_format(parser)
         self.add_ca(parser, arg="ca", allow_disabled=True)
@@ -38,7 +42,9 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             "path", nargs="?", default="-", help='Path where to dump the certificate. Use "-" for stdout.'
         )
 
-    def handle(self, ca, path, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, ca: CertificateAuthority, path: str, **options: typing.Any
+    ) -> None:
         if options["bundle"] and options["format"] == Encoding.DER:
             raise CommandError("Cannot dump bundle when using DER format.")
 

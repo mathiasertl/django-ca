@@ -16,8 +16,9 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import argparse
 import typing
+
+from django.core.management.base import CommandParser
 
 from django_ca.management.base import CertCommand
 from django_ca.models import Certificate
@@ -32,7 +33,7 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         <user@example.com>", the latter case must be quoted on the shell.
         """
 
-    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "-a",
             "--add",
@@ -53,7 +54,8 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         )
         super().add_arguments(parser)
 
-    def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        cert = typing.cast(Certificate, options["cert"])
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, cert: Certificate, **options: typing.Any
+    ) -> None:
         cert.watchers.add(*[Watcher.from_addr(addr) for addr in options["add"]])
         cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options["rm"]])
