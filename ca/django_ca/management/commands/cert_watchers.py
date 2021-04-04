@@ -54,6 +54,6 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         super().add_arguments(parser)
 
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        cert = typing.cast(Certificate, options['cert'])
+        cert = typing.cast(Certificate, options["cert"])
         cert.watchers.add(*[Watcher.from_addr(addr) for addr in options["add"]])
         cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options["rm"]])
