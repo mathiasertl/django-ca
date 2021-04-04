@@ -22,7 +22,6 @@ import shutil
 import sys
 import tempfile
 import typing
-import unittest
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
@@ -518,9 +517,7 @@ VQIDAQAB
         return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
 
     def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
-        self,
-        issuer: CertificateAuthority,
-        cert: X509CertMixin
+        self, issuer: CertificateAuthority, cert: X509CertMixin
     ) -> None:
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
@@ -1181,6 +1178,7 @@ class TestCaseMixinBase:
     This class merely adds assert* stubs when type checking is enabled. The only purpose of this class is to
     make mypy happy.
     """
+
     if typing.TYPE_CHECKING:
         # pylint: disable=unused-argument,missing-function-docstring
 
@@ -1202,6 +1200,4 @@ class TestCaseMixinBase:
             ...
 
 
-__all__ = (
-    "override_settings",
-)
+__all__ = ("override_settings",)

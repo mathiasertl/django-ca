@@ -52,7 +52,7 @@ class URLPatternTestCase(DjangoCATestCase):
         self,
         name: str,
         args: typing.Optional[typing.Sequence[typing.Any]] = None,
-        kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None
+        kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> None:
         """Context manager asserting that the given URL pattern is **not** found."""
         urlname = name

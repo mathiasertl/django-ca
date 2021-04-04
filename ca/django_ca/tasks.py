@@ -42,6 +42,7 @@ try:
     from celery import shared_task
     from celery.local import Proxy
 except ImportError:
+
     def shared_task(func: FuncTypeVar) -> "Proxy[FuncTypeVar]":
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 

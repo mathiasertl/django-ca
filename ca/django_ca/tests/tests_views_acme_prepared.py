@@ -62,7 +62,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
 
     def add_account(self, data: typing.Dict[str, str]) -> AcmeAccount:
         """Add an account with the given test data."""
-        return AcmeAccount.objects.get_or_create(   # type: ignore[no-any-return]
+        return AcmeAccount.objects.get_or_create(  # type: ignore[no-any-return]
             thumbprint=data["thumbprint"],
             defaults={
                 "pk": data["account_pk"],
