@@ -14,6 +14,7 @@
 """Test ACME related views."""
 
 import json
+import typing
 from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
@@ -32,8 +33,10 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
@@ -63,7 +66,7 @@ from .base import timestamps
 class DirectoryTestCase(DjangoCAWithCATestCase):
     """Test basic ACMEv2 directory view."""
 
-    url = reverse("django_ca:acme-directory")
+    url = reverse_lazy("django_ca:acme-directory")
     random_url = "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417"
 
     @freeze_time(timestamps["everything_valid"])
@@ -248,7 +251,7 @@ RWtl+pCaG18whZOFa5ei+Sf0Qv9Z0cvOtZpxs3fE/IBVExKvZExtSf7JiBvh8Jv1
 KSAr5SU7IyM/9M95oQIDAQAB
 -----END PUBLIC KEY-----"""
 
-    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.ca = self.cas["root"]
         self.cert = self.cas["child"]  # actually a ca, but doesn't matter
@@ -256,15 +259,22 @@ KSAr5SU7IyM/9M95oQIDAQAB
         self.ca.save()
         self.client.defaults["SERVER_NAME"] = self.SERVER_NAME
 
-    def absolute_uri(self, name, **kwargs):
+    def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Override to set a default for `hostname`."""
 
-        kwargs.setdefault("hostname", self.SERVER_NAME)
-        return super().absolute_uri(name, **kwargs)
+        if not hostname:
+            hostname = self.SERVER_NAME
+        return super().absolute_uri(name, hostname=hostname, **kwargs)
 
     def assertAcmeProblem(  # pylint: disable=invalid-name
-        self, response, typ, status, message, ca=None, link_relations=None
-    ):
+        self,
+        response: HttpResponse,
+        typ: str,
+        status: int,
+        message: str,
+        ca: typing.Optional[CertificateAuthority] = None,
+        link_relations: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> None:
         """Assert that a HTTP response confirms to an ACME problem report.
 
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
@@ -278,13 +288,20 @@ KSAr5SU7IyM/9M95oQIDAQAB
         self.assertEqual(data["detail"], message)
         self.assertIn("Replay-Nonce", response)
 
-    def assertAcmeResponse(self, response, ca=None, link_relations=None):  # pylint: disable=invalid-name
+    def assertAcmeResponse(  # pylint: disable=invalid-name
+        self,
+        response: HttpResponse,
+        ca: typing.Optional[CertificateAuthority] = None,
+        link_relations: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> None:
         """Assert basic Acme Response properties (Content-Type & Link header)."""
         link_relations = link_relations or {}
         self.assertLinkRelations(response, ca=ca, **link_relations)
         self.assertEqual(response["Content-Type"], "application/json")
 
-    def assertLinkRelations(self, response, ca=None, **kwargs):  # pylint: disable=invalid-name
+    def assertLinkRelations(  # pylint: disable=invalid-name
+        self, response: HttpResponse, ca: typing.Optional[CertificateAuthority] = None, **kwargs: str
+    ) -> None:
         """Assert Link relations for a given request."""
         if ca is None:
             ca = self.ca
@@ -580,7 +597,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
     """Test creating a new account."""
 
     contact = "mailto:user@example.com"
-    url = reverse("django_ca:acme-new-account", kwargs={"serial": certs["root"]["serial"]})
+    url = reverse_lazy("django_ca:acme-new-account", kwargs={"serial": certs["root"]["serial"]})
     message = acme.messages.Registration(contact=(contact,), terms_of_service_agreed=True)
     message_cls = acme.messages.Registration
     requires_kid = False
@@ -877,7 +894,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
 class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
     """Test creating a new order."""
 
-    url = reverse("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
+    url = reverse_lazy("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
     message_cls = NewOrder
 
     def get_message(self, **kwargs):
@@ -1286,7 +1303,9 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
     """Test retrieving a challenge."""
 
     slug = "92MPyl7jm0zw"
-    url = reverse("django_ca:acme-order-finalize", kwargs={"serial": certs["root"]["serial"], "slug": slug})
+    url = reverse_lazy(
+        "django_ca:acme-order-finalize", kwargs={"serial": certs["root"]["serial"], "slug": slug}
+    )
 
     def setUp(self) -> None:
         super().setUp()
