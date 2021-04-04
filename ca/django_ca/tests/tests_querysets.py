@@ -43,7 +43,7 @@ from .base import override_tmpcadir
 from .base import timestamps
 
 ModelTypeVar = typing.TypeVar("ModelTypeVar", bound=models.Model)
-QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=models.QuerySet[models.Model])
+QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound="models.QuerySet[models.Model]")
 
 
 class QuerySetTestCaseMixin(TestCaseMixinBase):
