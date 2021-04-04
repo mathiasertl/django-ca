@@ -1175,12 +1175,12 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
 
 
-__all__ = (
-    "override_settings",
-)
+class TestCaseMixinBase:
+    """Base class for all mixins.
 
-
-class TestCaseProtocol(typing.Protocol):
+    This class merely adds assert* stubs when type checking is enabled. The only purpose of this class is to
+    make mypy happy.
+    """
     if typing.TYPE_CHECKING:
 
         def assertEqual(
@@ -1188,9 +1188,11 @@ class TestCaseProtocol(typing.Protocol):
         ) -> None:
             ...
 
+        @contextmanager
+        def mute_celery(self) -> typing.Iterator[MagicMock]:
+            ...
 
-class TestCaseMixinBase(TestCaseProtocol):
-    def __init__(self, *args, **kwargs):
-        mro = self.__class__.mro()
-        if mro.index(TestCaseMixinBase) < mro.index(unittest.TestCase):
-            unittest.TestCase.__init__(self, *args, **kwargs)
+
+__all__ = (
+    "override_settings",
+)

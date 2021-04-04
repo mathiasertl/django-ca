@@ -43,7 +43,7 @@ from .tests_views_acme import AcmeTestCaseMixin
 ACCOUNT_SLUG = "DzW4PQ6L76PE"
 
 with open(os.path.join(settings.FIXTURES_DIR, "prepared-acme-requests.json")) as stream:
-    prepared_requests = json.load(stream)
+    prepared_requests: typing.Dict[str, typing.List[typing.Dict[str, typing.Any]]] = json.load(stream)
 
 
 class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
@@ -62,7 +62,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
 
     def add_account(self, data: typing.Dict[str, str]) -> AcmeAccount:
         """Add an account with the given test data."""
-        return AcmeAccount.objects.get_or_create(
+        return AcmeAccount.objects.get_or_create(   # type: ignore[no-any-return]
             thumbprint=data["thumbprint"],
             defaults={
                 "pk": data["account_pk"],
@@ -267,7 +267,9 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
             order.acme_finalize_url, f"/django_ca/acme/{self.ca_serial}/order/{order.slug}/finalize/"
         )
         # pylint: disable=no-member
-        with self.assertRaises(AcmeOrder.acmecertificate.RelatedObjectDoesNotExist):
+        with self.assertRaises(
+            AcmeOrder.acmecertificate.RelatedObjectDoesNotExist  # type: ignore[attr-defined]
+        ):
             self.assertIsNone(order.acmecertificate)
         # pylint: enable=no-member
 
