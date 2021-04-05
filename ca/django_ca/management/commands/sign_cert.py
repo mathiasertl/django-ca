@@ -16,6 +16,8 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 from django.core.management.base import CommandError
 from django.utils import timezone
 
@@ -90,13 +92,13 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(self, *args, **options):  # pylint: disable=arguments-differ
+    def handle(self, encoding: Encoding, **options):  # pylint: disable=arguments-differ
         ca = options["ca"]
         if ca.expires < timezone.now():
             raise CommandError("Certificate Authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
-        self.test_options(*args, **options)
+        self.test_options(**options)
 
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in options["watch"]]
@@ -104,7 +106,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # get extensions based on profiles
         kwargs = {
             "cn_in_san": options["cn_in_san"],
-            "csr_format": options["csr_format"],
+            "csr_format": encoding,
             # TODO: since expires option has a default, it currently overrides profile values
             "expires": options["expires"],
             "extensions": [],

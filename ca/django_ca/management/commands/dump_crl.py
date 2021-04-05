@@ -16,6 +16,8 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 from django.core.management.base import CommandError
 
 from ..base import BaseCommand
@@ -55,7 +57,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.add_password(parser)
         super().add_arguments(parser)
 
-    def handle(self, path, **options):  # pylint: disable=arguments-differ
+    def handle(self, path: str, encoding: Encoding, **options):  # pylint: disable=arguments-differ
         if options["ca_crl"]:
             self.stderr.write(self.style.WARNING("WARNING: --ca-crl is deprecated, use --scope=ca instead."))
             options["scope"] = "ca"
@@ -72,7 +74,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.test_private_key(ca, options["password"])
 
         try:
-            crl = ca.get_crl(**kwargs).public_bytes(options["format"])
+            crl = ca.get_crl(**kwargs).public_bytes(encoding)
         except Exception as ex:
             # Note: all parameters are already sanitized by parser actions
             raise CommandError(ex) from ex

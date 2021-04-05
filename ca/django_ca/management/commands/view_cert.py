@@ -18,6 +18,8 @@
 
 from datetime import datetime
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 from ...utils import parse_hash_algorithm
 from ..base import CertCommand
 
@@ -45,7 +47,7 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         self.add_format(parser)
         super().add_arguments(parser)
 
-    def handle(self, cert, **options):  # pylint: disable=arguments-differ
+    def handle(self, cert, encoding: Encoding, **options):  # pylint: disable=arguments-differ
         self.stdout.write("Common Name: %s" % cert.cn)
 
         # self.stdout.write notBefore/notAfter
@@ -84,4 +86,4 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
 
         if not options["no_pem"]:
             self.stdout.write("")
-            self.stdout.write(cert.dump_certificate(options["format"]))
+            self.stdout.write(cert.dump_certificate(encoding))

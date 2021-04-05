@@ -177,6 +177,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         default: Encoding = Encoding.PEM,
         help_text: str = "",
         opts: typing.Optional[typing.Sequence[str]] = None,
+        dest: str = "encoding",
     ) -> None:
         """Add the --format option."""
 
@@ -186,7 +187,12 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
         help_text = help_text % {"default": default.name}
         parser.add_argument(
-            *opts, metavar="{PEM,ASN1,DER}", default=default, action=actions.FormatAction, help=help_text
+            *opts,
+            metavar="{PEM,ASN1,DER}",
+            default=default,
+            action=actions.FormatAction,
+            dest=dest,
+            help=help_text
         )
 
     def add_key_size(self, parser):
@@ -353,7 +359,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             help="TLS Feature extensions.",
         )
 
-    def test_options(self, *args, **options):  # pylint: disable=unused-argument; args may be used in future
+    def test_options(self, **options):
         """Additional tests for validity of some options."""
 
         ca = options["ca"]

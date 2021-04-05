@@ -43,9 +43,9 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         )
 
     def handle(  # type: ignore[override] # pylint: disable=arguments-differ
-        self, cert: Certificate, bundle: bool, format: Encoding, path: str, **options: typing.Any
+        self, cert: Certificate, bundle: bool, encoding: Encoding, path: str, **options: typing.Any
     ) -> None:
-        if bundle and format == Encoding.DER:
+        if bundle and encoding == Encoding.DER:
             raise CommandError("Cannot dump bundle when using DER format.")
 
         if bundle:
@@ -53,4 +53,4 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         else:
             certs = [cert]
 
-        self.dump(path, b"".join([c.dump_certificate(format) for c in certs]))
+        self.dump(path, b"".join([c.dump_certificate(encoding) for c in certs]))

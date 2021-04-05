@@ -47,12 +47,12 @@ default profile, currently %s."""
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
 
-    def handle(self, *args, **options):  # pylint: disable=arguments-differ
+    def handle(self, **options):  # pylint: disable=arguments-differ
         cert = options["cert"]
         ca = options["ca"]
         if not ca:
             ca = options["ca"] = cert.ca
-        self.test_options(*args, **options)
+        self.test_options(**options)
 
         # get list of watchers
         if options["watch"]:
