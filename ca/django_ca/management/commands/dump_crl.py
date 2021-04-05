@@ -19,6 +19,7 @@
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
 from ..base import BaseCommand
 
@@ -27,7 +28,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Write the certificate revocation list (CRL)."
     binary_output = True
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "-e",
             "--expires",
@@ -57,13 +58,15 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.add_password(parser)
         super().add_arguments(parser)
 
-    def handle(self, path: str, encoding: Encoding, **options):  # pylint: disable=arguments-differ
+    def handle(
+        # pylint: disable=arguments-differ
+        self, path: str, encoding: Encoding, expires: int, **options
+    ) -> None:
         if options["ca_crl"]:
             self.stderr.write(self.style.WARNING("WARNING: --ca-crl is deprecated, use --scope=ca instead."))
             options["scope"] = "ca"
 
         kwargs = {
-            "expires": options["expires"],
             "algorithm": options["algorithm"],
             "password": options["password"],
             "scope": options["scope"],
@@ -74,7 +77,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.test_private_key(ca, options["password"])
 
         try:
-            crl = ca.get_crl(**kwargs).public_bytes(encoding)
+            crl = ca.get_crl(expires=expires, **kwargs).public_bytes(encoding)
         except Exception as ex:
             # Note: all parameters are already sanitized by parser actions
             raise CommandError(ex) from ex
