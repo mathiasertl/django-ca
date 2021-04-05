@@ -13,8 +13,11 @@
 
 """Command subclasses and argparse helpers for django-ca."""
 
+import argparse
+import io
 import sys
 import typing
+from datetime import timedelta
 from textwrap import indent
 
 from cryptography import x509
@@ -38,6 +41,7 @@ from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..extensions.base import NullExtension
 from ..models import CertificateAuthority
+from ..models import X509CertMixin
 from ..utils import SUBJECT_FIELDS
 from ..utils import add_colons
 from . import actions
@@ -46,36 +50,51 @@ from . import actions
 class BinaryOutputWrapper(OutputWrapper):
     """An output wrapper that allows you to write binary data."""
 
-    def __init__(self, out, ending=b"\n"):
-        super().__init__(out, ending=ending)
+    ending: bytes  # type: ignore[assignment]
+    _out: typing.BinaryIO
 
-    def write(self, msg=b"", style_func=None, ending=None):
+    def __init__(self, out: typing.BinaryIO, ending: bytes = b"\n") -> None:
+        super().__init__(out, ending=ending)  # type: ignore[arg-type]
+
+    def write(  # type: ignore[override]
+        self,
+        msg: bytes = b"",
+        style_func: typing.Optional[typing.Callable[..., typing.Any]] = None,
+        ending: typing.Optional[bytes] = None,
+    ) -> None:
         ending = self.ending if ending is None else ending
         msg = force_bytes(msg)
 
         if ending and not msg.endswith(ending):
             msg += ending
-        self._out.write(msg)
+            self._out.write(msg)
 
 
 class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base class
     """Base class for most/all management commands."""
 
+    # TODO: move bytes output to (incompatible) subclass for a little more type safety
+
     binary_output = False
 
-    def __init__(self, stdout=None, stderr=None, no_color=False):
+    def __init__(
+        self,
+        stdout: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
+        stderr: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
+        no_color: bool = False
+    ) -> None:
         if self.binary_output is True:
-            self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
-            self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)
+            self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)  # type: ignore[arg-type]
+            self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)  # type: ignore[arg-type]
             self.style = no_style()
         else:
-            super().__init__(stdout, stderr, no_color=no_color)
+            super().__init__(stdout, stderr, no_color=no_color)  # type: ignore[arg-type]
 
     def dump(self, path: str, data: bytes) -> None:
         """Dump `data` to `path` (``-`` means stdout)."""
 
         if path == "-":
-            self.stdout.write(data, ending=b"")
+            self.stdout.write(data, ending=b"")  # type: ignore[arg-type]
         else:
             try:
                 with open(path, "wb") as stream:
@@ -83,7 +102,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             except IOError as ex:
                 raise CommandError(ex) from ex
 
-    def execute(self, *args, **options):
+    def execute(self, *args: typing.Any, **options: typing.Any) -> None:
         if self.binary_output is True:
             if options.get("stdout"):  # pragma: no branch
                 self.stdout = BinaryOutputWrapper(options.pop("stdout"))
@@ -93,7 +112,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 
         super().execute(*args, **options)
 
-    def add_algorithm(self, parser):
+    def add_algorithm(self, parser: CommandParser) -> None:
         """Add the --algorithm option."""
 
         help_text = "The HashAlgorithm that will be used to generate the signature (default: %s)." % (
@@ -109,12 +128,18 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         )
 
     @property
-    def valid_subject_keys(self):
+    def valid_subject_keys(self) -> str:
         """Return human-readable enumeration of valid subject keys (CN/...)."""
         fields = ['"%s"' % f for f in SUBJECT_FIELDS]
         return "%s and %s" % (", ".join(fields[:-1]), fields[-1])
 
-    def add_subject(self, parser, arg="subject", metavar=None, help_text=None):
+    def add_subject(
+        self,
+        parser: argparse._ActionsContainer,  # called with an argument group, which is _ActionGroup
+        arg: str = "subject",
+        metavar: typing.Optional[str] = None,
+        help_text: typing.Optional[str] = None,
+    ) -> None:
         """Add subject option."""
         parser.add_argument(arg, action=actions.SubjectAction, metavar=metavar, help=help_text)
 
@@ -195,7 +220,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             help=help_text
         )
 
-    def add_key_size(self, parser):
+    def add_key_size(self, parser: CommandParser) -> None:
         """Add --key-size option (2048, 4096, ...)."""
         parser.add_argument(
             "--key-size",
@@ -204,7 +229,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             help="Key size for the private key (default: %(default)s).",
         )
 
-    def add_key_type(self, parser):
+    def add_key_type(self, parser: CommandParser) -> None:
         """Add --key-type option (type of private key - RSA/DSA/ECC)."""
         parser.add_argument(
             "--key-type",
@@ -213,13 +238,13 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             help="Key type for the private key (default: %(default)s).",
         )
 
-    def add_password(self, parser, help_text=None):
+    def add_password(self, parser: CommandParser, help_text: str = "") -> None:
         """Add password option."""
-        if help_text is None:
+        if not help_text:
             help_text = "Password used for accessing the private key of the CA."
         parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
 
-    def add_profile(self, parser, help_text):
+    def add_profile(self, parser: CommandParser, help_text: str) -> None:
         """Add profile-related options."""
         group = parser.add_argument_group("profiles", help_text)
         group = group.add_mutually_exclusive_group()
@@ -232,11 +257,16 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
                 help=profile.get("description", ""),
             )
 
-    def indent(self, text, prefix="    "):
+    def indent(self, text: str, prefix: str = "    ") -> str:
         """Get indented text."""
         return indent(text, prefix)
 
-    def print_extension(self, ext):
+    def print_extension(
+        self,
+        ext: typing.Union[
+            Extension[typing.Any, typing.Any, typing.Any], "x509.Extension[x509.ExtensionType]"
+        ],
+    ) -> None:
         """Print extension to stdout."""
 
         if isinstance(ext, Extension):
@@ -262,12 +292,12 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         else:  # pragma: no cover
             raise ValueError("Received unknown extension type: %s" % type(ext))
 
-    def print_extensions(self, cert):
+    def print_extensions(self, cert: X509CertMixin) -> None:
         """Print all extensions for the given certificate."""
         for ext in cert.extensions:
             self.print_extension(ext)
 
-    def test_private_key(self, ca, password):
+    def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
         """Test that we can load the private key of a CA."""
         try:
             ca.key(password)
@@ -287,7 +317,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     }
     subject_help = None  # concrete classes should set this
 
-    def add_base_args(self, parser, no_default_ca=False):
+    def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> None:
         """Add common arguments for signing certificates."""
         self.add_subject_group(parser)
         self.add_algorithm(parser)
@@ -319,7 +349,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             "--out", metavar="FILE", help="Save signed certificate to FILE. If omitted, print to stdout."
         )
 
-    def add_subject_group(self, parser):
+    def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""
 
         group = parser.add_argument_group("Certificate subject", self.subject_help)
@@ -334,7 +364,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             % self.valid_subject_keys,
         )
 
-    def add_extensions(self, parser):
+    def add_extensions(self, parser: CommandParser) -> None:
         """Add arguments for x509 extensions."""
         group = parser.add_argument_group("X509 v3 certificate extensions", self.add_extensions_help)
         group.add_argument(
@@ -359,18 +389,23 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             help="TLS Feature extensions.",
         )
 
-    def test_options(self, **options):
+    def test_options(
+        self,
+        ca: CertificateAuthority,
+        expires: timedelta,
+        password: typing.Optional[bytes],
+        **options: typing.Any
+    ) -> None:
         """Additional tests for validity of some options."""
 
-        ca = options["ca"]
-        if ca.expires < timezone.now() + options["expires"]:
+        if ca.expires < timezone.now() + expires:
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
                 "Certificate would outlive CA, maximum expiry for this CA is %s days." % max_days
             )
 
         # See if we can work with the private key
-        self.test_private_key(ca, options["password"])
+        self.test_private_key(ca, password)
 
 
 class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
@@ -393,7 +428,7 @@ class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base cl
 class CertificateAuthorityDetailMixin:
     """Mixin to add common arguments to init_ca and edit_ca."""
 
-    def add_general_args(self, parser, default=""):
+    def add_general_args(self, parser: CommandParser, default: str = "") -> None:
         """Add some general arguments."""
 
         group = parser.add_argument_group("General", "General information about the CA.")
@@ -413,7 +448,7 @@ class CertificateAuthorityDetailMixin:
             help="Terms of service URL for the CA.",
         )
 
-    def add_acme_group(self, parser):
+    def add_acme_group(self, parser: CommandParser) -> None:
         """Add arguments for ACMEv2."""
 
         if not ca_settings.CA_ENABLE_ACME:
@@ -449,7 +484,7 @@ class CertificateAuthorityDetailMixin:
             help="Require email address during ACME account registration.",
         )
 
-    def add_ca_args(self, parser):
+    def add_ca_args(self, parser: CommandParser) -> None:
         """Add CA arguments."""
 
         group = parser.add_argument_group(
