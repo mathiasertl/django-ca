@@ -136,9 +136,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
         )
         group.add_argument(
             "--ca-crl-url",
-            metavar="URL",
             action=MultipleURLAction,
-            default=[],
             help="URL to a certificate revokation list. Can be given multiple times.",
         )
         group.add_argument("--ca-ocsp-url", metavar="URL", action=URLAction, help="URL of an OCSP responder.")
