@@ -64,10 +64,9 @@ class BinaryOutputWrapper(OutputWrapper):
     ) -> None:
         ending = self.ending if ending is None else ending
         msg = force_bytes(msg)
-
         if ending and not msg.endswith(ending):
             msg += ending
-            self._out.write(msg)
+        self._out.write(msg)
 
 
 class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base class
