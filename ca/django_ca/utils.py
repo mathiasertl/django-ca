@@ -869,7 +869,7 @@ def parse_hash_algorithm(value: ParsableHash = None) -> hashes.HashAlgorithm:
     raise ValueError("Unknown type passed: %s" % type(value).__name__)
 
 
-def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
+def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
     """Parse a value to a valid encoding.
 
     This function accepts either a member of
@@ -893,8 +893,8 @@ def parse_encoding(value: Optional[Encoding] = None) -> Encoding:
             value = "DER"
 
         try:
-            return getattr(Encoding, value)
-        except AttributeError as e:
+            return Encoding[value]
+        except KeyError as e:
             raise ValueError("Unknown encoding: %s" % value) from e
 
     raise ValueError("Unknown type passed: %s" % type(value).__name__)
