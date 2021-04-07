@@ -13,9 +13,15 @@
 
 """Collection of argparse actions for django-ca management commands."""
 
+import abc
 import argparse
 import getpass
+import typing
 from datetime import timedelta
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
@@ -31,20 +37,40 @@ from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import shlex_split
 
-
-def _parse_timedelta(value):
-    # NOTE: Making this a member of ExpiresAction causes an infinite loop for some reason
-    try:
-        value = int(value)
-    except ValueError as ex:
-        raise argparse.ArgumentTypeError('Value must be an integer: "%s"' % value) from ex
-    if value <= 0:
-        raise argparse.ArgumentTypeError("Value must not be negative.")
-
-    return timedelta(days=value)
+ActionType = typing.TypeVar("ActionType")
 
 
-class AlgorithmAction(argparse.Action):
+class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=abc.ABCMeta):
+    """Abstract/generic base class for arguments that take a single value.
+
+    The main purpose of this class is to improve type hinting.
+    """
+
+    type: typing.Type[ActionType]
+
+    @abc.abstractmethod
+    def parse_value(self, value: str) -> ActionType:
+        """Parse the value passed to the command line. Implementing classes must implement this method.
+
+        Parameters
+        ----------
+
+        value : str
+            The value passed by the command line.
+        """
+        raise NotImplementedError
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        setattr(namespace, self.dest, self.parse_value(values))
+
+
+class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
     """Action for giving an algorithm.
 
     >>> parser.add_argument('--algorithm', action=AlgorithmAction)  # doctest: +ELLIPSIS
@@ -53,63 +79,66 @@ class AlgorithmAction(argparse.Action):
     Namespace(algorithm=<cryptography.hazmat.primitives.hashes.SHA256 object at ...>)
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> hashes.HashAlgorithm:
+        """Parse the value for this action."""
         try:
-            value = parse_hash_algorithm(value)
+            return parse_hash_algorithm(value)
         except ValueError as e:
-            parser.error(str(e))
-
-        setattr(namespace, self.dest, value)
+            raise argparse.ArgumentError(self, str(e))
 
 
-class CertificateAction(argparse.Action):
+class CertificateAction(SingleValueAction[Certificate]):
     """Action for naming a certificate."""
 
-    def __init__(self, allow_revoked=False, **kwargs):
+    def __init__(self, allow_revoked: bool = False, **kwargs: typing.Any) -> None:
         super().__init__(**kwargs)
         self.allow_revoked = allow_revoked
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> Certificate:
+        """Parse the value for this action."""
         queryset = Certificate.objects.all()
         if self.allow_revoked is False:
             queryset = queryset.filter(revoked=False)
 
         try:
-            setattr(namespace, self.dest, queryset.get_by_serial_or_cn(value))
+            return queryset.get_by_serial_or_cn(value)
         except Certificate.DoesNotExist as ex:
-            raise parser.error("%s: Certificate not found." % value) from ex
+            raise argparse.ArgumentError(self, "%s: Certificate not found." % value) from ex
         except Certificate.MultipleObjectsReturned as ex:
-            raise parser.error("%s: Multiple certificates match." % value) from ex
+            raise argparse.ArgumentError(self, "%s: Multiple certificates match." % value) from ex
 
 
-class CertificateAuthorityAction(argparse.Action):
+class CertificateAuthorityAction(SingleValueAction[CertificateAuthority]):
     """Action for naming a certificate authority."""
 
-    def __init__(self, allow_disabled=False, allow_unusable=False, **kwargs):
+    def __init__(
+        self, allow_disabled: bool = False, allow_unusable: bool = False, **kwargs: typing.Any
+    ) -> None:
         super().__init__(**kwargs)
         self.allow_disabled = allow_disabled
         self.allow_unusable = allow_unusable
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> CertificateAuthority:
+        """Parse the value for this action."""
         qs = CertificateAuthority.objects.all()
         if self.allow_disabled is False:
             qs = qs.enabled()
 
         try:
-            value = qs.get_by_serial_or_cn(value)
-        except CertificateAuthority.DoesNotExist:
-            parser.error("%s: Certificate authority not found." % value)
-        except CertificateAuthority.MultipleObjectsReturned:
-            parser.error("%s: Multiple Certificate authorities match." % value)
+            ca = qs.get_by_serial_or_cn(value)
+        except CertificateAuthority.DoesNotExist as ex:
+            raise argparse.ArgumentError(self, "%s: Certificate authority not found." % value) from ex
+        except CertificateAuthority.MultipleObjectsReturned as ex:
+            raise argparse.ArgumentError(self, "%s: Multiple Certificate authorities match." % value) from ex
 
         # verify that the private key exists
-        if not self.allow_unusable and not value.key_exists:
-            parser.error("%s: %s: Private key does not exist." % (value, value.private_key_path))
+        if not self.allow_unusable and not ca.key_exists:
+            raise argparse.ArgumentError(self, f"{ca}: {ca.private_key_path}: Private key does not exist.")
 
-        setattr(namespace, self.dest, value)
+        return ca
 
 
-class ExpiresAction(argparse.Action):
+class ExpiresAction(SingleValueAction[timedelta]):
     """Action for passing a timedelta in days.
 
     NOTE: str(timedelta) is different in python 3.6, so only outputting days here
@@ -120,16 +149,24 @@ class ExpiresAction(argparse.Action):
     3
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["type"] = _parse_timedelta
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         kwargs.setdefault("default", ca_settings.CA_DEFAULT_EXPIRES)
         super().__init__(*args, **kwargs)
 
-    def __call__(self, parser, namespace, value, option_string=None):
-        setattr(namespace, self.dest, value)
+    def parse_value(self, value: str) -> timedelta:
+        """Parse the value for this action."""
+        # NOTE: Making this a member of ExpiresAction causes an infinite loop for some reason
+        try:
+            days = int(value)
+        except ValueError as ex:
+            raise argparse.ArgumentError(self, f"{value}: Value must be an integer.") from ex
+        if days <= 0:
+            raise argparse.ArgumentError(self, f"{value}: Value must not be negative.")
+
+        return timedelta(days=days)
 
 
-class FormatAction(argparse.Action):
+class FormatAction(SingleValueAction[Encoding]):
     """Action for giving an encoding (DER/PEM).
 
     >>> parser.add_argument('--format', action=FormatAction)  # doctest: +ELLIPSIS
@@ -138,16 +175,15 @@ class FormatAction(argparse.Action):
     Namespace(format=<Encoding.DER: 'DER'>)
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> Encoding:
+        """Parse the value for this action."""
         try:
-            value = parse_encoding(value)
+            return parse_encoding(value)
         except ValueError as e:
-            parser.error(str(e))
-
-        setattr(namespace, self.dest, value)
+            raise argparse.ArgumentError(self, str(e))
 
 
-class KeyCurveAction(argparse.Action):
+class KeyCurveAction(SingleValueAction[ec.EllipticCurve]):
     """Action to parse an ECC curve value.
 
     >>> parser.add_argument('--curve', action=KeyCurveAction)  # doctest: +ELLIPSIS
@@ -156,16 +192,15 @@ class KeyCurveAction(argparse.Action):
     Namespace(curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
-
+    def parse_value(self, value: str) -> ec.EllipticCurve:
+        """Parse the value for this action."""
         try:
-            curve = parse_key_curve(value)
+            return parse_key_curve(value)
         except ValueError as e:
-            parser.error(e)
-        setattr(namespace, self.dest, curve)
+            raise argparse.ArgumentError(self, str(e))
 
 
-class KeySizeAction(argparse.Action):
+class KeySizeAction(SingleValueAction[int]):
     """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...).
 
     >>> parser.add_argument('--size', action=KeySizeAction)  # doctest: +ELLIPSIS
@@ -174,21 +209,25 @@ class KeySizeAction(argparse.Action):
     Namespace(size=4096)
     """
 
-    metavar = "{2048,4096,8192,...}"
-
-    def __init__(self, **kwargs):
-        kwargs.setdefault("type", int)
-        kwargs.setdefault("metavar", self.metavar)
+    def __init__(self, **kwargs: typing.Any) -> None:
+        kwargs.setdefault("metavar", "{2048,4096,8192,...}")
         super().__init__(**kwargs)
 
-    def __call__(self, parser, namespace, value, option_string=None):
-        option_string = option_string or "key size"
+    def parse_value(self, value: str) -> int:
+        """Parse the value for this action."""
+        try:
+            key_size = int(value)
+        except ValueError as ex:
+            raise argparse.ArgumentError(self, f"{value}: Must be an integer.") from ex
 
-        if not is_power2(value):
-            parser.error("%s must be a power of two (2048, 4096, ...)" % option_string)
-        elif value < ca_settings.CA_MIN_KEY_SIZE:
-            parser.error("%s must be at least %s bits." % (option_string, ca_settings.CA_MIN_KEY_SIZE))
-        setattr(namespace, self.dest, value)
+        if not is_power2(key_size):
+            raise argparse.ArgumentError(self, f"{key_size}: Must be a power of two (2048, 4096, ...).")
+
+        if key_size < ca_settings.CA_MIN_KEY_SIZE:
+            raise argparse.ArgumentError(
+                self, f"{key_size}: Must be at least {ca_settings.CA_MIN_KEY_SIZE} bits."
+            )
+        return key_size
 
 
 class MultipleURLAction(argparse.Action):
@@ -200,19 +239,25 @@ class MultipleURLAction(argparse.Action):
     Namespace(url=['https://example.com', 'https://example.net'])
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         kwargs.setdefault("default", [])
         kwargs.setdefault("metavar", "URL")
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
         validator = URLValidator()
         try:
-            validator(value)
+            validator(values)
         except ValidationError:
-            parser.error("%s: Not a valid URL." % value)
+            parser.error("%s: Not a valid URL." % values)
 
-        getattr(namespace, self.dest).append(value)
+        getattr(namespace, self.dest).append(values)
 
 
 class PasswordAction(argparse.Action):
@@ -226,21 +271,24 @@ class PasswordAction(argparse.Action):
     Namespace(password=b'secret')
     """
 
-    def __init__(self, prompt=None, **kwargs):
+    def __init__(self, prompt: str = "Password: ", **kwargs: typing.Any) -> None:
         super().__init__(**kwargs)
         self.prompt = prompt
 
-    def __call__(self, parser, namespace, value, option_string=None):
-        if value is None:
-            kwargs = {}
-            if self.prompt:
-                kwargs["prompt"] = self.prompt
-            value = getpass.getpass(**kwargs)
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: typing.Optional[str],
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        if values is None:
+            values = getpass.getpass(prompt=self.prompt)
 
-        setattr(namespace, self.dest, value.encode("utf-8"))
+        setattr(namespace, self.dest, values.encode("utf-8"))
 
 
-class ReasonAction(argparse.Action):
+class ReasonAction(SingleValueAction[ReasonFlags]):
     """Action to select a revocation reason.
 
     >>> parser.add_argument('--reason', action=ReasonAction)  # doctest: +ELLIPSIS
@@ -249,17 +297,18 @@ class ReasonAction(argparse.Action):
     Namespace(reason=<ReasonFlags.key_compromise: 'keyCompromise'>)
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         kwargs["choices"] = sorted([r.name for r in ReasonFlags])
         kwargs.setdefault("default", ReasonFlags.unspecified)
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> ReasonFlags:
+        """Parse the value for this action."""
         # NOTE: set of choices already assures that value is a valid ReasonFlag
-        setattr(namespace, self.dest, ReasonFlags[value])
+        return ReasonFlags[value]
 
 
-class SubjectAction(argparse.Action):
+class SubjectAction(SingleValueAction[Subject]):
     """Action for giving a subject.
 
     >>> parser.add_argument('--subject', action=SubjectAction)  # doctest: +ELLIPSIS
@@ -268,15 +317,15 @@ class SubjectAction(argparse.Action):
     Namespace(subject=Subject("/CN=example.com"))
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> Subject:
+        """Parse the value for this action."""
         try:
-            value = Subject(value)
+            return Subject(value)
         except ValueError as e:
-            parser.error(e)
-        setattr(namespace, self.dest, value)
+            raise argparse.ArgumentError(self, str(e))
 
 
-class URLAction(argparse.Action):
+class URLAction(SingleValueAction[str]):
     """Action to pass a single valid URL.
 
     >>> parser.add_argument('--url', action=URLAction)  # doctest: +ELLIPSIS
@@ -285,13 +334,15 @@ class URLAction(argparse.Action):
     Namespace(url='https://example.com')
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def parse_value(self, value: str) -> str:
+        """Parse the value for this action."""
         validator = URLValidator()
         try:
             validator(value)
-        except ValidationError:
-            parser.error("%s: Not a valid URL." % value)
-        setattr(namespace, self.dest, value)
+        except ValidationError as ex:
+            raise argparse.ArgumentError(self, f"{value}: Not a valid URL.") from ex
+
+        return value
 
 
 ##########################
@@ -316,10 +367,10 @@ class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method
     Namespace(key_usage=<KeyUsage: ['keyCertSign'], critical=True>)
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         self.extension = kwargs.pop("extension")
         kwargs["dest"] = self.extension.key
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
 
 class OrderedSetExtensionAction(ExtensionAction):
@@ -336,20 +387,26 @@ class OrderedSetExtensionAction(ExtensionAction):
     Namespace(key_usage=<KeyUsage: ['keyCertSign'], critical=True>)
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
         ext = self.extension()
 
-        values = shlex_split(value, ", ")
-        if values[0] == "critical":
-            values = values[1:]
+        ext_values = shlex_split(values, ", ")
+        if ext_values[0] == "critical":
+            ext_values = ext_values[1:]
             ext.critical = True
         else:
             ext.critical = False
 
         try:
-            ext |= values
+            ext |= ext_values
         except ValueError as e:
-            parser.error("Invalid extension value: %s: %s" % (value, e))
+            parser.error("Invalid extension value: %s: %s" % (values, e))
 
         setattr(namespace, self.dest, ext)
 
@@ -368,5 +425,11 @@ class AlternativeNameAction(ExtensionAction):
     Namespace(subject_alternative_name=<SubjectAlternativeName: ['URI:https://example.com'], critical=False>)
     """
 
-    def __call__(self, parser, namespace, value, option_string=None):
-        setattr(namespace, self.dest, self.extension({"value": [value]}))
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        setattr(namespace, self.dest, self.extension({"value": [values]}))

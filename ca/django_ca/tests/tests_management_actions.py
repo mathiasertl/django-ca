@@ -80,7 +80,8 @@ class SubjectActionTestCase(DjangoCATestCase):
         """Test false option values."""
         self.assertParserError(
             ["--subject=/WRONG=foobar"],
-            "usage: {script} [-h] [--subject SUBJECT]\n" "{script}: error: Unknown x509 name field: WRONG\n",
+            "usage: {script} [-h] [--subject SUBJECT]\n"
+            "{script}: error: argument --subject: Unknown x509 name field: WRONG\n",
         )
 
 
@@ -138,7 +139,9 @@ class FormatActionTestCase(DjangoCATestCase):
         """Test false option values."""
         self.assertParserError(
             ["--action=foo"],
-            "usage: {script} [-h] [--action ACTION]\n" "{script}: error: Unknown encoding: foo\n",
+            "usage: {script} [-h] [--action ACTION]\n"
+            "{script}: error: argument --action: "
+            "Unknown encoding: foo\n",
         )
 
 
@@ -162,7 +165,8 @@ class KeyCurveActionTestCase(DjangoCATestCase):
         """Test false option values."""
         self.assertParserError(
             ["--curve=foo"],
-            "usage: {script} [-h] [--curve CURVE]\n" "{script}: error: foo: Not a known Eliptic Curve\n",
+            "usage: {script} [-h] [--curve CURVE]\n"
+            "{script}: error: argument --curve: foo: Not a known Eliptic Curve\n",
         )
 
 
@@ -189,7 +193,8 @@ class AlgorithmActionTestCase(DjangoCATestCase):
         """Test false option values."""
         self.assertParserError(
             ["--algo=foo"],
-            "usage: {script} [-h] [--algo ALGO]\n" "{script}: error: Unknown hash algorithm: foo\n",
+            "usage: {script} [-h] [--algo ALGO]\n"
+            "{script}: error: argument --algo: Unknown hash algorithm: foo\n",
         )
 
 
@@ -215,22 +220,29 @@ class KeySizeActionTestCase(DjangoCATestCase):
     def test_no_power_two(self) -> None:
         """Test giving values that are not the power of two."""
         expected = """usage: {script} [-h] [--size SIZE]
-{script}: error: --size must be a power of two (2048, 4096, ...)\n"""
+{script}: error: argument --size: %s: Must be a power of two (2048, 4096, ...).\n"""
 
-        self.assertParserError(["--size=2047"], expected)
-        self.assertParserError(["--size=2049"], expected)
-        self.assertParserError(["--size=3084"], expected)
-        self.assertParserError(["--size=4095"], expected)
+        self.assertParserError(["--size=2047"], expected % 2047)
+        self.assertParserError(["--size=2049"], expected % 2049)
+        self.assertParserError(["--size=3084"], expected % 3084)
+        self.assertParserError(["--size=4095"], expected % 4095)
 
     @override_settings(CA_MIN_KEY_SIZE=2048, CA_DEFAULT_KEY_SIZE=4096)
     def test_to_small(self) -> None:
         """Test giving values that are to small."""
         expected = """usage: {script} [-h] [--size SIZE]
-{script}: error: --size must be at least 2048 bits.\n"""
+{script}: error: argument --size: %s: Must be at least 2048 bits.\n"""
 
-        self.assertParserError(["--size=1024"], expected)
-        self.assertParserError(["--size=512"], expected)
-        self.assertParserError(["--size=256"], expected)
+        self.assertParserError(["--size=1024"], expected % 1024)
+        self.assertParserError(["--size=512"], expected % 512)
+        self.assertParserError(["--size=256"], expected % 256)
+
+    def test_no_str(self) -> None:
+        """Test giving values that are to small."""
+        expected = """usage: {script} [-h] [--size SIZE]
+{script}: error: argument --size: foo: Must be an integer.\n"""
+
+        self.assertParserError(["--size=foo"], expected)
 
 
 class PasswordActionTestCase(DjangoCATestCase):
@@ -296,7 +308,8 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
         serial = "foo"
         self.assertParserError(
             [serial],
-            "usage: {script} [-h] cert\n" "{script}: error: {serial}: Certificate not found.\n",
+            "usage: {script} [-h] cert\n"
+            "{script}: error: argument cert: {serial}: Certificate not found.\n",
             serial=serial,
         )
 
@@ -311,7 +324,8 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
         serial = cert.serial[:8]
         self.assertParserError(
             [serial],
-            "usage: {script} [-h] cert\n" "{script}: error: {serial}: Multiple certificates match.\n",
+            "usage: {script} [-h] cert\n"
+            "{script}: error: argument cert: {serial}: Multiple certificates match.\n",
             serial=serial,
         )
 
@@ -341,7 +355,8 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
         """Test giving an unknown CA."""
         self.assertParserError(
             ["foo"],
-            """usage: {script} [-h] ca\n""" """{script}: error: foo: Certificate authority not found.\n""",
+            "usage: {script} [-h] ca\n"
+            "{script}: error: argument ca: foo: Certificate authority not found.\n",
         )
 
     def test_multiple(self) -> None:
@@ -355,7 +370,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertParserError(
             [serial],
             "usage: {script} [-h] ca\n"
-            "{script}: error: {serial}: Multiple Certificate authorities match.\n",
+            "{script}: error: argument ca: {serial}: Multiple Certificate authorities match.\n",
             serial=serial,
         )
 
@@ -367,7 +382,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
         ca.save()
 
         expected = """usage: {script} [-h] ca
-{script}: error: {serial}: Certificate authority not found.\n"""
+{script}: error: argument ca: {serial}: Certificate authority not found.\n"""
 
         self.assertParserError([ca.serial], expected, serial=ca.serial)
 
@@ -386,7 +401,8 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
 
         self.assertParserError(
             [ca.serial],
-            "usage: {script} [-h] ca\n" "{script}: error: {name}: {path}: Private key does not exist.\n",
+            "usage: {script} [-h] ca\n"
+            "{script}: error: argument ca: {name}: {path}: Private key does not exist.\n",
             name=ca.name,
             path=ca.private_key_path,
         )
@@ -415,7 +431,8 @@ class URLActionTestCase(DjangoCATestCase):
     def test_error(self) -> None:
         """Test false option values."""
         self.assertParserError(
-            ["--url=foo"], "usage: {script} [-h] [--url URL]\n" "{script}: error: foo: Not a valid URL.\n"
+            ["--url=foo"], "usage: {script} [-h] [--url URL]\n"
+            "{script}: error: argument --url: foo: Not a valid URL.\n"
         )
 
 
@@ -447,7 +464,7 @@ class ExpiresActionTestCase(DjangoCATestCase):
         self.assertParserError(
             ["--expires=-1"],
             "usage: {script} [-h] [--expires EXPIRES]\n"
-            "{script}: error: argument --expires: Value must not be negative.\n",
+            "{script}: error: argument --expires: -1: Value must not be negative.\n",
         )
 
     def test_error(self) -> None:
@@ -456,7 +473,7 @@ class ExpiresActionTestCase(DjangoCATestCase):
         self.assertParserError(
             ["--expires=%s" % value],
             "usage: dev.py [-h] [--expires EXPIRES]\n"
-            '{script}: error: argument --expires: Value must be an integer: "%s"\n' % value,
+            "{script}: error: argument --expires: %s: Value must be an integer.\n" % value,
         )
 
 

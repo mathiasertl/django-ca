@@ -1081,7 +1081,7 @@ HPKP pin: {hpkp}
     def test_unknown_cert(self) -> None:
         """Test viewing an unknown certificate."""
         name = "foobar"
-        with self.assertCommandError(r"^Error: %s: Certificate not found\.$" % name):
+        with self.assertCommandError(r"^Error: argument cert: %s: Certificate not found\.$" % name):
             self.cmd("view_cert", name, no_pem=True)
 
 
