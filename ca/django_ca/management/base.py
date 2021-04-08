@@ -134,7 +134,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 
     def add_subject(
         self,
-        parser: argparse._ActionsContainer,  # called with an argument group, which is _ActionGroup
+        parser: argparse._ActionsContainer,  # pylint: disable=protected-access; called with an argument group
         arg: str = "subject",
         metavar: typing.Optional[str] = None,
         help_text: typing.Optional[str] = None,
@@ -388,7 +388,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             help="TLS Feature extensions.",
         )
 
-    def test_options(
+    def test_options(  # pylint: disable=unused-argument
         self,
         ca: CertificateAuthority,
         expires: timedelta,
