@@ -80,7 +80,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         self,
         stdout: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
         stderr: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
-        no_color: bool = False
+        no_color: bool = False,
     ) -> None:
         if self.binary_output is True:
             self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)  # type: ignore[arg-type]

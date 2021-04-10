@@ -72,7 +72,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         self.assertEqual(ca.issuer_url, "%sissuer/%s.der" % (base_url, parent_serial))
         self.assertEqual(ca.ocsp_url, "%socsp/%s/cert/" % (base_url, ca.serial))
         self.assertEqual(ca.issuer_alt_name, "")
-        self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)    # type: ignore[union-attr]
+        self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)  # type: ignore[union-attr]
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:

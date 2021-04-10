@@ -431,8 +431,8 @@ class URLActionTestCase(DjangoCATestCase):
     def test_error(self) -> None:
         """Test false option values."""
         self.assertParserError(
-            ["--url=foo"], "usage: {script} [-h] [--url URL]\n"
-            "{script}: error: argument --url: foo: Not a valid URL.\n"
+            ["--url=foo"],
+            "usage: {script} [-h] [--url URL]\n{script}: error: argument --url: foo: Not a valid URL.\n",
         )
 
 
