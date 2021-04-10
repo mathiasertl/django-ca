@@ -39,7 +39,8 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
-            "serial",
+            "serials",
+            metavar="serial",
             nargs="*",
             help="Generate OCSP keys only for the given CA. If omitted, generate keys for all CAs.",
         )
