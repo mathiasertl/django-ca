@@ -13,6 +13,9 @@
 
 """TestCases for various model managers."""
 
+import typing
+import unittest
+
 from freezegun import freeze_time
 
 from .. import ca_settings
@@ -28,6 +31,7 @@ from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import profiles
+from ..querysets import CertificateAuthorityQuerySet
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithGeneratedCAsTestCase
@@ -44,11 +48,17 @@ from .base import timestamps
 class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
 
-    def assertProperties(self, ca, name, subject, parent=None):  # pylint: disable=invalid-name
+    def assertProperties(  # pylint: disable=invalid-name
+        self,
+        ca: CertificateAuthority,
+        name: str,
+        subject: str,
+        parent: typing.Optional[CertificateAuthority] = None,
+    ) -> None:
         """Assert some basic properties of a CA."""
         parent_ca = parent or ca
         parent_serial = parent_ca.serial
-        parent_ski = parent_ca.subject_key_identifier.value
+        parent_ski = parent_ca.subject_key_identifier.value  # type: ignore[union-attr] # always present
         issuer = parent_ca.subject
 
         base_url = "http://%s/django_ca/" % ca_settings.CA_DEFAULT_HOSTNAME
@@ -62,7 +72,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         self.assertEqual(ca.issuer_url, "%sissuer/%s.der" % (base_url, parent_serial))
         self.assertEqual(ca.ocsp_url, "%socsp/%s/cert/" % (base_url, ca.serial))
         self.assertEqual(ca.issuer_alt_name, "")
-        self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)
+        self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)    # type: ignore[union-attr]
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
@@ -187,7 +197,9 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
         name = "unknown-extension-type"
         subject = "/CN=%s.example.com" % name
         with self.assertRaisesRegex(ValueError, r"^Cannot add extension of type bool$"):
-            CertificateAuthority.objects.init(name, subject, extra_extensions=[True])
+            CertificateAuthority.objects.init(
+                name, subject, extra_extensions=[True]  # type: ignore[list-item]
+            )
         self.assertEqual(CertificateAuthority.objects.filter(name=name).count(), 0)
 
 
@@ -294,3 +306,27 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
             Certificate.objects.create_cert(
                 ca, csr, subject=subject, add_crl_url=False, add_ocsp_url=False, add_issuer_url=False
             )
+
+
+@unittest.skip("Only for type checkers.")
+class TypingTestCase(unittest.TestCase):
+    def test_get(self) -> CertificateAuthority:
+        return CertificateAuthority.objects.get(pk=1)
+
+    def test_first(self) -> typing.Optional[CertificateAuthority]:
+        return CertificateAuthority.objects.first()
+
+    def test_get_queryset(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.get_queryset()
+
+    def test_all(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.all()
+
+    def test_filter(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.filter()
+
+    def test_exclude(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.exclude()
+
+    def test_get_by_serial_or_cn(self) -> CertificateAuthority:
+        return CertificateAuthority.objects.get_by_serial_or_cn("foo")

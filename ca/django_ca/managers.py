@@ -17,10 +17,13 @@
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Generic
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 from typing import cast
 
@@ -72,6 +75,7 @@ if TYPE_CHECKING:
     from .models import AcmeOrder
     from .models import Certificate
     from .models import CertificateAuthority
+    from .querysets import CertificateAuthorityQuerySet
 
     AcmeAccountManagerBase = models.Manager[AcmeAccount]
     AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]
@@ -80,6 +84,8 @@ if TYPE_CHECKING:
     AcmeOrderManagerBase = models.Manager[AcmeOrder]
     CertificateAuthorityManagerBase = models.Manager[CertificateAuthority]
     CertificateManagerBase = models.Manager[Certificate]
+
+    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", CertificateAuthority, Certificate)
 else:
     AcmeAccountManagerBase = (
         AcmeAuthorizationManagerBase
@@ -88,10 +94,16 @@ else:
     ) = (
         AcmeChallengeManagerBase
     ) = AcmeOrderManagerBase = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
+    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
 
 
-class CertificateManagerMixin:
+class CertificateManagerMixin(Generic[X509CertMixinTypeVar]):
     """Mixin for model managers."""
+
+    if TYPE_CHECKING:
+        # from the queryset
+        def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar:
+            ...
 
     def get_common_extensions(
         self,
@@ -141,8 +153,31 @@ class CertificateManagerMixin:
         return builder
 
 
-class CertificateAuthorityManager(CertificateManagerMixin, CertificateAuthorityManagerBase):
+class CertificateAuthorityManager(
+    CertificateManagerMixin["CertificateAuthority"], CertificateAuthorityManagerBase
+):
     """Model manager for the CertificateAuthority model."""
+
+    if TYPE_CHECKING:
+        # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
+        # and does not know about queryset methods comming from the queryset. We typehint basic queryset
+        # methods here, so that mypy knows that returned objects are querysets.
+        #
+        # The type overrides are because of the return type, as mypy thinks they should return a manager.
+
+        def all(self) -> CertificateAuthorityQuerySet:  # type: ignore[override]
+            ...
+
+        def get_queryset(self) -> CertificateAuthorityQuerySet:
+            ...
+
+        def filter(self, *args: Any, **kwargs: Any) -> CertificateAuthorityQuerySet:  # type: ignore[override]
+            ...
+
+        def exclude(  # type: ignore[override]
+            self, *args: Any, **kwargs: Any
+        ) -> CertificateAuthorityQuerySet:
+            ...
 
     def init(
         self,
@@ -151,14 +186,14 @@ class CertificateAuthorityManager(CertificateManagerMixin, CertificateAuthorityM
         expires: Expires = None,
         algorithm: ParsableHash = None,
         parent: Optional["CertificateAuthority"] = None,
-        default_hostname: Optional[str] = None,
+        default_hostname: Optional[Union[bool, str]] = None,
         pathlen: Optional[int] = None,
         issuer_url: Optional[str] = None,
         issuer_alt_name: Union[str, IssuerAlternativeName] = "",
         crl_url: Optional[Iterable[str]] = None,
         ocsp_url: Optional[str] = None,
         ca_issuer_url: Optional[str] = None,
-        ca_crl_url: Optional[List[str]] = None,
+        ca_crl_url: Optional[Sequence[str]] = None,
         ca_ocsp_url: Optional[str] = None,
         name_constraints: Optional[Union[ParsableExtension, NameConstraints]] = None,
         password: Optional[bytes] = None,
@@ -285,7 +320,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, CertificateAuthorityM
             default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
 
         # If there is a default hostname, use it to compute some URLs from that
-        if default_hostname:
+        if isinstance(default_hostname, str) and default_hostname != "":
             default_hostname = validate_hostname(default_hostname, allow_port=True)
             if parent:
                 root_serial = parent.serial
@@ -435,7 +470,7 @@ class CertificateAuthorityManager(CertificateManagerMixin, CertificateAuthorityM
         return ca
 
 
-class CertificateManager(CertificateManagerMixin, CertificateManagerBase):
+class CertificateManager(CertificateManagerMixin["Certificate"], CertificateManagerBase):
     """Model manager for the Certificate model."""
 
     def create_cert(
