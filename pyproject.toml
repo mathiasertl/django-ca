@@ -54,6 +54,9 @@ max-args=10
 # Maximum number of branch for function / method body (see R0912).
 max-branches=20
 
+# Maximum number of parents for a class (see R0914).
+max-locals = 20
+
 # Maximum number of parents for a class (see R0901).
 max-parents = 15
 
