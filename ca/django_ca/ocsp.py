@@ -13,6 +13,7 @@
 
 """OCSP related functions."""
 
+import typing
 import warnings
 from datetime import timedelta
 
@@ -20,12 +21,13 @@ from django.utils import timezone
 
 from .constants import ReasonFlags
 from .deprecation import RemovedInDjangoCA120Warning
+from .models import CertificateAuthority
 
 # We need a two-letter year, otherwise OCSP doesn't work
 DATE_FORMAT = "%y%m%d%H%M%SZ"
 
 
-def get_index(ca):
+def get_index(ca: CertificateAuthority) -> typing.Iterator[str]:
     """Generate an index suitable for :manpage:`openssl-ocsp(1SSL)`.
 
     This function is used by the ``dump_ocsp_index`` management command.
@@ -51,7 +53,7 @@ def get_index(ca):
         elif cert.revoked:
             status = "R"
 
-            revocation = cert.revoked_date.strftime(DATE_FORMAT)
+            revocation = cert.revoked_date.strftime(DATE_FORMAT)  # type: ignore[union-attr]
             if cert.revoked_reason != ReasonFlags.unspecified.name:
                 revocation += ",%s" % cert.revoked_reason
         else:
