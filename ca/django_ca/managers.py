@@ -101,7 +101,8 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar]):
     """Mixin for model managers."""
 
     if TYPE_CHECKING:
-        # from the queryset
+        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+
         def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar:
             ...
 
@@ -164,19 +165,23 @@ class CertificateAuthorityManager(
         # methods here, so that mypy knows that returned objects are querysets.
         #
         # The type overrides are because of the return type, as mypy thinks they should return a manager.
+        #
+        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
 
-        def all(self) -> CertificateAuthorityQuerySet:  # type: ignore[override]
+        def all(self) -> "CertificateAuthorityQuerySet":  # type: ignore[override]
             ...
 
-        def get_queryset(self) -> CertificateAuthorityQuerySet:
+        def get_queryset(self) -> "CertificateAuthorityQuerySet":
             ...
 
-        def filter(self, *args: Any, **kwargs: Any) -> CertificateAuthorityQuerySet:  # type: ignore[override]
+        def filter(  # type: ignore[override]
+            self, *args: Any, **kwargs: Any
+        ) -> "CertificateAuthorityQuerySet":
             ...
 
         def exclude(  # type: ignore[override]
             self, *args: Any, **kwargs: Any
-        ) -> CertificateAuthorityQuerySet:
+        ) -> "CertificateAuthorityQuerySet":
             ...
 
     def init(
