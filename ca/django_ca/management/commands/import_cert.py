@@ -17,13 +17,16 @@
 """
 
 import argparse
+import typing
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
 from ...models import Certificate
+from ...models import CertificateAuthority
 from ..base import BaseCommand
 
 
@@ -32,13 +35,15 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
 The authority that that signed the certificate must exist in the database."""
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(parser, allow_disabled=False)
         parser.add_argument(
             "pub", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(self, pub, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, pub: typing.BinaryIO, ca: CertificateAuthority, **options: typing.Any
+    ) -> None:
         pub_data = pub.read()
 
         # close reader objects (otherwise we get a ResourceWarning)
@@ -53,6 +58,6 @@ The authority that that signed the certificate must exist in the database."""
             except Exception as ex:
                 raise CommandError("Unable to load public key.") from ex
 
-        cert = Certificate(ca=options["ca"])
+        cert = Certificate(ca=ca)
         cert.x509_cert = pub_loaded
         cert.save()

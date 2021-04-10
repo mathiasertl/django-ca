@@ -16,7 +16,12 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
+from django.core.management.base import CommandParser
+
 from ...models import CertificateAuthority
+from ...querysets import CertificateAuthorityQuerySet
 from ...utils import add_colons
 from ..base import BaseCommand
 
@@ -24,16 +29,16 @@ from ..base import BaseCommand
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "List available certificate authorities."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "-t", "--tree", default=False, action="store_true", help="Output data in a tree view."
         )
 
-    def qs(self, qs):
+    def qs(self, qs: CertificateAuthorityQuerySet) -> CertificateAuthorityQuerySet:
         """Order given queryset appropriately."""
         return qs.order_by("expires", "name")
 
-    def list_ca(self, ca, indent=""):
+    def list_ca(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list line for a given CA."""
 
         text = "%s%s - %s" % (indent, add_colons(ca.serial), ca.name)
@@ -42,7 +47,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         self.stdout.write(text)
 
-    def list_children(self, ca, indent=""):
+    def list_children(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list lines for children of the given CA."""
 
         children = list(enumerate(self.qs(ca.children.all()), 1))
@@ -60,8 +65,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
             self.list_children(child, child_indent)
 
-    def handle(self, **options):  # pylint: disable=arguments-differ
-        if options["tree"]:
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, tree: bool, **options: typing.Any
+    ) -> None:
+        if tree:
             for ca in self.qs(CertificateAuthority.objects.filter(parent__isnull=True)):
                 self.list_ca(ca)
                 self.list_children(ca)

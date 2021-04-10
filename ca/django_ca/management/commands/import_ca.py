@@ -18,6 +18,7 @@
 
 import argparse
 import os
+import typing
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -27,9 +28,9 @@ from cryptography.hazmat.primitives.serialization import PrivateFormat
 
 from django.core.files.base import ContentFile
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
 from ... import ca_settings
-from ...extensions import IssuerAlternativeName
 from ...models import CertificateAuthority
 from ...utils import ca_storage
 from ..actions import PasswordAction
@@ -42,7 +43,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
 
 Note that the private key will be copied to the directory configured by the CA_DIR setting."""
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(
             parser,
             "--parent",
@@ -71,7 +72,18 @@ Note that the private key will be copied to the directory configured by the CA_D
             "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(self, name, key, pem, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self,
+        name: str,
+        key: typing.BinaryIO,
+        pem: typing.BinaryIO,
+        parent: typing.Optional[CertificateAuthority],
+        password: typing.Optional[bytes],
+        import_password: typing.Optional[bytes],
+        issuer_alternative_name: typing.Optional[str],
+        issuer_url: typing.Optional[str],
+        **options: typing.Any
+    ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):
             try:
                 os.makedirs(ca_settings.CA_DIR)
@@ -83,7 +95,6 @@ Note that the private key will be copied to the directory configured by the CA_D
                 ) from ex
             # FileNotFoundError shouldn't happen, whole point of this block is to create it
 
-        import_password = options["import_password"]
         pem_data = pem.read()
         key_data = key.read()
         crl_url = "\n".join(options["crl_url"])
@@ -92,14 +103,13 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
-        issuer_alternative_name = options[IssuerAlternativeName.key]
         if issuer_alternative_name is None:  # pragma: no branch - no CA sets this
             issuer_alternative_name = ""
 
         ca = CertificateAuthority(
             name=name,
-            parent=options["parent"],
-            issuer_url=options["issuer_url"],
+            parent=parent,
+            issuer_url=issuer_url,
             issuer_alt_name=issuer_alternative_name,
             crl_url=crl_url,
         )
@@ -124,18 +134,18 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception as ex:
                 raise CommandError("Unable to load private key.") from ex
 
-        if options["password"] is None:
-            encryption = serialization.NoEncryption()
+        if password is None:
+            encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestAvailableEncryption(options["password"])
+            encryption = serialization.BestAvailableEncryption(password)
 
         # write private key to file
-        pem = key_loaded.private_bytes(
+        pem_as_bytes = key_loaded.private_bytes(
             encoding=Encoding.PEM, format=PrivateFormat.TraditionalOpenSSL, encryption_algorithm=encryption
         )
 
         try:
-            ca_storage.save(ca.private_key_path, ContentFile(pem))
+            ca_storage.save(ca.private_key_path, ContentFile(pem_as_bytes))
         except PermissionError as ex:
             raise CommandError(
                 "%s: Permission denied: Could not open file for writing" % ca.private_key_path

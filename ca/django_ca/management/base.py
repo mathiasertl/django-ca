@@ -307,14 +307,14 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
-    add_extensions_help = None  # concrete classes should set this
+    add_extensions_help = ""  # concrete classes should set this
     sign_extensions = {
         SubjectAlternativeName,
         KeyUsage,
         ExtendedKeyUsage,
         TLSFeature,
     }
-    subject_help = None  # concrete classes should set this
+    subject_help = ""  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> None:
         """Add common arguments for signing certificates."""
@@ -427,8 +427,17 @@ class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base cl
 class CertificateAuthorityDetailMixin:
     """Mixin to add common arguments to init_ca and edit_ca."""
 
-    def add_general_args(self, parser: CommandParser, default: str = "") -> None:
-        """Add some general arguments."""
+    def add_general_args(self, parser: CommandParser, default: typing.Optional[str] = "") -> None:
+        """Add some general arguments.
+
+        Parameters
+        ----------
+
+        parser : CommandParser
+        default : str, optional
+            Default value for arguments. Pass ``None`` if you want to be able to know if the value was passed
+            or not.
+        """
 
         group = parser.add_argument_group("General", "General information about the CA.")
         group.add_argument("--caa", default=default, metavar="NAME", help="CAA record for this CA.")

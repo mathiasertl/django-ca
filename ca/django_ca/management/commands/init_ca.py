@@ -18,15 +18,21 @@
 
 import os
 import pathlib
+import typing
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ...extensions import NameConstraints
 from ...models import CertificateAuthority
+from ...subject import Subject
 from ...tasks import cache_crl
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
@@ -43,7 +49,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
 
     help = "Create a certificate authority."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_general_args(parser)
         self.add_algorithm(parser)
 
@@ -167,7 +173,32 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
 
         self.add_ca_args(parser)
 
-    def handle(self, name, subject, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self,
+        name: str,
+        subject: Subject,
+        parent: typing.Optional[CertificateAuthority],
+        expires: timedelta,
+        key_size: int,
+        key_type: typing.Literal["RSA", "DSA", "ECC"],
+        ecc_curve: typing.Optional[ec.EllipticCurve],
+        algorithm: hashes.HashAlgorithm,
+        pathlen: typing.Optional[int],
+        password: typing.Optional[bytes],
+        parent_password: typing.Optional[bytes],
+        crl_url: typing.List[str],
+        ocsp_url: typing.Optional[str],
+        issuer_url: typing.Optional[str],
+        ca_crl_url: typing.List[str],
+        ca_ocsp_url: typing.Optional[str],
+        ca_issuer_url: typing.Optional[str],
+        permit_name: typing.List[str],
+        exclude_name: typing.List[str],
+        caa: str,
+        website: str,
+        tos: str,
+        **options: typing.Any
+    ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
@@ -177,39 +208,31 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
         #
         # The reasoning is simple: When issuing the child CA, the default is automatically after that of the
         # parent if it wasn't issued on the same day.
-        parent = options["parent"]
-        if parent and timezone.now() + options["expires"] > parent.expires:
-            options["expires"] = parent.expires
+        if parent and timezone.now() + expires > parent.expires:
+            expires = parent.expires  # type: ignore[assignment]
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to pathlen restrictions.")
-        if not parent and options["ca_crl_url"]:
+        if not parent and ca_crl_url:
             raise CommandError("CRLs cannot be used to revoke root CAs.")
-        if not parent and options["ca_ocsp_url"]:
+        if not parent and ca_ocsp_url:
             raise CommandError("OCSP cannot be used to revoke root CAs.")
 
         # See if we can work with the private key
         if parent:
-            self.test_private_key(parent, options["parent_password"])
+            self.test_private_key(parent, parent_password)
 
         # Set CommonName to name if not set in subject
         if "CN" not in subject:
             subject["CN"] = name
 
-        name_constraints = NameConstraints(
-            {
-                "value": {
-                    "permitted": options["permit_name"],
-                    "excluded": options["exclude_name"],
-                }
-            }
-        )
+        name_constraints = NameConstraints({"value": {"permitted": permit_name, "excluded": exclude_name}})
 
         issuer_alternative_name = options[IssuerAlternativeName.key]
         if issuer_alternative_name is None:
             issuer_alternative_name = ""
 
         kwargs = {}
-        for opt in ["path", "parent", "default_hostname"]:
+        for opt in ["path", "default_hostname"]:
             if options[opt] is not None:
                 kwargs[opt] = options[opt]
 
@@ -221,32 +244,33 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
 
         try:
             ca = CertificateAuthority.objects.init(
-                key_size=options["key_size"],
-                key_type=options["key_type"],
-                ecc_curve=options["ecc_curve"],
-                algorithm=options["algorithm"],
-                expires=options["expires"],
-                pathlen=options["pathlen"],
-                issuer_url=options["issuer_url"],
-                issuer_alt_name=",".join(issuer_alternative_name),
-                crl_url=options["crl_url"],
-                ocsp_url=options["ocsp_url"],
-                ca_issuer_url=options["ca_issuer_url"],
-                ca_crl_url=options["ca_crl_url"],
-                ca_ocsp_url=options["ca_ocsp_url"],
-                name_constraints=name_constraints,
                 name=name,
                 subject=subject,
-                password=options["password"],
-                parent_password=options["parent_password"],
-                caa=options["caa"],
-                website=options["website"],
-                terms_of_service=options["tos"],
+                expires=expires,
+                algorithm=algorithm,
+                parent=parent,
+                pathlen=pathlen,
+                issuer_url=issuer_url,
+                issuer_alt_name=",".join(issuer_alternative_name),
+                crl_url=crl_url,
+                ocsp_url=ocsp_url,
+                ca_issuer_url=ca_issuer_url,
+                ca_crl_url=ca_crl_url,
+                ca_ocsp_url=ca_ocsp_url,
+                name_constraints=name_constraints,
+                password=password,
+                parent_password=parent_password,
+                ecc_curve=ecc_curve,
+                key_type=key_type,
+                key_size=key_size,
+                caa=caa,
+                website=website,
+                terms_of_service=tos,
                 **kwargs
             )
         except Exception as ex:
             raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs
-        run_task(generate_ocsp_key, serial=ca.serial, password=options["password"])
-        run_task(cache_crl, serial=ca.serial, password=options["password"])
+        run_task(generate_ocsp_key, serial=ca.serial, password=password)
+        run_task(cache_crl, serial=ca.serial, password=password)

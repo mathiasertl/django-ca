@@ -20,6 +20,11 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
+from django.core.management.base import CommandParser
+
+from ...models import CertificateAuthority
 from ...ocsp import get_index
 from ..base import BaseCommand
 
@@ -27,13 +32,15 @@ from ..base import BaseCommand
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Write an OCSP index file."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(parser, allow_disabled=True)
         parser.add_argument(
             "path", type=str, default="-", nargs="?", help="Where to write the index (default: stdout)"
         )
 
-    def handle(self, ca, path, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, ca: CertificateAuthority, path: str, **options: typing.Any
+    ) -> None:
         if path == "-":
             for line in get_index(ca):
                 self.stdout.write(line)

@@ -16,18 +16,23 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
 from ..base import BaseCommand
+from ..base import BinaryOutputWrapper
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Write the certificate revocation list (CRL)."
     binary_output = True
+    stdout: BinaryOutputWrapper
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "-e",
             "--expires",
@@ -57,7 +62,9 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.add_password(parser)
         super().add_arguments(parser)
 
-    def handle(self, path: str, encoding: Encoding, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, path: str, encoding: Encoding, **options: typing.Any
+    ) -> None:
         if options["ca_crl"]:
             self.stderr.write(self.style.WARNING("WARNING: --ca-crl is deprecated, use --scope=ca instead."))
             options["scope"] = "ca"

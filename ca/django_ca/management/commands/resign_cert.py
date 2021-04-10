@@ -16,9 +16,13 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+from datetime import timedelta
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
 from ... import ca_settings
 from ...extensions import ExtendedKeyUsage
@@ -28,7 +32,9 @@ from ...extensions import TLSFeature
 from ...management.actions import CertificateAction
 from ...management.base import BaseSignCommand
 from ...models import Certificate
+from ...models import CertificateAuthority
 from ...models import Watcher
+from ...subject import Subject
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -41,28 +47,33 @@ default profile, currently %s."""
     add_extensions_help = "TODO"
     subject_help = "TODO"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_base_args(parser, no_default_ca=True)
         parser.add_argument(
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
 
-    def handle(self, **options):  # pylint: disable=arguments-differ
-        cert = options["cert"]
-        ca = options["ca"]
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self,
+        cert: Certificate,
+        ca: typing.Optional[CertificateAuthority],
+        subject: typing.Optional[Subject],
+        expires: timedelta,
+        watch: typing.List[str],
+        password: typing.Optional[bytes],
+        **options: typing.Any
+    ) -> None:
         if not ca:
-            ca = options["ca"] = cert.ca
-        self.test_options(**options)
+            ca = cert.ca
+        self.test_options(ca=ca, password=password, expires=expires, **options)
 
         # get list of watchers
-        if options["watch"]:
-            watchers = [Watcher.from_addr(addr) for addr in options["watch"]]
+        if watch:
+            watchers = [Watcher.from_addr(addr) for addr in watch]
         else:
             watchers = list(cert.watchers.all())
 
-        if options["subject"]:
-            subject = options["subject"]
-        else:
+        if subject is None:
             subject = cert.subject
 
         if not options[KeyUsage.key]:
@@ -86,23 +97,11 @@ default profile, currently %s."""
             san = options[SubjectAlternativeName.key]
 
         kwargs = {
-            "subject": subject,
-            "password": options["password"],
-            "csr_format": Encoding.PEM,
-            "key_usage": key_usage,
-            "extended_key_usage": ext_key_usage,
-            "tls_feature": tls_feature,
-            "algorithm": options["algorithm"],
-            "expires": options["expires"],
-            "subject_alternative_name": san,
-            "cn_in_san": False,
-        }
-        kwargs = {
             "algorithm": options["algorithm"],
             "csr_format": Encoding.PEM,
-            "expires": options["expires"],
+            "expires": expires,
             "extensions": [],
-            "password": options["password"],
+            "password": password,
             "subject": subject,
             "cn_in_san": False,  # we already copy the SAN/CN from the original cert
         }

@@ -16,8 +16,13 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
+from django.core.management.base import CommandParser
+
 from ... import ca_settings
 from ...extensions import IssuerAlternativeName
+from ...models import CertificateAuthority
 from ..base import BaseCommand
 from ..base import CertificateAuthorityDetailMixin
 
@@ -25,7 +30,7 @@ from ..base import CertificateAuthorityDetailMixin
 class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
     help = "Edit a certificate authority."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_general_args(parser, default=None)
         self.add_ca(parser, "ca", allow_disabled=True)
         self.add_acme_group(parser)
@@ -43,7 +48,9 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
             "--disable", action="store_false", dest="enabled", help="Disable the certificate authority."
         )
 
-    def handle(self, ca, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, ca: CertificateAuthority, **options: typing.Any
+    ) -> None:
         if options["issuer_url"] is not None:
             ca.issuer_url = options["issuer_url"]
         if options[IssuerAlternativeName.key]:

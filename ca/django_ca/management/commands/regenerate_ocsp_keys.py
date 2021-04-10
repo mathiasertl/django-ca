@@ -16,9 +16,14 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 
 from ... import ca_settings
 from ...models import CertificateAuthority
@@ -32,7 +37,7 @@ from ..base import BaseCommand
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Regenerate OCSP keys."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "serial",
             nargs="*",
@@ -57,9 +62,20 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(self, **options):  # pylint: disable=arguments-differ
-        serials = options["serial"]
-        profile = options["profile"] or "ocsp"
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self,
+        serials: typing.Iterable[str],
+        profile: typing.Optional[str],
+        expires: timedelta,
+        algorithm: hashes.HashAlgorithm,
+        ecc_curve: ec.EllipticCurve,
+        key_size: int,
+        key_type: typing.Literal["RSA", "DSA", "ECC"],
+        password: typing.Optional[bytes],
+        quiet: bool,
+        **options: typing.Any
+    ) -> None:
+        profile = profile or "ocsp"
 
         # Check if the profile exists. Note that this shouldn't really happen, since valid parameters match
         # existing profiles. The only case is when the user undefines the "ocsp" profile, which is the
@@ -80,8 +96,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 continue
 
             if not ca.key_exists:
-                if options["quiet"] is False:  # pragma: no branch
-                    # NOTE: coverage falsely identifies the above condition to always be false.
+                if quiet is False:
                     self.stderr.write(self.style.WARNING("%s: CA has no private key." % hr_serial))
 
                 continue
@@ -90,10 +105,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 generate_ocsp_key,
                 ca.serial,
                 profile=profile,
-                expires=options["expires"],
-                algorithm=options["algorithm"],
-                key_size=options["key_size"],
-                key_type=options["key_type"],
-                ecc_curve=options["ecc_curve"],
-                password=options["password"],
+                expires=expires,
+                algorithm=algorithm,
+                key_size=key_size,
+                key_type=key_type,
+                ecc_curve=ecc_curve,
+                password=password,
             )
