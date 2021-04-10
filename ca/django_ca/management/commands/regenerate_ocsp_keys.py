@@ -97,7 +97,8 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 continue
 
             if not ca.key_exists:
-                if quiet is False:
+                if quiet is False:  # pragma: no branch
+                    # NOTE: coverage falsely identifies the above condition to always be false.
                     self.stderr.write(self.style.WARNING("%s: CA has no private key." % hr_serial))
 
                 continue
