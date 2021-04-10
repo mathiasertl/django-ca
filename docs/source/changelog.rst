@@ -12,6 +12,7 @@ ChangeLog
 
 This version is currently under development.
 
+* Add support for Django 3.2.
 * Stop loading ``localsetttings.py`` from the same location as ``settings.py``.
 * Properly check permissions when resigning certificates.
 * Require the ``change certificate`` permission when revoking certificates.
