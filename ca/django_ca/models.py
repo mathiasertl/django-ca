@@ -725,7 +725,9 @@ class X509CertMixin(DjangoCAModelMixin, models.Model):
 class CertificateAuthority(X509CertMixin):
     """Model representing a x509 Certificate Authority."""
 
-    objects = CertificateAuthorityManager.from_queryset(CertificateAuthorityQuerySet)()
+    objects: CertificateAuthorityManager = CertificateAuthorityManager.from_queryset(
+        CertificateAuthorityQuerySet
+    )()
 
     name = models.CharField(max_length=32, help_text=_("A human-readable name"), unique=True)
     """Human-readable name of the CA, only used for displaying the CA."""
@@ -1013,7 +1015,7 @@ class CertificateAuthority(X509CertMixin):
         self, scope: Literal[None, "ca", "user", "attribute"], now: datetime
     ) -> Iterable[X509CertMixin]:
         """Get CRLs for the given scope."""
-        ca_qs = cast(CertificateAuthorityQuerySet, self.children.filter(expires__gt=now)).revoked()
+        ca_qs = self.children.filter(expires__gt=now).revoked()
         cert_qs = cast(CertificateQuerySet, self.certificate_set.filter(expires__gt=now)).revoked()
 
         if scope == "ca":
