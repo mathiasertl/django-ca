@@ -46,4 +46,4 @@ jobs:
         run: python dev.py code-quality
 
       - name: Run pylint
-        run: pylint --disable=fixme --verbose ca/django_ca/
+        run: pylint --verbose ca/django_ca/

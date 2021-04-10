@@ -48,7 +48,7 @@ jobs:
         - pip install -r requirements/requirements-lint.txt
         # pylint throws import-error, otherwise, but only on Travis
         - pip install typing-extensions
-        - pylint --disable=fixme ca/django_ca/
+        - pylint ca/django_ca/
      # cryptography typing is completely broken in 3.4
 #    - name: "Run mypy"
 #      script:

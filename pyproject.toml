@@ -83,7 +83,7 @@ disable = [
     #   https://github.com/landscapeio/landscape-issues/issues/214
     "cyclic-import",
 
-    # pylint==2.7.2 has problems with generic types:
+    # pylint==2.7.4 has problems with generic types:
     #   https://github.com/PyCQA/pylint/issues/3882
     #   https://github.com/PyCQA/pylint/issues/2822
     "unsubscriptable-object",
@@ -91,6 +91,7 @@ disable = [
     # These are just annoying
     "too-few-public-methods",
     "no-self-use",
+    "fixme",
 
     # covered by isort:
     "wrong-import-order",
