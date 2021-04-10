@@ -112,32 +112,15 @@ def test(suites):
     """Run named test suites (or all of them)."""
     # pylint: disable=import-outside-toplevel; imported here so that script runs without django
     from django.core.management import call_command  # pylint: disable=redefined-outer-name
-    from django.utils import deprecation
 
     # pylint: enable=import-outside-toplevel
 
     if not args.virtual_display:
         os.environ["VIRTUAL_DISPLAY"] = "n"
 
-    warnings.filterwarnings(action="always")
-    warnings.filterwarnings(action="error", module="django_ca")
-
-    # ignore this warning in some modules to get cleaner output
-
-    # filter some webtest warnings
-    msg2 = r"urllib.parse.splithost\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead"
-    msg3 = r"urllib.parse.splittype\(\) is deprecated as of 3.8, use urllib.parse.urlparse\(\) instead"
-    warnings.filterwarnings(action="ignore", category=DeprecationWarning, module="webtest.*", message=msg2)
-    warnings.filterwarnings(action="ignore", category=DeprecationWarning, module="webtest.*", message=msg3)
-
-    # At present, some libraries are not yet updated.
-    if hasattr(deprecation, "RemovedInDjango40Warning"):  # pragma: django<=3.0
-        warnings.filterwarnings(
-            action="ignore",
-            category=deprecation.RemovedInDjango40Warning,
-            module="django_object_actions.utils",
-            message=r"^django\.conf\.urls\.url\(\) is deprecated in favor of django\.urls\.re_path\(\)\.$",
-        )
+    # Set up warnings
+    warnings.filterwarnings(action="always")  # print all warnings
+    warnings.filterwarnings(action="error", module="django_ca")  # turn our warnings into errors
 
     os.chdir(CADIR)
     sys.path.insert(0, CADIR)
