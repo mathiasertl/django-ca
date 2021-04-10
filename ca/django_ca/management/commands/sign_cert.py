@@ -16,15 +16,22 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+from datetime import timedelta
+
+from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
+from ...extensions import Extension
 from ...extensions import SubjectAlternativeName
 from ...management.base import BaseSignCommand
 from ...models import Certificate
+from ...models import CertificateAuthority
 from ...models import Watcher
 from ...subject import Subject
 
@@ -44,7 +51,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             --profile. The --subject option allows you to name a CommonName (which is not usually
             in the defaults) and override any default values."""
 
-    def add_cn_in_san(self, parser):
+    def add_cn_in_san(self, parser: CommandParser) -> None:
         """Add argument group for the CommonName-in-SubjectAlternativeName options."""
         default = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
 
@@ -71,7 +78,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             help="Add the CommonName as subjectAlternativeName%s." % (" (default)" if default else ""),
         )
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_base_args(parser)
         self.add_cn_in_san(parser)
 
@@ -92,55 +99,71 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(self, encoding: Encoding, **options):  # pylint: disable=arguments-differ
-        ca = options["ca"]
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ,too-many-arguments
+        self,
+        ca: CertificateAuthority,
+        subject: typing.Optional[Subject],
+        expires: timedelta,
+        watch: typing.List[str],
+        password: typing.Optional[bytes],
+        encoding: Encoding,
+        cn_in_san: bool,
+        csr: typing.Optional[str],
+        profile: typing.Optional[str],
+        out: typing.Optional[str],
+        **options: typing.Any
+    ) -> None:
         if ca.expires < timezone.now():
             raise CommandError("Certificate Authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
-        self.test_options(**options)
+        self.test_options(ca=ca, expires=expires, password=password, **options)
+        subject = subject or Subject()
 
         # get list of watchers
-        watchers = [Watcher.from_addr(addr) for addr in options["watch"]]
+        watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # get extensions based on profiles
-        kwargs = {
-            "cn_in_san": options["cn_in_san"],
-            "csr_format": encoding,
-            # TODO: since expires option has a default, it currently overrides profile values
-            "expires": options["expires"],
-            "extensions": [],
-            "password": options["password"],
-            "subject": options["subject"] or Subject(),
-        }
+        extensions: typing.List[Extension[x509.ExtensionType, typing.Any, typing.Any]] = []
 
         for ext in self.sign_extensions:
             if options[ext.key]:
-                kwargs["extensions"].append(options[ext.key])
+                extensions.append(options[ext.key])
 
-        if "CN" not in kwargs["subject"] and not options[SubjectAlternativeName.key]:
+        if "CN" not in subject and not options[SubjectAlternativeName.key]:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Read the CSR
-        if options["csr"] is None:
+        if csr is None:
             self.stdout.write("Please paste the CSR:")
             csr = ""
             while not csr.endswith("-----END CERTIFICATE REQUEST-----\n"):
                 csr += "%s\n" % input()
             csr = csr.strip()
         else:
-            with open(options["csr"], "rb") as stream:
+            with open(csr, "rb") as stream:
                 csr = stream.read()
 
         try:
-            cert = Certificate.objects.create_cert(ca, csr, profile=options["profile"], **kwargs)
+            cert = Certificate.objects.create_cert(
+                ca,
+                csr,
+                profile=profile,
+                cn_in_san=cn_in_san,
+                csr_format=encoding,
+                # TODO: since expires option has a default, it currently overrides profile values
+                expires=expires,
+                extensions=extensions,
+                password=password,
+                subject=subject,
+            )
         except Exception as ex:
             raise CommandError(ex) from ex
 
         cert.watchers.add(*watchers)
 
-        if options["out"]:
-            with open(options["out"], "w") as stream:
+        if out:
+            with open(out, "w") as stream:
                 stream.write(cert.pub)
         else:
             self.stdout.write(cert.pub)

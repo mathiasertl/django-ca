@@ -16,8 +16,13 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from django.core.management.base import CommandError
+import typing
 
+from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
+
+from ...constants import ReasonFlags
+from ...models import Certificate
 from ..actions import ReasonAction
 from ..base import CertCommand
 
@@ -26,12 +31,14 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
     allow_revoked = True
     help = "Revoke a certificate."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("--reason", action=ReasonAction, help="An optional reason for revokation.")
         super().add_arguments(parser)
 
-    def handle(self, cert, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, cert: Certificate, reason: ReasonFlags, **options: typing.Any
+    ) -> None:
         if cert.revoked:
             raise CommandError("%s: Certificate is already revoked." % cert.serial)
 
-        cert.revoke(reason=options.get("reason"))
+        cert.revoke(reason=reason)
