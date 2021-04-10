@@ -15,9 +15,8 @@
 
 import os
 import re
+import typing
 from datetime import timedelta
-from typing import Any
-from typing import Dict
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -35,7 +34,7 @@ else:
 
 CA_DEFAULT_KEY_SIZE: int = getattr(settings, "CA_DEFAULT_KEY_SIZE", 4096)
 
-CA_PROFILES: Dict[str, Dict[str, Any]] = {
+CA_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = {
     "client": {
         # see: http://security.stackexchange.com/questions/68491/
         "description": _("A certificate for a client."),
@@ -200,7 +199,7 @@ CA_NOTIFICATION_DAYS = getattr(
     ],
 )
 CA_CRL_PROFILES = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
-CA_PASSWORDS: Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
+CA_PASSWORDS: typing.Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
 
 # ACME settings
 ACME_ORDER_VALIDITY: timedelta = getattr(settings, "CA_ACME_ORDER_VALIDITY", timedelta(hours=1))
@@ -211,7 +210,7 @@ ACME_DEFAULT_CERT_VALIDITY = getattr(settings, "CA_ACME_DEFAULT_CERT_VALIDITY", 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, "CA_MIN_KEY_SIZE", 2048)
 
-CA_DEFAULT_HOSTNAME = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
+CA_DEFAULT_HOSTNAME: typing.Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
 
 _CA_DIGEST_ALGORITHM = getattr(settings, "CA_DIGEST_ALGORITHM", "sha512").strip().upper()
 try:
