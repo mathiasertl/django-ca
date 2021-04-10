@@ -314,6 +314,7 @@ class TypingTestCase(unittest.TestCase):
 
     Note that none of these tests are designed to ever be executed.
     """
+
     # pylint: disable=missing-function-docstring
 
     def test_get(self) -> CertificateAuthority:
