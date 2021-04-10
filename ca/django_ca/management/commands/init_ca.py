@@ -173,7 +173,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
 
         self.add_ca_args(parser)
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ,too-many-arguments,too-many-locals # noqa: E501
         self,
         name: str,
         subject: Subject,
