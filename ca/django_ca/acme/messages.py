@@ -29,6 +29,9 @@ else:
     IdentifiersType = jose.Field
 
 
+identifiers_decoder = messages.Order._fields["identifiers"].fdec  # pylint: disable=no-member; false positive
+
+
 class Order(messages.Order):
     """An object describing an ACME order.
 
@@ -51,8 +54,6 @@ class NewOrder(messages.ResourceBody):
 
     resource_type = messages.NewOrder.resource_type
 
-    identifiers: IdentifiersType = jose.Field(
-        "identifiers", omitempty=False, decoder=messages.Order._fields["identifiers"].fdec
-    )
+    identifiers: IdentifiersType = jose.Field("identifiers", omitempty=False, decoder=identifiers_decoder)
     not_before = fields.RFC3339Field("notBefore", omitempty=True)
     not_after = fields.RFC3339Field("notAfter", omitempty=True)
