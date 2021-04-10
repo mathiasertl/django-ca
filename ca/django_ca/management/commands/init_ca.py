@@ -36,6 +36,7 @@ from ...subject import Subject
 from ...tasks import cache_crl
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
+from ...typehints import ParsableKeyType
 from ..actions import ExpiresAction
 from ..actions import MultipleURLAction
 from ..actions import PasswordAction
@@ -180,7 +181,7 @@ class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=
         parent: typing.Optional[CertificateAuthority],
         expires: timedelta,
         key_size: int,
-        key_type: typing.Literal["RSA", "DSA", "ECC"],
+        key_type: ParsableKeyType,
         ecc_curve: typing.Optional[ec.EllipticCurve],
         algorithm: hashes.HashAlgorithm,
         pathlen: typing.Optional[int],

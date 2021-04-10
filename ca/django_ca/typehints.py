@@ -69,7 +69,7 @@ PrivateKeyTypes = Union[
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
-ParsableKeyType = Optional[Literal["RSA", "DSA", "ECC"]]
+ParsableKeyType = Literal["RSA", "DSA", "ECC"]
 ParsableKeyCurve = Optional[Union[ec.EllipticCurve, str]]
 ParsableSubject = Union[
     str,

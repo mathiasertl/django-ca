@@ -29,6 +29,7 @@ from ... import ca_settings
 from ...models import CertificateAuthority
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
+from ...typehints import ParsableKeyType
 from ...utils import add_colons
 from ..actions import ExpiresAction
 from ..base import BaseCommand
@@ -71,7 +72,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         algorithm: hashes.HashAlgorithm,
         ecc_curve: ec.EllipticCurve,
         key_size: int,
-        key_type: typing.Literal["RSA", "DSA", "ECC"],
+        key_type: ParsableKeyType,
         password: typing.Optional[bytes],
         quiet: bool,
         **options: typing.Any
