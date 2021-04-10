@@ -310,6 +310,12 @@ class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
 
 @unittest.skip("Only for type checkers.")
 class TypingTestCase(unittest.TestCase):
+    """Test case to create some code that would show an error in type checkers if type hinting is wrong.
+
+    Note that none of these tests are designed to ever be executed.
+    """
+    # pylint: disable=missing-function-docstring
+
     def test_get(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get(pk=1)
 
