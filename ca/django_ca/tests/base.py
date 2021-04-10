@@ -86,6 +86,7 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_create_ca
 from ..subject import Subject
+from ..typehints import ParsableSubject
 from ..utils import add_colons
 from ..utils import ca_storage
 from ..utils import x509_name
@@ -483,12 +484,12 @@ VQIDAQAB
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
 
-    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.cas = {}
         self.certs = {}
 
-    def tearDown(self):  # pylint: disable=invalid-name,missing-function-docstring
+    def tearDown(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().tearDown()
         cache.clear()
 
@@ -614,8 +615,12 @@ VQIDAQAB
             yield
 
     def assertExtensions(  # pylint: disable=invalid-name
-        self, cert, extensions, signer=None, expect_defaults=True
-    ):
+        self,
+        cert: X509CertMixin,
+        extensions: typing.Sequence[Extension[typing.Any, typing.Any, typing.Any]],
+        signer: typing.Optional[CertificateAuthority] = None,
+        expect_defaults: bool = True,
+    ) -> None:
         """Assert that `cert` has the given extensions."""
         extensions = {e.key: e for e in extensions}
 
@@ -770,7 +775,9 @@ VQIDAQAB
         store_ctx = X509StoreContext(store, cert)
         self.assertIsNone(store_ctx.verify_certificate())
 
-    def assertSubject(self, cert, expected):  # pylint: disable=invalid-name
+    def assertSubject(  # pylint: disable=invalid-name
+        self, cert: X509CertMixin, expected: typing.Union[Subject, ParsableSubject]
+    ) -> None:
         """Assert the subject of `cert` matches `expected`."""
         if not isinstance(expected, Subject):
             expected = Subject(expected)
@@ -783,7 +790,7 @@ VQIDAQAB
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
 
-    def cmd(self, *args, **kwargs):
+    def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
         """Call to a manage.py command using call_command."""
         kwargs.setdefault("stdout", StringIO())
         kwargs.setdefault("stderr", StringIO())
@@ -793,7 +800,13 @@ VQIDAQAB
             call_command(*args, **kwargs)
         return kwargs["stdout"].getvalue(), kwargs["stderr"].getvalue()
 
-    def cmd_e2e(self, cmd, stdin=None, stdout=None, stderr=None):
+    def cmd_e2e(
+        self,
+        cmd: typing.Sequence[str],
+        stdin: typing.Optional[StringIO] = None,
+        stdout: typing.Optional[StringIO] = None,
+        stderr: typing.Optional[StringIO] = None,
+    ) -> typing.Tuple[str, str]:
         """Call a management command the way manage.py does.
 
         Unlike call_command, this method also tests the argparse configuration of the called command.
@@ -890,7 +903,7 @@ VQIDAQAB
             ctx["key_path"] = ca_storage.path(certs[name]["key_filename"])
         return ctx
 
-    def get_idp_full_name(self, ca):
+    def get_idp_full_name(self, ca: CertificateAuthority) -> typing.List[x509.UniformResourceIdentifier]:
         """Get the IDP full name for `ca`."""
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
@@ -927,7 +940,14 @@ VQIDAQAB
         return now + timedelta(days + 1)
 
     @classmethod
-    def load_ca(cls, name, parsed, enabled=True, parent=None, **kwargs):
+    def load_ca(
+        cls,
+        name: str,
+        parsed: x509.Certificate,
+        enabled: bool = True,
+        parent: typing.Optional[CertificateAuthority] = None,
+        **kwargs: typing.Any
+    ):
         """Load a CA from one of the preloaded files."""
         path = "%s.key" % name
 
@@ -964,14 +984,18 @@ VQIDAQAB
         return cert
 
     @classmethod
-    def load_cert(cls, ca, parsed, csr="", profile=""):
+    def load_cert(
+        cls, ca: CertificateAuthority, parsed: x509.Certificate, csr: str = "", profile: str = ""
+    ) -> Certificate:
         """Load a certificate from the given data."""
         cert = Certificate(ca=ca, csr=csr, profile=profile)
         cert.x509_cert = parsed
         cert.save()
         return cert
 
-    def create_superuser(self, username="admin", password="admin", email="user@example.com"):
+    def create_superuser(
+        self, username: str = "admin", password: str = "admin", email: str = "user@example.com"
+    ) -> User:
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
 
@@ -988,7 +1012,7 @@ VQIDAQAB
         self.cas["child"].save()
         self.usable_cas = self.cas
 
-    def load_all_cas(self):
+    def load_all_cas(self) -> None:
         """Load all known CAs."""
         self.cas.update(
             {
@@ -1003,7 +1027,7 @@ VQIDAQAB
             name: ca for name, ca in self.cas.items() if certs[name]["key_filename"] is not False
         }
 
-    def load_generated_certs(self):
+    def load_generated_certs(self) -> None:
         """Load certificates created as fixture data."""
         for name, data in [
             (k, v)
@@ -1021,7 +1045,7 @@ VQIDAQAB
             if k in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]
         }
 
-    def load_all_certs(self):
+    def load_all_certs(self) -> None:
         """Load all known certs."""
         for name, data in [(k, v) for k, v in certs.items() if v["type"] == "cert" and k not in self.certs]:
             ca = self.cas[data["ca"]]
@@ -1037,7 +1061,7 @@ VQIDAQAB
         }
 
     @contextmanager
-    def patch(self, *args, **kwargs):
+    def patch(self, *args: typing.Any, **kwargs: typing.Any) -> MagicMock:
         """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with patch(*args, **kwargs) as mock:
             yield mock
