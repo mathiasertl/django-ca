@@ -58,7 +58,7 @@ class BinaryOutputWrapper(OutputWrapper):
 
     def write(  # type: ignore[override]
         self,
-        msg: bytes = b"",
+        msg: typing.AnyStr = b"",
         style_func: typing.Optional[typing.Callable[..., typing.Any]] = None,
         ending: typing.Optional[bytes] = None,
     ) -> None:

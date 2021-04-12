@@ -16,11 +16,16 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
 from datetime import datetime
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.core.management.base import CommandParser
+
+from ...models import Certificate
 from ...utils import parse_hash_algorithm
+from ..base import BinaryOutputWrapper
 from ..base import CertCommand
 
 
@@ -28,8 +33,9 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
     binary_output = True
     allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
+    stdout: BinaryOutputWrapper
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "-n",
             "--no-pem",
@@ -47,7 +53,9 @@ class Command(CertCommand):  # pylint: disable=missing-class-docstring
         self.add_format(parser)
         super().add_arguments(parser)
 
-    def handle(self, cert, encoding: Encoding, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, cert: Certificate, encoding: Encoding, **options: typing.Any
+    ) -> None:
         self.stdout.write("Common Name: %s" % cert.cn)
 
         # self.stdout.write notBefore/notAfter

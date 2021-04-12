@@ -16,11 +16,13 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
@@ -30,12 +32,14 @@ from ...models import Certificate
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "Send notifications about expiring certificates to watchers."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "--days", type=int, default=14, help="Warn DAYS days ahead of time (default: %(default)s)."
         )
 
-    def handle(self, *args, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, **options: typing.Any
+    ) -> None:
         now = timezone.now()
         expires = now + timedelta(days=options["days"] + 1)  # add a day to avoid one-of errors
 

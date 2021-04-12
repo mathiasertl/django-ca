@@ -16,7 +16,12 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import typing
+
+from django.core.management.base import CommandParser
+
 from ... import ca_settings
+from ...models import CertificateAuthority
 from ...utils import add_colons
 from ...utils import ca_storage
 from ..base import BaseCommand
@@ -25,10 +30,12 @@ from ..base import BaseCommand
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = "View details of a certificate authority."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
 
-    def handle(self, ca, **options):  # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, ca: CertificateAuthority, **options: typing.Any
+    ) -> None:
         try:
             path = ca_storage.path(ca.private_key_path)
         except NotImplementedError:
@@ -58,9 +65,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         else:
             self.stdout.write("* Has no children.")
 
-        pathlen = ca.pathlen
-        if pathlen is None:
+        if ca.pathlen is None:
             pathlen = "unlimited"
+        else:
+            pathlen = str(ca.pathlen)
 
         self.stdout.write("* Distinguished Name: %s" % ca.distinguished_name)
         self.stdout.write("* Maximum levels of sub-CAs (pathlen): %s" % pathlen)
