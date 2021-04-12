@@ -337,3 +337,9 @@ class TypingTestCase(unittest.TestCase):
 
     def test_get_by_serial_or_cn(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get_by_serial_or_cn("foo")
+
+    def test_default(self) -> CertificateAuthority:
+        return CertificateAuthority.objects.default()
+
+    def test_usable(self) -> CertificateAuthority:
+        return CertificateAuthority.objects.usable()

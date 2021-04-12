@@ -184,6 +184,13 @@ class CertificateAuthorityManager(
         ) -> "CertificateAuthorityQuerySet":
             ...
 
+        # queryset methods
+        def default(self) -> "CertificateAuthority":
+            ...
+
+        def usable(self) -> "CertificateAuthorityQuerySet":
+            ...
+
     def init(
         self,
         name: str,
