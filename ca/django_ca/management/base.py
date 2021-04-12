@@ -308,7 +308,16 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: typing.Set[Extension[x509.ExtensionType, typing.Any, typing.Any]] = {
+    sign_extensions: typing.Set[
+        typing.Type[
+            typing.Union[
+                TLSFeature,
+                SubjectAlternativeName,
+                KeyUsage,
+                ExtendedKeyUsage,
+            ]
+        ]
+    ] = {
         SubjectAlternativeName,
         KeyUsage,
         ExtendedKeyUsage,
