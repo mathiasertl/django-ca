@@ -138,8 +138,11 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         # Read the CSR
         if csr_path == "-":
-            self.stdout.write("Please paste the CSR (press CTRL+D when finished):")
-            csr = sys.stdin.read()
+            self.stdout.write("Please paste the CSR:")
+            csr = b""
+            while not csr.endswith(b"-----END CERTIFICATE REQUEST-----\n"):
+                csr += b"%s\n" % input().encode("utf-8")
+            csr = csr.strip()
         else:
             with open(csr_path, 'rb') as stdin_stream:
                 csr = stdin_stream.read()
