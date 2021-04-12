@@ -16,6 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import sys
 import typing
 from datetime import timedelta
 
@@ -84,6 +85,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         parser.add_argument(
             "--csr",
+            dest="csr_path",
+            default="-",
             metavar="FILE",
             help="The path to the certificate to sign, if ommitted, you will be be prompted.",
         )
@@ -108,7 +111,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         password: typing.Optional[bytes],
         encoding: Encoding,
         cn_in_san: bool,
-        csr: typing.Optional[str],
+        csr_path: str,
         profile: typing.Optional[str],
         out: typing.Optional[str],
         **options: typing.Any
@@ -134,15 +137,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Read the CSR
-        if csr is None:
-            self.stdout.write("Please paste the CSR:")
-            csr = ""
-            while not csr.endswith("-----END CERTIFICATE REQUEST-----\n"):
-                csr += "%s\n" % input()
-            csr = csr.strip()
+        if csr_path == "-":
+            self.stdout.write("Please paste the CSR (press CTRL+D when finished):")
+            csr = sys.stdin.read()
         else:
-            with open(csr, "rb") as stream:
-                csr = stream.read()
+            with open(csr_path, 'rb') as stdin_stream:
+                csr = stdin_stream.read()
 
         try:
             cert = Certificate.objects.create_cert(
