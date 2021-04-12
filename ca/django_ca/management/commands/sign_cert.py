@@ -16,7 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import sys
 import typing
 from datetime import timedelta
 
@@ -144,7 +143,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr += b"%s\n" % input().encode("utf-8")
             csr = csr.strip()
         else:
-            with open(csr_path, 'rb') as stdin_stream:
+            with open(csr_path, "rb") as stdin_stream:
                 csr = stdin_stream.read()
 
         try:
