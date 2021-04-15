@@ -441,9 +441,7 @@ class CertificateAuthorityDetailMixin:
 
     def add_general_args(self, parser: CommandParser, default: typing.Optional[str] = "") -> None:
         """Add some general arguments.
-e
-        reveal_type(msg)
-        reveal_type(ending)
+
         Parameters
         ----------
 

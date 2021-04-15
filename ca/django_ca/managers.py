@@ -189,7 +189,7 @@ class CertificateAuthorityManager(
         def default(self) -> "CertificateAuthority":
             ...
 
-        def order_by(self, *fields: str) -> "CertificateAuthorityQuerySet":   # type: ignore[override]
+        def order_by(self, *fields: str) -> "CertificateAuthorityQuerySet":  # type: ignore[override]
             ...
 
         def usable(self) -> "CertificateAuthorityQuerySet":
@@ -504,14 +504,10 @@ class CertificateManager(CertificateManagerMixin["Certificate"], CertificateMana
         def get_queryset(self) -> "CertificateQuerySet":
             ...
 
-        def filter(  # type: ignore[override]
-            self, *args: Any, **kwargs: Any
-        ) -> "CertificateQuerySet":
+        def filter(self, *args: Any, **kwargs: Any) -> "CertificateQuerySet":  # type: ignore[override]
             ...
 
-        def exclude(  # type: ignore[override]
-            self, *args: Any, **kwargs: Any
-        ) -> "CertificateQuerySet":
+        def exclude(self, *args: Any, **kwargs: Any) -> "CertificateQuerySet":  # type: ignore[override]
             ...
 
         def order_by(self, *fields: str) -> "CertificateQuerySet":  # type: ignore[override]
