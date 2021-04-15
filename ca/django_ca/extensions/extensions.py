@@ -907,7 +907,7 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
             for name in self._excluded.serialize():
                 text += "  * %s\n" % name
 
-        return text
+        return text.strip()
 
     def get_excluded(self) -> GeneralNameList:
         """The ``excluded`` value of this instance."""
