@@ -30,7 +30,6 @@ from django.core.management.base import CommandParser
 from django.core.management.base import OutputWrapper
 from django.core.management.color import no_style
 from django.utils import timezone
-from django.utils.encoding import force_bytes
 
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
@@ -53,20 +52,21 @@ class BinaryOutputWrapper(OutputWrapper):
     ending: bytes  # type: ignore[assignment]
     _out: typing.BinaryIO
 
-    def __init__(self, out: typing.BinaryIO, ending: bytes = b"\n") -> None:
+    def __init__(self, out: typing.BinaryIO, ending: bytes = b"") -> None:
         super().__init__(out, ending=ending)  # type: ignore[arg-type]
 
     def write(  # type: ignore[override]
         self,
-        msg: typing.AnyStr = b"",
+        msg: typing.Union[str, bytes] = b"",
         style_func: typing.Optional[typing.Callable[..., typing.Any]] = None,
-        ending: typing.Optional[bytes] = None,
+        ending: bytes = b"",
     ) -> None:
-        ending = self.ending if ending is None else ending
-        msg = force_bytes(msg)
-        if ending and not msg.endswith(ending):
-            msg += ending
-        self._out.write(msg)
+        if not ending:
+            ending = self.ending
+        if isinstance(msg, str):
+            msg = msg.encode("utf-8")
+
+        self._out.write(msg + ending)
 
 
 class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base class
@@ -438,7 +438,9 @@ class CertificateAuthorityDetailMixin:
 
     def add_general_args(self, parser: CommandParser, default: typing.Optional[str] = "") -> None:
         """Add some general arguments.
-
+e
+        reveal_type(msg)
+        reveal_type(ending)
         Parameters
         ----------
 
