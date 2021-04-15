@@ -1016,7 +1016,7 @@ class CertificateAuthority(X509CertMixin):
     ) -> Iterable[X509CertMixin]:
         """Get CRLs for the given scope."""
         ca_qs = self.children.filter(expires__gt=now).revoked()
-        cert_qs = cast(CertificateQuerySet, self.certificate_set.filter(expires__gt=now)).revoked()
+        cert_qs = self.certificate_set.filter(expires__gt=now).revoked()
 
         if scope == "ca":
             return ca_qs
@@ -1258,7 +1258,7 @@ class CertificateAuthority(X509CertMixin):
 class Certificate(X509CertMixin):
     """Model representing a x509 Certificate."""
 
-    objects = CertificateManager.from_queryset(CertificateQuerySet)()
+    objects: CertificateManager = CertificateManager.from_queryset(CertificateQuerySet)()
 
     watchers = models.ManyToManyField(Watcher, related_name="certificates", blank=True)
 

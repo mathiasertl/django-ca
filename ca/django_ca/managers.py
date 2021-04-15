@@ -76,6 +76,7 @@ if TYPE_CHECKING:
     from .models import Certificate
     from .models import CertificateAuthority
     from .querysets import CertificateAuthorityQuerySet
+    from .querysets import CertificateQuerySet
 
     AcmeAccountManagerBase = models.Manager[AcmeAccount]
     AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]
@@ -186,6 +187,9 @@ class CertificateAuthorityManager(
 
         # queryset methods
         def default(self) -> "CertificateAuthority":
+            ...
+
+        def order_by(self, *fields: str) -> "CertificateAuthorityQuerySet":   # type: ignore[override]
             ...
 
         def usable(self) -> "CertificateAuthorityQuerySet":
@@ -484,6 +488,38 @@ class CertificateAuthorityManager(
 
 class CertificateManager(CertificateManagerMixin["Certificate"], CertificateManagerBase):
     """Model manager for the Certificate model."""
+
+    if TYPE_CHECKING:
+        # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
+        # and does not know about queryset methods comming from the queryset. We typehint basic queryset
+        # methods here, so that mypy knows that returned objects are querysets.
+        #
+        # The type overrides are because of the return type, as mypy thinks they should return a manager.
+        #
+        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+
+        def all(self) -> "CertificateQuerySet":  # type: ignore[override]
+            ...
+
+        def get_queryset(self) -> "CertificateQuerySet":
+            ...
+
+        def filter(  # type: ignore[override]
+            self, *args: Any, **kwargs: Any
+        ) -> "CertificateQuerySet":
+            ...
+
+        def exclude(  # type: ignore[override]
+            self, *args: Any, **kwargs: Any
+        ) -> "CertificateQuerySet":
+            ...
+
+        def order_by(self, *fields: str) -> "CertificateQuerySet":  # type: ignore[override]
+            ...
+
+        # queryset methods
+        def valid(self) -> "CertificateQuerySet":
+            ...
 
     def create_cert(
         self,
