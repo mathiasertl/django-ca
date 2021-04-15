@@ -52,21 +52,24 @@ class BinaryOutputWrapper(OutputWrapper):
     ending: bytes  # type: ignore[assignment]
     _out: typing.BinaryIO
 
-    def __init__(self, out: typing.BinaryIO, ending: bytes = b"") -> None:
+    def __init__(self, out: typing.BinaryIO, ending: bytes = b"\n") -> None:
         super().__init__(out, ending=ending)  # type: ignore[arg-type]
 
     def write(  # type: ignore[override]
         self,
         msg: typing.Union[str, bytes] = b"",
         style_func: typing.Optional[typing.Callable[..., typing.Any]] = None,
-        ending: bytes = b"",
+        ending: typing.Optional[bytes] = None,
     ) -> None:
-        if not ending:
+        if ending is None:
             ending = self.ending
+
         if isinstance(msg, str):
             msg = msg.encode("utf-8")
+        if ending and not msg.endswith(ending):
+            msg += ending
 
-        self._out.write(msg + ending)
+        self._out.write(msg)
 
 
 class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base class
