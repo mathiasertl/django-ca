@@ -94,7 +94,7 @@ def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
 
 
 @shared_task
-def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, str, Certificate]:
+def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, str, int]:
     """Task to generate an OCSP key for the CA named by `serial`."""
     ca = CertificateAuthority.objects.get(serial=serial)
     private_path, cert_path, cert = ca.generate_ocsp_key(**kwargs)
