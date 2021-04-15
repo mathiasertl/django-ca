@@ -27,17 +27,17 @@ class HexConverter:
 
     regex = "[0-9A-F:]+"
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         return value
 
-    def to_url(self, value):
+    def to_url(self, value: str) -> str:
         return value
 
 
 class SerialConverter(HexConverter):
     """Extends base to call :py:func:`~django-ca.utils.sanitize_serial` for the value."""
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         return sanitize_serial(value)
 
 
@@ -46,10 +46,10 @@ class Base64Converter:
 
     regex = "[a-zA-Z0-9=+/]+"
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         return value
 
-    def to_url(self, value):
+    def to_url(self, value: str) -> str:
         return value
 
 
