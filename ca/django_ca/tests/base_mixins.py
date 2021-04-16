@@ -44,16 +44,14 @@ class AdminTestCaseMixin(TestCaseProtocol):
     media_css: typing.List[str] = []
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
-    obj: DjangoCAModel
+    # TODO: we should get rid of this, it's ugly
+    obj: typing.Optional[DjangoCAModel]
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         self.user = self.create_superuser()
         self.client.force_login(self.user)
         super().setUp()
-        obj = self.model.objects.first()
-        if obj is None:
-            raise Exception("setUp() did not create any model instances.")
-        self.obj = obj
+        self.obj = self.model.objects.first()
 
     @property
     def add_url(self) -> str:
@@ -110,7 +108,7 @@ class AdminTestCaseMixin(TestCaseProtocol):
     def change_url(self, obj: typing.Optional[DjangoCAModel] = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
-        return obj.admin_change_url
+        return obj.admin_change_url  # type: ignore[union-attr]
 
     @property
     def changelist_url(self) -> str:

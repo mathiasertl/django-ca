@@ -45,7 +45,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
@@ -54,6 +54,7 @@ from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.dispatch.dispatcher import Signal
 from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.utils import override_settings
@@ -94,7 +95,6 @@ from ..utils import ca_storage
 from ..utils import x509_name
 from .base_mixins import TestCaseProtocol
 
-User = get_user_model()
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
 
 
@@ -526,7 +526,9 @@ VQIDAQAB
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
 
-    def assertBasic(self, cert: X509CertMixin, algo: str = "SHA256") -> None:  # pylint: disable=invalid-name
+    def assertBasic(  # pylint: disable=invalid-name
+        self, cert: x509.Certificate, algo: str = "SHA256"
+    ) -> None:
         """Assert some basic key properties."""
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
@@ -620,7 +622,7 @@ VQIDAQAB
     def assertExtensions(  # pylint: disable=invalid-name
         self,
         cert: X509CertMixin,
-        extensions: typing.Sequence[Extension[typing.Any, typing.Any, typing.Any]],
+        extensions: typing.Dict[str, Extension[typing.Any, typing.Any, typing.Any]],
         signer: typing.Optional[CertificateAuthority] = None,
         expect_defaults: bool = True,
     ) -> None:
@@ -711,25 +713,31 @@ VQIDAQAB
         self.assertEqual(output, expected)
         return output
 
-    def assertPostCreateCa(self, post, ca):  # pylint: disable=invalid-name
+    def assertPostCreateCa(  # pylint: disable=invalid-name
+        self, post: Mock, ca: CertificateAuthority
+    ) -> None:
         """Assert that the post_create_ca signal was called."""
         post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
 
-    def assertPostIssueCert(self, post, cert):  # pylint: disable=invalid-name
+    def assertPostIssueCert(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
-    def assertPostRevoke(self, post, cert):  # pylint: disable=invalid-name
+    def assertPostRevoke(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
-    def assertPrivateKey(self, ca, password=None):  # pylint: disable=invalid-name
+    def assertPrivateKey(  # pylint: disable=invalid-name
+        self, ca: CertificateAuthority, password: typing.Optional[typing.Union[str, bytes]] = None
+    ) -> None:
         """Assert some basic properties for a private key."""
         key = ca.key(password)
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
 
-    def assertRevoked(self, cert, reason=None):  # pylint: disable=invalid-name
+    def assertRevoked(  # pylint: disable=invalid-name
+        self, cert: X509CertMixin, reason: typing.Optional[ReasonFlags] = None
+    ) -> None:
         """Assert that the certificate is now revoked."""
         if isinstance(cert, CertificateAuthority):
             cert = CertificateAuthority.objects.get(serial=cert.serial)
@@ -743,19 +751,23 @@ VQIDAQAB
         else:
             self.assertEqual(cert.revoked_reason, reason)
 
-    def assertSerial(self, serial):  # pylint: disable=invalid-name
+    def assertSerial(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""
         self.assertIsNotNone(re.match("^[0-9A-F:]*$", serial), serial)
 
     @contextmanager
-    def assertSignal(self, signal):  # pylint: disable=invalid-name
+    def assertSignal(self, signal: Signal) -> typing.Iterator[Mock]:  # pylint: disable=invalid-name
         """Attach a mock to the given signal."""
         handler = Mock()
         signal.connect(handler)
-        yield handler
-        signal.disconnect(handler)
+        try:
+            yield handler
+        finally:
+            signal.disconnect(handler)
 
-    def assertSignature(self, chain, cert):  # pylint: disable=invalid-name
+    def assertSignature(  # pylint: disable=invalid-name
+        self, chain: typing.Sequence[CertificateAuthority], cert: Certificate
+    ) -> None:
         """Assert that `cert` is properly signed by `chain`.
 
         .. seealso:: http://stackoverflow.com/questions/30700348
@@ -787,7 +799,9 @@ VQIDAQAB
         self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
     @contextmanager
-    def assertValidationError(self, errors):  # pylint: disable=invalid-name
+    def assertValidationError(  # pylint: disable=invalid-name; unittest standard
+        self, errors: typing.Dict[str, typing.List[str]]
+    ) -> typing.Iterator[None]:
         """Context manager to assert that a ValidationError is thrown."""
         with self.assertRaises(ValidationError) as cmex:
             yield
