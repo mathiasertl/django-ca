@@ -15,6 +15,7 @@
 
 import typing
 from contextlib import contextmanager
+from datetime import datetime
 from http import HTTPStatus
 from urllib.parse import quote
 
@@ -24,8 +25,9 @@ from django.templatetags.static import static
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
+from freezegun.api import FrozenDateTimeFactory
+
 from ..models import DjangoCAModel
-from ..utils import classproperty
 
 if typing.TYPE_CHECKING:
     TestCaseProtocol = SimpleTestCase
@@ -36,24 +38,31 @@ else:
 class AdminTestCaseMixin(TestCaseProtocol):
     """Common mixin for testing admin classes for models."""
 
-    model: DjangoCAModel
+    model: typing.Type[DjangoCAModel]
     """Model must be configured for TestCase instances using this mixin."""
 
-    media_css = []
+    media_css: typing.List[str] = []
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
+
+    obj: DjangoCAModel
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         self.user = self.create_superuser()
         self.client.force_login(self.user)
         super().setUp()
-        self.obj = self.model.objects.first()
+        obj = self.model.objects.first()
+        if obj is None:
+            raise Exception("setUp() did not create any model instances.")
+        self.obj = obj
 
-    @classproperty
-    def add_url(cls) -> str:  # pylint: disable=no-self-argument; pylint does not detect django decorator
+    @property
+    def add_url(self) -> str:
         """Shortcut for the "add" URL of the model under test."""
-        return cls.model.admin_add_url
+        return typing.cast(str, self.model.admin_add_url)  # type hinting for @classproperty doesn't work
 
-    def assertBundle(self, response, filename, content):  # pylint: disable=invalid-name
+    def assertBundle(  # pylint: disable=invalid-name
+        self, response: HttpResponse, filename: str, content: str
+    ) -> None:
         """Assert a given bundle response."""
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
@@ -98,18 +107,18 @@ class AdminTestCaseMixin(TestCaseProtocol):
         expected = "%s?next=%s" % (reverse("admin:login"), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
 
-    def change_url(self, obj: DjangoCAModel = None) -> str:
+    def change_url(self, obj: typing.Optional[DjangoCAModel] = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
         return obj.admin_change_url
 
-    @classproperty
-    def changelist_url(cls) -> str:  # pylint: disable=no-self-argument; pylint doesn't detect @classproperty
+    @property
+    def changelist_url(self) -> str:
         """Shortcut for the changelist URL of the model under test."""
-        return cls.model.admin_changelist_url
+        return typing.cast(str, self.model.admin_changelist_url)
 
     @contextmanager
-    def freeze_time(self, timestamp):
+    def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
         """Overridden to force a client login, otherwise the user session is expired."""
 
         with super().freeze_time(timestamp) as frozen:
