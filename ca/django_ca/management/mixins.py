@@ -18,6 +18,7 @@ import typing
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from .. import ca_settings
@@ -37,6 +38,21 @@ class CommandProtocol(Protocol):
 
 class ArgumentsMixin:
     """Mixin that adds some common functions to BaseCommand subclasses."""
+
+    def add_algorithm(self, parser: CommandParser) -> None:
+        """Add the --algorithm option."""
+
+        help_text = "The HashAlgorithm that will be used to generate the signature (default: %s)." % (
+            ca_settings.CA_DIGEST_ALGORITHM.name
+        )
+
+        parser.add_argument(
+            "--algorithm",
+            metavar="{sha512,sha256,...}",
+            default=ca_settings.CA_DIGEST_ALGORITHM,
+            action=actions.AlgorithmAction,
+            help=help_text,
+        )
 
     def add_ca(
         self,
@@ -101,6 +117,19 @@ class ArgumentsMixin:
             dest=dest,
             help=help_text
         )
+
+    def add_password(self, parser: CommandParser, help_text: str = "") -> None:
+        """Add password option."""
+        if not help_text:
+            help_text = "Password used for accessing the private key of the CA."
+        parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
+
+    def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
+        """Test that we can load the private key of a CA."""
+        try:
+            ca.key(password)
+        except Exception as ex:
+            raise CommandError(str(ex)) from ex
 
 
 class CertCommandMixin(CommandProtocol):

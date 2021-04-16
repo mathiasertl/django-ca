@@ -23,14 +23,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
-from ..base import BaseCommand
-from ..base import BinaryOutputWrapper
+from ..base import BinaryCommand
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BinaryCommand):
+    """Implement :command:`manage.py dump_crl`."""
+
     help = "Write the certificate revocation list (CRL)."
-    binary_output = True
-    stdout: BinaryOutputWrapper
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(

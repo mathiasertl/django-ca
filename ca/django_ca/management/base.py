@@ -73,6 +73,9 @@ class BinaryOutputWrapper(OutputWrapper):
 class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     """A :py:class:`~django:django.core.management.BaseCommand` that supports binary output."""
 
+    stdout: BinaryOutputWrapper
+    stderr: BinaryOutputWrapper
+
     def __init__(
         self,
         stdout: typing.Optional[io.BytesIO] = None,
@@ -102,7 +105,7 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         """Dump `data` to `path` (``-`` means stdout)."""
 
         if path == "-":
-            self.stdout.write(data, ending=b"")  # type: ignore[arg-type]
+            self.stdout.write(data, ending=b"")
         else:
             try:
                 with open(path, "wb") as stream:
@@ -155,21 +158,6 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand):  # pylint: disable=abstr
 
         super().execute(*args, **options)
 
-    def add_algorithm(self, parser: CommandParser) -> None:
-        """Add the --algorithm option."""
-
-        help_text = "The HashAlgorithm that will be used to generate the signature (default: %s)." % (
-            ca_settings.CA_DIGEST_ALGORITHM.name
-        )
-
-        parser.add_argument(
-            "--algorithm",
-            metavar="{sha512,sha256,...}",
-            default=ca_settings.CA_DIGEST_ALGORITHM,
-            action=actions.AlgorithmAction,
-            help=help_text,
-        )
-
     @property
     def valid_subject_keys(self) -> str:
         """Return human-readable enumeration of valid subject keys (CN/...)."""
@@ -216,12 +204,6 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand):  # pylint: disable=abstr
             default="RSA",
             help="Key type for the private key (default: %(default)s).",
         )
-
-    def add_password(self, parser: CommandParser, help_text: str = "") -> None:
-        """Add password option."""
-        if not help_text:
-            help_text = "Password used for accessing the private key of the CA."
-        parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
 
     def add_profile(self, parser: CommandParser, help_text: str) -> None:
         """Add profile-related options."""
@@ -275,13 +257,6 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand):  # pylint: disable=abstr
         """Print all extensions for the given certificate."""
         for ext in cert.extensions:
             self.print_extension(ext)
-
-    def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
-        """Test that we can load the private key of a CA."""
-        try:
-            ca.key(password)
-        except Exception as ex:
-            raise CommandError(str(ex)) from ex
 
 
 class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
