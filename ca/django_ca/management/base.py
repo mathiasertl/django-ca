@@ -24,7 +24,6 @@ from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 from django.core.management.base import OutputWrapper
-from django.core.management.color import no_style
 from django.utils import timezone
 
 from .. import ca_settings
@@ -108,49 +107,8 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
                 raise CommandError(ex) from ex
 
 
-class BaseCommand(mixins.ArgumentsMixin, _BaseCommand):  # pylint: disable=abstract-method
+class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     """Base class for most/all management commands."""
-
-    # TODO: move bytes output to (incompatible) subclass for a little more type safety
-
-    binary_output = False
-
-    def __init__(
-        self,
-        stdout: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
-        stderr: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
-        no_color: bool = False,
-    ) -> None:
-        if self.binary_output is True:
-            self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)  # type: ignore[arg-type]
-            self.stderr = BinaryOutputWrapper(stderr or sys.stderr.buffer)  # type: ignore[arg-type]
-            self.style = no_style()
-        else:
-            super().__init__(stdout, stderr, no_color=no_color)  # type: ignore[arg-type]
-
-    def dump(self, path: str, data: bytes) -> None:
-        """Dump `data` to `path` (``-`` means stdout)."""
-        # TODO: should be moved
-
-        if path == "-":
-            self.stdout.write(data, ending=b"")  # type: ignore[arg-type]
-        else:
-            try:
-                with open(path, "wb") as stream:
-                    stream.write(data)
-            except IOError as ex:
-                raise CommandError(ex) from ex
-
-    def execute(self, *args: typing.Any, **options: typing.Any) -> None:
-        # TODO: can be removed
-        if self.binary_output is True:
-            if options.get("stdout"):  # pragma: no branch
-                self.stdout = BinaryOutputWrapper(options.pop("stdout"))
-            if options.get("stderr"):  # pragma: no branch
-                self.stderr = BinaryOutputWrapper(options.pop("stderr"))
-            options["no_color"] = True
-
-        super().execute(*args, **options)
 
     @property
     def valid_subject_keys(self) -> str:
