@@ -1,0 +1,6 @@
+class WebElement:
+    def click(self) -> None:
+        ...
+
+    def send_keys(self, *value: str) -> None:
+        ...
