@@ -24,10 +24,12 @@ from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ...models import CertificateAuthority
 from ..base import BaseCommand
-from ..base import CertificateAuthorityDetailMixin
+from ..mixins import CertificateAuthorityDetailMixin
 
 
-class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
+class Command(CertificateAuthorityDetailMixin, BaseCommand):
+    """Implement :command:`manage.py edit_ca`."""
+
     help = "Edit a certificate authority."
 
     def add_arguments(self, parser: CommandParser) -> None:

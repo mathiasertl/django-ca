@@ -42,11 +42,11 @@ from ..actions import MultipleURLAction
 from ..actions import PasswordAction
 from ..actions import URLAction
 from ..base import BaseCommand
-from ..base import CertificateAuthorityDetailMixin
+from ..mixins import CertificateAuthorityDetailMixin
 
 
-class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
-    """Create a certificate authority."""
+class Command(CertificateAuthorityDetailMixin, BaseCommand):
+    """Implement :command:`manage.py init_ca`."""
 
     help = "Create a certificate authority."
 

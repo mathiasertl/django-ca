@@ -35,10 +35,12 @@ from ...models import CertificateAuthority
 from ...utils import ca_storage
 from ..actions import PasswordAction
 from ..base import BaseCommand
-from ..base import CertificateAuthorityDetailMixin
+from ..mixins import CertificateAuthorityDetailMixin
 
 
-class Command(BaseCommand, CertificateAuthorityDetailMixin):  # pylint: disable=missing-class-docstring
+class Command(CertificateAuthorityDetailMixin, BaseCommand):
+    """Implement :command:`manage.py import_ca`."""
+
     help = """Import an existing certificate authority.
 
 Note that the private key will be copied to the directory configured by the CA_DIR setting."""
