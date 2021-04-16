@@ -21,7 +21,6 @@ The classes in this module wrap cryptography extensions, but allow adding/removi
 in a more pythonic manner and provide access functions."""
 
 import textwrap
-from typing import Any
 from typing import ClassVar
 from typing import Optional
 from typing import Set
@@ -1117,19 +1116,11 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
 
     def from_dict(self, value: ParsableSubjectKeyIdentifier) -> None:
         if isinstance(value, x509.SubjectKeyIdentifier):
-            value = value.digest
+            self.value = value.digest
         elif isinstance(value, str):
             self.value = hex_to_bytes(value)
         else:
             self.value = value
-
-    def from_other(self, value: Any) -> None:
-        if isinstance(value, x509.SubjectKeyIdentifier):
-            self.critical = self.default_critical
-            self.value = value.digest
-            self._test_value()
-        else:
-            super().from_other(value)
 
     def from_extension(self, value: x509.SubjectKeyIdentifier) -> None:
         self.value = value.digest

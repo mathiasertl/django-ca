@@ -2747,6 +2747,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
     test_values = {
         "one": {
             "values": [
+                x509.SubjectKeyIdentifier(b1),
                 hex1,
             ],
             "expected": b1,
@@ -2757,6 +2758,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         },
         "two": {
             "values": [
+                x509.SubjectKeyIdentifier(b2),
                 hex2,
             ],
             "expected": b2,
@@ -2767,6 +2769,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         },
         "three": {
             "values": [
+                x509.SubjectKeyIdentifier(b3),
                 hex3,
             ],
             "expected": b3,
@@ -2791,6 +2794,20 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(
             SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
             SubjectKeyIdentifier({"value": self.hex3}),
+        )
+
+        # dict also accepts SKI
+        self.assertEqual(
+            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b1)),
+            SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b1)}),
+        )
+        self.assertEqual(
+            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b2)),
+            SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b2)}),
+        )
+        self.assertEqual(
+            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
+            SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b3)}),
         )
 
 

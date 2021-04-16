@@ -102,7 +102,7 @@ CsrDict = TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningReq
 _PubDict = TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
 
 
-class PubDict(_PubDict, total=False):
+class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
     der: bytes
 
 
