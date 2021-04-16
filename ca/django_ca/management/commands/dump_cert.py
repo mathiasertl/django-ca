@@ -24,15 +24,14 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from ...models import Certificate
-from ..base import BaseCommand
+from ..base import BinaryCommand
 from ..mixins import CertCommandMixin
 
 
-class Command(CertCommandMixin, BaseCommand):
+class Command(CertCommandMixin, BinaryCommand):
     """Implement the :command:`manage.py dump_cert` command."""
 
     allow_revoked = True
-    binary_output = True
     help = "Dump a certificate to a file."
 
     def add_arguments(self, parser: CommandParser) -> None:
