@@ -102,7 +102,7 @@ def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, st
 
 
 @shared_task
-def generate_ocsp_keys(**kwargs: typing.Any) -> typing.List[typing.Tuple[str, str, Certificate]]:
+def generate_ocsp_keys(**kwargs: typing.Any) -> typing.List[typing.Tuple[str, str, int]]:
     """Task to generate an OCSP keys for all usable CAs."""
     keys = []
     for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):
