@@ -431,7 +431,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
     def __call__(self, test_func: FuncTypeVar) -> FuncTypeVar:
         if not inspect.isfunction(test_func):
             raise ValueError("Only functions can use override_tmpcadir()")
-        return super().__call__(test_func)
+        return super().__call__(test_func)  # type: ignore[no-any-return]
 
     def enable(self) -> None:
         self.options["CA_DIR"] = tempfile.mkdtemp()
@@ -506,10 +506,6 @@ VQIDAQAB
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
 
-    def mock_cadir(self, path: str):  # pylint: disable=invalid-name
-        """Shortcut to mock the ca dir to the given value."""
-        return mock_cadir(path)
-
     def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
 
@@ -532,7 +528,7 @@ VQIDAQAB
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         self.assertEqual(
             cert.authority_key_identifier.key_identifier,  # type: ignore[union-attr] # aki theoretically None
-            issuer.subject_key_identifier.value,
+            issuer.subject_key_identifier.value,  # type: ignore[union-attr] # ski theoretically None
         )
 
     def assertBasic(  # pylint: disable=invalid-name
@@ -573,7 +569,7 @@ VQIDAQAB
         expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
 
         if idp is not None:  # pragma: no branch
-            extensions.append(idp)
+            extensions.append(idp)  # type: ignore[arg-type] # why is this not recognized?
         extensions.append(
             x509.Extension(
                 value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=ExtensionOID.CRL_NUMBER
@@ -633,12 +629,12 @@ VQIDAQAB
     def assertExtensions(  # pylint: disable=invalid-name
         self,
         cert: typing.Union[X509CertMixin, x509.Certificate],
-        extensions: typing.Dict[str, Extension[typing.Any, typing.Any, typing.Any]],
+        extensions: typing.Iterable[Extension[typing.Any, typing.Any, typing.Any]],
         signer: typing.Optional[CertificateAuthority] = None,
         expect_defaults: bool = True,
     ) -> None:
         """Assert that `cert` has the given extensions."""
-        extensions = {e.key: e for e in extensions}
+        mapped_extensions = {e.key: e for e in extensions}
 
         if isinstance(cert, Certificate):
             pubkey = cert.x509_cert.public_key()
@@ -663,16 +659,16 @@ VQIDAQAB
 
         if expect_defaults is True:
             if isinstance(cert, Certificate):
-                extensions.setdefault(BasicConstraints.key, BasicConstraints())
+                mapped_extensions.setdefault(BasicConstraints.key, BasicConstraints())
             if signer is not None:
-                extensions.setdefault(
+                mapped_extensions.setdefault(
                     AuthorityKeyIdentifier.key, signer.get_authority_key_identifier_extension()
                 )
 
                 if isinstance(cert, Certificate) and signer.crl_url:
                     urls = signer.crl_url.split()
                     ext = CRLDistributionPoints({"value": [{"full_name": urls}]})
-                    extensions.setdefault(CRLDistributionPoints.key, ext)
+                    mapped_extensions.setdefault(CRLDistributionPoints.key, ext)
 
                 aia = AuthorityInformationAccess()
                 if isinstance(cert, Certificate) and signer.ocsp_url:
@@ -680,12 +676,12 @@ VQIDAQAB
                 if isinstance(cert, Certificate) and signer.issuer_url:
                     aia.issuers = [signer.issuer_url]
                 if aia.ocsp or aia.issuers:
-                    extensions.setdefault(AuthorityInformationAccess.key, aia)
+                    mapped_extensions.setdefault(AuthorityInformationAccess.key, aia)
 
             ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
-            extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
+            mapped_extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
 
-        self.assertEqual(actual, extensions)
+        self.assertEqual(actual, mapped_extensions)
 
     @contextmanager
     def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name

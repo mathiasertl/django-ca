@@ -25,6 +25,7 @@ from freezegun import freeze_time
 from ..models import CertificateAuthority
 from .base import DjangoCATestCase
 from .base import certs
+from .base import mock_cadir
 from .base import override_tmpcadir
 from .base import timestamps
 
@@ -167,7 +168,7 @@ class ImportCATest(DjangoCATestCase):
 
         with tempfile.TemporaryDirectory() as tempdir:
             ca_dir = os.path.join(tempdir, "foo", "bar")
-            with self.mock_cadir(ca_dir):
+            with mock_cadir(ca_dir):
                 self.cmd("import_ca", name, key_path, pem_path)
 
     def test_create_cadir_permission_denied(self) -> None:
@@ -181,7 +182,7 @@ class ImportCATest(DjangoCATestCase):
             os.chmod(tempdir, 0o000)
             ca_dir = os.path.join(tempdir, "foo", "bar")
             msg = r"^%s: Could not create CA_DIR: Permission denied.$" % ca_dir
-            with self.mock_cadir(ca_dir), self.assertCommandError(msg):
+            with mock_cadir(ca_dir), self.assertCommandError(msg):
                 self.cmd("import_ca", name, key_path, pem_path)
 
             # removing tempdir with these permissions throws an error before python 3.8.

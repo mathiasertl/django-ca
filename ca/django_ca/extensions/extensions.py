@@ -21,6 +21,7 @@ The classes in this module wrap cryptography extensions, but allow adding/removi
 in a more pythonic manner and provide access functions."""
 
 import textwrap
+from typing import Any
 from typing import ClassVar
 from typing import Optional
 from typing import Set
@@ -37,6 +38,7 @@ from cryptography.x509.oid import ExtensionOID
 from ..typehints import ParsableAuthorityInformationAccess
 from ..typehints import ParsableAuthorityKeyIdentifier
 from ..typehints import ParsableBasicConstraints
+from ..typehints import ParsableExtension
 from ..typehints import ParsableGeneralNameList
 from ..typehints import ParsableNameConstraints
 from ..typehints import ParsablePolicyConstraints
@@ -1091,6 +1093,18 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.SUBJECT_KEY_IDENTIFIER
     value: bytes
 
+    def __init__(
+        self,
+        value: Optional[
+            Union["x509.Extension[x509.SubjectKeyIdentifier]", ParsableExtension, x509.SubjectKeyIdentifier]
+        ] = None,
+    ) -> None:
+        if isinstance(value, x509.SubjectKeyIdentifier):
+            self.critical = self.default_critical
+            self.value = value.digest
+        else:
+            super().__init__(value)
+
     def hash_value(self) -> bytes:
         return self.value
 
@@ -1102,11 +1116,14 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
         return x509.SubjectKeyIdentifier(digest=self.value)
 
     def from_dict(self, value: ParsableSubjectKeyIdentifier) -> None:
-        if isinstance(value, str):
-            value = hex_to_bytes(value)
-        self.value = value
+        if isinstance(value, x509.SubjectKeyIdentifier):
+            value = value.digest
+        elif isinstance(value, str):
+            self.value = hex_to_bytes(value)
+        else:
+            self.value = value
 
-    def from_other(self, value: x509.SubjectKeyIdentifier) -> None:
+    def from_other(self, value: Any) -> None:
         if isinstance(value, x509.SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.value = value.digest

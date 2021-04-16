@@ -207,7 +207,7 @@ SerializedValue = TypeVar("SerializedValue")
 IterableItem = TypeVar("IterableItem")
 """TypeVar representing a value contained in an iterable extension."""
 
-ParsableSubjectKeyIdentifier = Union[str, bytes]
+ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 
 if TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
