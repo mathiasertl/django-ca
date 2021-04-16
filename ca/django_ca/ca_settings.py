@@ -140,7 +140,7 @@ CA_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = {
     },
 }
 
-_CA_CRL_PROFILES = {
+_CA_CRL_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = {
     "user": {
         "algorithm": "SHA512",
         "expires": 86400,
@@ -198,7 +198,9 @@ CA_NOTIFICATION_DAYS = getattr(
         1,
     ],
 )
-CA_CRL_PROFILES = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
+CA_CRL_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = getattr(
+    settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES
+)
 CA_PASSWORDS: typing.Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
 
 # ACME settings
