@@ -87,6 +87,7 @@ if TYPE_CHECKING:
     CertificateManagerBase = models.Manager[Certificate]
 
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", CertificateAuthority, Certificate)
+    QuerySetTypeVar = TypeVar("QuerySetTypeVar", CertificateAuthorityQuerySet, CertificateQuerySet)
 else:
     AcmeAccountManagerBase = (
         AcmeAuthorizationManagerBase
@@ -96,13 +97,35 @@ else:
         AcmeChallengeManagerBase
     ) = AcmeOrderManagerBase = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
+    QuerySetTypeVar = TypeVar("QuerySetTypeVar")
 
 
-class CertificateManagerMixin(Generic[X509CertMixinTypeVar]):
+class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
     """Mixin for model managers."""
 
     if TYPE_CHECKING:
+        # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
+        # and does not know about queryset methods comming from the queryset. We typehint basic queryset
+        # methods here, so that mypy knows that returned objects are querysets.
+        #
+        # The type overrides are because of the return type, as mypy thinks they should return a manager.
+        #
         # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+
+        def all(self) -> QuerySetTypeVar:
+            ...
+
+        def get_queryset(self) -> QuerySetTypeVar:
+            ...
+
+        def filter(self, *args: Any, **kwargs: Any) -> QuerySetTypeVar:
+            ...
+
+        def exclude(self, *args: Any, **kwargs: Any) -> QuerySetTypeVar:
+            ...
+
+        def order_by(self, *fields: str) -> QuerySetTypeVar:
+            ...
 
         def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar:
             ...
@@ -156,43 +179,20 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar]):
 
 
 class CertificateAuthorityManager(
-    CertificateManagerMixin["CertificateAuthority"], CertificateAuthorityManagerBase
+    CertificateManagerMixin["CertificateAuthority", "CertificateAuthorityQuerySet"],
+    CertificateAuthorityManagerBase,
 ):
     """Model manager for the CertificateAuthority model."""
 
     if TYPE_CHECKING:
-        # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
-        # and does not know about queryset methods comming from the queryset. We typehint basic queryset
-        # methods here, so that mypy knows that returned objects are querysets.
-        #
-        # The type overrides are because of the return type, as mypy thinks they should return a manager.
+        # See CertificateManagerMixin for description on this branch
         #
         # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
 
-        def all(self) -> "CertificateAuthorityQuerySet":  # type: ignore[override]
-            ...
-
-        def get_queryset(self) -> "CertificateAuthorityQuerySet":
-            ...
-
-        def filter(  # type: ignore[override]
-            self, *args: Any, **kwargs: Any
-        ) -> "CertificateAuthorityQuerySet":
-            ...
-
-        def exclude(  # type: ignore[override]
-            self, *args: Any, **kwargs: Any
-        ) -> "CertificateAuthorityQuerySet":
-            ...
-
-        # queryset methods
         def acme(self) -> "CertificateAuthorityQuerySet":
             ...
 
         def default(self) -> "CertificateAuthority":
-            ...
-
-        def order_by(self, *fields: str) -> "CertificateAuthorityQuerySet":  # type: ignore[override]
             ...
 
         def usable(self) -> "CertificateAuthorityQuerySet":
@@ -489,34 +489,16 @@ class CertificateAuthorityManager(
         return ca
 
 
-class CertificateManager(CertificateManagerMixin["Certificate"], CertificateManagerBase):
+class CertificateManager(
+    CertificateManagerMixin["Certificate", "CertificateQuerySet"], CertificateManagerBase
+):
     """Model manager for the Certificate model."""
 
     if TYPE_CHECKING:
-        # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
-        # and does not know about queryset methods comming from the queryset. We typehint basic queryset
-        # methods here, so that mypy knows that returned objects are querysets.
-        #
-        # The type overrides are because of the return type, as mypy thinks they should return a manager.
+        # See CertificateManagerMixin for description on this branch
         #
         # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
 
-        def all(self) -> "CertificateQuerySet":  # type: ignore[override]
-            ...
-
-        def get_queryset(self) -> "CertificateQuerySet":
-            ...
-
-        def filter(self, *args: Any, **kwargs: Any) -> "CertificateQuerySet":  # type: ignore[override]
-            ...
-
-        def exclude(self, *args: Any, **kwargs: Any) -> "CertificateQuerySet":  # type: ignore[override]
-            ...
-
-        def order_by(self, *fields: str) -> "CertificateQuerySet":  # type: ignore[override]
-            ...
-
-        # queryset methods
         def expired(self) -> "CertificateQuerySet":
             ...
 

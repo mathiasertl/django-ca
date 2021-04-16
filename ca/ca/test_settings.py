@@ -234,7 +234,9 @@ CA_OCSP_URLS = {
 }
 CA_ENABLE_ACME = True
 
-CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release[:2]
+CRYPTOGRAPHY_VERSION = packaging.version.parse(
+    cryptography.__version__
+).release[:2]  # type: ignore[index] # release may be None in theory
 NEWEST_PYTHON = sys.version_info[0:2] == (3, 9)
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (3, 4)
 NEWEST_DJANGO = django.VERSION[:2] == (3, 1)
