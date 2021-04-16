@@ -783,11 +783,11 @@ VQIDAQAB
 
             # Verify that the CA itself is valid
             store_ctx = X509StoreContext(store, ca)
-            self.assertIsNone(store_ctx.verify_certificate())
+            self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
-        cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
-        store_ctx = X509StoreContext(store, cert)
-        self.assertIsNone(store_ctx.verify_certificate())
+        loaded_cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
+        store_ctx = X509StoreContext(store, loaded_cert)
+        self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     def assertSubject(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, expected: typing.Union[Subject, ParsableSubject]
