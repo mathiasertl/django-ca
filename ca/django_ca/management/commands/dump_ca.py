@@ -24,12 +24,13 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from ...models import CertificateAuthority
-from ..base import BaseCommand
+from ..base import BinaryCommand
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BinaryCommand):
+    """Implement :command:`manage.py dump_ca`."""
+
     help = "Dump a certificate authority to a file."
-    binary_output = True
 
     def add_arguments(self, parser: CommandParser) -> None:
         super().add_arguments(parser)

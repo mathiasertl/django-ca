@@ -15,11 +15,16 @@
 
 import typing
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import CommandParser
 
 from .. import ca_settings
 from ..extensions import IssuerAlternativeName
+from ..models import CertificateAuthority
 from ..typehints import Protocol
+from ..utils import add_colons
 from . import actions
 
 
@@ -28,6 +33,74 @@ class CommandProtocol(Protocol):
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Entry point for subclassed commands to add custom arguments."""
+
+
+class ArgumentsMixin:
+    """Mixin that adds some common functions to BaseCommand subclasses."""
+
+    def add_ca(
+        self,
+        parser: CommandParser,
+        arg: str = "--ca",
+        help_text: str = "Certificate authority to use (default: %(default)s).",
+        allow_disabled: bool = False,
+        no_default: bool = False,
+        allow_unusable: bool = False,
+    ) -> None:
+        """Add the ``--ca`` action.
+
+        Parameters
+        ----------
+
+        parser
+        arg : str, optional
+        help : str, optional
+        allow_disabled : bool, optional
+        no_default : bool, optional
+        allow_unusable : bool, optional
+        """
+        if no_default is True:
+            default = None
+        else:
+            try:
+                default = CertificateAuthority.objects.default()
+            except ImproperlyConfigured:
+                default = None
+
+        help_text = help_text % {"default": add_colons(default.serial) if default else None}
+        parser.add_argument(
+            "%s" % arg,
+            metavar="SERIAL",
+            help=help_text,
+            default=default,
+            allow_disabled=allow_disabled,
+            allow_unusable=allow_unusable,
+            action=actions.CertificateAuthorityAction,
+        )
+
+    def add_format(
+        self,
+        parser: CommandParser,
+        default: Encoding = Encoding.PEM,
+        help_text: str = "",
+        opts: typing.Optional[typing.Sequence[str]] = None,
+        dest: str = "encoding",
+    ) -> None:
+        """Add the --format option."""
+
+        if opts is None:
+            opts = ["-f", "--format"]
+        if not help_text:
+            help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
+        help_text = help_text % {"default": default.name}
+        parser.add_argument(
+            *opts,
+            metavar="{PEM,ASN1,DER}",
+            default=default,
+            action=actions.FormatAction,
+            dest=dest,
+            help=help_text
+        )
 
 
 class CertCommandMixin(CommandProtocol):

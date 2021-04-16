@@ -83,6 +83,12 @@ class DumpCATestCase(DjangoCAWithCATestCase):
             self.assertEqual(stream.read(), self.ca.pub)
 
     @override_tmpcadir()
+    def test_color_output_error(self) -> None:
+        """Test that requesting color output throws an error."""
+        with self.assertCommandError("This command does not support color output."):
+            self.cmd("dump_ca", self.ca.serial, "/does/not/exist", force_color=True)
+
+    @override_tmpcadir()
     def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_ca.pem")

@@ -13,6 +13,7 @@
 
 """Command subclasses and argparse helpers for django-ca."""
 
+import abc
 import argparse
 import io
 import sys
@@ -21,9 +22,7 @@ from datetime import timedelta
 from textwrap import indent
 
 from cryptography import x509
-from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -41,8 +40,8 @@ from ..extensions.base import NullExtension
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
 from ..utils import SUBJECT_FIELDS
-from ..utils import add_colons
 from . import actions
+from . import mixins
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -71,7 +70,48 @@ class BinaryOutputWrapper(OutputWrapper):
         self._out.write(msg)
 
 
-class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base class
+class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
+    """A :py:class:`~django:django.core.management.BaseCommand` that supports binary output."""
+
+    def __init__(
+        self,
+        stdout: typing.Optional[io.BytesIO] = None,
+        stderr: typing.Optional[io.BytesIO] = None,
+        no_color: bool = True,
+        force_color: bool = False
+    ) -> None:
+        # BaseCommand error handling is not suitable and sets stdout/stderr redundantly:
+        # pylint: disable=super-init-not-called
+
+        self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
+        self.stderr = BinaryOutputWrapper(stdout or sys.stdout.buffer)
+
+    def execute(self, *args: typing.Any, **options: typing.Any) -> None:
+        if options.get("force_color"):
+            raise CommandError("This command does not support color output.")
+
+        if options.get("stdout"):  # pragma: no branch
+            self.stdout = BinaryOutputWrapper(options.pop("stdout"))
+        if options.get("stderr"):  # pragma: no branch
+            self.stderr = BinaryOutputWrapper(options.pop("stderr"))
+        options["no_color"] = True
+
+        super().execute(*args, **options)
+
+    def dump(self, path: str, data: bytes) -> None:
+        """Dump `data` to `path` (``-`` means stdout)."""
+
+        if path == "-":
+            self.stdout.write(data, ending=b"")  # type: ignore[arg-type]
+        else:
+            try:
+                with open(path, "wb") as stream:
+                    stream.write(data)
+            except IOError as ex:
+                raise CommandError(ex) from ex
+
+
+class BaseCommand(mixins.ArgumentsMixin, _BaseCommand):  # pylint: disable=abstract-method
     """Base class for most/all management commands."""
 
     # TODO: move bytes output to (incompatible) subclass for a little more type safety
@@ -93,6 +133,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
 
     def dump(self, path: str, data: bytes) -> None:
         """Dump `data` to `path` (``-`` means stdout)."""
+        # TODO: should be moved
 
         if path == "-":
             self.stdout.write(data, ending=b"")  # type: ignore[arg-type]
@@ -104,6 +145,7 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
                 raise CommandError(ex) from ex
 
     def execute(self, *args: typing.Any, **options: typing.Any) -> None:
+        # TODO: can be removed
         if self.binary_output is True:
             if options.get("stdout"):  # pragma: no branch
                 self.stdout = BinaryOutputWrapper(options.pop("stdout"))
@@ -144,46 +186,6 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
         """Add subject option."""
         parser.add_argument(arg, action=actions.SubjectAction, metavar=metavar, help=help_text)
 
-    def add_ca(
-        self,
-        parser: CommandParser,
-        arg: str = "--ca",
-        help_text: str = "Certificate authority to use (default: %(default)s).",
-        allow_disabled: bool = False,
-        no_default: bool = False,
-        allow_unusable: bool = False,
-    ) -> None:
-        """Add the ``--ca`` action.
-
-        Parameters
-        ----------
-
-        parser
-        arg : str, optional
-        help : str, optional
-        allow_disabled : bool, optional
-        no_default : bool, optional
-        allow_unusable : bool, optional
-        """
-        if no_default is True:
-            default = None
-        else:
-            try:
-                default = CertificateAuthority.objects.default()
-            except ImproperlyConfigured:
-                default = None
-
-        help_text = help_text % {"default": add_colons(default.serial) if default else None}
-        parser.add_argument(
-            "%s" % arg,
-            metavar="SERIAL",
-            help=help_text,
-            default=default,
-            allow_disabled=allow_disabled,
-            allow_unusable=allow_unusable,
-            action=actions.CertificateAuthorityAction,
-        )
-
     def add_ecc_curve(self, parser: CommandParser) -> None:
         """Add --ecc-curve option."""
         curve_help = "Elliptic Curve used for ECC keys (default: %(default)s)." % {
@@ -195,30 +197,6 @@ class BaseCommand(_BaseCommand):  # pylint: disable=abstract-method; is a base c
             action=actions.KeyCurveAction,
             default=ca_settings.CA_DEFAULT_ECC_CURVE,
             help=curve_help,
-        )
-
-    def add_format(
-        self,
-        parser: CommandParser,
-        default: Encoding = Encoding.PEM,
-        help_text: str = "",
-        opts: typing.Optional[typing.Sequence[str]] = None,
-        dest: str = "encoding",
-    ) -> None:
-        """Add the --format option."""
-
-        if opts is None:
-            opts = ["-f", "--format"]
-        if not help_text:
-            help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
-        help_text = help_text % {"default": default.name}
-        parser.add_argument(
-            *opts,
-            metavar="{PEM,ASN1,DER}",
-            default=default,
-            action=actions.FormatAction,
-            dest=dest,
-            help=help_text
         )
 
     def add_key_size(self, parser: CommandParser) -> None:
