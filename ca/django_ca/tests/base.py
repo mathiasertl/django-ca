@@ -543,18 +543,19 @@ VQIDAQAB
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
 
-    def assertCRL(  # pylint: disable=invalid-name
+    def assertCRL(
+        # pylint: disable=invalid-name
         self,
-        crl,
-        expected=None,
-        signer=None,
-        expires=86400,
-        algorithm=None,
-        encoding=Encoding.PEM,
-        idp=None,
-        extensions=None,
-        crl_number=0,
-    ):
+        crl: bytes,
+        expected: typing.Optional[typing.Sequence[X509CertMixin]] = None,
+        signer: typing.Optional[CertificateAuthority] = None,
+        expires: int = 86400,
+        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
+        encoding: Encoding = Encoding.PEM,
+        idp: typing.Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
+        extensions: typing.Optional[typing.List["x509.Extension[x509.ExtensionType]"]] = None,
+        crl_number: int = 0,
+    ) -> None:
         """Test the given CRL.
 
         Parameters
@@ -569,7 +570,7 @@ VQIDAQAB
         signer = signer or self.cas["child"]
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
         extensions = extensions or []
-        expires = datetime.utcnow() + timedelta(seconds=expires)
+        expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
 
         if idp is not None:  # pragma: no branch
             extensions.append(idp)
@@ -587,20 +588,19 @@ VQIDAQAB
         )
 
         if encoding == Encoding.PEM:
-            crl = x509.load_pem_x509_crl(crl, default_backend())
+            parsed_crl = x509.load_pem_x509_crl(crl, default_backend())
         else:
-            crl = x509.load_der_x509_crl(crl, default_backend())
+            parsed_crl = x509.load_der_x509_crl(crl, default_backend())
 
-        self.assertIsInstance(crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(crl.is_signature_valid(signer.x509_cert.public_key()))
-        self.assertEqual(crl.issuer, signer.x509_cert.subject)
-        self.assertEqual(crl.last_update, datetime.utcnow())
-        self.assertEqual(crl.next_update, expires)
-        self.assertCountEqual(list(crl.extensions), extensions)
+        self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
+        self.assertTrue(parsed_crl.is_signature_valid(signer.x509_cert.public_key()))
+        self.assertEqual(parsed_crl.issuer, signer.x509_cert.subject)
+        self.assertEqual(parsed_crl.last_update, datetime.utcnow())
+        self.assertEqual(parsed_crl.next_update, expires_timestamp)
+        self.assertCountEqual(list(parsed_crl.extensions), extensions)
 
-        entries = {e.serial_number: e for e in crl}
-        expected = {c.x509_cert.serial_number: c for c in expected}
-        self.assertCountEqual(entries, expected)
+        entries = {e.serial_number: e for e in parsed_crl}
+        self.assertCountEqual(entries, {c.x509_cert.serial_number: c for c in expected})
         for entry in entries.values():
             self.assertEqual(entry.revocation_date, datetime.utcnow())
             self.assertEqual(list(entry.extensions), [])
@@ -608,7 +608,7 @@ VQIDAQAB
     @contextmanager
     def assertCreateCASignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> None:
+    ) -> typing.Iterator[typing.Tuple[Mock, Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
             try:
@@ -618,7 +618,7 @@ VQIDAQAB
                 self.assertTrue(post_sig.called is post)
 
     @contextmanager
-    def assertCommandError(self, msg):  # pylint: disable=invalid-name
+    def assertCommandError(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Context manager asserting that CommandError is raised.
 
         Parameters
