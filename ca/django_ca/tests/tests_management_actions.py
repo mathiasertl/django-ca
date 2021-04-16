@@ -15,7 +15,10 @@
 
 import argparse
 import doctest
+import os
+import sys
 from datetime import timedelta
+from io import StringIO
 from unittest import mock
 
 from cryptography.hazmat.primitives import hashes
@@ -34,6 +37,7 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base_mixins import TestCaseProtocol
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
@@ -47,7 +51,25 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     return tests
 
 
-class SubjectActionTestCase(DjangoCATestCase):
+class ParserTestCaseMixin(TestCaseProtocol):
+    parser: argparse.ArgumentParser
+
+    def assertParserError(self, args, expected, **kwargs):  # pylint: disable=invalid-name
+        """Assert that given args throw a parser error."""
+
+        kwargs.setdefault("script", os.path.basename(sys.argv[0]))
+        expected = expected.format(**kwargs)
+
+        buf = StringIO()
+        with self.assertRaises(SystemExit), mock.patch("sys.stderr", buf):
+            self.parser.parse_args(args)
+
+        output = buf.getvalue()
+        self.assertEqual(output, expected)
+        return output
+
+
+class SubjectActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test SubjectAction."""
 
     def setUp(self) -> None:
@@ -85,7 +107,7 @@ class SubjectActionTestCase(DjangoCATestCase):
         )
 
 
-class OrderedSetExtensionActionTestCase(DjangoCATestCase):
+class OrderedSetExtensionActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test OrderedSetExtensionAction."""
 
     def setUp(self) -> None:
@@ -116,7 +138,7 @@ class OrderedSetExtensionActionTestCase(DjangoCATestCase):
         )
 
 
-class FormatActionTestCase(DjangoCATestCase):
+class FormatActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test FormatAction."""
 
     def setUp(self) -> None:
@@ -145,7 +167,7 @@ class FormatActionTestCase(DjangoCATestCase):
         )
 
 
-class KeyCurveActionTestCase(DjangoCATestCase):
+class KeyCurveActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test KeyCurveAction."""
 
     def setUp(self) -> None:
@@ -170,7 +192,7 @@ class KeyCurveActionTestCase(DjangoCATestCase):
         )
 
 
-class AlgorithmActionTestCase(DjangoCATestCase):
+class AlgorithmActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test AlgorithmAction."""
 
     def setUp(self) -> None:
@@ -198,7 +220,7 @@ class AlgorithmActionTestCase(DjangoCATestCase):
         )
 
 
-class KeySizeActionTestCase(DjangoCATestCase):
+class KeySizeActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test KeySizeAction."""
 
     def setUp(self) -> None:
@@ -245,7 +267,7 @@ class KeySizeActionTestCase(DjangoCATestCase):
         self.assertParserError(["--size=foo"], expected)
 
 
-class PasswordActionTestCase(DjangoCATestCase):
+class PasswordActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test PasswordAction."""
 
     def setUp(self) -> None:
@@ -284,7 +306,7 @@ class PasswordActionTestCase(DjangoCATestCase):
         getpass.assert_called_once()
 
 
-class CertificateActionTestCase(DjangoCAWithCertTestCase):
+class CertificateActionTestCase(ParserTestCaseMixin, DjangoCAWithCertTestCase):
     """Test CertificateAction."""
 
     def setUp(self) -> None:
@@ -330,7 +352,7 @@ class CertificateActionTestCase(DjangoCAWithCertTestCase):
         )
 
 
-class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
+class CertificateAuthorityActionTestCase(ParserTestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test CertificateAuthorityAction."""
 
     def setUp(self) -> None:
@@ -414,7 +436,7 @@ class CertificateAuthorityActionTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(args.ca, self.cas["pwd"])
 
 
-class URLActionTestCase(DjangoCATestCase):
+class URLActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test URLAction."""
 
     def setUp(self) -> None:
@@ -436,7 +458,7 @@ class URLActionTestCase(DjangoCATestCase):
         )
 
 
-class ExpiresActionTestCase(DjangoCATestCase):
+class ExpiresActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test ExpiresAction."""
 
     def setUp(self) -> None:
@@ -477,7 +499,7 @@ class ExpiresActionTestCase(DjangoCATestCase):
         )
 
 
-class ReasonActionTestCase(DjangoCATestCase):
+class ReasonActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test ReasonAction."""
 
     def setUp(self) -> None:
@@ -504,7 +526,7 @@ class ReasonActionTestCase(DjangoCATestCase):
         )
 
 
-class MultipleURLActionTestCase(DjangoCATestCase):
+class MultipleURLActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
     """Test MultipleURLAction."""
 
     def setUp(self) -> None:

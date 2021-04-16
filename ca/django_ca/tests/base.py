@@ -19,7 +19,6 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 import typing
 from contextlib import contextmanager
@@ -698,20 +697,6 @@ VQIDAQAB
 
         self.assertFalse(cert.revoked)
         self.assertEqual(cert.revoked_reason, "")
-
-    def assertParserError(self, args, expected, **kwargs):  # pylint: disable=invalid-name
-        """Assert that given args throw a parser error."""
-
-        kwargs.setdefault("script", os.path.basename(sys.argv[0]))
-        expected = expected.format(**kwargs)
-
-        buf = StringIO()
-        with self.assertRaises(SystemExit), patch("sys.stderr", buf):
-            self.parser.parse_args(args)
-
-        output = buf.getvalue()
-        self.assertEqual(output, expected)
-        return output
 
     def assertPostCreateCa(  # pylint: disable=invalid-name
         self, post: Mock, ca: CertificateAuthority
