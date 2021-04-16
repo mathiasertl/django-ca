@@ -52,6 +52,8 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
 
 
 class ParserTestCaseMixin(TestCaseProtocol):
+    """Mixin class that provides assertParserError."""
+
     parser: argparse.ArgumentParser
 
     def assertParserError(self, args, expected, **kwargs):  # pylint: disable=invalid-name
