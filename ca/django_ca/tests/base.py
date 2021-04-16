@@ -656,7 +656,7 @@ VQIDAQAB
                     OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e for e in cert.extensions
                 ]
             }
-        else:  # pragma: no branch
+        else:  # pragma: no cover
             raise ValueError("cert must be Certificate(Authority) or x509.Certificate)")
 
         if expect_defaults is True:
