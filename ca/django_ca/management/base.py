@@ -19,9 +19,6 @@ import io
 import sys
 import typing
 from datetime import timedelta
-from textwrap import indent
-
-from cryptography import x509
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
@@ -32,13 +29,10 @@ from django.utils import timezone
 
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
-from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
-from ..extensions.base import NullExtension
 from ..models import CertificateAuthority
-from ..models import X509CertMixin
 from ..utils import SUBJECT_FIELDS
 from . import actions
 from . import mixins
@@ -217,46 +211,6 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand):  # pylint: disable=abstr
                 dest="profile",
                 help=profile.get("description", ""),
             )
-
-    def indent(self, text: str, prefix: str = "    ") -> str:
-        """Get indented text."""
-        return indent(text, prefix)
-
-    def print_extension(
-        self,
-        ext: typing.Union[
-            Extension[typing.Any, typing.Any, typing.Any], "x509.Extension[x509.ExtensionType]"
-        ],
-    ) -> None:
-        """Print extension to stdout."""
-
-        if isinstance(ext, Extension):
-            if isinstance(ext, NullExtension):
-                if ext.critical:
-                    # NOTE: Only PrecertPoison is ever marked as critical
-                    self.stdout.write("%s (critical): Yes" % ext.name)
-                else:
-                    self.stdout.write("%s: Yes" % ext.name)
-            else:
-                if ext.critical:
-                    self.stdout.write("%s (critical):" % ext.name)
-                else:
-                    self.stdout.write("%s:" % ext.name)
-
-                self.stdout.write(self.indent(ext.as_text()))
-        elif isinstance(ext, x509.Extension):
-            oid_name = ext.oid._name  # pylint: disable=protected-access; only wai to get name
-            if ext.critical:  # pragma: no cover - all unrecognized extensions that we have are non-critical
-                self.stdout.write("%s (critical): %s" % (oid_name, ext.oid.dotted_string))
-            else:
-                self.stdout.write("%s: %s" % (oid_name, ext.oid.dotted_string))
-        else:  # pragma: no cover
-            raise ValueError("Received unknown extension type: %s" % type(ext))
-
-    def print_extensions(self, cert: X509CertMixin) -> None:
-        """Print all extensions for the given certificate."""
-        for ext in cert.extensions:
-            self.print_extension(ext)
 
 
 class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class

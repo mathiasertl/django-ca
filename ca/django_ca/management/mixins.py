@@ -14,16 +14,22 @@
 """Mixins for :py:class:`~django:django.core.management.BaseCommand` classes."""
 
 import typing
+from textwrap import indent
 
+from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
+from django.core.management.base import OutputWrapper
 
 from .. import ca_settings
+from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
+from ..extensions.base import NullExtension
 from ..models import CertificateAuthority
+from ..models import X509CertMixin
 from ..typehints import Protocol
 from ..utils import add_colons
 from . import actions
@@ -32,11 +38,14 @@ from . import actions
 class CommandProtocol(Protocol):
     """Protocol for mixin classes, so that mypy can detect any issues."""
 
+    stdout: OutputWrapper
+    stderr: OutputWrapper
+
     def add_arguments(self, parser: CommandParser) -> None:
         """Entry point for subclassed commands to add custom arguments."""
 
 
-class ArgumentsMixin:
+class ArgumentsMixin(CommandProtocol):
     """Mixin that adds some common functions to BaseCommand subclasses."""
 
     def add_algorithm(self, parser: CommandParser) -> None:
@@ -123,6 +132,46 @@ class ArgumentsMixin:
         if not help_text:
             help_text = "Password used for accessing the private key of the CA."
         parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
+
+    def indent(self, text: str, prefix: str = "    ") -> str:
+        """Get indented text."""
+        return indent(text, prefix)
+
+    def print_extension(
+        self,
+        ext: typing.Union[
+            Extension[typing.Any, typing.Any, typing.Any], "x509.Extension[x509.ExtensionType]"
+        ],
+    ) -> None:
+        """Print extension to stdout."""
+
+        if isinstance(ext, Extension):
+            if isinstance(ext, NullExtension):
+                if ext.critical:
+                    # NOTE: Only PrecertPoison is ever marked as critical
+                    self.stdout.write("%s (critical): Yes" % ext.name)
+                else:
+                    self.stdout.write("%s: Yes" % ext.name)
+            else:
+                if ext.critical:
+                    self.stdout.write("%s (critical):" % ext.name)
+                else:
+                    self.stdout.write("%s:" % ext.name)
+
+                self.stdout.write(self.indent(ext.as_text()))
+        elif isinstance(ext, x509.Extension):
+            oid_name = ext.oid._name  # pylint: disable=protected-access; only wai to get name
+            if ext.critical:  # pragma: no cover - all unrecognized extensions that we have are non-critical
+                self.stdout.write("%s (critical): %s" % (oid_name, ext.oid.dotted_string))
+            else:
+                self.stdout.write("%s: %s" % (oid_name, ext.oid.dotted_string))
+        else:  # pragma: no cover
+            raise ValueError("Received unknown extension type: %s" % type(ext))
+
+    def print_extensions(self, cert: X509CertMixin) -> None:
+        """Print all extensions for the given certificate."""
+        for ext in cert.extensions:
+            self.print_extension(ext)
 
     def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
         """Test that we can load the private key of a CA."""
