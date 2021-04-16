@@ -32,6 +32,7 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet
+from ..querysets import CertificateQuerySet
 from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithGeneratedCAsTestCase
@@ -332,8 +333,14 @@ class TypingTestCase(unittest.TestCase):
     def test_filter(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.filter()
 
+    def test_order_by(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.order_by()
+
     def test_exclude(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.exclude()
+
+    def test_acme(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.acme()
 
     def test_get_by_serial_or_cn(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get_by_serial_or_cn("foo")
@@ -341,5 +348,36 @@ class TypingTestCase(unittest.TestCase):
     def test_default(self) -> CertificateAuthority:
         return CertificateAuthority.objects.default()
 
-    def test_usable(self) -> CertificateAuthority:
+    def test_usable(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.usable()
+
+    # Tests for Certificate
+    def test_cert_get(self) -> Certificate:
+        return Certificate.objects.get(pk=1)
+
+    def test_cert_first(self) -> typing.Optional[Certificate]:
+        return Certificate.objects.first()
+
+    def test_cert_get_queryset(self) -> CertificateQuerySet:
+        return Certificate.objects.get_queryset()
+
+    def test_cert_all(self) -> CertificateQuerySet:
+        return Certificate.objects.all()
+
+    def test_cert_filter(self) -> CertificateQuerySet:
+        return Certificate.objects.filter()
+
+    def test_cert_order_by(self) -> CertificateQuerySet:
+        return Certificate.objects.order_by()
+
+    def test_cert_revoked(self) -> CertificateQuerySet:
+        return Certificate.objects.revoked()
+
+    def test_cert_expired(self) -> CertificateQuerySet:
+        return Certificate.objects.expired()
+
+    def test_cert_not_yet_valid(self) -> CertificateQuerySet:
+        return Certificate.objects.not_yet_valid()
+
+    def test_cert_valid(self) -> CertificateQuerySet:
+        return Certificate.objects.valid()
