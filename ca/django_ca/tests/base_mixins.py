@@ -13,33 +13,43 @@
 
 """Collection of mixin classes for unittest.TestCase subclasses."""
 
+import typing
 from contextlib import contextmanager
 from http import HTTPStatus
 from urllib.parse import quote
 
+from django.db import models
+from django.http import HttpResponse
 from django.templatetags.static import static
+from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
+from ..models import DjangoCAModelMixin
 from ..utils import classproperty
 
+if typing.TYPE_CHECKING:
+    TestCaseProtocol = SimpleTestCase
+else:
+    TestCaseProtocol = object
 
-class AdminTestCaseMixin:
+
+class AdminTestCaseMixin(TestCaseProtocol):
     """Common mixin for testing admin classes for models."""
 
-    model = None
+    model: models.Model
     """Model must be configured for TestCase instances using this mixin."""
 
     media_css = []
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
-    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         self.user = self.create_superuser()
         self.client.force_login(self.user)
         super().setUp()
         self.obj = self.model.objects.first()
 
     @classproperty
-    def add_url(cls):  # pylint: disable=no-self-argument; pylint does not detect django decorator
+    def add_url(cls) -> str:  # pylint: disable=no-self-argument; pylint does not detect django decorator
         """Shortcut for the "add" URL of the model under test."""
         return cls.model.admin_add_url
 
@@ -50,12 +60,14 @@ class AdminTestCaseMixin:
         self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
         self.assertEqual(response.content.decode("utf-8").strip(), content.strip())
 
-    def assertCSS(self, response, path):  # pylint: disable=invalid-name
+    def assertCSS(self, response: HttpResponse, path: str) -> None:  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
         self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
-    def assertChangeResponse(self, response, status=HTTPStatus.OK):  # pylint: disable=invalid-name
+    def assertChangeResponse(  # pylint: disable=invalid-name
+        self, response: HttpResponse, status: int = HTTPStatus.OK
+    ) -> None:
         """Assert that the passed response is a model change view."""
         self.assertEqual(response.status_code, status)
         templates = [t.name for t in response.templates]
@@ -66,8 +78,8 @@ class AdminTestCaseMixin:
             self.assertCSS(response, css)
 
     def assertChangelistResponse(  # pylint: disable=invalid-name
-        self, response, *objects, status=HTTPStatus.OK
-    ):
+        self, response: HttpResponse, *objects: models.Model, status: int = HTTPStatus.OK
+    ) -> None:
         """Assert that the passed response is a model changelist view."""
         self.assertEqual(response.status_code, status)
         self.assertCountEqual(response.context["cl"].result_list, objects)
@@ -79,18 +91,20 @@ class AdminTestCaseMixin:
         for css in self.media_css:
             self.assertCSS(response, css)
 
-    def assertRequiresLogin(self, response, **kwargs):  # pylint: disable=invalid-name
+    def assertRequiresLogin(  # pylint: disable=invalid-name
+        self, response: HttpResponse, **kwargs: typing.Any
+    ) -> None:
         """Assert that the given response is a redirect to the login page."""
         expected = "%s?next=%s" % (reverse("admin:login"), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
 
-    def change_url(self, obj=None):
+    def change_url(self, obj: DjangoCAModelMixin = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
         return obj.admin_change_url
 
     @classproperty
-    def changelist_url(cls):  # pylint: disable=no-self-argument; pylint does not detect django decorator
+    def changelist_url(cls) -> str:  # pylint: disable=no-self-argument; pylint doesn't detect @classproperty
         """Shortcut for the changelist URL of the model under test."""
         return cls.model.admin_changelist_url
 
@@ -102,11 +116,13 @@ class AdminTestCaseMixin:
             self.client.force_login(self.user)
             yield frozen
 
-    def get_changelist_view(self, data=None):
+    def get_changelist_view(self, data: typing.Optional[typing.Dict[str, str]] = None) -> HttpResponse:
         """Get the response to a changelist view for the given model."""
         return self.client.get(self.changelist_url, data)
 
-    def get_change_view(self, obj, data=None):
+    def get_change_view(
+        self, obj: DjangoCAModelMixin, data: typing.Optional[typing.Dict[str, str]] = None
+    ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
 
@@ -117,7 +133,9 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin):
     TestCases using this mixin are expected to implement ``setUp`` to add some useful test model instances.
     """
 
-    def get_changelists(self):
+    def get_changelists(
+        self,
+    ) -> typing.Iterator[typing.Tuple["models.QuerySet[models.Model]", typing.Dict[str, str]]]:
         """Generator for possible changelist views.
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.

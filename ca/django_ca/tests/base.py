@@ -60,6 +60,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from freezegun import freeze_time
+from freezegun.api import FrozenDateTimeFactory
 from pyvirtualdisplay import Display
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -87,9 +88,11 @@ from ..signals import post_revoke_cert
 from ..signals import pre_create_ca
 from ..subject import Subject
 from ..typehints import ParsableSubject
+from ..typehints import PrivateKeyTypes
 from ..utils import add_colons
 from ..utils import ca_storage
 from ..utils import x509_name
+from .base_mixins import TestCaseProtocol
 
 User = get_user_model()
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
@@ -452,7 +455,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         shutil.rmtree(self.options["CA_DIR"])
 
 
-class DjangoCATestCaseMixin:
+class DjangoCATestCaseMixin(TestCaseProtocol):
     """Base class for all testcases with some enhancements."""
 
     # pylint: disable=too-many-public-methods
@@ -828,7 +831,7 @@ VQIDAQAB
         return stdout.getvalue(), stderr.getvalue()
 
     @property
-    def crl_profiles(self):
+    def crl_profiles(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
         """Return a list of CRL profiles."""
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
         for config in profiles.values():
@@ -842,21 +845,21 @@ VQIDAQAB
         return profiles
 
     @contextmanager
-    def freeze_time(self, timestamp):
+    def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
         """Context manager to freeze time to one of the given timestamps.
 
         If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
         timestamp.
         """
-        if isinstance(timestamp, str) and timestamp in timestamps:  # pragma: no branch
+        if isinstance(timestamp, str):  # pragma: no branch
             timestamp = timestamps[timestamp]
 
         with freeze_time(timestamp) as frozen:
             yield frozen
 
-    def get_cert_context(self, name):
+    def get_cert_context(self, name: str) -> typing.Dict[str, typing.Any]:
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
-        ctx = {}
+        ctx: typing.Dict[str, typing.Any] = {}
         for key, value in certs[name].items():
             if key == "precert_poison":
                 ctx["precert_poison"] = "PrecertPoison (critical): Yes"
@@ -903,21 +906,23 @@ VQIDAQAB
             ctx["key_path"] = ca_storage.path(certs[name]["key_filename"])
         return ctx
 
-    def get_idp_full_name(self, ca: CertificateAuthority) -> typing.List[x509.UniformResourceIdentifier]:
+    def get_idp_full_name(
+        self, ca: CertificateAuthority
+    ) -> typing.Optional[typing.List[x509.UniformResourceIdentifier]]:
         """Get the IDP full name for `ca`."""
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
 
     def get_idp(
         self,
-        full_name=None,
-        indirect_crl=False,
-        only_contains_attribute_certs=False,
-        only_contains_ca_certs=False,
-        only_contains_user_certs=False,
-        only_some_reasons=None,
-        relative_name=None,
-    ):
+        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        indirect_crl: bool = False,
+        only_contains_attribute_certs: bool = False,
+        only_contains_ca_certs: bool = False,
+        only_contains_user_certs: bool = False,
+        only_some_reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
+    ) -> "x509.Extension[x509.IssuingDistributionPoint]":
         """Get an IssuingDistributionPoint extension."""
         return x509.Extension(
             oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
@@ -947,7 +952,7 @@ VQIDAQAB
         enabled: bool = True,
         parent: typing.Optional[CertificateAuthority] = None,
         **kwargs: typing.Any
-    ):
+    ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
         path = "%s.key" % name
 
@@ -963,7 +968,9 @@ VQIDAQAB
         return ca
 
     @classmethod
-    def create_csr(cls, subject):
+    def create_csr(
+        cls, subject: typing.Union[typing.List[typing.Tuple[str, str]], str]
+    ) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(
             public_exponent=65537, key_size=1024, backend=default_backend()
@@ -977,7 +984,13 @@ VQIDAQAB
         return private_key, request
 
     @classmethod
-    def create_cert(cls, ca, csr, subject, **kwargs):
+    def create_cert(
+        cls,
+        ca: CertificateAuthority,
+        csr: typing.Union[x509.CertificateSigningRequest, str, bytes],
+        subject: typing.Optional[Subject],
+        **kwargs: typing.Any
+    ) -> Certificate:
         """Create a certificate with the given data."""
         cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
         cert.full_clean()
@@ -1061,13 +1074,13 @@ VQIDAQAB
         }
 
     @contextmanager
-    def patch(self, *args: typing.Any, **kwargs: typing.Any) -> MagicMock:
+    def patch(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[MagicMock]:
         """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with patch(*args, **kwargs) as mock:
             yield mock
 
     @contextmanager
-    def patch_object(self, *args, **kwargs):
+    def patch_object(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[typing.Any]:
         """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with patch.object(*args, **kwargs) as mock:
             yield mock
