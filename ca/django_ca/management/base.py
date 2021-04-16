@@ -74,7 +74,7 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         stdout: typing.Optional[io.BytesIO] = None,
         stderr: typing.Optional[io.BytesIO] = None,
         no_color: bool = True,
-        force_color: bool = False
+        force_color: bool = False,
     ) -> None:
         # BaseCommand error handling is not suitable and sets stdout/stderr redundantly:
         # pylint: disable=super-init-not-called
