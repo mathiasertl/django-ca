@@ -54,6 +54,7 @@ from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.dispatch.dispatcher import Signal
+from django.http import HttpResponse
 from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.utils import override_settings
@@ -89,15 +90,23 @@ from ..signals import pre_create_ca
 from ..subject import Subject
 from ..typehints import ParsableSubject
 from ..typehints import PrivateKeyTypes
+from ..typehints import TypedDict
 from ..utils import add_colons
 from ..utils import ca_storage
 from ..utils import x509_name
 from .base_mixins import TestCaseProtocol
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
+KeyDict = TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
+CsrDict = TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest, "der": bytes})
+_PubDict = TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
 
 
-def _load_key(data):
+class PubDict(_PubDict, total=False):
+    der: bytes
+
+
+def _load_key(data: typing.Dict[typing.Any, typing.Any]) -> KeyDict:
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["key_filename"])
 
@@ -107,35 +116,33 @@ def _load_key(data):
     parsed = serialization.load_pem_private_key(raw, password=data.get("password"), backend=default_backend())
     return {
         "pem": raw.decode("utf-8"),
-        "parsed": parsed,
+        "parsed": parsed,  # type: ignore[typeddict-item]  # we do not support all key types
     }
 
 
-def _load_csr(data):
+def _load_csr(data: typing.Dict[typing.Any, typing.Any]) -> CsrDict:
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["csr_filename"])
 
     with open(path, "rb") as stream:
         raw = stream.read().strip()
 
-    csr_data = {
+    parsed = x509.load_pem_x509_csr(raw, default_backend())
+    return {
         "pem": raw.decode("utf-8"),
-        "parsed": x509.load_pem_x509_csr(raw, default_backend()),
+        "parsed": parsed,
+        "der": parsed.public_bytes(Encoding.DER),
     }
 
-    csr_data["der"] = csr_data["parsed"].public_bytes(Encoding.DER)
 
-    return csr_data
-
-
-def _load_pub(data):
+def _load_pub(data: typing.Dict[typing.Any, typing.Any]) -> PubDict:
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["pub_filename"])
 
     with open(path, "rb") as stream:
         pem = stream.read().replace(b"\r\n", b"\n")
 
-    pub_data = {
+    pub_data: PubDict = {
         "pem": pem.decode("utf-8"),
         "parsed": x509.load_pem_x509_certificate(pem, default_backend()),
     }
@@ -145,7 +152,7 @@ def _load_pub(data):
         with open(der_path, "rb") as stream:
             der = stream.read().replace(b"\r\n", b"\n")
         pub_data["der"] = der
-        # Failes for alt-extensions since alternative AKI was added
+        # Fails for alt-extensions since alternative AKI was added
         # pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
 
     return pub_data
@@ -391,23 +398,23 @@ timestamps["everything_expired"] = timestamps["base"] + timedelta(days=365 * 20)
 ocsp_data = _fixture_data["ocsp"]
 
 
-def dns(name):  # just a shortcut
+def dns(name: str) -> x509.DNSName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.DNSName`."""
     return x509.DNSName(name)
 
 
-def uri(url):  # just a shortcut
+def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.UniformResourceIdentifier`."""
     return x509.UniformResourceIdentifier(url)
 
 
-def rdn(name):  # just a shortcut
+def rdn(name: str) -> x509.RelativeDistinguishedName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509..RelativeDistinguishedNam`."""
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
 
 
 @contextmanager
-def mock_cadir(path):
+def mock_cadir(path: str) -> typing.Iterator[None]:
     """Contextmanager to set the CA_DIR to a given path without actually creating it."""
     with override_settings(CA_DIR=path), patch.object(ca_storage, "location", path), patch.object(
         ca_storage, "_location", path
@@ -426,7 +433,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
             raise ValueError("Only functions can use override_tmpcadir()")
         return super().__call__(test_func)
 
-    def enable(self):
+    def enable(self) -> None:
         self.options["CA_DIR"] = tempfile.mkdtemp()
 
         # copy CAs
@@ -447,7 +454,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
 
         super().enable()
 
-    def disable(self):
+    def disable(self) -> None:
         super().disable()
         self.mock.stop()
         self.mock_.stop()
@@ -488,18 +495,18 @@ VQIDAQAB
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
-        self.cas = {}
-        self.certs = {}
+        self.cas: typing.Dict[str, CertificateAuthority] = {}
+        self.certs: typing.Dict[str, Certificate] = {}
 
     def tearDown(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().tearDown()
         cache.clear()
 
-    def tmpcadir(self, **kwargs):
+    def tmpcadir(self, **kwargs: typing.Any) -> override_tmpcadir:
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
 
-    def mock_cadir(self, path):  # pylint: disable=invalid-name
+    def mock_cadir(self, path: str):  # pylint: disable=invalid-name
         """Shortcut to mock the ca dir to the given value."""
         return mock_cadir(path)
 
@@ -523,7 +530,10 @@ VQIDAQAB
         self, issuer: CertificateAuthority, cert: X509CertMixin
     ) -> None:
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
-        self.assertEqual(cert.authority_key_identifier.key_identifier, issuer.subject_key_identifier.value)
+        self.assertEqual(
+            cert.authority_key_identifier.key_identifier,  # type: ignore[union-attr] # aki theoretically None
+            issuer.subject_key_identifier.value,
+        )
 
     def assertBasic(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, algo: str = "SHA256"
@@ -596,7 +606,9 @@ VQIDAQAB
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
-    def assertCreateCASignals(self, pre=True, post=True):  # pylint: disable=invalid-name
+    def assertCreateCASignals(  # pylint: disable=invalid-name
+        self, pre: bool = True, post: bool = True
+    ) -> None:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
             try:
@@ -620,7 +632,7 @@ VQIDAQAB
 
     def assertExtensions(  # pylint: disable=invalid-name
         self,
-        cert: X509CertMixin,
+        cert: typing.Union[X509CertMixin, x509.Certificate],
         extensions: typing.Dict[str, Extension[typing.Any, typing.Any, typing.Any]],
         signer: typing.Optional[CertificateAuthority] = None,
         expect_defaults: bool = True,
@@ -628,17 +640,19 @@ VQIDAQAB
         """Assert that `cert` has the given extensions."""
         extensions = {e.key: e for e in extensions}
 
-        if isinstance(cert, X509CertMixin):
+        if isinstance(cert, Certificate):
+            pubkey = cert.x509_cert.public_key()
+            actual = {e.key: e for e in cert.extensions}
+            signer = cert.ca
+        elif isinstance(cert, CertificateAuthority):
             pubkey = cert.x509_cert.public_key()
             actual = {e.key: e for e in cert.extensions}
 
-            if isinstance(cert, Certificate):
-                signer = cert.ca
-            elif cert.parent is None:  # root CA
+            if cert.parent is None:  # root CA
                 signer = cert
             else:  # intermediate CA
                 signer = cert.parent
-        else:  # cg cert
+        elif isinstance(cert, x509.Certificate):  # cg cert
             pubkey = cert.public_key()
             actual = {
                 e.key: e
@@ -674,27 +688,27 @@ VQIDAQAB
         self.assertEqual(actual, extensions)
 
     @contextmanager
-    def assertImproperlyConfigured(self, msg):  # pylint: disable=invalid-name; unittest standard
+    def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
             yield
 
-    def assertIssuer(self, issuer, cert):  # pylint: disable=invalid-name
+    def assertIssuer(  # pylint: disable=invalid-name
+        self, issuer: CertificateAuthority, cert: X509CertMixin
+    ) -> None:
         """Assert that the issuer for `cert` matches the subject of `issuer`."""
         self.assertEqual(cert.issuer, issuer.subject)
 
-    def assertMessages(self, response, expected):  # pylint: disable=invalid-name
+    def assertMessages(  # pylint: disable=invalid-name
+        self, response: HttpResponse, expected: typing.List[str]
+    ) -> None:
         """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
 
-    def assertNotRevoked(self, cert):  # pylint: disable=invalid-name
+    def assertNotRevoked(self, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
         """Assert that the certificate is not revoked."""
-        if isinstance(cert, CertificateAuthority):
-            cert = CertificateAuthority.objects.get(serial=cert.serial)
-        else:
-            cert = Certificate.objects.get(serial=cert.serial)
-
+        cert.refresh_from_db()
         self.assertFalse(cert.revoked)
         self.assertEqual(cert.revoked_reason, "")
 
