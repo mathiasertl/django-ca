@@ -419,23 +419,6 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         self.test_private_key(ca, password)
 
 
-class CertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
-    """Base class for commands that operate on a single certificate."""
-
-    allow_revoked = False
-
-    def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument(
-            "cert",
-            action=actions.CertificateAction,
-            allow_revoked=self.allow_revoked,
-            help="""Certificate by CommonName or serial. If you give a CommonName (which is not by
-                definition unique) there must be only one valid certificate with the given
-                CommonName.""",
-        )
-        super().add_arguments(parser)
-
-
 class CertificateAuthorityDetailMixin:
     """Mixin to add common arguments to init_ca and edit_ca."""
 

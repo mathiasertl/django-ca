@@ -20,12 +20,15 @@ import typing
 
 from django.core.management.base import CommandParser
 
-from django_ca.management.base import CertCommand
-from django_ca.models import Certificate
-from django_ca.models import Watcher
+from ...models import Certificate
+from ...models import Watcher
+from ..base import BaseCommand
+from ..mixins import CertCommandMixin
 
 
-class Command(CertCommand):  # pylint: disable=missing-class-docstring
+class Command(CertCommandMixin, BaseCommand):
+    """Implement the :command:`manage.py cert_watchers` command."""
+
     help = """Add/remove addresses to be notified of an expiring certificate. The
         "list_certs" command lists all known certificates.
 

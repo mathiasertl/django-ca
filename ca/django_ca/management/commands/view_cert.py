@@ -25,11 +25,12 @@ from django.core.management.base import CommandParser
 
 from ...models import Certificate
 from ...utils import parse_hash_algorithm
+from ..base import BaseCommand
 from ..base import BinaryOutputWrapper
-from ..base import CertCommand
+from ..mixins import CertCommandMixin
 
 
-class Command(CertCommand):  # pylint: disable=missing-class-docstring
+class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-docstring
     binary_output = True
     allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'

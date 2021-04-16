@@ -24,10 +24,11 @@ from django.core.management.base import CommandParser
 from ...constants import ReasonFlags
 from ...models import Certificate
 from ..actions import ReasonAction
-from ..base import CertCommand
+from ..base import BaseCommand
+from ..mixins import CertCommandMixin
 
 
-class Command(CertCommand):  # pylint: disable=missing-class-docstring
+class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-docstring
     allow_revoked = True
     help = "Revoke a certificate."
 
