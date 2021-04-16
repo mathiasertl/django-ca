@@ -13,6 +13,7 @@
 
 """Mixins for :py:class:`~django:django.core.management.BaseCommand` classes."""
 
+import abc
 import typing
 from textwrap import indent
 
@@ -20,9 +21,9 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
-from django.core.management.base import OutputWrapper
 
 from .. import ca_settings
 from ..extensions import Extension
@@ -30,22 +31,18 @@ from ..extensions import IssuerAlternativeName
 from ..extensions.base import NullExtension
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
-from ..typehints import Protocol
 from ..utils import add_colons
 from . import actions
 
-
-class CommandProtocol(Protocol):
-    """Protocol for mixin classes, so that mypy can detect any issues."""
-
-    stdout: OutputWrapper
-    stderr: OutputWrapper
-
-    def add_arguments(self, parser: CommandParser) -> None:
-        """Entry point for subclassed commands to add custom arguments."""
+if typing.TYPE_CHECKING:
+    # When type checking, mixins use BaseCommand as base class for all mixins.
+    # This way, mypy does not complain about missing attributes.
+    _Base = BaseCommand
+else:
+    _Base = object
 
 
-class ArgumentsMixin(CommandProtocol):
+class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin that adds some common functions to BaseCommand subclasses."""
 
     def add_algorithm(self, parser: CommandParser) -> None:
@@ -181,7 +178,7 @@ class ArgumentsMixin(CommandProtocol):
             raise CommandError(str(ex)) from ex
 
 
-class CertCommandMixin(CommandProtocol):
+class CertCommandMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin for commands that operate on a single certificate."""
 
     allow_revoked = False
@@ -198,7 +195,7 @@ class CertCommandMixin(CommandProtocol):
         super().add_arguments(parser)
 
 
-class CertificateAuthorityDetailMixin(CommandProtocol):
+class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin to add common arguments to commands that create or update a certificate authority."""
 
     def add_general_args(self, parser: CommandParser, default: typing.Optional[str] = "") -> None:
