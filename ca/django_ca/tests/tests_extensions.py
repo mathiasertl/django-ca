@@ -2777,6 +2777,22 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         },
     }
 
+    def test_ski_constructor(self):
+        """Test passing x509.SubjectKeyIdentifier."""
+
+        self.assertEqual(
+            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b1)),
+            SubjectKeyIdentifier({"value": self.hex1}),
+        )
+        self.assertEqual(
+            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b2)),
+            SubjectKeyIdentifier({"value": self.hex2}),
+        )
+        self.assertEqual(
+            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
+            SubjectKeyIdentifier({"value": self.hex3}),
+        )
+
 
 class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
     """Test TLSFeature extension."""
