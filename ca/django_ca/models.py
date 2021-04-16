@@ -185,12 +185,11 @@ def pem_validator(value: str) -> None:
         raise ValidationError(_("Not a valid PEM."))
 
 
-class DjangoCAModelMixin:
-    """Mixin with shared properties for all django-ca models."""
+class DjangoCAModel(models.Model):
+    """Abstract base model for all django-ca models."""
 
-    if TYPE_CHECKING:
-        _meta: models.options.Options[models.Model]
-        pk: int
+    class Meta:
+        abstract = True
 
     @classproperty
     def admin_add_url(cls) -> str:  # pylint: disable=no-self-argument; false positive
@@ -240,7 +239,7 @@ class Watcher(models.Model):
         return self.mail
 
 
-class X509CertMixin(DjangoCAModelMixin, models.Model):
+class X509CertMixin(DjangoCAModel):
     """Mixin class with common attributes for Certificates and Certificate Authorities."""
 
     # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -1295,7 +1294,7 @@ class Certificate(X509CertMixin):
         return self.cn
 
 
-class AcmeAccount(DjangoCAModelMixin, models.Model):
+class AcmeAccount(DjangoCAModel):
     """Implements an ACME account object.
 
     .. seealso::
@@ -1376,7 +1375,7 @@ class AcmeAccount(DjangoCAModelMixin, models.Model):
         return self.terms_of_service_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
 
 
-class AcmeOrder(DjangoCAModelMixin, models.Model):
+class AcmeOrder(DjangoCAModel):
     """Implements an ACME order object.
 
     .. seealso::
@@ -1476,7 +1475,7 @@ class AcmeOrder(DjangoCAModelMixin, models.Model):
         )
 
 
-class AcmeAuthorization(DjangoCAModelMixin, models.Model):
+class AcmeAuthorization(DjangoCAModel):
     """Implements an ACME authorization object.
 
     .. seealso::
@@ -1592,7 +1591,7 @@ class AcmeAuthorization(DjangoCAModelMixin, models.Model):
         return self.status in states and self.order.usable
 
 
-class AcmeChallenge(DjangoCAModelMixin, models.Model):
+class AcmeChallenge(DjangoCAModel):
     """Implements an ACME Challenge Object.
 
     .. seealso:: `RFC 8555, section 7.1.5 <https://tools.ietf.org/html/rfc8555#section-7.1.5>`_
@@ -1717,7 +1716,7 @@ class AcmeChallenge(DjangoCAModelMixin, models.Model):
         return self.status in states and self.auth.usable
 
 
-class AcmeCertificate(DjangoCAModelMixin, models.Model):
+class AcmeCertificate(DjangoCAModel):
     """Intermediate model for certificates to be issued via ACME."""
 
     objects = AcmeCertificateManager.from_queryset(AcmeCertificateQuerySet)()

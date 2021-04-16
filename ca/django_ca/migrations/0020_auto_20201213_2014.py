@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'ACME Account',
                 'verbose_name_plural': 'ACME Accounts',
             },
-            bases=(django_ca.models.DjangoCAModelMixin, models.Model),
+            bases=(django_ca.models.DjangoCAModel, ),
         ),
         migrations.AddField(
             model_name='certificateauthority',
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'ACME Order',
                 'verbose_name_plural': 'ACME Orders',
             },
-            bases=(django_ca.models.DjangoCAModelMixin, models.Model),
+            bases=(django_ca.models.DjangoCAModel, ),
         ),
         migrations.CreateModel(
             name='AcmeCertificate',

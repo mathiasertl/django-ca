@@ -24,7 +24,7 @@ from django.templatetags.static import static
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
-from ..models import DjangoCAModelMixin
+from ..models import DjangoCAModel
 from ..utils import classproperty
 
 if typing.TYPE_CHECKING:
@@ -36,7 +36,7 @@ else:
 class AdminTestCaseMixin(TestCaseProtocol):
     """Common mixin for testing admin classes for models."""
 
-    model: models.Model
+    model: DjangoCAModel
     """Model must be configured for TestCase instances using this mixin."""
 
     media_css = []
@@ -98,7 +98,7 @@ class AdminTestCaseMixin(TestCaseProtocol):
         expected = "%s?next=%s" % (reverse("admin:login"), quote(response.wsgi_request.get_full_path()))
         self.assertRedirects(response, expected, **kwargs)
 
-    def change_url(self, obj: DjangoCAModelMixin = None) -> str:
+    def change_url(self, obj: DjangoCAModel = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
         return obj.admin_change_url
@@ -121,7 +121,7 @@ class AdminTestCaseMixin(TestCaseProtocol):
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
-        self, obj: DjangoCAModelMixin, data: typing.Optional[typing.Dict[str, str]] = None
+        self, obj: DjangoCAModel, data: typing.Optional[typing.Dict[str, str]] = None
     ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
