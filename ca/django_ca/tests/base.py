@@ -45,7 +45,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
