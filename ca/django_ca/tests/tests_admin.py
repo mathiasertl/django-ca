@@ -51,7 +51,7 @@ class CertificateAdminTestCaseMixin:
     """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
 
     model: typing.Type[Certificate] = Certificate
-    media_css: typing.Tuple[str] = (
+    media_css: typing.Tuple[str, ...] = (
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateadmin.css",
     )
@@ -63,7 +63,9 @@ class CertificateAdminViewTestCase(
 ):
     """Tests for the Certificate ModelAdmin class."""
 
-    def get_changelists(self):
+    def get_changelists(
+        self,
+    ) -> typing.Iterator[typing.Tuple[typing.Iterable[Certificate], typing.Dict[str, str]]]:
         # yield various different result sets for different filters and times
         with self.freeze_time("everything_valid"):
             yield (self.model.objects.all(), {})
@@ -454,14 +456,9 @@ class CertDownloadTestCase(
 ):
     """Test fetching certificate bundles."""
 
-    def get_url(self, cert):
+    def get_url(self, cert: Certificate) -> str:
         """Get url for the given object."""
         return reverse("admin:django_ca_certificate_download", kwargs={"pk": cert.pk})
-
-    @property
-    def url(self):
-        """Get URL for the default object."""
-        return self.get_url(cert=self.obj)
 
     def test_basic(self) -> None:
         """Test direct certificate download."""
@@ -469,12 +466,13 @@ class CertDownloadTestCase(
 
     def test_der(self) -> None:
         """Download a certificate in DER format."""
+        cert = self.certs["root-cert"]
         filename = "root-cert_example_com.der"
-        response = self.client.get(self.url, {"format": "DER"})
+        response = self.client.get(self.get_url(cert), {"format": "DER"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
         self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
-        self.assertEqual(response.content, self.obj.dump_certificate(Encoding.DER))
+        self.assertEqual(response.content, cert.dump_certificate(Encoding.DER))
 
     def test_not_found(self) -> None:
         """Try downloading a certificate that does not exist."""
@@ -484,25 +482,25 @@ class CertDownloadTestCase(
 
     def test_bad_format(self) -> None:
         """Try downloading an unknown format."""
-        response = self.client.get("%s?format=bad" % self.url)
+        response = self.client.get(self.get_url(self.certs["root-cert"]), {"format": "bad"})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"")
 
     def test_anonymous(self) -> None:
         """Try an anonymous download."""
-        self.assertRequiresLogin(Client().get(self.url))
+        self.assertRequiresLogin(Client().get(self.get_url(self.certs["root-cert"])))
 
     def test_plain_user(self) -> None:
         """Try downloading as plain user."""
         self.user.is_superuser = self.user.is_staff = False
         self.user.save()
-        self.assertRequiresLogin(self.client.get(self.url))
+        self.assertRequiresLogin(self.client.get(self.get_url(self.certs["root-cert"])))
 
     def test_no_perms(self) -> None:
         """Try downloading as staff user with no permissions."""
         self.user.is_superuser = False
         self.user.save()
-        response = self.client.get(self.url)
+        response = self.client.get(self.get_url(self.certs["root-cert"]))
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_no_staff(self) -> None:
@@ -510,7 +508,7 @@ class CertDownloadTestCase(
         self.user.is_staff = False
         self.user.save()
         self.user.user_permissions.add(Permission.objects.get(codename="change_certificate"))
-        self.assertRequiresLogin(self.client.get(self.url))
+        self.assertRequiresLogin(self.client.get(self.get_url(self.certs["root-cert"])))
 
 
 class CertDownloadBundleTestCase(

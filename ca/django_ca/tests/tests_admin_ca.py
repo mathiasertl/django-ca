@@ -21,7 +21,6 @@ from django.urls import reverse
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
-from .base import certs
 from .base_mixins import AdminTestCaseMixin
 from .base_mixins import StandardAdminViewTestCaseMixin
 

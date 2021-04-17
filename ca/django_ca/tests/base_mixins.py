@@ -28,7 +28,6 @@ from django.urls import reverse
 from freezegun.api import FrozenDateTimeFactory
 
 from ..models import DjangoCAModel
-from ..models import Certificate
 from ..models import X509CertMixin
 
 if typing.TYPE_CHECKING:
@@ -45,7 +44,7 @@ class AdminTestCaseMixin(TestCaseProtocol):
     model: typing.Type[DjangoCAModelTypeVar]
     """Model must be configured for TestCase instances using this mixin."""
 
-    media_css: typing.Tuple[str] = tuple()
+    media_css: typing.Tuple[str, ...] = tuple()
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
     # TODO: we should get rid of this, it's ugly
@@ -158,7 +157,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin):
 
     def get_changelists(
         self,
-    ) -> typing.Iterator[typing.Tuple["models.QuerySet[models.Model]", typing.Dict[str, str]]]:
+    ) -> typing.Iterator[typing.Tuple[typing.Iterable[DjangoCAModel], typing.Dict[str, str]]]:
         """Generator for possible changelist views.
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.
