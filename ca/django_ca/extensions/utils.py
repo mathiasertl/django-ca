@@ -13,8 +13,6 @@
 
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
-# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
-
 import textwrap
 from typing import Any
 from typing import FrozenSet

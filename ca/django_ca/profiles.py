@@ -356,7 +356,7 @@ class Profile:
     def _update_from_ca(
         self,
         ca: "CertificateAuthority",
-        extensions: Dict[str, Extension[Any, Any, Any]],  # pylint: disable=unsubscriptable-object
+        extensions: Dict[str, Extension[Any, Any, Any]],
         add_crl_url: bool,
         add_ocsp_url: bool,
         add_issuer_url: bool,
@@ -417,7 +417,7 @@ class Profile:
         self,
         cn_in_san: bool,
         subject: Subject,
-        extensions: Dict[str, Extension[Any, Any, Any]],  # pylint: disable=unsubscriptable-object
+        extensions: Dict[str, Extension[Any, Any, Any]],
     ) -> None:
         if subject.get("CN") and cn_in_san is True:
             try:

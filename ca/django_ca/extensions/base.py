@@ -13,7 +13,6 @@
 
 """Base classes for x509 extensions."""
 
-# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
 # pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
 
 import abc
@@ -675,7 +674,8 @@ class OrderedSetExtension(
 
 
 class AlternativeNameExtension(
-    ListExtension[AlternativeNameTypeVar, ParsableGeneralName, str, x509.GeneralName]
+    ListExtension[AlternativeNameTypeVar, ParsableGeneralName, str, x509.GeneralName],
+    Generic[AlternativeNameTypeVar],
 ):
     """Base class for extensions that contain a list of general names.
 
@@ -711,7 +711,8 @@ class AlternativeNameExtension(
 class CRLDistributionPointsBase(
     ListExtension[
         ExtensionTypeTypeVar, ParsableDistributionPoint, SerializedDistributionPoint, DistributionPoint
-    ]
+    ],
+    Generic[ExtensionTypeTypeVar],
 ):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
@@ -752,7 +753,8 @@ class SignedCertificateTimestampsBase(
         ParsableSignedCertificateTimestamp,
         SerializedSignedCertificateTimestamp,
         SignedCertificateTimestamp,
-    ]
+    ],
+    Generic[SignedCertificateTimestampsBaseTypeVar],
 ):
     """Base class for extensions containing signed certificate timestamps.
 

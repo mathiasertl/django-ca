@@ -13,8 +13,6 @@
 
 """Various type aliases used in throughout django-ca."""
 
-# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
-
 import sys
 from datetime import datetime
 from datetime import timedelta

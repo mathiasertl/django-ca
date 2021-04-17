@@ -16,8 +16,6 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
-
 import re
 from typing import Any
 from typing import Dict

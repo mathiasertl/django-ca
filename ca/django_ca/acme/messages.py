@@ -13,8 +13,6 @@
 
 """Specialized variants of ACME message classes."""
 
-# pylint: disable=unsubscriptable-object; https://github.com/PyCQA/pylint/issues/3882
-
 from typing import TYPE_CHECKING
 from typing import List
 
@@ -24,7 +22,7 @@ from acme import messages
 
 # https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
 if TYPE_CHECKING:
-    IdentifiersType = jose.Field[List[str]]
+    IdentifiersType = jose.Field[List[str]]  # pylint: disable=unsubscriptable-object
 else:
     IdentifiersType = jose.Field
 

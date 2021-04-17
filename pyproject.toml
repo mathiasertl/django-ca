@@ -86,11 +86,6 @@ disable = [
     #   https://github.com/landscapeio/landscape-issues/issues/214
     "cyclic-import",
 
-    # pylint==2.7.4 has problems with generic types:
-    #   https://github.com/PyCQA/pylint/issues/3882
-    #   https://github.com/PyCQA/pylint/issues/2822
-    "unsubscriptable-object",
-
     # no-member is broken with Generic grandparents (pylint==2.7.4, astroid==2.5.2)
     #   https://github.com/PyCQA/pylint/issues/3131
     #   https://github.com/PyCQA/astroid/pull/927
