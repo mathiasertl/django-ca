@@ -44,11 +44,12 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 @freeze_time(timestamps["everything_valid"])
-class SignCertTestCase(DjangoCAWithGeneratedCAsTestCase):
+class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Main test class for this command."""
 
     def setUp(self) -> None:

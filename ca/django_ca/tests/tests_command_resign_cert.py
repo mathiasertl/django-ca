@@ -34,10 +34,11 @@ from ..subject import Subject
 from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])
-class ResignCertTestCase(DjangoCAWithCertTestCase):
+class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     """Main test class for this command."""
 
     def setUp(self) -> None:

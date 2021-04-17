@@ -61,7 +61,7 @@ class CertificateAdminTestCaseMixin:
 class CertificateAdminViewTestCase(
     CertificateAdminTestCaseMixin,
     StandardAdminViewTestCaseMixin[Certificate],
-    DjangoCAWithGeneratedCertsTestCase
+    DjangoCAWithGeneratedCertsTestCase,
 ):
     """Tests for the Certificate ModelAdmin class."""
 

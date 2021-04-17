@@ -38,6 +38,7 @@ from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 
 class TestDjangoCATestCase(DjangoCATestCase):
@@ -195,7 +196,7 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
                 pass
 
 
-class CommandTestCase(DjangoCAWithCATestCase):
+class CommandTestCase(TestCaseMixin, DjangoCAWithCATestCase):
     """Test the cmd_e2e function."""
 
     def test_basic(self) -> None:

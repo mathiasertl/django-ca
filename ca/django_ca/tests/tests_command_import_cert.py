@@ -24,10 +24,11 @@ from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])
-class ImportCertTest(DjangoCAWithCATestCase):
+class ImportCertTest(TestCaseMixin, DjangoCAWithCATestCase):
     """Main test class for this command."""
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

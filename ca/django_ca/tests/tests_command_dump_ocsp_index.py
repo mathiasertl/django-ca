@@ -27,6 +27,7 @@ from ..deprecation import RemovedInDjangoCA120Warning
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 BASIC = """V\t{child-cert[ocsp-expires]}\t\t{child-cert[ocsp-serial]}\tunknown\t{child-cert[subject]}
 V\t{profile-client[ocsp-expires]}\t\t{profile-client[ocsp-serial]}\tunknown\t{profile-client[subject]}
@@ -99,7 +100,7 @@ REVOKED_FIRST = (
 REVOKED_SECOND = "R\t{ecc-cert[ocsp-expires]}\t{revoked},key_compromise\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
 
 
-class OCSPIndexTestCase(DjangoCAWithCertTestCase):
+class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     """Test the ``dump_ocsp_index`` management command."""
 
     timeformat = "%y%m%d%H%M%SZ"

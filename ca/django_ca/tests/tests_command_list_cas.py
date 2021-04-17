@@ -24,6 +24,7 @@ from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 {ecc[serial_colons]} - {ecc[name]}{ecc_state}
@@ -33,7 +34,7 @@ EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 """
 
 
-class ListCertsTestCase(DjangoCATestCase):
+class ListCertsTestCase(TestCaseMixin, DjangoCATestCase):
     """Test the list_cas management command."""
 
     def setUp(self) -> None:

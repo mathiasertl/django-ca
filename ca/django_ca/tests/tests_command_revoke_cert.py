@@ -18,9 +18,10 @@ from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
 from .base import DjangoCAWithGeneratedCertsTestCase
+from .base_mixins import TestCaseMixin
 
 
-class RevokeCertTestCase(DjangoCAWithGeneratedCertsTestCase):
+class RevokeCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
     def setUp(self) -> None:

@@ -28,9 +28,10 @@ from .base import certs
 from .base import mock_cadir
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
-class ImportCATest(DjangoCATestCase):
+class ImportCATest(TestCaseMixin, DjangoCATestCase):
     """Test the import_ca management command."""
 
     @override_tmpcadir()

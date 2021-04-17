@@ -21,9 +21,10 @@ from ..utils import add_colons
 from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
-class ListCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
+class ListCertsTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
     def _line(self, cert):

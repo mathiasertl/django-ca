@@ -21,9 +21,10 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from .. import ca_settings
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 
-class DumpCATestCase(DjangoCAWithCATestCase):
+class DumpCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
     """Main test class for this command."""
 
     def setUp(self) -> None:

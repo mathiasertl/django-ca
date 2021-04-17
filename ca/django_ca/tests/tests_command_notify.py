@@ -23,10 +23,11 @@ from ..models import Watcher
 from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 @override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
-class NotifyExpiringCertsTestCase(DjangoCAWithGeneratedCertsTestCase):
+class NotifyExpiringCertsTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
     @freeze_time(timestamps["everything_valid"])

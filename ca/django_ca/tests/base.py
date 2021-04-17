@@ -24,7 +24,6 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
-from io import StringIO
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -49,8 +48,6 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
-from django.core.management import ManagementUtility
-from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.dispatch.dispatcher import Signal
 from django.http import HttpResponse
@@ -799,43 +796,6 @@ VQIDAQAB
         with self.assertRaises(ValidationError) as cmex:
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
-
-    def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
-        """Call to a manage.py command using call_command."""
-        kwargs.setdefault("stdout", StringIO())
-        kwargs.setdefault("stderr", StringIO())
-        stdin = kwargs.pop("stdin", StringIO())
-
-        with patch("sys.stdin", stdin):
-            call_command(*args, **kwargs)
-        return kwargs["stdout"].getvalue(), kwargs["stderr"].getvalue()
-
-    def cmd_e2e(
-        self,
-        cmd: typing.Sequence[str],
-        stdin: typing.Optional[StringIO] = None,
-        stdout: typing.Optional[StringIO] = None,
-        stderr: typing.Optional[StringIO] = None,
-    ) -> typing.Tuple[str, str]:
-        """Call a management command the way manage.py does.
-
-        Unlike call_command, this method also tests the argparse configuration of the called command.
-        """
-        stdout = stdout or StringIO()
-        stderr = stderr or StringIO()
-        if stdin is None:
-            stdin = StringIO()
-
-        with patch("sys.stdin", stdin), patch("sys.stdout", stdout), patch("sys.stderr", stderr):
-            util = ManagementUtility(
-                [
-                    "manage.py",
-                ]
-                + list(cmd)
-            )
-            util.execute()
-
-        return stdout.getvalue(), stderr.getvalue()
 
     @property
     def crl_profiles(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:

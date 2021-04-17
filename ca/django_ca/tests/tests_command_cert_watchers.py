@@ -14,9 +14,10 @@
 """Test the cert_watchers management command."""
 
 from .base import DjangoCAWithGeneratedCertsTestCase
+from .base_mixins import TestCaseMixin
 
 
-class CertWatchersTestCase(DjangoCAWithGeneratedCertsTestCase):
+class CertWatchersTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Main test class for this command."""
 
     def test_basic(self) -> None:

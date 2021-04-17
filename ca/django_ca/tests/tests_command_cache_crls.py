@@ -26,9 +26,10 @@ from ..utils import get_crl_cache_key
 from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
-class CacheCRLsTestCase(DjangoCAWithGeneratedCAsTestCase):
+class CacheCRLsTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Main test class for this command."""
 
     @override_tmpcadir()

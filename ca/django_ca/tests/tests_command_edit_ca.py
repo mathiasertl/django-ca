@@ -16,9 +16,10 @@
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 
-class EditCATestCase(DjangoCAWithCATestCase):
+class EditCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
     """Test the edit_ca management command."""
 
     issuer = "https://issuer-test.example.org"

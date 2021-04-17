@@ -25,9 +25,10 @@ from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import certs
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 
-class CRLValidationTestCase(DjangoCATestCase):
+class CRLValidationTestCase(TestCaseMixin, DjangoCATestCase):
     """CRL validation tests."""
 
     def setUp(self) -> None:

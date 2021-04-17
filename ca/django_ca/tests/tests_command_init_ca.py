@@ -34,9 +34,10 @@ from .base import DjangoCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
-class InitCATest(DjangoCATestCase):
+class InitCATest(TestCaseMixin, DjangoCATestCase):
     """Test the init_ca management command."""
 
     def init_ca(self, **kwargs):

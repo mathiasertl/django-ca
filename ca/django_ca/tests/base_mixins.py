@@ -17,9 +17,13 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from http import HTTPStatus
+from io import StringIO
+from unittest import mock
 from urllib.parse import quote
 
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
+from django.core.management import ManagementUtility
+from django.core.management import call_command
 from django.db import models
 from django.http import HttpResponse
 from django.templatetags.static import static
@@ -42,6 +46,42 @@ DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAMode
 
 
 class TestCaseMixin(TestCaseProtocol):
+    """Mixin providing augmented functionality to all test cases."""
+
+    def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
+        """Call to a manage.py command using call_command."""
+        kwargs.setdefault("stdout", StringIO())
+        kwargs.setdefault("stderr", StringIO())
+        stdin = kwargs.pop("stdin", StringIO())
+
+        with mock.patch("sys.stdin", stdin):
+            call_command(*args, **kwargs)
+        return kwargs["stdout"].getvalue(), kwargs["stderr"].getvalue()
+
+    def cmd_e2e(
+        self,
+        cmd: typing.Sequence[str],
+        stdin: typing.Optional[StringIO] = None,
+        stdout: typing.Optional[StringIO] = None,
+        stderr: typing.Optional[StringIO] = None,
+    ) -> typing.Tuple[str, str]:
+        """Call a management command the way manage.py does.
+
+        Unlike call_command, this method also tests the argparse configuration of the called command.
+        """
+        stdout = stdout or StringIO()
+        stderr = stderr or StringIO()
+        if stdin is None:
+            stdin = StringIO()
+
+        with mock.patch("sys.stdin", stdin), mock.patch("sys.stdout", stdout), mock.patch(
+            "sys.stderr", stderr
+        ):
+            util = ManagementUtility(["manage.py"] + list(cmd))
+            util.execute()
+
+        return stdout.getvalue(), stderr.getvalue()
+
     @contextmanager
     def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
         """Context manager to freeze time to one of the given timestamps.

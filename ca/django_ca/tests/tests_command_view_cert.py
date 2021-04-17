@@ -28,6 +28,7 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 output = {
     "root-cert": """Common Name: {cn}
@@ -518,7 +519,7 @@ HPKP pin: {hpkp}
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ViewCertTestCase(DjangoCAWithCertTestCase):
+class ViewCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     """Main test class for this command."""
 
     def _get_format(self, cert):

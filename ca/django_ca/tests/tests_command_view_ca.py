@@ -16,6 +16,7 @@
 from .base import DjangoCAWithCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 expected = {
     "ecc": """{name} (enabled):
@@ -1090,7 +1091,7 @@ expected["dsa"] = expected["ecc"]
 expected["pwd"] = expected["ecc"]
 
 
-class ViewCATestCase(DjangoCAWithCATestCase):
+class ViewCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
     """Main test class for this command."""
 
     @override_tmpcadir()
