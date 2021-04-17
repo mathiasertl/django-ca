@@ -788,7 +788,7 @@ VQIDAQAB
         self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     def assertSubject(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, expected: typing.Union[Subject, ParsableSubject]
+        self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]
     ) -> None:
         """Assert the subject of `cert` matches `expected`."""
         if not isinstance(expected, Subject):
