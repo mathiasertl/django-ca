@@ -91,6 +91,11 @@ disable = [
     #   https://github.com/PyCQA/pylint/issues/2822
     "unsubscriptable-object",
 
+    # no-member is broken with Generic grandparents (pylint==2.7.4, astroid==2.5.2)
+    #   https://github.com/PyCQA/pylint/issues/3131
+    #   https://github.com/PyCQA/astroid/pull/927
+    "no-member",
+
     # These are just annoying
     "too-few-public-methods",
     "no-self-use",
