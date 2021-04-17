@@ -14,6 +14,7 @@
 """Base test cases for admin views and CertificateAdmin tests."""
 
 import json
+import typing
 from http import HTTPStatus
 from unittest import mock
 
@@ -48,8 +49,8 @@ User = get_user_model()
 class CertificateAdminTestCaseMixin:
     """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
 
-    model = Certificate
-    media_css = (
+    model: typing.Type[Certificate] = Certificate
+    media_css: typing.Tuple[str] = (
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateadmin.css",
     )

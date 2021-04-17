@@ -34,14 +34,16 @@ if typing.TYPE_CHECKING:
 else:
     TestCaseProtocol = object
 
+DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
+
 
 class AdminTestCaseMixin(TestCaseProtocol):
     """Common mixin for testing admin classes for models."""
 
-    model: typing.Type[DjangoCAModel]
+    model: typing.Type[DjangoCAModelTypeVar]
     """Model must be configured for TestCase instances using this mixin."""
 
-    media_css: typing.List[str] = []
+    media_css: typing.Tuple[str] = tuple()
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
     # TODO: we should get rid of this, it's ugly

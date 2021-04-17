@@ -14,6 +14,7 @@
 """Test cases for adding certificates via the admin interface."""
 
 import html
+import typing
 import unittest
 from datetime import datetime
 from datetime import timedelta
@@ -22,19 +23,26 @@ from http import HTTPStatus
 from django.conf import settings
 
 from freezegun import freeze_time
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 
 from .. import ca_settings
 from ..extensions import BasicConstraints
 from ..extensions import ExtendedKeyUsage
+from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..profiles import Profile
 from ..profiles import profiles
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
+from ..typehints import ExtensionTypeTypeVar
+from ..typehints import ParsableValue
+from ..typehints import SerializedExtension
+from ..typehints import SerializedValue
 from ..utils import MULTIPLE_OIDS
 from ..utils import NAME_OID_MAPPINGS
 from .base import DjangoCAWithCertTestCase
@@ -693,7 +701,12 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, SeleniumTestCase):
     """Some Selenium based test cases to test the client side javascript code."""
 
-    def get_expected(self, profile, extension_class, default=None):
+    def get_expected(
+        self,
+        profile: Profile,
+        extension_class: typing.Type[Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue]],
+        default: typing.Any = None,
+    ) -> SerializedExtension:
         """Get expected value for a given extension for the given profile."""
         if extension_class.key in profile.extensions:
             return profile.extensions[extension_class.key].serialize()
@@ -701,21 +714,20 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
 
     def assertProfile(  # pylint: disable=invalid-name
         self,
-        profile,
-        ku_select,
-        ku_critical,
-        eku_select,
-        eku_critical,
-        tf_select,
-        tf_critical,
-        subject,
-        cn_in_san,
-    ):
+        profile_name: str,
+        ku_select: Select,
+        ku_critical: WebElement,
+        eku_select: Select,
+        eku_critical: WebElement,
+        tf_select: Select,
+        tf_critical: WebElement,
+        subject: typing.Dict[str, WebElement],
+        cn_in_san: WebElement,
+    ) -> None:
         """Assert that the admin form equals the given profile."""
 
         # pylint: disable=too-many-locals
-
-        profile = profiles[profile]
+        profile = profiles[profile_name]
 
         ku_expected = self.get_expected(profile, KeyUsage, [])
         ku_selected = [o.get_attribute("value") for o in ku_select.all_selected_options]
@@ -739,21 +751,21 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
 
             # OIDs that can occur multiple times are stored as list in subject, so we wrap it
             if NAME_OID_MAPPINGS[key] in MULTIPLE_OIDS:
-                value = [value]
-
-            self.assertEqual(value, profile.subject.get(key, ""))
+                self.assertEqual([value], profile.subject.get(key, ""))
+            else:
+                self.assertEqual(value, profile.subject.get(key, ""))
 
     def clear_form(
         self,
-        ku_select,
-        ku_critical,
-        eku_select,
-        eku_critical,
-        tf_select,
-        tf_critical,
-        cn_in_san,
-        subject_fields,
-    ):
+        ku_select: Select,
+        ku_critical: WebElement,
+        eku_select: Select,
+        eku_critical: WebElement,
+        tf_select: Select,
+        tf_critical: WebElement,
+        subject: typing.Dict[str, WebElement],
+        cn_in_san: WebElement,
+    ) -> None:
         """Clear the form."""
         ku_select.deselect_all()
         eku_select.deselect_all()
@@ -767,7 +779,7 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
             tf_critical.click()
         if cn_in_san.is_selected():
             cn_in_san.click()
-        for field in subject_fields.values():
+        for field in subject.values():
             field.clear()
 
     @override_tmpcadir()
@@ -857,8 +869,8 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
                 eku_critical,
                 tf_select,
                 tf_critical,
-                cn_in_san,
                 subject_fields,
+                cn_in_san,
             )
 
             value = option.get_attribute("value")
@@ -878,12 +890,14 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
                 cn_in_san,
             )
 
-            # now fill everything with dummy values to test the other way round
-            # pylint: disable=expression-not-assigned
-            [ku_select.select_by_value(o.get_attribute("value")) for o in ku_select.options]
-            [eku_select.select_by_value(o.get_attribute("value")) for o in eku_select.options]
-            [tf_select.select_by_value(o.get_attribute("value")) for o in tf_select.options]
-            # pylint: enable=expression-not-assigned
+            # Set all options to make sure that selected values are *unset* too
+            for ext_select in [ku_select, eku_select, tf_select]:
+                for opt in ext_select.options:
+                    ext_value = opt.get_attribute("value")
+                    if not ext_value:  # should not happen, just to be sure (also makes mypy happy)
+                        raise ValueError("option was not set.")
+
+                    ext_select.select_by_value(ext_value)
 
             if not ku_critical.is_selected():
                 ku_critical.click()
@@ -907,8 +921,8 @@ class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCas
                 eku_critical,
                 tf_select,
                 tf_critical,
-                cn_in_san,
                 subject_fields,
+                cn_in_san,
             )
             option.click()
 
