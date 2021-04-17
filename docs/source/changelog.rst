@@ -21,6 +21,7 @@ This version is currently under development.
 * Lint code using `pylint <https://www.pylint.org/>`_.
 * Make sure that operators for OrderedSetExtension always return an instance of the implementing class, not of
   the base class.
+* Certificate bundles now always end with a newline, as normal bundles do.
 
 Backwards incompatible changes
 ==============================

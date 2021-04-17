@@ -24,7 +24,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import Client
 from django.urls import reverse
-from django.utils.encoding import force_str
 
 from freezegun import freeze_time
 
@@ -32,7 +31,9 @@ from .. import ca_settings
 from .. import extensions
 from .. import models
 from ..models import Certificate
+from ..models import CertificateAuthority
 from ..models import Watcher
+from ..models import X509CertMixin
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCATestCase
@@ -463,10 +464,8 @@ class CertDownloadTestCase(
         return self.get_url(cert=self.obj)
 
     def test_basic(self) -> None:
-        """Basic bundle download."""
-        filename = "root-cert_example_com.pem"
-        response = self.client.get(self.url, {"format": "PEM"})
-        self.assertBundle(response, filename, self.obj.pub)
+        """Test direct certificate download."""
+        self.assertBundle(self.certs["root-cert"], [self.certs["root-cert"]], "root-cert_example_com.pem")
 
     def test_der(self) -> None:
         """Download a certificate in DER format."""
@@ -519,34 +518,29 @@ class CertDownloadBundleTestCase(
 ):
     """Test downloading certificate bundles."""
 
-    def get_url(self, cert):
+    def get_url(self, cert: X509CertMixin) -> str:
         """Get URL for given certificate for this test."""
         return reverse("admin:django_ca_certificate_download_bundle", kwargs={"pk": cert.pk})
 
-    @property
-    def url(self):
-        """Generic URL for this test."""
-        return self.get_url(cert=self.obj)
+    def test_root_cert(self) -> None:
+        """Try downloading a certificate bundle."""
+        cert = self.certs["root-cert"]
+        self.assertBundle(cert, [cert, cert.ca], "root-cert_example_com_bundle.pem")
 
-    def test_cert(self) -> None:
-        """TRy downloading a certificate bundle."""
-        filename = "root-cert_example_com_bundle.pem"
-        response = self.client.get("%s?format=PEM" % self.url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["Content-Type"], "application/pkix-cert")
-        self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
-        self.assertEqual(
-            force_str(response.content), "%s\n%s" % (self.obj.pub.strip(), self.obj.ca.pub.strip())
-        )
-        self.assertEqual(self.cas["root"], self.obj.ca)  # just to be sure we test the right thing
+    def test_child_cert(self) -> None:
+        """Download bundle for certificate signed by intermediate ca."""
+        cert = self.certs["child-cert"]
+        parent = typing.cast(CertificateAuthority, cert.ca.parent)
+        self.assertBundle(cert, [cert, cert.ca, parent], "child-cert_example_com_bundle.pem")
 
     def test_invalid_format(self) -> None:
         """Try downloading an invalid format."""
-        response = self.client.get("%s?format=INVALID" % self.url)
+        url = self.get_url(cert=self.certs["child-cert"])
+        response = self.client.get("%s?format=INVALID" % url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"")
 
         # DER is not supported for bundles
-        response = self.client.get("%s?format=DER" % self.url)
+        response = self.client.get("%s?format=DER" % url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")

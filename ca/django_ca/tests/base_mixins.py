@@ -28,6 +28,8 @@ from django.urls import reverse
 from freezegun.api import FrozenDateTimeFactory
 
 from ..models import DjangoCAModel
+from ..models import Certificate
+from ..models import X509CertMixin
 
 if typing.TYPE_CHECKING:
     TestCaseProtocol = SimpleTestCase
@@ -60,7 +62,7 @@ class AdminTestCaseMixin(TestCaseProtocol):
         """Shortcut for the "add" URL of the model under test."""
         return typing.cast(str, self.model.admin_add_url)  # type hinting for @classproperty doesn't work
 
-    def assertBundle(  # pylint: disable=invalid-name
+    def assertBundleOld(  # pylint: disable=invalid-name
         self, response: HttpResponse, filename: str, content: str
     ) -> None:
         """Assert a given bundle response."""
@@ -68,6 +70,18 @@ class AdminTestCaseMixin(TestCaseProtocol):
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
         self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
         self.assertEqual(response.content.decode("utf-8").strip(), content.strip())
+
+    def assertBundle(  # pylint: disable=invalid-name
+        self, cert: X509CertMixin, expected: typing.Iterable[X509CertMixin], filename: str
+    ) -> None:
+        """Assert that the bundle for the given certificate matches the expected chain and filename."""
+        url = self.get_url(cert)
+        expected_content = "\n".join([e.pub.strip() for e in expected]) + "\n"
+        response = self.client.get(url, {"format": "PEM"})
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response["Content-Type"], "application/pkix-cert")
+        self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
+        self.assertEqual(response.content.decode("utf-8"), expected_content)
 
     def assertCSS(self, response: HttpResponse, path: str) -> None:  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""

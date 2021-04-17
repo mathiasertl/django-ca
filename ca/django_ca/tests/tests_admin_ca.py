@@ -46,7 +46,7 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
 
     model = CertificateAuthority
 
-    def get_url(self, ca):
+    def get_url(self, ca: CertificateAuthority) -> str:
         """Function to get the bundle URL for the given CA."""
         return reverse("admin:django_ca_certificateauthority_download_bundle", kwargs={"pk": ca.pk})
 
@@ -57,15 +57,13 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
 
     def test_root(self) -> None:
         """Test downloading the bundle for the root CA."""
-        filename = "root_example_com_bundle.pem"
-        self.assertBundle(self.client.get("%s?format=PEM" % self.url), filename, certs["root"]["pub"]["pem"])
+        self.assertBundle(self.cas["root"], [self.cas["root"]], "root_example_com_bundle.pem")
 
     def test_child(self) -> None:
         """Test downloading the bundle for a child CA."""
-        filename = "child_example_com_bundle.pem"
-        content = "%s\n%s" % (certs["child"]["pub"]["pem"].strip(), certs["root"]["pub"]["pem"].strip())
-        response = self.client.get("%s?format=PEM" % self.get_url(self.cas["child"]))
-        self.assertBundle(response, filename, content)
+        self.assertBundle(
+            self.cas["child"], [self.cas["child"], self.cas["root"]], "child_example_com_bundle.pem"
+        )
 
     def test_invalid_format(self) -> None:
         """Test downloading the bundle in an invalid format."""
