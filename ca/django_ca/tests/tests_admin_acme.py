@@ -25,6 +25,7 @@ from ..models import AcmeOrder
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 from .base_mixins import StandardAdminViewTestCaseMixin
+from .base_mixins import TestCaseProtocol
 
 PEM1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
@@ -91,12 +92,12 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATes
         )
 
 
-class AcmeOrderViewsTestCaseMixin:
+class AcmeOrderViewsTestCaseMixin(TestCaseProtocol):
     """Mixin to create orders."""
 
     model = AcmeOrder
 
-    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
         self.order1 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_VALID)
         self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING)
