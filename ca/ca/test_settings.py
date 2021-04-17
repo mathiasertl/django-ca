@@ -238,7 +238,7 @@ _parsed_cg_version = packaging.version.parse(cryptography.__version__).release
 CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]  # type: ignore[index]
 NEWEST_PYTHON = sys.version_info[0:2] == (3, 9)
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (3, 4)
-NEWEST_DJANGO = django.VERSION[:2] == (3, 1)
+NEWEST_DJANGO = django.VERSION[:2] == (3, 2)
 NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
 
 # For Selenium test cases
