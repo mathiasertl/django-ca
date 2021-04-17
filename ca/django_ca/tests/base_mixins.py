@@ -19,6 +19,7 @@ from datetime import datetime
 from http import HTTPStatus
 from urllib.parse import quote
 
+from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.db import models
 from django.http import HttpResponse
 from django.templatetags.static import static
@@ -137,6 +138,12 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     def changelist_url(self) -> str:
         """Shortcut for the changelist URL of the model under test."""
         return typing.cast(str, self.model.admin_changelist_url)
+
+    def create_superuser(
+        self, username: str = "admin", password: str = "admin", email: str = "user@example.com"
+    ) -> User:
+        """Shortcut to create a superuser."""
+        return User.objects.create_superuser(username=username, password=password, email=email)
 
     @contextmanager
     def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:

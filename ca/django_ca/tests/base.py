@@ -44,7 +44,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
@@ -1000,12 +999,6 @@ VQIDAQAB
         cert.x509_cert = parsed
         cert.save()
         return cert
-
-    def create_superuser(
-        self, username: str = "admin", password: str = "admin", email: str = "user@example.com"
-    ) -> User:
-        """Shortcut to create a superuser."""
-        return User.objects.create_superuser(username=username, password=password, email=email)
 
     def load_usable_cas(self) -> None:
         """Load CAs generated as fixture data."""
