@@ -61,15 +61,6 @@ class AdminTestCaseMixin(TestCaseProtocol):
         """Shortcut for the "add" URL of the model under test."""
         return typing.cast(str, self.model.admin_add_url)  # type hinting for @classproperty doesn't work
 
-    def assertBundleOld(  # pylint: disable=invalid-name
-        self, response: HttpResponse, filename: str, content: str
-    ) -> None:
-        """Assert a given bundle response."""
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["Content-Type"], "application/pkix-cert")
-        self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
-        self.assertEqual(response.content.decode("utf-8").strip(), content.strip())
-
     def assertBundle(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, expected: typing.Iterable[X509CertMixin], filename: str
     ) -> None:
