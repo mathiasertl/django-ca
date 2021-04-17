@@ -1183,7 +1183,7 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
             return
 
         if settings.VIRTUAL_DISPLAY:
-            cls.vdisplay = Display(visible=0, size=(1024, 768))
+            cls.vdisplay = Display(visible=False, size=(1024, 768))
             cls.vdisplay.start()
 
         cls.selenium = WebDriver(
