@@ -25,10 +25,12 @@ from django.templatetags.static import static
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
+from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
 
 from ..models import DjangoCAModel
 from ..models import X509CertMixin
+from .base import timestamps
 
 if typing.TYPE_CHECKING:
     TestCaseProtocol = SimpleTestCase
@@ -38,7 +40,22 @@ else:
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 
 
-class AdminTestCaseMixin(TestCaseProtocol):
+class TestCaseMixin(TestCaseProtocol):
+    @contextmanager
+    def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
+        """Context manager to freeze time to one of the given timestamps.
+
+        If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
+        timestamp.
+        """
+        if isinstance(timestamp, str):  # pragma: no branch
+            timestamp = timestamps[timestamp]
+
+        with freeze_time(timestamp) as frozen:
+            yield frozen
+
+
+class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     """Common mixin for testing admin classes for models."""
 
     model: typing.Type[DjangoCAModelTypeVar]
@@ -140,7 +157,7 @@ class AdminTestCaseMixin(TestCaseProtocol):
         return self.client.get(self.change_url(obj), data)
 
 
-class StandardAdminViewTestCaseMixin(AdminTestCaseMixin):
+class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
     """A mixin that adds tests for the standard Django admin views.
 
     TestCases using this mixin are expected to implement ``setUp`` to add some useful test model instances.

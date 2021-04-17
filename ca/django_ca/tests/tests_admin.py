@@ -50,7 +50,7 @@ User = get_user_model()
 class CertificateAdminTestCaseMixin:
     """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
 
-    model: typing.Type[Certificate] = Certificate
+    model = Certificate
     media_css: typing.Tuple[str, ...] = (
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateadmin.css",
@@ -59,7 +59,9 @@ class CertificateAdminTestCaseMixin:
 
 @freeze_time(timestamps["everything_valid"])
 class CertificateAdminViewTestCase(
-    CertificateAdminTestCaseMixin, StandardAdminViewTestCaseMixin, DjangoCAWithGeneratedCertsTestCase
+    CertificateAdminTestCaseMixin,
+    StandardAdminViewTestCaseMixin[Certificate],
+    DjangoCAWithGeneratedCertsTestCase
 ):
     """Tests for the Certificate ModelAdmin class."""
 
@@ -220,7 +222,7 @@ class CertificateAdminViewTestCase(
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
 
-class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
+class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCATestCase):
     """Test the CSR detail view."""
 
     url = reverse("admin:django_ca_certificate_csr_details")
@@ -287,7 +289,7 @@ class CSRDetailTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Djang
         self.assertRequiresLogin(self.client.post(self.url, data={"csr": self.csr_pem}))
 
 
-class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCATestCase):
+class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCATestCase):
     """Test fetching profile information."""
 
     url = reverse("admin:django_ca_certificate_profiles")
@@ -452,7 +454,7 @@ class ProfilesViewTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, Dj
 
 
 class CertDownloadTestCase(
-    CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase
+    CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCAWithGeneratedCertsTestCase
 ):
     """Test fetching certificate bundles."""
 
@@ -512,7 +514,7 @@ class CertDownloadTestCase(
 
 
 class CertDownloadBundleTestCase(
-    CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase
+    CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCAWithGeneratedCertsTestCase
 ):
     """Test downloading certificate bundles."""
 

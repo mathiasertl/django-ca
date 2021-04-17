@@ -45,6 +45,7 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 class TestBasic(DjangoCAWithGeneratedCAsTestCase):
@@ -445,7 +446,7 @@ class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeCleanupTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeCleanupTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
 
     def setUp(self) -> None:

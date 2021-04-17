@@ -24,6 +24,7 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
+from .base_mixins import DjangoCAModelTypeVar
 from .base_mixins import StandardAdminViewTestCaseMixin
 from .base_mixins import TestCaseProtocol
 
@@ -95,8 +96,6 @@ class AcmeAccountViewsTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATes
 class AcmeOrderViewsTestCaseMixin(TestCaseProtocol):
     """Mixin to create orders."""
 
-    model = AcmeOrder
-
     def setUp(self) -> None:
         super().setUp()
         self.order1 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_VALID)
@@ -105,6 +104,8 @@ class AcmeOrderViewsTestCaseMixin(TestCaseProtocol):
 
 class AcmeOrderViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
+
+    model: DjangoCAModelTypeVar = AcmeOrder
 
     @override_tmpcadir()
     def test_expired_filter(self) -> None:

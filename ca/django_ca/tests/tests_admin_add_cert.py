@@ -698,7 +698,9 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")
-class AddCertificateSeleniumTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, SeleniumTestCase):
+class AddCertificateSeleniumTestCase(
+    CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate], SeleniumTestCase
+):
     """Some Selenium based test cases to test the client side javascript code."""
 
     def get_expected(
