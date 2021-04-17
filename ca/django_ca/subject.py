@@ -18,8 +18,8 @@
 from collections import abc
 from typing import Any
 from typing import Dict
-from typing import Generator
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -134,7 +134,7 @@ class Subject:
         except KeyError as ex:
             raise KeyError(OID_NAME_MAPPINGS[key]) from ex
 
-    def __iter__(self) -> Generator[str, None, None]:
+    def __iter__(self) -> Iterator[str]:
         for key, _value in self._iter:
             yield OID_NAME_MAPPINGS[key]
 
@@ -192,14 +192,14 @@ class Subject:
         except KeyError:
             return default
 
-    def items(self) -> Generator[Tuple[str, str], None, None]:
+    def items(self) -> Iterator[Tuple[str, str]]:
         """View of the subjects items."""
         for key, value in self._iter:
             key_str = OID_NAME_MAPPINGS[key]
             for val in value:
                 yield key_str, val
 
-    def keys(self) -> Generator[str, None, None]:
+    def keys(self) -> Iterator[str]:
         """View on subject keys, in order."""
         for key in self:
             yield key
@@ -256,7 +256,7 @@ class Subject:
         for k in f:
             self[k] = f[k]
 
-    def values(self) -> Generator[str, None, None]:
+    def values(self) -> Iterator[str]:
         """View on subject values, in order."""
         for _key, value in self._iter:
             for val in value:
@@ -266,7 +266,7 @@ class Subject:
     # Actual functions #
     ####################
     @property
-    def fields(self) -> Generator[Tuple[x509.ObjectIdentifier, str], None, None]:
+    def fields(self) -> Iterator[Tuple[x509.ObjectIdentifier, str]]:
         """This subject as a list of :py:class:`~cg:cryptography.x509.oid.NameOID` instances.
 
         >>> list(Subject('/C=AT/CN=example.com').fields)  # doctest: +NORMALIZE_WHITESPACE
