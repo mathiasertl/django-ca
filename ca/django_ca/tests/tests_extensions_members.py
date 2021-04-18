@@ -24,6 +24,7 @@ from ..extensions.utils import PolicyInformation
 from .base import DjangoCATestCase
 from .base import certs
 from .base import uri
+from .base_mixins import TestCaseMixin
 
 
 class DistributionPointTestCase(TestCase):
@@ -109,7 +110,7 @@ class DistributionPointTestCase(TestCase):
         )
 
 
-class PolicyInformationTestCase(DjangoCATestCase):
+class PolicyInformationTestCase(TestCaseMixin, DjangoCATestCase):
     """Test PolicyInformation class."""
 
     oid = "2.5.29.32.0"

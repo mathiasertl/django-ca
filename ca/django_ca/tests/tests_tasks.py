@@ -48,7 +48,7 @@ from .base import timestamps
 from .base_mixins import TestCaseMixin
 
 
-class TestBasic(DjangoCAWithGeneratedCAsTestCase):
+class TestBasic(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test the basic handling of celery tasks."""
 
     def test_missing_celery(self) -> None:
@@ -80,7 +80,7 @@ class TestBasic(DjangoCAWithGeneratedCAsTestCase):
             self.assertEqual(test_mock.call_count, 1)
 
 
-class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
+class TestCacheCRLs(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test the cache_crl Celery task."""
 
     @override_tmpcadir()
@@ -145,7 +145,7 @@ class TestCacheCRLs(DjangoCAWithGeneratedCAsTestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
+class GenerateOCSPKeysTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test the generate_ocsp_key task."""
 
     @override_tmpcadir()
@@ -170,7 +170,7 @@ class GenerateOCSPKeysTestCase(DjangoCAWithGeneratedCAsTestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeValidateChallengeTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
     def setUp(self) -> None:
@@ -323,7 +323,7 @@ class AcmeValidateChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeIssueCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeIssueCertificateTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
 
     def setUp(self) -> None:

@@ -58,6 +58,7 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 class TestWatcher(TestCase):
@@ -115,7 +116,7 @@ class TestWatcher(TestCase):
         self.assertEqual(str(watcher), "%s <%s>" % (name, mail))
 
 
-class CertificateAuthorityTests(DjangoCAWithCertTestCase):
+class CertificateAuthorityTests(TestCaseMixin, DjangoCAWithCertTestCase):
     """Test :py:class:`django_ca.models.CertificateAuthority`."""
 
     @override_tmpcadir()
@@ -453,7 +454,7 @@ class CertificateAuthorityTests(DjangoCAWithCertTestCase):
         self.assertIsInstance(pem_user_crl, bytes)
 
 
-class CertificateTests(DjangoCAWithCertTestCase):
+class CertificateTests(TestCaseMixin, DjangoCAWithCertTestCase):
     """Test :py:class:`django_ca.models.Certificate`."""
 
     def assertExtension(self, cert, name, key, cls):  # pylint: disable=invalid-name; unittest style
@@ -728,7 +729,7 @@ class CertificateTests(DjangoCAWithCertTestCase):
             )
 
 
-class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeAccountTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeAccount`."""
 
     def setUp(self) -> None:
@@ -836,7 +837,7 @@ class AcmeAccountTestCase(DjangoCAWithGeneratedCAsTestCase):
             self.account1.full_clean()
 
 
-class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeOrderTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeOrder`."""
 
     def setUp(self) -> None:
@@ -884,7 +885,7 @@ class AcmeOrderTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(self.order1.serial, self.cas["root"].serial)
 
 
-class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeAuthorizationTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeAuthorization`."""
 
     def setUp(self) -> None:
@@ -971,7 +972,7 @@ class AcmeAuthorizationTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(AcmeChallenge.objects.all().count(), 2)
 
 
-class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeChallengeTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeChallenge`."""
 
     def setUp(self) -> None:
@@ -1058,7 +1059,7 @@ class AcmeChallengeTestCase(DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(self.chall.serial, self.chall.auth.order.account.ca.serial)
 
 
-class AcmeCertificateTestCase(DjangoCAWithGeneratedCAsTestCase):
+class AcmeCertificateTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.models.AcmeCertificate`."""
 
     def setUp(self) -> None:

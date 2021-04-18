@@ -37,13 +37,13 @@ from ..subject import Subject
 from .base import DjangoCATestCase
 from .base import DjangoCAWithGeneratedCAsTransactionTestCase
 from .base import DjangoCAWithGeneratedCertsTestCase
-from .base import TestCaseMixinBase
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
-class QuerySetTestCaseMixin(TestCaseMixinBase):
+class QuerySetTestCaseMixin(TestCaseMixin):
     """Mixin for QuerySet test cases."""
 
     def assertQuerySet(  # pylint: disable=invalid-name; unittest standard
@@ -67,7 +67,7 @@ class QuerySetTestCaseMixin(TestCaseMixinBase):
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024)
-class CertificateAuthorityQuerySetTestCase(DjangoCATestCase):
+class CertificateAuthorityQuerySetTestCase(TestCaseMixin, DjangoCATestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateAuthorityQuerySet`."""
 
     @override_tmpcadir()

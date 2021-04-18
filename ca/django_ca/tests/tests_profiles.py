@@ -37,10 +37,11 @@ from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-class DocumentationTestCase(DjangoCATestCase):
+class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
     """Test sphinx docs."""
 
     def setUp(self) -> None:
@@ -71,7 +72,7 @@ class DocumentationTestCase(DjangoCATestCase):
         doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
 
-class ProfileTestCase(DjangoCATestCase):
+class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
     """Main tests for the profile class."""
 
     def create_cert(self, prof, *args, **kwargs):  # pylint: disable=arguments-differ

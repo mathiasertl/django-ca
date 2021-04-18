@@ -21,6 +21,8 @@ from io import StringIO
 from unittest import mock
 from urllib.parse import quote
 
+from cryptography import x509
+
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.core.management import ManagementUtility
@@ -34,8 +36,11 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
 
+from ..models import Certificate
+from ..models import CertificateAuthority
 from ..models import DjangoCAModel
 from ..models import X509CertMixin
+from .base import certs
 from .base import timestamps
 
 if typing.TYPE_CHECKING:
@@ -52,6 +57,14 @@ X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixi
 
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
+
+    load_cas: typing.Iterable[str]
+    load_certs: typing.Iterable[str]
+    new_cas: typing.Dict[str, CertificateAuthority]
+    new_certs: typing.Dict[str, Certificate]
+
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+        super().setUp()
 
     def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
@@ -116,6 +129,39 @@ class TestCaseMixin(TestCaseProtocol):
         with freeze_time(timestamp) as frozen:
             yield frozen
 
+    @classmethod
+    def load_ca(
+        cls,
+        name: str,
+        parsed: x509.Certificate,
+        enabled: bool = True,
+        parent: typing.Optional[CertificateAuthority] = None,
+        **kwargs: typing.Any
+    ) -> CertificateAuthority:
+        """Load a CA from one of the preloaded files."""
+        path = "%s.key" % name
+
+        # set some default values
+        kwargs.setdefault("issuer_alt_name", certs[name].get("issuer_alternative_name", ""))
+        kwargs.setdefault("crl_url", certs[name].get("crl_url", ""))
+        kwargs.setdefault("ocsp_url", certs[name].get("ocsp_url", ""))
+        kwargs.setdefault("issuer_url", certs[name].get("issuer_url", ""))
+
+        ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
+        ca.x509_cert = parsed  # calculates serial etc
+        ca.save()
+        return ca
+
+    @classmethod
+    def load_cert(
+        cls, ca: CertificateAuthority, parsed: x509.Certificate, csr: str = "", profile: str = ""
+    ) -> Certificate:
+        """Load a certificate from the given data."""
+        cert = Certificate(ca=ca, csr=csr, profile=profile)
+        cert.x509_cert = parsed
+        cert.save()
+        return cert
+
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     """Common mixin for testing admin classes for models."""
@@ -133,10 +179,10 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     obj: typing.Optional[DjangoCAModel]
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+        super().setUp()
         self.user = self.create_superuser()
         self.client.force_login(self.user)
-        super().setUp()
-        self.obj = self.model.objects.first()
+        self.obj = self.model.objects.first()  # TODO: get rid of this
 
     @property
     def add_url(self) -> str:

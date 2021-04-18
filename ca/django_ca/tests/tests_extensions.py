@@ -63,6 +63,7 @@ from .base import certs
 from .base import dns
 from .base import rdn
 from .base import uri
+from .base_mixins import TestCaseMixin
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
@@ -108,7 +109,7 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     return tests
 
 
-class AbstractExtensionTestMixin:
+class AbstractExtensionTestMixin(TestCaseMixin):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     force_critical = None
@@ -2369,7 +2370,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
             PrecertPoison({"critical": False})
 
 
-class PrecertificateSignedCertificateTimestampsTestCase(DjangoCAWithCertTestCase):
+class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     """Test PrecertificateSignedCertificateTimestamps extension."""
 
     # pylint: disable=too-many-public-methods; RO-extension requires implementing everything again

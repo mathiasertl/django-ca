@@ -35,6 +35,7 @@ from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 app_name = "django_ca"
 urlpatterns = [
@@ -64,7 +65,7 @@ urlpatterns = [
 # CRL code complains about 512 bit keys
 @override_settings(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)
 @freeze_time("2019-04-14 12:26:00")
-class GenericCRLViewTests(DjangoCAWithCertTestCase):
+class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
     """Test generic CRL view."""
 
     def setUp(self) -> None:
@@ -197,7 +198,7 @@ class GenericCRLWithTZViewTests(GenericCRLViewTests):
     """Same but with timezone support."""
 
 
-class GenericCAIssuersViewTests(DjangoCAWithGeneratedCAsTestCase):
+class GenericCAIssuersViewTests(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test issuer view."""
 
     def test_view(self) -> None:

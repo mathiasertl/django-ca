@@ -40,6 +40,7 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
 @override_settings(
@@ -206,7 +207,7 @@ class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, CA_DEFAULT_CA=certs["root"]["serial"])
 @freeze_time(timestamps["everything_valid"])
-class CertificateAuthorityManagerDefaultTestCase(DjangoCAWithGeneratedCAsTestCase):
+class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
 
     def setUp(self) -> None:
@@ -258,7 +259,7 @@ class CertificateAuthorityManagerDefaultTestCase(DjangoCAWithGeneratedCAsTestCas
 
 
 @override_settings(CA_DEFAULT_SUBJECT={})
-class CreateCertTestCase(DjangoCAWithGeneratedCAsTestCase):
+class CreateCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})

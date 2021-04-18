@@ -893,29 +893,6 @@ VQIDAQAB
         return now + timedelta(days + 1)
 
     @classmethod
-    def load_ca(
-        cls,
-        name: str,
-        parsed: x509.Certificate,
-        enabled: bool = True,
-        parent: typing.Optional[CertificateAuthority] = None,
-        **kwargs: typing.Any
-    ) -> CertificateAuthority:
-        """Load a CA from one of the preloaded files."""
-        path = "%s.key" % name
-
-        # set some default values
-        kwargs.setdefault("issuer_alt_name", certs[name].get("issuer_alternative_name", ""))
-        kwargs.setdefault("crl_url", certs[name].get("crl_url", ""))
-        kwargs.setdefault("ocsp_url", certs[name].get("ocsp_url", ""))
-        kwargs.setdefault("issuer_url", certs[name].get("issuer_url", ""))
-
-        ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
-        ca.x509_cert = parsed  # calculates serial etc
-        ca.save()
-        return ca
-
-    @classmethod
     def create_csr(
         cls, subject: typing.Union[typing.List[typing.Tuple[str, str]], str]
     ) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
@@ -942,16 +919,6 @@ VQIDAQAB
         """Create a certificate with the given data."""
         cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
         cert.full_clean()
-        return cert
-
-    @classmethod
-    def load_cert(
-        cls, ca: CertificateAuthority, parsed: x509.Certificate, csr: str = "", profile: str = ""
-    ) -> Certificate:
-        """Load a certificate from the given data."""
-        cert = Certificate(ca=ca, csr=csr, profile=profile)
-        cert.x509_cert = parsed
-        cert.save()
         return cert
 
     def load_usable_cas(self) -> None:

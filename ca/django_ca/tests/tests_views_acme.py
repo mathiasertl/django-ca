@@ -58,13 +58,13 @@ from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from .base import DjangoCAWithCATestCase
 from .base import DjangoCAWithCATransactionTestCase
-from .base import TestCaseMixinBase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import TestCaseMixin
 
 
-class DirectoryTestCase(DjangoCAWithCATestCase):
+class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
     """Test basic ACMEv2 directory view."""
 
     url = reverse_lazy("django_ca:acme-directory")
@@ -240,7 +240,7 @@ class DirectoryTestCase(DjangoCAWithCATestCase):
         )
 
 
-class AcmeTestCaseMixin(TestCaseMixinBase):
+class AcmeTestCaseMixin(TestCaseMixin):
     """TestCase mixin with various common utility functions."""
 
     hostname = "example.com"  # what we want a certificate for
@@ -357,7 +357,7 @@ KSAr5SU7IyM/9M95oQIDAQAB
         return self.client.post(url, json.dumps(data), **kwargs)
 
 
-class AcmeNewNonceViewTestCase(DjangoCAWithCATestCase):
+class AcmeNewNonceViewTestCase(TestCaseMixin, DjangoCAWithCATestCase):
     """Test getting a new ACME nonce."""
 
     def setUp(self) -> None:
@@ -402,10 +402,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     def setUp(self) -> None:
         super().setUp()
         self.account_slug = acme_slug()
-        self.kid = "http://%s%s" % (
-            self.SERVER_NAME,
-            self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.account_slug),
-        )
+        self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.account_slug)
 
     def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None, post_kwargs=None):
         """Do a generic ACME request.

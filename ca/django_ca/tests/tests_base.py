@@ -41,7 +41,7 @@ from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
 
-class TestDjangoCATestCase(DjangoCATestCase):
+class TestDjangoCATestCase(TestCaseMixin, DjangoCATestCase):
     """Test some basic stuff in the base test classes."""
 
     @override_tmpcadir()

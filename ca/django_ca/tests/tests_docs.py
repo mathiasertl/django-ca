@@ -19,12 +19,13 @@ from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base_mixins import TestCaseMixin
 
 BASE = "../../../docs/source"
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-class DocumentationTestCase(DjangoCATestCase):
+class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
     """Main testcase class."""
 
     def setUp(self) -> None:
