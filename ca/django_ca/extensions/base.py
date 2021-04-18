@@ -713,7 +713,7 @@ class CRLDistributionPointsBase(
         ExtensionTypeTypeVar, ParsableDistributionPoint, SerializedDistributionPoint, DistributionPoint
     ],
     Generic[ExtensionTypeTypeVar],
-    metaclass=abc.ABCMeta
+    metaclass=abc.ABCMeta,
 ):
     """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
     :py:class:`~django_ca.extensions.FreshestCRL`.
