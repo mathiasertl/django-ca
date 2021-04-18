@@ -13,7 +13,7 @@
 
 """Test cases for ModelAdmin classes for ACME models."""
 
-# pylint: disable=too-many-ancestors; with mixins we have many ancestors
+import typing
 
 from django.utils import timezone
 
@@ -22,11 +22,11 @@ from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
+from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 from .base_mixins import DjangoCAModelTypeVar
 from .base_mixins import StandardAdminViewTestCaseMixin
-from .base_mixins import TestCaseProtocol
 
 PEM1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
@@ -58,54 +58,87 @@ CSR1 = "MIICbDCCAVQCAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKZoFq9UCNpC
 CSR2 = "MIICbDCCAVQCAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALpIUHFIMXJSJ6YfoTsDRUgut6AY6sdhprPBumVdJXoBbDUjSW4R1aJuXPXmQMDRo-D5Tkvxx7rxsWnOG3l3-vZi18Ortk27k_5f-6_7OdoujijZFYxq0T0hVvgDh47r-aY67q0-CfTNfCYRfAkbOZ8UpAbV6u0vynguHznacIywl2NB5wmlDTLBo0CYp2ElRDfaj-Syhh6fwMTpDXs43wQJelJvDjOgMAPbcW1CiSnamIt3nSxwQjSOrAs6r-nIZblgPsQCvjjuF55okC4tjDqMSk2Qtq5bQwh9OO-AX9xTFCBeH8rqycqgPkIustUsFJEbOayQa4w2JWumgysFATkCAwEAAaAnMCUGCSqGSIb3DQEJDjEYMBYwFAYDVR0RBA0wC4IJbG9jYWxob3N0MA0GCSqGSIb3DQEBCwUAA4IBAQAxc3zi_S79F_M5I8SFR4IOfJOt1pU1z6tsGNcVeK_vN-8jCMuQiicBlEwcauxox7KO1czMFX_Ikq-W_ctc2RhqfD4GsU80KDrDLQarZ1KC6egSXrHcuYqTeqRdNtnExCCrzRlUzaB5kojUpmdnRJ48rFgoLHuTxPd47vqTQahzx0xl3xhM-VQmQFc-urvIcyYNR620qA9b84lOwmzT9duRjYIrAS1H2vRatNqRU8tDAhbuvu-_yU_U0lo3gQcK5NGLVR45qU-yr0SgYIKgfkL6E6W9B80xT5Qt4Py7WZCSvrUOLC2uco_jDODrY-xCky7Tbalu1_FEzF-nkSEDK_x0"  # NOQA: E501
 
 
-class AcmeAccountViewsTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATestCase):
-    """Test standard views for :py:class:`~django_ca.models.AcmeAccount`."""
+class AcmeAdminTestCaseMixin(
+    StandardAdminViewTestCaseMixin[DjangoCAModelTypeVar], typing.Generic[DjangoCAModelTypeVar]
+):
+    """Admin view mixin that creates all model instances for ACME."""
 
-    model = AcmeAccount
+    cas: typing.Dict[str, CertificateAuthority]
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
-        self.kid1 = "http://example.com%s" % self.absolute_uri(
+        kid1 = "http://example.com%s" % self.absolute_uri(
             ":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1
         )
-        self.account1 = AcmeAccount.objects.create(
+        account1 = AcmeAccount.objects.create(
             ca=self.cas["child"],
             contact="mailto:%s" % self.user.email,
             status=AcmeAccount.STATUS_VALID,
-            kid=self.kid1,
+            kid=kid1,
             terms_of_service_agreed=True,
             pem=PEM1,
             thumbprint=THUMBPRINT1,
             slug=ACME_SLUG_1,
         )
-        self.kid2 = "http://example.com%s" % self.absolute_uri(
+        kid2 = "http://example.com%s" % self.absolute_uri(
             ":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1
         )
-        self.account2 = AcmeAccount.objects.create(
+        account2 = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:%s" % self.user.email,
             status=AcmeAccount.STATUS_REVOKED,
-            kid=self.kid2,
+            kid=kid2,
             terms_of_service_agreed=False,
             pem=PEM2,
             thumbprint=THUMBPRINT2,
             slug=ACME_SLUG_2,
         )
+        self.order1 = AcmeOrder.objects.create(account=account1, status=AcmeOrder.STATUS_VALID)
+        self.order2 = AcmeOrder.objects.create(account=account2, status=AcmeOrder.STATUS_PROCESSING)
+
+        auth1 = AcmeAuthorization.objects.create(
+            order=self.order1,
+            type=AcmeAuthorization.TYPE_DNS,
+            value="example.com",
+            status=AcmeAuthorization.STATUS_PENDING,
+            wildcard=True,
+        )
+        auth2 = AcmeAuthorization.objects.create(
+            order=self.order2,
+            type=AcmeAuthorization.TYPE_DNS,
+            value="example.net",
+            status=AcmeAuthorization.STATUS_VALID,
+            wildcard=False,
+        )
+        AcmeChallenge.objects.create(auth=auth1, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1)
+        AcmeChallenge.objects.create(
+            auth=auth2,
+            status=AcmeChallenge.STATUS_VALID,
+            token=TOKEN2,
+            validated=timezone.now(),
+            type=AcmeChallenge.TYPE_HTTP_01,
+        )
+        AcmeChallenge.objects.create(
+            auth=auth2,
+            status=AcmeChallenge.STATUS_INVALID,
+            token=TOKEN3,
+            error="some-error",
+            type=AcmeChallenge.TYPE_DNS_01,
+        )
+        AcmeCertificate.objects.create(order=self.order1)
+        AcmeCertificate.objects.create(order=self.order2, csr=CSR1)
 
 
-class AcmeOrderViewsTestCaseMixin(TestCaseProtocol):
-    """Mixin to create orders."""
+class AcmeAccountViewsTestCase(AcmeAdminTestCaseMixin[AcmeAccount], DjangoCAWithCATestCase):
+    """Test standard views for :py:class:`~django_ca.models.AcmeAccount`."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.order1 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_VALID)
-        self.order2 = AcmeOrder.objects.create(account=self.account1, status=AcmeOrder.STATUS_PROCESSING)
+    model = AcmeAccount
 
 
-class AcmeOrderViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCase):
+class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], DjangoCAWithCATestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
 
-    model: DjangoCAModelTypeVar = AcmeOrder
+    model = AcmeOrder
 
     @override_tmpcadir()
     def test_expired_filter(self) -> None:
@@ -123,61 +156,19 @@ class AcmeOrderViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCa
             )
 
 
-class AcmeAuthorizationViewsTestCase(AcmeOrderViewsTestCaseMixin, AcmeAccountViewsTestCase):
+class AcmeAuthorizationViewsTestCase(AcmeAdminTestCaseMixin[AcmeAuthorization], DjangoCAWithCATestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
     model = AcmeAuthorization
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.auth1 = AcmeAuthorization.objects.create(
-            order=self.order1,
-            type=AcmeAuthorization.TYPE_DNS,
-            value="example.com",
-            status=AcmeAuthorization.STATUS_PENDING,
-            wildcard=True,
-        )
-        self.auth2 = AcmeAuthorization.objects.create(
-            order=self.order2,
-            type=AcmeAuthorization.TYPE_DNS,
-            value="example.net",
-            status=AcmeAuthorization.STATUS_VALID,
-            wildcard=False,
-        )
 
-
-class AcmeChallengeViewsTestCase(AcmeAuthorizationViewsTestCase):
+class AcmeChallengeViewsTestCase(AcmeAdminTestCaseMixin[AcmeChallenge], DjangoCAWithCATestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeChallenge`."""
 
     model = AcmeChallenge
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.chall1 = AcmeChallenge.objects.create(
-            auth=self.auth1, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1
-        )
-        self.chall2 = AcmeChallenge.objects.create(
-            auth=self.auth2,
-            status=AcmeChallenge.STATUS_VALID,
-            token=TOKEN2,
-            validated=timezone.now(),
-            type=AcmeChallenge.TYPE_HTTP_01,
-        )
-        self.chall3 = AcmeChallenge.objects.create(
-            auth=self.auth2,
-            status=AcmeChallenge.STATUS_INVALID,
-            token=TOKEN3,
-            error="some-error",
-            type=AcmeChallenge.TYPE_DNS_01,
-        )
 
-
-class AcmeCertificateViewsTestCase(AcmeChallengeViewsTestCase):
+class AcmeCertificateViewsTestCase(AcmeAdminTestCaseMixin[AcmeCertificate], DjangoCAWithCATestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeCertificate`."""
 
     model = AcmeCertificate
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.cert1 = AcmeCertificate.objects.create(order=self.order1)
-        self.cert2 = AcmeCertificate.objects.create(order=self.order2, csr=CSR1)

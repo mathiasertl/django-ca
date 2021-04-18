@@ -211,6 +211,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return self.client.get(self.change_url(obj), data)
 
     def get_url(self, obj: DjangoCAModelTypeVar) -> str:
+        """Get URL for the given object for this test case."""
         return reverse("admin:%s" % self.view_name, kwargs={"pk": obj.pk})
 
 
