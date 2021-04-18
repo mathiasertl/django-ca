@@ -208,6 +208,8 @@ IterableItem = TypeVar("IterableItem")
 ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 
 if TYPE_CHECKING:
+    # pylint shows unsubscriptable-object for x509.Extension in cryptography<3.5
+    # pylint: disable=unsubscriptable-object
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
     ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
