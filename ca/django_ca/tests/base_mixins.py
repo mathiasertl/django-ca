@@ -46,6 +46,7 @@ else:
     TestCaseProtocol = object
 
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
+X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 
 class TestCaseMixin(TestCaseProtocol):
@@ -108,6 +109,9 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     media_css: typing.Tuple[str, ...] = tuple()
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
+    view_name: str
+    """The name of the view being tested."""
+
     # TODO: we should get rid of this, it's ugly
     obj: typing.Optional[DjangoCAModel]
 
@@ -123,7 +127,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return typing.cast(str, self.model.admin_add_url)  # type hinting for @classproperty doesn't work
 
     def assertBundle(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, expected: typing.Iterable[X509CertMixin], filename: str
+        self, cert: DjangoCAModelTypeVar, expected: typing.Iterable[X509CertMixin], filename: str
     ) -> None:
         """Assert that the bundle for the given certificate matches the expected chain and filename."""
         url = self.get_url(cert)
@@ -205,6 +209,9 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
+
+    def get_url(self, obj: DjangoCAModelTypeVar) -> str:
+        return reverse("admin:%s" % self.view_name, kwargs={"pk": obj.pk})
 
 
 class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):

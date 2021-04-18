@@ -33,7 +33,6 @@ from .. import models
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
-from ..models import X509CertMixin
 from ..subject import Subject
 from ..utils import SUBJECT_FIELDS
 from .base import DjangoCATestCase
@@ -467,9 +466,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, DjangoCATestCase)
 class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test fetching certificate bundles."""
 
-    def get_url(self, cert: Certificate) -> str:
-        """Get url for the given object."""
-        return reverse("admin:django_ca_certificate_download", kwargs={"pk": cert.pk})
+    view_name = "django_ca_certificate_download"
 
     def test_basic(self) -> None:
         """Test direct certificate download."""
@@ -522,12 +519,13 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGener
         self.assertRequiresLogin(self.client.get(self.get_url(self.certs["root-cert"])))
 
 
-class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class CertDownloadBundleTestCase(
+    CertificateModelAdminTestCaseMixin,
+    DjangoCAWithGeneratedCertsTestCase
+):
     """Test downloading certificate bundles."""
 
-    def get_url(self, cert: X509CertMixin) -> str:
-        """Get URL for given certificate for this test."""
-        return reverse("admin:django_ca_certificate_download_bundle", kwargs={"pk": cert.pk})
+    view_name = "django_ca_certificate_download_bundle"
 
     def test_root_cert(self) -> None:
         """Try downloading a certificate bundle."""
@@ -542,7 +540,7 @@ class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWit
 
     def test_invalid_format(self) -> None:
         """Try downloading an invalid format."""
-        url = self.get_url(cert=self.certs["child-cert"])
+        url = self.get_url(self.certs["child-cert"])
         response = self.client.get("%s?format=INVALID" % url)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"")

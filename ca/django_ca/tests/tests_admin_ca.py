@@ -17,7 +17,6 @@ from http import HTTPStatus
 
 from django.test import Client
 from django.test import override_settings
-from django.urls import reverse
 
 from ..models import CertificateAuthority
 from .base import DjangoCAWithCATestCase
@@ -44,15 +43,12 @@ class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
     """Tests for downloading the certificate bundle."""
 
     model = CertificateAuthority
-
-    def get_url(self, ca: CertificateAuthority) -> str:
-        """Function to get the bundle URL for the given CA."""
-        return reverse("admin:django_ca_certificateauthority_download_bundle", kwargs={"pk": ca.pk})
+    view_name = "django_ca_certificateauthority_download_bundle"
 
     @property
     def url(self):
         """Shortcut property to get the bundle URL for the root CA."""
-        return self.get_url(ca=self.cas["root"])
+        return self.get_url(self.cas["root"])
 
     def test_root(self) -> None:
         """Test downloading the bundle for the root CA."""
