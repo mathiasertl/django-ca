@@ -67,9 +67,7 @@ class AcmeAdminTestCaseMixin(
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
-        kid1 = "http://example.com%s" % self.absolute_uri(
-            ":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1
-        )
+        kid1 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1)
         account1 = AcmeAccount.objects.create(
             ca=self.cas["child"],
             contact="mailto:%s" % self.user.email,
@@ -80,9 +78,7 @@ class AcmeAdminTestCaseMixin(
             thumbprint=THUMBPRINT1,
             slug=ACME_SLUG_1,
         )
-        kid2 = "http://example.com%s" % self.absolute_uri(
-            ":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1
-        )
+        kid2 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1)
         account2 = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:%s" % self.user.email,

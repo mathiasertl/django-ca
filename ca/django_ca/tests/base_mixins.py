@@ -21,6 +21,7 @@ from io import StringIO
 from unittest import mock
 from urllib.parse import quote
 
+from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.core.management import ManagementUtility
 from django.core.management import call_command
@@ -51,6 +52,22 @@ X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixi
 
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
+
+    def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
+        """Build an absolute uri for the given request.
+
+        The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
+        is used as namespace.
+        """
+
+        if hostname is None:
+            hostname = settings.ALLOWED_HOSTS[0]
+
+        if name.startswith("/"):
+            return "http://%s%s" % (hostname, name)
+        if name.startswith(":"):  # pragma: no branch
+            name = "django_ca%s" % name
+        return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
 
     def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
         """Call to a manage.py command using call_command."""
