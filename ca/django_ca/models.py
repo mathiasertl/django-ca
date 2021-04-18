@@ -1445,13 +1445,11 @@ class AcmeOrder(DjangoCAModel):
 
         Parameters
         ----------
-
         identifiers : list of :py:class:`acme:acme.messages.Identifier`
             The identifiers for this for this order.
 
         Returns
         -------
-
         list of :py:class:`~django_ca.models.AcmeAuthorization`
         """
         return self.authorizations.bulk_create(
@@ -1547,7 +1545,6 @@ class AcmeAuthorization(DjangoCAModel):
 
         Returns
         -------
-
         identifier : :py:class:`acme:acme.messages.Identifier`
         """
         if self.type == AcmeAuthorization.TYPE_DNS:
@@ -1573,7 +1570,6 @@ class AcmeAuthorization(DjangoCAModel):
 
         Note that challenges will be created if they don't exist.
         """
-
         return [
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
@@ -1654,7 +1650,6 @@ class AcmeChallenge(DjangoCAModel):
 
         Returns
         -------
-
         :py:class:`acme:acme.challenges.Challenge`
             The acme representation of this class.
         """
@@ -1688,7 +1683,6 @@ class AcmeChallenge(DjangoCAModel):
 
         Returns
         -------
-
         :py:class:`acme:acme.messages.ChallengeBody`
             The acme representation of this class.
         """
@@ -1739,7 +1733,6 @@ class AcmeCertificate(DjangoCAModel):
 
         Returns
         -------
-
         :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The CSR as used by cryptography.
         """

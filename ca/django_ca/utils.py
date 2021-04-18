@@ -1169,8 +1169,7 @@ def get_crl_cache_key(
     encoding: Encoding = Encoding.DER,
     scope: Optional[str] = None,
 ) -> str:
-    """Function to get a cache key for a CRL with the given parameters."""
-
+    """Get the cache key for a CRL with the given parameters."""
     return "crl_%s_%s_%s_%s" % (serial, algorithm.name, encoding.name, scope)
 
 
