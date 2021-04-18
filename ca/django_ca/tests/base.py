@@ -53,6 +53,7 @@ from django.dispatch.dispatcher import Signal
 from django.http import HttpResponse
 from django.test import TestCase
 from django.test import TransactionTestCase
+from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
@@ -390,6 +391,15 @@ timestamps["profile_certs_expired"] = certs["profile-server"]["valid_until"] + t
 timestamps["everything_expired"] = timestamps["base"] + timedelta(days=365 * 20)
 ocsp_data = _fixture_data["ocsp"]
 
+if typing.TYPE_CHECKING:
+    # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
+    # that the mixin accesses. See also:
+    #   https://github.com/python/mypy/issues/5837
+    # TODO: remove when DjangoCATestCaseMixin is fully migrated
+    TestCaseProtocol = SimpleTestCase
+else:
+    TestCaseProtocol = object
+
 
 def dns(name: str) -> x509.DNSName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.DNSName`."""
@@ -454,7 +464,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         shutil.rmtree(self.options["CA_DIR"])
 
 
-class DjangoCATestCaseMixin:
+class DjangoCATestCaseMixin(TestCaseProtocol):
     """Base class for all testcases with some enhancements."""
 
     # pylint: disable=too-many-public-methods

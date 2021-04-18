@@ -47,23 +47,34 @@ from .base_mixins import StandardAdminViewTestCaseMixin
 User = get_user_model()
 
 
-class CertificateModelAdminTestCaseMixin:
-    """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
+class CertificateAdminTestCaseMixin:
+    """Mixin that defines the ``media_css`` property for certificates.
 
-    model = Certificate
+    This does **not** set the ``model`` property, as mypy then complains about incompatible types in base
+    classes.
+    """
+
     media_css: typing.Tuple[str, ...] = (
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateadmin.css",
     )
 
 
+class CertificateModelAdminTestCaseMixin(CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate]):
+    """Specialized variant of :py:class:`~django_ca.tests.tests_admin.AdminTestCaseMixin` for certificates."""
+
+    model = Certificate
+
+
 @freeze_time(timestamps["everything_valid"])
 class CertificateAdminViewTestCase(
-    CertificateModelAdminTestCaseMixin,
+    CertificateAdminTestCaseMixin,
     StandardAdminViewTestCaseMixin[Certificate],
     DjangoCAWithGeneratedCertsTestCase,
 ):
     """Tests for the Certificate ModelAdmin class."""
+
+    model = Certificate
 
     def get_changelists(
         self,
@@ -222,9 +233,7 @@ class CertificateAdminViewTestCase(
         self.assertEqual(list(cert.watchers.all()), [watcher])
 
 
-class CSRDetailTestCase(
-    CertificateModelAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCATestCase
-):
+class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, DjangoCATestCase):
     """Test the CSR detail view."""
 
     url = reverse("admin:django_ca_certificate_csr_details")
@@ -291,9 +300,7 @@ class CSRDetailTestCase(
         self.assertRequiresLogin(self.client.post(self.url, data={"csr": self.csr_pem}))
 
 
-class ProfilesViewTestCase(
-    CertificateModelAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCATestCase
-):
+class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, DjangoCATestCase):
     """Test fetching profile information."""
 
     url = reverse("admin:django_ca_certificate_profiles")
@@ -457,9 +464,7 @@ class ProfilesViewTestCase(
         )
 
 
-class CertDownloadTestCase(
-    CertificateModelAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCAWithGeneratedCertsTestCase
-):
+class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test fetching certificate bundles."""
 
     def get_url(self, cert: Certificate) -> str:
@@ -517,9 +522,7 @@ class CertDownloadTestCase(
         self.assertRequiresLogin(self.client.get(self.get_url(self.certs["root-cert"])))
 
 
-class CertDownloadBundleTestCase(
-    CertificateModelAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCAWithGeneratedCertsTestCase
-):
+class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test downloading certificate bundles."""
 
     def get_url(self, cert: X509CertMixin) -> str:

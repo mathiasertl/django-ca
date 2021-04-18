@@ -38,6 +38,9 @@ from ..models import X509CertMixin
 from .base import timestamps
 
 if typing.TYPE_CHECKING:
+    # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
+    # that the mixin accesses. See also:
+    #   https://github.com/python/mypy/issues/5837
     TestCaseProtocol = SimpleTestCase
 else:
     TestCaseProtocol = object
