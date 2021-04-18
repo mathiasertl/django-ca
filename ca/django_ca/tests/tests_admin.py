@@ -519,10 +519,7 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGener
         self.assertRequiresLogin(self.client.get(self.get_url(self.certs["root-cert"])))
 
 
-class CertDownloadBundleTestCase(
-    CertificateModelAdminTestCaseMixin,
-    DjangoCAWithGeneratedCertsTestCase
-):
+class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
     """Test downloading certificate bundles."""
 
     view_name = "django_ca_certificate_download_bundle"
