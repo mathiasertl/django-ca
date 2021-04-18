@@ -24,7 +24,9 @@ from .base_mixins import AdminTestCaseMixin
 from .base_mixins import StandardAdminViewTestCaseMixin
 
 
-class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, DjangoCAWithCATestCase):
+class CertificateAuthorityAdminViewTestCase(
+    StandardAdminViewTestCaseMixin[CertificateAuthority], DjangoCAWithCATestCase
+):
     """Test CA admin views."""
 
     model = CertificateAuthority
@@ -39,14 +41,14 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin, Djan
         self.test_change_view()
 
 
-class CADownloadBundleTestCase(AdminTestCaseMixin, DjangoCAWithCATestCase):
+class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], DjangoCAWithCATestCase):
     """Tests for downloading the certificate bundle."""
 
     model = CertificateAuthority
     view_name = "django_ca_certificateauthority_download_bundle"
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Shortcut property to get the bundle URL for the root CA."""
         return self.get_url(self.cas["root"])
 
