@@ -145,7 +145,6 @@ class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], DjangoCAWithCATe
         self.assertChangelistResponse(self.client.get("%s?expired=1" % self.changelist_url))
 
         with self.freeze_time("everything_expired"):
-            self.client.force_login(self.user)
             self.assertChangelistResponse(self.client.get("%s?expired=0" % self.changelist_url))
             self.assertChangelistResponse(
                 self.client.get("%s?expired=1" % self.changelist_url), self.order1, self.order2
