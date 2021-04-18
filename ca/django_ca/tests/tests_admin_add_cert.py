@@ -52,11 +52,13 @@ from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import AdminTestCaseMixin
-from .tests_admin import CertificateAdminTestCaseMixin
+from .tests_admin import CertificateModelAdminTestCaseMixin
 
 
 @freeze_time(timestamps["after_child"])
-class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, DjangoCAWithCertTestCase):
+class AddCertificateTestCase(
+    CertificateModelAdminTestCaseMixin, AdminTestCaseMixin[Certificate], DjangoCAWithCertTestCase
+):
     """Tests for adding certificates."""
 
     @override_tmpcadir()
@@ -699,7 +701,7 @@ class AddCertificateTestCase(CertificateAdminTestCaseMixin, AdminTestCaseMixin, 
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")
 class AddCertificateSeleniumTestCase(
-    CertificateAdminTestCaseMixin, AdminTestCaseMixin[Certificate], SeleniumTestCase
+    CertificateModelAdminTestCaseMixin, AdminTestCaseMixin[Certificate], SeleniumTestCase
 ):
     """Some Selenium based test cases to test the client side javascript code."""
 
