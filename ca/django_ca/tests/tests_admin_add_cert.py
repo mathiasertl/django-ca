@@ -58,7 +58,10 @@ from .tests_admin import CertificateModelAdminTestCaseMixin
 class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     """Tests for adding certificates."""
 
-    load_cas = ("root", "pwd", )
+    load_cas = (
+        "root",
+        "pwd",
+    )
 
     @override_tmpcadir()
     def test_get(self) -> None:

@@ -392,9 +392,7 @@ class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, Tes
     def before_prepared_request(self, data: typing.Dict[str, str]) -> None:
         acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_VALID)
-        AcmeCertificate.objects.create(
-            slug=data["cert"], order=order, cert=self.cert, csr=data["csr"]
-        )
+        AcmeCertificate.objects.create(slug=data["cert"], order=order, cert=self.cert, csr=data["csr"])
 
     def get_url(self, data: typing.Dict[str, str]) -> str:
         return reverse(

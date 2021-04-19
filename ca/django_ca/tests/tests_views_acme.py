@@ -457,9 +457,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         else:
             payload = msg
 
-        jws = acme.jws.JWS.sign(
-            payload, key, jose.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
-        )
+        jws = acme.jws.JWS.sign(payload, key, jose.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid)
         return self.post(uri, jws.to_json(), **post_kwargs)
 
     def get_message(self, **kwargs: typing.Any) -> typing.Union[bytes, MessageTypeVar]:
@@ -1073,6 +1071,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
 @freeze_time(timestamps["everything_valid"])
 class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
     """Test creating a new order."""
+
     # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
@@ -1232,6 +1231,7 @@ class AcmeChallengeViewTestCase(
     AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TransactionTestCase
 ):
     """Test retrieving a challenge."""
+
     # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
@@ -1611,6 +1611,7 @@ class AcmeOrderFinalizeViewTestCase(
 @freeze_time(timestamps["everything_valid"])
 class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
     """Test retrieving an order."""
+
     # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
@@ -1774,6 +1775,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWith
 @freeze_time(timestamps["everything_valid"])
 class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
     """Test retrieving a certificate."""
+
     # NOTE: This is the request that does *not* return a JSON object (but the full cert), so the generic
     #       type for AcmeWithAccountViewTestCaseMixin really is just a dummy.
 
