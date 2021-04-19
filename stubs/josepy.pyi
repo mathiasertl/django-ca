@@ -148,7 +148,7 @@ class Signature(JSONObjectWithFields):
         cls: Type[SignatureTypeVar],
         payload: bytes,
         key: JWK,
-        alg,
+        alg: JWASignature,
         include_jwk: bool = True,
         protect: FrozenSet[str] = frozenset(),
         **kwargs: Dict[str, Any]
@@ -171,3 +171,6 @@ class JWS(JSONObjectWithFields):
 class ComparableX509:
     def __init__(self, wrapped: Union[crypto.X509, crypto.X509Req]) -> None:
         ...
+
+
+RS256: JWASignature

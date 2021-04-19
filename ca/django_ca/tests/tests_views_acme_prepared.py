@@ -203,16 +203,6 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Test
         # Test that *no* account was created
         self.assertEqual(AcmeAccount.objects.all().count(), 0)
 
-    def get_nonce(self, ca: typing.Optional[CertificateAuthority] = None) -> str:
-        """Get a nonce with an actualy request."""
-        if ca is None:
-            ca = self.new_cas["root"]
-
-        url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
-        response = self.client.head(url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        return response["replay-nonce"]
-
     def assertPreparedResponse(
         self, data: typing.Dict[str, str], response: HttpResponse, celery_mock: mock.MagicMock
     ) -> None:

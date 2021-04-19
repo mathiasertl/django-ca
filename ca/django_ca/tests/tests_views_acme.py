@@ -21,6 +21,7 @@ from http import HTTPStatus
 from unittest import mock
 
 import acme
+import acme.jws
 import josepy as jose
 import pyrfc3339
 import pytz
@@ -57,16 +58,19 @@ from ..models import CertificateAuthority
 from ..models import acme_slug
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
+from ..typehints import PrivateKeyTypes
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import TestCaseMixin
 
+MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
+
 
 class DirectoryTestCase(TestCaseMixin, TestCase):
     """Test basic ACMEv2 directory view."""
 
-    load_cas = ("root", )
+    load_cas = ("root",)
     url = reverse_lazy("django_ca:acme-directory")
     random_url = "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417"
 
@@ -251,8 +255,8 @@ lJcJOkTwT0P0U46Wg4o2/p6v45nVzXXC+Egmah2Evl+Pdo2Mhg1F8Vf4/wRcZWnt
 Rt/6X2p4XpW6AvIzYwIDAQAB
 -----END PUBLIC KEY-----"""
 
-    load_cas = ("root", )
-    load_certs = ("root-cert", )
+    load_cas = ("root",)
+    load_certs = ("root-cert",)
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
@@ -314,19 +318,21 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         actual = parse_header_links(response["Link"])
         self.assertEqual(expected, actual)
 
-    def assertMalformed(self, resp, message="", typ="malformed", **kwargs):  # pylint: disable=invalid-name
+    def assertMalformed(  # pylint: disable=invalid-name
+        self, resp: HttpResponse, message: str = "", typ: str = "malformed", **kwargs: typing.Any
+    ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
 
     def assertUnauthorized(  # pylint: disable=invalid-name
-        self, resp, message=AcmeResponseUnauthorized.message, **kwargs
-    ):
+        self, resp: HttpResponse, message: str = AcmeResponseUnauthorized.message, **kwargs: typing.Any
+    ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(
             resp, "unauthorized", status=HTTPStatus.UNAUTHORIZED, message=message, **kwargs
         )
 
-    def get_nonce(self, ca=None):
+    def get_nonce(self, ca=None) -> bytes:
         """Get a nonce with an actual request.
 
         Returns
@@ -360,7 +366,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
 class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
     """Test getting a new ACME nonce."""
 
-    load_cas = ("root", )
+    load_cas = ("root",)
 
     def setUp(self) -> None:
         super().setUp()
@@ -397,18 +403,36 @@ class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
         self.assertEqual(response["cache-control"], "no-store")
 
 
-class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
+class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar]):
     """Base class with test cases for all views."""
 
     post_as_get = False
     requires_kid = True
+    message_cls: typing.Type[MessageTypeVar]
+    view_name: str
 
     def setUp(self) -> None:
         super().setUp()
         self.account_slug = acme_slug()
         self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.account_slug)
 
-    def acme(self, uri, msg, cert=None, kid=None, nonce=None, payload_cb=None, post_kwargs=None):
+    @property
+    def url(self) -> str:
+        """Property providing a single URL under test."""
+        ...
+
+    def acme(
+        self,
+        uri: str,
+        msg: typing.Union[jose.JSONObjectWithFields, bytes],
+        cert: typing.Optional[PrivateKeyTypes] = None,
+        kid: typing.Optional[str] = None,
+        nonce: typing.Optional[bytes] = None,
+        payload_cb: typing.Callable[
+            [typing.Dict[typing.Any, typing.Any]], typing.Dict[typing.Any, typing.Any]
+        ] = None,
+        post_kwargs: typing.Dict[str, str] = None,
+    ) -> HttpResponse:
         """Do a generic ACME request.
 
         The `payload_cb` parameter is an optional callback that will receive the message data before being
@@ -422,10 +446,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         if post_kwargs is None:
             post_kwargs = {}
 
-        comparable = jose.util.ComparableRSAKey(cert)
-        key = jose.jwk.JWKRSA(key=comparable)
+        comparable = jose.ComparableRSAKey(cert)
+        key = jose.JWKRSA(key=comparable)
 
-        if isinstance(msg, jose.json_util.JSONObjectWithFields):
+        if isinstance(msg, jose.JSONObjectWithFields):
             payload = msg.to_json()
             if payload_cb is not None:
                 payload = payload_cb(payload)
@@ -434,11 +458,11 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
             payload = msg
 
         jws = acme.jws.JWS.sign(
-            payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
+            payload, key, jose.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
         )
         return self.post(uri, jws.to_json(), **post_kwargs)
 
-    def get_message(self, **kwargs):
+    def get_message(self, **kwargs: typing.Any) -> typing.Union[bytes, MessageTypeVar]:
         """Return a  message that can be sent to the server successfully.
 
         This function is used by test cases that want to get a useful message and manipulate it in some way so
@@ -449,16 +473,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         return self.message_cls(**kwargs)
 
-    def get_url(self, **kwargs):
+    def get_url(self, **kwargs: typing.Any) -> str:
         """Get a URL for this view with the given kwargs."""
         return reverse("django_ca:%s" % self.view_name, kwargs=kwargs)
 
     @property
-    def message(self):
+    def message(self) -> typing.Union[bytes, MessageTypeVar]:
         """Property for sending the default message."""
-        if self.post_as_get:
-            return b""
-
         return self.get_message()
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
@@ -487,12 +508,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         sign = acme.jws.Signature.sign
 
-        def sign_mock(*args, **kwargs):
+        def sign_mock(*args, **kwargs):  # type: ignore[no-untyped-def]
             """Mock function to set include_jwk to true."""
             kwargs["include_jwk"] = True
             return sign(*args, **kwargs)
 
-        with mock.patch("acme.jws.Signature.sign", side_effect=sign_mock):
+        with self.patch("acme.jws.Signature.sign", spec_set=True, side_effect=sign_mock):
             resp = self.acme(self.url, self.message, kid="foo")
         self.assertMalformed(resp, "jwk and kid are mutually exclusive.")
 
@@ -508,7 +529,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
     @override_tmpcadir()
     def test_wrong_jwk_or_kid(self) -> None:
         """Send a KID where a JWK is required and vice-versa."""
-        kid = self.kid
+        kid: typing.Optional[str] = self.kid
         expected = "Request requires a full JWK key."
         if self.requires_kid:
             expected = "Request requires a JWK key ID."
@@ -535,13 +556,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         sign = acme.jws.Signature.sign
 
-        def sign_mock(*args, **kwargs):
+        def sign_mock(*args, **kwargs):  # type: ignore[no-untyped-def]
             """Mock function so that JWS has neither jwk nor kid"""
             kwargs.pop("kid")
             kwargs["include_jwk"] = False
             return sign(*args, **kwargs)
 
-        with mock.patch("acme.jws.Signature.sign", side_effect=sign_mock):
+        with self.patch("acme.jws.Signature.sign", spec_set=True, side_effect=sign_mock):
             resp = self.acme(self.url, self.message, kid="foo")
         self.assertMalformed(resp, "JWS contained neither key nor key ID.")
 
@@ -557,7 +578,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
 
         kid = self.kid if self.requires_kid else None
         with self.patch("django.http.request.HttpRequest.build_absolute_uri", return_value="foo"):
-            resp = self.acme(self.url, self.message, kid=kid)
+            if self.post_as_get:
+                resp = self.acme(self.url, b"", kid=kid)
+            else:
+                resp = self.acme(self.url, self.message, kid=kid)
         self.assertUnauthorized(resp, "URL does not match.", link_relations={"index": "foo"})
 
     @override_tmpcadir()
@@ -572,10 +596,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         self.assertMalformed(resp, "Non-empty payload in get-as-post request.")
 
 
-class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):
+class AcmeWithAccountViewTestCaseMixin(
+    AcmeBaseViewTestCaseMixin[MessageTypeVar], typing.Generic[MessageTypeVar]
+):
     """Mixin that also adds an account to the database."""
 
-    def setUp(self):  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, kid=self.kid, pem=self.PEM
@@ -595,7 +621,7 @@ class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, TestCase):
+class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registration], TestCase):
     """Test creating a new account."""
 
     contact = "mailto:user@example.com"
@@ -893,18 +919,18 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, TestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
+class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestCase):
     """Test creating a new order."""
 
     url = reverse_lazy("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
     message_cls = NewOrder
 
-    def get_message(self, **kwargs):
+    def get_message(self, **kwargs: typing.Any) -> NewOrder:
         kwargs.setdefault("identifiers", [{"type": "dns", "value": self.SERVER_NAME}])
-        return super().get_message(**kwargs)
+        return super().get_message(**kwargs)  # type: ignore[return-value] # base has union
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive=True):
+    def test_basic(self, accept_naive: bool = True) -> None:
         """Basic test for creating an account via ACME."""
 
         with self.mock_slug() as slug:
@@ -948,7 +974,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
         self.test_basic(accept_naive=False)
 
     @override_tmpcadir()
-    def test_not_before_not_after(self, accept_naive=True):
+    def test_not_before_not_after(self, accept_naive: bool = True) -> None:
         """Test the notBefore/notAfter properties."""
         not_before = timezone.now() + timedelta(seconds=10)
         not_after = timezone.now() + timedelta(days=3)
@@ -1045,8 +1071,9 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
+class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
     """Test creating a new order."""
+    # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
     view_name = "acme-authz"
@@ -1060,12 +1087,12 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
         self.authz = AcmeAuthorization.objects.get(order=self.order, value="example.com")
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Get URL for the standard auth object."""
         return self.get_url(serial=self.ca.serial, slug=self.authz.slug)
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive=True):
+    def test_basic(self, accept_naive: bool = True) -> None:
         """Basic test for creating an account via ACME."""
 
         resp = self.acme(self.url, self.message, kid=self.kid)
@@ -1201,8 +1228,11 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, TransactionTestCase):
+class AcmeChallengeViewTestCase(
+    AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TransactionTestCase
+):
     """Test retrieving a challenge."""
+    # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
     view_name = "acme-challenge"
@@ -1219,7 +1249,7 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, TransactionTes
         self.challenge.save()
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Get default generic url"""
         return self.get_url(serial=self.challenge.serial, slug=self.challenge.slug)
 
@@ -1301,7 +1331,9 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, TransactionTes
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, TransactionTestCase):
+class AcmeOrderFinalizeViewTestCase(
+    AcmeWithAccountViewTestCaseMixin[acme.messages.CertificateRequest], TransactionTestCase
+):
     """Test retrieving a challenge."""
 
     slug = "92MPyl7jm0zw"
@@ -1331,21 +1363,23 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, Transactio
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
 
-    def assertBadCSR(self, resp, message):  # pylint: disable=invalid-name
+    def assertBadCSR(self, resp: HttpResponse, message: str) -> None:  # pylint: disable=invalid-name
         """Assert a badCSR error."""
         self.assertAcmeProblem(resp, "badCSR", status=HTTPStatus.BAD_REQUEST, message=message)
 
-    def get_message(self, csr):  # pylint: disable=arguments-differ
+    def get_message(  # type: ignore[override] # pylint: disable=arguments-differ
+        self, csr: x509.CertificateSigningRequest
+    ) -> acme.messages.CertificateRequest:
         """Get a message for the given cryptography CSR object."""
         req = X509Req.from_cryptography(csr)
-        return acme.messages.CertificateRequest(csr=jose.util.ComparableX509(req))
+        return acme.messages.CertificateRequest(csr=jose.ComparableX509(req))
 
     @property
-    def message(self):
+    def message(self) -> acme.messages.CertificateRequest:
         return self.get_message(self.csr)
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive=True):
+    def test_basic(self, accept_naive: bool = True) -> None:
         """Basic test for creating an account via ACME."""
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1575,8 +1609,9 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, Transactio
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
+class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
     """Test retrieving an order."""
+    # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
     view_name = "acme-order"
@@ -1587,12 +1622,12 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
         self.authz = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Get URL for the standard auth object."""
         return self.get_url(serial=self.ca.serial, slug=self.order.slug)
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive=True):
+    def test_basic(self, accept_naive: bool = True) -> None:
         """Basic test for creating an account via ACME."""
 
         resp = self.acme(self.url, self.message, kid=self.kid)
@@ -1737,8 +1772,10 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
+class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
     """Test retrieving a certificate."""
+    # NOTE: This is the request that does *not* return a JSON object (but the full cert), so the generic
+    #       type for AcmeWithAccountViewTestCaseMixin really is just a dummy.
 
     post_as_get = True
     view_name = "acme-cert"
@@ -1749,7 +1786,7 @@ class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
         self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Get URL for the standard cert object."""
         return self.get_url(serial=self.ca.serial, slug=self.acmecert.slug)
 
