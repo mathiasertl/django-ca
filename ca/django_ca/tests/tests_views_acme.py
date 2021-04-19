@@ -442,11 +442,11 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         if nonce is None:
             nonce = self.get_nonce()
         if cert is None:
-            cert = certs[self.load_certs[0]]["key"]["parsed"]
+            cert = typing.cast(PrivateKeyTypes, certs[self.load_certs[0]]["key"]["parsed"])
         if post_kwargs is None:
             post_kwargs = {}
 
-        comparable = jose.ComparableRSAKey(cert)
+        comparable = jose.ComparableRSAKey(cert)  # type: ignore[arg-type] # could also be DSA/EC key
         key = jose.JWKRSA(key=comparable)
 
         if isinstance(msg, jose.JSONObjectWithFields):

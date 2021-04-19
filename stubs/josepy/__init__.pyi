@@ -10,10 +10,6 @@ from typing import TypeVar
 from typing import Union
 
 from OpenSSL import crypto
-from cryptography.hazmat.backends.interfaces import Backend
-from cryptography.hazmat.primitives import _serialization
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
 
 from .json_util import Field
 from .json_util import JSONDeSerializable
@@ -21,6 +17,10 @@ from .json_util import JSONObjectWithFields
 from .json_util import TypedJSONObjectWithFields
 from .json_util import decode_b64jose
 from .json_util import encode_b64jose
+from .jwk import JWK
+from .jwk import JWKRSA
+from .util import ComparableKey
+from .util import ComparableRSAKey
 
 SignatureTypeVar = TypeVar("SignatureTypeVar", bound="Signature")
 
@@ -31,32 +31,6 @@ class Error(Exception):
 
 class DeserializationError(Error):
     ...
-
-
-class ComparableKey:
-    # NOTE: in reality, this comes from the wrapped public key
-    def public_bytes(
-        self,
-        encoding: _serialization.Encoding,
-        format: _serialization.PublicFormat = serialization.PublicFormat.SubjectPublicKeyInfo
-    ) -> bytes:
-        ...
-
-
-class JWK(TypedJSONObjectWithFields):
-    key: ComparableKey
-
-    @classmethod
-    def load(
-        cls: Type["JWK"],
-        data: bytes,
-        password: Optional[bytes] = None,
-        backend: Optional[Backend] = None
-    ) -> "JWK":
-        ...
-
-    def thumbprint(self, hash_function: Type[hashes.HashAlgorithm] = hashes.SHA256) -> bytes:
-        ...
 
 
 class JWA(JSONDeSerializable):
@@ -110,9 +84,13 @@ class ComparableX509:
 RS256: JWASignature
 
 __all__ = (
+    "ComparableKey",
+    "ComparableRSAKey",
     "Field",
     "JSONDeSerializable",
     "JSONObjectWithFields",
+    "JWK",
+    "JWKRSA",
     "TypedJSONObjectWithFields",
     "encode_b64jose",
     "decode_b64jose",
