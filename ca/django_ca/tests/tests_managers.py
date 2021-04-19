@@ -47,7 +47,7 @@ from .base_mixins import TestCaseMixin
     CA_PROFILES={},
     CA_DEFAULT_SUBJECT={},
 )
-class CertificateAuthorityManagerInitTestCase(DjangoCATestCase):
+class CertificateAuthorityManagerInitTestCase(TestCaseMixin, DjangoCATestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
 
     def assertProperties(  # pylint: disable=invalid-name

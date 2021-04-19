@@ -28,6 +28,7 @@ from django.contrib.auth.models import User  # pylint: disable=imported-auth-use
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.db import models
+from django.dispatch.dispatcher import Signal
 from django.http import HttpResponse
 from django.templatetags.static import static
 from django.test.testcases import SimpleTestCase
@@ -58,13 +59,15 @@ X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixi
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: typing.Iterable[str]
-    load_certs: typing.Iterable[str]
-    new_cas: typing.Dict[str, CertificateAuthority]
-    new_certs: typing.Dict[str, Certificate]
+    load_cas: typing.Iterable[str] = tuple()
+    load_certs: typing.Iterable[str] = tuple()
+    new_cas: typing.Dict[str, CertificateAuthority] = {}
+    new_certs: typing.Dict[str, Certificate] = {}
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
+        for name in self.load_cas:
+            self.new_cas[name] = self.load_ca(name)
 
     def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
@@ -81,6 +84,16 @@ class TestCaseMixin(TestCaseProtocol):
         if name.startswith(":"):  # pragma: no branch
             name = "django_ca%s" % name
         return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
+
+    @contextmanager
+    def assertSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
+        """Attach a mock to the given signal."""
+        handler = mock.Mock()
+        signal.connect(handler)
+        try:
+            yield handler
+        finally:
+            signal.disconnect(handler)
 
     def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
         """Call to a manage.py command using call_command."""
@@ -133,13 +146,17 @@ class TestCaseMixin(TestCaseProtocol):
     def load_ca(
         cls,
         name: str,
-        parsed: x509.Certificate,
+        parsed: typing.Optional[x509.Certificate] = None,
         enabled: bool = True,
         parent: typing.Optional[CertificateAuthority] = None,
         **kwargs: typing.Any
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
         path = "%s.key" % name
+        if parsed is None:
+            parsed = certs["root"]["pub"]["parsed"]
+        if parent is None and certs[name].get("parent"):
+            parent = CertificateAuthority.objects.get(name=certs[name]["parent"])
 
         # set some default values
         kwargs.setdefault("issuer_alt_name", certs[name].get("issuer_alternative_name", ""))

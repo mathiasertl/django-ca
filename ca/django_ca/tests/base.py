@@ -49,7 +49,6 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.core.management.base import CommandError
-from django.dispatch.dispatcher import Signal
 from django.http import HttpResponse
 from django.test import TestCase
 from django.test import TransactionTestCase
@@ -738,16 +737,6 @@ VQIDAQAB
     def assertSerial(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""
         self.assertIsNotNone(re.match("^[0-9A-F:]*$", serial), serial)
-
-    @contextmanager
-    def assertSignal(self, signal: Signal) -> typing.Iterator[Mock]:  # pylint: disable=invalid-name
-        """Attach a mock to the given signal."""
-        handler = Mock()
-        signal.connect(handler)
-        try:
-            yield handler
-        finally:
-            signal.disconnect(handler)
 
     def assertSignature(  # pylint: disable=invalid-name
         self, chain: typing.Sequence[CertificateAuthority], cert: Certificate
