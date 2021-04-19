@@ -70,8 +70,8 @@ X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixi
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: typing.Iterable[str] = tuple()
-    load_certs: typing.Iterable[str] = tuple()
+    load_cas: typing.Tuple[str, ...] = tuple()
+    load_certs: typing.Tuple[str, ...] = tuple()
     new_cas: typing.Dict[str, CertificateAuthority] = {}
     new_certs: typing.Dict[str, Certificate] = {}
 

@@ -315,7 +315,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         kwargs.setdefault("index", response.wsgi_request.build_absolute_uri(directory))
 
         expected = [{"rel": k, "url": v} for k, v in kwargs.items()]
-        actual = parse_header_links(response["Link"])
+        actual = parse_header_links(response["Link"])  # type: ignore[no-untyped-call]
         self.assertEqual(expected, actual)
 
     def assertMalformed(  # pylint: disable=invalid-name
@@ -332,7 +332,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
             resp, "unauthorized", status=HTTPStatus.UNAUTHORIZED, message=message, **kwargs
         )
 
-    def get_nonce(self, ca=None) -> bytes:
+    def get_nonce(self, ca: typing.Optional[CertificateAuthority] = None) -> bytes:
         """Get a nonce with an actual request.
 
         Returns
@@ -350,7 +350,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         return jose.decode_b64jose(response["replay-nonce"])
 
     @contextmanager
-    def mock_slug(self):
+    def mock_slug(self) -> typing.Iterator[str]:
         """Mock random slug generation, yields the static value."""
 
         slug = get_random_string(length=12)
@@ -359,8 +359,10 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
 
     def post(self, url: str, data: typing.Any, **kwargs: str) -> HttpResponse:
         """Make a post request with some ACME specific default data."""
-        kwargs.setdefault("content_type", "application/jose+json")
-        return self.client.post(url, json.dumps(data), **kwargs)
+        ctype = kwargs.pop("content_type", "application/jose+json")
+        return self.client.post(
+            url, json.dumps(data), content_type=ctype, follow=False, secure=False, **kwargs
+        )
 
 
 class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
@@ -428,10 +430,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         cert: typing.Optional[PrivateKeyTypes] = None,
         kid: typing.Optional[str] = None,
         nonce: typing.Optional[bytes] = None,
-        payload_cb: typing.Callable[
-            [typing.Dict[typing.Any, typing.Any]], typing.Dict[typing.Any, typing.Any]
+        payload_cb: typing.Optional[
+            typing.Callable[[typing.Dict[typing.Any, typing.Any]], typing.Dict[typing.Any, typing.Any]]
         ] = None,
-        post_kwargs: typing.Dict[str, str] = None,
+        post_kwargs: typing.Optional[typing.Dict[str, str]] = None,
     ) -> HttpResponse:
         """Do a generic ACME request.
 
@@ -492,7 +494,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
         .. seealso:: RFC 8555, 6.2
         """
-        resp = self.acme(self.url, self.message, post_kwargs={"CONTENT_TYPE": "FOO"})
+        resp = self.acme(self.url, self.message, post_kwargs={"content_type": "FOO"})
         self.assertAcmeProblem(
             resp,
             "malformed",
