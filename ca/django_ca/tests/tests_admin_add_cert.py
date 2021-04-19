@@ -21,6 +21,7 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from django.conf import settings
+from django.test import TestCase
 
 from freezegun import freeze_time
 from selenium.webdriver.remote.webelement import WebElement
@@ -45,7 +46,6 @@ from ..typehints import SerializedExtension
 from ..typehints import SerializedValue
 from ..utils import MULTIPLE_OIDS
 from ..utils import NAME_OID_MAPPINGS
-from .base import DjangoCAWithCertTestCase
 from .base import SeleniumTestCase
 from .base import certs
 from .base import override_settings
@@ -55,8 +55,10 @@ from .tests_admin import CertificateModelAdminTestCaseMixin
 
 
 @freeze_time(timestamps["after_child"])
-class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCertTestCase):
+class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     """Tests for adding certificates."""
+
+    load_cas = ("root", "pwd", )
 
     @override_tmpcadir()
     def test_get(self) -> None:
@@ -78,7 +80,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     def test_add(self) -> None:
         """Test to actually add a certificate."""
         cname = "test-add.example.com"
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -138,7 +140,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir()
     def test_required_subject(self) -> None:
         """Test that we have to enter a complete subject value."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
@@ -177,7 +179,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir()
     def test_empty_subject(self) -> None:
         """Test passing an empty subject."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
@@ -222,7 +224,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_no_key_usage(self) -> None:
         """Test adding a cert with no (extended) key usage."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cname = "test-add2.example.com"
         san = "test-san.example.com"
@@ -271,7 +273,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_with_password(self) -> None:
         """Test adding with a password."""
-        ca = self.cas["pwd"]
+        ca = self.new_cas["pwd"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "with-password.example.com"
 
@@ -397,7 +399,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir()
     def test_wrong_csr(self) -> None:
         """Test passing an unparseable CSR."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -439,7 +441,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir()
     def test_wrong_algorithm(self) -> None:
         """Test selecting an unknown algorithm."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-add-wrong-algo.example.com"
 
@@ -483,7 +485,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir()
     def test_expires_in_the_past(self) -> None:
         """Test creating a cert that expires in the past."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-expires-in-the-past.example.com"
         expires = datetime.now() - timedelta(days=3)
@@ -527,7 +529,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
     @override_tmpcadir()
     def test_expires_too_late(self) -> None:
         """Test that creating a cert that expires after the CA expires throws an error."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-expires-too-late.example.com"
         expires = ca.expires + timedelta(days=3)
@@ -577,7 +579,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
         """
         cname = "Foo Bar"
         error = "The CommonName cannot be parsed as general name. Either change the CommonName or do not include it."  # NOQA
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
         with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
@@ -618,7 +620,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
 
     def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         CertificateAuthority.objects.update(enabled=False)
         response = self.client.get(self.add_url)
@@ -654,7 +656,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, DjangoCAWithCer
 
     def test_add_unusable_cas(self) -> None:
         """Try adding with an unusable CA."""
-        ca = self.cas["root"]
+        ca = self.new_cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         CertificateAuthority.objects.update(private_key_path="not/exist/add-unusable-cas")
 
