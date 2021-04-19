@@ -34,6 +34,8 @@ from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.test import TestCase
+from django.test import TransactionTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.urls import reverse_lazy
@@ -51,32 +53,31 @@ from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
-from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import acme_slug
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
-from .base import DjangoCAWithCATestCase
-from .base import DjangoCAWithCATransactionTestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import TestCaseMixin
 
 
-class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
+class DirectoryTestCase(TestCaseMixin, TestCase):
     """Test basic ACMEv2 directory view."""
 
+    load_cas = ("root", )
     url = reverse_lazy("django_ca:acme-directory")
     random_url = "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417"
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.ca.acme_enabled = True
+        self.ca.save()
 
     @freeze_time(timestamps["everything_valid"])
     def test_default(self) -> None:
         """Test the default directory view."""
-        ca = CertificateAuthority.objects.default()
-        ca.acme_enabled = True
-        ca.save()
-
         with mock.patch("secrets.token_bytes", return_value=b"foobar"):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -87,21 +88,16 @@ class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
-                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
-                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % ca.serial),
-                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % ca.serial),
+                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % self.ca.serial),
+                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % self.ca.serial),
+                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % self.ca.serial),
             },
         )
 
     @freeze_time(timestamps["everything_valid"])
     def test_named_ca(self) -> None:
         """Test getting directory for named CA."""
-
-        ca = CertificateAuthority.objects.default()
-        ca.acme_enabled = True
-        ca.save()
-
-        url = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
+        url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
         with mock.patch("secrets.token_bytes", return_value=b"foobar"):
             response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -113,23 +109,21 @@ class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
-                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
-                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % ca.serial),
-                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % ca.serial),
+                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % self.ca.serial),
+                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % self.ca.serial),
+                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % self.ca.serial),
             },
         )
 
     @freeze_time(timestamps["everything_valid"])
     def test_meta(self) -> None:
         """Test the meta property."""
-        ca = CertificateAuthority.objects.default()
-        ca.acme_enabled = True
-        ca.website = "http://ca.example.com"
-        ca.terms_of_service = "http://ca.example.com/acme/tos"
-        ca.caa_identity = "ca.example.com"
-        ca.save()
+        self.ca.website = "http://ca.example.com"
+        self.ca.terms_of_service = "http://ca.example.com/acme/tos"
+        self.ca.caa_identity = "ca.example.com"
+        self.ca.save()
 
-        url = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
+        url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
         with mock.patch("secrets.token_bytes", return_value=b"foobar"):
             response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -141,15 +135,15 @@ class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
-                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % ca.serial),
-                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % ca.serial),
-                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % ca.serial),
+                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % self.ca.serial),
+                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % self.ca.serial),
+                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % self.ca.serial),
                 "meta": {
-                    "termsOfService": ca.terms_of_service,
+                    "termsOfService": self.ca.terms_of_service,
                     "caaIdentities": [
-                        ca.caa_identity,
+                        self.ca.caa_identity,
                     ],
-                    "website": ca.website,
+                    "website": self.ca.website,
                 },
             },
         )
@@ -157,6 +151,9 @@ class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_acme_default_disabled(self) -> None:
         """Test that fetching the default CA with ACME disabled doesn't work."""
+        self.ca.acme_enabled = False
+        self.ca.save()
+
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertEqual(response["Content-Type"], "application/problem+json")
@@ -172,15 +169,17 @@ class DirectoryTestCase(TestCaseMixin, DjangoCAWithCATestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_acme_disabled(self) -> None:
         """Test that fetching the default CA with ACME disabled doesn't work."""
-        ca = CertificateAuthority.objects.default()
-        url = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
+        self.ca.acme_enabled = False
+        self.ca.save()
+
+        url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
         response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertEqual(response["Content-Type"], "application/problem+json")
         self.assertEqual(
             response.json(),
             {
-                "detail": "%s: CA not found." % ca.serial,
+                "detail": "%s: CA not found." % self.ca.serial,
                 "status": 404,
                 "type": "urn:ietf:params:acme:error:not-found",
             },
@@ -246,16 +245,17 @@ class AcmeTestCaseMixin(TestCaseMixin):
     hostname = "example.com"  # what we want a certificate for
     SERVER_NAME = "example.com"
     PEM = """-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDF9BgQzTqQQnCLTcniyO++uDyb
-RWtl+pCaG18whZOFa5ei+Sf0Qv9Z0cvOtZpxs3fE/IBVExKvZExtSf7JiBvh8Jv1
-85svKEiZOhlkxB3sSem1xTdkPIr/kpgswK1BoWqX0pP5EQuVn483jXNNFWvaYM6H
-KSAr5SU7IyM/9M95oQIDAQAB
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDaQORFBn/OXuD0KF4BStAyoARK
++zIGwjibGrObfH62Y2X6i0MpLPYOAMxBzbuZEodv6kaF9ipW9yCdokIndpelPoZ8
+lJcJOkTwT0P0U46Wg4o2/p6v45nVzXXC+Egmah2Evl+Pdo2Mhg1F8Vf4/wRcZWnt
+Rt/6X2p4XpW6AvIzYwIDAQAB
 -----END PUBLIC KEY-----"""
+
+    load_cas = ("root", )
+    load_certs = ("root-cert", )
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
-        self.ca = self.cas["root"]
-        self.cert = self.cas["child"]  # actually a ca, but doesn't matter
         self.ca.acme_enabled = True
         self.ca.save()
         self.client.defaults["SERVER_NAME"] = self.SERVER_NAME
@@ -336,7 +336,7 @@ KSAr5SU7IyM/9M95oQIDAQAB
             The decoded bytes of the nonce.
         """
         if ca is None:
-            ca = self.cas["root"]
+            ca = self.new_cas["root"]
 
         url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)
@@ -357,12 +357,16 @@ KSAr5SU7IyM/9M95oQIDAQAB
         return self.client.post(url, json.dumps(data), **kwargs)
 
 
-class AcmeNewNonceViewTestCase(TestCaseMixin, DjangoCAWithCATestCase):
+class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
     """Test getting a new ACME nonce."""
+
+    load_cas = ("root", )
 
     def setUp(self) -> None:
         super().setUp()
-        self.url = reverse("django_ca:acme-new-nonce", kwargs={"serial": self.cas["root"].serial})
+        self.ca.acme_enabled = True
+        self.ca.save()
+        self.url = reverse("django_ca:acme-new-nonce", kwargs={"serial": self.ca.serial})
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_disabled(self) -> None:
@@ -414,11 +418,11 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin):
         if nonce is None:
             nonce = self.get_nonce()
         if cert is None:
-            cert = self.cert
+            cert = certs[self.load_certs[0]]["key"]["parsed"]
         if post_kwargs is None:
             post_kwargs = {}
 
-        comparable = jose.util.ComparableRSAKey(cert.key(password=None))
+        comparable = jose.util.ComparableRSAKey(cert)
         key = jose.jwk.JWKRSA(key=comparable)
 
         if isinstance(msg, jose.json_util.JSONObjectWithFields):
@@ -591,7 +595,7 @@ class AcmeWithAccountViewTestCaseMixin(AcmeBaseViewTestCaseMixin):
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, TestCase):
     """Test creating a new account."""
 
     contact = "mailto:user@example.com"
@@ -889,7 +893,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin, DjangoCAWithCATestCa
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
     """Test creating a new order."""
 
     url = reverse_lazy("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
@@ -1041,7 +1045,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCAT
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
     """Test creating a new order."""
 
     post_as_get = True
@@ -1197,7 +1201,7 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
+class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, TransactionTestCase):
     """Test retrieving a challenge."""
 
     post_as_get = True
@@ -1297,7 +1301,7 @@ class AcmeChallengeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCA
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATransactionTestCase):
+class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, TransactionTestCase):
     """Test retrieving a challenge."""
 
     slug = "92MPyl7jm0zw"
@@ -1571,7 +1575,7 @@ class AcmeOrderFinalizeViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWi
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
     """Test retrieving an order."""
 
     post_as_get = True
@@ -1614,15 +1618,11 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
     def test_valid_cert(self) -> None:
         """Test viewing a an order with a valid certificate"""
 
-        cert = Certificate(ca=self.ca)
-        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
-        cert.save()
-
         self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
-        acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
+        acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
 
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
@@ -1675,15 +1675,11 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
         *should* always be true at the same time.
         """
 
-        cert = Certificate(ca=self.ca)
-        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
-        cert.save()
-
         self.order.status = AcmeOrder.STATUS_PROCESSING
         self.order.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
-        AcmeCertificate.objects.create(order=self.order, cert=cert)
+        AcmeCertificate.objects.create(order=self.order, cert=self.cert)
 
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
@@ -1741,7 +1737,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATest
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWithCATestCase):
+class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, TestCase):
     """Test retrieving a certificate."""
 
     post_as_get = True
@@ -1750,11 +1746,7 @@ class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin, DjangoCAWith
     def setUp(self) -> None:
         super().setUp()
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
-
-        cert = Certificate(ca=self.ca)
-        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
-        cert.save()
-        self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=cert)
+        self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
 
     @property
     def url(self):

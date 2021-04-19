@@ -23,6 +23,7 @@ from unittest import mock
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
+from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -36,8 +37,6 @@ from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
-from .base import DjangoCAWithCATestCase
-from .base import DjangoCAWithCertTestCase
 from .tests_views_acme import AcmeTestCaseMixin
 
 ACCOUNT_SLUG = "DzW4PQ6L76PE"
@@ -190,7 +189,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test creating a new account."""
 
     expected_status_code = HTTPStatus.CREATED
@@ -207,7 +206,7 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
     def get_nonce(self, ca: typing.Optional[CertificateAuthority] = None) -> str:
         """Get a nonce with an actualy request."""
         if ca is None:
-            ca = self.cas["root"]
+            ca = self.new_cas["root"]
 
         url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)
@@ -235,7 +234,7 @@ class PreparedAcmeNewAccountViewTestCase(AcmePreparedRequestsTestCaseMixin, Djan
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test creating a new order."""
 
     expected_status_code = HTTPStatus.CREATED
@@ -288,7 +287,7 @@ class PreparedAcmeNewOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, Django
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test creating a new order."""
 
     view_name = "AcmeAuthorizationView"
@@ -306,7 +305,7 @@ class PreparedAcmeAuthorizationViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test retrieving a challenge."""
 
     view_name = "AcmeChallengeView"
@@ -339,7 +338,7 @@ class PreparedAcmeChallengeViewTestCase(AcmePreparedRequestsTestCaseMixin, Djang
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test retrieving a challenge."""
 
     view_name = "AcmeOrderFinalizeView"
@@ -363,7 +362,7 @@ class PreparedAcmeOrderFinalizeViewTestCase(AcmePreparedRequestsTestCaseMixin, D
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCATestCase):
+class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test retrieving a challenge."""
 
     view_name = "AcmeOrderView"
@@ -384,7 +383,7 @@ class PreparedAcmeOrderViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAW
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 @freeze_time(datetime(2020, 10, 29, 20, 15, 35))  # when we recorded these requests
-class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, DjangoCAWithCertTestCase):
+class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, TestCase):
     """Test retrieving a challenge."""
 
     view_name = "AcmeCertificateView"
@@ -404,7 +403,7 @@ class PreparedAcmeCertificateViewTestCase(AcmePreparedRequestsTestCaseMixin, Dja
         acc = self.add_account(data)
         order = AcmeOrder.objects.create(account=acc, slug=data["order"], status=AcmeOrder.STATUS_VALID)
         AcmeCertificate.objects.create(
-            slug=data["cert"], order=order, cert=self.certs["root-cert"], csr=data["csr"]
+            slug=data["cert"], order=order, cert=self.cert, csr=data["csr"]
         )
 
     def get_url(self, data: typing.Dict[str, str]) -> str:
