@@ -23,5 +23,5 @@ class DjangoTestApp:
 
 
 class WebTestMixin:
-    app_class: DjangoTestApp = typing.Type[DjangoTestApp]
+    app_class: typing.Type[DjangoTestApp]
     app: DjangoTestApp
