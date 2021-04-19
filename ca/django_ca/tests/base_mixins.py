@@ -173,16 +173,6 @@ class TestCaseMixin(TestCaseProtocol):
         """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
-    @contextmanager
-    def assertSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
-        """Attach a mock to the given signal."""
-        handler = mock.Mock()
-        signal.connect(handler)
-        try:
-            yield handler
-        finally:
-            signal.disconnect(handler)
-
     def assertSubject(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]
     ) -> None:
@@ -274,6 +264,16 @@ class TestCaseMixin(TestCaseProtocol):
         cert.x509_cert = parsed
         cert.save()
         return cert
+
+    @contextmanager
+    def mockSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
+        """Context manager to attach a mock to the given signal."""
+        handler = mock.Mock()
+        signal.connect(handler)
+        try:
+            yield handler
+        finally:
+            signal.disconnect(handler)
 
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):

@@ -86,7 +86,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Simplest test while resigning a cert."""
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("resign_cert", self.cert.serial)
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
@@ -99,7 +99,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_different_ca(self) -> None:
         """Test writing with a different CA."""
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
 
         self.assertEqual(stderr, "")
@@ -121,7 +121,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         alt = "new-alt-name.example.com"
 
         # resign a cert, but overwrite all options
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd_e2e(
                 [
                     "resign_cert",
@@ -163,7 +163,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         """Test writing output to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, out=out_path)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -184,7 +184,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         cert = self.certs["no-extensions"]
 
         msg = r"^Must give at least a CN in --subject or one or more --alt arguments\."
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post, self.assertCommandError(msg):
             self.cmd("resign_cert", cert, subject=Subject(subject))
@@ -198,7 +198,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         """Test resign function throwing a random exception."""
         msg = "foobar"
         msg_re = r"^%s$" % msg
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post, patch(
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post, patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
         ), self.assertCommandError(msg_re):
 

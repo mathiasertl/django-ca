@@ -83,7 +83,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -144,7 +144,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -183,7 +183,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -229,7 +229,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "test-add2.example.com"
         san = "test-san.example.com"
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -278,7 +278,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "with-password.example.com"
 
         # first post without password
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -311,7 +311,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # now post with a false password
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -344,7 +344,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # post with correct password!
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -402,7 +402,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.new_cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -445,7 +445,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-add-wrong-algo.example.com"
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -490,7 +490,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "test-expires-in-the-past.example.com"
         expires = datetime.now() - timedelta(days=3)
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -536,7 +536,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         correct_expires = ca.expires.strftime("%Y-%m-%d")
         error = "CA expires on %s, certificate must not expire after that." % correct_expires
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -582,7 +582,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.new_cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -626,7 +626,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={
@@ -663,13 +663,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
                 self.add_url,
                 data={

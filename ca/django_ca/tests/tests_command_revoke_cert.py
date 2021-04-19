@@ -32,7 +32,7 @@ class RevokeCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
         """Test revoking without a reason."""
         self.assertFalse(self.cert.revoked)
 
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+        with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
             stdout, stderr = self.cmd("revoke_cert", self.cert.serial)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(stdout, "")
@@ -49,7 +49,7 @@ class RevokeCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
         self.assertFalse(self.cert.revoked)
 
         for reason in ReasonFlags:
-            with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+            with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
                 stdout, stderr = self.cmd_e2e(["revoke_cert", self.cert.serial, "--reason", reason.name])
             self.assertEqual(pre.call_count, 1)
             self.assertEqual(stdout, "")
@@ -72,7 +72,7 @@ class RevokeCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
 
         self.assertFalse(self.cert.revoked)
 
-        with self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+        with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
             self.cmd("revoke_cert", self.cert.serial)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -82,7 +82,7 @@ class RevokeCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
 
         with self.assertCommandError(
             r"^%s: Certificate is already revoked\.$" % self.cert.serial
-        ), self.assertSignal(pre_revoke_cert) as pre, self.assertSignal(post_revoke_cert) as post:
+        ), self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
             self.cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)

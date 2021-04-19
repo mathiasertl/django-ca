@@ -147,7 +147,7 @@ class AdminChangeActionTestCaseMixin(AdminTestCaseMixin):
     @contextmanager
     def assertNoSignals(self):  # pylint: disable=invalid-name
         """Shortcut to assert that **no** signals where called."""
-        with self.assertSignals(False, False) as (pre, post):
+        with self.mockSignals(False, False) as (pre, post):
             yield pre, post
 
     def assertRequiresLogin(self, response, **kwargs):  # pylint: disable=invalid-name
@@ -156,9 +156,9 @@ class AdminChangeActionTestCaseMixin(AdminTestCaseMixin):
         self.assertFailedRequest(response)
 
     @contextmanager
-    def assertSignals(self, pre_called=True, post_called=True):  # pylint: disable=invalid-name
+    def mockSignals(self, pre_called=True, post_called=True):  # pylint: disable=invalid-name
         """Assert that the singals were (not) called."""
-        with self.assertSignal(self.pre_signal) as pre, self.assertSignal(self.post_signal) as post:
+        with self.mockSignal(self.pre_signal) as pre, self.mockSignal(self.post_signal) as post:
             try:
                 yield pre, post
             finally:
@@ -214,7 +214,7 @@ class AdminChangeActionTestCaseMixin(AdminTestCaseMixin):
 
     def test_unknown_object(self) -> None:
         """Test an unknown object (get_change_actions() fetches object, so it should work)."""
-        with self.assertSignals(False, False):
+        with self.mockSignals(False, False):
             # pylint: disable=not-callable; self.model is None in Mixin
             response = self.client.get(self.change_url(self.model(pk=1234)))
         self.assertRedirects(response, "/admin/")
@@ -258,14 +258,14 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGen
 
     def test_no_reason(self) -> None:
         """Test revoking without any reason."""
-        with self.assertSignals():
+        with self.mockSignals():
             response = self.client.post(self.url, data={"revoked_reason": ""})
         self.assertSuccessfulRequest(response, reason="unspecified")
 
     def test_with_reason(self) -> None:
         """Test revoking a certificate with an explicit reason."""
         reason = ReasonFlags.certificate_hold
-        with self.assertSignals():
+        with self.mockSignals():
             response = self.client.post(self.url, data={"revoked_reason": reason.name})
         self.assertSuccessfulRequest(response, reason=reason.name)
 
@@ -362,7 +362,7 @@ class ResignChangeActionTestCase(
     @override_tmpcadir()
     def test_resign(self) -> None:
         """Try a basic resign request."""
-        with self.assertSignals():
+        with self.mockSignals():
             response = self.client.post(self.url, data=self.data)
         self.assertSuccessfulRequest(response)
         self.assertRedirects(response, self.changelist_url)

@@ -188,7 +188,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         subject = Subject({"CN": "example.com"})
 
         prof = Profile("example", subject=Subject())
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -222,7 +222,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         issuer = Subject("/CN=issuer.example.com")
 
         prof = Profile("example", subject=Subject(), issuer_name=issuer)
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -270,7 +270,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
             add_issuer_url=False,
             add_issuer_alternative_name=False,
         )
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -284,7 +284,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
             ],
         )
 
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -333,7 +333,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
             add_issuer_alternative_name=False,
             cn_in_san=False,
         )
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -347,7 +347,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         )
 
         # Create the same cert, but pass cn_in_san=True to create_cert
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}), cn_in_san=True)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -362,7 +362,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         )
 
         # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -386,7 +386,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         )
 
         # test that the first SAN is added as CN if we don't have A CN
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -417,7 +417,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         ski = SubjectKeyIdentifier({"value": b"333333"})
 
         prof = Profile("example", subject=Subject())
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -450,7 +450,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         ski = SubjectKeyIdentifier({"value": b"333333"})
 
         prof = Profile("example", subject=Subject())
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -482,7 +482,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         subject = Subject({"CN": "example.com"})
 
         prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -514,7 +514,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         subject = Subject({"CN": "example.com"})
 
         prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
-        with self.assertSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -547,12 +547,12 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
 
         prof = Profile("example", subject=Subject({"C": "AT"}))
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=Subject())
         self.assertEqual(pre.call_count, 0)
 
         # pass an empty SAN
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, cn_in_san=True, extensions=[SubjectAlternativeName()])
         self.assertEqual(pre.call_count, 0)
 
@@ -565,7 +565,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
 
         prof = Profile("example", subject=Subject({"C": "AT"}))
         msg = r"^%s: Could not parse CommonName as subjectAlternativeName\.$" % cname
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 0)
 
@@ -582,7 +582,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         prof = Profile("example", subject=Subject())
 
         msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(
                 prof,
                 ca,
@@ -595,7 +595,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         self.assertEqual(pre.call_count, 0)
 
         msg = r"^extensions\[crl_distribution_points\] is not of type CRLDistributionPoints"
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(
                 prof,
                 ca,
@@ -607,7 +607,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         self.assertEqual(pre.call_count, 0)
 
         msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(
                 prof,
                 ca,
@@ -619,7 +619,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         self.assertEqual(pre.call_count, 0)
 
         msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(
                 prof,
                 ca,
@@ -632,7 +632,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
         self.assertEqual(pre.call_count, 0)
 
         msg = r"^extensions\[issuer_alternative_name\] is not of type IssuerAlternativeName"
-        with self.assertSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(
                 prof,
                 ca,

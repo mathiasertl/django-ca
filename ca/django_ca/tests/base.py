@@ -575,7 +575,7 @@ VQIDAQAB
         self, pre: bool = True, post: bool = True
     ) -> typing.Iterator[typing.Tuple[Mock, Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
-        with self.assertSignal(pre_create_ca) as pre_sig, self.assertSignal(post_create_ca) as post_sig:
+        with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
             try:
                 yield (pre_sig, post_sig)
             finally:

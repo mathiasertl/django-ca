@@ -62,7 +62,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         """Test reading CSR from stdin."""
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
@@ -93,7 +93,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             stdin = StringIO(self.csr_pem)
             subject = Subject([("CN", cname)])
 
-            with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd(
                     "sign_cert", ca=ca, subject=subject, password=certs[name]["password"], stdin=stdin
                 )
@@ -129,7 +129,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
 
         try:
             subject = Subject([("CN", "example.com"), ("emailAddress", "user@example.com")])
-            with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, csr=csr_path)
             self.assertEqual(stderr, "")
             self.assertEqual(pre.call_count, 1)
@@ -160,7 +160,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         stdin = StringIO(self.csr_pem)
 
         try:
-            with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd(
                     "sign_cert",
                     ca=self.ca,
@@ -197,7 +197,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         cname = "foo bar"
         msg = r"^%s: Could not parse CommonName as subjectAlternativeName\.$" % cname
 
-        with self.assertCommandError(msg), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(
+        with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post:
             self.cmd("sign_cert", ca=self.ca, subject=Subject([("CN", cname)]), cn_in_san=True, stdin=stdin)
@@ -208,7 +208,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     def test_cn_not_in_san(self) -> None:
         """Test adding a CN that is not in the SAN."""
         stdin = StringIO(self.csr_pem)
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
@@ -236,7 +236,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         """Test signing without passing any SANs."""
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.net")])
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
@@ -275,7 +275,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
 
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
         stdin = StringIO(self.csr_pem)
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
@@ -307,7 +307,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             ]
         )
         stdin = StringIO(self.csr_pem)
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd(
                 "sign_cert",
                 ca=self.ca,
@@ -340,7 +340,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             "--tls-feature=OCSPMustStaple",
         ]
 
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(stderr, "")
@@ -365,7 +365,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     def test_no_subject(self) -> None:
         """Test signing without a subject (but SANs)."""
         stdin = StringIO(self.csr_pem)
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert", ca=self.ca, alt=SubjectAlternativeName({"value": ["example.com"]}), stdin=stdin
             )
@@ -395,7 +395,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         stdin = StringIO(self.csr_pem)
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
-        ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=ca, alt=SubjectAlternativeName({"value": ["example.com"]}), stdin=stdin)
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
@@ -403,7 +403,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         # Pass a password
         stdin = StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd(
                 "sign_cert",
                 ca=ca,
@@ -417,9 +417,9 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         # Pass the wrong password
         stdin = StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with self.assertCommandError(self.re_false_password), self.assertSignal(
+        with self.assertCommandError(self.re_false_password), self.mockSignal(
             pre_issue_cert
-        ) as pre, self.assertSignal(post_issue_cert) as post:
+        ) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd(
                 "sign_cert",
                 ca=ca,
@@ -451,7 +451,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         msg += "$"
 
         stdin = StringIO(self.csr_pem)
-        with self.assertCommandError(msg), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(
+        with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post:
             self.cmd("sign_cert", ca=self.ca, alt=["example.com"], stdin=stdin)
@@ -467,7 +467,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
 
         try:
             subject = Subject([("CN", "example.com"), ("emailAddress", "user@example.com")])
-            with self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+            with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd(
                     "sign_cert", ca=self.ca, subject=subject, csr=csr_path, csr_format=Encoding.DER
                 )
@@ -502,7 +502,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
 
         with self.assertCommandError(
             r"^Certificate would outlive CA, maximum expiry for this CA is {} days\.$".format(time_left)
-        ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=self.ca, alt={"value": ["example.com"]}, expires=expires, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -512,7 +512,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         """Test signing a cert that has neither CN nor SAN."""
         with self.assertCommandError(
             r"^Must give at least a CN in --subject or one or more --alt arguments\.$"
-        ), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(post_issue_cert) as post:
+        ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=self.ca, subject=Subject([("C", "AT")]))
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -522,9 +522,9 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         """Test signing with an invalid CSR format."""
         stdin = StringIO(self.csr_pem)
 
-        with self.assertCommandError("Unknown CSR format passed: foo$"), self.assertSignal(
+        with self.assertCommandError("Unknown CSR format passed: foo$"), self.mockSignal(
             pre_issue_cert
-        ) as pre, self.assertSignal(post_issue_cert) as post:
+        ) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd(
                 "sign_cert",
                 ca=self.ca,
@@ -543,9 +543,9 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 
-        with self.assertCommandError(r"^Certificate Authority is revoked\.$"), self.assertSignal(
+        with self.assertCommandError(r"^Certificate Authority is revoked\.$"), self.mockSignal(
             pre_issue_cert
-        ) as pre, self.assertSignal(post_issue_cert) as post:
+        ) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
@@ -560,7 +560,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 
-        with self.assertCommandError(msg), self.assertSignal(pre_issue_cert) as pre, self.assertSignal(
+        with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post:
             self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
@@ -574,9 +574,9 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         stdin = StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 
-        with self.assertCommandError(r"^Certificate Authority has expired\.$"), self.assertSignal(
+        with self.assertCommandError(r"^Certificate Authority has expired\.$"), self.mockSignal(
             pre_issue_cert
-        ) as pre, self.assertSignal(post_issue_cert) as post:
+        ) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
