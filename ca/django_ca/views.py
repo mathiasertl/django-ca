@@ -314,8 +314,6 @@ class GenericOCSPView(OCSPView):
     """
 
     def dispatch(self, request, serial, **kwargs):
-        # pylint: disable=arguments-differ; more concrete parameters
-        # pylint: disable=missing-function-docstring; standard Django view function
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:

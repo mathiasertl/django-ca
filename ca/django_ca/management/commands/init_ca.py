@@ -174,7 +174,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
 
         self.add_ca_args(parser)
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ,too-many-arguments,too-many-locals # noqa: E501
+    def handle(  # type: ignore[override] # pylint: disable=too-many-arguments,too-many-locals
         self,
         name: str,
         subject: Subject,

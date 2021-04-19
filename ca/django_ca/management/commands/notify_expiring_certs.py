@@ -37,9 +37,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             "--days", type=int, default=14, help="Warn DAYS days ahead of time (default: %(default)s)."
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
-        self, **options: typing.Any
-    ) -> None:
+    def handle(self, **options: typing.Any) -> None:  # type: ignore[override]
         now = timezone.now()
         expires = now + timedelta(days=options["days"] + 1)  # add a day to avoid one-of errors
 

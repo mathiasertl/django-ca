@@ -22,7 +22,7 @@ from acme import messages
 
 # https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
 if TYPE_CHECKING:
-    IdentifiersType = jose.Field[List[str]]  # pylint: disable=unsubscriptable-object
+    IdentifiersType = jose.Field[List[str]]
 else:
     IdentifiersType = jose.Field
 

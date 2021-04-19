@@ -61,9 +61,7 @@ class Command(BinaryCommand):
         self.add_password(parser)
         super().add_arguments(parser)
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
-        self, path: str, encoding: Encoding, **options: typing.Any
-    ) -> None:
+    def handle(self, path: str, encoding: Encoding, **options: typing.Any) -> None:  # type: ignore[override]
         if options["ca_crl"]:
             self.stderr.write(self.style.WARNING("WARNING: --ca-crl is deprecated, use --scope=ca instead."))
             options["scope"] = "ca"

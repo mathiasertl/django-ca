@@ -75,7 +75,7 @@ class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
 class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
     """Main tests for the profile class."""
 
-    def create_cert(self, prof, *args, **kwargs):  # pylint: disable=arguments-differ
+    def create_cert(self, prof, *args, **kwargs):
         """Shortcut to create a cert with the given profile."""
         cert = Certificate()
         cert.x509_cert = prof.create_cert(*args, **kwargs)

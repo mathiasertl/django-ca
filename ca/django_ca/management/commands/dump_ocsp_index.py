@@ -38,7 +38,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             "path", type=str, default="-", nargs="?", help="Where to write the index (default: stdout)"
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override]
         self, ca: CertificateAuthority, path: str, **options: typing.Any
     ) -> None:
         if path == "-":

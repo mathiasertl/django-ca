@@ -2475,7 +2475,6 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
 
     def test_getitem(self) -> None:
         """Test item getter (e.g. ``x = ext[0]``)."""
-        # pylint: disable=unsubscriptable-object; false positive
         self.assertEqual(self.ext1[0], self.data1["value"][0])
         self.assertEqual(self.ext1[1], self.data1["value"][1])
         with self.assertRaises(IndexError):
@@ -2489,7 +2488,6 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
 
     def test_getitem_slices(self) -> None:
         """Test getting slices (e.g. ``x = ext[0:1]``)."""
-        # pylint: disable=unsubscriptable-object; false positive
         self.assertEqual(self.ext1[:1], self.data1["value"][:1])
         self.assertEqual(self.ext2[:2], self.data2["value"][:2])
         self.assertEqual(self.ext2[:], self.data2["value"][:])

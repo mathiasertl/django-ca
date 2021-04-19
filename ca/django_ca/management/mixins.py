@@ -157,7 +157,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
                 self.stdout.write(self.indent(ext.as_text()))
         elif isinstance(ext, x509.Extension):
-            oid_name = ext.oid._name  # pylint: disable=protected-access; only wai to get name
+            oid_name = ext.oid._name  # pylint: disable=protected-access; only way to get name
             if ext.critical:  # pragma: no cover - all unrecognized extensions that we have are non-critical
                 self.stdout.write("%s (critical): %s" % (oid_name, ext.oid.dotted_string))
             else:

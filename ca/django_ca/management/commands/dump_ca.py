@@ -43,7 +43,7 @@ class Command(BinaryCommand):
             "path", nargs="?", default="-", help='Path where to dump the certificate. Use "-" for stdout.'
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override]
         self, ca: CertificateAuthority, path: str, bundle: bool, encoding: Encoding, **options: typing.Any
     ) -> None:
         if bundle and encoding == Encoding.DER:

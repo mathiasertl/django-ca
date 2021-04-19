@@ -45,7 +45,7 @@ class DumpCRLTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         super().setUp()
         self.ca = self.cas["root"]
 
-    def assertSerial(self, revokation, cert):  # pylint: disable=arguments-differ
+    def assertSerial(self, revokation, cert):
         self.assertEqual(revokation.get_serial(), cert.serial.encode("utf-8"))
 
     @override_tmpcadir()

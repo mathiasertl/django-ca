@@ -74,7 +74,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override]
         self,
         name: str,
         key: typing.BinaryIO,

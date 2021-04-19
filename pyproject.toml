@@ -113,6 +113,10 @@ disable = [
     "bad-indentation",
     "multiple-statements",
     "bare-except",
+
+    # (seems to be) covered by mypy
+    "unsubscriptable-object",
+    "arguments-differ",
 ]
 
 [tool.pylint.similarities]

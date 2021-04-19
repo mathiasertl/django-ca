@@ -238,7 +238,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
-    def dispatch(  # type: ignore[override] # pylint: disable=arguments-differ
+    def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
     ) -> HttpResponse:
         if not ca_settings.CA_ENABLE_ACME:
@@ -409,9 +409,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
        * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
 
-    def dispatch(  # type: ignore[override] # pylint: disable=arguments-differ; more concrete here
-        self, request: HttpRequest, serial: str
-    ) -> HttpResponse:
+    def dispatch(self, request: HttpRequest, serial: str) -> HttpResponse:  # type: ignore[override]
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 

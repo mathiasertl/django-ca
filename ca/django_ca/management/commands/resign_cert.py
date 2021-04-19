@@ -53,7 +53,7 @@ default profile, currently %s."""
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
+    def handle(  # type: ignore[override]
         self,
         cert: Certificate,
         ca: typing.Optional[CertificateAuthority],

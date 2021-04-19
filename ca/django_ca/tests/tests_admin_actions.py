@@ -251,7 +251,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGen
         obj = obj or self.obj
         self.assertNotRevoked(obj)
 
-    def assertSuccessfulRequest(self, response, obj=None, reason=""):  # pylint: disable=arguments-differ
+    def assertSuccessfulRequest(self, response, obj=None, reason=""):
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
         self.assertRevoked(self.obj, reason=reason)

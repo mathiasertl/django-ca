@@ -33,9 +33,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
 
-    def handle(  # type: ignore[override] # pylint: disable=arguments-differ
-        self, ca: CertificateAuthority, **options: typing.Any
-    ) -> None:
+    def handle(self, ca: CertificateAuthority, **options: typing.Any) -> None:  # type: ignore[override]
         try:
             path = ca_storage.path(ca.private_key_path)
         except NotImplementedError:

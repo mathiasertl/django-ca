@@ -538,7 +538,7 @@ class ViewCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
             "san": cert.subject_alternative_name,
         }
 
-    def assertBasic(self, status):  # pylint: disable=arguments-differ
+    def assertBasic(self, status):
         """Test basic properties of output."""
         for key, cert in self.ca_certs.items():
             stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())

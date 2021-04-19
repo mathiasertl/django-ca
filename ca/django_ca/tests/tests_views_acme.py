@@ -1370,7 +1370,7 @@ class AcmeOrderFinalizeViewTestCase(
         """Assert a badCSR error."""
         self.assertAcmeProblem(resp, "badCSR", status=HTTPStatus.BAD_REQUEST, message=message)
 
-    def get_message(  # type: ignore[override] # pylint: disable=arguments-differ
+    def get_message(  # type: ignore[override]
         self, csr: x509.CertificateSigningRequest
     ) -> acme.messages.CertificateRequest:
         """Get a message for the given cryptography CSR object."""
