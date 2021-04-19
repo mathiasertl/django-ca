@@ -70,9 +70,10 @@ class AdminActionTestCaseMixin(
         self.user.user_permissions.clear()
         self.user.save()
 
-        response = self.client.post(self.changelist_url, self.data)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-        self.assertFailedRequest(response, self.obj)
+        for obj in self.get_objects():
+            response = self.client.post(self.changelist_url, self.data)
+            self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+            self.assertFailedRequest(response, obj)
 
     def test_insufficient_permissions(self) -> None:
         """Test with insufficient permissions.
@@ -106,9 +107,10 @@ class AdminActionTestCaseMixin(
             app, name = perm.split(".", 1)
             self.user.user_permissions.add(Permission.objects.get(codename=name, content_type__app_label=app))
 
-        response = self.client.post(self.changelist_url, self.data)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFailedRequest(response, self.obj)
+        for obj in self.get_objects():
+            response = self.client.post(self.changelist_url, self.data)
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertFailedRequest(response, obj)
 
     def test_required_permissions(self) -> None:
         """Test that the required permissions make the request work."""
@@ -120,9 +122,10 @@ class AdminActionTestCaseMixin(
             app, name = perm.split(".", 1)
             self.user.user_permissions.add(Permission.objects.get(codename=name, content_type__app_label=app))
 
-        response = self.client.post(self.changelist_url, self.data)
-        self.assertRedirects(response, self.changelist_url)
-        self.assertSuccessfulRequest(response, self.obj)
+        for obj in self.get_objects():
+            response = self.client.post(self.changelist_url, self.data)
+            self.assertRedirects(response, self.changelist_url)
+            self.assertSuccessfulRequest(response, obj)
 
 
 class AdminChangeActionTestCaseMixin(
@@ -141,11 +144,6 @@ class AdminChangeActionTestCaseMixin(
         """Get action URL of the given object."""
         view_name = "admin:%s_%s_actions" % (self.model._meta.app_label, self.model._meta.model_name)
         return reverse(view_name, kwargs={"pk": obj.pk, "tool": self.tool})
-
-    @property
-    def url(self) -> str:
-        """Get default url for this test case."""
-        return self.get_url(obj=self.cert)
 
     def assertFailedRequest(  # pylint: disable=invalid-name
         self, response: HttpResponse, obj: typing.Optional[DjangoCAModelTypeVar] = None
@@ -196,34 +194,41 @@ class AdminChangeActionTestCaseMixin(
     @override_tmpcadir()
     def test_get(self) -> None:
         """Just test getting the page."""
-        with self.assertNoSignals():
-            response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        for obj in self.get_objects():
+            with self.assertNoSignals():
+                response = self.client.get(self.get_url(obj=obj))
+            self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_anonymous(self) -> None:
         """Test performing action as anonymous user."""
         client = Client()
-        with self.assertNoSignals():
-            self.assertRequiresLogin(client.get(self.url))
-            self.assertRequiresLogin(client.post(self.url, data=self.data))
+        for obj in self.get_objects():
+            url = self.get_url(obj)
+            with self.assertNoSignals():
+                self.assertRequiresLogin(client.get(url))
+                self.assertRequiresLogin(client.post(url, data=self.data))
 
     def test_plain_user(self) -> None:
         """Test that a plain user (no staff, no permissions) cannot perform this action."""
         self.user.is_superuser = self.user.is_staff = False
         self.user.save()
 
-        with self.assertNoSignals():
-            self.assertRequiresLogin(self.client.get(self.url))
-            self.assertRequiresLogin(self.client.post(self.url, data=self.data))
+        for obj in self.get_objects():
+            url = self.get_url(obj)
+            with self.assertNoSignals():
+                self.assertRequiresLogin(self.client.get(url))
+                self.assertRequiresLogin(self.client.post(url, data=self.data))
 
     def test_permissions_required(self) -> None:
         """Test that action requires the change_certificate permission."""
         self.user.is_superuser = False
         self.user.save()
 
-        with self.assertNoSignals():
-            self.assertForbidden(self.client.get(self.url))
-            self.assertForbidden(self.client.post(self.url, self.data))
+        for obj in self.get_objects():
+            url = self.get_url(obj)
+            with self.assertNoSignals():
+                self.assertForbidden(self.client.get(url))
+                self.assertForbidden(self.client.post(url, self.data))
 
     def test_is_staff_is_required(self) -> None:
         """Test that action requires is_staff, even if the user has the right permissions."""
@@ -232,9 +237,11 @@ class AdminChangeActionTestCaseMixin(
         self.user.save()
         self.user.user_permissions.add(Permission.objects.get(codename="change_certificate"))
 
-        with self.assertNoSignals():
-            self.assertRequiresLogin(self.client.get(self.url))
-            self.assertRequiresLogin(self.client.post(self.url, data=self.data))
+        for obj in self.get_objects():
+            url = self.get_url(obj)
+            with self.assertNoSignals():
+                self.assertRequiresLogin(self.client.get(url))
+                self.assertRequiresLogin(self.client.post(url, data=self.data))
 
     def test_unknown_object(self) -> None:
         """Test an unknown object (get_change_actions() fetches object, so it should work)."""
@@ -293,22 +300,25 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
     def test_no_reason(self) -> None:
         """Test revoking without any reason."""
-        with self.mockSignals():
-            response = self.client.post(self.url, data={"revoked_reason": ""})
+        for obj in self.get_objects():
+            with self.mockSignals():
+                response = self.client.post(self.get_url(obj), data={"revoked_reason": ""})
         self.assertSuccessfulRequest(response, reason="unspecified")
 
     def test_with_reason(self) -> None:
         """Test revoking a certificate with an explicit reason."""
         reason = ReasonFlags.certificate_hold
-        with self.mockSignals():
-            response = self.client.post(self.url, data={"revoked_reason": reason.name})
-        self.assertSuccessfulRequest(response, reason=reason.name)
+        for obj in self.get_objects():
+            with self.mockSignals():
+                response = self.client.post(self.get_url(obj), data={"revoked_reason": reason.name})
+            self.assertSuccessfulRequest(response, reason=reason.name)
 
     def test_with_bogus_reason(self) -> None:
         """Try setting an invalid reason."""
         reason = "bogus"
-        with self.assertNoSignals():
-            response = self.client.post(self.url, data={"revoked_reason": reason})
+        for obj in self.get_objects():
+            with self.assertNoSignals():
+                response = self.client.post(self.get_url(obj), data={"revoked_reason": reason})
         self.assertNotRevoked(self.cert)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
@@ -324,12 +334,14 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         cert.save()
 
         # Viewing page already redirects to change URL
-        with self.assertNoSignals():
-            self.assertRedirects(self.client.get(self.url), self.change_url())
+        for obj in self.get_objects():
+            with self.assertNoSignals():
+                self.assertRedirects(self.client.get(self.get_url(obj)), self.change_url())
 
         # Revoke a second time, which does not update the reason
-        with self.assertNoSignals():
-            response = self.client.post(self.url, data={"revoked_reason": "certificateHold"})
+        for obj in self.get_objects():
+            with self.assertNoSignals():
+                response = self.client.post(self.get_url(obj), data={"revoked_reason": "certificateHold"})
         self.assertRedirects(response, self.change_url())
         self.assertRevoked(self.cert)
 
@@ -394,7 +406,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     def test_resign(self) -> None:
         """Try a basic resign request."""
         with self.mockSignals():
-            response = self.client.post(self.url, data=self.data)
+            response = self.client.post(self.get_url(self.cert), data=self.data)
         self.assertSuccessfulRequest(response)
         self.assertRedirects(response, self.changelist_url)
 
@@ -404,8 +416,9 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.cert.csr = ""
         self.cert.save()
 
-        with self.assertNoSignals():
-            response = self.client.get(self.url)
+        for obj in self.get_objects():
+            with self.assertNoSignals():
+                response = self.client.get(self.get_url(obj))
         self.assertRedirects(response, self.change_url())
         self.assertMessages(response, ["Certificate has no CSR (most likely because it was imported)."])
 
@@ -415,7 +428,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
 
         self.cert.profile = ""
         self.cert.save()
-        form = self.app.get(self.url, user=self.user.username).form
+        form = self.app.get(self.get_url(self.cert), user=self.user.username).form
         form.submit().follow()
 
         resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).get()
@@ -424,7 +437,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     @override_tmpcadir()
     def test_webtest_basic(self) -> None:
         """Resign basic certificate."""
-        form = self.app.get(self.url, user=self.user.username).form
+        form = self.app.get(self.get_url(self.cert), user=self.user.username).form
         response = form.submit().follow()
         self.assertSuccessfulRequest(response)
 
