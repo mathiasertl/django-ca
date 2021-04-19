@@ -1,6 +1,8 @@
 import typing
 from datetime import datetime
 
+from cryptography import x509
+
 FILETYPE_PEM: int
 FILETYPE_ASN1: int
 FILETYPE_TEXT: int
@@ -8,6 +10,12 @@ FILETYPE_TEXT: int
 
 class X509:
     ...
+
+
+class X509Req:
+    @classmethod
+    def from_cryptography(cls, crypto_req: x509.CertificateSigningRequest) -> "X509Req":
+        ...
 
 
 def load_certificate(type: int, buffer: bytes) -> X509:
