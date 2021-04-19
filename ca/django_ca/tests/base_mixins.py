@@ -217,7 +217,7 @@ class TestCaseMixin(TestCaseProtocol):
 
     @contextmanager
     def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
-        """Context manager to freeze time to one of the given timestamps.
+        """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
         timestamp.
@@ -284,6 +284,12 @@ class TestCaseMixin(TestCaseProtocol):
             yield signal_mock
         finally:
             signal.disconnect(signal_mock)
+
+    @contextmanager
+    def mute_celery(self) -> typing.Iterator[mock.MagicMock]:
+        """Mock celery invocations."""
+        with mock.patch("celery.app.task.Task.apply_async", spec_set=True) as mocked:
+            yield mocked
 
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):

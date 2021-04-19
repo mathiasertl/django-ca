@@ -889,12 +889,6 @@ VQIDAQAB
         with patch.object(*args, **kwargs) as mock:
             yield mock
 
-    @contextmanager
-    def mute_celery(self) -> typing.Iterator[MagicMock]:
-        """Mock celery invocations."""
-        with patch("celery.app.task.Task.apply_async") as mock:
-            yield mock
-
     def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
