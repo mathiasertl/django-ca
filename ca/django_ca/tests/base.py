@@ -62,7 +62,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .. import ca_settings
-from ..constants import ReasonFlags
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions.base import CRLDistributionPointsBase
 from ..extensions.base import Extension
@@ -608,12 +607,6 @@ VQIDAQAB
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
         self.assertEqual(messages, expected)
 
-    def assertNotRevoked(self, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
-        """Assert that the certificate is not revoked."""
-        cert.refresh_from_db()
-        self.assertFalse(cert.revoked)
-        self.assertEqual(cert.revoked_reason, "")
-
     def assertPostCreateCa(  # pylint: disable=invalid-name
         self, post: Mock, ca: CertificateAuthority
     ) -> None:
@@ -631,22 +624,6 @@ VQIDAQAB
         key = ca.key(password)
         self.assertIsNotNone(key)
         self.assertTrue(key.key_size > 0)
-
-    def assertRevoked(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, reason: typing.Optional[ReasonFlags] = None
-    ) -> None:
-        """Assert that the certificate is now revoked."""
-        if isinstance(cert, CertificateAuthority):
-            cert = CertificateAuthority.objects.get(serial=cert.serial)
-        else:
-            cert = Certificate.objects.get(serial=cert.serial)
-
-        self.assertTrue(cert.revoked)
-
-        if reason is None:
-            self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
-        else:
-            self.assertEqual(cert.revoked_reason, reason)
 
     def assertSerial(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""

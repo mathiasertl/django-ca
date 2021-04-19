@@ -25,6 +25,7 @@ from cryptography import x509
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
+from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.management import ManagementUtility
 from django.core.management import call_command
@@ -38,6 +39,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
 
+from ..constants import ReasonFlags
 from ..extensions import OID_TO_EXTENSION
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
@@ -179,9 +181,38 @@ class TestCaseMixin(TestCaseProtocol):
         """Assert that the issuer for `cert` matches the subject of `issuer`."""
         self.assertEqual(cert.issuer, issuer.subject)
 
+    def assertMessages(  # pylint: disable=invalid-name
+        self, response: HttpResponse, expected: typing.List[str]
+    ) -> None:
+        """Assert given Django messages for `response`."""
+        messages = [str(m) for m in list(get_messages(response.wsgi_request))]
+        self.assertEqual(messages, expected)
+
+    def assertNotRevoked(self, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
+        """Assert that the certificate is not revoked."""
+        cert.refresh_from_db()
+        self.assertFalse(cert.revoked)
+        self.assertEqual(cert.revoked_reason, "")
+
     def assertPostIssueCert(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
+    def assertRevoked(  # pylint: disable=invalid-name
+        self, cert: X509CertMixin, reason: typing.Optional[ReasonFlags] = None
+    ) -> None:
+        """Assert that the certificate is now revoked."""
+        if isinstance(cert, CertificateAuthority):
+            cert = CertificateAuthority.objects.get(serial=cert.serial)
+        else:
+            cert = Certificate.objects.get(serial=cert.serial)
+
+        self.assertTrue(cert.revoked)
+
+        if reason is None:
+            self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
+        else:
+            self.assertEqual(cert.revoked_reason, reason)
 
     def assertSubject(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]

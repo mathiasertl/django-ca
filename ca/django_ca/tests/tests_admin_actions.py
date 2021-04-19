@@ -13,14 +13,20 @@
 
 """Test cases to test various admin actions."""
 
+import typing
 from contextlib import contextmanager
 from http import HTTPStatus
+from unittest import mock
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.dispatch.dispatcher import Signal
+from django.http import HttpResponse
 from django.test import Client
+from django.test import TestCase
 from django.urls import reverse
 
+from django_webtest import DjangoWebtestResponse
 from django_webtest import WebTestMixin
 from freezegun import freeze_time
 
@@ -35,9 +41,12 @@ from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import AdminTestCaseMixin
+from .base_mixins import DjangoCAModelTypeVar
 
 
-class AdminActionTestCaseMixin(AdminTestCaseMixin):
+class AdminActionTestCaseMixin(
+    AdminTestCaseMixin[DjangoCAModelTypeVar], typing.Generic[DjangoCAModelTypeVar]
+):
     """TestCase mixin for normal Django admin actions."""
 
     action = ""
@@ -48,11 +57,15 @@ class AdminActionTestCaseMixin(AdminTestCaseMixin):
         super().setUp()
         self.data = {"action": self.action, "_selected_action": [self.obj.pk]}
 
-    def assertFailedRequest(self, response, *objects):  # pylint: disable=invalid-name
+    def assertFailedRequest(  # pylint: disable=invalid-name
+        self, response: HttpResponse, *objects: DjangoCAModelTypeVar
+    ) -> None:
         """Assert that a request did not have any effect."""
         raise NotImplementedError
 
-    def assertSuccessfulRequest(self, response, *objects):  # pylint: disable=invalid-name
+    def assertSuccessfulRequest(  # pylint: disable=invalid-name
+        self, response: HttpResponse, *objects: DjangoCAModelTypeVar
+    ) -> None:
         """Assert that the request was successful."""
         raise NotImplementedError
 
@@ -117,43 +130,61 @@ class AdminActionTestCaseMixin(AdminTestCaseMixin):
         self.assertSuccessfulRequest(response, self.obj)
 
 
-class AdminChangeActionTestCaseMixin(AdminTestCaseMixin):
+class AdminChangeActionTestCaseMixin(
+    AdminTestCaseMixin[DjangoCAModelTypeVar], typing.Generic[DjangoCAModelTypeVar]
+):
     """Mixin to test Django object actions."""
 
-    data = {}
+    load_cas = ("root", "child", )
+    load_certs = ("profile-webserver", )
+    data: typing.Dict[str, typing.Any] = {}
     tool = ""
-    pre_signal = None
-    post_signal = None
+    pre_signal: Signal
+    post_signal: Signal
 
-    def get_url(self, obj):
+    def get_url(self, obj: DjangoCAModelTypeVar) -> str:
         """Get action URL of the given object."""
         view_name = "admin:%s_%s_actions" % (self.model._meta.app_label, self.model._meta.model_name)
         return reverse(view_name, kwargs={"pk": obj.pk, "tool": self.tool})
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Get default url for this test case."""
-        return self.get_url(obj=self.obj)
+        return self.get_url(obj=self.cert)
 
-    def assertFailedRequest(self, response, obj=None):  # pylint: disable=invalid-name
+    def assertFailedRequest(  # pylint: disable=invalid-name
+        self, response: HttpResponse, obj: typing.Optional[DjangoCAModelTypeVar] = None
+    ) -> None:
         """Assert that a request did not have any effect."""
         raise NotImplementedError
 
-    def assertForbidden(self, response, obj=None):  # pylint: disable=invalid-name
+    def assertForbidden(  # pylint: disable=invalid-name
+        self, response: HttpResponse, obj: typing.Optional[DjangoCAModelTypeVar] = None
+    ) -> None:
         """Assert that the action returned HTTP 403 (Forbidden)."""
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertFailedRequest(response, obj=obj)
 
     @contextmanager
-    def assertNoSignals(self):  # pylint: disable=invalid-name
+    def assertNoSignals(  # pylint: disable=invalid-name
+        self
+    ) -> typing.Iterator[typing.Tuple[mock.MagicMock, mock.MagicMock]]:
         """Shortcut to assert that **no** signals where called."""
         with self.mockSignals(False, False) as (pre, post):
             yield pre, post
 
-    def assertRequiresLogin(self, response, **kwargs):  # pylint: disable=invalid-name
+    def assertRequiresLogin(  # pylint: disable=invalid-name
+        self, response: HttpResponse, **kwargs: typing.Any
+    ) -> None:
         """Overwritten as a shortcut to also test that the certificate was not revoked."""
         super().assertRequiresLogin(response, **kwargs)
         self.assertFailedRequest(response)
+
+    def assertSuccessfulRequest(  # pylint: disable=invalid-name
+        self, response: HttpResponse, obj: typing.Optional[DjangoCAModelTypeVar] = None
+    ) -> None:
+        """Assert that the request was successful."""
+        raise NotImplementedError
 
     @contextmanager
     def mockSignals(self, pre_called=True, post_called=True):  # pylint: disable=invalid-name
@@ -164,10 +195,6 @@ class AdminChangeActionTestCaseMixin(AdminTestCaseMixin):
             finally:
                 self.assertEqual(pre.called, pre_called)
                 self.assertEqual(post.called, post_called)
-
-    def assertSuccessfulRequest(self, response, obj=None):  # pylint: disable=invalid-name
-        """Assert that the request was successful."""
-        raise NotImplementedError
 
     @override_tmpcadir()
     def test_get(self) -> None:
@@ -221,24 +248,24 @@ class AdminChangeActionTestCaseMixin(AdminTestCaseMixin):
 
 
 @freeze_time(timestamps["everything_valid"])
-class RevokeActionTestCase(AdminActionTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], DjangoCAWithGeneratedCertsTestCase):
     """Test the revoke action."""
 
     action = "revoke"
     model = Certificate
     required_permissions = ["django_ca.change_certificate"]
 
-    def assertFailedRequest(self, response, *objects):
+    def assertFailedRequest(self, response: HttpResponse, *objects: Certificate) -> None:
         for obj in objects:
             self.assertNotRevoked(obj)
 
-    def assertSuccessfulRequest(self, response, *objects):
+    def assertSuccessfulRequest(self, response: HttpResponse, *objects: Certificate) -> None:
         for obj in objects:
             self.assertRevoked(obj)
 
 
 @freeze_time(timestamps["everything_valid"])
-class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], TestCase):
     """Test the revoke change action."""
 
     model = Certificate
@@ -247,14 +274,14 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGen
     pre_signal = pre_revoke_cert
     post_signal = post_revoke_cert
 
-    def assertFailedRequest(self, response, obj=None):
-        obj = obj or self.obj
+    def assertFailedRequest(self, response: HttpResponse, obj: typing.Optional[Certificate] = None) -> None:
+        obj = obj or self.cert
         self.assertNotRevoked(obj)
 
     def assertSuccessfulRequest(self, response, obj=None, reason=""):
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
-        self.assertRevoked(self.obj, reason=reason)
+        self.assertRevoked(self.cert, reason=reason)
 
     def test_no_reason(self) -> None:
         """Test revoking without any reason."""
@@ -274,7 +301,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGen
         reason = "bogus"
         with self.assertNoSignals():
             response = self.client.post(self.url, data={"revoked_reason": reason})
-        self.assertNotRevoked(self.obj)
+        self.assertNotRevoked(self.cert)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
         self.assertEqual(
@@ -284,7 +311,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGen
 
     def test_revoked(self) -> None:
         """Try revoking a certificate that already is revoked."""
-        cert = Certificate.objects.get(serial=self.obj.serial)
+        cert = Certificate.objects.get(serial=self.cert.serial)
         cert.revoke()
         cert.save()
 
@@ -296,13 +323,11 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin, DjangoCAWithGen
         with self.assertNoSignals():
             response = self.client.post(self.url, data={"revoked_reason": "certificateHold"})
         self.assertRedirects(response, self.change_url())
-        self.assertRevoked(self.obj)
+        self.assertRevoked(self.cert)
 
 
 @freeze_time(timestamps["everything_valid"])
-class ResignChangeActionTestCase(
-    AdminChangeActionTestCaseMixin, WebTestMixin, DjangoCAWithGeneratedCertsTestCase
-):
+class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], WebTestMixin, TestCase):
     """Test the resign change action."""
 
     model = Certificate
@@ -310,17 +335,15 @@ class ResignChangeActionTestCase(
     pre_signal = pre_issue_cert
     post_signal = post_issue_cert
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.obj.profile = "webserver"
-        self.obj.save()
-
-    def assertFailedRequest(self, response, obj=None):
-        obj = obj or self.obj
+    def assertFailedRequest(self, response: HttpResponse, obj: typing.Optional[Certificate] = None) -> None:
+        obj = obj or self.cert
         self.assertEqual(self.model.objects.filter(cn=obj.cn).count(), 1)
 
-    def assertSuccessfulRequest(self, response, obj=None):
-        obj = obj or self.obj
+    def assertSuccessfulRequest(
+        self, response: typing.Union[DjangoWebtestResponse, HttpResponse],
+        obj: typing.Optional[Certificate] = None
+    ) -> None:
+        obj = obj or self.cert
         resigned = Certificate.objects.filter(cn=obj.cn).exclude(pk=obj.pk).get()
 
         self.assertFalse(resigned.revoked)
@@ -339,19 +362,19 @@ class ResignChangeActionTestCase(
         self.assertNotEqual(obj.serial, resigned.serial)
 
     @property
-    def data(self):
+    def data(self) -> typing.Dict[str, typing.Any]:  # type: ignore[override]
         """Return default data."""
+        # mypy override: https://github.com/python/mypy/issues/4125
         return {
-            "ca": self.obj.ca.pk,
+            "ca": self.cert.ca.pk,
             "profile": "webserver",
-            "subject_5": self.obj.cn,
+            "subject_5": self.cert.cn,
             "subject_alternative_name_1": True,
             "algorithm": "SHA256",
-            "expires": self.obj.ca.expires.strftime("%Y-%m-%d"),
+            "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
             "key_usage_0": ["digitalSignature", "keyAgreement", "keyEncipherment"],
             "key_usage_1": True,
             "extended_key_usage_0": [
-                "clientAuth",
                 "serverAuth",
             ],
             "extended_key_usage_1": False,
@@ -370,8 +393,8 @@ class ResignChangeActionTestCase(
     @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
     def test_no_csr(self) -> None:
         """Try resigning a cert that has no CSR."""
-        self.obj.csr = ""
-        self.obj.save()
+        self.cert.csr = ""
+        self.cert.save()
 
         with self.assertNoSignals():
             response = self.client.get(self.url)
@@ -382,12 +405,12 @@ class ResignChangeActionTestCase(
     def test_no_profile(self) -> None:
         """Test that resigning a cert with no stored profile stores the default profile."""
 
-        self.obj.profile = ""
-        self.obj.save()
+        self.cert.profile = ""
+        self.cert.save()
         form = self.app.get(self.url, user=self.user.username).form
         form.submit().follow()
 
-        resigned = Certificate.objects.filter(cn=self.obj.cn).exclude(pk=self.obj.pk).get()
+        resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).get()
         self.assertEqual(resigned.profile, ca_settings.CA_DEFAULT_PROFILE)
 
     @override_tmpcadir()
@@ -400,7 +423,7 @@ class ResignChangeActionTestCase(
     @override_tmpcadir()
     def test_webtest_all(self) -> None:
         """Resign certificate with **all** extensions."""
-        cert = self.certs["all-extensions"]
+        cert = self.load_named_cert("all-extensions")
         cert.profile = "webserver"
         cert.save()
         form = self.app.get(self.get_url(cert), user=self.user.username).form
@@ -410,7 +433,7 @@ class ResignChangeActionTestCase(
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_webtest_no_ext(self) -> None:
         """Resign certificate with **no** extensions."""
-        cert = self.certs["no-extensions"]
+        cert = self.load_named_cert("no-extensions")
         cert.profile = "webserver"
         cert.save()
         form = self.app.get(self.get_url(cert), user=self.user.username).form
