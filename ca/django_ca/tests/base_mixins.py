@@ -154,7 +154,7 @@ class TestCaseMixin(TestCaseProtocol):
         """Load a CA from one of the preloaded files."""
         path = "%s.key" % name
         if parsed is None:
-            parsed = certs["root"]["pub"]["parsed"]
+            parsed = certs[name]["pub"]["parsed"]
         if parent is None and certs[name].get("parent"):
             parent = CertificateAuthority.objects.get(name=certs[name]["parent"])
 
