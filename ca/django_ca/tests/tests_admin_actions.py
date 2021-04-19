@@ -49,8 +49,9 @@ class AdminActionTestCaseMixin(
     """TestCase mixin for normal Django admin actions."""
 
     action = ""
-    insufficient_permissions = []
-    required_permissions = []
+    data: typing.Dict[str, typing.Any]
+    insufficient_permissions: typing.List[str] = []
+    required_permissions: typing.List[str] = []
 
     def assertFailedRequest(  # pylint: disable=invalid-name
         self, response: HttpResponse, *objects: DjangoCAModelTypeVar
