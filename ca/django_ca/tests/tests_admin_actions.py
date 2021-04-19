@@ -134,8 +134,11 @@ class AdminChangeActionTestCaseMixin(
 ):
     """Mixin to test Django object actions."""
 
-    load_cas = ("root", "child", )
-    load_certs = ("profile-webserver", )
+    load_cas = (
+        "root",
+        "child",
+    )
+    load_certs = ("profile-webserver",)
     data: typing.Dict[str, typing.Any] = {}
     tool = ""
     pre_signal: Signal
@@ -161,7 +164,7 @@ class AdminChangeActionTestCaseMixin(
 
     @contextmanager
     def assertNoSignals(  # pylint: disable=invalid-name
-        self
+        self,
     ) -> typing.Iterator[typing.Tuple[mock.MagicMock, mock.MagicMock]]:
         """Shortcut to assert that **no** signals where called."""
         with self.mockSignals(False, False) as (pre, post):
@@ -256,8 +259,8 @@ class AdminChangeActionTestCaseMixin(
 class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], TestCase):
     """Test the revoke action."""
 
-    load_cas = ("root", )
-    load_certs = ("root-cert", )
+    load_cas = ("root",)
+    load_certs = ("root-cert",)
     action = "revoke"
     model = Certificate
     required_permissions = ["django_ca.change_certificate"]
@@ -293,7 +296,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         self,
         response: HttpResponse,
         obj: typing.Optional[Certificate] = None,
-        reason: typing.Optional[str] = None
+        reason: typing.Optional[str] = None,
     ) -> None:
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
@@ -361,8 +364,9 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertEqual(self.model.objects.filter(cn=obj.cn).count(), 1)
 
     def assertSuccessfulRequest(
-        self, response: typing.Union[DjangoWebtestResponse, HttpResponse],
-        obj: typing.Optional[Certificate] = None
+        self,
+        response: typing.Union[DjangoWebtestResponse, HttpResponse],
+        obj: typing.Optional[Certificate] = None,
     ) -> None:
         obj = obj or self.cert
         resigned = Certificate.objects.filter(cn=obj.cn).exclude(pk=obj.pk).get()

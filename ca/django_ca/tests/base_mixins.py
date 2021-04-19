@@ -279,7 +279,7 @@ class TestCaseMixin(TestCaseProtocol):
         parsed: typing.Optional[x509.Certificate] = None,
         enabled: bool = True,
         parent: typing.Optional[CertificateAuthority] = None,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
         path = "%s.key" % name
