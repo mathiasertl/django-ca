@@ -64,12 +64,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from .. import ca_settings
 from ..constants import ReasonFlags
 from ..extensions import KEY_TO_EXTENSION
-from ..extensions import OID_TO_EXTENSION
-from ..extensions import AuthorityInformationAccess
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
-from ..extensions import CRLDistributionPoints
-from ..extensions import SubjectKeyIdentifier
 from ..extensions.base import CRLDistributionPointsBase
 from ..extensions.base import Extension
 from ..extensions.base import IterableExtension
@@ -78,11 +72,9 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
 from ..signals import post_create_ca
-from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_create_ca
 from ..subject import Subject
-from ..typehints import ParsableSubject
 from ..typehints import PrivateKeyTypes
 from ..typehints import TypedDict
 from ..utils import add_colons
@@ -508,15 +500,6 @@ VQIDAQAB
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
 
-    def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
-        self, issuer: CertificateAuthority, cert: X509CertMixin
-    ) -> None:
-        """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
-        self.assertEqual(
-            cert.authority_key_identifier.key_identifier,  # type: ignore[union-attr] # aki theoretically None
-            issuer.subject_key_identifier.value,  # type: ignore[union-attr] # ski theoretically None
-        )
-
     def assertBasic(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, algo: str = "SHA256"
     ) -> None:
@@ -612,76 +595,11 @@ VQIDAQAB
         with self.assertRaisesRegex(CommandError, msg):
             yield
 
-    def assertExtensions(  # pylint: disable=invalid-name
-        self,
-        cert: typing.Union[X509CertMixin, x509.Certificate],
-        extensions: typing.Iterable[Extension[typing.Any, typing.Any, typing.Any]],
-        signer: typing.Optional[CertificateAuthority] = None,
-        expect_defaults: bool = True,
-    ) -> None:
-        """Assert that `cert` has the given extensions."""
-        mapped_extensions = {e.key: e for e in extensions}
-
-        if isinstance(cert, Certificate):
-            pubkey = cert.x509_cert.public_key()
-            actual = {e.key: e for e in cert.extensions}
-            signer = cert.ca
-        elif isinstance(cert, CertificateAuthority):
-            pubkey = cert.x509_cert.public_key()
-            actual = {e.key: e for e in cert.extensions}
-
-            if cert.parent is None:  # root CA
-                signer = cert
-            else:  # intermediate CA
-                signer = cert.parent
-        elif isinstance(cert, x509.Certificate):  # cg cert
-            pubkey = cert.public_key()
-            actual = {
-                e.key: e
-                for e in [
-                    OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e for e in cert.extensions
-                ]
-            }
-        else:  # pragma: no cover
-            raise ValueError("cert must be Certificate(Authority) or x509.Certificate)")
-
-        if expect_defaults is True:
-            if isinstance(cert, Certificate):
-                mapped_extensions.setdefault(BasicConstraints.key, BasicConstraints())
-            if signer is not None:
-                mapped_extensions.setdefault(
-                    AuthorityKeyIdentifier.key, signer.get_authority_key_identifier_extension()
-                )
-
-                if isinstance(cert, Certificate) and signer.crl_url:
-                    urls = signer.crl_url.split()
-                    ext = CRLDistributionPoints({"value": [{"full_name": urls}]})
-                    mapped_extensions.setdefault(CRLDistributionPoints.key, ext)
-
-                aia = AuthorityInformationAccess()
-                if isinstance(cert, Certificate) and signer.ocsp_url:
-                    aia.ocsp = [signer.ocsp_url]
-                if isinstance(cert, Certificate) and signer.issuer_url:
-                    aia.issuers = [signer.issuer_url]
-                if aia.ocsp or aia.issuers:
-                    mapped_extensions.setdefault(AuthorityInformationAccess.key, aia)
-
-            ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
-            mapped_extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
-
-        self.assertEqual(actual, mapped_extensions)
-
     @contextmanager
     def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
             yield
-
-    def assertIssuer(  # pylint: disable=invalid-name
-        self, issuer: CertificateAuthority, cert: X509CertMixin
-    ) -> None:
-        """Assert that the issuer for `cert` matches the subject of `issuer`."""
-        self.assertEqual(cert.issuer, issuer.subject)
 
     def assertMessages(  # pylint: disable=invalid-name
         self, response: HttpResponse, expected: typing.List[str]
@@ -701,10 +619,6 @@ VQIDAQAB
     ) -> None:
         """Assert that the post_create_ca signal was called."""
         post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
-
-    def assertPostIssueCert(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
-        """Assert that the post_issue_cert signal was called."""
-        post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
     def assertPostRevoke(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
@@ -762,14 +676,6 @@ VQIDAQAB
         loaded_cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
         store_ctx = X509StoreContext(store, loaded_cert)
         self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
-
-    def assertSubject(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]
-    ) -> None:
-        """Assert the subject of `cert` matches `expected`."""
-        if not isinstance(expected, Subject):
-            expected = Subject(expected)
-        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard

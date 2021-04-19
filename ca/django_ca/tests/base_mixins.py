@@ -37,10 +37,20 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
 
+from ..extensions import OID_TO_EXTENSION
+from ..extensions import AuthorityInformationAccess
+from ..extensions import AuthorityKeyIdentifier
+from ..extensions import BasicConstraints
+from ..extensions import CRLDistributionPoints
+from ..extensions import Extension
+from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import DjangoCAModel
 from ..models import X509CertMixin
+from ..signals import post_issue_cert
+from ..subject import Subject
+from ..typehints import ParsableSubject
 from .base import certs
 from .base import timestamps
 
@@ -85,6 +95,84 @@ class TestCaseMixin(TestCaseProtocol):
             name = "django_ca%s" % name
         return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
 
+    def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
+        self, issuer: CertificateAuthority, cert: X509CertMixin
+    ) -> None:
+        """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
+        self.assertEqual(
+            cert.authority_key_identifier.key_identifier,  # type: ignore[union-attr] # aki theoretically None
+            issuer.subject_key_identifier.value,  # type: ignore[union-attr] # ski theoretically None
+        )
+
+    def assertExtensions(  # pylint: disable=invalid-name
+        self,
+        cert: typing.Union[X509CertMixin, x509.Certificate],
+        extensions: typing.Iterable[Extension[typing.Any, typing.Any, typing.Any]],
+        signer: typing.Optional[CertificateAuthority] = None,
+        expect_defaults: bool = True,
+    ) -> None:
+        """Assert that `cert` has the given extensions."""
+        mapped_extensions = {e.key: e for e in extensions}
+
+        if isinstance(cert, Certificate):
+            pubkey = cert.x509_cert.public_key()
+            actual = {e.key: e for e in cert.extensions}
+            signer = cert.ca
+        elif isinstance(cert, CertificateAuthority):
+            pubkey = cert.x509_cert.public_key()
+            actual = {e.key: e for e in cert.extensions}
+
+            if cert.parent is None:  # root CA
+                signer = cert
+            else:  # intermediate CA
+                signer = cert.parent
+        elif isinstance(cert, x509.Certificate):  # cg cert
+            pubkey = cert.public_key()
+            actual = {
+                e.key: e
+                for e in [
+                    OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e for e in cert.extensions
+                ]
+            }
+        else:  # pragma: no cover
+            raise ValueError("cert must be Certificate(Authority) or x509.Certificate)")
+
+        if expect_defaults is True:
+            if isinstance(cert, Certificate):
+                mapped_extensions.setdefault(BasicConstraints.key, BasicConstraints())
+            if signer is not None:
+                mapped_extensions.setdefault(
+                    AuthorityKeyIdentifier.key, signer.get_authority_key_identifier_extension()
+                )
+
+                if isinstance(cert, Certificate) and signer.crl_url:
+                    urls = signer.crl_url.split()
+                    ext = CRLDistributionPoints({"value": [{"full_name": urls}]})
+                    mapped_extensions.setdefault(CRLDistributionPoints.key, ext)
+
+                aia = AuthorityInformationAccess()
+                if isinstance(cert, Certificate) and signer.ocsp_url:
+                    aia.ocsp = [signer.ocsp_url]
+                if isinstance(cert, Certificate) and signer.issuer_url:
+                    aia.issuers = [signer.issuer_url]
+                if aia.ocsp or aia.issuers:
+                    mapped_extensions.setdefault(AuthorityInformationAccess.key, aia)
+
+            ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
+            mapped_extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
+
+        self.assertEqual(actual, mapped_extensions)
+
+    def assertIssuer(  # pylint: disable=invalid-name
+        self, issuer: CertificateAuthority, cert: X509CertMixin
+    ) -> None:
+        """Assert that the issuer for `cert` matches the subject of `issuer`."""
+        self.assertEqual(cert.issuer, issuer.subject)
+
+    def assertPostIssueCert(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
+        """Assert that the post_issue_cert signal was called."""
+        post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
     @contextmanager
     def assertSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
         """Attach a mock to the given signal."""
@@ -94,6 +182,14 @@ class TestCaseMixin(TestCaseProtocol):
             yield handler
         finally:
             signal.disconnect(handler)
+
+    def assertSubject(  # pylint: disable=invalid-name
+        self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]
+    ) -> None:
+        """Assert the subject of `cert` matches `expected`."""
+        if not isinstance(expected, Subject):
+            expected = Subject(expected)
+        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
     def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
         """Call to a manage.py command using call_command."""
