@@ -1,3 +1,4 @@
+import typing
 import josepy as jose
 
 
@@ -10,6 +11,17 @@ class Signature(jose.Signature):
 
 
 class JWS(jose.JWS):
-    @property
-    def signature(self) -> Signature:
+    @classmethod
+    def sign(
+        cls,
+        payload: bytes,
+        key: jose.JWK,
+        alg,
+        nonce: bytes,
+        url: typing.Optional[str] = None,
+        kid: typing.Optional[str] = None,
+    ) -> jose.JWS:
         ...
+
+    @property
+    def signature(self) -> Signature: ...

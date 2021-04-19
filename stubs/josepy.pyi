@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import FrozenSet
 from typing import Generic
 from typing import Iterator
 from typing import List
@@ -13,6 +14,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+from OpenSSL import crypto
 from cryptography.hazmat.backends.interfaces import Backend
 from cryptography.hazmat.primitives import _serialization
 from cryptography.hazmat.primitives import hashes
@@ -22,6 +24,7 @@ K = TypeVar('K')
 V = TypeVar('V')
 T = TypeVar('T')
 JSONDeSerializableTypeVar = TypeVar('JSONDeSerializableTypeVar')
+SignatureTypeVar = TypeVar("SignatureTypeVar", bound="Signature")
 
 
 def decode_b64jose(data: str, size: Optional[int] = None, minimum: Optional[bool] = False) -> bytes:
@@ -140,7 +143,17 @@ class Header(JSONObjectWithFields):
 
 
 class Signature(JSONObjectWithFields):
-    ...
+    @classmethod
+    def sign(
+        cls: Type[SignatureTypeVar],
+        payload: bytes,
+        key: JWK,
+        alg,
+        include_jwk: bool = True,
+        protect: FrozenSet[str] = frozenset(),
+        **kwargs: Dict[str, Any]
+    ) -> SignatureTypeVar:
+        ...
 
 
 class JWS(JSONObjectWithFields):
@@ -152,4 +165,9 @@ class JWS(JSONObjectWithFields):
         ...
 
     def verify(self, key: Optional[JWK] = None) -> bool:
+        ...
+
+
+class ComparableX509:
+    def __init__(self, wrapped: Union[crypto.X509, crypto.X509Req]) -> None:
         ...
