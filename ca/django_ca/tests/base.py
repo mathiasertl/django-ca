@@ -878,12 +878,6 @@ VQIDAQAB
         }
 
     @contextmanager
-    def patch(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[MagicMock]:
-        """Shortcut to :py:func:`py:unittest.mock.patch`."""
-        with patch(*args, **kwargs) as mock:
-            yield mock
-
-    @contextmanager
     def patch_object(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[typing.Any]:
         """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with patch.object(*args, **kwargs) as mock:

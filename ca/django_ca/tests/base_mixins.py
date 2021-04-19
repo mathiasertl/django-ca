@@ -76,8 +76,16 @@ class TestCaseMixin(TestCaseProtocol):
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
+
         for name in self.load_cas:
             self.new_cas[name] = self.load_ca(name)
+        if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
+            self.ca = self.new_cas[self.load_cas[0]]
+
+        for name in self.load_certs:
+            self.new_certs[name] = self.load_named_cert(name)
+        if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
+            self.cert = self.new_certs[self.load_certs[0]]
 
     def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
@@ -265,6 +273,19 @@ class TestCaseMixin(TestCaseProtocol):
         cert.save()
         return cert
 
+    @classmethod
+    def load_named_cert(cls, name: str) -> Certificate:
+        """Load a certificate with the given mame."""
+        data = certs[name]
+        ca = CertificateAuthority.objects.get(name=data["ca"])
+        csr = data.get("csr", {}).get("pem", "")
+        profile = data.get("profile", "")
+
+        cert = Certificate(ca=ca, csr=csr, profile=profile)
+        cert.x509_cert = data["pub"]["parsed"]
+        cert.save()
+        return cert
+
     @contextmanager
     def mockSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
         """Context manager to attach a mock to the given signal."""
@@ -289,6 +310,12 @@ class TestCaseMixin(TestCaseProtocol):
     def mute_celery(self) -> typing.Iterator[mock.MagicMock]:
         """Mock celery invocations."""
         with mock.patch("celery.app.task.Task.apply_async", spec_set=True) as mocked:
+            yield mocked
+
+    @contextmanager
+    def patch(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[mock.MagicMock]:
+        """Shortcut to :py:func:`py:unittest.mock.patch`."""
+        with mock.patch(*args, **kwargs) as mocked:
             yield mocked
 
 
