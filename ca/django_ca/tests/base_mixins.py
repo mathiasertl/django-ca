@@ -268,12 +268,22 @@ class TestCaseMixin(TestCaseProtocol):
     @contextmanager
     def mockSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
         """Context manager to attach a mock to the given signal."""
-        handler = mock.Mock()
-        signal.connect(handler)
+
+        # This function is only here to create an autospec. From the documentation:
+        #
+        #   Notice that the function takes a sender argument, along with wildcard keyword arguments
+        #   (**kwargs); all signal handlers must take these arguments.
+        #
+        # https://docs.djangoproject.com/en/dev/topics/signals/#connecting-to-specific-signals
+        def callback(sender: models.Model, **kwargs: typing.Any) -> None:
+            pass
+
+        signal_mock = mock.create_autospec(callback, spec_set=True)
+        signal.connect(signal_mock)
         try:
-            yield handler
+            yield signal_mock
         finally:
-            signal.disconnect(handler)
+            signal.disconnect(signal_mock)
 
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
