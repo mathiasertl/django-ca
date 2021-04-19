@@ -16,7 +16,7 @@ class JWS(jose.JWS):
         cls,
         payload: bytes,
         key: jose.JWK,
-        alg,
+        alg: jose.JWASignature,
         nonce: bytes,
         url: typing.Optional[str] = None,
         kid: typing.Optional[str] = None,
@@ -24,4 +24,5 @@ class JWS(jose.JWS):
         ...
 
     @property
-    def signature(self) -> Signature: ...
+    def signature(self) -> Signature:
+        ...
