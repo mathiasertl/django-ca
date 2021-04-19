@@ -87,7 +87,10 @@ class TestCaseMixin(TestCaseProtocol):
             self.ca = self.new_cas[self.load_cas[0]]
 
         for name in self.load_certs:
-            self.new_certs[name] = self.load_named_cert(name)
+            try:
+                self.new_certs[name] = self.load_named_cert(name)
+            except CertificateAuthority.DoesNotExist:
+                self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
         if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
             self.cert = self.new_certs[self.load_certs[0]]
 
@@ -199,7 +202,7 @@ class TestCaseMixin(TestCaseProtocol):
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
     def assertRevoked(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, reason: typing.Optional[ReasonFlags] = None
+        self, cert: X509CertMixin, reason: typing.Optional[str] = None
     ) -> None:
         """Assert that the certificate is now revoked."""
         if isinstance(cert, CertificateAuthority):
