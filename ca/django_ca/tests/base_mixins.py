@@ -89,7 +89,7 @@ class TestCaseMixin(TestCaseProtocol):
         for name in self.load_certs:
             try:
                 self.new_certs[name] = self.load_named_cert(name)
-            except CertificateAuthority.DoesNotExist:
+            except CertificateAuthority.DoesNotExist:  # pragma: no cover
                 self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
         if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
             self.cert = self.new_certs[self.load_certs[0]]

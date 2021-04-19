@@ -43,13 +43,11 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.contrib.messages import get_messages
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.core.management.base import CommandError
-from django.http import HttpResponse
 from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.testcases import SimpleTestCase
@@ -599,13 +597,6 @@ VQIDAQAB
         """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
             yield
-
-    def assertMessages(  # pylint: disable=invalid-name
-        self, response: HttpResponse, expected: typing.List[str]
-    ) -> None:
-        """Assert given Django messages for `response`."""
-        messages = [str(m) for m in list(get_messages(response.wsgi_request))]
-        self.assertEqual(messages, expected)
 
     def assertPostCreateCa(  # pylint: disable=invalid-name
         self, post: Mock, ca: CertificateAuthority
