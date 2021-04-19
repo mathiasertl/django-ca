@@ -14,6 +14,7 @@
 """Test some code in the test base module to make sure it really works."""
 
 import tempfile
+import typing
 
 from django.test import TestCase
 
@@ -161,12 +162,7 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
     We do the same thing three times here, just to make sure that the result is really different.
     """
 
-    # pylint: disable=missing-function-docstring
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.seen_dirs = set()
+    seen_dirs: typing.ClassVar[typing.Set[str]] = set()
 
     @override_tmpcadir()
     def test_a(self) -> None:

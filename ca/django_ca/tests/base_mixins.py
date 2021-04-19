@@ -467,6 +467,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return self.client.get(self.change_url(obj), data)
 
     def get_objects(self) -> typing.Iterable[DjangoCAModelTypeVar]:
+        """Get list of objects for defined for this test."""
         return self.model.objects.all()
 
     def get_url(self, obj: DjangoCAModelTypeVar) -> str:
