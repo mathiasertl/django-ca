@@ -37,7 +37,6 @@ from ..signals import post_issue_cert
 from ..signals import post_revoke_cert
 from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
-from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import AdminTestCaseMixin
@@ -52,10 +51,6 @@ class AdminActionTestCaseMixin(
     action = ""
     insufficient_permissions = []
     required_permissions = []
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.data = {"action": self.action, "_selected_action": [self.obj.pk]}
 
     def assertFailedRequest(  # pylint: disable=invalid-name
         self, response: HttpResponse, *objects: DjangoCAModelTypeVar
@@ -187,7 +182,9 @@ class AdminChangeActionTestCaseMixin(
         raise NotImplementedError
 
     @contextmanager
-    def mockSignals(self, pre_called=True, post_called=True):  # pylint: disable=invalid-name
+    def mockSignals(  # pylint: disable=invalid-name
+        self, pre_called: bool = True, post_called: bool = True
+    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
         """Assert that the singals were (not) called."""
         with self.mockSignal(self.pre_signal) as pre, self.mockSignal(self.post_signal) as post:
             try:
@@ -248,12 +245,18 @@ class AdminChangeActionTestCaseMixin(
 
 
 @freeze_time(timestamps["everything_valid"])
-class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], DjangoCAWithGeneratedCertsTestCase):
+class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], TestCase):
     """Test the revoke action."""
 
+    load_cas = ("root", )
+    load_certs = ("root-cert", )
     action = "revoke"
     model = Certificate
     required_permissions = ["django_ca.change_certificate"]
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.data = {"action": self.action, "_selected_action": [self.cert.pk]}
 
     def assertFailedRequest(self, response: HttpResponse, *objects: Certificate) -> None:
         for obj in objects:
@@ -278,7 +281,12 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         obj = obj or self.cert
         self.assertNotRevoked(obj)
 
-    def assertSuccessfulRequest(self, response, obj=None, reason=""):
+    def assertSuccessfulRequest(
+        self,
+        response: HttpResponse,
+        obj: typing.Optional[Certificate] = None,
+        reason: typing.Optional[str] = None
+    ) -> None:
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
         self.assertRevoked(self.cert, reason=reason)
