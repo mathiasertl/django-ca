@@ -25,6 +25,7 @@ from cryptography import x509
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
+from django.core.cache import cache
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.db import models
@@ -76,6 +77,7 @@ class TestCaseMixin(TestCaseProtocol):
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
+        cache.clear()
 
         for name in self.load_cas:
             self.new_cas[name] = self.load_ca(name)
@@ -296,7 +298,8 @@ class TestCaseMixin(TestCaseProtocol):
         #   (**kwargs); all signal handlers must take these arguments.
         #
         # https://docs.djangoproject.com/en/dev/topics/signals/#connecting-to-specific-signals
-        def callback(sender: models.Model, **kwargs: typing.Any) -> None:
+        def callback(sender: models.Model, **kwargs: typing.Any) -> None:  # pragma: no cover
+            # pylint: disable=unused-argument
             pass
 
         signal_mock = mock.create_autospec(callback, spec_set=True)

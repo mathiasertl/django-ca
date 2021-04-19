@@ -181,6 +181,7 @@ class AcmeGetNonceViewMixin:
         try:
             count = cache.incr(cache_key)
         except ValueError:
+            # raised if cache_key is not set
             return False
 
         if count > 1:  # nonce was already used

@@ -16,6 +16,7 @@
 import doctest
 import ipaddress
 import os
+import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
@@ -221,10 +222,13 @@ class ReadFileTestCase(DjangoCATestCase):
             os.chmod(path, 0o600)  # make sure we can delete CA_DIR
 
 
-class ParseNameTestCase(DjangoCATestCase):
+class ParseNameTestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_name`."""
 
-    def assertSubject(self, actual, expected):  # pylint: disable=arguments-differ
+    def assertSubject(  # pylint: disable=invalid-name
+        self, actual: str, expected: typing.List[typing.Tuple[str, str]]
+    ):
+        """Test that the given subject matches."""
         self.assertEqual(parse_name(actual), expected)
 
     def test_basic(self) -> None:

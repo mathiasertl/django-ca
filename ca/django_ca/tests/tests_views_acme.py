@@ -924,6 +924,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
     message_cls = NewOrder
 
     def get_message(self, **kwargs: typing.Any) -> NewOrder:
+        """Return a  message that can be sent to the server successfully."""
         kwargs.setdefault("identifiers", [{"type": "dns", "value": self.SERVER_NAME}])
         return super().get_message(**kwargs)  # type: ignore[return-value] # base has union
 
@@ -1376,6 +1377,7 @@ class AcmeOrderFinalizeViewTestCase(
 
     @property
     def message(self) -> acme.messages.CertificateRequest:
+        """Default message to send to the server."""
         return self.get_message(self.csr)
 
     @override_tmpcadir()

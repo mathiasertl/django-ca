@@ -933,15 +933,6 @@ class DjangoCATransactionTestCase(DjangoCATestCaseMixin, TransactionTestCase):
     """Same as DjangoCATestCase but as TransactionTestCase."""
 
 
-@override_settings(CA_MIN_KEY_SIZE=512)
-class DjangoCAWithCATransactionTestCase(DjangoCATransactionTestCase):
-    """Same as DjangoCAWithCATestCase but as TransactionTestCase."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_all_cas()
-
-
 class DjangoCAWithGeneratedCAsTransactionTestCase(DjangoCATransactionTestCase):
     """Same as DjangoCAWithGeneratedCAsTestCase but as TransactionTestCase."""
 
