@@ -32,7 +32,7 @@ from .base_mixins import TestCaseMixin
 class CacheCRLsTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    load_cas = ("__generated__", )
+    load_cas = "__generated__"
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])

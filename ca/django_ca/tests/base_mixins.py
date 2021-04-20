@@ -72,8 +72,8 @@ X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixi
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: typing.Tuple[str, ...] = tuple()
-    load_certs: typing.Tuple[str, ...] = tuple()
+    load_cas: typing.Union[str, typing.Tuple[str, ...]] = tuple()
+    load_certs: typing.Union[str, typing.Tuple[str, ...]] = tuple()
     default_ca = "child"
     default_cert = "child-cert"
     new_cas: typing.Dict[str, CertificateAuthority] = {}
@@ -83,7 +83,9 @@ class TestCaseMixin(TestCaseProtocol):
         super().setUp()
         cache.clear()
 
-        if self.load_cas == ("__generated__", ):
+        if self.load_cas == "__all__":
+            self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
+        elif self.load_cas == "__generated__":
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
 
         # Load all CAs (sort by len() of parent so that root CAs are loaded first)
