@@ -16,14 +16,17 @@
 import os
 import shutil
 import tempfile
+import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
+from unittest.case import _AssertWarnsContext
 
 from freezegun import freeze_time
 
 from ..constants import ReasonFlags
 from ..deprecation import RemovedInDjangoCA120Warning
+from ..models import CertificateAuthority
 from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import timestamps
@@ -106,7 +109,7 @@ class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     timeformat = "%y%m%d%H%M%SZ"
 
     @contextmanager
-    def assertDeprecation(self):  # pylint: disable=invalid-name; unittest standard
+    def assertDeprecation(self) -> typing.Iterator[_AssertWarnsContext]:  # pylint: disable=invalid-name
         """Context manager to assert the deprecation message."""
         with self.assertWarnsRegex(
             RemovedInDjangoCA120Warning,
@@ -114,7 +117,9 @@ class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         ) as warn_cm:
             yield warn_cm
 
-    def assertIndex(self, ca=None, expected="", **context):  # pylint: disable=invalid-name; unittest standard
+    def assertIndex(  # pylint: disable=invalid-name; unittest standard
+        self, ca: typing.Optional[CertificateAuthority] = None, expected: str = "", **context: typing.Any
+    ) -> None:
         if ca is None:
             ca = self.cas["child"]
 
