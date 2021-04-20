@@ -22,12 +22,13 @@ from datetime import datetime
 from datetime import timedelta
 from unittest.case import _AssertWarnsContext
 
+from django.test import TestCase
+
 from freezegun import freeze_time
 
 from ..constants import ReasonFlags
 from ..deprecation import RemovedInDjangoCA120Warning
 from ..models import CertificateAuthority
-from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import timestamps
 from .base_mixins import TestCaseMixin
@@ -103,9 +104,11 @@ REVOKED_FIRST = (
 REVOKED_SECOND = "R\t{ecc-cert[ocsp-expires]}\t{revoked},key_compromise\t{ecc-cert[ocsp-serial]}\tunknown\t{ecc-cert[subject]}\n"  # NOQA
 
 
-class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
+class OCSPIndexTestCase(TestCaseMixin, TestCase):
     """Test the ``dump_ocsp_index`` management command."""
 
+    load_cas = "__usable__"
+    load_certs = "__usable__"
     timeformat = "%y%m%d%H%M%SZ"
 
     @contextmanager
@@ -121,7 +124,7 @@ class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         self, ca: typing.Optional[CertificateAuthority] = None, expected: str = "", **context: typing.Any
     ) -> None:
         if ca is None:
-            ca = self.cas["child"]
+            ca = self.ca
 
         context.update(certs)
         with self.assertDeprecation():
@@ -172,7 +175,7 @@ class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_ecc_ca(self) -> None:
         # test another CA
-        self.assertIndex(ca=self.cas["ecc"], expected=ECC_CA)
+        self.assertIndex(ca=self.new_cas["ecc"], expected=ECC_CA)
 
     @freeze_time(timestamps["everything_valid"])
     def test_file(self) -> None:
@@ -182,7 +185,7 @@ class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
             path = os.path.join(tmpdir, "ocsp-index.txt")
 
             with self.assertDeprecation():
-                stdout, stderr = self.cmd("dump_ocsp_index", path, ca=self.cas["child"])
+                stdout, stderr = self.cmd("dump_ocsp_index", path, ca=self.new_cas["child"])
             self.assertEqual(stdout, "")
             self.assertEqual(stderr, "")
 
@@ -195,13 +198,13 @@ class OCSPIndexTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     def test_revoked(self) -> None:
         with freeze_time(timestamps["everything_valid"]) as frozen_timestamp:
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
-            cert = self.certs["ecc-cert"]
+            cert = self.new_certs["ecc-cert"]
             cert.revoke()
 
-            self.assertIndex(expected=REVOKED_FIRST, ca=self.cas["ecc"], revoked=revoked_timestamp)
+            self.assertIndex(expected=REVOKED_FIRST, ca=self.new_cas["ecc"], revoked=revoked_timestamp)
 
             frozen_timestamp.tick(timedelta(seconds=3600))
 
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
             cert.revoke(ReasonFlags.key_compromise)
-            self.assertIndex(expected=REVOKED_SECOND, ca=self.cas["ecc"], revoked=revoked_timestamp)
+            self.assertIndex(expected=REVOKED_SECOND, ca=self.new_cas["ecc"], revoked=revoked_timestamp)
