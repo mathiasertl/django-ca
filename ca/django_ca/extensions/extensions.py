@@ -710,6 +710,19 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
     """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
     critical)."""
 
+    def __init__(
+        self,
+        value: Optional[
+            Union["x509.Extension[x509.InhibitAnyPolicy]", ParsableExtension, int]
+        ] = None,
+    ) -> None:
+        if isinstance(value, int):
+            self.critical = self.default_critical
+            self.skip_certs = value
+            self._test_value()
+        else:
+            super().__init__(value)
+
     def hash_value(self) -> int:
         return self.skip_certs
 
@@ -731,18 +744,6 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
 
     def from_extension(self, value: x509.InhibitAnyPolicy) -> None:
         self.skip_certs = value.skip_certs
-
-    def from_int(self, value: int) -> None:
-        """Parser allowing creation of an instance just from an int."""
-        self.skip_certs = value
-
-    def from_other(self, value: int) -> None:
-        if isinstance(value, int):
-            self.critical = self.default_critical
-            self.from_int(value)
-            self._test_value()
-        else:
-            super().from_other(value)
 
     def serialize_value(self) -> int:
         return self.skip_certs

@@ -19,6 +19,7 @@ import json
 import operator
 import os
 import sys
+import typing
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -57,6 +58,8 @@ from ..extensions.base import UnrecognizedExtension
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
+from ..typehints import CRLExtensionTypeTypeVar
+from ..typehints import TypedDict
 from ..utils import GeneralNameList
 from .base import DjangoCAWithCertTestCase
 from .base import certs
@@ -64,6 +67,23 @@ from .base import dns
 from .base import rdn
 from .base import uri
 from .base_mixins import TestCaseMixin
+
+ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)
+TestValueDict = TypedDict(
+    "TestValueDict",
+    {
+        "values": typing.List[typing.Any],
+        "expected": typing.Any,
+        "expected_repr": str,
+        "expected_serialized": typing.Any,
+        "expected_text": str,
+        "extension_type": x509.ExtensionType,
+    },
+)
+TestValues = typing.Dict[str, TestValueDict]
+DistributionPointsBaseTypeVar = typing.TypeVar(
+    "DistributionPointsBaseTypeVar", CRLDistributionPoints, FreshestCRL
+)
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
@@ -109,13 +129,17 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     return tests
 
 
-class AbstractExtensionTestMixin(TestCaseMixin):
+class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
-    force_critical = None
+    ext_class: typing.Type[ExtensionTypeVar]
+    test_values: TestValues
+    force_critical: typing.Optional[bool] = None
     repr_tmpl = "<{name}: {value}, critical={critical}>"
 
-    def assertExtensionEqual(self, first, second):  # pylint: disable=invalid-name
+    def assertExtensionEqual(  # pylint: disable=invalid-name
+        self, first: ExtensionTypeVar, second: ExtensionTypeVar
+    ) -> None:
         """Function to test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
@@ -150,7 +174,7 @@ class AbstractExtensionTestMixin(TestCaseMixin):
         if self.force_critical is not True:
             yield False
 
-    def ext(self, value=None, critical=None):
+    def ext(self, value: typing.Any = None, critical: typing.Optional[bool] = None) -> ExtensionTypeVar:
         """Get an extension instance with the given value."""
         if value is None:
             value = {}
@@ -342,7 +366,7 @@ class AbstractExtensionTestMixin(TestCaseMixin):
             self.assertExtensionEqual(ext, self.ext(ext.value))
 
 
-class ExtensionTestMixin(AbstractExtensionTestMixin):
+class ExtensionTestMixin(AbstractExtensionTestMixin[ExtensionTypeVar], typing.Generic[ExtensionTypeVar]):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self) -> None:
@@ -416,11 +440,12 @@ class NullExtensionTestMixin(ExtensionTestMixin):
 
     repr_tmpl = "<{name}: critical={critical}>"
 
-    def assertExtensionEqual(self, first, second):
+    def assertExtensionEqual(self, first: ExtensionTypeVar, second: ExtensionTypeVar) -> None:
         """Function to test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
         """
+        # TODO: could be removed probably?
         self.assertEqual(first.__class__, second.__class__)
         self.assertEqual(first.critical, second.critical)
 
@@ -1116,6 +1141,137 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         )
 
 
+class CRLDistributionPointsTestCaseBase(
+    ListExtensionTestMixin,
+    ExtensionTestMixin[DistributionPointsBaseTypeVar],
+    typing.Generic[DistributionPointsBaseTypeVar, CRLExtensionTypeTypeVar],
+):
+    ext_class: typing.Type[DistributionPointsBaseTypeVar]
+    ext_class_type: typing.Type[CRLExtensionTypeTypeVar]
+
+    uri1 = "http://ca.example.com/crl"
+    uri2 = "http://ca.example.net/crl"
+    uri3 = "http://ca.example.com/"
+    dns1 = "example.org"
+    rdn1 = "/CN=example.com"
+
+    s1 = {"full_name": ["URI:%s" % uri1]}
+    s2 = {"full_name": ["URI:%s" % uri1, "DNS:%s" % dns1]}
+    s3 = {"relative_name": rdn1}
+    s4 = {
+        "full_name": ["URI:%s" % uri2],
+        "crl_issuer": ["URI:%s" % uri3],
+        "reasons": ["ca_compromise", "key_compromise"],
+    }
+    dp1 = DistributionPoint(s1)
+    dp2 = DistributionPoint(s2)
+    dp3 = DistributionPoint(s3)
+    dp4 = DistributionPoint(s4)
+
+    cg_rdn1 = rdn([(NameOID.COMMON_NAME, "example.com")])
+
+    cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
+    cg_dp2 = x509.DistributionPoint(
+        full_name=[uri(uri1), dns(dns1)], relative_name=None, crl_issuer=None, reasons=None
+    )
+    cg_dp3 = x509.DistributionPoint(full_name=None, relative_name=cg_rdn1, crl_issuer=None, reasons=None)
+    cg_dp4 = x509.DistributionPoint(
+        full_name=[uri(uri2)],
+        relative_name=None,
+        crl_issuer=[uri(uri3)],
+        reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.ca_compromise]),
+    )
+
+    cg_dps1: CRLExtensionTypeTypeVar
+    cg_dps2: CRLExtensionTypeTypeVar
+    cg_dps3: CRLExtensionTypeTypeVar
+    cg_dps4: CRLExtensionTypeTypeVar
+
+    invalid_values = [True, None]
+
+    def setUp(self) -> None:
+        self.test_values = {
+            "one": {
+                "values": [
+                    [self.s1],
+                    [self.dp1],
+                    [self.cg_dp1],
+                    [{"full_name": [self.uri1]}],
+                    [{"full_name": [uri(self.uri1)]}],
+                ],
+                "expected": [self.s1],
+                "expected_djca": [self.dp1],
+                "expected_repr": "[<DistributionPoint: full_name=['URI:%s']>]" % self.uri1,
+                "expected_serialized": [self.s1],
+                "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s" % self.uri1,
+                "extension_type": self.cg_dps1,
+            },
+            "two": {
+                "values": [
+                    [self.s2],
+                    [self.dp2],
+                    [self.cg_dp2],
+                    [{"full_name": [self.uri1, self.dns1]}],
+                    [{"full_name": [uri(self.uri1), dns(self.dns1)]}],
+                ],
+                "expected": [self.s2],
+                "expected_djca": [self.dp2],
+                "expected_repr": "[<DistributionPoint: full_name=['URI:%s', 'DNS:%s']>]"
+                % (self.uri1, self.dns1),
+                "expected_serialized": [self.s2],
+                "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s\n    "
+                "* DNS:%s" % (self.uri1, self.dns1),
+                "extension_type": self.cg_dps2,
+            },
+            "rdn": {
+                "values": [[self.s3], [self.dp3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
+                "expected": [self.s3],
+                "expected_djca": [self.dp3],
+                "expected_repr": "[<DistributionPoint: relative_name='%s'>]" % self.rdn1,
+                "expected_serialized": [self.s3],
+                "expected_text": "* DistributionPoint:\n  * Relative Name: %s" % self.rdn1,
+                "extension_type": self.cg_dps3,
+            },
+            "adv": {
+                "values": [[self.s4], [self.dp4], [self.cg_dp4]],
+                "expected": [self.s4],
+                "expected_djca": [self.dp4],
+                "expected_repr": "[<DistributionPoint: full_name=['URI:%s'], crl_issuer=['URI:%s'], "
+                "reasons=['ca_compromise', 'key_compromise']>]" % (self.uri2, self.uri3),
+                "expected_serialized": [self.s4],
+                "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s\n"
+                "  * CRL Issuer:\n    * URI:%s\n"
+                "  * Reasons: ca_compromise, key_compromise" % (self.uri2, self.uri3),
+                "extension_type": self.cg_dps4,
+            },
+        }
+
+    def test_none_value(self) -> None:
+        """Test that we can pass a None value for GeneralNameList items."""
+        ext = self.ext_class()
+        self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[]))
+
+        ext.append(DistributionPoint({"full_name": None}))
+        self.assertEqual(
+            ext.extension_type,
+            self.ext_class_type(
+                distribution_points=[
+                    x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
+                ]
+            ),
+        )
+
+        ext.value[0].full_name = GeneralNameList()
+        self.assertEqual(
+            ext.extension_type,
+            self.ext_class_type(
+                distribution_points=[
+                    x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
+                ]
+            ),
+        )
+
+
 class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
     """Test AuthorityInformationAccess extension."""
 
@@ -1409,7 +1565,9 @@ class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
         return
 
 
-class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+class CRLDistributionPointsTestCase(
+    CRLDistributionPointsTestCaseBase[CRLDistributionPoints, x509.CRLDistributionPoints], TestCase
+):
     """Test CRLDistributionPoints extension."""
 
     ext_class = CRLDistributionPoints
@@ -1417,118 +1575,10 @@ class CRLDistributionPointsTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
     ext_class_name = "CRLDistributionPoints"
     ext_class_type = x509.CRLDistributionPoints
 
-    uri1 = "http://ca.example.com/crl"
-    uri2 = "http://ca.example.net/crl"
-    uri3 = "http://ca.example.com/"
-    dns1 = "example.org"
-    rdn1 = "/CN=example.com"
-
-    s1 = {"full_name": ["URI:%s" % uri1]}
-    s2 = {"full_name": ["URI:%s" % uri1, "DNS:%s" % dns1]}
-    s3 = {"relative_name": rdn1}
-    s4 = {
-        "full_name": ["URI:%s" % uri2],
-        "crl_issuer": ["URI:%s" % uri3],
-        "reasons": ["ca_compromise", "key_compromise"],
-    }
-    dp1 = DistributionPoint(s1)
-    dp2 = DistributionPoint(s2)
-    dp3 = DistributionPoint(s3)
-    dp4 = DistributionPoint(s4)
-
-    cg_rdn1 = rdn([(NameOID.COMMON_NAME, "example.com")])
-
-    cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
-    cg_dp2 = x509.DistributionPoint(
-        full_name=[uri(uri1), dns(dns1)], relative_name=None, crl_issuer=None, reasons=None
-    )
-    cg_dp3 = x509.DistributionPoint(full_name=None, relative_name=cg_rdn1, crl_issuer=None, reasons=None)
-    cg_dp4 = x509.DistributionPoint(
-        full_name=[uri(uri2)],
-        relative_name=None,
-        crl_issuer=[uri(uri3)],
-        reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.ca_compromise]),
-    )
-
-    cg_dps1 = x509.CRLDistributionPoints([cg_dp1])
-    cg_dps2 = x509.CRLDistributionPoints([cg_dp2])
-    cg_dps3 = x509.CRLDistributionPoints([cg_dp3])
-    cg_dps4 = x509.CRLDistributionPoints([cg_dp4])
-
-    invalid_values = [True, None]
-    test_values = {
-        "one": {
-            "values": [[s1], [dp1], [cg_dp1], [{"full_name": [uri1]}], [{"full_name": [uri(uri1)]}]],
-            "expected": [s1],
-            "expected_djca": [dp1],
-            "expected_repr": "[<DistributionPoint: full_name=['URI:%s']>]" % uri1,
-            "expected_serialized": [s1],
-            "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s" % uri1,
-            "extension_type": cg_dps1,
-        },
-        "two": {
-            "values": [
-                [s2],
-                [dp2],
-                [cg_dp2],
-                [{"full_name": [uri1, dns1]}],
-                [{"full_name": [uri(uri1), dns(dns1)]}],
-            ],
-            "expected": [s2],
-            "expected_djca": [dp2],
-            "expected_repr": "[<DistributionPoint: full_name=['URI:%s', 'DNS:%s']>]" % (uri1, dns1),
-            "expected_serialized": [s2],
-            "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s\n    "
-            "* DNS:%s" % (uri1, dns1),
-            "extension_type": cg_dps2,
-        },
-        "rdn": {
-            "values": [[s3], [dp3], [cg_dp3], [{"relative_name": cg_rdn1}]],
-            "expected": [s3],
-            "expected_djca": [dp3],
-            "expected_repr": "[<DistributionPoint: relative_name='%s'>]" % rdn1,
-            "expected_serialized": [s3],
-            "expected_text": "* DistributionPoint:\n  * Relative Name: %s" % rdn1,
-            "extension_type": cg_dps3,
-        },
-        "adv": {
-            "values": [[s4], [dp4], [cg_dp4]],
-            "expected": [s4],
-            "expected_djca": [dp4],
-            "expected_repr": "[<DistributionPoint: full_name=['URI:%s'], crl_issuer=['URI:%s'], "
-            "reasons=['ca_compromise', 'key_compromise']>]" % (uri2, uri3),
-            "expected_serialized": [s4],
-            "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s\n"
-            "  * CRL Issuer:\n    * URI:%s\n"
-            "  * Reasons: ca_compromise, key_compromise" % (uri2, uri3),
-            "extension_type": cg_dps4,
-        },
-    }
-
-    def test_none_value(self) -> None:
-        """Test that we can pass a None value for GeneralNameList items."""
-        ext = self.ext_class()
-        self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[]))
-
-        ext.append(DistributionPoint({"full_name": None}))
-        self.assertEqual(
-            ext.extension_type,
-            self.ext_class_type(
-                distribution_points=[
-                    x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
-                ]
-            ),
-        )
-
-        ext.value[0].full_name = GeneralNameList()
-        self.assertEqual(
-            ext.extension_type,
-            self.ext_class_type(
-                distribution_points=[
-                    x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
-                ]
-            ),
-        )
+    cg_dps1 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseBase.cg_dp1])
+    cg_dps2 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseBase.cg_dp2])
+    cg_dps3 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseBase.cg_dp3])
+    cg_dps4 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseBase.cg_dp4])
 
 
 class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
@@ -1665,7 +1715,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, Te
     }
 
 
-class FreshestCRLTestCase(CRLDistributionPointsTestCase):
+class FreshestCRLTestCase(CRLDistributionPointsTestCaseBase[FreshestCRL, x509.FreshestCRL], TestCase):
     """Test FreshestCRL extension."""
 
     ext_class = FreshestCRL
@@ -1673,19 +1723,13 @@ class FreshestCRLTestCase(CRLDistributionPointsTestCase):
     ext_class_name = "FreshestCRL"
     ext_class_type = x509.FreshestCRL
 
-    cg_dps1 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp1])
-    cg_dps2 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp2])
-    cg_dps3 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp3])
-    cg_dps4 = x509.FreshestCRL([CRLDistributionPointsTestCase.cg_dp4])
-
-    def setUp(self) -> None:
-        self.test_values["one"]["extension_type"] = self.cg_dps1
-        self.test_values["two"]["extension_type"] = self.cg_dps2
-        self.test_values["rdn"]["extension_type"] = self.cg_dps3
-        self.test_values["adv"]["extension_type"] = self.cg_dps4
+    cg_dps1 = x509.FreshestCRL([CRLDistributionPointsTestCaseBase.cg_dp1])
+    cg_dps2 = x509.FreshestCRL([CRLDistributionPointsTestCaseBase.cg_dp2])
+    cg_dps3 = x509.FreshestCRL([CRLDistributionPointsTestCaseBase.cg_dp3])
+    cg_dps4 = x509.FreshestCRL([CRLDistributionPointsTestCaseBase.cg_dp4])
 
 
-class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
+class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
     """Test InhibitAnyPolicy extension."""
 
     ext_class = InhibitAnyPolicy
@@ -1736,13 +1780,15 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r"^abc: must be an int$"):
             InhibitAnyPolicy({"value": "abc"})
         with self.assertRaisesRegex(ValueError, r"^Value is of unsupported type str$"):
-            InhibitAnyPolicy("abc")
+            InhibitAnyPolicy("abc")  # type: ignore[arg-type]
 
     def test_value(self) -> None:
         return
 
 
-class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+class IssuerAlternativeNameTestCase(
+    ListExtensionTestMixin, ExtensionTestMixin[IssuerAlternativeName], TestCase
+):
     """Test IssuerAlternativeName extension."""
 
     ext_class = IssuerAlternativeName
@@ -1827,7 +1873,7 @@ class IssuerAlternativeNameTestCase(ListExtensionTestMixin, ExtensionTestMixin, 
         self.assertEqual(empty.extension_type, self.et1)
 
 
-class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
+class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase):
     """Test PolicyConstraints extension."""
 
     ext_class = PolicyConstraints
@@ -1942,7 +1988,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin, TestCase):
         return
 
 
-class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
+class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[KeyUsage], TestCase):
     """Test KeyUsage extension."""
 
     ext_class = KeyUsage
@@ -2075,7 +2121,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCas
             KeyUsage({"value": [True]})
 
 
-class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
+class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[ExtendedKeyUsage], TestCase):
     """Test ExtendedKeyUsage extension."""
 
     ext_class = ExtendedKeyUsage
@@ -2182,7 +2228,7 @@ class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin,
         )
 
 
-class NameConstraintsTestCase(ExtensionTestMixin, TestCase):
+class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
     """Test NameConstraints extension."""
 
     ext_class = NameConstraints
@@ -2303,7 +2349,7 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
     ext_class_key = "ocsp_no_check"
     ext_class_name = "OCSPNoCheck"
 
-    test_values = {
+    test_values: TestValues = {
         "empty": {
             "values": [{}, None],
             "expected": None,
@@ -2322,7 +2368,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
     ext_class_key = "precert_poison"
     ext_class_name = "PrecertPoison"
     force_critical = True
-    test_values = {
+    test_values: TestValues = {
         "empty": {
             "values": [{}, None],
             "expected": None,
@@ -2367,7 +2413,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
     def test_critical(self) -> None:
         """Test the critical property."""
         with self.assertRaisesRegex(ValueError, r"^PrecertPoison must always be marked as critical$"):
-            PrecertPoison({"critical": False})
+            PrecertPoison({"critical": False})  # type: ignore[arg-type]
 
 
 class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
@@ -2387,11 +2433,11 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
         cert1 = self.certs[self.name1]
         cert2 = self.certs[self.name2]
 
-        self.cgx1 = cert1.x509_cert.extensions.get_extension_for_oid(
-            ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
+        self.cgx1 = cert1.x509_cert.extensions.get_extension_for_class(
+            x509.PrecertificateSignedCertificateTimestamps
         )
-        self.cgx2 = cert2.x509_cert.extensions.get_extension_for_oid(
-            ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
+        self.cgx2 = cert2.x509_cert.extensions.get_extension_for_class(
+            x509.PrecertificateSignedCertificateTimestamps
         )
         self.ext1 = PrecertificateSignedCertificateTimestamps(self.cgx1)
         self.ext2 = PrecertificateSignedCertificateTimestamps(self.cgx2)
@@ -2457,16 +2503,16 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
     def test_del(self) -> None:
         """Test item deletion (e.g. ``del ext[0]``, not supported here)."""
         with self.assertRaises(NotImplementedError):
-            del self.ext1[0]
+            del self.ext1[0]  # type: ignore[no-untyped-call]
         with self.assertRaises(NotImplementedError):
-            del self.ext2[0]
+            del self.ext2[0]  # type: ignore[no-untyped-call]
 
     def test_extend(self) -> None:
         """Test ext.extend() (not supported here)."""
         with self.assertRaises(NotImplementedError):
-            self.ext1.extend([])
+            self.ext1.extend([])  # type: ignore[no-untyped-call]
         with self.assertRaises(NotImplementedError):
-            self.ext2.extend([])
+            self.ext2.extend([])  # type: ignore[no-untyped-call]
 
     def test_extension_type(self) -> None:
         """Test extension_type property."""
@@ -2512,9 +2558,9 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
     def test_insert(self) -> None:
         """Test ext.insert() (Not supported here)."""
         with self.assertRaises(NotImplementedError):
-            self.ext1.insert(0, self.data1["value"][0])
+            self.ext1.insert(0, self.data1["value"][0])  # type: ignore[no-untyped-call]
         with self.assertRaises(NotImplementedError):
-            self.ext2.insert(0, self.data2["value"][0])
+            self.ext2.insert(0, self.data2["value"][0])  # type: ignore[no-untyped-call]
 
     def test_len(self) -> None:
         """Test len(ext) (Not supported here)."""
@@ -2536,16 +2582,16 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
     def test_pop(self) -> None:
         """Test ext.pop() (Not supported here)."""
         with self.assertRaises(NotImplementedError):
-            self.ext1.pop(self.data1["value"][0])
+            self.ext1.pop(self.data1["value"][0])  # type: ignore[no-untyped-call]
         with self.assertRaises(NotImplementedError):
-            self.ext2.pop(self.data2["value"][0])
+            self.ext2.pop(self.data2["value"][0])  # type: ignore[no-untyped-call]
 
     def test_remove(self) -> None:
         """Test ext.remove() (Not supported here)."""
         with self.assertRaises(NotImplementedError):
-            self.ext1.remove(self.data1["value"][0])
+            self.ext1.remove(self.data1["value"][0])  # type: ignore[no-untyped-call]
         with self.assertRaises(NotImplementedError):
-            self.ext2.remove(self.data2["value"][0])
+            self.ext2.remove(self.data2["value"][0])  # type: ignore[no-untyped-call]
 
     def test_repr(self) -> None:
         """Test repr()."""
@@ -2630,27 +2676,27 @@ class UnknownExtensionTestCase(TestCase):
             value=x509.SubjectAlternativeName([uri("example.com")]),
         )
         with self.assertRaisesRegex(TypeError, r"^Extension value must be a x509\.UnrecognizedExtension$"):
-            UnrecognizedExtension(value)
+            UnrecognizedExtension(value)  # type: ignore[arg-type]
 
     def test_from_dict(self) -> None:
         """Test that you cannot instantiate this extension from a dict."""
         with self.assertRaisesRegex(TypeError, r"Value must be a x509\.Extension instance$"):
-            UnrecognizedExtension({"value": "foo"})
+            UnrecognizedExtension({"value": "foo"})  # type: ignore[arg-type]
 
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     """Test SubjectAlternativeName extension."""
 
-    ext_class = SubjectAlternativeName
+    ext_class = SubjectAlternativeName  # type: ignore[assignment]
     ext_class_key = "subject_alternative_name"
     ext_class_name = "SubjectAlternativeName"
-    ext_class_type = x509.SubjectAlternativeName
+    ext_class_type = x509.SubjectAlternativeName  # type: ignore[assignment]
 
     uri1 = value1 = "https://example.com"
     uri2 = "https://example.net"
     dns1 = "example.com"
     dns2 = "example.net"
-    et1 = x509.SubjectAlternativeName([uri(value1)])
+    et1 = x509.SubjectAlternativeName([uri(value1)])  # type: ignore[assignment]
 
     test_values = {
         "empty": {
@@ -2659,7 +2705,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected_repr": "[]",
             "expected_serialized": [],
             "expected_text": "",
-            "extension_type": ext_class_type([]),
+            "extension_type": x509.SubjectAlternativeName([]),
         },
         "uri": {
             "values": [[uri1], [uri(uri1)]],
@@ -2667,7 +2713,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected_repr": "['URI:%s']" % uri1,
             "expected_serialized": ["URI:%s" % uri1],
             "expected_text": "* URI:%s" % uri1,
-            "extension_type": ext_class_type([uri(uri1)]),
+            "extension_type": x509.SubjectAlternativeName([uri(uri1)]),
         },
         "dns": {
             "values": [[dns1], [dns(dns1)]],
@@ -2675,7 +2721,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected_repr": "['DNS:%s']" % dns1,
             "expected_serialized": ["DNS:%s" % dns1],
             "expected_text": "* DNS:%s" % dns1,
-            "extension_type": ext_class_type([dns(dns1)]),
+            "extension_type": x509.SubjectAlternativeName([dns(dns1)]),
         },
         "both": {
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
@@ -2683,7 +2729,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected_repr": "['URI:%s', 'DNS:%s']" % (uri1, dns1),
             "expected_serialized": ["URI:%s" % uri1, "DNS:%s" % dns1],
             "expected_text": "* URI:%s\n* DNS:%s" % (uri1, dns1),
-            "extension_type": ext_class_type([uri(uri1), dns(dns1)]),
+            "extension_type": x509.SubjectAlternativeName([uri(uri1), dns(dns1)]),
         },
         "all": {
             "values": [
@@ -2696,7 +2742,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected_repr": "['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s']" % (uri1, uri2, dns1, dns2),
             "expected_serialized": ["URI:%s" % uri1, "URI:%s" % uri2, "DNS:%s" % dns1, "DNS:%s" % dns2],
             "expected_text": "* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s" % (uri1, uri2, dns1, dns2),
-            "extension_type": ext_class_type([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
+            "extension_type": x509.SubjectAlternativeName([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
         },
         "order": {  # same as "all" above but other order
             "values": [
@@ -2709,7 +2755,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected_repr": "['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s']" % (dns2, dns1, uri2, uri1),
             "expected_serialized": ["DNS:%s" % dns2, "DNS:%s" % dns1, "URI:%s" % uri2, "URI:%s" % uri1],
             "expected_text": "* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s" % (dns2, dns1, uri2, uri1),
-            "extension_type": ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
+            "extension_type": x509.SubjectAlternativeName([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
         },
     }
 
@@ -2731,7 +2777,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         self.assertIsNone(san.get_common_name())
 
 
-class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], TestCase):
     """Test SubjectKeyIdentifier extension."""
 
     ext_class = SubjectKeyIdentifier
@@ -2781,7 +2827,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         },
     }
 
-    def test_ski_constructor(self):
+    def test_ski_constructor(self) -> None:
         """Test passing x509.SubjectKeyIdentifier."""
 
         self.assertEqual(
@@ -2812,7 +2858,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         )
 
 
-class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin, TestCase):
+class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[TLSFeature], TestCase):
     """Test TLSFeature extension."""
 
     ext_class = TLSFeature
