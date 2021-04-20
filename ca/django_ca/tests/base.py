@@ -28,11 +28,6 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from OpenSSL.crypto import FILETYPE_PEM
-from OpenSSL.crypto import X509Store
-from OpenSSL.crypto import X509StoreContext
-from OpenSSL.crypto import load_certificate
-
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -47,7 +42,6 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
-from django.core.management.base import CommandError
 from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.testcases import SimpleTestCase
@@ -497,14 +491,6 @@ VQIDAQAB
         """Context manager to use a temporary CA dir."""
         return override_tmpcadir(**kwargs)
 
-    def assertBasic(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, algo: str = "SHA256"
-    ) -> None:
-        """Assert some basic key properties."""
-        self.assertEqual(cert.version, x509.Version.v3)
-        self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
-        self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
-
     def assertCRL(
         # pylint: disable=invalid-name
         self,
@@ -580,19 +566,6 @@ VQIDAQAB
                 self.assertTrue(post_sig.called is post)
 
     @contextmanager
-    def assertCommandError(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
-        """Context manager asserting that CommandError is raised.
-
-        Parameters
-        ----------
-
-        msg : str
-            The regex matching the exception message.
-        """
-        with self.assertRaisesRegex(CommandError, msg):
-            yield
-
-    @contextmanager
     def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
@@ -619,31 +592,6 @@ VQIDAQAB
     def assertSerial(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""
         self.assertIsNotNone(re.match("^[0-9A-F:]*$", serial), serial)
-
-    def assertSignature(  # pylint: disable=invalid-name
-        self, chain: typing.Sequence[CertificateAuthority], cert: Certificate
-    ) -> None:
-        """Assert that `cert` is properly signed by `chain`.
-
-        .. seealso:: http://stackoverflow.com/questions/30700348
-        """
-        store = X509Store()
-
-        # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
-        now = datetime.utcnow()
-        store.set_time(now)
-
-        for elem in chain:
-            ca = load_certificate(FILETYPE_PEM, elem.dump_certificate())
-            store.add_cert(ca)
-
-            # Verify that the CA itself is valid
-            store_ctx = X509StoreContext(store, ca)
-            self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
-
-        loaded_cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
-        store_ctx = X509StoreContext(store, loaded_cert)
-        self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard

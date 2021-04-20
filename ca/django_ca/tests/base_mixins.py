@@ -21,7 +21,14 @@ from http import HTTPStatus
 from unittest import mock
 from urllib.parse import quote
 
+from OpenSSL.crypto import FILETYPE_PEM
+from OpenSSL.crypto import X509Store
+from OpenSSL.crypto import X509StoreContext
+from OpenSSL.crypto import load_certificate
+
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
@@ -29,6 +36,7 @@ from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.management import ManagementUtility
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import models
 from django.dispatch.dispatcher import Signal
 from django.http import HttpResponse
@@ -149,6 +157,27 @@ class TestCaseMixin(TestCaseProtocol):
             issuer.subject_key_identifier.value,  # type: ignore[union-attr] # ski theoretically None
         )
 
+    def assertBasic(  # pylint: disable=invalid-name
+        self, cert: x509.Certificate, algo: str = "SHA256"
+    ) -> None:
+        """Assert some basic key properties."""
+        self.assertEqual(cert.version, x509.Version.v3)
+        self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
+        self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
+
+    @contextmanager
+    def assertCommandError(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+        """Context manager asserting that CommandError is raised.
+
+        Parameters
+        ----------
+
+        msg : str
+            The regex matching the exception message.
+        """
+        with self.assertRaisesRegex(CommandError, msg):
+            yield
+
     def assertExtensions(  # pylint: disable=invalid-name
         self,
         cert: typing.Union[X509CertMixin, x509.Certificate],
@@ -246,6 +275,33 @@ class TestCaseMixin(TestCaseProtocol):
             self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
         else:
             self.assertEqual(cert.revoked_reason, reason)
+
+    def assertSignature(  # pylint: disable=invalid-name
+        self,
+        chain: typing.Iterable[CertificateAuthority],
+        cert: typing.Union[Certificate, CertificateAuthority]
+    ) -> None:
+        """Assert that `cert` is properly signed by `chain`.
+
+        .. seealso:: http://stackoverflow.com/questions/30700348
+        """
+        store = X509Store()
+
+        # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
+        now = datetime.utcnow()
+        store.set_time(now)
+
+        for elem in chain:
+            ca = load_certificate(FILETYPE_PEM, elem.dump_certificate())
+            store.add_cert(ca)
+
+            # Verify that the CA itself is valid
+            store_ctx = X509StoreContext(store, ca)
+            self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
+
+        loaded_cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
+        store_ctx = X509StoreContext(store, loaded_cert)
+        self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     def assertSubject(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]
