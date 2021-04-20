@@ -60,30 +60,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     load_cas = (
         "root",
+        "child",
         "pwd",
+        "ecc",
     )
 
-    @override_tmpcadir()
-    def test_get(self) -> None:
-        """Do a basic get request (to test CSS etc)."""
-        response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        templates = [t.name for t in response.templates]
-        self.assertIn("admin/django_ca/certificate/change_form.html", templates)
-        self.assertIn("admin/change_form.html", templates)
-        self.assertCSS(response, "django_ca/admin/css/base.css")
-        self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
-
-    @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-    def test_get_dict(self) -> None:
-        """Test get with no profiles and no default subject."""
-        self.test_get()
-
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
-    def test_add(self) -> None:
-        """Test to actually add a certificate."""
-        cname = "test-add.example.com"
-        ca = self.new_cas["root"]
+    def add_cert(self, cname: str, ca: CertificateAuthority) -> None:
         csr = certs["root-cert"]["csr"]["pem"]
 
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -139,6 +121,29 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    @override_tmpcadir()
+    def test_get(self) -> None:
+        """Do a basic get request (to test CSS etc)."""
+        response = self.client.get(self.add_url)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        templates = [t.name for t in response.templates]
+        self.assertIn("admin/django_ca/certificate/change_form.html", templates)
+        self.assertIn("admin/change_form.html", templates)
+        self.assertCSS(response, "django_ca/admin/css/base.css")
+        self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
+
+    @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+    def test_get_dict(self) -> None:
+        """Test get with no profiles and no default subject."""
+        self.test_get()
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    def test_add(self) -> None:
+        """Test to actually add a certificate."""
+        self.add_cert("test-child-add.example.com", self.ca)
+        self.add_cert("test-root-add.example.com", self.new_cas["root"])
+        self.add_cert("test-ecc-add.example.com", self.new_cas["ecc"])
 
     @override_tmpcadir()
     def test_required_subject(self) -> None:

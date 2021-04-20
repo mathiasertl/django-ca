@@ -74,6 +74,7 @@ class TestCaseMixin(TestCaseProtocol):
 
     load_cas: typing.Tuple[str, ...] = tuple()
     load_certs: typing.Tuple[str, ...] = tuple()
+    default_ca = "child"
     new_cas: typing.Dict[str, CertificateAuthority] = {}
     new_certs: typing.Dict[str, Certificate] = {}
 
@@ -85,6 +86,10 @@ class TestCaseMixin(TestCaseProtocol):
             self.new_cas[name] = self.load_ca(name)
         if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
             self.ca = self.new_cas[self.load_cas[0]]
+        elif self.load_cas:
+            if self.default_ca not in self.load_cas:
+                raise ValueError(f"{self.default_ca}: Not in {self.load_cas}.")
+            self.ca = self.new_cas[self.default_ca]
 
         for name in self.load_certs:
             try:
