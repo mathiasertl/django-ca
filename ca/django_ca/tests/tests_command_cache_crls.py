@@ -40,19 +40,17 @@ class CacheCRLsTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         Note: Without an explicit serial expired CAs are excluded, that's why we need @freeze_time().
         """
 
-        hash_cls = hashes.SHA512
-        enc_cls = Encoding.DER
         stdout, stderr = self.cmd("cache_crls")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
         for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "ca")
+            key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsNotNone(crl)
-            self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
+            self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
 
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "user")
+            key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsNotNone(crl)
 
@@ -61,17 +59,15 @@ class CacheCRLsTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         """Test passing an explicit serial."""
         ca = self.cas["root"]
 
-        hash_cls = hashes.SHA512
-        enc_cls = Encoding.DER
         stdout, stderr = self.cmd("cache_crls", ca.serial)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-        key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "ca")
+        key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
         crl = x509.load_der_x509_crl(cache.get(key), default_backend())
         self.assertIsNotNone(crl)
-        self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
 
-        key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "user")
+        key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
         crl = x509.load_der_x509_crl(cache.get(key), default_backend())
         self.assertIsNotNone(crl)
