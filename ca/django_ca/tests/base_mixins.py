@@ -87,6 +87,8 @@ class TestCaseMixin(TestCaseProtocol):
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
         elif self.load_cas == "__usable__":
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
+        elif isinstance(self.load_cas, str):
+            self.fail(f"{self.load_cas}: Unknown alias for load_cas.")
 
         # Load all CAs (sort by len() of parent so that root CAs are loaded first)
         for name in sorted(self.load_cas, key=lambda n: len(certs[n].get("parent", ""))):
@@ -99,6 +101,14 @@ class TestCaseMixin(TestCaseProtocol):
             if self.default_ca not in self.load_cas:
                 self.fail(f"{self.default_ca}: Not in {self.load_cas}.")
             self.ca = self.new_cas[self.default_ca]
+
+        if self.load_certs == "__all__":
+            self.load_certs = tuple(k for k, v in certs.items() if v.get("type") == "cert")
+        elif self.load_certs == "__usable__":
+            self.load_certs = tuple(k for k, v in certs.items()
+                                    if v.get("type") == "cert" and v["cat"] == "generated")
+        elif isinstance(self.load_certs, str):
+            self.fail(f"{self.load_certs}: Unknown alias for load_certs.")
 
         for name in self.load_certs:
             try:
