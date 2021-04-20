@@ -67,9 +67,10 @@ from .base import dns
 from .base import rdn
 from .base import uri
 from .base_mixins import TestCaseMixin
+from .base_mixins import TestCaseProtocol
 
 ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)
-TestValueDict = TypedDict(
+_TestValueDict = TypedDict(
     "TestValueDict",
     {
         "values": typing.List[typing.Any],
@@ -80,10 +81,17 @@ TestValueDict = TypedDict(
         "extension_type": x509.ExtensionType,
     },
 )
-TestValues = typing.Dict[str, TestValueDict]
 DistributionPointsBaseTypeVar = typing.TypeVar(
     "DistributionPointsBaseTypeVar", CRLDistributionPoints, FreshestCRL
 )
+
+
+class TestValueDict(_TestValueDict, total=False):
+    expected_djca: typing.Any
+    expected_bool: bool
+
+
+TestValues = typing.Dict[str, TestValueDict]
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
@@ -460,9 +468,11 @@ class NullExtensionTestMixin(ExtensionTestMixin):
         self.assertEqual(self.ext_class().repr_value(), "")
 
 
-class IterableExtensionTestMixin:
+class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProtocol):
     """Mixin for testing IterableExtension-based extensions."""
 
+    test_values: TestValues
+    ext_class: typing.Type[ExtensionTypeVar]
     invalid_values = []
 
     def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):  # pylint: disable=invalid-name
@@ -821,7 +831,12 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
         self.assertIsNot(orig, new)  # assert that this is a different instance
         self.assertIsNot(orig.value, new.value)  # value is also different instance
 
-    def assertSingleValueOperator(self, oper, update=True, infix=True):  # pylint: disable=invalid-name
+    def assertSingleValueOperator(  # pylint: disable=invalid-name
+        self,
+        oper: typing.Callable[[typing.Any, typing.Any], typing.Any],
+        update: bool = True,
+        infix: bool = True
+    ) -> None:
         """Test that an operator taking a single value works the same way with sets and this extension."""
         for config in self.test_values.values():
 
@@ -852,7 +867,12 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                         infix=infix,
                     )
 
-    def assertMultipleValuesOperator(self, oper, update=True, infix=True):  # pylint: disable=invalid-name
+    def assertMultipleValuesOperator(  # pylint: disable=invalid-name
+        self,
+        oper: typing.Callable[[typing.Any, typing.Any], typing.Any],
+        update: bool = True,
+        infix: bool = True
+    ) -> None:
         """Test that an operator taking a multiple values works the same way with sets and this extension."""
         for first_config in self.test_values.values():
             for second_config in self.test_values.values():
@@ -871,7 +891,9 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                         oper, init_config["expected"], expected, update=update, infix=infix
                     )
 
-    def assertRelation(self, oper):  # pylint: disable=invalid-name
+    def assertRelation(  # pylint: disable=invalid-name
+        self, oper: typing.Callable[[typing.Any, typing.Any], typing.Any]
+    ) -> None:
         """Assert that a extension relation is equal to that of set()."""
         self.assertEqual(oper(set(), set()), oper(self.ext_class({"value": set()}), set()))
         self.assertEqual(
@@ -1272,7 +1294,7 @@ class CRLDistributionPointsTestCaseBase(
         )
 
 
-class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
+class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformationAccess], TestCase):
     """Test AuthorityInformationAccess extension."""
 
     ext_class = AuthorityInformationAccess
@@ -1403,7 +1425,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin, TestCase):
         self.assertEqual(ext, expected)
 
 
-class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
+class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier], TestCase):
     """Test AuthorityKeyIdentifier extension."""
 
     ext_class = AuthorityKeyIdentifier
@@ -1497,7 +1519,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin, TestCase):
         return
 
 
-class BasicConstraintsTestCase(ExtensionTestMixin, TestCase):
+class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
     """Test BasicConstraints extension."""
 
     ext_class = BasicConstraints
@@ -1581,7 +1603,7 @@ class CRLDistributionPointsTestCase(
     cg_dps4 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseBase.cg_dp4])
 
 
-class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin, TestCase):
+class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin[CertificatePolicies], TestCase):
     """Test CertificatePolicies extension."""
 
     ext_class = CertificatePolicies
