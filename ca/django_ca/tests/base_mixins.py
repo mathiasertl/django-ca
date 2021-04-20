@@ -86,7 +86,8 @@ class TestCaseMixin(TestCaseProtocol):
         if self.load_cas == ("__generated__", ):
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
 
-        for name in self.load_cas:
+        # Load all CAs (sort by len() of parent so that root CAs are loaded first)
+        for name in sorted(self.load_cas, key=lambda n: len(certs[n].get("parent", ""))):
             self.new_cas[name] = self.load_ca(name)
 
         # Set `self.ca` as a default certificate authority (if at least one is loaded)
