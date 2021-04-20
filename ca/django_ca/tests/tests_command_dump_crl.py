@@ -45,9 +45,6 @@ class DumpCRLTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         super().setUp()
         self.ca = self.cas["root"]
 
-    def assertSerial(self, revokation, cert):
-        self.assertEqual(revokation.get_serial(), cert.serial.encode("utf-8"))
-
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test basic creation of a CRL."""
