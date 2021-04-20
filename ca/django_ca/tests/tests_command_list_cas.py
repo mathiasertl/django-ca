@@ -13,14 +13,15 @@
 
 """Test the list_cas management command."""
 
+import typing
 from datetime import timedelta
 
+from django.test import TestCase
 from django.utils import timezone
 
 from freezegun import freeze_time
 
 from ..models import CertificateAuthority
-from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import timestamps
@@ -34,23 +35,25 @@ EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 """
 
 
-class ListCertsTestCase(TestCaseMixin, DjangoCATestCase):
+class ListCertsTestCase(TestCaseMixin, TestCase):
     """Test the list_cas management command."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_usable_cas()
+    load_cas = "__usable__"
 
-    def assertOutput(self, output, expected, **context):  # pylint: disable=invalid-name
+    def assertOutput(  # pylint: disable=invalid-name
+        self, output: str, expected: str, **context: typing.Any
+    ) -> None:
         """Assert the output of this command."""
         context.update(certs)
-        for ca_name in self.cas:
+        for ca_name in self.new_cas:
             context.setdefault("%s_state" % ca_name, "")
         self.assertEqual(output, expected.format(**context))
 
     def test_all_cas(self) -> None:
         """Test list with all CAs."""
-        self.load_all_cas()
+        for name in [k for k, v in certs.items() if v.get("type") == "ca" and k not in self.new_cas]:
+            self.load_ca(name)
+
         stdout, stderr = self.cmd("list_cas")
         self.assertEqual(
             stdout,
@@ -106,12 +109,11 @@ class ListCertsTestCase(TestCaseMixin, DjangoCATestCase):
     def test_disabled(self) -> None:
         """Test the command if some CA is disabled."""
 
-        ca = self.cas["root"]
-        ca.enabled = False
-        ca.save()
+        self.ca.enabled = False
+        self.ca.save()
 
         stdout, stderr = self.cmd("list_cas")
-        self.assertOutput(stdout, EXPECTED, root_state=" (disabled)")
+        self.assertOutput(stdout, EXPECTED, child_state=" (disabled)")
         self.assertEqual(stderr, "")
 
     @freeze_time(timestamps["everything_valid"])
@@ -138,7 +140,7 @@ class ListCertsTestCase(TestCaseMixin, DjangoCATestCase):
         # manually create Certificate objects
         expires = timezone.now() + timedelta(days=3)
         valid_from = timezone.now() - timedelta(days=3)
-        root = self.cas["root"]
+        root = self.new_cas["root"]
         child3 = CertificateAuthority.objects.create(
             name="child3", serial="child3", parent=root, expires=expires, valid_from=valid_from
         )
