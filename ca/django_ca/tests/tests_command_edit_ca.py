@@ -13,15 +13,17 @@
 
 """Test the edit_ca management command."""
 
+from django.test import TestCase
+
 from ..models import CertificateAuthority
-from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
 
-class EditCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
+class EditCATestCase(TestCaseMixin, TestCase):
     """Test the edit_ca management command."""
 
+    load_cas = ("root", )
     issuer = "https://issuer-test.example.org"
     ian = "http://ian-test.example.org"
     ocsp = "http://ocsp-test.example.org"
@@ -29,10 +31,6 @@ class EditCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
     caa = "caa.example.com"
     website = "https://website.example.com"
     tos = "https://tos.example.com"
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca = self.cas["root"]
 
     def edit_ca(self, *args: str) -> None:
         """Shortcut for calling the edit_ca management command."""
