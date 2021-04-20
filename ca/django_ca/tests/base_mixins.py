@@ -85,7 +85,7 @@ class TestCaseMixin(TestCaseProtocol):
 
         if self.load_cas == "__all__":
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
-        elif self.load_cas == "__generated__":
+        elif self.load_cas == "__usable__":
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
 
         # Load all CAs (sort by len() of parent so that root CAs are loaded first)
