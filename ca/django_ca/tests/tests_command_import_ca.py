@@ -19,11 +19,11 @@ import tempfile
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
+from django.test import TestCase
 
 from freezegun import freeze_time
 
 from ..models import CertificateAuthority
-from .base import DjangoCATestCase
 from .base import certs
 from .base import mock_cadir
 from .base import override_tmpcadir
@@ -31,7 +31,7 @@ from .base import timestamps
 from .base_mixins import TestCaseMixin
 
 
-class ImportCATest(TestCaseMixin, DjangoCATestCase):
+class ImportCATest(TestCaseMixin, TestCase):
     """Test the import_ca management command."""
 
     @override_tmpcadir()
