@@ -18,11 +18,11 @@ import os
 from cryptography import x509
 
 from django.conf import settings
+from django.test import TestCase
 
 from freezegun import freeze_time
 
 from ..models import Certificate
-from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
@@ -30,21 +30,23 @@ from .base_mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])
-class ImportCertTest(TestCaseMixin, DjangoCAWithCATestCase):
+class ImportCertTest(TestCaseMixin, TestCase):
     """Main test class for this command."""
+
+    load_cas = ("root", )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
         """Import a standard certificate."""
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root-cert"]["pub_filename"])
-        out, err = self.cmd("import_cert", pem_path, ca=self.cas["root"])
+        out, err = self.cmd("import_cert", pem_path, ca=self.ca)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
         cert = Certificate.objects.get(serial=certs["root-cert"]["serial"])
-        self.assertSignature([self.cas["root"]], cert)
-        self.assertEqual(cert.ca, self.cas["root"])
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(cert.ca, self.ca)
         cert.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(cert.x509_cert.version, x509.Version.v3)
 
@@ -52,14 +54,14 @@ class ImportCertTest(TestCaseMixin, DjangoCAWithCATestCase):
     def test_der(self) -> None:
         """Import a DER certificate."""
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root-cert"]["pub_der_filename"])
-        out, err = self.cmd("import_cert", pem_path, ca=self.cas["root"])
+        out, err = self.cmd("import_cert", pem_path, ca=self.ca)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
         cert = Certificate.objects.get(serial=certs["root-cert"]["serial"])
-        self.assertSignature([self.cas["root"]], cert)
-        self.assertEqual(cert.ca, self.cas["root"])
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(cert.ca, self.ca)
         cert.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(cert.x509_cert.version, x509.Version.v3)
 
@@ -67,5 +69,5 @@ class ImportCertTest(TestCaseMixin, DjangoCAWithCATestCase):
     def test_bogus(self) -> None:
         """Try to import bogus data."""
         with self.assertCommandError(r"^Unable to load public key\.$"):
-            self.cmd("import_cert", __file__, ca=self.cas["root"])
+            self.cmd("import_cert", __file__, ca=self.ca)
         self.assertEqual(Certificate.objects.count(), 0)
