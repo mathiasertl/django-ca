@@ -15,6 +15,8 @@
 
 import os
 
+from cryptography import x509
+
 from django.conf import settings
 
 from freezegun import freeze_time
@@ -44,7 +46,7 @@ class ImportCertTest(TestCaseMixin, DjangoCAWithCATestCase):
         self.assertSignature([self.cas["root"]], cert)
         self.assertEqual(cert.ca, self.cas["root"])
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(cert.x509_cert, algo=certs["root-cert"]["algorithm"])
+        self.assertEqual(cert.x509_cert.version, x509.Version.v3)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self) -> None:
@@ -59,7 +61,7 @@ class ImportCertTest(TestCaseMixin, DjangoCAWithCATestCase):
         self.assertSignature([self.cas["root"]], cert)
         self.assertEqual(cert.ca, self.cas["root"])
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(cert.x509_cert, algo=certs["root-cert"]["algorithm"])
+        self.assertEqual(cert.x509_cert.version, x509.Version.v3)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self) -> None:

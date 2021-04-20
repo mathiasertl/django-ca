@@ -16,6 +16,7 @@
 import os
 import tempfile
 
+from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
@@ -62,7 +63,7 @@ class ImportCATest(TestCaseMixin, TestCase):
 
             if not data.get("parent"):
                 self.assertSignature([ca], ca)
-            self.assertBasic(ca.x509_cert, algo=data["algorithm"])
+            self.assertEqual(ca.x509_cert.version, x509.Version.v3)
 
             # test the private key
             key = ca.key(data["password"])
@@ -101,7 +102,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             if not data.get("parent"):
                 self.assertSignature(reversed(ca.bundle), ca)
 
-            self.assertBasic(ca.x509_cert, algo=data["algorithm"])
+            self.assertEqual(ca.x509_cert.version, x509.Version.v3)
 
             # test the private key
             key = ca.key(None)
@@ -129,7 +130,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509_cert, algo=certs["root"]["algorithm"])
+        self.assertEqual(ca.x509_cert.version, x509.Version.v3)
 
         # test the private key
         with self.assertRaisesRegex(TypeError, "^Password was not given but private key is encrypted$"):

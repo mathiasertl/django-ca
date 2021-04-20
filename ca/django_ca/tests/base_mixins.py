@@ -158,12 +158,12 @@ class TestCaseMixin(TestCaseProtocol):
         )
 
     def assertBasic(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, algo: str = "SHA256"
+        self, cert: x509.Certificate, algo: typing.Type[hashes.HashAlgorithm] = hashes.SHA256
     ) -> None:
         """Assert some basic key properties."""
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
-        self.assertIsInstance(cert.signature_hash_algorithm, getattr(hashes, algo.upper()))
+        self.assertIsInstance(cert.signature_hash_algorithm, algo)
 
     @contextmanager
     def assertCommandError(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name

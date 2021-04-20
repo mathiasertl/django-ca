@@ -63,7 +63,7 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
         self.assertSerial(ca.serial)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509_cert, algo="sha512")
+        self.assertBasic(ca.x509_cert, algo=hashes.SHA512)
 
         # test the private key
         key = ca.key(None)
