@@ -83,6 +83,9 @@ class TestCaseMixin(TestCaseProtocol):
         super().setUp()
         cache.clear()
 
+        if self.load_cas == ("__generated__", ):
+            self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
+
         for name in self.load_cas:
             self.new_cas[name] = self.load_ca(name)
 
