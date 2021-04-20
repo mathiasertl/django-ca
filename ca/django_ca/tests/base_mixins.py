@@ -13,11 +13,11 @@
 
 """Collection of mixin classes for unittest.TestCase subclasses."""
 
+import io
 import typing
 from contextlib import contextmanager
 from datetime import datetime
 from http import HTTPStatus
-from io import StringIO
 from unittest import mock
 from urllib.parse import quote
 
@@ -245,31 +245,75 @@ class TestCaseMixin(TestCaseProtocol):
             expected = Subject(expected)
         self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
-    def cmd(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Tuple[str, str]:
+    @typing.overload
+    def cmd(
+        self, *args: typing.Any, stdout: io.BytesIO, stderr: io.BytesIO, **kwargs: typing.Any
+    ) -> typing.Tuple[bytes, bytes]:
+        ...
+
+    @typing.overload
+    def cmd(
+        self,
+        *args: typing.Any,
+        stdout: io.BytesIO,
+        stderr: typing.Optional[io.StringIO] = None,
+        **kwargs: typing.Any,
+    ) -> typing.Tuple[bytes, str]:
+        ...
+
+    @typing.overload
+    def cmd(
+        self,
+        *args: typing.Any,
+        stdout: typing.Optional[io.StringIO] = None,
+        stderr: io.BytesIO,
+        **kwargs: typing.Any,
+    ) -> typing.Tuple[str, bytes]:
+        ...
+
+    @typing.overload
+    def cmd(
+        self,
+        *args: typing.Any,
+        stdout: typing.Optional[io.StringIO] = None,
+        stderr: typing.Optional[io.StringIO] = None,
+        **kwargs: typing.Any,
+    ) -> typing.Tuple[str, str]:
+        ...
+
+    def cmd(
+        self,
+        *args: typing.Any,
+        stdout: typing.Optional[typing.Union[io.StringIO, io.BytesIO]] = None,
+        stderr: typing.Optional[typing.Union[io.StringIO, io.BytesIO]] = None,
+        **kwargs: typing.Any,
+    ) -> typing.Tuple[typing.Union[str, bytes], typing.Union[str, bytes]]:
         """Call to a manage.py command using call_command."""
-        kwargs.setdefault("stdout", StringIO())
-        kwargs.setdefault("stderr", StringIO())
-        stdin = kwargs.pop("stdin", StringIO())
+        if stdout is None:
+            stdout = io.StringIO()
+        if stderr is None:
+            stderr = io.StringIO()
+        stdin = kwargs.pop("stdin", io.StringIO())
 
         with mock.patch("sys.stdin", stdin):
-            call_command(*args, **kwargs)
-        return kwargs["stdout"].getvalue(), kwargs["stderr"].getvalue()
+            call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
+        return stdout.getvalue(), stderr.getvalue()
 
     def cmd_e2e(
         self,
         cmd: typing.Sequence[str],
-        stdin: typing.Optional[StringIO] = None,
-        stdout: typing.Optional[StringIO] = None,
-        stderr: typing.Optional[StringIO] = None,
+        stdin: typing.Optional[io.StringIO] = None,
+        stdout: typing.Optional[io.StringIO] = None,
+        stderr: typing.Optional[io.StringIO] = None,
     ) -> typing.Tuple[str, str]:
         """Call a management command the way manage.py does.
 
         Unlike call_command, this method also tests the argparse configuration of the called command.
         """
-        stdout = stdout or StringIO()
-        stderr = stderr or StringIO()
+        stdout = stdout or io.StringIO()
+        stderr = stderr or io.StringIO()
         if stdin is None:
-            stdin = StringIO()
+            stdin = io.StringIO()
 
         with mock.patch("sys.stdin", stdin), mock.patch("sys.stdout", stdout), mock.patch(
             "sys.stderr", stderr
