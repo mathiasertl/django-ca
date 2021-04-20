@@ -86,11 +86,6 @@ disable = [
     #   https://github.com/landscapeio/landscape-issues/issues/214
     "cyclic-import",
 
-    # no-member is broken with Generic grandparents (pylint==2.7.4, astroid==2.5.2)
-    #   https://github.com/PyCQA/pylint/issues/3131
-    #   https://github.com/PyCQA/astroid/pull/927
-    "no-member",
-
     # These are just annoying
     "too-few-public-methods",
     "no-self-use",
@@ -100,7 +95,7 @@ disable = [
     "wrong-import-order",
 
     # covered by pyflakes:
-    "undefined-variable",
+    "undefined-variable",  # also mypy
     "unused-import",
     "unused-variable",
 
@@ -115,8 +110,21 @@ disable = [
     "bare-except",
 
     # (seems to be) covered by mypy
-    "unsubscriptable-object",
+    "unsubscriptable-object",  # mypy: index
     "arguments-differ",
+    "no-value-for-parameter",  # mypy: call-arg
+    "inconsistent-return-statements",
+    "assignment-from-no-return",
+    "import-error",  # mypy: import
+    "abstract-class-instantiated",  # mypy: abstract
+
+    
+    # no-member is covered by mypy, and it is broken with Generic grandparents in
+    # pylint==2.7.4 and astroid==2.5.2.
+    #   https://github.com/PyCQA/pylint/issues/3131
+    #   https://github.com/PyCQA/astroid/pull/927
+    "no-member",
+
 ]
 
 [tool.pylint.similarities]
