@@ -34,7 +34,7 @@ class EditCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
         super().setUp()
         self.ca = self.cas["root"]
 
-    def edit_ca(self, *args):
+    def edit_ca(self, *args: str) -> None:
         """Shortcut for calling the edit_ca management command."""
 
         stdout, stderr = self.cmd_e2e(["edit_ca", self.ca.serial] + list(args))
