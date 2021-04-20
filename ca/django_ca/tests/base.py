@@ -62,9 +62,7 @@ from ..extensions.base import ListExtension
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
-from ..signals import post_create_ca
 from ..signals import post_revoke_cert
-from ..signals import pre_create_ca
 from ..subject import Subject
 from ..typehints import PrivateKeyTypes
 from ..typehints import TypedDict
@@ -475,9 +473,6 @@ VQIDAQAB
     ACME_SLUG_1 = "Mr6FfdD68lzp"
     ACME_SLUG_2 = "DzW4PQ6L76PE"
 
-    # Note: cryptography sometimes adds another sentence at the end
-    re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
-
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.cas: typing.Dict[str, CertificateAuthority] = {}
@@ -554,40 +549,14 @@ VQIDAQAB
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
-    def assertCreateCASignals(  # pylint: disable=invalid-name
-        self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[typing.Tuple[Mock, Mock]]:
-        """Context manager mocking both pre and post_create_ca signals."""
-        with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
-            try:
-                yield (pre_sig, post_sig)
-            finally:
-                self.assertTrue(pre_sig.called is pre)
-                self.assertTrue(post_sig.called is post)
-
-    @contextmanager
     def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
             yield
 
-    def assertPostCreateCa(  # pylint: disable=invalid-name
-        self, post: Mock, ca: CertificateAuthority
-    ) -> None:
-        """Assert that the post_create_ca signal was called."""
-        post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
-
     def assertPostRevoke(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    def assertPrivateKey(  # pylint: disable=invalid-name
-        self, ca: CertificateAuthority, password: typing.Optional[typing.Union[str, bytes]] = None
-    ) -> None:
-        """Assert some basic properties for a private key."""
-        key = ca.key(password)
-        self.assertIsNotNone(key)
-        self.assertTrue(key.key_size > 0)
 
     def assertSerial(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the serial matches a basic regex pattern."""
@@ -698,12 +667,6 @@ VQIDAQAB
         )
 
     @classmethod
-    def expires(cls, days: int) -> datetime:
-        """Get a timestamp `days` from now."""
-        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        return now + timedelta(days + 1)
-
-    @classmethod
     def create_csr(
         cls, subject: typing.Union[typing.List[typing.Tuple[str, str]], str]
     ) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
@@ -798,10 +761,6 @@ VQIDAQAB
         """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with patch.object(*args, **kwargs) as mock:
             yield mock
-
-    def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
-        """Shortcut to reverse an URI name."""
-        return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
 
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):

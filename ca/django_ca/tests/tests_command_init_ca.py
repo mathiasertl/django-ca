@@ -13,6 +13,8 @@
 
 """Test the init_ca management command."""
 
+import io
+import typing
 from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
@@ -20,6 +22,7 @@ from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
+from django.test import TestCase
 from django.utils import timezone
 
 from freezegun import freeze_time
@@ -30,37 +33,45 @@ from ..extensions import CRLDistributionPoints
 from ..extensions import NameConstraints
 from ..models import CertificateAuthority
 from ..utils import int_to_hex
-from .base import DjangoCATestCase
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import TestCaseMixin
 
 
-class InitCATest(TestCaseMixin, DjangoCATestCase):
+class InitCATest(TestCaseMixin, TestCase):
     """Test the init_ca management command."""
 
-    def init_ca(self, **kwargs):
+    def init_ca(self, **kwargs: typing.Any) -> typing.Tuple[str, str]:
         """Run a basic init_ca command."""
 
+        stdout = io.StringIO()
+        stderr = io.StringIO()
         name = kwargs.pop("name", "Test CA")
         kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
-        return self.cmd("init_ca", name, "/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s" % name, **kwargs)
+        return self.cmd(
+            "init_ca",
+            name,
+            "/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s" % name,
+            stdout=stdout,
+            stderr=stderr,
+            **kwargs,
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
         """"Basic tests for the command."""
 
+        name = "test_basic"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca()
+            out, err = self.init_ca(name=name)
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
-        self.assertSerial(ca.serial)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertBasic(ca.x509_cert, algo=hashes.SHA512)
@@ -78,7 +89,7 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
                 ("L", "Vienna"),
                 ("O", "Org"),
                 ("OU", "OrgUnit"),
-                ("CN", "Test CA"),
+                ("CN", name),
             ],
         )
         self.assertIssuer(ca, ca)
@@ -99,12 +110,13 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
         website = f"https://{hostname}"
         tos = f"{website}/tos/"
         caa = f"caa.{hostname}"
+        name = "test_arguments"
 
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(
                 [
                     "init_ca",
-                    "Test CA",
+                    name,
                     "/CN=args.example.com",
                     "--algorithm=SHA1",  # hashes.SHA1(),
                     "--key-type=DSA",
@@ -126,10 +138,9 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
-        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertEqual(
@@ -186,7 +197,6 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
         ca = CertificateAuthority.objects.get(cn="acme.example.com")
         self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
-        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
 
         self.assertTrue(ca.acme_enabled)
@@ -207,8 +217,10 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
     def test_ecc(self) -> None:
         """Test creating an ECC CA."""
 
+        name = "test_ecc"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
+                name=name,
                 algorithm=hashes.SHA1(),
                 key_type="ECC",
                 key_size=1024,
@@ -225,7 +237,7 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
         self.assertEqual(
@@ -244,18 +256,15 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
     def test_permitted(self) -> None:
         """Test the NameConstraints extension with 'permitted'."""
 
+        name = "test_permitted"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(
-                name="permitted",
-                permit_name=["DNS:.com"],
-            )
+            out, err = self.init_ca(name=name, permit_name=["DNS:.com"])
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
-        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
@@ -265,18 +274,15 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
     def test_excluded(self) -> None:
         """Test the NameConstraints extension with 'excluded'."""
 
+        name = "test_excluded"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(
-                name="excluded",
-                exclude_name=["DNS:.com"],
-            )
+            out, err = self.init_ca(name=name, exclude_name=["DNS:.com"])
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
-        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertEqual(ca.name_constraints, NameConstraints({"value": {"excluded": ["DNS:.com"]}}))
@@ -291,14 +297,14 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
     def test_no_pathlen(self) -> None:
         """Test creating a CA with no pathlen."""
 
+        name = "test_no_pathlen"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(pathlen=None)
+            out, err = self.init_ca(name=name, pathlen=None)
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
-        self.assertSerial(ca.serial)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
@@ -312,14 +318,15 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
     def test_empty_subject_fields(self) -> None:
         """Test creating a CA with empty subject fields."""
 
+        name = "test_empty_subject_fields"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd(
-                "init_ca", "test", "/C=/ST=/L=/O=/OU=/CN=test", key_size=ca_settings.CA_MIN_KEY_SIZE
+                "init_ca", name, "/C=/ST=/L=/O=/OU=/CN=test", key_size=ca_settings.CA_MIN_KEY_SIZE
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
@@ -331,14 +338,16 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
     def test_no_cn(self) -> None:
         """Test creating a CA with no CommonName."""
 
-        out, err = self.cmd("init_ca", "test", "/C=/ST=/L=/O=/OU=smth", key_size=ca_settings.CA_MIN_KEY_SIZE)
+        name = "test_no_cn"
+        subject = "/C=/ST=/L=/O=/OU=smth"
+        out, err = self.cmd("init_ca", name, subject, key_size=ca_settings.CA_MIN_KEY_SIZE)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.first()
+        ca = CertificateAuthority.objects.get(name=name)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertPrivateKey(ca)
-        self.assertSubject(ca.x509_cert, [("OU", "smth"), ("CN", "test")])
+        self.assertSubject(ca.x509_cert, [("OU", "smth"), ("CN", name)])
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -421,7 +430,7 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_intermediate_check(self):  # pylint: disable=too-many-statements
+    def test_intermediate_check(self) -> None:  # pylint: disable=too-many-statements
         """Test intermediate pathlen checks."""
 
         with self.assertCreateCASignals() as (pre, post):
@@ -641,35 +650,33 @@ class InitCATest(TestCaseMixin, DjangoCATestCase):
 
         Note: freeze time b/c this test uses root CA as a parent.
         """
-        self.load_usable_cas()
+        root = self.load_ca("root")
 
         name = "ca"
         hostname = "test-default-hostname.com"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name=name, parent=self.cas["root"], default_hostname=hostname)
+            out, err = self.init_ca(name=name, parent=root, default_hostname=hostname)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         self.assertTrue(pre.called)
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
 
-        self.assertEqual(
-            ca.issuer_url, "http://%s/django_ca/issuer/%s.der" % (hostname, self.cas["root"].serial)
-        )
+        self.assertEqual(ca.issuer_url, "http://%s/django_ca/issuer/%s.der" % (hostname, root.serial))
         self.assertEqual(ca.ocsp_url, "http://%s/django_ca/ocsp/%s/cert/" % (hostname, ca.serial))
         self.assertEqual(
             ca.authority_information_access,
             AuthorityInformationAccess(
                 {
                     "value": {
-                        "issuers": ["URI:http://%s/django_ca/issuer/%s.der" % (hostname, ca.parent.serial)],
-                        "ocsp": ["URI:http://%s/django_ca/ocsp/%s/ca/" % (hostname, ca.parent.serial)],
+                        "issuers": ["URI:http://%s/django_ca/issuer/%s.der" % (hostname, root.serial)],
+                        "ocsp": ["URI:http://%s/django_ca/ocsp/%s/ca/" % (hostname, root.serial)],
                     }
                 }
             ),
         )
 
-        ca_crl_url = "http://%s%s" % (hostname, self.reverse("ca-crl", serial=self.cas["root"].serial))
+        ca_crl_url = "http://%s%s" % (hostname, self.reverse("ca-crl", serial=root.serial))
         self.assertEqual(
             ca.crl_distribution_points,
             CRLDistributionPoints(

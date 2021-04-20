@@ -17,6 +17,7 @@ import io
 import typing
 from contextlib import contextmanager
 from datetime import datetime
+from datetime import timedelta
 from http import HTTPStatus
 from unittest import mock
 from urllib.parse import quote
@@ -59,7 +60,9 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import DjangoCAModel
 from ..models import X509CertMixin
+from ..signals import post_create_ca
 from ..signals import post_issue_cert
+from ..signals import pre_create_ca
 from ..subject import Subject
 from ..typehints import ParsableSubject
 from .base import certs
@@ -87,6 +90,9 @@ class TestCaseMixin(TestCaseProtocol):
     new_cas: typing.Dict[str, CertificateAuthority] = {}
     new_certs: typing.Dict[str, Certificate] = {}
 
+    # Note: cryptography sometimes adds another sentence at the end
+    re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
+
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         cache.clear()
@@ -95,7 +101,7 @@ class TestCaseMixin(TestCaseProtocol):
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
         elif self.load_cas == "__usable__":
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
-        elif isinstance(self.load_cas, str):
+        elif isinstance(self.load_cas, str):  # pragma: no cover
             self.fail(f"{self.load_cas}: Unknown alias for load_cas.")
 
         # Load all CAs (sort by len() of parent so that root CAs are loaded first)
@@ -106,7 +112,7 @@ class TestCaseMixin(TestCaseProtocol):
         if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
             self.ca = self.new_cas[self.load_cas[0]]
         elif self.load_cas:
-            if self.default_ca not in self.load_cas:
+            if self.default_ca not in self.load_cas:  # pragma: no cover
                 self.fail(f"{self.default_ca}: Not in {self.load_cas}.")
             self.ca = self.new_cas[self.default_ca]
 
@@ -115,7 +121,7 @@ class TestCaseMixin(TestCaseProtocol):
         elif self.load_certs == "__usable__":
             self.load_certs = tuple(k for k, v in certs.items()
                                     if v.get("type") == "cert" and v["cat"] == "generated")
-        elif isinstance(self.load_certs, str):
+        elif isinstance(self.load_certs, str):  # pragma: no cover
             self.fail(f"{self.load_certs}: Unknown alias for load_certs.")
 
         for name in self.load_certs:
@@ -177,6 +183,18 @@ class TestCaseMixin(TestCaseProtocol):
         """
         with self.assertRaisesRegex(CommandError, msg):
             yield
+
+    @contextmanager
+    def assertCreateCASignals(  # pylint: disable=invalid-name
+        self, pre: bool = True, post: bool = True
+    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+        """Context manager mocking both pre and post_create_ca signals."""
+        with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
+            try:
+                yield (pre_sig, post_sig)
+            finally:
+                self.assertTrue(pre_sig.called is pre)
+                self.assertTrue(post_sig.called is post)
 
     def assertExtensions(  # pylint: disable=invalid-name
         self,
@@ -256,9 +274,23 @@ class TestCaseMixin(TestCaseProtocol):
         self.assertFalse(cert.revoked)
         self.assertEqual(cert.revoked_reason, "")
 
+    def assertPostCreateCa(  # pylint: disable=invalid-name
+        self, post: mock.Mock, ca: CertificateAuthority
+    ) -> None:
+        """Assert that the post_create_ca signal was called."""
+        post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
+
     def assertPostIssueCert(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
+    def assertPrivateKey(  # pylint: disable=invalid-name
+        self, ca: CertificateAuthority, password: typing.Optional[typing.Union[str, bytes]] = None
+    ) -> None:
+        """Assert some basic properties for a private key."""
+        key = ca.key(password)
+        self.assertIsNotNone(key)
+        self.assertTrue(key.key_size > 0)
 
     def assertRevoked(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, reason: typing.Optional[str] = None
@@ -389,6 +421,12 @@ class TestCaseMixin(TestCaseProtocol):
 
         return stdout.getvalue(), stderr.getvalue()
 
+    @classmethod
+    def expires(cls, days: int) -> datetime:
+        """Get a timestamp `days` from now."""
+        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        return now + timedelta(days + 1)
+
     @contextmanager
     def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
         """Context manager to freeze time to a given timestamp.
@@ -484,6 +522,10 @@ class TestCaseMixin(TestCaseProtocol):
         """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with mock.patch(*args, **kwargs) as mocked:
             yield mocked
+
+    def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
+        """Shortcut to reverse an URI name."""
+        return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
 
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
