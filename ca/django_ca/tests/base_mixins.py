@@ -75,6 +75,7 @@ class TestCaseMixin(TestCaseProtocol):
     load_cas: typing.Tuple[str, ...] = tuple()
     load_certs: typing.Tuple[str, ...] = tuple()
     default_ca = "child"
+    default_cert = "child-cert"
     new_cas: typing.Dict[str, CertificateAuthority] = {}
     new_certs: typing.Dict[str, Certificate] = {}
 
@@ -84,11 +85,13 @@ class TestCaseMixin(TestCaseProtocol):
 
         for name in self.load_cas:
             self.new_cas[name] = self.load_ca(name)
+
+        # Set `self.ca` as a default certificate authority (if at least one is loaded)
         if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
             self.ca = self.new_cas[self.load_cas[0]]
         elif self.load_cas:
             if self.default_ca not in self.load_cas:
-                raise ValueError(f"{self.default_ca}: Not in {self.load_cas}.")
+                self.fail(f"{self.default_ca}: Not in {self.load_cas}.")
             self.ca = self.new_cas[self.default_ca]
 
         for name in self.load_certs:
@@ -96,8 +99,14 @@ class TestCaseMixin(TestCaseProtocol):
                 self.new_certs[name] = self.load_named_cert(name)
             except CertificateAuthority.DoesNotExist:  # pragma: no cover
                 self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
+
+        # Set `self.cert` as a default certificate (if at least one is loaded)
         if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
             self.cert = self.new_certs[self.load_certs[0]]
+        elif self.load_certs:
+            if self.default_cert not in self.load_certs:
+                self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
+            self.cert = self.new_certs[self.default_cert]
 
     def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
