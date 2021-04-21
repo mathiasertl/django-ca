@@ -4,8 +4,8 @@ exclude = "migrations"
 
 [tool.coverage.report]
 exclude_lines = [
-    "^\\s*@abc.abstractmethod",
-    "^\\s*@overload",
+    "^\\s*@(abc.)?abstractmethod",
+    "^\\s*@(typing.)?overload",
     "^\\s*if (typing.)?TYPE_CHECKING:",
     "pragma: no ?cover",
 ]
