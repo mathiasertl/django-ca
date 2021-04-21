@@ -66,6 +66,7 @@ from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
 from ..typehints import CRLExtensionTypeTypeVar
 from ..typehints import ParsableDistributionPoint
+from ..typehints import ParsableExtension
 from ..typehints import ParsablePolicyInformation
 from ..typehints import TypedDict
 from ..utils import GeneralNameList
@@ -77,13 +78,22 @@ from .base import uri
 from .base_mixins import TestCaseMixin
 from .base_mixins import TestCaseProtocol
 
-ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)
-NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)
-IterableExtensionTypeVar = typing.TypeVar("IterableExtensionTypeVar", bound=IterableExtension)
-ListExtensionTypeVar = typing.TypeVar("ListExtensionTypeVar", bound=ListExtension)
-OrderedSetExtensionTypeVar = typing.TypeVar("OrderedSetExtensionTypeVar", bound=OrderedSetExtension)
+ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)  # type: ignore[type-arg]
+NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)  # type: ignore[type-arg]
+IterableExtensionTypeVar = typing.TypeVar(
+    "IterableExtensionTypeVar",
+    bound=IterableExtension  # type: ignore[type-arg]
+)
+ListExtensionTypeVar = typing.TypeVar(
+    "ListExtensionTypeVar",
+    bound=ListExtension  # type: ignore[type-arg]
+)
+OrderedSetExtensionTypeVar = typing.TypeVar(
+    "OrderedSetExtensionTypeVar",
+    bound=OrderedSetExtension  # type: ignore[type-arg]
+)
 _TestValueDict = TypedDict(
-    "TestValueDict",
+    "_TestValueDict",
     {
         "values": typing.List[typing.Any],
         "expected": typing.Any,
@@ -96,6 +106,7 @@ _TestValueDict = TypedDict(
 DistributionPointsBaseTypeVar = typing.TypeVar(
     "DistributionPointsBaseTypeVar", CRLDistributionPoints, FreshestCRL
 )
+IterableTypeVar = typing.TypeVar("IterableTypeVar", list, set)  # type: ignore[type-arg]
 
 
 class TestValueDict(_TestValueDict, total=False):
@@ -155,6 +166,8 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     ext_class: typing.Type[ExtensionTypeVar]
+    ext_class_key: str
+    ext_class_name: str
     test_values: TestValues
     force_critical: typing.Optional[bool] = None
     repr_tmpl = "<{name}: {value}, critical={critical}>"
@@ -209,7 +222,7 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
             ext = x509.extensions.Extension(oid=self.ext_class.oid, critical=critical, value=value)
             return self.ext_class(ext)
 
-        val = {"value": value}
+        val: ParsableExtension = {"value": value}
         if critical is not None:
             val["critical"] = critical
         return self.ext_class(val)
@@ -297,7 +310,7 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
         class_name = "example_class"
 
         class _Example:
-            def __str__(self):
+            def __str__(self) -> str:
                 return class_name
 
         for config in self.test_values.values():
@@ -306,7 +319,7 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
                     continue  # self.ext() would construct an x509.Extension and the constructor would fail
 
                 with self.assertRaisesRegex(ValueError, "^%s: Invalid critical value passed$" % class_name):
-                    self.ext(value, critical=_Example())
+                    self.ext(value, critical=_Example())  # type: ignore[arg-type]
 
     def test_init_unknown_type(self) -> None:
         """Try creating an extension with a value of unknown type."""
@@ -387,7 +400,8 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
         """Test that value property can be used for the constructor."""
         for config in self.test_values.values():
             ext = self.ext(value=config["expected"])
-            self.assertExtensionEqual(ext, self.ext(ext.value))
+            # NOTE: Extension does not define a value, but all subclasses do, so we ignore mypy here
+            self.assertExtensionEqual(ext, self.ext(ext.value))  # type: ignore[attr-defined]
 
 
 class ExtensionTestMixin(AbstractExtensionTestMixin[ExtensionTypeVar], typing.Generic[ExtensionTypeVar]):
@@ -486,9 +500,10 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
         self.assertEqual(self.ext_class().repr_value(), "")
 
 
-class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar], TestCaseProtocol):
+class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, IterableTypeVar], TestCaseProtocol):
     """Mixin for testing IterableExtension-based extensions."""
 
+    container_type: typing.Type[IterableTypeVar]
     test_values: TestValues
     ext_class: typing.Type[IterableExtensionTypeVar]
     invalid_values: typing.List[typing.Any] = []
@@ -644,7 +659,8 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar], TestC
 
 
 class ListExtensionTestMixin(
-    IterableExtensionTestMixin[ListExtensionTypeVar], typing.Generic[ListExtensionTypeVar]
+    IterableExtensionTestMixin[ListExtensionTypeVar, list],  # type: ignore[type-arg] # pragma: py<3.8
+    typing.Generic[ListExtensionTypeVar]
 ):
     """Mixin for testing ListExtension-based extensions."""
 
@@ -860,7 +876,7 @@ class ListExtensionTestMixin(
 
 
 class OrderedSetExtensionTestMixin(
-    IterableExtensionTestMixin[OrderedSetExtensionTypeVar],
+    IterableExtensionTestMixin[OrderedSetExtensionTypeVar, set],  # type: ignore[type-arg] # pragma: py<3.8
     typing.Generic[OrderedSetExtensionTypeVar],
 ):
     """Mixin for OrderedSetExtension based extensions."""
