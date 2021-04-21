@@ -14,7 +14,10 @@
 """Test the resign_cert management command."""
 
 import os
+import typing
 from unittest.mock import patch
+
+from django.test import TestCase
 
 from freezegun import freeze_time
 
@@ -27,25 +30,27 @@ from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..models import Certificate
+from ..models import CertificateAuthority
 from ..models import Watcher
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
-from .base import DjangoCAWithCertTestCase
 from .base import override_tmpcadir
 from .base import timestamps
 from .base_mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])
-class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
+class ResignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.cert = self.certs["root-cert"]
+    default_cert = "root-cert"
+    load_cas = ("root", "child")
+    load_certs = ("root-cert", "no-extensions")
 
-    def assertResigned(self, old, new, new_ca=None):  # pylint: disable=invalid-name
+    def assertResigned(  # pylint: disable=invalid-name
+        self, old: Certificate, new: Certificate, new_ca: typing.Optional[CertificateAuthority] = None
+    ) -> None:
         """Assert that the resigned certificate mathes the old cert."""
         new_ca = new_ca or old.ca
         issuer = new_ca.subject
@@ -57,7 +62,9 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
         self.assertEqual(issuer, new.issuer)
         self.assertEqual(old.hpkp_pin, new.hpkp_pin)
 
-    def assertEqualExt(self, old, new, new_ca=None):  # pylint: disable=invalid-name
+    def assertEqualExt(  # pylint: disable=invalid-name
+        self, old: Certificate, new: Certificate, new_ca: typing.Optional[CertificateAuthority] = None
+    ) -> None:
         """Assert that the extensions in both certs are equal."""
         new_ca = new_ca or old.ca
         self.assertEqual(old.subject, new.subject)
@@ -100,15 +107,15 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     def test_different_ca(self) -> None:
         """Test writing with a different CA."""
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
+            stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.new_cas["child"])
 
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.cert, new, new_ca=self.cas["child"])
-        self.assertEqualExt(self.cert, new, new_ca=self.cas["child"])
+        self.assertResigned(self.cert, new, new_ca=self.new_cas["child"])
+        self.assertEqualExt(self.cert, new, new_ca=self.new_cas["child"])
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_overwrite(self) -> None:
@@ -181,7 +188,7 @@ class ResignCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
     def test_no_cn(self) -> None:
         """Test resigning with a subject that has no CN."""
         subject = "/C=AT"  # has no CN
-        cert = self.certs["no-extensions"]
+        cert = self.new_certs["no-extensions"]
 
         msg = r"^Must give at least a CN in --subject or one or more --alt arguments\."
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(

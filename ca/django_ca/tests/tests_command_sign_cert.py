@@ -24,6 +24,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.test import TestCase
 
 from freezegun import freeze_time
 
@@ -39,7 +40,6 @@ from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import ca_storage
-from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -49,12 +49,14 @@ from .base_mixins import TestCaseMixin
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
 @freeze_time(timestamps["everything_valid"])
-class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class SignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
+
+    default_ca = "root"
+    load_cas = "__usable__"
 
     def setUp(self) -> None:
         super().setUp()
-        self.ca = self.cas["root"]
         self.csr_pem = certs["root-cert"]["csr"]["pem"]
 
     @override_tmpcadir()
@@ -67,7 +69,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
 
-        cert = Certificate.objects.first()
+        cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, subject)
@@ -88,7 +90,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
 
-        for name, ca in self.usable_cas.items():
+        for name, ca in self.new_cas.items():
             cname = "%s-signed.example.com" % name
             stdin = StringIO(self.csr_pem)
             subject = Subject([("CN", cname)])
@@ -134,7 +136,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             self.assertEqual(stderr, "")
             self.assertEqual(pre.call_count, 1)
 
-            cert = Certificate.objects.first()
+            cert = Certificate.objects.get()
             self.assertPostIssueCert(post, cert)
             self.assertSignature([self.ca], cert)
 
@@ -170,7 +172,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
                 )
             self.assertEqual(pre.call_count, 1)
 
-            cert = Certificate.objects.first()
+            cert = Certificate.objects.get()
             self.assertPostIssueCert(post, cert)
             self.assertSignature([self.ca], cert)
             self.assertEqual(stdout, "Please paste the CSR:\n")
@@ -219,7 +221,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             )
         self.assertEqual(pre.call_count, 1)
 
-        cert = Certificate.objects.first()
+        cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertIssuer(self.ca, cert)
@@ -247,7 +249,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             )
         self.assertEqual(pre.call_count, 1)
 
-        cert = Certificate.objects.first()
+        cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, subject)
@@ -286,7 +288,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
 
-        cert = Certificate.objects.first()
+        cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, ca_settings.CA_DEFAULT_SUBJECT)
@@ -345,7 +347,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(stderr, "")
 
-        cert = Certificate.objects.first()
+        cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, [("CN", "example.com")])
@@ -370,7 +372,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
                 "sign_cert", ca=self.ca, alt=SubjectAlternativeName({"value": ["example.com"]}), stdin=stdin
             )
 
-        cert = Certificate.objects.first()
+        cert = Certificate.objects.get()
 
         self.assertEqual(pre.call_count, 1)
         self.assertPostIssueCert(post, cert)
@@ -386,7 +388,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     def test_with_password(self) -> None:
         """Test signing with a CA that is protected with a password."""
         password = b"testpassword"
-        ca = self.cas["pwd"]
+        ca = self.new_cas["pwd"]
         self.assertIsNotNone(ca.key(password=password))
 
         ca = CertificateAuthority.objects.get(pk=ca.pk)
@@ -436,7 +438,8 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
     )
     def test_unparseable(self) -> None:
         """Test creating a cert where the CA private key contains bogus data."""
-        key_path = os.path.join(ca_storage.location, self.ca.private_key_path)
+        # NOTE: we assert ca_storage class in skipUnless() above
+        key_path = os.path.join(ca_storage.location, self.ca.private_key_path)  # type: ignore[attr-defined]
 
         os.chmod(key_path, stat.S_IWUSR | stat.S_IRUSR)
         with open(key_path, "w") as stream:
@@ -474,7 +477,7 @@ class SignCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             self.assertEqual(pre.call_count, 1)
             self.assertEqual(stderr, "")
 
-            cert = Certificate.objects.first()
+            cert = Certificate.objects.get()
             self.assertPostIssueCert(post, cert)
             self.assertSignature([self.ca], cert)
 
