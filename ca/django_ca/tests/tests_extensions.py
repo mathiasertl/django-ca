@@ -54,11 +54,16 @@ from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
+from ..extensions.base import IterableExtension
+from ..extensions.base import ListExtension
+from ..extensions.base import NullExtension
+from ..extensions.base import OrderedSetExtension
 from ..extensions.base import UnrecognizedExtension
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
 from ..typehints import CRLExtensionTypeTypeVar
+from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsablePolicyInformation
 from ..typehints import TypedDict
 from ..utils import GeneralNameList
@@ -71,6 +76,10 @@ from .base_mixins import TestCaseMixin
 from .base_mixins import TestCaseProtocol
 
 ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)
+NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)
+IterableExtensionTypeVar = typing.TypeVar("IterableExtensionTypeVar", bound=IterableExtension)
+ListExtensionTypeVar = typing.TypeVar("ListExtensionTypeVar", bound=ListExtension)
+OrderedSetExtensionTypeVar = typing.TypeVar("OrderedSetExtensionTypeVar", bound=OrderedSetExtension)
 _TestValueDict = TypedDict(
     "TestValueDict",
     {
@@ -157,7 +166,9 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
         self.assertEqual(first.critical, second.critical)
         self.assertEqual(first, second)
 
-    def assertSerialized(self, ext, config, critical=None):  # pylint: disable=invalid-name
+    def assertSerialized(  # pylint: disable=invalid-name
+        self, ext: ExtensionTypeVar, config: TestValueDict, critical: typing.Optional[bool] = None
+    ) -> None:
         """Assert that the extension can be serialized as expected."""
         if critical is None:
             critical = self.ext_class.default_critical
@@ -300,7 +311,7 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
             pass
 
         with self.assertRaisesRegex(ValueError, "^Value is of unsupported type _Example$"):
-            self.ext_class(_Example())
+            self.ext_class(_Example())  # type: ignore[arg-type] # what we're testing here
 
     def test_ne(self) -> None:
         """Test ``!=`` (not-equal) operator."""
@@ -444,7 +455,7 @@ class ExtensionTestMixin(AbstractExtensionTestMixin[ExtensionTypeVar], typing.Ge
                 self.assertEqual(ext.for_builder(), (config["extension_type"], critical))
 
 
-class NullExtensionTestMixin(ExtensionTestMixin):
+class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     repr_tmpl = "<{name}: critical={critical}>"
@@ -458,7 +469,9 @@ class NullExtensionTestMixin(ExtensionTestMixin):
         self.assertEqual(first.__class__, second.__class__)
         self.assertEqual(first.critical, second.critical)
 
-    def assertSerialized(self, ext, config, critical=None):
+    def assertSerialized(
+        self, ext: NullExtensionTypeVar, config: typing.Any, critical: typing.Optional[bool] = None
+    ) -> None:
         if critical is None:
             critical = self.ext_class.default_critical
         self.assertEqual(ext.serialize(), {"critical": critical})
@@ -469,25 +482,28 @@ class NullExtensionTestMixin(ExtensionTestMixin):
         self.assertEqual(self.ext_class().repr_value(), "")
 
 
-class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProtocol):
+class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar], TestCaseProtocol):
     """Mixin for testing IterableExtension-based extensions."""
 
     test_values: TestValues
-    ext_class: typing.Type[ExtensionTypeVar]
-    invalid_values = []
+    ext_class: typing.Type[IterableExtensionTypeVar]
+    invalid_values: typing.List[typing.Any] = []
 
     if typing.TYPE_CHECKING:
-        def ext(self, value: typing.Any = None, critical: typing.Optional[bool] = None) -> ExtensionTypeVar:
+        def ext(
+            self, value: typing.Any = None, critical: typing.Optional[bool] = None
+        ) -> IterableExtensionTypeVar:
             ...
 
-    def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):  # pylint: disable=invalid-name
+    def assertSameInstance(  # pylint: disable=invalid-name
+        self, orig_id: int, orig_value_id: int, new: IterableExtensionTypeVar, expected_value: typing.Any
+    ) -> None:
         """Assert that `new` is still the same instance and has the expected value."""
         self.assertEqual(new.value, expected_value)
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
 
-    def assertEqualFunction(
-        # pylint: disable=invalid-name
+    def assertEqualFunction(  # pylint: disable=invalid-name
         self,
         func: typing.Callable[..., typing.Any],
         init: typing.Any,
@@ -496,8 +512,8 @@ class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProto
         infix: bool = True,
         set_init: typing.Optional[typing.Set[typing.Any]] = None,
         set_value: typing.Any = None,
-        raises: typing.Optional[typing.Tuple[Exception, str]] = None,
-    ):
+        raises: typing.Optional[typing.Tuple[typing.Type[Exception], str]] = None,
+    ) -> None:
         """Assert that the given function `func` behaves the same way on a set and on the tested extension.
 
         This example would test if ``set.update()`` and ``self.ext_class.update()`` would behave the same way,
@@ -590,7 +606,7 @@ class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProto
                 for value in values:
                     self.assertIn(value, ext)
 
-    def test_len(self):  # len()
+    def test_len(self) -> None:
         """Test len(ext)."""
         for values in self.test_values.values():
             self.assertEqual(len(self.ext_class({"value": values["expected"]})), len(values["expected"]))
@@ -606,7 +622,9 @@ class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProto
                     self.assertEqual(len(ext), 0)
 
 
-class ListExtensionTestMixin(IterableExtensionTestMixin):
+class ListExtensionTestMixin(
+    IterableExtensionTestMixin[ListExtensionTypeVar], typing.Generic[ListExtensionTypeVar]
+):
     """Mixin for testing ListExtension-based extensions."""
 
     # pylint: disable=unnecessary-lambda; assertion functions require passing lambda functions
@@ -817,10 +835,13 @@ class ListExtensionTestMixin(IterableExtensionTestMixin):
 
         ext = self.ext_class({"value": []})
         with self.assertRaisesRegex(TypeError, r"^Can only assign int/item or slice/iterable$"):
-            ext[0:1] = 3
+            ext[0:1] = 3  # type: ignore[call-overload] # exactly what we're testing here
 
 
-class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
+class OrderedSetExtensionTestMixin(
+    IterableExtensionTestMixin[OrderedSetExtensionTypeVar],
+    typing.Generic[OrderedSetExtensionTypeVar],
+):
     """Mixin for OrderedSetExtension based extensions."""
 
     # pylint: disable=unnecessary-lambda; assertion functions require passing lambda functions
@@ -829,7 +850,10 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
     container_type = set
     ext_class_name = "OrderedSetExtension"
 
-    def assertIsCopy(self, orig, new, expected_value=None):  # pylint: disable=invalid-name
+    def assertIsCopy(
+        # pylint: disable=invalid-name
+        self, orig: typing.Any, new: typing.Any, expected_value: typing.Any = None
+    ) -> None:
         """Assert that `new` is a different instance then `other` and has possibly updated values."""
         if expected_value is None:
             expected_value = orig.value.copy()  # copy just to be sure
@@ -889,13 +913,13 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
                 self.assertEqualFunction(oper, set(), expected, update=update, infix=infix)
 
                 for init_config in self.test_values.values():
-                    expected = (
+                    expected_config = (
                         set(init_config["expected"]),
                         set(first_config["expected"]),
                         set(second_config["expected"]),
                     )
                     self.assertEqualFunction(
-                        oper, init_config["expected"], expected, update=update, infix=infix
+                        oper, init_config["expected"], expected_config, update=update, infix=infix
                     )
 
     def assertRelation(  # pylint: disable=invalid-name
@@ -1171,7 +1195,7 @@ class OrderedSetExtensionTestMixin(IterableExtensionTestMixin):
 
 
 class CRLDistributionPointsTestCaseBase(
-    ListExtensionTestMixin,
+    ListExtensionTestMixin[DistributionPointsBaseTypeVar],
     ExtensionTestMixin[DistributionPointsBaseTypeVar],
     typing.Generic[DistributionPointsBaseTypeVar, CRLExtensionTypeTypeVar],
 ):
@@ -1184,10 +1208,10 @@ class CRLDistributionPointsTestCaseBase(
     dns1 = "example.org"
     rdn1 = "/CN=example.com"
 
-    s1 = {"full_name": ["URI:%s" % uri1]}
-    s2 = {"full_name": ["URI:%s" % uri1, "DNS:%s" % dns1]}
-    s3 = {"relative_name": rdn1}
-    s4 = {
+    s1: ParsableDistributionPoint = {"full_name": ["URI:%s" % uri1]}
+    s2: ParsableDistributionPoint = {"full_name": ["URI:%s" % uri1, "DNS:%s" % dns1]}
+    s3: ParsableDistributionPoint = {"relative_name": rdn1}
+    s4: ParsableDistributionPoint = {
         "full_name": ["URI:%s" % uri2],
         "crl_issuer": ["URI:%s" % uri3],
         "reasons": ["ca_compromise", "key_compromise"],
@@ -1610,7 +1634,9 @@ class CRLDistributionPointsTestCase(
     cg_dps4 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseBase.cg_dp4])
 
 
-class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin[CertificatePolicies], TestCase):
+class CertificatePoliciesTestCase(
+    ListExtensionTestMixin[CertificatePolicies], ExtensionTestMixin[CertificatePolicies], TestCase
+):
     """Test CertificatePolicies extension."""
 
     ext_class = CertificatePolicies
@@ -1816,7 +1842,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
 
 
 class IssuerAlternativeNameTestCase(
-    ListExtensionTestMixin, ExtensionTestMixin[IssuerAlternativeName], TestCase
+    ListExtensionTestMixin[IssuerAlternativeName], ExtensionTestMixin[IssuerAlternativeName], TestCase
 ):
     """Test IssuerAlternativeName extension."""
 
@@ -2017,7 +2043,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
         return
 
 
-class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[KeyUsage], TestCase):
+class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixin[KeyUsage], TestCase):
     """Test KeyUsage extension."""
 
     ext_class = KeyUsage
@@ -2150,7 +2176,9 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[KeyUsage
             KeyUsage({"value": [True]})
 
 
-class ExtendedKeyUsageTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[ExtendedKeyUsage], TestCase):
+class ExtendedKeyUsageTestCase(
+    OrderedSetExtensionTestMixin[ExtendedKeyUsage], ExtensionTestMixin[ExtendedKeyUsage], TestCase
+):
     """Test ExtendedKeyUsage extension."""
 
     ext_class = ExtendedKeyUsage
@@ -2371,7 +2399,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
         return
 
 
-class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
+class OCSPNoCheckTestCase(NullExtensionTestMixin[OCSPNoCheck], TestCase):
     """Test OCSPNoCheck extension."""
 
     ext_class = OCSPNoCheck
@@ -2390,7 +2418,7 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin, TestCase):
     }
 
 
-class PrecertPoisonTestCase(NullExtensionTestMixin, TestCase):
+class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
     """Test PrecertPoison extension."""
 
     ext_class = PrecertPoison
@@ -2887,7 +2915,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
         )
 
 
-class TLSFeatureTestCase(OrderedSetExtensionTestMixin, ExtensionTestMixin[TLSFeature], TestCase):
+class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTestMixin[TLSFeature], TestCase):
     """Test TLSFeature extension."""
 
     ext_class = TLSFeature
