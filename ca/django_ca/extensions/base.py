@@ -359,6 +359,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
 class IterableExtension(
     Extension[ExtensionTypeTypeVar, Iterable[ParsableItem], List[SerializedItem]],
     Generic[ExtensionTypeTypeVar, ParsableItem, SerializedItem, IterableItem],
+    metaclass=abc.ABCMeta,
 ):
     """Base class for iterable extensions.
 
@@ -396,6 +397,10 @@ class IterableExtension(
 
     def __len__(self) -> int:
         return len(self.value)
+
+    @abc.abstractmethod
+    def clear(self) -> None:
+        raise NotImplementedError
 
     def repr_value(self) -> str:
         return "[%s]" % ", ".join([repr(v) for v in self.serialize_value()])

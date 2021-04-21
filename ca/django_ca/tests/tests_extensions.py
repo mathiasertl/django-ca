@@ -20,6 +20,8 @@ import operator
 import os
 import sys
 import typing
+from unittest import TestLoader
+from unittest import TestSuite
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -104,7 +106,9 @@ class TestValueDict(_TestValueDict, total=False):
 TestValues = typing.Dict[str, TestValueDict]
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(  # pylint: disable=unused-argument
+    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+) -> TestSuite:
     """Load doctests."""
 
     if sys.version_info >= (3, 7):
@@ -184,7 +188,7 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
         json.dumps(serialized)  # make sure that we can actually serialize the value
 
     @property
-    def critical_values(self):
+    def critical_values(self) -> typing.Iterator[bool]:
         """Loop through all possible values for critical.
 
         This may or may not include both boolean values depending on ``force_critical``.
@@ -494,6 +498,23 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar], TestC
             self, value: typing.Any = None, critical: typing.Optional[bool] = None
         ) -> IterableExtensionTypeVar:
             ...
+
+        def assertExtensionEqual(  # pylint: disable=invalid-name
+            self, first: IterableExtensionTypeVar, second: IterableExtensionTypeVar
+        ) -> None:
+            ...
+
+    def assertIsCopy(
+        # pylint: disable=invalid-name
+        self, orig: typing.Any, new: typing.Any, expected_value: typing.Any = None
+    ) -> None:
+        """Assert that `new` is a different instance then `other` and has possibly updated values."""
+        if expected_value is None:
+            expected_value = orig.value.copy()  # copy just to be sure
+
+        self.assertEqual(new.value, expected_value)
+        self.assertIsNot(orig, new)  # assert that this is a different instance
+        self.assertIsNot(orig.value, new.value)  # value is also different instance
 
     def assertSameInstance(  # pylint: disable=invalid-name
         self, orig_id: int, orig_value_id: int, new: IterableExtensionTypeVar, expected_value: typing.Any
@@ -849,18 +870,6 @@ class OrderedSetExtensionTestMixin(
 
     container_type = set
     ext_class_name = "OrderedSetExtension"
-
-    def assertIsCopy(
-        # pylint: disable=invalid-name
-        self, orig: typing.Any, new: typing.Any, expected_value: typing.Any = None
-    ) -> None:
-        """Assert that `new` is a different instance then `other` and has possibly updated values."""
-        if expected_value is None:
-            expected_value = orig.value.copy()  # copy just to be sure
-
-        self.assertEqual(new.value, expected_value)
-        self.assertIsNot(orig, new)  # assert that this is a different instance
-        self.assertIsNot(orig.value, new.value)  # value is also different instance
 
     def assertSingleValueOperator(  # pylint: disable=invalid-name
         self,
