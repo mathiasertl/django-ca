@@ -144,7 +144,7 @@ ParsableUserNotice = TypedDict(
 ParsableDistributionPoint = TypedDict(
     "ParsableDistributionPoint",
     {
-        "full_name": ParsableGeneralNameList,
+        "full_name": Optional[ParsableGeneralNameList],
         "relative_name": ParsableRelativeDistinguishedName,
         "crl_issuer": ParsableGeneralNameList,
         "reasons": Iterable[Union[str, x509.ReasonFlags]],
