@@ -127,7 +127,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
 
         This may or may not include both boolean values depending on ``force_critical``.
         """
-        if self.force_critical is not False:
+        if self.force_critical is not False:  # pragma: no cover; not currently used
             yield True
         if self.force_critical is not True:
             yield False
