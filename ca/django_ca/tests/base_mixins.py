@@ -28,8 +28,10 @@ from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
 
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
@@ -48,6 +50,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
 
+from .. import ca_settings
 from ..constants import ReasonFlags
 from ..extensions import OID_TO_EXTENSION
 from ..extensions import AuthorityInformationAccess
@@ -56,6 +59,9 @@ from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
 from ..extensions import Extension
 from ..extensions import SubjectKeyIdentifier
+from ..extensions.base import CRLDistributionPointsBase
+from ..extensions.base import IterableExtension
+from ..extensions.base import ListExtension
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import DjangoCAModel
@@ -65,6 +71,7 @@ from ..signals import post_issue_cert
 from ..signals import pre_create_ca
 from ..subject import Subject
 from ..typehints import ParsableSubject
+from ..utils import ca_storage
 from .base import certs
 from .base import timestamps
 
@@ -172,6 +179,68 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
         self.assertIsInstance(cert.signature_hash_algorithm, algo)
+
+    def assertCRL(
+        # pylint: disable=invalid-name
+        self,
+        crl: bytes,
+        expected: typing.Optional[typing.Sequence[X509CertMixin]] = None,
+        signer: typing.Optional[CertificateAuthority] = None,
+        expires: int = 86400,
+        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
+        encoding: Encoding = Encoding.PEM,
+        idp: typing.Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
+        extensions: typing.Optional[typing.List["x509.Extension[x509.ExtensionType]"]] = None,
+        crl_number: int = 0,
+    ) -> None:
+        """Test the given CRL.
+
+        Parameters
+        ----------
+
+        crl : bytes
+            The raw CRL
+        expected : list
+            List of CAs/certs to be expected in this CRL
+        """
+        expected = expected or []
+        signer = signer or self.new_cas["child"]
+        algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
+        extensions = extensions or []
+        expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
+
+        if idp is not None:  # pragma: no branch
+            extensions.append(idp)  # type: ignore[arg-type] # why is this not recognized?
+        extensions.append(
+            x509.Extension(
+                value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=x509.ExtensionOID.CRL_NUMBER
+            )
+        )
+        extensions.append(
+            x509.Extension(
+                value=signer.get_authority_key_identifier(),
+                oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                critical=False,
+            )
+        )
+
+        if encoding == Encoding.PEM:
+            parsed_crl = x509.load_pem_x509_crl(crl, default_backend())
+        else:
+            parsed_crl = x509.load_der_x509_crl(crl, default_backend())
+
+        self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
+        self.assertTrue(parsed_crl.is_signature_valid(signer.x509_cert.public_key()))
+        self.assertEqual(parsed_crl.issuer, signer.x509_cert.subject)
+        self.assertEqual(parsed_crl.last_update, datetime.utcnow())
+        self.assertEqual(parsed_crl.next_update, expires_timestamp)
+        self.assertCountEqual(list(parsed_crl.extensions), extensions)
+
+        entries = {e.serial_number: e for e in parsed_crl}
+        self.assertCountEqual(entries, {c.x509_cert.serial_number: c for c in expected})
+        for entry in entries.values():
+            self.assertEqual(entry.revocation_date, datetime.utcnow())
+            self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
     def assertCommandError(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
@@ -423,6 +492,38 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return stdout.getvalue(), stderr.getvalue()
 
+    def get_idp(
+        self,
+        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        indirect_crl: bool = False,
+        only_contains_attribute_certs: bool = False,
+        only_contains_ca_certs: bool = False,
+        only_contains_user_certs: bool = False,
+        only_some_reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
+    ) -> "x509.Extension[x509.IssuingDistributionPoint]":
+        """Get an IssuingDistributionPoint extension."""
+        return x509.Extension(
+            oid=x509.ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+            value=x509.IssuingDistributionPoint(
+                full_name=full_name,
+                indirect_crl=indirect_crl,
+                only_contains_attribute_certs=only_contains_attribute_certs,
+                only_contains_ca_certs=only_contains_ca_certs,
+                only_contains_user_certs=only_contains_user_certs,
+                only_some_reasons=only_some_reasons,
+                relative_name=relative_name,
+            ),
+            critical=True,
+        )
+
+    def get_idp_full_name(
+        self, ca: CertificateAuthority
+    ) -> typing.Optional[typing.List[x509.UniformResourceIdentifier]]:
+        """Get the IDP full name for `ca`."""
+        crl_url = [url.strip() for url in ca.crl_url.split()]
+        return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
+
     @classmethod
     def expires(cls, days: int) -> datetime:
         """Get a timestamp `days` from now."""
@@ -441,6 +542,55 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         with freeze_time(timestamp) as frozen:
             yield frozen
+
+    def get_cert_context(self, name: str) -> typing.Dict[str, typing.Any]:
+        """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
+        ctx: typing.Dict[str, typing.Any] = {}
+        for key, value in certs[name].items():
+            if key == "precert_poison":
+                ctx["precert_poison"] = "PrecertPoison (critical): Yes"
+            elif key == "precertificate_signed_certificate_timestamps_serialized":
+                ctx["sct_critical"] = " (critical)" if value["critical"] else ""
+                ctx["sct_values"] = []
+                for val in value["value"]:
+                    ctx["sct_values"].append(val)
+            elif key == "precertificate_signed_certificate_timestamps":
+                continue  # special extension b/c it cannot be created
+            elif key == "pathlen":
+                ctx[key] = value
+                ctx["%s_text" % key] = "unlimited" if value is None else value
+            elif isinstance(value, Extension):
+                ctx[key] = value
+
+                if isinstance(value, ListExtension):
+                    for i, val in enumerate(value):
+                        ctx["%s_%s" % (key, i)] = val
+
+                else:
+                    ctx["%s_text" % key] = value.as_text()
+
+                if value.critical:
+                    ctx["%s_critical" % key] = " (critical)"
+                else:
+                    ctx["%s_critical" % key] = ""
+            else:
+                ctx[key] = value
+
+            if isinstance(value, CRLDistributionPointsBase):
+                for i, ext_value in enumerate(value.value):
+                    ctx["%s_%s" % (key, i)] = ext_value
+            elif isinstance(value, IterableExtension):
+                for i, ext_value in enumerate(value.serialize_value()):
+                    ctx["%s_%s" % (key, i)] = ext_value
+
+        if certs[name].get("parent"):
+            parent = certs[certs[name]["parent"]]
+            ctx["parent_name"] = parent["name"]
+            ctx["parent_serial"] = parent["serial"]
+
+        if certs[name]["key_filename"] is not False:
+            ctx["key_path"] = ca_storage.path(certs[name]["key_filename"])
+        return ctx
 
     @classmethod
     def load_ca(

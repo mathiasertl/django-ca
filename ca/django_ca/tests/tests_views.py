@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
-from django.test import Client
+from django.test import TestCase
 from django.urls import include
 from django.urls import path
 from django.urls import re_path
@@ -30,8 +30,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..views import CertificateRevocationListView
-from .base import DjangoCAWithCertTestCase
-from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -65,13 +63,11 @@ urlpatterns = [
 # CRL code complains about 512 bit keys
 @override_settings(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)
 @freeze_time("2019-04-14 12:26:00")
-class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
+class GenericCRLViewTests(TestCaseMixin, TestCase):
     """Test generic CRL view."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca = self.cas["child"]
-        self.client = Client()
+    load_cas = ("root", "child", "pwd", )
+    load_certs = ("child-cert", )
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -84,8 +80,7 @@ class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
         # revoke a certificate
-        cert = self.certs["child-cert"]
-        cert.revoke()
+        self.cert.revoke()
 
         # fetch again - we should see a cached response
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
@@ -99,7 +94,7 @@ class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pkix-crl")
         self.assertCRL(
-            response.content, expected=[cert], encoding=Encoding.DER, expires=600, idp=idp, crl_number=1
+            response.content, expected=[self.cert], encoding=Encoding.DER, expires=600, idp=idp, crl_number=1
         )
 
     @override_tmpcadir()
@@ -119,8 +114,8 @@ class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
-        root = self.cas["root"]
-        child = self.cas["child"]
+        root = self.new_cas["root"]
+        child = self.new_cas["child"]
         idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
         self.assertIsNotNone(root.key(password=None))
 
@@ -148,9 +143,10 @@ class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_ca_crl_intermediate(self) -> None:
         """Test getting CRL for an intermediate CA."""
-        child = self.cas["child"]
-        full_name = "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
-        full_name = [x509.UniformResourceIdentifier(full_name)]
+        child = self.new_cas["child"]
+        full_name = [x509.UniformResourceIdentifier(
+            "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
+        )]
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
         self.assertIsNotNone(child.key(password=None))
 
@@ -162,7 +158,7 @@ class GenericCRLViewTests(TestCaseMixin, DjangoCAWithCertTestCase):
     @override_tmpcadir()
     def test_password(self) -> None:
         """Test getting a CRL with a password."""
-        ca = self.cas["pwd"]
+        ca = self.new_cas["pwd"]
 
         # getting CRL from view directly doesn't work
         with self.assertRaisesRegex(TypeError, r"^Password was not given but private key is encrypted$"):
@@ -198,15 +194,15 @@ class GenericCRLWithTZViewTests(GenericCRLViewTests):
     """Same but with timezone support."""
 
 
-class GenericCAIssuersViewTests(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class GenericCAIssuersViewTests(TestCaseMixin, TestCase):
     """Test issuer view."""
+
+    load_cas = "__usable__"
 
     def test_view(self) -> None:
         """Basic test for the view."""
-        client = Client()
-
-        for ca in self.cas.values():
+        for ca in self.new_cas.values():
             url = reverse("django_ca:issuer", kwargs={"serial": ca.root.serial})
-            resp = client.get(url)
+            resp = self.client.get(url)
             self.assertEqual(resp["Content-Type"], "application/pkix-cert")
             self.assertEqual(resp.content, ca.root.x509_cert.public_bytes(encoding=Encoding.DER))
