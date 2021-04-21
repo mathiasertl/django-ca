@@ -212,6 +212,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             self.assertEqual(bool(ext), config.get("expected_bool", True))
 
     def test_value(self) -> None:
+        """Overwritten because extension has no value."""
         return
 
     def test_none_value(self) -> None:
@@ -337,6 +338,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
         )
 
     def test_value(self) -> None:
+        """Overwritten because extension has no value."""
         return
 
 
@@ -405,6 +407,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
             BasicConstraints({"value": {"ca": True, "pathlen": "foobar"}})
 
     def test_value(self) -> None:
+        """Overwritten because extension has no value."""
         return
 
 
@@ -628,6 +631,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
             InhibitAnyPolicy("abc")  # type: ignore[arg-type]
 
     def test_value(self) -> None:
+        """Overwritten because extension has no value."""
         return
 
 
@@ -830,6 +834,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
         self.assertIsNone(pconst.require_explicit_policy)
 
     def test_value(self) -> None:
+        """Overwritten because extension has no value."""
         return
 
 
@@ -1186,6 +1191,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
         self.assertEqual(ext.permitted, [])
 
     def test_value(self) -> None:
+        """Overwritten because extension has no value."""
         return
 
 
@@ -1227,6 +1233,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
     }
 
     def test_eq(self) -> None:
+        """Test for equality."""
         for values in self.test_values.values():
             ext = self.ext(values["expected"])
             self.assertEqual(ext, ext)

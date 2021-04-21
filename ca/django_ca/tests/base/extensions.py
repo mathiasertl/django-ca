@@ -73,6 +73,8 @@ IterableTypeVar = typing.TypeVar("IterableTypeVar", list, set)  # type: ignore[t
 
 
 class TestValueDict(_TestValueDict, total=False):
+    """Value used to define generic test cases."""
+
     expected_djca: typing.Any
     expected_bool: bool
 
@@ -80,7 +82,7 @@ class TestValueDict(_TestValueDict, total=False):
 TestValues = typing.Dict[str, TestValueDict]
 
 
-class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]):
+class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     ext_class: typing.Type[ExtensionTypeVar]
@@ -318,11 +320,11 @@ class AbstractExtensionTestMixin(TestCaseMixin, typing.Generic[ExtensionTypeVar]
         """Test that value property can be used for the constructor."""
         for config in self.test_values.values():
             ext = self.ext(value=config["expected"])
-            # NOTE: Extension does not define a value, but all subclasses do, so we ignore mypy here
+            # NOTE: Tests for classes that do not set the value attribute override this function
             self.assertExtensionEqual(ext, self.ext(ext.value))  # type: ignore[attr-defined]
 
 
-class ExtensionTestMixin(AbstractExtensionTestMixin[ExtensionTypeVar], typing.Generic[ExtensionTypeVar]):
+class ExtensionTestMixin(typing.Generic[ExtensionTypeVar], AbstractExtensionTestMixin[ExtensionTypeVar]):
     """Override generic implementations to use test_value property."""
 
     def test_as_extension(self) -> None:
@@ -396,7 +398,9 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
 
     repr_tmpl = "<{name}: critical={critical}>"
 
-    def assertExtensionEqual(self, first: ExtensionTypeVar, second: ExtensionTypeVar) -> None:
+    def assertExtensionEqual(  # pylint: disable=invalid-name
+        self, first: ExtensionTypeVar, second: ExtensionTypeVar
+    ) -> None:
         """Function to test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
@@ -405,7 +409,7 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
         self.assertEqual(first.__class__, second.__class__)
         self.assertEqual(first.critical, second.critical)
 
-    def assertSerialized(
+    def assertSerialized(  # pylint: disable=missing-function-docstring,invalid-name
         self, ext: NullExtensionTypeVar, config: typing.Any, critical: typing.Optional[bool] = None
     ) -> None:
         if critical is None:
@@ -427,7 +431,7 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
     invalid_values: typing.List[typing.Any] = []
 
     if typing.TYPE_CHECKING:
-
+        # pylint: disable=missing-function-docstring,unused-argument
         def ext(
             self, value: typing.Any = None, critical: typing.Optional[bool] = None
         ) -> IterableExtensionTypeVar:
@@ -581,8 +585,8 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
 
 class ListExtensionTestMixin(
-    IterableExtensionTestMixin[ListExtensionTypeVar, list],  # type: ignore[type-arg] # pragma: py<3.8
     typing.Generic[ListExtensionTypeVar],
+    IterableExtensionTestMixin[ListExtensionTypeVar, list],  # type: ignore[type-arg] # pragma: py<3.8
 ):
     """Mixin for testing ListExtension-based extensions."""
 
@@ -1142,10 +1146,12 @@ class OrderedSetExtensionTestMixin(
 
 
 class CRLDistributionPointsTestCaseBase(
+    typing.Generic[DistributionPointsBaseTypeVar, CRLExtensionTypeTypeVar],
     ListExtensionTestMixin[DistributionPointsBaseTypeVar],
     ExtensionTestMixin[DistributionPointsBaseTypeVar],
-    typing.Generic[DistributionPointsBaseTypeVar, CRLExtensionTypeTypeVar],
 ):
+    """Base class for test cases for CRL based extensions."""
+
     ext_class: typing.Type[DistributionPointsBaseTypeVar]
     ext_class_type: typing.Type[CRLExtensionTypeTypeVar]
 
@@ -1189,7 +1195,7 @@ class CRLDistributionPointsTestCaseBase(
 
     invalid_values = [True, None]
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         self.test_values = {
             "one": {
                 "values": [
