@@ -66,6 +66,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     )
 
     def add_cert(self, cname: str, ca: CertificateAuthority) -> None:
+        """Add certificate based on given name with given CA."""
         csr = certs["root-cert"]["csr"]["pem"]
 
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:

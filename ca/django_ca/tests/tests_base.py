@@ -209,6 +209,8 @@ class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a su
     Note that none of these tests are designed to ever be executed.
     """
 
+    # pylint: disable=missing-function-docstring
+
     def cmd_basic(self) -> typing.Tuple[str, str]:
         stdout, stderr = self.cmd("example")
         return stdout, stderr

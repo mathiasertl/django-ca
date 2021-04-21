@@ -80,7 +80,7 @@ DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAMode
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 
-class TestCaseMixin(TestCaseProtocol):
+class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-methods
     """Mixin providing augmented functionality to all test cases."""
 
     load_cas: typing.Union[str, typing.Tuple[str, ...]] = tuple()
@@ -97,7 +97,7 @@ class TestCaseMixin(TestCaseProtocol):
         super().setUp()
         cache.clear()
 
-        if self.load_cas == "__all__":
+        if self.load_cas == "__all__":  # pragma: no cover
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
         elif self.load_cas == "__usable__":
             self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
@@ -116,7 +116,8 @@ class TestCaseMixin(TestCaseProtocol):
                 self.fail(f"{self.default_ca}: Not in {self.load_cas}.")
             self.ca = self.new_cas[self.default_ca]
 
-        if self.load_certs == "__all__":
+        if self.load_certs == "__all__":  # pragma: no cover; not needed yet.
+            # TODO: check when transition is complete
             self.load_certs = tuple(k for k, v in certs.items() if v.get("type") == "cert")
         elif self.load_certs == "__usable__":
             self.load_certs = tuple(
@@ -135,7 +136,7 @@ class TestCaseMixin(TestCaseProtocol):
         if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
             self.cert = self.new_certs[self.load_certs[0]]
         elif self.load_certs:
-            if self.default_cert not in self.load_certs:
+            if self.default_cert not in self.load_certs:  # pragma: no cover
                 self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
             self.cert = self.new_certs[self.default_cert]
 

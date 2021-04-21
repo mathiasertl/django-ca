@@ -13,6 +13,7 @@
 
 """Base classes for testing :py:mod:`django_ca.extensions`."""
 
+import abc
 import functools
 import json
 import operator
@@ -82,7 +83,7 @@ class TestValueDict(_TestValueDict, total=False):
 TestValues = typing.Dict[str, TestValueDict]
 
 
-class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin):
+class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin, metaclass=abc.ABCMeta):
     """TestCase mixin for tests that all extensions are expected to pass, including abstract base classes."""
 
     ext_class: typing.Type[ExtensionTypeVar]
@@ -153,9 +154,9 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
             ext = self.ext(config["expected"])
             self.assertEqual(ext.as_text(), config["expected_text"])
 
+    @abc.abstractmethod
     def test_config(self) -> None:
         """Test basic extension configuration."""
-        self.assertEqual(self.ext_class.key, "")
 
     def test_hash(self) -> None:
         """Test hash()."""
@@ -447,12 +448,9 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
         self,
         orig: typing.Any,
         new: typing.Any,
-        expected_value: typing.Any = None,
+        expected_value: typing.Any,
     ) -> None:
         """Assert that `new` is a different instance then `other` and has possibly updated values."""
-        if expected_value is None:
-            expected_value = orig.value.copy()  # copy just to be sure
-
         self.assertEqual(new.value, expected_value)
         self.assertIsNot(orig, new)  # assert that this is a different instance
         self.assertIsNot(orig.value, new.value)  # value is also different instance

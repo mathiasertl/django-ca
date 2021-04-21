@@ -17,7 +17,6 @@ import copy
 import inspect
 import json
 import os
-import re
 import shutil
 import tempfile
 import typing
@@ -559,10 +558,6 @@ VQIDAQAB
     def assertPostRevoke(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    def assertSerial(self, serial: str) -> None:  # pylint: disable=invalid-name
-        """Assert that the serial matches a basic regex pattern."""
-        self.assertIsNotNone(re.match("^[0-9A-F:]*$", serial), serial)
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard
