@@ -215,6 +215,19 @@ class AuthorityKeyIdentifier(
     authority_cert_issuer: GeneralNameList
     authority_cert_serial_number: Optional[int] = None
 
+    def __init__(
+        self,
+        value: Optional[
+            Union["x509.Extension[x509.AuthorityKeyIdentifier]", ParsableExtension, "SubjectKeyIdentifier"]
+        ] = None,
+    ) -> None:
+        if isinstance(value, SubjectKeyIdentifier):
+            self.critical = self.default_critical
+            self.from_subject_key_identifier(value)
+            self._test_value()
+        else:
+            super().__init__(value)
+
     def hash_value(self) -> Tuple[Optional[bytes], Tuple[x509.GeneralName, ...], Optional[int]]:
         return self.key_identifier, tuple(self.authority_cert_issuer), self.authority_cert_serial_number
 
@@ -266,14 +279,6 @@ class AuthorityKeyIdentifier(
         self.key_identifier = value.key_identifier
         self.authority_cert_issuer = GeneralNameList(value.authority_cert_issuer)
         self.authority_cert_serial_number = value.authority_cert_serial_number
-
-    def from_other(self, value: "SubjectKeyIdentifier") -> None:
-        if isinstance(value, SubjectKeyIdentifier):
-            self.critical = self.default_critical
-            self.from_subject_key_identifier(value)
-            self._test_value()
-        else:
-            super().from_other(value)
 
     def from_subject_key_identifier(self, ext: "SubjectKeyIdentifier") -> None:
         """Create an extension based on SubjectKeyIdentifier extension."""
