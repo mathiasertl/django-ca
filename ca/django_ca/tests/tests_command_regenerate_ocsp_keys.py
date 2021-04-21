@@ -13,12 +13,16 @@
 
 """Test the regenerate_ocsp_keys management command."""
 
+import typing
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 from ..models import Certificate
+from ..models import CertificateAuthority
+from ..typehints import PrivateKeyTypes
 from ..utils import add_colons
 from ..utils import ca_storage
 from .base import DjangoCATestCase
@@ -35,7 +39,13 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, DjangoCATestCase):
         self.load_usable_cas()
         self.existing_certs = list(Certificate.objects.values_list("pk", flat=True))
 
-    def assertKey(self, ca, key_type=RSAPrivateKey, password=None):  # pylint: disable=invalid-name
+    def assertKey(  # pylint: disable=invalid-name
+        self,
+        ca: CertificateAuthority,
+        key_type: typing.Type[PrivateKeyTypes] = RSAPrivateKey,
+        password: typing.Optional[bytes] = None,
+        excludes: typing.Optional[typing.Iterable[int]] = None,
+    ) -> typing.Tuple[PrivateKeyTypes, x509.Certificate]:
         """Assert that they key ispresent and can be read."""
         priv_path = "ocsp/%s.key" % ca.serial
         cert_path = "ocsp/%s.pem" % ca.serial
@@ -53,12 +63,19 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, DjangoCATestCase):
         cert = x509.load_pem_x509_certificate(cert, default_backend())
         self.assertIsInstance(cert, x509.Certificate)
 
-        db_cert = Certificate.objects.exclude(pk__in=self.existing_certs).first()
-        self.assertEqual(db_cert.authority_information_access.ocsp, [])
+        cert_qs = Certificate.objects.filter(ca=ca).exclude(pk__in=self.existing_certs)
+
+        if excludes:
+            cert_qs = cert_qs.exclude(pk__in=excludes)
+
+        db_cert = cert_qs.get()
+        self.assertIsNotNone(db_cert.authority_information_access)
+        # NOTE: mypy does not see that aia is *not* none due to above check
+        self.assertEqual(db_cert.authority_information_access.ocsp, [])  # type: ignore[union-attr]
 
         return priv, cert
 
-    def assertHasNoKey(self, serial):  # pylint: disable=invalid-name
+    def assertHasNoKey(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the key is **not** present."""
         priv_path = "ocsp/%s.key" % serial
         cert_path = "ocsp/%s.pem" % serial
@@ -94,11 +111,14 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, DjangoCATestCase):
         self.assertEqual(stderr, "")
         priv, cert = self.assertKey(self.cas["root"])
 
+        # get list of existing certificates
+        excludes = list(Certificate.objects.all().values_list("pk", flat=True))
+
         # write again
         stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        new_priv, new_cert = self.assertKey(self.cas["root"])
+        new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)
 
         # Key/Cert should now be different
         self.assertNotEqual(priv, new_priv)
