@@ -119,8 +119,9 @@ class TestCaseMixin(TestCaseProtocol):
         if self.load_certs == "__all__":
             self.load_certs = tuple(k for k, v in certs.items() if v.get("type") == "cert")
         elif self.load_certs == "__usable__":
-            self.load_certs = tuple(k for k, v in certs.items()
-                                    if v.get("type") == "cert" and v["cat"] == "generated")
+            self.load_certs = tuple(
+                k for k, v in certs.items() if v.get("type") == "cert" and v["cat"] == "generated"
+            )
         elif isinstance(self.load_certs, str):  # pragma: no cover
             self.fail(f"{self.load_certs}: Unknown alias for load_certs.")
 
@@ -311,7 +312,7 @@ class TestCaseMixin(TestCaseProtocol):
     def assertSignature(  # pylint: disable=invalid-name
         self,
         chain: typing.Iterable[CertificateAuthority],
-        cert: typing.Union[Certificate, CertificateAuthority]
+        cert: typing.Union[Certificate, CertificateAuthority],
     ) -> None:
         """Assert that `cert` is properly signed by `chain`.
 

@@ -33,7 +33,7 @@ from .base_mixins import TestCaseMixin
 class ImportCertTest(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    load_cas = ("root", )
+    load_cas = ("root",)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:

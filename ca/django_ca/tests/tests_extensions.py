@@ -81,16 +81,11 @@ from .base_mixins import TestCaseProtocol
 ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)  # type: ignore[type-arg]
 NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)  # type: ignore[type-arg]
 IterableExtensionTypeVar = typing.TypeVar(
-    "IterableExtensionTypeVar",
-    bound=IterableExtension  # type: ignore[type-arg]
+    "IterableExtensionTypeVar", bound=IterableExtension  # type: ignore[type-arg]
 )
-ListExtensionTypeVar = typing.TypeVar(
-    "ListExtensionTypeVar",
-    bound=ListExtension  # type: ignore[type-arg]
-)
+ListExtensionTypeVar = typing.TypeVar("ListExtensionTypeVar", bound=ListExtension)  # type: ignore[type-arg]
 OrderedSetExtensionTypeVar = typing.TypeVar(
-    "OrderedSetExtensionTypeVar",
-    bound=OrderedSetExtension  # type: ignore[type-arg]
+    "OrderedSetExtensionTypeVar", bound=OrderedSetExtension  # type: ignore[type-arg]
 )
 _TestValueDict = TypedDict(
     "_TestValueDict",
@@ -509,6 +504,7 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
     invalid_values: typing.List[typing.Any] = []
 
     if typing.TYPE_CHECKING:
+
         def ext(
             self, value: typing.Any = None, critical: typing.Optional[bool] = None
         ) -> IterableExtensionTypeVar:
@@ -521,7 +517,10 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
     def assertIsCopy(
         # pylint: disable=invalid-name
-        self, orig: typing.Any, new: typing.Any, expected_value: typing.Any = None
+        self,
+        orig: typing.Any,
+        new: typing.Any,
+        expected_value: typing.Any = None,
     ) -> None:
         """Assert that `new` is a different instance then `other` and has possibly updated values."""
         if expected_value is None:
@@ -660,7 +659,7 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
 class ListExtensionTestMixin(
     IterableExtensionTestMixin[ListExtensionTypeVar, list],  # type: ignore[type-arg] # pragma: py<3.8
-    typing.Generic[ListExtensionTypeVar]
+    typing.Generic[ListExtensionTypeVar],
 ):
     """Mixin for testing ListExtension-based extensions."""
 
@@ -891,7 +890,7 @@ class OrderedSetExtensionTestMixin(
         self,
         oper: typing.Callable[[typing.Any, typing.Any], typing.Any],
         update: bool = True,
-        infix: bool = True
+        infix: bool = True,
     ) -> None:
         """Test that an operator taking a single value works the same way with sets and this extension."""
         for config in self.test_values.values():
@@ -927,7 +926,7 @@ class OrderedSetExtensionTestMixin(
         self,
         oper: typing.Callable[[typing.Any, typing.Any], typing.Any],
         update: bool = True,
-        infix: bool = True
+        infix: bool = True,
     ) -> None:
         """Test that an operator taking a multiple values works the same way with sets and this extension."""
         for first_config in self.test_values.values():

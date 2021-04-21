@@ -23,7 +23,7 @@ from .base_mixins import TestCaseMixin
 class EditCATestCase(TestCaseMixin, TestCase):
     """Test the edit_ca management command."""
 
-    load_cas = ("root", )
+    load_cas = ("root",)
     issuer = "https://issuer-test.example.org"
     ian = "http://ian-test.example.org"
     ocsp = "http://ocsp-test.example.org"

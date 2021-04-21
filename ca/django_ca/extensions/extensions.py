@@ -717,9 +717,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
 
     def __init__(
         self,
-        value: Optional[
-            Union["x509.Extension[x509.InhibitAnyPolicy]", ParsableExtension, int]
-        ] = None,
+        value: Optional[Union["x509.Extension[x509.InhibitAnyPolicy]", ParsableExtension, int]] = None,
     ) -> None:
         if isinstance(value, int):
             self.critical = self.default_critical
