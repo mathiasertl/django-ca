@@ -53,22 +53,22 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
-from .. import ca_settings
-from ..extensions import KEY_TO_EXTENSION
-from ..extensions.base import CRLDistributionPointsBase
-from ..extensions.base import Extension
-from ..extensions.base import IterableExtension
-from ..extensions.base import ListExtension
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..models import X509CertMixin
-from ..signals import post_revoke_cert
-from ..subject import Subject
-from ..typehints import PrivateKeyTypes
-from ..typehints import TypedDict
-from ..utils import add_colons
-from ..utils import ca_storage
-from ..utils import x509_name
+from ... import ca_settings
+from ...extensions import KEY_TO_EXTENSION
+from ...extensions.base import CRLDistributionPointsBase
+from ...extensions.base import Extension
+from ...extensions.base import IterableExtension
+from ...extensions.base import ListExtension
+from ...models import Certificate
+from ...models import CertificateAuthority
+from ...models import X509CertMixin
+from ...signals import post_revoke_cert
+from ...subject import Subject
+from ...typehints import PrivateKeyTypes
+from ...typehints import TypedDict
+from ...utils import add_colons
+from ...utils import ca_storage
+from ...utils import x509_name
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
 KeyDict = TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
