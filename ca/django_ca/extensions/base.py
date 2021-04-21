@@ -403,7 +403,7 @@ class IterableExtension(
     def as_text(self) -> str:
         return "\n".join(["* %s" % v for v in self.serialize_value()])
 
-    def parse_value(self, value: ParsableItem) -> IterableItem:
+    def parse_value(self, value: Union[ParsableItem, IterableItem]) -> IterableItem:
         """Parse a single value (presumably from an iterable)."""
         return cast(IterableItem, value)
 
@@ -473,7 +473,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
 
     # Implement functions provided by list(). Class mentions that this provides the same methods.
 
-    def append(self, value: ParsableItem) -> None:
+    def append(self, value: Union[ParsableItem, IterableItem]) -> None:
         self.value.append(self.parse_value(value))
         self._test_value()
 
