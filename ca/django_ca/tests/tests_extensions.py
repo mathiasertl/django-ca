@@ -59,6 +59,7 @@ from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
 from ..typehints import CRLExtensionTypeTypeVar
+from ..typehints import ParsablePolicyInformation
 from ..typehints import TypedDict
 from ..utils import GeneralNameList
 from .base import DjangoCAWithCertTestCase
@@ -78,7 +79,7 @@ _TestValueDict = TypedDict(
         "expected_repr": str,
         "expected_serialized": typing.Any,
         "expected_text": str,
-        "extension_type": x509.ExtensionType,
+        "extension_type": typing.Optional[x509.ExtensionType],  # None for invalid extensions
     },
 )
 DistributionPointsBaseTypeVar = typing.TypeVar(
@@ -475,24 +476,29 @@ class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProto
     ext_class: typing.Type[ExtensionTypeVar]
     invalid_values = []
 
+    if typing.TYPE_CHECKING:
+        def ext(self, value: typing.Any = None, critical: typing.Optional[bool] = None) -> ExtensionTypeVar:
+            ...
+
     def assertSameInstance(self, orig_id, orig_value_id, new, expected_value):  # pylint: disable=invalid-name
         """Assert that `new` is still the same instance and has the expected value."""
         self.assertEqual(new.value, expected_value)
         self.assertEqual(id(new), orig_id)  # assert that this is really the same instance
         self.assertEqual(id(new.value), orig_value_id)
 
-    def assertEqualFunction(  # pylint: disable=invalid-name
+    def assertEqualFunction(
+        # pylint: disable=invalid-name
         self,
-        func,
-        init,
-        value,
-        update=True,
-        infix=True,
-        set_init=None,
-        set_value=None,
-        raises=None,
+        func: typing.Callable[..., typing.Any],
+        init: typing.Any,
+        value: typing.Any,
+        update: bool = True,
+        infix: bool = True,
+        set_init: typing.Optional[typing.Set[typing.Any]] = None,
+        set_value: typing.Any = None,
+        raises: typing.Optional[typing.Tuple[Exception, str]] = None,
     ):
-        """Assert that the given function f behaves the same way on a set and on the tested extension.
+        """Assert that the given function `func` behaves the same way on a set and on the tested extension.
 
         This example would test if ``set.update()`` and ``self.ext_class.update()`` would behave the same way,
         given a particular initial value and a particular value::
@@ -511,7 +517,7 @@ class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProto
         Parameters
         ----------
 
-        f : func
+        func : func
             The function to test
         init : set
             The initial value for the extension and the set.
@@ -527,6 +533,7 @@ class IterableExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseProto
             ``f`` will return the same object instance.
         infix : bool
             If the function represents an infix operator (some checks are different in this case).
+        raises :
         """
         if set_value is None:
             set_value = value
@@ -1614,11 +1621,11 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin[Cer
 
     text1, text2, text3, text4, text5, text6 = ["text%s" % i for i in range(1, 7)]
 
-    un1 = {
+    un1: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [text1],
     }
-    un2 = {
+    un2: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {
@@ -1626,7 +1633,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin[Cer
             }
         ],
     }
-    un3 = {
+    un3: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {
@@ -1639,7 +1646,7 @@ class CertificatePoliciesTestCase(ListExtensionTestMixin, ExtensionTestMixin[Cer
             }
         ],
     }
-    un4 = {
+    un4: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             text4,
