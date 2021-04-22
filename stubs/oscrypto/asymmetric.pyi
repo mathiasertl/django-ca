@@ -9,6 +9,10 @@ class PrivateKey:
         ...
 
 
+class Certificate:
+    ...
+
+
 def load_private_key(
     source: typing.Union[bytes, str, PrivateKeyInfo],
     password: typing.Optional[typing.Union[bytes, str]] = None,
