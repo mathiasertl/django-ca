@@ -32,8 +32,8 @@ BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))
 class DocumentationTestCase(TestCaseMixin, TestCase):
     """Main testcase class."""
 
-    load_cas = ("root", )
-    load_certs = ("root-cert", )
+    load_cas = ("root",)
+    load_certs = ("root-cert",)
 
     def get_globs(self) -> typing.Dict[str, typing.Any]:
         """Get globs for test cases."""

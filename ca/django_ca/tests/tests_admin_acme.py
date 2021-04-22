@@ -63,7 +63,10 @@ class AcmeAdminTestCaseMixin(
 ):
     """Admin view mixin that creates all model instances for ACME."""
 
-    load_cas = ("root", "child",)
+    load_cas = (
+        "root",
+        "child",
+    )
     new_cas: typing.Dict[str, CertificateAuthority]
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring

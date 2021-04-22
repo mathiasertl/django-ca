@@ -367,7 +367,10 @@ class OCSPTestGenericView(OCSPViewTestMixin, TestCase):
     """Test the generic view."""
 
     load_cas = ("root", "child")
-    load_certs = ("child-cert", "profile-ocsp", )
+    load_certs = (
+        "child-cert",
+        "profile-ocsp",
+    )
 
     @override_tmpcadir()
     def test_get(self) -> None:
@@ -638,8 +641,11 @@ class OCSPWithTZTestView(OCSPTestView):
 class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
     """Test generic OCSP view."""
 
-    load_cas = ("root", "child", )
-    load_certs = ("child-cert", )
+    load_cas = (
+        "root",
+        "child",
+    )
+    load_certs = ("child-cert",)
 
     @override_tmpcadir()
     def test_cert_get(self) -> None:

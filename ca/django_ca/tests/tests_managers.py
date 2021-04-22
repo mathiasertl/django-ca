@@ -210,7 +210,10 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
 
-    load_cas = ("root", "child", )
+    load_cas = (
+        "root",
+        "child",
+    )
 
     def test_default(self) -> None:
         """Test the correct CA is returned if CA_DEFAULT_CA is set."""
@@ -302,8 +305,12 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
 
         with self.assertRaisesRegex(KeyError, r"^'webserver'$"):
             Certificate.objects.create_cert(
-                self.ca, self.csr, subject=subject, add_crl_url=False, add_ocsp_url=False,
-                add_issuer_url=False
+                self.ca,
+                self.csr,
+                subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
             )
 
 

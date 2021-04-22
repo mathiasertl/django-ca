@@ -333,7 +333,7 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
 
-    load_cas = ("root", )
+    load_cas = ("root",)
 
     def setUp(self) -> None:
         super().setUp()
@@ -458,7 +458,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
 
-    load_cas = ("root", )
+    load_cas = ("root",)
 
     def setUp(self) -> None:
         super().setUp()

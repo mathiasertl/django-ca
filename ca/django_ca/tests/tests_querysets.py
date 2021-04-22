@@ -189,8 +189,8 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.ca.save()
 
         self.assertCountEqual(
-            CertificateAuthority.objects.enabled(), [c for c in self.new_cas.values()
-                                                     if c.name != self.ca.name]
+            CertificateAuthority.objects.enabled(),
+            [c for c in self.new_cas.values() if c.name != self.ca.name],
         )
         self.assertCountEqual(CertificateAuthority.objects.disabled(), [self.ca])
 

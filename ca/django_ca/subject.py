@@ -229,9 +229,7 @@ class Subject:
         return value
 
     def update(
-        self,
-        e: Optional[Union["Subject", ParsableSubject]] = None,
-        **f: Union[str, Iterable[str]]
+        self, e: Optional[Union["Subject", ParsableSubject]] = None, **f: Union[str, Iterable[str]]
     ) -> None:
         """Update S from subject/dict/iterable E and F."""
         if e is None:

@@ -66,8 +66,12 @@ urlpatterns = [
 class GenericCRLViewTests(TestCaseMixin, TestCase):
     """Test generic CRL view."""
 
-    load_cas = ("root", "child", "pwd", )
-    load_certs = ("child-cert", )
+    load_cas = (
+        "root",
+        "child",
+        "pwd",
+    )
+    load_certs = ("child-cert",)
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -144,9 +148,11 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
     def test_ca_crl_intermediate(self) -> None:
         """Test getting CRL for an intermediate CA."""
         child = self.new_cas["child"]
-        full_name = [x509.UniformResourceIdentifier(
-            "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
-        )]
+        full_name = [
+            x509.UniformResourceIdentifier(
+                "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
+            )
+        ]
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
         self.assertIsNotNone(child.key(password=None))
 

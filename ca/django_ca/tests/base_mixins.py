@@ -540,7 +540,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         ca: CertificateAuthority,
         csr: typing.Union[x509.CertificateSigningRequest, str, bytes],
         subject: typing.Optional[Subject],
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> Certificate:
         """Create a certificate with the given data."""
         cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
