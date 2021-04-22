@@ -57,7 +57,7 @@ from .base.mixins import TestCaseMixin
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import OrderedDict
-else:
+else:  # pragma: only py<3.8
     from typing_extensions import OrderedDict
 
 
