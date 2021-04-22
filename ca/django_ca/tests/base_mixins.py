@@ -688,17 +688,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         ca.save()
         return ca
 
-    @contextmanager
-    @classmethod
-    def load_cert(
-        cls, ca: CertificateAuthority, parsed: x509.Certificate, csr: str = "", profile: str = ""
-    ) -> Certificate:
-        """Load a certificate from the given data."""
-        cert = Certificate(ca=ca, csr=csr, profile=profile)
-        cert.x509_cert = parsed
-        cert.save()
-        return cert
-
     @classmethod
     def load_named_cert(cls, name: str) -> Certificate:
         """Load a certificate with the given mame."""

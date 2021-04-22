@@ -35,7 +35,6 @@ from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
 from django.test import TestCase
-from django.test import TransactionTestCase
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -45,11 +44,9 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
-from ... import ca_settings
 from ...extensions import KEY_TO_EXTENSION
 from ...models import Certificate
 from ...models import CertificateAuthority
-from ...subject import Subject
 from ...typehints import PrivateKeyTypes
 from ...typehints import TypedDict
 from ...utils import add_colons
@@ -469,132 +466,9 @@ VQIDAQAB
         super().tearDown()
         cache.clear()
 
-    @classmethod
-    def create_cert(
-        cls,
-        ca: CertificateAuthority,
-        csr: typing.Union[x509.CertificateSigningRequest, str, bytes],
-        subject: typing.Optional[Subject],
-        **kwargs: typing.Any
-    ) -> Certificate:
-        """Create a certificate with the given data."""
-        cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
-        cert.full_clean()
-        return cert
-
-    def load_usable_cas(self) -> None:
-        """Load CAs generated as fixture data."""
-        self.cas.update(
-            {
-                k: self.load_ca(name=v["name"], parsed=v["pub"]["parsed"])
-                for k, v in certs.items()
-                if v.get("type") == "ca" and k not in self.cas and v["key_filename"] is not False
-            }
-        )
-        self.cas["child"].parent = self.cas["root"]
-        self.cas["child"].save()
-        self.usable_cas = self.cas
-
-    def load_all_cas(self) -> None:
-        """Load all known CAs."""
-        self.cas.update(
-            {
-                k: self.load_ca(name=v["name"], parsed=v["pub"]["parsed"])
-                for k, v in certs.items()
-                if v.get("type") == "ca" and k not in self.cas
-            }
-        )
-        self.cas["child"].parent = self.cas["root"]
-        self.cas["child"].save()
-        self.usable_cas = {
-            name: ca for name, ca in self.cas.items() if certs[name]["key_filename"] is not False
-        }
-
-    def load_generated_certs(self) -> None:
-        """Load certificates created as fixture data."""
-        for name, data in [
-            (k, v)
-            for k, v in certs.items()
-            if v["type"] == "cert" and v["cat"] == "generated" and k not in self.certs
-        ]:
-            ca = self.cas[data["ca"]]
-            csr = data.get("csr", {}).get("pem", "")
-            self.certs[name] = self.load_cert(ca, parsed=data["pub"]["parsed"], csr=csr)
-
-        self.generated_certs = self.certs
-        self.ca_certs = {
-            k: v
-            for k, v in self.certs.items()
-            if k in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]
-        }
-
-    def load_all_certs(self) -> None:
-        """Load all known certs."""
-        for name, data in [(k, v) for k, v in certs.items() if v["type"] == "cert" and k not in self.certs]:
-            ca = self.cas[data["ca"]]
-            csr = data.get("csr", {}).get("pem", "")
-            profile = data.get("profile", ca_settings.CA_DEFAULT_PROFILE)
-            self.certs[name] = self.load_cert(ca, parsed=data["pub"]["parsed"], csr=csr, profile=profile)
-
-        self.generated_certs = {k: v for k, v in self.certs.items() if certs[k]["cat"] == "generated"}
-        self.ca_certs = {
-            k: v
-            for k, v in self.certs.items()
-            if k in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]
-        }
-
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
     """Base TestCase class."""
-
-
-@override_settings(CA_MIN_KEY_SIZE=512)
-class DjangoCAWithCATestCase(DjangoCATestCase):
-    """A test class that already has all CA predefined."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_all_cas()
-
-
-class DjangoCAWithGeneratedCAsTestCase(DjangoCATestCase):
-    """TestCase that has all generated (usable) CAs preloaded."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_usable_cas()
-
-
-class DjangoCAWithGeneratedCertsTestCase(DjangoCAWithCATestCase):
-    """TestCase that has all **generated** certificates preloaded."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_generated_certs()
-
-
-class DjangoCAWithCertTestCase(DjangoCAWithCATestCase):
-    """TestCase that has all certificates preloaded.
-
-    This class really loads all certificates that we know of. This includes certificates generated as test
-    fixture, certificates retrieved from the interned as example data and certificates from bug reports.
-    """
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_all_certs()
-
-
-class DjangoCATransactionTestCase(DjangoCATestCaseMixin, TransactionTestCase):
-    """Same as DjangoCATestCase but as TransactionTestCase."""
-
-
-class DjangoCAWithGeneratedCAsTransactionTestCase(DjangoCATransactionTestCase):
-    """Same as DjangoCAWithGeneratedCAsTestCase but as TransactionTestCase."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.load_usable_cas()
 
 
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
