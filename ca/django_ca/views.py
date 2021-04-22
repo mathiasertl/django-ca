@@ -23,6 +23,7 @@ import base64
 import binascii
 import logging
 import os
+import typing
 from datetime import datetime
 from datetime import timedelta
 
@@ -37,6 +38,7 @@ from cryptography.x509 import load_pem_x509_certificate
 from cryptography.x509 import ocsp
 
 from django.core.cache import cache
+from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.utils.decorators import method_decorator
@@ -85,7 +87,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
-    def get(self, request, serial):
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         encoding = parse_encoding(request.GET.get("encoding", self.type))
         cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=encoding, scope=self.scope)
@@ -117,7 +119,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 class OCSPView(View):
     """View to provide an OCSP responder."""
 
-    ca = None
+    ca: CertificateAuthority = None
     """The name or serial of your Certificate Authority."""
 
     responder_key = None
@@ -141,7 +143,7 @@ class OCSPView(View):
     ca_ocsp = False
     """If set to ``True``, validate child CAs instead."""
 
-    def get(self, request, data):
+    def get(self, request: HttpRequest, data: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
             data = base64.b64decode(data)
@@ -154,7 +156,7 @@ class OCSPView(View):
             log.exception(e)
             return self.fail()
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
             return self.process_ocsp_request(request.body)
@@ -162,7 +164,7 @@ class OCSPView(View):
             log.exception(e)
             return self.fail()
 
-    def fail(self, status=ocsp.OCSPResponseStatus.INTERNAL_ERROR):
+    def fail(self, status: int = ocsp.OCSPResponseStatus.INTERNAL_ERROR) -> HttpResponse:
         """Generic method to return a failure response."""
         return self.http_response(
             ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
@@ -222,7 +224,7 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
-    def http_response(self, data, status=200):
+    def http_response(self, data: bytes, status: int = 200) -> HttpResponse:
         """Get a HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type="application/ocsp-response")
 
@@ -313,7 +315,9 @@ class GenericOCSPView(OCSPView):
     argument must be the serial for this CA.
     """
 
-    def dispatch(self, request, serial, **kwargs):
+    def dispatch(  # type: ignore[override]
+        self, request: HttpRequest, serial: str, **kwargs: typing.Any
+    ) -> HttpResponse:
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:
@@ -321,13 +325,13 @@ class GenericOCSPView(OCSPView):
         self.ca = CertificateAuthority.objects.get(serial=serial)
         return super().dispatch(request, **kwargs)
 
-    def get_ca(self):
+    def get_ca(self) -> CertificateAuthority:
         return self.ca
 
-    def get_responder_key_data(self):
+    def get_responder_key_data(self) -> bytes:
         return read_file("ocsp/%s.key" % self.ca.serial.replace(":", ""))
 
-    def get_responder_cert_data(self):
+    def get_responder_cert_data(self) -> bytes:
         return read_file("ocsp/%s.pem" % self.ca.serial.replace(":", ""))
 
 
@@ -338,7 +342,7 @@ class GenericCAIssuersView(View):
     :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension.
     """
 
-    def get(self, request, serial):
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         ca = CertificateAuthority.objects.get(serial=serial)
         data = ca.x509_cert.public_bytes(encoding=Encoding.DER)
