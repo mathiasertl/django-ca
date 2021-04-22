@@ -13,8 +13,11 @@
 
 """Django form fields related to django-ca."""
 
+import typing
+
 from django import forms
 
+from .extensions import Extension
 from .profiles import profile
 from .subject import Subject
 from .utils import SUBJECT_FIELDS
@@ -26,7 +29,7 @@ from .widgets import SubjectWidget
 class SubjectField(forms.MultiValueField):
     """A MultiValue field for a :py:class:`~django_ca.subject.Subject`."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         fields = (
             forms.CharField(required=False),  # C
             forms.CharField(required=False),  # ST
@@ -40,9 +43,9 @@ class SubjectField(forms.MultiValueField):
         # NOTE: do not pass initial here as this is done on webserver invocation
         #       This screws up tests.
         kwargs.setdefault("widget", SubjectWidget)
-        super().__init__(fields=fields, require_all_fields=False, *args, **kwargs)
+        super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
-    def compress(self, data_list):
+    def compress(self, data_list: typing.List[typing.Tuple[str, str]]) -> Subject:
         # list comprehension is to filter empty fields
         return Subject([(k, v) for k, v in zip(SUBJECT_FIELDS, data_list) if v])
 
@@ -50,23 +53,27 @@ class SubjectField(forms.MultiValueField):
 class SubjectAltNameField(forms.MultiValueField):
     """A MultiValueField for a Subject Alternative Name extension."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         fields = (
             forms.CharField(required=False),
             forms.BooleanField(required=False),
         )
         kwargs.setdefault("widget", SubjectAltNameWidget)
         kwargs.setdefault("initial", ["", profile.cn_in_san])
-        super().__init__(fields=fields, require_all_fields=False, *args, **kwargs)
+        super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
-    def compress(self, data_list):
+    def compress(self, data_list: typing.Tuple[str, bool]) -> typing.Tuple[str, bool]:
         return data_list
 
 
 class MultiValueExtensionField(forms.MultiValueField):
     """A MultiValueField for multiple-choice extensions (e.g. :py:class:`~django_ca.extensions.KeyUsage`."""
 
-    def __init__(self, extension, *args, **kwargs):
+    def __init__(
+        self,
+        extension: typing.Type[Extension[typing.Any, typing.Any, typing.Any]],
+        **kwargs: typing.Any
+    ) -> None:
         self.extension = extension
         kwargs.setdefault("label", extension.name)
         ext = profile.extensions.get(self.extension.key)
@@ -74,15 +81,19 @@ class MultiValueExtensionField(forms.MultiValueField):
             ext = ext.serialize()
             kwargs.setdefault("initial", [ext["value"], ext["critical"]])
 
+        # NOTE: only use extensions that define CHOICES
+        choices: typing.Tuple[typing.Tuple[str, str], ...] = extension.CHOICES  # type: ignore[attr-defined]
         fields = (
-            forms.MultipleChoiceField(required=False, choices=extension.CHOICES),
+            forms.MultipleChoiceField(required=False, choices=choices),
             forms.BooleanField(required=False),
         )
 
-        widget = MultiValueExtensionWidget(choices=extension.CHOICES)
-        super().__init__(fields=fields, require_all_fields=False, widget=widget, *args, **kwargs)
+        widget = MultiValueExtensionWidget(choices=choices)
+        super().__init__(fields=fields, require_all_fields=False, widget=widget, **kwargs)
 
-    def compress(self, data_list):
+    def compress(
+        self, data_list: typing.Tuple[typing.List[str], bool]
+    ) -> Extension[typing.Any, typing.Any, typing.Any]:
         return self.extension(
             {
                 "critical": data_list[1],

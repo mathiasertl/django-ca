@@ -13,10 +13,13 @@
 
 """Form widgets for django-ca admin interface."""
 
+import typing
+
 from django.forms import widgets
 from django.utils.translation import gettext as _
 
 from . import ca_settings
+from .extensions import Extension
 
 
 class LabeledCheckboxInput(widgets.CheckboxInput):
@@ -26,11 +29,13 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 
-    def __init__(self, label, *args, **kwargs):
+    def __init__(self, label: str, *args: typing.Any, **kwargs: typing.Any) -> None:
         self.label = label
         super().__init__(*args, **kwargs)
 
-    def get_context(self, *args, **kwargs):
+    def get_context(
+        self, *args: typing.Any, **kwargs: typing.Any
+    ) -> typing.Dict[str, typing.Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["label"] = self.label
         return ctx
@@ -48,11 +53,11 @@ class LabeledTextInput(widgets.TextInput):
 
     template_name = "django_ca/forms/widgets/labeledtextinput.html"
 
-    def __init__(self, label, *args, **kwargs):
+    def __init__(self, label: str, *args: typing.Any, **kwargs: typing.Any):
         self.label = label
         super().__init__(*args, **kwargs)
 
-    def get_context(self, *args, **kwargs):
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["label"] = self.label
         ctx["widget"]["cssid"] = self.label.lower().replace(" ", "-")
@@ -75,7 +80,7 @@ class ProfileWidget(widgets.Select):
 
     template_name = "django_ca/forms/widgets/profile.html"
 
-    def get_context(self, *args, **kwargs):
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["desc"] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
             "description", ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("desc", "")
@@ -98,7 +103,7 @@ class CustomMultiWidget(widgets.MultiWidget):  # pylint: disable=abstract-method
 class SubjectWidget(CustomMultiWidget):
     """Widget for a :py:class:`~django_ca.subject.Subject`."""
 
-    def __init__(self, attrs=None):
+    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None) -> None:
         _widgets = (
             SubjectTextInput(label=_("Country"), attrs={"placeholder": "2 character country code"}),
             SubjectTextInput(label=_("State")),
@@ -110,9 +115,11 @@ class SubjectWidget(CustomMultiWidget):
         )
         super().__init__(_widgets, attrs)
 
-    def decompress(self, value):
+    def decompress(
+        self, value: typing.Optional[typing.Dict[str, typing.Union[str, typing.List[str]]]]
+    ) -> typing.List[typing.Union[str, typing.List[str]]]:
         if value is None:  # pragma: no cover
-            return ("", "", "", "", "", "")
+            return ["", "", "", "", "", ""]
 
         # Multiple OUs are not supported in webinterface
         org_unit = value.get("OU", "")
@@ -134,11 +141,12 @@ class SubjectWidget(CustomMultiWidget):
 class SubjectAltNameWidget(CustomMultiWidget):
     """Widget for a Subject Alternative Name extension."""
 
-    def __init__(self, attrs=None):
+    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None) -> None:
         _widgets = (widgets.TextInput(), LabeledCheckboxInput(label="Include CommonName"))
         super().__init__(_widgets, attrs)
 
-    def decompress(self, value):  # pragma: no cover
+    def decompress(self, value: typing.Optional[typing.Tuple[str, bool]]) -> typing.Tuple[str, bool]:
+        # Invoked when resigning a certificate
         if value:
             return value
         return ("", True)
@@ -147,14 +155,20 @@ class SubjectAltNameWidget(CustomMultiWidget):
 class MultiValueExtensionWidget(CustomMultiWidget):
     """A widget for multiple-choice extensions (e.g. :py:class:`~django_ca.extensions.KeyUsage`."""
 
-    def __init__(self, choices, attrs=None):
+    def __init__(
+        self,
+        choices: typing.Sequence[typing.Tuple[str, str]],
+        attrs: typing.Optional[typing.Dict[str, str]] = None
+    ) -> None:
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),
             LabeledCheckboxInput(label=_("critical")),
         )
         super().__init__(_widgets, attrs)
 
-    def decompress(self, value):
+    def decompress(
+        self, value: typing.Optional[Extension[typing.Any, typing.Any, typing.Any]]
+    ) -> typing.Tuple[typing.List[str], bool]:
         if value:
             return value.serialize_value(), value.critical
         return ([], False)

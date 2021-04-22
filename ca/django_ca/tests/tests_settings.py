@@ -16,11 +16,11 @@
 from datetime import timedelta
 from unittest import mock
 
-from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 from .. import ca_settings
 from ..subject import get_default_subject
+from .base.mixins import TestCaseMixin
 
 
 class SettingsTestCase(TestCase):
@@ -89,12 +89,8 @@ class DefaultCATestCase(TestCase):
             self.assertEqual(ca_settings.CA_DEFAULT_CA, "0")
 
 
-class ImproperlyConfiguredTestCase(TestCase):
+class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
     """Test various invalid configurations."""
-
-    def assertImproperlyConfigured(self, msg):  # pylint: disable=invalid-name; unittest standard
-        """Minor shortcut to ``assertRaisesRegex``."""
-        return self.assertRaisesRegex(ImproperlyConfigured, msg)
 
     def test_default_ecc_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ECC_CURVE``."""
