@@ -70,9 +70,7 @@ class MultiValueExtensionField(forms.MultiValueField):
     """A MultiValueField for multiple-choice extensions (e.g. :py:class:`~django_ca.extensions.KeyUsage`."""
 
     def __init__(
-        self,
-        extension: typing.Type[Extension[typing.Any, typing.Any, typing.Any]],
-        **kwargs: typing.Any
+        self, extension: typing.Type[Extension[typing.Any, typing.Any, typing.Any]], **kwargs: typing.Any
     ) -> None:
         self.extension = extension
         kwargs.setdefault("label", extension.name)

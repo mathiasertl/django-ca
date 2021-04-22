@@ -477,7 +477,7 @@ class CertificateTests(TestCaseMixin, TestCase):
         cert: X509CertMixin,
         name: str,
         key: str,
-        cls: typing.Type[Extension[typing.Any, typing.Any, typing.Any]]
+        cls: typing.Type[Extension[typing.Any, typing.Any, typing.Any]],
     ) -> None:
         """Assert that an extension for the given certificate is equal to what we have on record.
 

@@ -33,9 +33,7 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
         self.label = label
         super().__init__(*args, **kwargs)
 
-    def get_context(
-        self, *args: typing.Any, **kwargs: typing.Any
-    ) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["label"] = self.label
         return ctx
@@ -161,7 +159,7 @@ class MultiValueExtensionWidget(CustomMultiWidget):
     def __init__(
         self,
         choices: typing.Sequence[typing.Tuple[str, str]],
-        attrs: typing.Optional[typing.Dict[str, str]] = None
+        attrs: typing.Optional[typing.Dict[str, str]] = None,
     ) -> None:
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),

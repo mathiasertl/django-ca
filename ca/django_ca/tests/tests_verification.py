@@ -175,5 +175,5 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                         *paths,
                         untrusted=untrusted,
                         crl=[crl1, crl4, crl6],
-                        cert=cert
+                        cert=cert,
                     )
