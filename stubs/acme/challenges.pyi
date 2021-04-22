@@ -26,6 +26,8 @@ class KeyAuthorizationChallengeResponse(ChallengeResponse):
 
 
 class KeyAuthorizationChallenge(_TokenChallenge):
+    typ: str
+
     def __init__(self, token: bytes):
         ...
 

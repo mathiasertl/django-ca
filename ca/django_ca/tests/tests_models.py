@@ -15,6 +15,7 @@
 
 import os
 import re
+import typing
 from datetime import datetime
 from datetime import timedelta
 from unittest import mock
@@ -41,6 +42,7 @@ from freezegun import freeze_time
 from .. import ca_settings
 from ..constants import ReasonFlags
 from ..extensions import KEY_TO_EXTENSION
+from ..extensions import Extension
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
@@ -50,6 +52,7 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import Watcher
+from ..models import X509CertMixin
 from ..subject import Subject
 from ..utils import get_crl_cache_key
 from .base import certs
@@ -58,6 +61,8 @@ from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import AcmeValuesMixin
 from .base.mixins import TestCaseMixin
+
+ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
 
 
 class TestWatcher(TestCase):
@@ -326,7 +331,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     def test_no_auth_key_identifier(self) -> None:
         """Test an getting the CRL from a CA with no AuthorityKeyIdentifier."""
         # All CAs have a authority key identifier, so we mock that this exception is not present
-        def side_effect(cls):
+        def side_effect(cls: typing.Any) -> typing.NoReturn:
             # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
@@ -354,7 +359,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     def test_crl_invalid_scope(self) -> None:
         """"Try getting a CRL with an invalid scope."""
         with self.assertRaisesRegex(ValueError, r'^scope must be either None, "ca", "user" or "attribute"$'):
-            self.ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)
+            self.ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)  # type: ignore[arg-type]
 
     @override_tmpcadir()
     def test_cache_crls(self) -> None:
@@ -367,10 +372,10 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
             ]
 
         for _name, ca in self.usable_cas:
-            der_user_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.DER, "user")
-            pem_user_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.PEM, "user")
-            der_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.DER, "ca")
-            pem_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512, Encoding.PEM, "ca")
+            der_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
+            pem_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "user")
+            der_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
+            pem_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "ca")
 
             self.assertIsNone(cache.get(der_ca_key))
             self.assertIsNone(cache.get(pem_ca_key))
@@ -467,7 +472,13 @@ class CertificateTests(TestCaseMixin, TestCase):
     load_cas = "__all__"
     load_certs = "__all__"
 
-    def assertExtension(self, cert, name, key, cls):  # pylint: disable=invalid-name; unittest style
+    def assertExtension(  # pylint: disable=invalid-name; unittest style
+        self,
+        cert: X509CertMixin,
+        name: str,
+        key: str,
+        cls: typing.Type[Extension[typing.Any, typing.Any, typing.Any]]
+    ) -> None:
         """Assert that an extension for the given certificate is equal to what we have on record.
 
         Parameters
@@ -475,11 +486,11 @@ class CertificateTests(TestCaseMixin, TestCase):
 
         cert : :py:class:`django_ca.models.Certificate`
         name : str
-            Name of the certificate
+        Name of the certificate
         key : str
-            Extension name
+        Extension name
         cls : class
-            Expected extension class
+        Expected extension class
         """
         ext = getattr(cert, key)
 
@@ -594,7 +605,7 @@ class CertificateTests(TestCaseMixin, TestCase):
             self.cert.revoke(reason)
             got = self.cert.get_revocation_reason()
             self.assertIsInstance(got, x509.ReasonFlags)
-            self.assertEqual(got.name, reason.name)
+            self.assertEqual(got.name, reason.name)  # type: ignore[union-attr] # see check above
 
     def test_validate_past(self) -> None:
         """Test that model validation blocks revoked_date or revoked_invalidity in the future."""
@@ -656,7 +667,7 @@ class CertificateTests(TestCaseMixin, TestCase):
             )
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
-        def side_effect(cls):
+        def side_effect(cls: typing.Any) -> typing.NoReturn:
             # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
@@ -1000,7 +1011,9 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         )
         self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01)
 
-    def assertChallenge(self, challenge, typ, token, cls):  # pylint: disable=invalid-name
+    def assertChallenge(
+        self, challenge: ChallengeTypeVar, typ: str, token: bytes, cls: typing.Type[ChallengeTypeVar]
+    ) -> None:  # pylint: disable=invalid-name
         """Test that the ACME challenge is of the given type."""
         self.assertIsInstance(challenge, cls)
         self.assertEqual(challenge.typ, typ)
@@ -1083,13 +1096,15 @@ class AcmeCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             thumbprint=self.ACME_THUMBPRINT_1,
         )
         self.order = AcmeOrder.objects.create(account=self.account)
-        self.cert = AcmeCertificate.objects.create(order=self.order)
+        self.acme_cert = AcmeCertificate.objects.create(order=self.order)
 
     def test_acme_url(self) -> None:
         """Test the acme_url property."""
-        self.assertEqual(self.cert.acme_url, f"/django_ca/acme/{self.order.serial}/cert/{self.cert.slug}/")
+        self.assertEqual(
+            self.acme_cert.acme_url, f"/django_ca/acme/{self.order.serial}/cert/{self.acme_cert.slug}/"
+        )
 
     def test_parse_csr(self) -> None:
         """Test the parse_csr property."""
-        self.cert.csr = certs["root-cert"]["csr"]["pem"]
-        self.assertIsInstance(self.cert.parse_csr(), x509.CertificateSigningRequest)
+        self.acme_cert.csr = certs["root-cert"]["csr"]["pem"]
+        self.assertIsInstance(self.acme_cert.parse_csr(), x509.CertificateSigningRequest)
