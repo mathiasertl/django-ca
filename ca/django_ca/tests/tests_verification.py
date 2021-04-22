@@ -17,12 +17,14 @@ import os
 import shlex
 import subprocess
 import tempfile
+import typing
 from contextlib import contextmanager
 from io import StringIO
 
 from django.test import TestCase
 
 from ..models import CertificateAuthority
+from ..models import X509CertMixin
 from ..subject import Subject
 from .base import certs
 from .base import override_tmpcadir
@@ -36,13 +38,13 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         super().setUp()
         self.csr_pem = certs["root-cert"]["csr"]["pem"]  # just some CSR
 
-    def init_ca(self, name, **kwargs):
+    def init_ca(self, name: str, **kwargs: typing.Any) -> CertificateAuthority:
         """Create a CA."""
         self.cmd("init_ca", name, "/CN=%s" % name, **kwargs)
         return CertificateAuthority.objects.get(name=name)
 
     @contextmanager
-    def crl(self, ca, **kwargs):
+    def crl(self, ca: CertificateAuthority, **kwargs: typing.Any) -> typing.Iterator[str]:
         """Dump CRL to a tmpdir, yield path to it."""
         kwargs["ca"] = ca
         with tempfile.TemporaryDirectory() as tempdir:
@@ -51,7 +53,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             yield path
 
     @contextmanager
-    def dumped(self, *certificates):
+    def dumped(self, *certificates: X509CertMixin) -> typing.Iterator[typing.List[str]]:
         """Dump certificates to a tempdir, yield list of paths."""
         with tempfile.TemporaryDirectory() as tempdir:
             paths = []
@@ -64,8 +66,10 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             yield paths
 
     @contextmanager
-    def sign_cert(self, ca, hostname="example.com", **kwargs):
-        """Create a signed certificate."""
+    def sign_cert(
+        self, ca: CertificateAuthority, hostname: str = "example.com", **kwargs: typing.Any
+    ) -> typing.Iterator[str]:
+        """Create a signed certificate in a temporary directory."""
         stdin = StringIO(self.csr_pem)
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -75,7 +79,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             )
             yield out_path
 
-    def openssl(self, cmd, *args, **kwargs):
+    def openssl(self, cmd: str, *args: str, **kwargs: str) -> None:
         """Run openssl."""
         # pylint: disable=subprocess-run-check; we use an assertion
         cmd = cmd.format(*args, **kwargs)
@@ -85,14 +89,21 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         )
         self.assertEqual(proc.returncode, 0, proc.stderr.decode("utf-8"))
 
-    def verify(self, cmd, *args, **kwargs):
+    def verify(
+        self,
+        cmd: str,
+        *args: str,
+        untrusted: typing.Optional[typing.Iterable[str]] = None,
+        crl: typing.Optional[typing.Iterable[str]] = None,
+        **kwargs: str,
+    ) -> None:
         """Run openssl verify."""
-        if "untrusted" in kwargs:
-            cmd = "%s %s" % (" ".join("-untrusted %s" % path for path in kwargs.pop("untrusted")), cmd)
-        if "crl" in kwargs:
-            cmd = "%s %s" % (" ".join("-CRLfile %s" % path for path in kwargs.pop("crl")), cmd)
+        if untrusted:
+            cmd = "%s %s" % (" ".join("-untrusted %s" % path for path in untrusted), cmd)
+        if crl:
+            cmd = "%s %s" % (" ".join("-CRLfile %s" % path for path in crl), cmd)
 
-        return self.openssl("verify %s" % cmd, *args, **kwargs)
+        self.openssl("verify %s" % cmd, *args, **kwargs)
 
     @override_tmpcadir()
     def test_root_ca(self) -> None:

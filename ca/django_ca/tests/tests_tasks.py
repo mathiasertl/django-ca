@@ -96,11 +96,11 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         for data in self.new_cas.values():
             tasks.cache_crl(data.serial)
 
-            key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "ca")
+            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
-            key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "user")
+            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
 
     @override_tmpcadir()
@@ -112,11 +112,11 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         tasks.cache_crls()
 
         for data in self.new_cas.values():
-            key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "ca")
+            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
-            key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "user")
+            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
 
     @override_tmpcadir()
@@ -129,7 +129,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         tasks.cache_crls()
 
         for data in self.new_cas.values():
-            key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "ca")
+            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
             self.assertIsNone(cache.get(key))
 
     @override_tmpcadir()
@@ -204,21 +204,21 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
 
-    def refresh_from_db(self):
+    def refresh_from_db(self) -> None:
         """Refresh objects from database."""
         self.account.refresh_from_db()
         self.order.refresh_from_db()
         self.auth.refresh_from_db()
         self.chall.refresh_from_db()
 
-    def assertInvalid(self):  # pylint: disable=invalid-name; unittest standard
+    def assertInvalid(self) -> None:  # pylint: disable=invalid-name; unittest standard
         """Assert that the challenge validation failed."""
         self.refresh_from_db()
         self.assertEqual(self.chall.status, AcmeChallenge.STATUS_INVALID)
         self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_INVALID)
         self.assertEqual(self.order.status, AcmeOrder.STATUS_INVALID)
 
-    def assertValid(self, order_state=AcmeOrder.STATUS_READY):  # pylint: disable=invalid-name
+    def assertValid(self, order_state: str = AcmeOrder.STATUS_READY) -> None:  # pylint: disable=invalid-name
         """Assert that the challenge is valid."""
         self.refresh_from_db()
         self.assertEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
@@ -350,13 +350,15 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
-        self.cert = AcmeCertificate.objects.create(order=self.order, csr=certs["root-cert"]["csr"]["pem"])
+        self.acme_cert = AcmeCertificate.objects.create(
+            order=self.order, csr=certs["root-cert"]["csr"]["pem"]
+        )
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
 
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.cert.pk)
+            tasks.acme_issue_certificate(self.acme_cert.pk)
         self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
 
     def test_unknown_ert(self) -> None:
@@ -364,10 +366,10 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         AcmeCertificate.objects.all().delete()
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.cert.pk)
+            tasks.acme_issue_certificate(self.acme_cert.pk)
 
         self.assertEqual(
-            logcm.output, [f"ERROR:django_ca.tasks:Certificate with id={self.cert.pk} not found"]
+            logcm.output, [f"ERROR:django_ca.tasks:Certificate with id={self.acme_cert.pk} not found"]
         )
 
     def test_unusable_cert(self) -> None:
@@ -377,7 +379,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.save()
 
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.cert.pk)
+            tasks.acme_issue_certificate(self.acme_cert.pk)
 
         self.assertEqual(
             logcm.output, [f"ERROR:django_ca.tasks:{self.order}: Cannot issue certificate for this order"]
@@ -388,20 +390,20 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         """Test basic certificate issuance."""
 
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.cert.pk)
+            tasks.acme_issue_certificate(self.acme_cert.pk)
 
         self.assertEqual(
             logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
         )
-        self.cert.refresh_from_db()
+        self.acme_cert.refresh_from_db()
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.cert.cert.subject_alternative_name,
+            self.acme_cert.cert.subject_alternative_name,
             SubjectAlternativeName({"value": ["dns:%s" % self.hostname]}),
         )
-        self.assertEqual(self.cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
-        self.assertEqual(self.cert.cert.cn, self.hostname)
+        self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertEqual(self.acme_cert.cert.cn, self.hostname)
 
     @override_tmpcadir()
     def test_two_hostnames(self) -> None:
@@ -411,13 +413,13 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         AcmeAuthorization.objects.create(order=self.order, value=hostname2)
 
         # NOTE; not testing log output here, because order of hostnames might not be stable
-        tasks.acme_issue_certificate(self.cert.pk)
+        tasks.acme_issue_certificate(self.acme_cert.pk)
 
-        self.cert.refresh_from_db()
+        self.acme_cert.refresh_from_db()
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.cert.cert.subject_alternative_name,
+            self.acme_cert.cert.subject_alternative_name,
             SubjectAlternativeName(
                 {
                     "value": [
@@ -427,8 +429,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
                 }
             ),
         )
-        self.assertEqual(self.cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
-        self.assertIn(self.cert.cert.cn, [self.hostname, hostname2])
+        self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertIn(self.acme_cert.cert.cn, [self.hostname, hostname2])
 
     @override_tmpcadir()
     def test_not_after(self) -> None:
@@ -438,20 +440,20 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.save()
 
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.cert.pk)
+            tasks.acme_issue_certificate(self.acme_cert.pk)
 
         self.assertEqual(
             logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
         )
-        self.cert.refresh_from_db()
+        self.acme_cert.refresh_from_db()
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.cert.cert.subject_alternative_name,
+            self.acme_cert.cert.subject_alternative_name,
             SubjectAlternativeName({"value": ["dns:%s" % self.hostname]}),
         )
-        self.assertEqual(self.cert.cert.expires, not_after)
-        self.assertEqual(self.cert.cert.cn, self.hostname)
+        self.assertEqual(self.acme_cert.cert.expires, not_after)
+        self.assertEqual(self.acme_cert.cert.cn, self.hostname)
 
 
 @freeze_time(timestamps["everything_valid"])

@@ -17,8 +17,11 @@ import argparse
 import doctest
 import os
 import sys
+import typing
 from datetime import timedelta
 from io import StringIO
+from unittest import TestLoader
+from unittest import TestSuite
 from unittest import mock
 
 from cryptography.hazmat.primitives import hashes
@@ -39,11 +42,13 @@ from .base import override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(  # pylint: disable=unused-argument
+    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+) -> TestSuite:
     """Load doctests"""
 
     # Trick so that every doctest in module gets completely new argument parser
-    def set_up(self):
+    def set_up(self: typing.Any) -> None:
         self.globs["parser"] = argparse.ArgumentParser()
 
     tests.addTests(doctest.DocTestSuite("django_ca.management.actions", setUp=set_up))
@@ -55,7 +60,9 @@ class ParserTestCaseMixin(TestCaseMixin):
 
     parser: argparse.ArgumentParser
 
-    def assertParserError(self, args, expected, **kwargs):  # pylint: disable=invalid-name
+    def assertParserError(  # pylint: disable=invalid-name
+        self, args: typing.List[str], expected: str, **kwargs: typing.Any
+    ) -> str:
         """Assert that given args throw a parser error."""
 
         kwargs.setdefault("script", os.path.basename(sys.argv[0]))
@@ -287,8 +294,8 @@ class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
         args = self.parser.parse_args(["--password=foobar"])
         self.assertEqual(args.password, b"foobar")
 
-    @mock.patch("getpass.getpass", return_value="prompted")
-    def test_output(self, getpass):
+    @mock.patch("getpass.getpass", spec_set=True, return_value="prompted")
+    def test_output(self, getpass: mock.MagicMock) -> None:
         """Test prompting the user for a password."""
         prompt = "new prompt: "
         parser = argparse.ArgumentParser()
@@ -297,8 +304,8 @@ class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertEqual(args.password, b"prompted")
         getpass.assert_called_once_with(prompt=prompt)
 
-    @mock.patch("getpass.getpass", return_value="prompted")
-    def test_prompt(self, getpass):
+    @mock.patch("getpass.getpass", spec_set=True, return_value="prompted")
+    def test_prompt(self, getpass: mock.MagicMock) -> None:
         """Test using a custom prompt."""
         parser = argparse.ArgumentParser()
         parser.add_argument("--password", nargs="?", action=actions.PasswordAction)
@@ -405,34 +412,32 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_disabled(self) -> None:
         """Test using a disabled CA."""
-        ca = CertificateAuthority.objects.first()
-        ca.enabled = False
-        ca.save()
+        self.ca.enabled = False
+        self.ca.save()
 
         expected = """usage: {script} [-h] ca
 {script}: error: argument ca: {serial}: Certificate authority not found.\n"""
 
-        self.assertParserError([ca.serial], expected, serial=ca.serial)
+        self.assertParserError([self.ca.serial], expected, serial=self.ca.serial)
 
         # test allow_disabled=True
         parser = argparse.ArgumentParser()
         parser.add_argument("ca", action=actions.CertificateAuthorityAction, allow_disabled=True)
 
-        args = parser.parse_args([ca.serial])
-        self.assertEqual(args.ca, ca)
+        args = parser.parse_args([self.ca.serial])
+        self.assertEqual(args.ca, self.ca)
 
     def test_pkey_doesnt_exists(self) -> None:
         """Test error case where private key for CA does not exist."""
-        ca = CertificateAuthority.objects.first()
-        ca.private_key_path = "does-not-exist"
-        ca.save()
+        self.ca.private_key_path = "does-not-exist"
+        self.ca.save()
 
         self.assertParserError(
-            [ca.serial],
+            [self.ca.serial],
             "usage: {script} [-h] ca\n"
             "{script}: error: argument ca: {name}: {path}: Private key does not exist.\n",
-            name=ca.name,
-            path=ca.private_key_path,
+            name=self.ca.name,
+            path=self.ca.private_key_path,
         )
 
     @override_tmpcadir()
