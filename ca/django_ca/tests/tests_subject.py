@@ -332,6 +332,10 @@ class TestSubject(TestCase):
         self.assertEqual(subj, merged)
 
         subj = Subject("/O=Org/CN=example.com")
+        subj.update(Subject("/C=AT/CN=example.net").name)
+        self.assertEqual(subj, merged)
+
+        subj = Subject("/O=Org/CN=example.com")
         subj.update({"C": "AT", "CN": "example.net"})
         self.assertEqual(subj, merged)
 
@@ -349,6 +353,10 @@ class TestSubject(TestCase):
 
         subj = Subject("/O=Org/CN=example.com")
         subj.update([("C", "DE")], C="AT", CN="example.net")
+        self.assertEqual(subj, merged)
+
+        subj = Subject("/O=Org/CN=example.com")
+        subj.update("/C=AT/CN=example.net")
         self.assertEqual(subj, merged)
 
     def test_fields(self) -> None:

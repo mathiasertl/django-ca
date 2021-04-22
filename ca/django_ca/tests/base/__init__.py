@@ -28,9 +28,7 @@ from unittest.mock import patch
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
@@ -56,7 +54,6 @@ from ...typehints import PrivateKeyTypes
 from ...typehints import TypedDict
 from ...utils import add_colons
 from ...utils import ca_storage
-from ...utils import x509_name
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
 KeyDict = TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
@@ -471,22 +468,6 @@ VQIDAQAB
     def tearDown(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().tearDown()
         cache.clear()
-
-    @classmethod
-    def create_csr(
-        cls, subject: typing.Union[typing.List[typing.Tuple[str, str]], str]
-    ) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
-        """Generate a CSR with the given subject."""
-        private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=1024, backend=default_backend()
-        )
-        builder = x509.CertificateSigningRequestBuilder()
-
-        builder = builder.subject_name(x509_name(subject))
-        builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
-        request = builder.sign(private_key, hashes.SHA256(), default_backend())
-
-        return private_key, request
 
     @classmethod
     def create_cert(
