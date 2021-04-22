@@ -26,7 +26,7 @@ from ..models import CertificateAuthority
 from ..subject import Subject
 from .base import certs
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class CRLValidationTestCase(TestCaseMixin, TestCase):

@@ -19,7 +19,7 @@ from django.test import TestCase
 
 from .base import override_settings
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 expected = {
     "ecc": """{name} (enabled):

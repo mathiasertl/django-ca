@@ -23,7 +23,7 @@ from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
 from .base import certs
 from .base import uri
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class DistributionPointTestCase(TestCase):

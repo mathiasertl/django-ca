@@ -37,7 +37,7 @@ from ..signals import pre_issue_cert
 from ..subject import Subject
 from .base import override_tmpcadir
 from .base import timestamps
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])

@@ -23,7 +23,7 @@ from freezegun import freeze_time
 from ..models import Watcher
 from .base import override_settings
 from .base import timestamps
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 @override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])

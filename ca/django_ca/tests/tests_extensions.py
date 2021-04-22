@@ -66,7 +66,7 @@ from .base.extensions import ListExtensionTestMixin
 from .base.extensions import NullExtensionTestMixin
 from .base.extensions import OrderedSetExtensionTestMixin
 from .base.extensions import TestValues
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 def load_tests(  # pylint: disable=unused-argument

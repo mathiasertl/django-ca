@@ -19,7 +19,7 @@ from ..constants import ReasonFlags
 from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class RevokeCertTestCase(TestCaseMixin, TestCase):

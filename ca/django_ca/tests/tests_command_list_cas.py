@@ -25,7 +25,7 @@ from ..models import CertificateAuthority
 from .base import certs
 from .base import override_settings
 from .base import timestamps
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 {ecc[serial_colons]} - {ecc[name]}{ecc_state}

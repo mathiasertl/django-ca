@@ -33,7 +33,7 @@ from ..views import CertificateRevocationListView
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 app_name = "django_ca"
 urlpatterns = [

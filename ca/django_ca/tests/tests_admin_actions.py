@@ -39,8 +39,8 @@ from ..signals import pre_issue_cert
 from ..signals import pre_revoke_cert
 from .base import override_tmpcadir
 from .base import timestamps
-from .base_mixins import AdminTestCaseMixin
-from .base_mixins import DjangoCAModelTypeVar
+from .base.mixins import AdminTestCaseMixin
+from .base.mixins import DjangoCAModelTypeVar
 
 
 class AdminActionTestCaseMixin(

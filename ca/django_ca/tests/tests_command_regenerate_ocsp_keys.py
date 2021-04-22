@@ -29,7 +29,7 @@ from ..utils import add_colons
 from ..utils import ca_storage
 from .base import certs
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):

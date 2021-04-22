@@ -41,11 +41,11 @@ from ...typehints import ParsableDistributionPoint
 from ...typehints import ParsableExtension
 from ...typehints import TypedDict
 from ...utils import GeneralNameList
-from ..base_mixins import TestCaseMixin
-from ..base_mixins import TestCaseProtocol
 from . import dns
 from . import rdn
 from . import uri
+from .mixins import TestCaseMixin
+from .mixins import TestCaseProtocol
 
 ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)  # type: ignore[type-arg]
 NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)  # type: ignore[type-arg]

@@ -36,7 +36,7 @@ from ..subject import Subject
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument

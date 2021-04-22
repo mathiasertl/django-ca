@@ -22,7 +22,7 @@ from django.test import TestCase
 
 from .. import ca_settings
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class DumpCertTestCase(TestCaseMixin, TestCase):

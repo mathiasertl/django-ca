@@ -22,7 +22,7 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
-from ..base_mixins import TestCaseMixin
+from .mixins import TestCaseMixin
 
 
 class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover

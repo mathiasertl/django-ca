@@ -24,7 +24,7 @@ from ..models import Certificate
 from ..utils import add_colons
 from .base import override_settings
 from .base import timestamps
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class ListCertsTestCase(TestCaseMixin, TestCase):

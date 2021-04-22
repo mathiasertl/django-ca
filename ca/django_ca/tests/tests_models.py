@@ -56,8 +56,8 @@ from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-from .base_mixins import AcmeValuesMixin
-from .base_mixins import TestCaseMixin
+from .base.mixins import AcmeValuesMixin
+from .base.mixins import TestCaseMixin
 
 
 class TestWatcher(TestCase):

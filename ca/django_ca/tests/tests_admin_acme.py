@@ -25,8 +25,8 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
 from .base import override_tmpcadir
-from .base_mixins import DjangoCAModelTypeVar
-from .base_mixins import StandardAdminViewTestCaseMixin
+from .base.mixins import DjangoCAModelTypeVar
+from .base.mixins import StandardAdminViewTestCaseMixin
 
 PEM1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E

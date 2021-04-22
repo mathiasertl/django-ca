@@ -45,8 +45,8 @@ from ..utils import x509_name
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
-from .base_mixins import AdminTestCaseMixin
-from .base_mixins import StandardAdminViewTestCaseMixin
+from .base.mixins import AdminTestCaseMixin
+from .base.mixins import StandardAdminViewTestCaseMixin
 
 User = get_user_model()
 

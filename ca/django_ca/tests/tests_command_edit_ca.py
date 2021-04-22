@@ -17,7 +17,7 @@ from django.test import TestCase
 
 from ..models import CertificateAuthority
 from .base import override_tmpcadir
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class EditCATestCase(TestCaseMixin, TestCase):

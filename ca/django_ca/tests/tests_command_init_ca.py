@@ -36,7 +36,7 @@ from ..utils import int_to_hex
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
-from .base_mixins import TestCaseMixin
+from .base.mixins import TestCaseMixin
 
 
 class InitCATest(TestCaseMixin, TestCase):

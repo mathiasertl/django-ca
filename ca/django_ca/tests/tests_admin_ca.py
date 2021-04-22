@@ -20,8 +20,8 @@ from django.test import TestCase
 from django.test import override_settings
 
 from ..models import CertificateAuthority
-from .base_mixins import AdminTestCaseMixin
-from .base_mixins import StandardAdminViewTestCaseMixin
+from .base.mixins import AdminTestCaseMixin
+from .base.mixins import StandardAdminViewTestCaseMixin
 
 
 class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[CertificateAuthority], TestCase):
