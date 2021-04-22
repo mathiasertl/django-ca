@@ -19,6 +19,7 @@ from importlib import reload
 
 import acme
 
+from django.test import TestCase
 from django.urls import include
 from django.urls import path
 from django.urls import reverse
@@ -27,7 +28,6 @@ from django.urls.exceptions import NoReverseMatch
 from .. import urls
 from ..acme.constants import IdentifierType
 from ..acme.constants import Status
-from .base import DjangoCATestCase
 from .base import override_settings
 
 urlpatterns = [
@@ -35,7 +35,7 @@ urlpatterns = [
 ]
 
 
-class URLPatternTestCase(DjangoCATestCase):
+class URLPatternTestCase(TestCase):
     """Test that URL patterns are not enabled when CA_ENABLE_ACME."""
 
     @contextmanager
@@ -79,7 +79,7 @@ class URLPatternTestCase(DjangoCATestCase):
         reverse("django_ca:acme-new-nonce", kwargs={"serial": "AB:CD"})
 
 
-class TestConstantsTestCase(DjangoCATestCase):
+class TestConstantsTestCase(TestCase):
     """Test constants."""
 
     def test_status_enum(self) -> None:

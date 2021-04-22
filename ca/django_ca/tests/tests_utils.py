@@ -56,7 +56,6 @@ from ..utils import validate_hostname
 from ..utils import validate_key_parameters
 from ..utils import x509_name
 from ..utils import x509_relative_name
-from .base import DjangoCATestCase
 from .base import dns
 from .base import override_settings
 from .base import override_tmpcadir
@@ -173,7 +172,7 @@ class NameMatchTest(TestCase):
         self.match("/C=AT/ST=Vienna/L=\"Loc Fünf\"/O='Org Name'/OU=Org Unit/CN=example.com", expected)
 
 
-class ReadFileTestCase(DjangoCATestCase):
+class ReadFileTestCase(TestCase):
     """Test :py:func:`django_ca.utils.read_file`."""
 
     @override_tmpcadir()
@@ -320,7 +319,7 @@ class RelativeNameTestCase(TestCase):
         self.assertEqual(x509_relative_name([("CN", "example.com")]), expected)
 
 
-class ValidateEmailTestCase(DjangoCATestCase):
+class ValidateEmailTestCase(TestCase):
     """Test :py:func:`django_ca.utils.validate_email`."""
 
     def test_basic(self) -> None:
@@ -937,7 +936,7 @@ http://www.example.net"""
             multiline_url_validator("http://www.example.com\nfoo\nhttp://example.org")
 
 
-class GetCertBuilderTestCase(DjangoCATestCase):
+class GetCertBuilderTestCase(TestCase):
     """Test :py:func:`django_ca.utils.get_cert_builder`."""
 
     def parse_date(self, date):
@@ -1012,7 +1011,7 @@ class ValidateKeyParametersTest(TestCase):
             validate_key_parameters(16, "RSA")
 
 
-class GeneralNameListTestCase(DjangoCATestCase):
+class GeneralNameListTestCase(TestCase):
     """Test GeneralNameList."""
 
     dns1 = "example.com"

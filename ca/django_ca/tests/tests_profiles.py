@@ -16,6 +16,8 @@
 import doctest
 from datetime import timedelta
 
+from django.test import TestCase
+
 from .. import ca_settings
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
@@ -33,7 +35,6 @@ from ..profiles import profiles
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import parse_hash_algorithm
-from .base import DjangoCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -41,7 +42,7 @@ from .base_mixins import TestCaseMixin
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
+class DocumentationTestCase(TestCaseMixin, TestCase):
     """Test sphinx docs."""
 
     def setUp(self) -> None:
@@ -72,7 +73,7 @@ class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
         doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
 
-class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
+class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
 
     def create_cert(self, prof, *args, **kwargs):
@@ -656,7 +657,7 @@ class ProfileTestCase(TestCaseMixin, DjangoCATestCase):
             self.assertEqual(repr(profiles[name]), "<Profile: '%s'>" % name)
 
 
-class GetProfileTestCase(DjangoCATestCase):
+class GetProfileTestCase(TestCase):
     """Test the get_profile function."""
 
     def test_basic(self) -> None:
@@ -669,7 +670,7 @@ class GetProfileTestCase(DjangoCATestCase):
         self.assertEqual(prof.name, ca_settings.CA_DEFAULT_PROFILE)
 
 
-class ProfilesTestCase(DjangoCATestCase):
+class ProfilesTestCase(TestCase):
     """Tests the ``profiles`` proxy."""
 
     def test_basic(self) -> None:

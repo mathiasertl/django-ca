@@ -17,13 +17,13 @@ from datetime import timedelta
 from unittest import mock
 
 from django.core.exceptions import ImproperlyConfigured
+from django.test import TestCase
 
 from .. import ca_settings
 from ..subject import get_default_subject
-from .base import DjangoCATestCase
 
 
-class SettingsTestCase(DjangoCATestCase):
+class SettingsTestCase(TestCase):
     """Test some standard settings."""
 
     def test_none_profiles(self) -> None:
@@ -70,7 +70,7 @@ class SettingsTestCase(DjangoCATestCase):
             self.assertFalse(ca_settings.CA_USE_CELERY)
 
 
-class DefaultCATestCase(DjangoCATestCase):
+class DefaultCATestCase(TestCase):
     """Test the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting."""
 
     def test_no_setting(self) -> None:
@@ -89,7 +89,7 @@ class DefaultCATestCase(DjangoCATestCase):
             self.assertEqual(ca_settings.CA_DEFAULT_CA, "0")
 
 
-class ImproperlyConfiguredTestCase(DjangoCATestCase):
+class ImproperlyConfiguredTestCase(TestCase):
     """Test various invalid configurations."""
 
     def assertImproperlyConfigured(self, msg):  # pylint: disable=invalid-name; unittest standard

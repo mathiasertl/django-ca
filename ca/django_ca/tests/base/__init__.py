@@ -22,7 +22,6 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
-from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import cryptography
@@ -34,7 +33,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
-from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -467,10 +465,6 @@ VQIDAQAB
         cache.clear()
 
 
-class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):
-    """Base TestCase class."""
-
-
 class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
     """TestCase with some helper functions for Selenium."""
 
@@ -520,34 +514,6 @@ class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # prag
     def wait_for_page_load(self, wait: int = 2) -> None:
         """Wait for the page to load."""
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
-
-
-class TestCaseMixinBase:
-    """Base class for all mixins.
-
-    This class merely adds assert* stubs when type checking is enabled. The only purpose of this class is to
-    make mypy happy.
-    """
-
-    if typing.TYPE_CHECKING:
-        # pylint: disable=unused-argument,missing-function-docstring,invalid-name
-
-        def assertCountEqual(
-            self,
-            first: typing.Iterable[typing.Any],
-            second: typing.Iterable[typing.Any],
-            msg: typing.Optional[str] = None,
-        ) -> None:
-            ...
-
-        def assertEqual(
-            self, first: typing.Any, second: typing.Any, msg: typing.Optional[str] = None
-        ) -> None:
-            ...
-
-        @contextmanager
-        def mute_celery(self) -> typing.Iterator[MagicMock]:
-            ...
 
 
 __all__ = ("override_settings",)

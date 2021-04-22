@@ -20,15 +20,16 @@ import tempfile
 from contextlib import contextmanager
 from io import StringIO
 
+from django.test import TestCase
+
 from ..models import CertificateAuthority
 from ..subject import Subject
-from .base import DjangoCATestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
 
-class CRLValidationTestCase(TestCaseMixin, DjangoCATestCase):
+class CRLValidationTestCase(TestCaseMixin, TestCase):
     """CRL validation tests."""
 
     def setUp(self) -> None:
