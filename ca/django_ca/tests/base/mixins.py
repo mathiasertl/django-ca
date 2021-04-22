@@ -747,7 +747,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
 
     @property
-    def usable_cas(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
+    def usable_cas(self) -> typing.Iterator[typing.Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
         for name, ca in self.new_cas.items():
             if certs[name]["key_filename"]:
