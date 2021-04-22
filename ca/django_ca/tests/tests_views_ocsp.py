@@ -15,6 +15,7 @@
 
 import base64
 import os
+import sys
 import typing
 from datetime import datetime
 from datetime import timedelta
@@ -53,6 +54,11 @@ from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import TestCaseMixin
+
+if sys.version_info >= (3, 8):  # pragma: only py>=3.8
+    from typing import OrderedDict
+else:
+    from typing_extensions import OrderedDict
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
@@ -248,7 +254,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo_str)
 
     def assertOCSPSubject(  # pylint: disable=invalid-name
-        self, got: typing.OrderedDict[str, str], expected: Subject
+        self, got: OrderedDict[str, str], expected: Subject
     ) -> None:
         """Assert that the OCSP subject matches."""
         translated = {}
