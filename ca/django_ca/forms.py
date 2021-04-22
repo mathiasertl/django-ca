@@ -13,6 +13,7 @@
 
 """Specialized Django forms for the admin interface."""
 
+import typing
 from datetime import date
 from datetime import datetime
 
@@ -21,6 +22,7 @@ from cryptography.hazmat.primitives import hashes
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.admin.widgets import AdminSplitDateTime
+from django.forms.models import ModelFormOptions
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -32,17 +34,18 @@ from .fields import MultiValueExtensionField
 from .fields import SubjectAltNameField
 from .fields import SubjectField
 from .models import Certificate
+from .models import CertificateAuthority
 from .utils import EXTENDED_KEY_USAGE_DESC
 from .utils import KEY_USAGE_DESC
 from .utils import parse_general_name
 from .widgets import ProfileWidget
 
 
-def _initial_expires():
+def _initial_expires() -> datetime:
     return datetime.today() + ca_settings.CA_DEFAULT_EXPIRES
 
 
-def _profile_choices():
+def _profile_choices() -> typing.Iterable[typing.Tuple[str, str]]:
     return sorted([(p, p) for p in ca_settings.CA_PROFILES], key=lambda e: e[0])
 
 
@@ -59,11 +62,13 @@ class X509CertMixinAdminForm(forms.ModelForm):
       present in the form.
     """
 
-    def __init__(self, *args, **kwargs):
+    _meta: ModelFormOptions
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
 
         meta = self._meta  # pylint: disable=no-member; false positive
-        if not getattr(meta, "help_texts", None):  # pragma: no cover
+        if meta.help_texts is None:  # pragma: no cover
             # help_texts is always set since we have a Meta class, but keeping this here as a precaution.
             meta.help_texts = {}
 
@@ -90,7 +95,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
 
     This is used by forms for creating a new certificate and resigning an existing one."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
 
         # Set choices so we can filter out CAs where the private key does not exist locally
@@ -140,7 +145,7 @@ class CreateCertificateBaseForm(forms.ModelForm):
     )
     tls_feature = MultiValueExtensionField(extension=TLSFeature)
 
-    def clean_algorithm(self):  # pylint: disable=missing-function-docstring
+    def clean_algorithm(self) -> hashes.HashAlgorithm:  # pylint: disable=missing-function-docstring
         algo = self.cleaned_data["algorithm"]
         try:
             algo = getattr(hashes, algo.upper())()
@@ -148,27 +153,27 @@ class CreateCertificateBaseForm(forms.ModelForm):
             # We only add what is known to cryptography in `choices`, and other values posted are caught
             # during Djangos standard form validation, so this should never happen.
             raise forms.ValidationError(_("Unknown hash algorithm: %s") % algo) from ex
-        return algo
+        return algo  # type: ignore[no-any-return]
 
-    def clean_expires(self):  # pylint: disable=missing-function-docstring
-        expires = self.cleaned_data["expires"]
+    def clean_expires(self) -> datetime:  # pylint: disable=missing-function-docstring
+        expires: datetime = self.cleaned_data["expires"]
         if expires < date.today():
             raise forms.ValidationError(_("Certificate cannot expire in the past."))
         return expires
 
-    def clean_password(self):  # pylint: disable=missing-function-docstring
-        password = self.cleaned_data["password"]
+    def clean_password(self) -> typing.Optional[bytes]:  # pylint: disable=missing-function-docstring
+        password: str = self.cleaned_data["password"]
         if not password:
             return None
         return password.encode("utf-8")
 
-    def clean(self):
+    def clean(self) -> typing.Dict[str, typing.Any]:
         data = super().clean()
         expires = data.get("expires")
-        ca = data.get("ca")
+        ca: CertificateAuthority = data["ca"]
         password = data.get("password")
         subject = data.get("subject")
-        cn_in_san = data.get("subject_alternative_name")[1]
+        cn_in_san = typing.cast(typing.Tuple[str, bool], data.get("subject_alternative_name"))[1]
 
         # test the password
         try:
@@ -204,8 +209,8 @@ class CreateCertificateBaseForm(forms.ModelForm):
 class CreateCertificateForm(CreateCertificateBaseForm):
     """Admin form for creating a completely new certificate."""
 
-    def clean_csr(self):  # pylint: disable=missing-function-docstring
-        data = self.cleaned_data["csr"]
+    def clean_csr(self) -> str:  # pylint: disable=missing-function-docstring
+        data: str = self.cleaned_data["csr"]
         lines = data.splitlines()
         if (
             not lines

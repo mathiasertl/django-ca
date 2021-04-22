@@ -147,9 +147,12 @@ class SubjectAltNameWidget(CustomMultiWidget):
 
     def decompress(self, value: typing.Optional[typing.Tuple[str, bool]]) -> typing.Tuple[str, bool]:
         # Invoked when resigning a certificate
-        if value:
+        if value:  # pragma: no branch
             return value
-        return ("", True)
+
+        # Since the value is at least a Tuple[str, bool], the above check is never False.
+        # Keep this here just to be sure.
+        return ("", True)  # pragma: no cover
 
 
 class MultiValueExtensionWidget(CustomMultiWidget):
