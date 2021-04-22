@@ -19,7 +19,6 @@ from cryptography import x509
 
 from django import template
 from django.contrib.admin.templatetags.admin_modify import submit_row
-from django.template import context
 
 from ..utils import add_colons
 from ..utils import bytes_to_hex
@@ -66,6 +65,6 @@ def is_user_notice(value: typing.Any) -> bool:
 
 
 @register.inclusion_tag("django_ca/admin/submit_line.html", takes_context=True)
-def django_ca_certificate_submit_row(context: context.RequestContext) -> context.Context:
+def django_ca_certificate_submit_row(context: template.context.RequestContext) -> template.context.Context:
     """Submit row for certificate change view."""
     return submit_row(context)
