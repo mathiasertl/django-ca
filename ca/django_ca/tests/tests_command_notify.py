@@ -16,19 +16,22 @@
 from datetime import timedelta
 
 from django.core import mail
+from django.test import TestCase
 
 from freezegun import freeze_time
 
 from ..models import Watcher
-from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
 from .base import timestamps
 from .base_mixins import TestCaseMixin
 
 
 @override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
-class NotifyExpiringCertsTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
+
+    load_cas = "__usable__"
+    load_certs = "__usable__"
 
     @freeze_time(timestamps["everything_valid"])
     def test_no_certs(self) -> None:
@@ -50,27 +53,27 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestC
     @freeze_time(timestamps["ca_certs_expiring"])
     def test_one_watcher(self) -> None:
         """Test one expiring certificate."""
-        cert = self.certs["root-cert"]
         email = "user1@example.com"
         watcher = Watcher.from_addr("First Last <%s>" % email)
-        cert.watchers.add(watcher)
-        timestamp = cert.expires.strftime("%Y-%m-%d")
+        self.cert.watchers.add(watcher)
+        timestamp = self.cert.expires.strftime("%Y-%m-%d")
 
         stdout, stderr = self.cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "Certificate expiration for %s on %s" % (cert.cn, timestamp))
+        self.assertEqual(
+            mail.outbox[0].subject, "Certificate expiration for %s on %s" % (self.cert.cn, timestamp)
+        )
         self.assertEqual(mail.outbox[0].to, [email])
 
     def test_notification_days(self) -> None:
         """Test that user gets multiple notifications of expiring certs."""
-        cert = self.certs["root-cert"]
         email = "user1@example.com"
         watcher = Watcher.from_addr("First Last <%s>" % email)
-        cert.watchers.add(watcher)
+        self.cert.watchers.add(watcher)
 
-        with freeze_time(cert.expires - timedelta(days=20)) as frozen_time:
+        with freeze_time(self.cert.expires - timedelta(days=20)) as frozen_time:
             for _i in reversed(range(0, 20)):
                 stdout, stderr = self.cmd("notify_expiring_certs", days=14)
                 self.assertEqual(stdout, "")

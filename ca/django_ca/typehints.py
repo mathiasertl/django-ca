@@ -73,6 +73,7 @@ ParsableKeyType = Literal["RSA", "DSA", "ECC"]
 ParsableKeyCurve = Optional[Union[ec.EllipticCurve, str]]
 ParsableSubject = Union[
     str,
+    # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001
     Mapping[x509.ObjectIdentifier, Union[str, Iterable[str]]],
     Mapping[str, Union[str, Iterable[str]]],
     x509.Name,

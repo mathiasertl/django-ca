@@ -16,18 +16,18 @@
 from http import HTTPStatus
 
 from django.test import Client
+from django.test import TestCase
 from django.test import override_settings
 
 from ..models import CertificateAuthority
-from .base import DjangoCAWithCATestCase
 from .base_mixins import AdminTestCaseMixin
 from .base_mixins import StandardAdminViewTestCaseMixin
 
 
-class CertificateAuthorityAdminViewTestCase(
-    StandardAdminViewTestCaseMixin[CertificateAuthority], DjangoCAWithCATestCase
-):
+class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[CertificateAuthority], TestCase):
     """Test CA admin views."""
+
+    load_cas = "__all__"
 
     model = CertificateAuthority
     media_css = (
@@ -41,25 +41,30 @@ class CertificateAuthorityAdminViewTestCase(
         self.test_change_view()
 
 
-class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], DjangoCAWithCATestCase):
+class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCase):
     """Tests for downloading the certificate bundle."""
 
+    default_ca = "root"
+    load_cas = (
+        "root",
+        "child",
+    )
     model = CertificateAuthority
     view_name = "django_ca_certificateauthority_download_bundle"
 
     @property
     def url(self) -> str:
         """Shortcut property to get the bundle URL for the root CA."""
-        return self.get_url(self.cas["root"])
+        return self.get_url(self.ca)
 
     def test_root(self) -> None:
         """Test downloading the bundle for the root CA."""
-        self.assertBundle(self.cas["root"], [self.cas["root"]], "root_example_com_bundle.pem")
+        self.assertBundle(self.ca, [self.ca], "root_example_com_bundle.pem")
 
     def test_child(self) -> None:
         """Test downloading the bundle for a child CA."""
         self.assertBundle(
-            self.cas["child"], [self.cas["child"], self.cas["root"]], "child_example_com_bundle.pem"
+            self.new_cas["child"], [self.new_cas["child"], self.ca], "child_example_com_bundle.pem"
         )
 
     def test_invalid_format(self) -> None:

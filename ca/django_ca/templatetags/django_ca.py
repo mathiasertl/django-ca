@@ -13,10 +13,13 @@
 
 """Template tags used by the admin interface."""
 
+import typing
+
 from cryptography import x509
 
 from django import template
 from django.contrib.admin.templatetags.admin_modify import submit_row
+from django.template import context
 
 from ..utils import add_colons
 from ..utils import bytes_to_hex
@@ -33,7 +36,7 @@ register.filter("format_relative_name", format_relative_name)
 
 
 @register.filter
-def format_general_names(value):
+def format_general_names(value: typing.Iterable[x509.GeneralName]) -> typing.List[str]:
     """A template tag to format general names.
 
     Note that currently general names always occur as list.
@@ -42,7 +45,7 @@ def format_general_names(value):
 
 
 @register.filter
-def as_hex(value):
+def as_hex(value: typing.Union[int, bytes]) -> str:
     """Takes a bytes value and returns its hex representation."""
 
     if isinstance(value, int):
@@ -51,18 +54,18 @@ def as_hex(value):
 
 
 @register.filter
-def oid_name(value):
+def oid_name(value: x509.ObjectIdentifier) -> str:
     """Get name of an OID."""
     return value._name  # pylint: disable=protected-access; only way to get the OID name
 
 
 @register.filter
-def is_user_notice(value):
+def is_user_notice(value: typing.Any) -> bool:
     """Return ``True`` if `value` is :py:class:`~cg:cryptography.x509.UserNotice`."""
     return isinstance(value, x509.UserNotice)
 
 
 @register.inclusion_tag("django_ca/admin/submit_line.html", takes_context=True)
-def django_ca_certificate_submit_row(context):
+def django_ca_certificate_submit_row(context: context.RequestContext) -> context.Context:
     """Submit row for certificate change view."""
     return submit_row(context)

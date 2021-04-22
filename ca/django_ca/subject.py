@@ -19,7 +19,6 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -139,7 +138,9 @@ class Subject:
     def __len__(self) -> int:
         return len(self._data)
 
-    def __setitem__(self, key: Union[x509.ObjectIdentifier, str], value: Union[str, List[str]]) -> None:
+    def __setitem__(
+        self, key: Union[x509.ObjectIdentifier, str], value: Optional[Union[str, Iterable[str]]]
+    ) -> None:
         if isinstance(key, str):
             key = NAME_OID_MAPPINGS[key]
 
@@ -229,24 +230,24 @@ class Subject:
 
     def update(
         self,
-        e: Optional[
-            Union[
-                "Subject",
-                Mapping[Union[str, x509.ObjectIdentifier], Union[str, List[str]]],
-                Iterable[Tuple[Union[str, x509.ObjectIdentifier], Union[str, List[str]]]],
-            ]
-        ] = None,
-        **f: Union[str, List[str]]
+        e: Optional[Union["Subject", ParsableSubject]] = None,
+        **f: Union[str, Iterable[str]]
     ) -> None:
         """Update S from subject/dict/iterable E and F."""
         if e is None:
             e = {}
 
+        # Convert str and x509.Name to plain iterables first
+        if isinstance(e, str):
+            e = parse_name(e)
+        elif isinstance(e, x509.Name):
+            e = [(n.oid, n.value) for n in e]
+
         if isinstance(e, Subject):
             self._data.update(e._data)  # pylint: disable=protected-access
         elif isinstance(e, abc.Mapping):
-            for k in e.keys():
-                self[k] = e[k]
+            for key, value in e.items():
+                self[key] = value
         else:
             for key, value in e:
                 self[key] = value

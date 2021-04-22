@@ -13,7 +13,6 @@
 
 """TestCase base classes that preload some data and add common helper methods."""
 
-import copy
 import inspect
 import json
 import os
@@ -24,7 +23,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 from unittest.mock import MagicMock
-from unittest.mock import Mock
 from unittest.mock import patch
 
 import cryptography
@@ -38,8 +36,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.testcases import SimpleTestCase
@@ -55,7 +51,6 @@ from ... import ca_settings
 from ...extensions import KEY_TO_EXTENSION
 from ...models import Certificate
 from ...models import CertificateAuthority
-from ...signals import post_revoke_cert
 from ...subject import Subject
 from ...typehints import PrivateKeyTypes
 from ...typehints import TypedDict
@@ -477,43 +472,6 @@ VQIDAQAB
         super().tearDown()
         cache.clear()
 
-    def tmpcadir(self, **kwargs: typing.Any) -> override_tmpcadir:
-        """Context manager to use a temporary CA dir."""
-        return override_tmpcadir(**kwargs)
-
-    @contextmanager
-    def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
-        """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
-        with self.assertRaisesRegex(ImproperlyConfigured, msg):
-            yield
-
-    def assertPostRevoke(self, post: Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
-        """Assert that the post_revoke_cert signal was called."""
-        post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    @contextmanager
-    def assertValidationError(  # pylint: disable=invalid-name; unittest standard
-        self, errors: typing.Dict[str, typing.List[str]]
-    ) -> typing.Iterator[None]:
-        """Context manager to assert that a ValidationError is thrown."""
-        with self.assertRaises(ValidationError) as cmex:
-            yield
-        self.assertEqual(cmex.exception.message_dict, errors)
-
-    @property
-    def crl_profiles(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
-        """Return a list of CRL profiles."""
-        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
-        for config in profiles.values():
-            config.setdefault("OVERRIDES", {})
-
-            for data in [d for d in certs.values() if d.get("type") == "ca"]:
-                config["OVERRIDES"][data["serial"]] = {}
-                if data.get("password"):
-                    config["OVERRIDES"][data["serial"]]["password"] = data["password"]
-
-        return profiles
-
     @classmethod
     def create_csr(
         cls, subject: typing.Union[typing.List[typing.Tuple[str, str]], str]
@@ -603,12 +561,6 @@ VQIDAQAB
             for k, v in self.certs.items()
             if k in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]
         }
-
-    @contextmanager
-    def patch_object(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[typing.Any]:
-        """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
-        with patch.object(*args, **kwargs) as mock:
-            yield mock
 
 
 class DjangoCATestCase(DjangoCATestCaseMixin, TestCase):

@@ -14,6 +14,9 @@
 """Test module testing :py:class:`~django_ca.subject.Subject`."""
 
 import doctest
+import typing
+from unittest import TestLoader
+from unittest import TestSuite
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -23,7 +26,9 @@ from django.test import TestCase
 from ..subject import Subject
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(  # pylint: disable=unused-argument
+    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+) -> TestSuite:
     """Load doctests"""
     tests.addTests(doctest.DocTestSuite("django_ca.subject"))
     return tests
@@ -134,7 +139,7 @@ class TestSubject(TestCase):
     def test_init_invalid_type(self) -> None:
         """Test creating a subject with an invalid type."""
         with self.assertRaisesRegex(ValueError, r"^Invalid subject: 33$"):
-            Subject(33)
+            Subject(33)  # type: ignore[arg-type]
 
     def test_unknown_oid(self) -> None:
         """Test passing an unknown OID."""
@@ -235,7 +240,7 @@ class TestSubject(TestCase):
         self.assertEqual(subj, Subject("/CN=example.com"))
 
         with self.assertRaisesRegex(ValueError, r"^Value must be str or list$"):
-            subj["C"] = 33
+            subj["C"] = 33  # type: ignore[assignment]
 
     def test_get(self) -> None:
         """Test Subject.get()."""
@@ -308,7 +313,7 @@ class TestSubject(TestCase):
 
         subj = Subject()
         with self.assertRaisesRegex(ValueError, r"^Value must be str or list$"):
-            subj.setdefault("C", 33)
+            subj.setdefault("C", 33)  # type: ignore[arg-type]
 
     def test_clear_copy(self) -> None:
         """Test that a subjects clear() does not affect the copy."""

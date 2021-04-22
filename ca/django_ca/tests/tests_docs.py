@@ -14,28 +14,28 @@
 """Test some sphinx documents."""
 
 import doctest
+import os
+import typing
 
-from .base import DjangoCATestCase
+from django.conf import settings
+from django.test import TestCase
+
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
-BASE = "../../../docs/source"
+BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
+class DocumentationTestCase(TestCaseMixin, TestCase):
     """Main testcase class."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
-        self.cert = self.load_cert(
-            self.ca, parsed=certs["root-cert"]["pub"]["parsed"], csr=certs["root-cert"]["csr"]["pem"]
-        )
+    load_cas = ("root", )
+    load_certs = ("root-cert", )
 
-    def get_globs(self):
+    def get_globs(self) -> typing.Dict[str, typing.Any]:
         """Get globs for test cases."""
         return {
             "ca": self.ca,
@@ -48,9 +48,9 @@ class DocumentationTestCase(TestCaseMixin, DjangoCATestCase):
     @override_tmpcadir()
     def test_python_intro(self) -> None:
         """Test python/intro.rst."""
-        doctest.testfile("%s/python/intro.rst" % BASE, globs=self.get_globs())
+        doctest.testfile(f"{BASE}/python/intro.rst", globs=self.get_globs())
 
     @override_tmpcadir()
     def test_python_models(self) -> None:
         """Test python/models.rst."""
-        doctest.testfile("%s/python/models.rst" % BASE, globs=self.get_globs())
+        doctest.testfile(f"{BASE}/python/models.rst", globs=self.get_globs())

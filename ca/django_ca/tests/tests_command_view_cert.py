@@ -13,17 +13,19 @@
 
 """Test the view_cert management command."""
 
+import typing
 from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.test import TestCase
 from django.utils.encoding import force_bytes
 
 from freezegun import freeze_time
 
+from ..extensions import SubjectKeyIdentifier
+from ..models import Certificate
 from ..models import Watcher
-from ..subject import Subject
-from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -519,10 +521,18 @@ HPKP pin: {hpkp}
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
-class ViewCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
+class ViewCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    def _get_format(self, cert):
+    load_cas = "__all__"
+    load_certs = "__all__"
+
+    def _get_ski_text(self, ski: typing.Optional[SubjectKeyIdentifier]) -> str:
+        if ski is None:
+            return ""
+        return ski.as_text()
+
+    def _get_format(self, cert: Certificate) -> typing.Dict[str, str]:
         return {
             "cn": cert.cn,
             "from": cert.not_before.strftime("%Y-%m-%d %H:%M"),
@@ -532,15 +542,14 @@ class ViewCertTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
             "sha1": cert.get_digest("SHA1"),
             "sha256": cert.get_digest("SHA256"),
             "sha512": cert.get_digest("SHA512"),
-            "subjectKeyIdentifier": cert.subject_key_identifier.as_text(),
-            "authorityKeyIdentifier": cert.ca.subject_key_identifier.as_text(),
+            "subjectKeyIdentifier": self._get_ski_text(cert.subject_key_identifier),
+            "authorityKeyIdentifier": self._get_ski_text(cert.ca.subject_key_identifier),
             "hpkp": cert.hpkp_pin,
-            "san": cert.subject_alternative_name,
         }
 
-    def assertBasic(self, status):
+    def assertBasicOutput(self, status: str) -> None:
         """Test basic properties of output."""
-        for key, cert in self.ca_certs.items():
+        for key, cert in self.ca_certs:
             stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())
             if cert.subject_alternative_name is None:
                 self.assertEqual(
@@ -587,7 +596,7 @@ HPKP pin: {hpkp}
             self.assertEqual(stderr, b"")
 
         # test with no pem but with extensions
-        for key, cert in self.ca_certs.items():
+        for key, cert in self.ca_certs:
             stdout, stderr = self.cmd(
                 "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
             )
@@ -637,17 +646,17 @@ HPKP pin: {hpkp}
     @freeze_time(timestamps["before_everything"])
     def test_basic_not_yet_valid(self) -> None:
         """Basic tests when all certs are not yet valid."""
-        self.assertBasic(status="Not yet valid")
+        self.assertBasicOutput(status="Not yet valid")
 
     @freeze_time(timestamps["everything_expired"])
     def test_basic_expired(self) -> None:
         """Basic tests when all certs are expired."""
-        self.assertBasic(status="Expired")
+        self.assertBasicOutput(status="Expired")
 
     @freeze_time(timestamps["everything_valid"])
     def test_certs(self) -> None:
         """Test main certs."""
-        for name, cert in self.generated_certs.items():
+        for name, cert in self.usable_certs:
             stdout, stderr = self.cmd(
                 "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
             )
@@ -659,9 +668,8 @@ HPKP pin: {hpkp}
     @freeze_time(timestamps["everything_valid"])
     def test_der(self) -> None:
         """Test viewing a cert as DER."""
-        cert = self.certs["child-cert"]
         stdout, stderr = self.cmd(
-            "view_cert", cert.serial, format=Encoding.DER, stdout=BytesIO(), stderr=BytesIO()
+            "view_cert", self.cert.serial, format=Encoding.DER, stdout=BytesIO(), stderr=BytesIO()
         )
         expected = """Common Name: {cn}
 Valid from: {valid_from_short}
@@ -687,10 +695,11 @@ HPKP pin: {hpkp}
 
     def test_revoked(self) -> None:
         """Test viewing a revoked cert."""
-        cert = self.certs["child-cert"]
-        cert.revoked = True
-        cert.save()
-        stdout, stderr = self.cmd("view_cert", cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        self.cert.revoked = True
+        self.cert.save()
+        stdout, stderr = self.cmd(
+            "view_cert", self.cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO()
+        )
         self.assertEqual(
             stdout.decode("utf-8"),
             """Common Name: {cn}
@@ -712,12 +721,11 @@ HPKP pin: {hpkp}
         )
         self.assertEqual(stderr, b"")
 
+    @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
     def test_no_san_with_watchers(self) -> None:
         """Test a cert with no subjectAltNames but with watchers."""
-        ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
-        cert = self.create_cert(ca, csr, subject=Subject({"CN": "example.com"}), cn_in_san=False)
+        cert = self.new_certs["no-extensions"]
         watcher = Watcher.from_addr("user@example.com")
         cert.watchers.add(watcher)
 
@@ -741,9 +749,9 @@ HPKP pin: %(hpkp)s
         )
         self.assertEqual(stderr, b"")
 
-    def assertContrib(self, name, expected, **context):  # pylint: disable=invalid-name
+    def assertContrib(self, name: str, expected: str, **context: str) -> None:  # pylint: disable=invalid-name
         """Assert basic contrib output."""
-        cert = self.certs[name]
+        cert = self.new_certs[name]
         stdout, stderr = self.cmd(
             "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
         )

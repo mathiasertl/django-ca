@@ -15,6 +15,7 @@
 
 import typing
 
+from django.test import TestCase
 from django.utils import timezone
 
 from ..models import AcmeAccount
@@ -23,7 +24,6 @@ from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
-from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 from .base_mixins import DjangoCAModelTypeVar
 from .base_mixins import StandardAdminViewTestCaseMixin
@@ -63,13 +63,14 @@ class AcmeAdminTestCaseMixin(
 ):
     """Admin view mixin that creates all model instances for ACME."""
 
-    cas: typing.Dict[str, CertificateAuthority]
+    load_cas = ("root", "child",)
+    new_cas: typing.Dict[str, CertificateAuthority]
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
-        kid1 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1)
+        kid1 = self.absolute_uri(":acme-account", serial=self.new_cas["child"].serial, slug=ACME_SLUG_1)
         account1 = AcmeAccount.objects.create(
-            ca=self.cas["child"],
+            ca=self.new_cas["child"],
             contact="mailto:%s" % self.user.email,
             status=AcmeAccount.STATUS_VALID,
             kid=kid1,
@@ -78,9 +79,9 @@ class AcmeAdminTestCaseMixin(
             thumbprint=THUMBPRINT1,
             slug=ACME_SLUG_1,
         )
-        kid2 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1)
+        kid2 = self.absolute_uri(":acme-account", serial=self.new_cas["root"].serial, slug=ACME_SLUG_1)
         account2 = AcmeAccount.objects.create(
-            ca=self.cas["root"],
+            ca=self.new_cas["root"],
             contact="mailto:%s" % self.user.email,
             status=AcmeAccount.STATUS_REVOKED,
             kid=kid2,
@@ -125,13 +126,13 @@ class AcmeAdminTestCaseMixin(
         AcmeCertificate.objects.create(order=self.order2, csr=CSR1)
 
 
-class AcmeAccountViewsTestCase(AcmeAdminTestCaseMixin[AcmeAccount], DjangoCAWithCATestCase):
+class AcmeAccountViewsTestCase(AcmeAdminTestCaseMixin[AcmeAccount], TestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeAccount`."""
 
     model = AcmeAccount
 
 
-class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], DjangoCAWithCATestCase):
+class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], TestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
 
     model = AcmeOrder
@@ -151,19 +152,19 @@ class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], DjangoCAWithCATe
             )
 
 
-class AcmeAuthorizationViewsTestCase(AcmeAdminTestCaseMixin[AcmeAuthorization], DjangoCAWithCATestCase):
+class AcmeAuthorizationViewsTestCase(AcmeAdminTestCaseMixin[AcmeAuthorization], TestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
     model = AcmeAuthorization
 
 
-class AcmeChallengeViewsTestCase(AcmeAdminTestCaseMixin[AcmeChallenge], DjangoCAWithCATestCase):
+class AcmeChallengeViewsTestCase(AcmeAdminTestCaseMixin[AcmeChallenge], TestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeChallenge`."""
 
     model = AcmeChallenge
 
 
-class AcmeCertificateViewsTestCase(AcmeAdminTestCaseMixin[AcmeCertificate], DjangoCAWithCATestCase):
+class AcmeCertificateViewsTestCase(AcmeAdminTestCaseMixin[AcmeCertificate], TestCase):
     """Test standard views for :py:class:`~django_ca.models.AcmeCertificate`."""
 
     model = AcmeCertificate

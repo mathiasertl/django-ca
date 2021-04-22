@@ -13,20 +13,20 @@
 
 """Test the revoke_cert management command."""
 
+from django.test import TestCase
+
 from ..constants import ReasonFlags
 from ..models import Certificate
 from ..signals import post_revoke_cert
 from ..signals import pre_revoke_cert
-from .base import DjangoCAWithGeneratedCertsTestCase
 from .base_mixins import TestCaseMixin
 
 
-class RevokeCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class RevokeCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.cert = self.certs["root-cert"]
+    load_cas = ("root",)
+    load_certs = ("root-cert",)
 
     def test_no_reason(self) -> None:
         """Test revoking without a reason."""

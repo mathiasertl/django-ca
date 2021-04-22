@@ -57,7 +57,6 @@ from ..extensions.utils import PolicyInformation
 from ..models import X509CertMixin
 from ..typehints import ParsablePolicyInformation
 from ..utils import GeneralNameList
-from .base import DjangoCAWithCertTestCase
 from .base import certs
 from .base import dns
 from .base import uri
@@ -1270,11 +1269,16 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
             PrecertPoison({"critical": False})  # type: ignore[arg-type]
 
 
-class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAWithCertTestCase):
+class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase):
     """Test PrecertificateSignedCertificateTimestamps extension."""
 
     # pylint: disable=too-many-public-methods; RO-extension requires implementing everything again
     # pylint: disable=too-many-instance-attributes; RO-extension requires implementing everything again
+
+    default_ca = "letsencrypt_x3"
+    default_cert = "letsencrypt_x3-cert"
+    load_cas = ("letsencrypt_x3", "comodo_ev")
+    load_certs = ("letsencrypt_x3-cert", "comodo_ev-cert")
 
     ext_class = PrecertificateSignedCertificateTimestamps
     ext_class_key = "precertificate_signed_certificate_timestamps"
@@ -1284,8 +1288,8 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, DjangoCAW
         super().setUp()
         self.name1 = "letsencrypt_x3-cert"
         self.name2 = "comodo_ev-cert"
-        cert1 = self.certs[self.name1]
-        cert2 = self.certs[self.name2]
+        cert1 = self.new_certs[self.name1]
+        cert2 = self.new_certs[self.name2]
 
         self.cgx1 = cert1.x509_cert.extensions.get_extension_for_class(
             x509.PrecertificateSignedCertificateTimestamps

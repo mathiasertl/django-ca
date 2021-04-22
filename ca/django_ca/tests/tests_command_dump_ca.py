@@ -18,18 +18,17 @@ from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.test import TestCase
+
 from .. import ca_settings
-from .base import DjangoCAWithCATestCase
 from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
 
-class DumpCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
+class DumpCATestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca = self.cas["root"]
+    load_cas = ("root",)
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -65,7 +64,7 @@ class DumpCATestCase(TestCaseMixin, DjangoCAWithCATestCase):
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
 
-        child = self.cas["child"]
+        child = self.load_ca("child")
         stdout, stderr = self.cmd(
             "dump_ca", child.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
         )

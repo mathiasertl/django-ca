@@ -18,18 +18,18 @@ from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.test import TestCase
+
 from .. import ca_settings
-from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
 
-class DumpCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class DumpCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.cert = self.certs["root-cert"]
+    load_cas = ("root",)
+    load_certs = ("root-cert",)
 
     def test_basic(self) -> None:
         """Basic test of this command."""
@@ -59,7 +59,7 @@ class DumpCertTestCase(TestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
             "dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO()
         )
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.cert.pub.encode("utf-8") + self.cas["root"].pub.encode("utf-8"))
+        self.assertEqual(stdout, self.cert.pub.encode("utf-8") + self.ca.pub.encode("utf-8"))
 
     @override_tmpcadir()
     def test_file_output(self) -> None:

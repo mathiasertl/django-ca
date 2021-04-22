@@ -25,15 +25,14 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.test import TestCase
+
 from ..constants import ReasonFlags
 from ..extensions import TLSFeature
 from ..management import actions
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
-from .base import DjangoCATestCase
-from .base import DjangoCAWithCertTestCase
-from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -71,7 +70,7 @@ class ParserTestCaseMixin(TestCaseMixin):
         return output
 
 
-class SubjectActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class SubjectActionTestCase(ParserTestCaseMixin, TestCase):
     """Test SubjectAction."""
 
     def setUp(self) -> None:
@@ -109,7 +108,7 @@ class SubjectActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class OrderedSetExtensionActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class OrderedSetExtensionActionTestCase(ParserTestCaseMixin, TestCase):
     """Test OrderedSetExtensionAction."""
 
     def setUp(self) -> None:
@@ -140,7 +139,7 @@ class OrderedSetExtensionActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class FormatActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class FormatActionTestCase(ParserTestCaseMixin, TestCase):
     """Test FormatAction."""
 
     def setUp(self) -> None:
@@ -169,7 +168,7 @@ class FormatActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class KeyCurveActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class KeyCurveActionTestCase(ParserTestCaseMixin, TestCase):
     """Test KeyCurveAction."""
 
     def setUp(self) -> None:
@@ -194,7 +193,7 @@ class KeyCurveActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class AlgorithmActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
     """Test AlgorithmAction."""
 
     def setUp(self) -> None:
@@ -222,7 +221,7 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class KeySizeActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
     """Test KeySizeAction."""
 
     def setUp(self) -> None:
@@ -269,7 +268,7 @@ class KeySizeActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         self.assertParserError(["--size=foo"], expected)
 
 
-class PasswordActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
     """Test PasswordAction."""
 
     def setUp(self) -> None:
@@ -308,8 +307,11 @@ class PasswordActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         getpass.assert_called_once()
 
 
-class CertificateActionTestCase(ParserTestCaseMixin, DjangoCAWithCertTestCase):
+class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
     """Test CertificateAction."""
+
+    load_cas = "__usable__"
+    load_certs = "__usable__"
 
     def setUp(self) -> None:
         super().setUp()
@@ -318,14 +320,14 @@ class CertificateActionTestCase(ParserTestCaseMixin, DjangoCAWithCertTestCase):
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        for name, cert in self.certs.items():
+        for name, cert in self.new_certs.items():
             args = self.parser.parse_args([certs[name]["serial"]])
             self.assertEqual(args.cert, cert)
 
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
         args = self.parser.parse_args([certs["root-cert"]["serial"][:6]])
-        self.assertEqual(args.cert, self.certs["root-cert"])
+        self.assertEqual(args.cert, self.new_certs["root-cert"])
 
     def test_missing(self) -> None:
         """Test giving an unknown cert."""
@@ -340,7 +342,7 @@ class CertificateActionTestCase(ParserTestCaseMixin, DjangoCAWithCertTestCase):
     def test_multiple(self) -> None:
         """Test matching multiple certs with abbreviation."""
         # Manually set almost the same serial on second cert
-        cert = Certificate(ca=self.cas["root"])
+        cert = Certificate(ca=self.new_cas["root"])
         cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
         cert.serial = cert.serial[:-1] + "X"
         cert.save()
@@ -354,8 +356,10 @@ class CertificateActionTestCase(ParserTestCaseMixin, DjangoCAWithCertTestCase):
         )
 
 
-class CertificateAuthorityActionTestCase(ParserTestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     """Test CertificateAuthorityAction."""
+
+    load_cas = "__usable__"
 
     def setUp(self) -> None:
         super().setUp()
@@ -365,7 +369,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, DjangoCAWithGenera
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        for name, ca in self.usable_cas.items():
+        for name, ca in self.usable_cas:
             args = self.parser.parse_args([certs[name]["serial"]])
             self.assertEqual(args.ca, ca)
 
@@ -373,7 +377,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, DjangoCAWithGenera
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
         args = self.parser.parse_args([certs["ecc"]["serial"][:6]])
-        self.assertEqual(args.ca, self.cas["ecc"])
+        self.assertEqual(args.ca, self.new_cas["ecc"])
 
     def test_missing(self) -> None:
         """Test giving an unknown CA."""
@@ -435,10 +439,10 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, DjangoCAWithGenera
     def test_password(self) -> None:
         """Test that the action works with a password-encrypted CA."""
         args = self.parser.parse_args([certs["pwd"]["serial"]])
-        self.assertEqual(args.ca, self.cas["pwd"])
+        self.assertEqual(args.ca, self.new_cas["pwd"])
 
 
-class URLActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class URLActionTestCase(ParserTestCaseMixin, TestCase):
     """Test URLAction."""
 
     def setUp(self) -> None:
@@ -460,7 +464,7 @@ class URLActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class ExpiresActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
     """Test ExpiresAction."""
 
     def setUp(self) -> None:
@@ -501,7 +505,7 @@ class ExpiresActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class ReasonActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class ReasonActionTestCase(ParserTestCaseMixin, TestCase):
     """Test ReasonAction."""
 
     def setUp(self) -> None:
@@ -528,7 +532,7 @@ class ReasonActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
         )
 
 
-class MultipleURLActionTestCase(ParserTestCaseMixin, DjangoCATestCase):
+class MultipleURLActionTestCase(ParserTestCaseMixin, TestCase):
     """Test MultipleURLAction."""
 
     def setUp(self) -> None:

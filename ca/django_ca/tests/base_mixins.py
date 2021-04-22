@@ -13,6 +13,7 @@
 
 """Collection of mixin classes for unittest.TestCase subclasses."""
 
+import copy
 import io
 import typing
 from contextlib import contextmanager
@@ -37,6 +38,8 @@ from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ValidationError
 from django.core.management import ManagementUtility
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -68,6 +71,7 @@ from ..models import DjangoCAModel
 from ..models import X509CertMixin
 from ..signals import post_create_ca
 from ..signals import post_issue_cert
+from ..signals import post_revoke_cert
 from ..signals import pre_create_ca
 from ..subject import Subject
 from ..typehints import ParsableSubject
@@ -104,16 +108,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         super().setUp()
         cache.clear()
 
-        if self.load_cas == "__all__":  # pragma: no cover
-            self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
-        elif self.load_cas == "__usable__":
-            self.load_cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
-        elif isinstance(self.load_cas, str):  # pragma: no cover
-            self.fail(f"{self.load_cas}: Unknown alias for load_cas.")
-
-        # Load all CAs (sort by len() of parent so that root CAs are loaded first)
-        for name in sorted(self.load_cas, key=lambda n: len(certs[n].get("parent", ""))):
-            self.new_cas[name] = self.load_ca(name)
+        self.new_cas = {}
+        self.new_certs = {}
+        self.load_cas = self.load_named_cas(self.load_cas)
+        self.load_certs = self.load_named_certs(self.load_certs)
 
         # Set `self.ca` as a default certificate authority (if at least one is loaded)
         if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
@@ -123,22 +121,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.fail(f"{self.default_ca}: Not in {self.load_cas}.")
             self.ca = self.new_cas[self.default_ca]
 
-        if self.load_certs == "__all__":  # pragma: no cover; not needed yet.
-            # TODO: check when transition is complete
-            self.load_certs = tuple(k for k, v in certs.items() if v.get("type") == "cert")
-        elif self.load_certs == "__usable__":
-            self.load_certs = tuple(
-                k for k, v in certs.items() if v.get("type") == "cert" and v["cat"] == "generated"
-            )
-        elif isinstance(self.load_certs, str):  # pragma: no cover
-            self.fail(f"{self.load_certs}: Unknown alias for load_certs.")
-
-        for name in self.load_certs:
-            try:
-                self.new_certs[name] = self.load_named_cert(name)
-            except CertificateAuthority.DoesNotExist:  # pragma: no cover
-                self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
-
         # Set `self.cert` as a default certificate (if at least one is loaded)
         if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
             self.cert = self.new_certs[self.load_certs[0]]
@@ -146,6 +128,40 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             if self.default_cert not in self.load_certs:  # pragma: no cover
                 self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
             self.cert = self.new_certs[self.default_cert]
+
+    def load_named_cas(self, cas: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
+        if cas == "__all__":
+            cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
+        elif cas == "__usable__":
+            cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
+        elif isinstance(cas, str):  # pragma: no cover
+            self.fail(f"{cas}: Unknown alias for load_cas.")
+
+        # Filter CAs that we already loaded
+        cas = tuple(ca for ca in cas if ca not in self.new_cas)
+
+        # Load all CAs (sort by len() of parent so that root CAs are loaded first)
+        for name in sorted(cas, key=lambda n: len(certs[n].get("parent", ""))):
+            self.new_cas[name] = self.load_ca(name)
+        return cas
+
+    def load_named_certs(self, names: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
+        if names == "__all__":
+            names = tuple(k for k, v in certs.items() if v.get("type") == "cert")
+        elif names == "__usable__":
+            names = tuple(k for k, v in certs.items() if v.get("type") == "cert" and v["cat"] == "generated")
+        elif isinstance(names, str):  # pragma: no cover
+            self.fail(f"{names}: Unknown alias for load_certs.")
+
+        # Filter certificates that are already loaded
+        names = tuple(name for name in names if name not in self.new_certs)
+
+        for name in names:
+            try:
+                self.new_certs[name] = self.load_named_cert(name)
+            except CertificateAuthority.DoesNotExist:  # pragma: no cover
+                self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
+        return names
 
     def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
         """Build an absolute uri for the given request.
@@ -326,6 +342,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         self.assertEqual(actual, mapped_extensions)
 
+    @contextmanager
+    def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+        """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
+        with self.assertRaisesRegex(ImproperlyConfigured, msg):
+            yield
+
     def assertIssuer(  # pylint: disable=invalid-name
         self, issuer: CertificateAuthority, cert: X509CertMixin
     ) -> None:
@@ -354,6 +376,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def assertPostIssueCert(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
+    def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
+        """Assert that the post_revoke_cert signal was called."""
+        post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
     def assertPrivateKey(  # pylint: disable=invalid-name
         self, ca: CertificateAuthority, password: typing.Optional[typing.Union[str, bytes]] = None
@@ -413,6 +439,22 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         if not isinstance(expected, Subject):
             expected = Subject(expected)
         self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
+
+    @contextmanager
+    def assertValidationError(  # pylint: disable=invalid-name; unittest standard
+        self, errors: typing.Dict[str, typing.List[str]]
+    ) -> typing.Iterator[None]:
+        """Context manager to assert that a ValidationError is thrown."""
+        with self.assertRaises(ValidationError) as cmex:
+            yield
+        self.assertEqual(cmex.exception.message_dict, errors)
+
+    @property
+    def ca_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
+        """Yield loaded certificates for each certificate authority."""
+        for name, cert in self.new_certs.items():
+            if name in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]:
+                yield name, cert
 
     @typing.overload
     def cmd(
@@ -491,6 +533,33 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             util.execute()
 
         return stdout.getvalue(), stderr.getvalue()
+
+    @classmethod
+    def create_cert(
+        cls,
+        ca: CertificateAuthority,
+        csr: typing.Union[x509.CertificateSigningRequest, str, bytes],
+        subject: typing.Optional[Subject],
+        **kwargs: typing.Any
+    ) -> Certificate:
+        """Create a certificate with the given data."""
+        cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
+        cert.full_clean()
+        return cert
+
+    @property
+    def crl_profiles(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
+        """Return a list of CRL profiles."""
+        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
+        for config in profiles.values():
+            config.setdefault("OVERRIDES", {})
+
+            for data in [d for d in certs.values() if d.get("type") == "ca"]:
+                config["OVERRIDES"][data["serial"]] = {}
+                if data.get("password"):
+                    config["OVERRIDES"][data["serial"]]["password"] = data["password"]
+
+        return profiles
 
     def get_idp(
         self,
@@ -619,6 +688,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         ca.save()
         return ca
 
+    @contextmanager
     @classmethod
     def load_cert(
         cls, ca: CertificateAuthority, parsed: x509.Certificate, csr: str = "", profile: str = ""
@@ -675,9 +745,29 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with mock.patch(*args, **kwargs) as mocked:
             yield mocked
 
+    @contextmanager
+    def patch_object(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[typing.Any]:
+        """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
+        with mock.patch.object(*args, **kwargs) as mocked:
+            yield mocked
+
     def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
+
+    @property
+    def usable_cas(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
+        """Yield loaded generated certificates."""
+        for name, ca in self.new_cas.items():
+            if certs[name]["key_filename"]:
+                yield name, ca
+
+    @property
+    def usable_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
+        """Yield loaded generated certificates."""
+        for name, cert in self.new_certs.items():
+            if certs[name]["cat"] == "generated":
+                yield name, cert
 
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
@@ -827,3 +917,31 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
         """Test that the change view works for all instances."""
         for obj in self.model.objects.all():
             self.assertChangeResponse(self.get_change_view(obj))
+
+
+class AcmeValuesMixin:
+    """Mixin that sets a few static valid ACME values."""
+
+    # ACME data present in all mixins
+    ACME_THUMBPRINT_1 = "U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8"
+    ACME_THUMBPRINT_2 = "s_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo"
+    ACME_PEM_1 = """-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
+tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
+tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
+MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
+s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
+lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
+XwIDAQAB
+-----END PUBLIC KEY-----"""
+    ACME_PEM_2 = """-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
+Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
+RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
+NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
+MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
+/Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
+VQIDAQAB
+-----END PUBLIC KEY-----"""
+    ACME_SLUG_1 = "Mr6FfdD68lzp"
+    ACME_SLUG_2 = "DzW4PQ6L76PE"

@@ -20,6 +20,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from django.db import models
+from django.test import TestCase
+from django.test import TransactionTestCase
 
 from freezegun import freeze_time
 
@@ -34,12 +36,10 @@ from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
-from .base import DjangoCATestCase
-from .base import DjangoCAWithGeneratedCAsTransactionTestCase
-from .base import DjangoCAWithGeneratedCertsTestCase
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import AcmeValuesMixin
 from .base_mixins import TestCaseMixin
 
 
@@ -67,12 +67,14 @@ class QuerySetTestCaseMixin(TestCaseMixin):
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024)
-class CertificateAuthorityQuerySetTestCase(TestCaseMixin, DjangoCATestCase):
+class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateAuthorityQuerySet`."""
+
+    load_cas = ("root", "child")
 
     @override_tmpcadir()
     def test_basic(self) -> None:
-        """some basic queryset tests."""
+        """Basic test for init()."""
         key_size = ca_settings.CA_MIN_KEY_SIZE
         ca = CertificateAuthority.objects.init(
             name="Root CA",
@@ -178,47 +180,51 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, DjangoCATestCase):
 
     def test_enabled_disabled(self) -> None:
         """Test enabled/disabled filter."""
-        self.load_usable_cas()
-        name = "root"
-        self.assertCountEqual(CertificateAuthority.objects.enabled(), self.cas.values())
+        self.load_named_cas("__usable__")
+
+        self.assertCountEqual(CertificateAuthority.objects.enabled(), self.new_cas.values())
         self.assertCountEqual(CertificateAuthority.objects.disabled(), [])
 
-        self.cas[name].enabled = False
-        self.cas[name].save()
+        self.ca.enabled = False
+        self.ca.save()
 
         self.assertCountEqual(
-            CertificateAuthority.objects.enabled(), [c for c in self.cas.values() if c.name != name]
+            CertificateAuthority.objects.enabled(), [c for c in self.new_cas.values()
+                                                     if c.name != self.ca.name]
         )
-        self.assertCountEqual(CertificateAuthority.objects.disabled(), [self.cas["root"]])
+        self.assertCountEqual(CertificateAuthority.objects.disabled(), [self.ca])
 
     def test_valid(self) -> None:
         """Test valid/usable/invalid filters."""
-        self.load_usable_cas()
+        self.load_named_cas("__usable__")
 
         with freeze_time(timestamps["before_cas"]):
             self.assertCountEqual(CertificateAuthority.objects.valid(), [])
             self.assertCountEqual(CertificateAuthority.objects.usable(), [])
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.new_cas.values())
 
         with freeze_time(timestamps["before_child"]):
-            valid = [c for c in self.cas.values() if c.name != "child"]
+            valid = [c for c in self.new_cas.values() if c.name != "child"]
             self.assertCountEqual(CertificateAuthority.objects.valid(), valid)
             self.assertCountEqual(CertificateAuthority.objects.usable(), valid)
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), [self.cas["child"]])
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), [self.new_cas["child"]])
 
         with freeze_time(timestamps["after_child"]):
-            self.assertCountEqual(CertificateAuthority.objects.valid(), self.cas.values())
-            self.assertCountEqual(CertificateAuthority.objects.usable(), self.cas.values())
+            self.assertCountEqual(CertificateAuthority.objects.valid(), self.new_cas.values())
+            self.assertCountEqual(CertificateAuthority.objects.usable(), self.new_cas.values())
             self.assertCountEqual(CertificateAuthority.objects.invalid(), [])
 
         with freeze_time(timestamps["cas_expired"]):
             self.assertCountEqual(CertificateAuthority.objects.valid(), [])
             self.assertCountEqual(CertificateAuthority.objects.usable(), [])
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
+            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.new_cas.values())
 
 
-class CertificateQuerysetTestCase(QuerySetTestCaseMixin, DjangoCAWithGeneratedCertsTestCase):
+class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateQuerySet`."""
+
+    load_cas = "__usable__"
+    load_certs = "__usable__"
 
     def test_validity(self) -> None:
         """Test validity filter."""
@@ -226,26 +232,26 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, DjangoCAWithGeneratedCe
         with freeze_time(timestamps["everything_valid"]):
             self.assertQuerySet(Certificate.objects.expired())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
-            self.assertQuerySet(Certificate.objects.valid(), *self.certs.values())
+            self.assertQuerySet(Certificate.objects.valid(), *self.new_certs.values())
 
         with freeze_time(timestamps["everything_expired"]):
-            self.assertQuerySet(Certificate.objects.expired(), *self.certs.values())
+            self.assertQuerySet(Certificate.objects.expired(), *self.new_certs.values())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
             self.assertQuerySet(Certificate.objects.valid())
 
         with freeze_time(timestamps["before_everything"]):
             self.assertQuerySet(Certificate.objects.expired())
-            self.assertQuerySet(Certificate.objects.not_yet_valid(), *self.certs.values())
+            self.assertQuerySet(Certificate.objects.not_yet_valid(), *self.new_certs.values())
             self.assertQuerySet(Certificate.objects.valid())
 
         expired = [
-            self.certs["root-cert"],
-            self.certs["child-cert"],
-            self.certs["ecc-cert"],
-            self.certs["dsa-cert"],
-            self.certs["pwd-cert"],
+            self.new_certs["root-cert"],
+            self.new_certs["child-cert"],
+            self.new_certs["ecc-cert"],
+            self.new_certs["dsa-cert"],
+            self.new_certs["pwd-cert"],
         ]
-        valid = [c for c in self.certs.values() if c not in expired]
+        valid = [c for c in self.new_certs.values() if c not in expired]
         with freeze_time(timestamps["ca_certs_expired"]):
             self.assertQuerySet(Certificate.objects.expired(), *expired)
             self.assertQuerySet(Certificate.objects.not_yet_valid())
@@ -253,19 +259,20 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, DjangoCAWithGeneratedCe
 
 
 class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
-    QuerySetTestCaseMixin, DjangoCAWithGeneratedCAsTransactionTestCase
+    QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTestCase
 ):
     """Base class for ACME querysets (creates different instances)."""
 
+    load_cas = "__usable__"
+
     def setUp(self) -> None:
         super().setUp()
-        self.ca = self.cas["root"]
         self.ca.acme_enabled = True
         self.ca.save()
-        self.ca2 = self.cas["child"]
+        self.ca2 = self.new_cas["root"]
         self.ca2.acme_enabled = True
         self.ca2.save()
-        self.kid = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=self.ACME_SLUG_1)
+        self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.ACME_SLUG_1)
         self.account = AcmeAccount.objects.create(
             ca=self.ca,
             contact="user@example.com",
@@ -276,7 +283,7 @@ class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
             slug=self.ACME_SLUG_1,
             kid=self.kid,
         )
-        self.kid2 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=self.ACME_SLUG_2)
+        self.kid2 = self.absolute_uri(":acme-account", serial=self.ca2.serial, slug=self.ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.ca2,
             contact="user@example.net",

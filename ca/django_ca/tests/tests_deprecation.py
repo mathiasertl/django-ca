@@ -29,15 +29,15 @@ class TestDjangoCATestCase(TestCase):
     msg_in_120 = "deprecated in 1.20"
     msg_in_next = "deprecated in next version"
 
-    def deprecated_in_119(self):
+    def deprecated_in_119(self) -> None:
         """Emit a message about deprecation in 1.19."""
         warnings.warn(self.msg_in_119, category=RemovedInDjangoCA119Warning)
 
-    def deprecated_in_120(self):
+    def deprecated_in_120(self) -> None:
         """Emit a message about deprecation in 1.20."""
         warnings.warn(self.msg_in_120, category=RemovedInDjangoCA120Warning)
 
-    def deprecated_in_next(self):
+    def deprecated_in_next(self) -> None:
         """Emit a message about deprecation in the next version."""
         warnings.warn(self.msg_in_next, category=RemovedInNextVersionWarning)
 

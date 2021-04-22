@@ -21,7 +21,6 @@ from django.test import TestCase
 
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
-from .base import DjangoCATestCase
 from .base import certs
 from .base import uri
 from .base_mixins import TestCaseMixin
@@ -110,7 +109,7 @@ class DistributionPointTestCase(TestCase):
         )
 
 
-class PolicyInformationTestCase(TestCaseMixin, DjangoCATestCase):
+class PolicyInformationTestCase(TestCaseMixin, TestCase):
     """Test PolicyInformation class."""
 
     oid = "2.5.29.32.0"
@@ -250,9 +249,9 @@ class PolicyInformationTestCase(TestCaseMixin, DjangoCATestCase):
         )
         self.assertEqual(self.pi_empty.as_text(), "Policy Identifier: None\nNo Policy Qualifiers")
 
-        self.load_all_cas()
-        self.load_all_certs()
-        for name, cert in list(self.cas.items()) + list(self.certs.items()):
+        self.load_named_cas("__all__")
+        self.load_named_certs("__all__")
+        for name, cert in list(self.new_cas.items()) + list(self.new_certs.items()):
             try:
                 ext = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
             except x509.ExtensionNotFound:
@@ -264,9 +263,9 @@ class PolicyInformationTestCase(TestCaseMixin, DjangoCATestCase):
 
     def test_certs(self) -> None:
         """Test for all known certs."""
-        self.load_all_cas()
-        self.load_all_certs()
-        for _name, cert in list(self.cas.items()) + list(self.certs.items()):
+        self.load_named_cas("__all__")
+        self.load_named_certs("__all__")
+        for _name, cert in list(self.new_cas.items()) + list(self.new_certs.items()):
             try:
                 val = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
             except x509.ExtensionNotFound:

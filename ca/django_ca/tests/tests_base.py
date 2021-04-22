@@ -35,15 +35,13 @@ from ..extensions import PolicyConstraints
 from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
-from .base import DjangoCATestCase
-from .base import DjangoCAWithCATestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base_mixins import TestCaseMixin
 
 
-class TestDjangoCATestCase(TestCaseMixin, DjangoCATestCase):
+class TestDjangoCATestCase(TestCaseMixin, TestCase):
     """Test some basic stuff in the base test classes."""
 
     @override_tmpcadir()
@@ -52,28 +50,17 @@ class TestDjangoCATestCase(TestCaseMixin, DjangoCATestCase):
         ca_dir = ca_settings.CA_DIR
         self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
 
-    def test_tmpcadir(self) -> None:
-        """Test the tmpcadir ad context manager."""
-        old_ca_dir = ca_settings.CA_DIR
-
-        with self.tmpcadir():
-            ca_dir = ca_settings.CA_DIR
-            self.assertNotEqual(ca_dir, old_ca_dir)
-            self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
-
-        self.assertEqual(ca_settings.CA_DIR, old_ca_dir)  # ensure that they're equal again
-
     @override_tmpcadir()
     def test_assert_extensions(self) -> None:
         """Test some basic extension properties."""
-        self.load_usable_cas()
-        self.load_generated_certs()
+        self.load_named_cas("__usable__")
+        self.load_named_certs("__usable__")
 
-        self.assertExtensions(self.certs["no-extensions"], [], expect_defaults=False)
-        self.assertExtensions(self.certs["no-extensions"].x509_cert, [], expect_defaults=False)
+        self.assertExtensions(self.new_certs["no-extensions"], [], expect_defaults=False)
+        self.assertExtensions(self.new_certs["no-extensions"].x509_cert, [], expect_defaults=False)
 
         cert_key = "all-extensions"
-        cert = self.certs[cert_key]
+        cert = self.new_certs[cert_key]
         data = certs[cert_key]
         all_extensions = [
             OCSPNoCheck(),
@@ -107,7 +94,7 @@ class TestDjangoCATestCase(TestCaseMixin, DjangoCATestCase):
 
         # now test root and child ca
         cert_key = "root"
-        ca = self.cas[cert_key]
+        ca = self.new_cas[cert_key]
         data = certs[cert_key]
 
         root_extensions = [
@@ -117,7 +104,7 @@ class TestDjangoCATestCase(TestCaseMixin, DjangoCATestCase):
         self.assertExtensions(ca, root_extensions)
 
         cert_key = "child"
-        ca = self.cas[cert_key]
+        ca = self.new_cas[cert_key]
         data = certs[cert_key]
 
         root_extensions = [
@@ -139,7 +126,7 @@ class OverrideSettingsFuncTestCase(TestCase):
 
 
 @override_settings(CA_MIN_KEY_SIZE=512)
-class OverrideSettingsClassOnlyTestCase(DjangoCATestCase):
+class OverrideSettingsClassOnlyTestCase(TestCaseMixin, TestCase):
     """Test that override_settings also updates ca_settings."""
 
     def test_basic(self) -> None:
@@ -157,7 +144,7 @@ class OverrideSettingsClassOnlyTestCase(DjangoCATestCase):
         self.assertEqual(ca_settings.CA_MIN_KEY_SIZE, 256)
 
 
-class OverrideCaDirForFuncTestCase(DjangoCATestCase):
+class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
     """Test the override_tmpcadir decorator for a method.
 
     We do the same thing three times here, just to make sure that the result is really different.
@@ -195,8 +182,10 @@ class OverrideCaDirForFuncTestCase(DjangoCATestCase):
                 pass
 
 
-class CommandTestCase(TestCaseMixin, DjangoCAWithCATestCase):
+class CommandTestCase(TestCaseMixin, TestCase):
     """Test the cmd_e2e function."""
+
+    load_cas = "__all__"
 
     def test_basic(self) -> None:
         """Trivial basic test."""

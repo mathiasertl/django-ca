@@ -27,6 +27,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
+from django.test import TestCase
 from django.utils import timezone
 
 from freezegun import freeze_time
@@ -41,14 +42,14 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
-from .base import DjangoCAWithGeneratedCAsTestCase
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
+from .base_mixins import AcmeValuesMixin
 from .base_mixins import TestCaseMixin
 
 
-class TestBasic(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class TestBasic(TestCaseMixin, TestCase):
     """Test the basic handling of celery tasks."""
 
     def test_missing_celery(self) -> None:
@@ -80,8 +81,10 @@ class TestBasic(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
             self.assertEqual(test_mock.call_count, 1)
 
 
-class TestCacheCRLs(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class TestCacheCRLs(TestCaseMixin, TestCase):
     """Test the cache_crl Celery task."""
+
+    load_cas = "__usable__"
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -90,7 +93,7 @@ class TestCacheCRLs(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         hash_cls = hashes.SHA512
         enc_cls = Encoding.DER
 
-        for data in self.cas.values():
+        for data in self.new_cas.values():
             tasks.cache_crl(data.serial)
 
             key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "ca")
@@ -108,7 +111,7 @@ class TestCacheCRLs(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         enc_cls = Encoding.DER
         tasks.cache_crls()
 
-        for data in self.cas.values():
+        for data in self.new_cas.values():
             key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
@@ -125,7 +128,7 @@ class TestCacheCRLs(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
         enc_cls = Encoding.DER
         tasks.cache_crls()
 
-        for data in self.cas.values():
+        for data in self.new_cas.values():
             key = get_crl_cache_key(data.serial, hash_cls, enc_cls, "ca")
             self.assertIsNone(cache.get(key))
 
@@ -135,24 +138,26 @@ class TestCacheCRLs(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
 
         msg = r"^Password was not given but private key is encrypted$"
         with self.settings(CA_PASSWORDS={}), self.assertRaisesRegex(TypeError, msg):
-            tasks.cache_crl(self.cas["pwd"].serial)
+            tasks.cache_crl(self.new_cas["pwd"].serial)
 
     def test_no_private_key(self) -> None:
         """Test creating a CRL for a CA where no private key is available."""
 
         with self.assertRaises(FileNotFoundError):
-            tasks.cache_crl(self.cas["pwd"].serial)
+            tasks.cache_crl(self.new_cas["pwd"].serial)
 
 
 @freeze_time(timestamps["everything_valid"])
-class GenerateOCSPKeysTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     """Test the generate_ocsp_key task."""
+
+    load_cas = "__usable__"
 
     @override_tmpcadir()
     def test_single(self) -> None:
         """Test creating a single key."""
 
-        for ca in self.cas.values():
+        for ca in self.new_cas.values():
             tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
             self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
@@ -163,21 +168,23 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
 
         tasks.generate_ocsp_keys()
 
-        for ca in self.cas.values():
+        for ca in self.new_cas.values():
             tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
             self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeValidateChallengeTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
+
+    load_cas = ("root",)
 
     def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.cas["root"],
+            ca=self.new_cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
@@ -323,14 +330,16 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestC
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeIssueCertificateTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
+
+    load_cas = ("root", )
 
     def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.cas["root"],
+            ca=self.new_cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             pem=self.ACME_PEM_1,
@@ -446,14 +455,16 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCa
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeCleanupTestCase(TestCaseMixin, DjangoCAWithGeneratedCAsTestCase):
+class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
+
+    load_cas = ("root", )
 
     def setUp(self) -> None:
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.cas["root"],
+            ca=self.new_cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             pem=self.ACME_PEM_1,
