@@ -46,11 +46,11 @@ from ..typehints import SerializedExtension
 from ..typehints import SerializedValue
 from ..utils import MULTIPLE_OIDS
 from ..utils import NAME_OID_MAPPINGS
-from .base import SeleniumTestCase
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
+from .base.testcases import SeleniumTestCase
 from .tests_admin import CertificateModelAdminTestCaseMixin
 
 
@@ -711,6 +711,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumTestCase):
     """Some Selenium based test cases to test the client side javascript code."""
 
+    load_cas = "__usable__"
+
     def get_expected(
         self,
         profile: Profile,
@@ -795,7 +797,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     @override_tmpcadir()
     def test_paste_csr_test(self) -> None:
         """Test that pasting a CSR shows text next to subject input fields."""
-        self.load_usable_cas()
         self.login()
 
         self.selenium.get("%s%s" % (self.live_server_url, self.add_url))
@@ -829,7 +830,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     def test_select_profile(self) -> None:
         """Test that selecting the profile modifies the extensions."""
 
-        self.load_usable_cas()
         self.login()
 
         self.selenium.get("%s%s" % (self.live_server_url, self.add_url))

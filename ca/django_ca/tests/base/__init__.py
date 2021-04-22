@@ -31,20 +31,9 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from django.core.cache import cache
-from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
-from django.urls import reverse
-
-from pyvirtualdisplay import Display
-from selenium.webdriver.firefox.webdriver import WebDriver
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.wait import WebDriverWait
 
 from ...extensions import KEY_TO_EXTENSION
-from ...models import Certificate
-from ...models import CertificateAuthority
 from ...typehints import PrivateKeyTypes
 from ...typehints import TypedDict
 from ...utils import add_colons
@@ -351,15 +340,6 @@ timestamps["profile_certs_expired"] = certs["profile-server"]["valid_until"] + t
 timestamps["everything_expired"] = timestamps["base"] + timedelta(days=365 * 20)
 ocsp_data = _fixture_data["ocsp"]
 
-if typing.TYPE_CHECKING:
-    # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
-    # that the mixin accesses. See also:
-    #   https://github.com/python/mypy/issues/5837
-    # TODO: remove when DjangoCATestCaseMixin is fully migrated
-    TestCaseProtocol = SimpleTestCase
-else:
-    TestCaseProtocol = object
-
 
 def dns(name: str) -> x509.DNSName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.DNSName`."""
@@ -424,96 +404,6 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         self.mock.stop()
         self.mock_.stop()
         shutil.rmtree(self.options["CA_DIR"])
-
-
-class DjangoCATestCaseMixin(TestCaseProtocol):
-    """Base class for all testcases with some enhancements."""
-
-    # pylint: disable=too-many-public-methods
-
-    # ACME data present in all mixins
-    ACME_THUMBPRINT_1 = "U-yUM27CQn9pClKlEITobHB38GJOJ9YbOxnw5KKqU-8"
-    ACME_THUMBPRINT_2 = "s_glgc6Fem0CW7ZioXHBeuUQVHSO-viZ3xNR8TBebCo"
-    ACME_PEM_1 = """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
-tyHz6cIYPv5u5zZbHGfNvrmMl8qHMmddQSv581AAFa21zueS+W8jnRI5ISxER95J
-tNad2XEDsFINNvYaSG8E54IHMNQijVLR4MJchkfMAa6g1gIsJB+ffEt4Ea3TMyGr
-MifJG0EjmtjkjKFbr2zuPhRX3fIGjZTlkxgvb1AY2P4AxALwS/hG4bsxHHNxHt2Z
-s9Bekv+55T5+ZqvhNz1/3yADRapEn6dxHRoUhnYebqNLSVoEefM+h5k7AS48waJS
-lKC17RMZfUgGE/5iMNeg9qtmgWgZOIgWDyPEpiXZEDDKeoifzwn1LO59W8c4W6L7
-XwIDAQAB
------END PUBLIC KEY-----"""
-    ACME_PEM_2 = """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8SCUVQqpTBRyryuu560
-Q8cAi18Ac+iLjaSLL4gOaDEU9CpPi4l9yCGphnQFQ92YP+GWv+C6/JRp24852QbR
-RzuUJqJPdDxD78yFXoxYCLPmwQMnToA7SE3SnZ/PW2GPFMbAICuRdd3PhMAWCODS
-NewZPLBlG35brRlfFtUEc2oQARb2lhBkMXrpIWeuSNQtInAHtfTJNA51BzdrIT2t
-MIfadw4ljk7cVbrSYemT6e59ATYxiMXalu5/4v22958voEBZ38TE8AXWiEtTQYwv
-/Kj0P67yuzE94zNdT28pu+jJYr5nHusa2NCbvnYFkDwzigmwCxVt9kW3xj3gfpgc
-VQIDAQAB
------END PUBLIC KEY-----"""
-    ACME_SLUG_1 = "Mr6FfdD68lzp"
-    ACME_SLUG_2 = "DzW4PQ6L76PE"
-
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
-        super().setUp()
-        self.cas: typing.Dict[str, CertificateAuthority] = {}
-        self.certs: typing.Dict[str, Certificate] = {}
-
-    def tearDown(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
-        super().tearDown()
-        cache.clear()
-
-
-class SeleniumTestCase(DjangoCATestCaseMixin, StaticLiveServerTestCase):  # pragma: no cover
-    """TestCase with some helper functions for Selenium."""
-
-    # NOTE: coverage has weird issues all over this class
-    vdisplay: Display
-    selenium: WebDriver
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        if settings.SKIP_SELENIUM_TESTS:
-            return
-
-        if settings.VIRTUAL_DISPLAY:
-            cls.vdisplay = Display(visible=False, size=(1024, 768))
-            cls.vdisplay.start()
-
-        cls.selenium = WebDriver(
-            executable_path=settings.GECKODRIVER_PATH, service_log_path=settings.GECKODRIVER_LOG_PATH
-        )
-        cls.selenium.implicitly_wait(10)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        if settings.SKIP_SELENIUM_TESTS:
-            super().tearDownClass()
-            return
-
-        cls.selenium.quit()
-        if settings.VIRTUAL_DISPLAY:
-            cls.vdisplay.stop()
-        super().tearDownClass()
-
-    def find(self, selector: str) -> WebElement:
-        """Find an element by CSS selector."""
-
-        return self.selenium.find_element_by_css_selector(selector)
-
-    def login(self, username: str = "admin", password: str = "admin") -> None:
-        """Login the given user."""
-        self.selenium.get("%s%s" % (self.live_server_url, reverse("admin:login")))
-        self.find("#id_username").send_keys(username)
-        self.find("#id_password").send_keys(password)
-        self.find('input[type="submit"]').click()
-        self.wait_for_page_load()
-
-    def wait_for_page_load(self, wait: int = 2) -> None:
-        """Wait for the page to load."""
-        WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
 
 
 __all__ = ("override_settings",)
