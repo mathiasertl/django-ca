@@ -14,6 +14,7 @@
 """Test :py:mod:`django_ca.profiles`."""
 
 import doctest
+import typing
 from datetime import timedelta
 
 from django.test import TestCase
@@ -49,7 +50,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         super().setUp()
         self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
 
-    def get_globs(self):
+    def get_globs(self) -> typing.Dict[str, typing.Any]:
         """Get globals for doctests."""
         return {
             "Profile": Profile,
@@ -63,9 +64,9 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
     def test_module(self) -> None:
         """Test doctests from main module."""
         # pylint: disable=redefined-outer-name,import-outside-toplevel; we need the top-level module
-        from .. import profiles
+        from .. import profiles as profiles_mod
 
-        doctest.testmod(profiles, globs=self.get_globs())
+        doctest.testmod(profiles_mod, globs=self.get_globs())
 
     @override_tmpcadir()
     def test_python_intro(self) -> None:
@@ -76,7 +77,9 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
 class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
 
-    def create_cert(self, prof, *args, **kwargs):
+    def create_cert(  # type: ignore[override]
+        self, prof: Profile, *args: typing.Any, **kwargs: typing.Any
+    ) -> Certificate:
         """Shortcut to create a cert with the given profile."""
         cert = Certificate()
         cert.x509_cert = prof.create_cert(*args, **kwargs)
