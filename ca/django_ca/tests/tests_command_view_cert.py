@@ -547,7 +547,7 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
             "hpkp": cert.hpkp_pin,
         }
 
-    def assertBasicOutput(self, status: str) -> None:
+    def assertBasicOutput(self, status: str) -> None:  # pylint: disable=invalid-name
         """Test basic properties of output."""
         for key, cert in self.ca_certs:
             stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())

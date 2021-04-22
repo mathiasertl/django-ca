@@ -130,6 +130,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.cert = self.new_certs[self.default_cert]
 
     def load_named_cas(self, cas: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
+        """Load CAs by the given name."""
         if cas == "__all__":
             cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
         elif cas == "__usable__":
@@ -146,6 +147,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return cas
 
     def load_named_certs(self, names: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
+        """Load certs by the given name."""
         if names == "__all__":
             names = tuple(k for k, v in certs.items() if v.get("type") == "cert")
         elif names == "__usable__":
