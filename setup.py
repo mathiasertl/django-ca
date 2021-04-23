@@ -92,6 +92,7 @@ setup(
         "Development Status :: 4 - Beta",
         "Framework :: Django :: 2.2",
         "Framework :: Django :: 3.1",
+        "Framework :: Django :: 3.2",
         "Framework :: Django",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
