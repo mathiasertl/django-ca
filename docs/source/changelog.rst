@@ -18,10 +18,15 @@ This version is currently under development.
 * Require the ``change certificate`` permission when revoking certificates.
 * Preselect profile of original certificate when resigning certificates.
 * ``./dev.py init-demo`` now also saves profiles and CSRs.
-* Lint code using `pylint <https://www.pylint.org/>`_.
 * Make sure that operators for OrderedSetExtension always return an instance of the implementing class, not of
   the base class.
 * Certificate bundles now always end with a newline, as normal bundles do.
+
+Code style changes
+==================
+
+* Code is now completely `pylint <https://www.pylint.org/>`_ clean.
+* Code is now fully type-hinted. This requires the upcoming release of cryptography (current: 3.4).
 
 Backwards incompatible changes
 ==============================
