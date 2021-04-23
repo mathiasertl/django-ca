@@ -216,7 +216,10 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
     policy_qualifiers: Optional[List[PolicyQualifier]]
 
     def __init__(
-        self, data: Optional[Union[x509.PolicyInformation, ParsablePolicyInformation]] = None
+        self,
+        data: Optional[
+            Union[x509.PolicyInformation, ParsablePolicyInformation, SerializedPolicyInformation]
+        ] = None,
     ) -> None:
         if isinstance(data, x509.PolicyInformation):
             self.policy_identifier = data.policy_identifier
@@ -301,7 +304,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
     def __setitem__(
         self,
         key: typing.Union[int, slice],
-        value: typing.Union[ParsablePolicyQualifier, typing.Iterable[ParsablePolicyQualifier]]
+        value: typing.Union[ParsablePolicyQualifier, typing.Iterable[ParsablePolicyQualifier]],
     ) -> None:
         """Implement item getter (e.g ``pi[0]`` or ``pi[0:1]``)."""
         if isinstance(key, slice) and isinstance(value, typing.Iterable):
@@ -398,7 +401,9 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
             self.policy_qualifiers = []
         self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
 
-    def _parse_policy_qualifier(self, qualifier: ParsablePolicyQualifier) -> PolicyQualifier:
+    def _parse_policy_qualifier(
+        self, qualifier: Union[SerializedPolicyQualifier, ParsablePolicyQualifier]
+    ) -> PolicyQualifier:
 
         if isinstance(qualifier, str):
             return qualifier
@@ -424,7 +429,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         raise ValueError("PolicyQualifier must be string, dict or x509.UserNotice")
 
     def parse_policy_qualifiers(
-        self, qualifiers: Optional[Iterable[ParsablePolicyQualifier]]
+        self, qualifiers: Optional[Iterable[Union[SerializedPolicyQualifier, ParsablePolicyQualifier]]]
     ) -> Optional[List[PolicyQualifier]]:
         """Parse given list of policy qualifiers."""
         if qualifiers is None:
