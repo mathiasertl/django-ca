@@ -77,7 +77,7 @@ setup(
     author="Mathias Ertl",
     author_email="mati@er.tl",
     url="https://github.com/mathiasertl/django-ca",
-    packages=find_packages("ca", exclude=("ca", "django_ca.tests")),
+    packages=find_packages("ca", exclude=("ca", "django_ca.tests", "django_ca.tests.base")),
     package_dir={"": "ca"},
     package_data={"": package_data},
     python_requires=">=3.6",
