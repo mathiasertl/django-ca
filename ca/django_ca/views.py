@@ -53,6 +53,7 @@ from django.views.generic.detail import SingleObjectMixin
 from . import ca_settings
 from .models import Certificate
 from .models import CertificateAuthority
+from .typehints import Literal
 from .typehints import PrivateKeyTypes
 from .utils import SERIAL_RE
 from .utils import get_crl_cache_key
@@ -78,7 +79,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     type = Encoding.DER
     """Encoding for CRL."""
 
-    scope: typing.Optional[typing.Literal["ca", "user", "attribute"]] = "user"
+    scope: typing.Optional[Literal["ca", "user", "attribute"]] = "user"
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
     include both."""
 
