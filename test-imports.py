@@ -93,13 +93,13 @@ for static_file in [
 # Check that tests are **not** included
 try:
     from django_ca import tests
-    print('Was able to import django_ca.tests')
+    print(f"Was able to import django_ca.tests from {tests.__path__}")
     sys.exit(1)
 except ImportError:
     pass
 try:
     from django_ca.tests import base
-    print('Was able to import django_ca.tests.base')
+    print(f"Was able to import django_ca.tests from {base.__path__}")
     sys.exit(1)
 except ImportError:
     pass
