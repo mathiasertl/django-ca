@@ -31,8 +31,6 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import cast
-from typing import overload
 from urllib.parse import urlparse
 
 import idna
@@ -542,14 +540,14 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     return encoded
 
 
-@overload
+@typing.overload
 def validate_key_parameters(
     key_size: Optional[int], key_type: Literal["DSA"], ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[int, Literal["DSA"], None]:
     ...
 
 
-@overload
+@typing.overload
 def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[Literal["RSA"]] = "RSA",
@@ -558,7 +556,7 @@ def validate_key_parameters(
     ...
 
 
-@overload
+@typing.overload
 def validate_key_parameters(
     key_size: Optional[int], key_type: Literal["ECC"], ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[None, Literal["ECC"], ec.EllipticCurve]:
@@ -605,17 +603,17 @@ def validate_key_parameters(
     return key_size, key_type, ecc_curve
 
 
-@overload
+@typing.overload
 def generate_private_key(key_size: int, key_type: Literal["DSA"], ecc_curve: None) -> dsa.DSAPrivateKey:
     ...
 
 
-@overload
+@typing.overload
 def generate_private_key(key_size: int, key_type: Literal["RSA"], ecc_curve: None) -> rsa.RSAPrivateKey:
     ...
 
 
-@overload
+@typing.overload
 def generate_private_key(
     key_size: None, key_type: Literal["ECC"], ecc_curve: ec.EllipticCurve
 ) -> ec.EllipticCurvePrivateKey:
@@ -1114,13 +1112,11 @@ class GeneralNameList(List[x509.GeneralName]):
     def __repr__(self) -> str:
         return "<GeneralNameList: %r>" % [format_general_name(v) for v in self]
 
-    # Overloading functions, see also:
-    #   https://mypy.readthedocs.io/en/stable/more_types.html#function-overloading
-    @overload
+    @typing.overload
     def __setitem__(self, key: SupportsIndex, value: ParsableGeneralName) -> None:  # pragma: no cover
         ...
 
-    @overload
+    @typing.overload
     def __setitem__(self, key: slice, value: ParsableGeneralNameList) -> None:  # pragma: no cover
         ...
 
