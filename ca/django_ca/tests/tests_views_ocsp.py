@@ -57,6 +57,7 @@ from .base.mixins import TestCaseMixin
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import OrderedDict
+
     OrderedDictType = OrderedDict[str, str]
 else:  # pragma: only py<3.8
     from collections import OrderedDict as OrderedDictType
