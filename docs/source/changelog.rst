@@ -25,8 +25,12 @@ This version is currently under development.
 Code style changes
 ==================
 
-* Code is now completely `pylint <https://www.pylint.org/>`_ clean.
+* Use :file:`pyproject.toml` for all tools that support it.
+* Code is now clean according to `black <https://github.com/psf/black>`_.
+* Code is now clean according to `pylint <https://www.pylint.org/>`_.
 * Code is now fully type-hinted. This requires the upcoming release of cryptography (current: 3.4).
+* Documentation is now style-checked using `doc8 <https://github.com/PyCQA/doc8>` and spell-checked using
+  `sphinxcontrib.spelling <https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html>`_.
 
 Backwards incompatible changes
 ==============================
