@@ -18,7 +18,9 @@
 
 import copy
 import logging
+import sys
 import typing
+from datetime import date
 from datetime import datetime
 from functools import partial
 from http import HTTPStatus
@@ -29,9 +31,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.contrib import admin
+from django.contrib.admin.views.main import ChangeList
 from django.contrib.messages import constants as messages
 from django.core.exceptions import PermissionDenied
+from django.core.handlers.wsgi import WSGIRequest
+from django.db import models
+from django.forms import ModelForm
 from django.http import Http404
+from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
@@ -40,13 +47,15 @@ from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.urls import reverse
+from django.urls.resolvers import URLPattern
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.html import escape
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from django_object_actions import DjangoObjectActions
+# TYPE NOTE: Since we only use the baseclass, we do not include a stub
+from django_object_actions import DjangoObjectActions  # type: ignore[import]
 
 from . import ca_settings
 from .constants import ReasonFlags
@@ -72,7 +81,9 @@ from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
 from .models import Watcher
+from .models import X509CertMixin
 from .profiles import profiles
+from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
@@ -83,24 +94,54 @@ from .utils import parse_csr
 log = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
+    AcmeAccountAdminBase = admin.ModelAdmin[AcmeAccount]
+    AcmeAuthorizationAdminBase = admin.ModelAdmin[AcmeAuthorization]
     AcmeCertificateAdminBase = admin.ModelAdmin[AcmeCertificate]
     AcmeChallengeAdminBase = admin.ModelAdmin[AcmeChallenge]
+    AcmeOrderAdminBase = admin.ModelAdmin[AcmeOrder]
+    CertificateAdminBase = admin.ModelAdmin[Certificate]
+    CertificateAuthorityAdminBase = admin.ModelAdmin[CertificateAuthority]
+    ModelAdminBase = admin.ModelAdmin[models.Model]
+    QuerySet = models.QuerySet[models.Model]
+    WatcherAdminBase = admin.ModelAdmin[Watcher]
+    MixinBase = ModelAdminBase
 else:
+    AcmeAccountAdminBase = admin.ModelAdmin
+    AcmeAuthorizationAdminBase = admin.ModelAdmin
     AcmeCertificateAdminBase = admin.ModelAdmin
     AcmeChallengeAdminBase = admin.ModelAdmin
+    AcmeOrderAdminBase = admin.ModelAdmin
+    CertificateAdminBase = admin.ModelAdmin
+    CertificateAuthorityAdminBase = admin.ModelAdmin
+    ModelAdminBase = admin.ModelAdmin
+    QuerySet = models.QuerySet
+    WatcherAdminBase = admin.ModelAdmin
+    MixinBase = object
+
+FieldSets = typing.List[typing.Tuple[typing.Optional[str], typing.Dict[str, typing.Any]]]
+QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
+X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
+
+if sys.version_info >= (3, 8):  # pragma: only py>=3.8
+    from typing import OrderedDict
+
+    OrderedDictType = OrderedDict[str, str]
+else:  # pragma: only py<3.8
+    from collections import OrderedDict as OrderedDictType
 
 
 @admin.register(Watcher)
-class WatcherAdmin(admin.ModelAdmin):
+class WatcherAdmin(WatcherAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
 
 
-class CertificateMixin:
+class CertificateMixin(typing.Generic[X509CertMixinTypeVar], MixinBase):
     """Mixin for CA/Certificate."""
 
     form = X509CertMixinAdminForm
+    x509_fieldset_index: int
 
-    def get_urls(self):
+    def get_urls(self) -> typing.List[URLPattern]:
         """Overridden to add urls for download/download_bundle views."""
         info = self.model._meta.app_label, self.model._meta.model_name
         urls = [
@@ -118,7 +159,7 @@ class CertificateMixin:
         urls += super().get_urls()
         return urls
 
-    def _download_response(self, request, pk, bundle=False):
+    def _download_response(self, request: HttpRequest, pk: int, bundle: bool = False) -> HttpResponse:
         if not request.user.is_staff or not self.has_change_permission(request):
             # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
             raise PermissionDenied
@@ -149,27 +190,27 @@ class CertificateMixin:
         response["Content-Disposition"] = "attachment; filename=%s" % filename
         return response
 
-    def distinguished_name(self, obj) -> str:
+    def distinguished_name(self, obj: X509CertMixinTypeVar) -> str:
         """The certificates distinguished name formatted as string."""
         return format_name(obj.x509_cert.subject)
 
     distinguished_name.short_description = _("Distinguished Name")  # type: ignore[attr-defined]
 
-    def download_view(self, request, pk):
+    def download_view(self, request: HttpRequest, pk: int) -> HttpResponse:
         """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
 
         return self._download_response(request, pk)
 
-    def download_bundle_view(self, request, pk):
+    def download_bundle_view(self, request: HttpRequest, pk: int) -> HttpResponse:
         """A view that allows the user to download a certificate bundle in PEM format."""
 
         return self._download_response(request, pk, bundle=True)
 
-    def has_delete_permission(self, request, obj=None):
+    def has_delete_permission(self, request: HttpRequest, obj: typing.Optional[models.Model] = None) -> bool:
         # pylint: disable=missing-function-docstring,unused-argument; Django standard
         return False
 
-    def get_actions(self, request):
+    def get_actions(self, request: HttpRequest) -> OrderedDictType:
         """Disable the "delete selected" admin action.
 
         Otherwise the action is present even though has_delete_permission is False, it just doesn't
@@ -179,13 +220,13 @@ class CertificateMixin:
         actions.pop("delete_selected", "")
         return actions
 
-    def hpkp_pin(self, obj):
+    def hpkp_pin(self, obj: X509CertMixinTypeVar) -> str:
         """Property showing the HPKP bin (only adds a short description)."""
         return obj.hpkp_pin
 
     hpkp_pin.short_description = _("HPKP pin")  # type: ignore[attr-defined] # django standard
 
-    def cn_display(self, obj):
+    def cn_display(self, obj: X509CertMixinTypeVar) -> str:
         """Display the common name or ``<none>``."""
         if obj.cn:
             return obj.cn
@@ -193,14 +234,16 @@ class CertificateMixin:
 
     cn_display.short_description = _("CommonName")  # type: ignore[attr-defined] # django standard
 
-    def serial_field(self, obj):
+    def serial_field(self, obj: X509CertMixinTypeVar) -> str:
         """Display the serial (with colons added)."""
         return add_colons(obj.serial)
 
     serial_field.short_description = _("Serial")  # type: ignore[attr-defined] # django standard
     serial_field.admin_order_field = "serial"  # type: ignore[attr-defined] # django standard
 
-    def get_search_results(self, request, queryset, search_term):
+    def get_search_results(
+        self, request: HttpRequest, queryset: QuerySet, search_term: str
+    ) -> typing.Tuple[QuerySet, bool]:
         """Overridden to strip any colons from search terms (so you can search for serials with colons)."""
         # Replace ':' from any search term that looks like a serial
         search_term = " ".join(
@@ -216,7 +259,7 @@ class CertificateMixin:
     # Properties for x509 extensions #
     ##################################
 
-    def output_template(self, obj, key):
+    def output_template(self, obj: X509CertMixinTypeVar, key: str) -> str:
         """Render extension for the given object."""
 
         ext = getattr(obj, key)
@@ -236,7 +279,7 @@ class CertificateMixin:
             templates.append("django_ca/admin/extensions/base/base.html")
         return render_to_string(templates, {"obj": obj, "extension": ext})
 
-    def unknown_oid(self, oid, obj):
+    def unknown_oid(self, oid: x509.ObjectIdentifier, obj: X509CertMixinTypeVar) -> str:
         """Generic display for extensions that we do not know about and cannot display."""
         ext = obj.x509_cert.extensions.get_extension_for_oid(oid)
         html = ""
@@ -247,11 +290,14 @@ class CertificateMixin:
         html += "<p>%s<p>" % escape(ext.value)
         return html
 
-    def get_oid_name(self, oid):
+    def get_oid_name(self, oid: x509.ObjectIdentifier) -> str:
         """Get a normalized name for the given OID."""
         return oid.dotted_string.replace(".", "_")
 
-    def get_fieldsets(self, request, obj=None):  # pylint: disable=missing-function-docstring
+    # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
+    def get_fieldsets(  # type: ignore[override] # pylint: disable=missing-function-docstring
+        self, request: HttpRequest, obj: typing.Optional[X509CertMixinTypeVar] = None
+    ) -> FieldSets:
         fieldsets = super().get_fieldsets(request, obj=obj)
 
         if obj is None:
@@ -270,7 +316,8 @@ class CertificateMixin:
                 # admin instance:
                 if isinstance(field, x509.Extension):
                     func = partial(self.unknown_oid, field.oid)
-                    func.short_description = "Unkown OID (%s)" % field.oid.dotted_string
+                    desc = "Unkown OID (%s)" % field.oid.dotted_string
+                    func.short_description = desc  # type: ignore[attr-defined]
 
                     field = self.get_oid_name(field.oid)
 
@@ -285,17 +332,22 @@ class CertificateMixin:
 
         return fieldsets
 
-    def get_readonly_fields(self, request, obj=None):  # pylint: disable=missing-function-docstring
+    def get_readonly_fields(  # type: ignore[override] # pylint: disable=missing-function-docstring
+        self, request: HttpRequest, obj: typing.Optional[X509CertMixinTypeVar] = None
+    ) -> typing.Union[typing.List[str], typing.Tuple[typing.Any, ...]]:
         fields = super().get_readonly_fields(request, obj=obj)
-
-        if not obj.revoked:
-            # We can only change the date when the certificate was compromised if it's actually revoked.
-            fields.append("compromised")
 
         if obj is None:  # pragma: no cover
             # This is never True because CertificateAdmin (the only case where objects are added) doesn't call
             # the superclass in this case.
             return fields
+
+        if isinstance(fields, tuple):  # pragma: no cover # just to make mypy happy, we always use lists
+            fields = list(fields)
+
+        if not obj.revoked:
+            # We can only change the date when the certificate was compromised if it's actually revoked.
+            fields.append("compromised")
 
         fields = list(fields)
         for field in obj.extension_fields:
@@ -320,18 +372,18 @@ for ext_key, ext_cls in KEY_TO_EXTENSION.items():
     # if hasattr(CertificateMixin, key):
     #    continue
 
-    f = partial(CertificateMixin.output_template, key=ext_key)
-    f.short_description = ext_cls.name
-    f = MethodType(f, CertificateMixin)
+    func = partial(CertificateMixin.output_template, key=ext_key)
+    func.short_description = ext_cls.name  # type: ignore[attr-defined]
+    bound_func = MethodType(func, CertificateMixin)
 
-    setattr(CertificateMixin, ext_key, f)
+    setattr(CertificateMixin, ext_key, bound_func)
 
 
 @admin.register(CertificateAuthority)
-class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
+class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], CertificateAuthorityAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.CertificateAuthority`."""
 
-    fieldsets = (
+    fieldsets = [
         (
             None,
             {
@@ -375,7 +427,7 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
                 "fields": [],  # dynamically added by add_fieldsets
             },
         ),
-    )
+    ]
     list_display = [
         "enabled",
         "name",
@@ -400,10 +452,13 @@ class CertificateAuthorityAdmin(CertificateMixin, admin.ModelAdmin):
     ]
     x509_fieldset_index = 3
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def get_fieldsets(self, request, obj=None):
+    # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
+    def get_fieldsets(  # type: ignore[override]
+        self, request: HttpRequest, obj: typing.Optional[CertificateAuthority] = None
+    ) -> FieldSets:
         """Collapse the "Revocation" section unless the certificate is revoked."""
         fieldsets = super().get_fieldsets(request, obj=obj)
         if ca_settings.CA_ENABLE_ACME:
@@ -438,7 +493,7 @@ class DefaultListFilter(admin.SimpleListFilter):  # pylint: disable=abstract-met
     Inspired by https://stackoverflow.com/a/16556771.
     """
 
-    def choices(self, changelist):
+    def choices(self, changelist: ChangeList) -> typing.Iterator[typing.Dict[str, typing.Any]]:
         for lookup, title in self.lookup_choices:
             yield {
                 "selected": self.value() == lookup,
@@ -458,21 +513,28 @@ class StatusListFilter(DefaultListFilter):
     title = _("Status")
     parameter_name = "status"
 
-    def lookups(self, request, model_admin):
-        return (
+    # TODO: We should check if we can use "" for the first lookup for more type safety
+    def lookups(
+        self, request: HttpRequest, model_admin: ModelAdminBase
+    ) -> typing.List[typing.Tuple[typing.Optional[str], str]]:
+        return [
             (None, _("Valid")),
             ("expired", _("Expired")),
             ("revoked", _("Revoked")),
             ("all", _("All")),
-        )
+        ]
 
-    def queryset(self, request, queryset):  # pylint: disable=inconsistent-return-statements
+    # TYPE NOTE: django-stubs defines queryset as QuerySet[Any], but we can be more specific here
+    def queryset(  # type: ignore[override]
+        self, request: HttpRequest, queryset: CertificateQuerySet
+    ) -> CertificateQuerySet:
         if self.value() is None:
             return queryset.valid()
         if self.value() == "expired":
             return queryset.expired()
         if self.value() == "revoked":
             return queryset.revoked()
+        return queryset
 
 
 class AutoGeneratedFilter(DefaultListFilter):
@@ -481,23 +543,29 @@ class AutoGeneratedFilter(DefaultListFilter):
     title = _("autogeneration")
     parameter_name = "auto"
 
-    def lookups(self, request, model_admin):
-        return (
+    # TODO: We should check if we can use "" for the first lookup for more type safety
+    def lookups(
+        self, request: HttpRequest, model_admin: ModelAdminBase
+    ) -> typing.List[typing.Tuple[typing.Optional[str], str]]:
+        return [
             (None, _("No")),
             ("auto", _("Yes")),
             ("all", _("All")),
-        )
+        ]
 
-    def queryset(self, request, queryset):  # pylint: disable=inconsistent-return-statements
+    # TYPE NOTE: django-stubs defines queryset as QuerySet[Any], but we can be more specific here
+    def queryset(  # type: ignore[override]
+        self, request: HttpRequest, queryset: CertificateQuerySet
+    ) -> CertificateQuerySet:
         if self.value() == "auto":
             return Certificate.objects.filter(autogenerated=True)
         if self.value() is None:
             return Certificate.objects.filter(autogenerated=False)
-        # "all" does not need a filter
+        return queryset
 
 
 @admin.register(Certificate)
-class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
+class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], CertificateAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Certificate`."""
 
     actions = [
@@ -580,7 +648,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             },
         ),
     ]
-    add_fieldsets = [
+    add_fieldsets: FieldSets = [
         (
             None,
             {
@@ -609,7 +677,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     ]
 
     # same as add_fieldsets but without the csr
-    resign_fieldsets = [
+    resign_fieldsets: FieldSets = [
         (
             None,
             {
@@ -637,23 +705,30 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
     ]
     x509_fieldset_index = 1
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
             if ca.key_exists:
                 return True
         return False
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
+    def get_form(  # type: ignore[override] # django-stubs does not use generics
+        self,
+        request: HttpRequest,
+        obj: typing.Optional[Certificate] = None,
+        change: bool = False,
+        **kwargs: typing.Any,
+    ) -> typing.Type[ModelForm]:
         """Override to get specialized forms for signing/resigning certs."""
         if hasattr(request, "_resign_obj"):
             return ResignCertificateForm
         if obj is None:
             return CreateCertificateForm
 
-        return super().get_form(request, obj=obj, **kwargs)
+        # TYPE NOTE: django-stubs does not seem to add typehints for this function
+        return typing.cast(typing.Type[ModelForm], super().get_form(request, obj=obj, **kwargs))
 
-    def get_changeform_initial_data(self, request):
+    def get_changeform_initial_data(self, request: HttpRequest) -> typing.Dict[str, typing.Any]:
         """Get initial data based on default profile.
 
         When resigning a certificate, get initial data from the certificate."""
@@ -691,18 +766,25 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
         return data
 
-    def add_view(self, request, form_url="", extra_context=None):
+    def add_view(
+        self, request: HttpRequest,
+        form_url: str = "",
+        extra_context: typing.Optional[typing.Dict[str, typing.Any]] = None
+    ) -> HttpResponse:
         extra_context = extra_context or {}
         extra_context["profiles_url"] = reverse("admin:%s" % self.profiles_view_name)
         extra_context["csr_details_url"] = reverse("admin:%s" % self.csr_details_view_name)
-        return super().add_view(request, form_url=form_url, extra_context=extra_context)
+        return super().add_view(
+            request, form_url=form_url,
+            extra_context=extra_context  # type: ignore[arg-type] # django-stubs wrongly thinks it's None
+        )
 
     @property
-    def csr_details_view_name(self):
+    def csr_details_view_name(self) -> str:
         """URL for the CSR details view."""
         return "%s_%s_csr_details" % (self.model._meta.app_label, self.model._meta.verbose_name)
 
-    def csr_details_view(self, request):
+    def csr_details_view(self, request: HttpRequest) -> JsonResponse:
         """Returns details of a CSR request."""
 
         if not request.user.is_staff or not self.has_change_permission(request):
@@ -718,11 +800,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         return JsonResponse({"subject": subject})
 
     @property
-    def profiles_view_name(self):
+    def profiles_view_name(self) -> str:
         """URL for the profiles view."""
         return "%s_%s_profiles" % (self.model._meta.app_label, self.model._meta.verbose_name)
 
-    def profiles_view(self, request):
+    def profiles_view(self, request: HttpRequest) -> JsonResponse:
         """Returns profiles."""
 
         if not self.has_change_permission(request):
@@ -732,7 +814,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         data = {name: profiles[name].serialize() for name in ca_settings.CA_PROFILES}
         return JsonResponse(data)
 
-    def get_urls(self):
+    def get_urls(self) -> typing.List[URLPattern]:
         # Remove the delete action from the URLs
         urls = super().get_urls()
 
@@ -754,7 +836,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
 
         return urls
 
-    def resign(self, request, obj):
+    def resign(self, request: HttpRequest, obj: Certificate) -> HttpResponse:
         """View for resigning an existing certificate."""
 
         if not self.has_view_permission(request, obj) or not self.has_add_permission(request):
@@ -767,17 +849,20 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             )
             return HttpResponseRedirect(obj.admin_change_url)
 
-        request._resign_obj = obj  # pylint: disable=protected-access; set/used by django-ca only
-        extra_context = {
+        # TYPE/PYLINT NOTE: _resign_obj is used by django-ca
+        request._resign_obj = obj  # type: ignore[attr-defined] # pylint: disable=protected-access
+        context = {
             "title": _("Resign %s for %s") % (obj._meta.verbose_name, obj),
             "original_obj": obj,
             "object_action": _("Resign"),
         }
-        return self.changeform_view(request, extra_context=extra_context)
 
-    resign.short_description = _("Resign this certificate.")
+        # TYPE NOTE: django-stubs wrongly thinks that extra_context should be Dict[str, bool]
+        return self.changeform_view(request, extra_context=context)  # type: ignore[arg-type,no-any-return]
 
-    def revoke_change(self, request, obj):
+    resign.short_description = _("Resign this certificate.")  # type: ignore[attr-defined] # django standard
+
+    def revoke_change(self, request: WSGIRequest, obj: Certificate) -> HttpResponse:
         """View for the revoke action."""
         if not self.has_change_permission(request, obj):
             # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
@@ -803,18 +888,18 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
         context = dict(self.admin_site.each_context(request), form=form, object=obj, opts=obj._meta)
         return TemplateResponse(request, "admin/django_ca/certificate/revoke_form.html", context)
 
-    revoke_change.label = _("Revoke")
-    revoke_change.short_description = _("Revoke this certificate")
+    revoke_change.label = _("Revoke")  # type: ignore[attr-defined] # django standard
+    revoke_change.short_description = _("Revoke this certificate")  # type: ignore[attr-defined]
 
-    def revoke(self, request, queryset):
+    def revoke(self, request: HttpRequest, queryset: CertificateQuerySet) -> None:
         """Implement the revoke() action."""
         for cert in queryset:
             cert.revoke()
 
-    revoke.short_description = _("Revoke selected certificates")
-    revoke.allowed_permissions = ("change",)
+    revoke.short_description = _("Revoke selected certificates")  # type: ignore[attr-defined]
+    revoke.allowed_permissions = ("change",)  # type: ignore[attr-defined] # django standard
 
-    def get_change_actions(self, request, object_id, form_url):
+    def get_change_actions(self, request: HttpRequest, object_id: int, form_url: str) -> typing.List[str]:
         actions = list(super().get_change_actions(request, object_id, form_url))
         try:
             obj = self.model.objects.get(pk=object_id)
@@ -825,7 +910,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             actions.remove("revoke_change")
         return actions
 
-    def get_fieldsets(self, request, obj=None):
+    # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
+    def get_fieldsets(  # type: ignore[override]
+        self, request: HttpRequest, obj: typing.Optional[Certificate] = None
+    ) -> FieldSets:
         """Collapse the "Revocation" section unless the certificate is revoked."""
         fieldsets = super().get_fieldsets(request, obj=obj)
 
@@ -840,12 +928,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             ]
         return fieldsets
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(  # type: ignore[override]
+        self, request: HttpRequest, obj: typing.Optional[Certificate] = None
+    ) -> typing.Union[typing.List[str], typing.Tuple[typing.Any, ...]]:
         if obj is None:
             return []
         return super().get_readonly_fields(request, obj=obj)
 
-    def status(self, obj):
+    def status(self, obj: Certificate) -> str:
         """Get a string for the status of a certificate."""
         if obj.revoked:
             return _("Revoked")
@@ -853,16 +943,22 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin, admin.ModelAdmin):
             return _("Expired")
         return _("Valid")
 
-    status.short_description = _("Status")
+    status.short_description = _("Status")  # type: ignore[attr-defined] # django standard
 
-    def expires_date(self, obj):
+    def expires_date(self, obj: Certificate) -> date:
         """Get the date (without time) when a cert expires."""
         return obj.expires.date()
 
-    expires_date.short_description = _("Expires")
-    expires_date.admin_order_field = "expires"
+    expires_date.short_description = _("Expires")  # type: ignore[attr-defined] # django standard
+    expires_date.admin_order_field = "expires"  # type: ignore[attr-defined] # django standard
 
-    def save_model(self, request, obj, form, change):
+    def save_model(  # type: ignore[override] # django-stubs really shoudl cover this
+        self,
+        request: HttpRequest,
+        obj: Certificate,
+        form: typing.Union[ResignCertificateForm, CreateCertificateForm],
+        change: bool
+    ) -> None:
         data = form.cleaned_data
 
         # If this is a new certificate, initialize it.
@@ -927,13 +1023,15 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         title = _("Expired")
         parameter_name = "expired"
 
-        def lookups(self, request, model_admin):
-            return (
+        def lookups(
+            self, request: HttpRequest, model_admin: ModelAdminBase
+        ) -> typing.List[typing.Tuple[str, str]]:
+            return [
                 ("0", _("No")),
                 ("1", _("Yes")),
-            )
+            ]
 
-        def queryset(self, request, queryset):
+        def queryset(self, request: HttpRequest, queryset: QuerySetTypeVar) -> QuerySetTypeVar:
             now = timezone.now()
 
             if self.value() == "0":
@@ -943,7 +1041,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
             return queryset
 
     @admin.register(AcmeAccount)
-    class AcmeAccountAdmin(admin.ModelAdmin):
+    class AcmeAccountAdmin(AcmeAccountAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAccount`."""
 
         list_display = ("first_contact", "ca", "slug", "status", "created", "terms_of_service_agreed")
@@ -954,15 +1052,15 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         )
         search_fields = ("contact",)
 
-        def first_contact(self, obj):
+        def first_contact(self, obj: AcmeAccount) -> str:
             """return the first contact address."""
             return str(obj)
 
-        first_contact.short_description = _("Contact")
-        first_contact.admin_order_field = "contact"
+        first_contact.short_description = _("Contact")  # type: ignore[attr-defined] # django standard
+        first_contact.admin_order_field = "contact"  # type: ignore[attr-defined] # django standard
 
     @admin.register(AcmeOrder)
-    class AcmeOrderAdmin(admin.ModelAdmin):
+    class AcmeOrderAdmin(AcmeOrderAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeOrder`."""
 
         list_display = (
@@ -976,14 +1074,14 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         list_select_related = ("account",)
         search_fields = ("account__contact", "slug")
 
-        def ca(self, obj):
+        def ca(self, obj: AcmeOrder) -> str:
             """Property to get a link to the CA."""
             return format_html('<a href="{}">{}</a>', obj.account.ca.admin_change_url, obj.account.ca)
 
-        ca.short_description = _("CA")
-        ca.admin_order_field = "account__ca"
+        ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
+        ca.admin_order_field = "account__ca"  # type: ignore[attr-defined] # django standard
 
-        def account_link(self, obj):
+        def account_link(self, obj: AcmeOrder) -> str:
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.account.admin_change_url, obj.account)
 
@@ -991,7 +1089,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         account_link.admin_order_field = "account__contact"  # type: ignore[attr-defined] # django standard
 
     @admin.register(AcmeAuthorization)
-    class AcmeAuthorizationAdmin(admin.ModelAdmin):
+    class AcmeAuthorizationAdmin(AcmeAuthorizationAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
         list_display = ("slug", "value", "status", "ca", "account", "order_display")
@@ -1006,14 +1104,14 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
             "order__account__contact",
         )
 
-        def account(self, obj):
+        def account(self, obj: AcmeAuthorization) -> str:
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
 
         account.short_description = _("Account")  # type: ignore[attr-defined] # django standard
         account.admin_order_field = "order__account__contact"  # type: ignore[attr-defined] # django standard
 
-        def ca(self, obj):
+        def ca(self, obj: AcmeAuthorization) -> str:
             """Property to get a link to the CA."""
             return format_html(
                 '<a href="{}">{}</a>', obj.order.account.ca.admin_change_url, obj.order.account.ca
@@ -1022,7 +1120,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
         ca.admin_order_field = "account__ca"  # type: ignore[attr-defined] # django standard
 
-        def order_display(self, obj):
+        def order_display(self, obj: AcmeAuthorization) -> str:
             """Property to get a link to the ACME order."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
 
