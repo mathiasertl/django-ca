@@ -45,6 +45,7 @@ install_requires = [
     "django-object-actions>=1.1",
     "idna>=2.9",
     "packaging",
+    "typing-extensions; python_version < '3.8'",
 ]
 
 package_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ca")
