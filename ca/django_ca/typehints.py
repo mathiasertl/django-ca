@@ -82,7 +82,7 @@ ParsableSubject = Union[
 ]
 
 # GeneralNameList
-ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]]]
+ParsableRelativeDistinguishedName = Union[str, Iterable[Tuple[str, str]], x509.RelativeDistinguishedName]
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 

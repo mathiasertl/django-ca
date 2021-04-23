@@ -17,6 +17,7 @@ import binascii
 import os
 import re
 import shlex
+import typing
 from collections import abc
 from datetime import datetime
 from datetime import timedelta
@@ -293,12 +294,12 @@ def add_colons(value: str, pad: str = "0") -> str:
 
     s : str
         The string to add colons to
-    pad : str, default
-        If not None, pad the string so that the last element always has two characters. The default is
-        ``"0"``.
+    pad : str, optional
+        If not an empty string, pad the string so that the last element always has two characters. The default
+        is ``"0"``.
     """
 
-    if len(value) % 2 == 1 and pad is not None:
+    if len(value) % 2 == 1 and pad:
         value = "%s%s" % (pad, value)
 
     return ":".join([value[i : i + 2] for i in range(0, len(value), 2)])
@@ -550,7 +551,9 @@ def validate_key_parameters(
 
 @overload
 def validate_key_parameters(
-    key_size: Optional[int], key_type: Optional[Literal["RSA"]], ecc_curve: ParsableKeyCurve = None
+    key_size: Optional[int] = None,
+    key_type: Optional[Literal["RSA"]] = "RSA",
+    ecc_curve: ParsableKeyCurve = None
 ) -> Tuple[int, Literal["RSA"], None]:
     ...
 
@@ -799,7 +802,9 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
             raise ValueError("Could not parse DNS name: %s" % name) from e
 
 
-def parse_hash_algorithm(value: ParsableHash = None) -> hashes.HashAlgorithm:
+def parse_hash_algorithm(
+    value: typing.Union[typing.Type[hashes.HashAlgorithm], ParsableHash] = None
+) -> hashes.HashAlgorithm:
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
@@ -852,9 +857,7 @@ def parse_hash_algorithm(value: ParsableHash = None) -> hashes.HashAlgorithm:
     if value is None:
         return ca_settings.CA_DIGEST_ALGORITHM
     if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
-        # issubclass() doesn't narrow the type, so value() is detected as Any
-        #   https://github.com/python/mypy/issues/8556
-        return cast(hashes.HashAlgorithm, value())
+        return value()
     if isinstance(value, hashes.HashAlgorithm):
         return value
     if isinstance(value, str):

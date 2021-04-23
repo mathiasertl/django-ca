@@ -20,6 +20,8 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
+from unittest import TestLoader
+from unittest import TestSuite
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -61,7 +63,9 @@ from .base import override_settings
 from .base import override_tmpcadir
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(  # pylint: disable=unused-argument
+    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+) -> TestSuite:
     """Load doctests."""
     tests.addTests(doctest.DocTestSuite(utils))
     return tests
@@ -70,10 +74,10 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
 class NameMatchTest(TestCase):
     """Test parsing of names."""
 
-    def match(self, value, expected):
+    def match(self, value: str, expected: typing.List[typing.Tuple[str, str]]) -> None:
         """Helper function to use NAME_RE."""
-        value = [(t[0], t[2]) for t in NAME_RE.findall(value)]
-        self.assertEqual(value, expected)
+        parsed_value = [(t[0], t[2]) for t in NAME_RE.findall(value)]
+        self.assertEqual(parsed_value, expected)
 
     def test_empty(self) -> None:
         """Test parsing an empty subject."""
@@ -226,7 +230,7 @@ class ParseNameTestCase(TestCase):
 
     def assertSubject(  # pylint: disable=invalid-name
         self, actual: str, expected: typing.List[typing.Tuple[str, str]]
-    ):
+    ) -> None:
         """Test that the given subject matches."""
         self.assertEqual(parse_name(actual), expected)
 
@@ -397,7 +401,7 @@ class GeneratePrivateKeyTestCase(TestCase):
     def test_invalid_type(self) -> None:
         """Test passing an invalid key type."""
         with self.assertRaisesRegex(ValueError, r"^FOO: Invalid key type\.$"):
-            generate_private_key(16, "FOO", None)
+            generate_private_key(16, "FOO", None)  # type: ignore[call-overload]
 
 
 class ParseGeneralNameTest(TestCase):
@@ -604,7 +608,7 @@ class ParseHashAlgorithm(TestCase):
             parse_hash_algorithm("foo")
 
         with self.assertRaisesRegex(ValueError, "^Unknown type passed: bool$"):
-            parse_hash_algorithm(False)
+            parse_hash_algorithm(False)  # type: ignore[arg-type]
 
 
 class FormatNameTestCase(TestCase):
@@ -702,7 +706,7 @@ class ParseEncodingTestCase(TestCase):
             parse_encoding("foo")
 
         with self.assertRaisesRegex(ValueError, "^Unknown type passed: bool$"):
-            parse_encoding(True)
+            parse_encoding(True)  # type: ignore[arg-type]
 
 
 class AddColonsTestCase(TestCase):
@@ -727,9 +731,9 @@ class AddColonsTestCase(TestCase):
 
     def test_no_pad(self) -> None:
         """Test disabling padding."""
-        self.assertEqual(utils.add_colons("a", pad=None), "a")
-        self.assertEqual(utils.add_colons("ab", pad=None), "ab")
-        self.assertEqual(utils.add_colons("abc", pad=None), "ab:c")
+        self.assertEqual(utils.add_colons("a", pad=""), "a")
+        self.assertEqual(utils.add_colons("ab", pad=""), "ab")
+        self.assertEqual(utils.add_colons("abc", pad=""), "ab:c")
 
     def test_zero_padding(self) -> None:
         """Test when there is no padding."""
@@ -895,7 +899,7 @@ class MultilineURLValidatorTestCase(TestCase):
     """Test :py:func:`django_ca.utils.multiline_url_validator`."""
 
     @contextmanager
-    def assertValidationError(self, value):  # pylint: disable=invalid-name; unittest standard
+    def assertValidationError(self, value: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Wrapper to assert a validation error.
 
         Django 3.2 adds the value to ValidationError. This method turns into a useless one-liner as soon as we
@@ -939,7 +943,7 @@ http://www.example.net"""
 class GetCertBuilderTestCase(TestCase):
     """Test :py:func:`django_ca.utils.get_cert_builder`."""
 
-    def parse_date(self, date):
+    def parse_date(self, date: str) -> datetime:
         """Helper to parse a date."""
         return datetime.strptime(date, "%Y%m%d%H%M%SZ")
 
@@ -986,7 +990,7 @@ class GetCertBuilderTestCase(TestCase):
     def test_invalid_type(self) -> None:
         """Test passing an invalid type."""
         with self.assertRaises(TypeError):
-            get_cert_builder("a string")
+            get_cert_builder("a string")  # type: ignore[arg-type]
 
 
 class ValidateKeyParametersTest(TestCase):
