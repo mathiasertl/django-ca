@@ -362,6 +362,9 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi1)
         self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi_empty)
 
+        # Invalid values are always false:
+        self.assertNotIn(True, self.pi1)
+
     def test_count(self) -> None:
         """Test PolicyInformation.count()."""
         self.assertEqual(self.pi1.count(self.s1["policy_qualifiers"][0]), 1)
@@ -481,6 +484,13 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         self.pi_empty.insert(1, self.q2)
         self.pi_empty.policy_identifier = self.oid
         self.assertEqual(self.pi2, self.pi_empty)
+
+    def test_iter(self) -> None:
+        """Test iter(pi)."""
+        self.assertEqual(list(self.pi1), [self.q1])
+        self.assertEqual(list(self.pi2), [self.q2])
+        self.assertEqual(list(self.pi4), [self.q4, self.q5])
+        self.assertEqual(list(self.pi_empty), [])
 
     def test_len(self) -> None:
         """Test len(ext)."""
@@ -606,6 +616,38 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
                 ],
             },
         )
+
+    def test_setitem(self):
+        """Test __setitem__()."""
+        # pylint: disable=invalid-name; let's just use pi here
+        pi = PolicyInformation(self.s1)
+        self.assertEqual(pi, self.pi1)
+        pi[0] = self.q2
+        self.assertEqual(pi, self.pi2)
+
+        pi = PolicyInformation(self.s1)
+        pi[0:1] = [self.q2]
+        self.assertEqual(pi, self.pi2)
+
+        # list()[0:1] = "x" also works
+        pi = PolicyInformation({"policy_identifier": "2.5.29.32.0"})
+        pi[0:1] = [self.q2]
+        self.assertEqual(pi, self.pi2)
+
+        pi = PolicyInformation()
+        with self.assertRaisesRegex(ValueError, r"^Index out of range$"):
+            pi[0] = self.q1
+        self.assertEqual(len(pi), 0)
+
+        pi = PolicyInformation(self.s1)
+        with self.assertRaisesRegex(ValueError, r"^PolicyQualifier must be string, dict or x509.UserNotice$"):
+            pi[0] = True
+        self.assertEqual(pi, self.pi1)
+
+        pi = PolicyInformation(self.s1)
+        with self.assertRaisesRegex(TypeError, r"^bar/%s: Invalid key/value type$" % self.q1):
+            pi["bar"] = self.q1
+        self.assertEqual(pi, self.pi1)
 
     def test_str(self) -> None:
         """Test str()."""
