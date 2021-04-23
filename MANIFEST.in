@@ -1,4 +1,5 @@
 recursive-include ca/django_ca/static *
 recursive-include ca/django_ca/templates *
+recursive-exclude ca/django_ca/tests *
 include LICENSE
 include README.md
