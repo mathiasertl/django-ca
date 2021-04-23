@@ -90,6 +90,12 @@ for static_file in [
         print(f"{static_file}: Could not find static file.")
         sys.exit(1)
 
+# Check that tests are **not** included
+try:
+    from django_ca import tests
+except ImportError:
+    pass
+
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
 if args.extra == "acme":
     from django_ca.acme import messages
