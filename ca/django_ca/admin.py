@@ -37,6 +37,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.handlers.wsgi import WSGIRequest
 from django.db import models
 from django.forms import ModelForm
+from django.forms.widgets import MediaDefiningClass
 from django.http import Http404
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -91,6 +92,7 @@ from .utils import format_name
 from .utils import parse_csr
 
 log = logging.getLogger(__name__)
+X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 if typing.TYPE_CHECKING:
     AcmeAccountAdminBase = admin.ModelAdmin[AcmeAccount]
@@ -101,6 +103,7 @@ if typing.TYPE_CHECKING:
     CertificateAdminBase = admin.ModelAdmin[Certificate]
     CertificateAuthorityAdminBase = admin.ModelAdmin[CertificateAuthority]
     ModelAdminBase = admin.ModelAdmin[models.Model]
+    ModelAdminGenericBase = admin.ModelAdmin[X509CertMixinTypeVar]
     QuerySet = models.QuerySet[models.Model]
     WatcherAdminBase = admin.ModelAdmin[Watcher]
     MixinBase = ModelAdminBase
@@ -113,13 +116,13 @@ else:
     CertificateAdminBase = admin.ModelAdmin
     CertificateAuthorityAdminBase = admin.ModelAdmin
     ModelAdminBase = admin.ModelAdmin
+    ModelAdminGenericBase = admin.ModelAdmin
     QuerySet = models.QuerySet
     WatcherAdminBase = admin.ModelAdmin
     MixinBase = object
 
 FieldSets = typing.List[typing.Tuple[typing.Optional[str], typing.Dict[str, typing.Any]]]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
-X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import OrderedDict
@@ -134,7 +137,25 @@ class WatcherAdmin(WatcherAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
 
 
-class CertificateMixin(typing.Generic[X509CertMixinTypeVar], MixinBase):
+if sys.version_info < (3, 7):  # pragma: only py<3.7
+    # In Python 3.6, Generic has a special metaclass. So does ModelAdmin in general. This creates a conflict
+    # in metaclass base classes:
+    #   https://github.com/python/typing/issues/449
+    #
+    # PYLINT NOTE: GenericMeta only exists in Python 3.6 and pylint does not get that his import is only for
+    #              that version, throwing an error for newer Python versions.
+    from typing import GenericMeta  # pylint: disable=no-name-in-module,ungrouped-imports
+
+    # PYLINT NOTE: Redefining the class with the same name is just the shortest way here
+    class MediaDefiningClass(GenericMeta, MediaDefiningClass):  # pylint: disable=function-redefined
+        """Metaclass for py3.6."""
+
+
+class CertificateMixin(
+    typing.Generic[X509CertMixinTypeVar],
+    MixinBase,
+    metaclass=MediaDefiningClass,
+):
     """Mixin for CA/Certificate."""
 
     form = X509CertMixinAdminForm
