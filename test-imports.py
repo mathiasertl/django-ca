@@ -95,6 +95,10 @@ try:
     from django_ca import tests
 except ImportError:
     pass
+try:
+    from django_ca.tests import base
+except ImportError:
+    pass
 
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
 if args.extra == "acme":
