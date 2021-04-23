@@ -18,6 +18,7 @@
 
 import copy
 import logging
+import typing
 from datetime import datetime
 from functools import partial
 from http import HTTPStatus
@@ -80,6 +81,13 @@ from .utils import format_name
 from .utils import parse_csr
 
 log = logging.getLogger(__name__)
+
+if typing.TYPE_CHECKING:
+    AcmeCertificateAdminBase = admin.ModelAdmin[AcmeCertificate]
+    AcmeChallengeAdminBase = admin.ModelAdmin[AcmeChallenge]
+else:
+    AcmeCertificateAdminBase = admin.ModelAdmin
+    AcmeChallengeAdminBase = admin.ModelAdmin
 
 
 @admin.register(Watcher)
@@ -145,7 +153,7 @@ class CertificateMixin:
         """The certificates distinguished name formatted as string."""
         return format_name(obj.x509_cert.subject)
 
-    distinguished_name.short_description = _("Distinguished Name")
+    distinguished_name.short_description = _("Distinguished Name")  # type: ignore[attr-defined]
 
     def download_view(self, request, pk):
         """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
@@ -175,7 +183,7 @@ class CertificateMixin:
         """Property showing the HPKP bin (only adds a short description)."""
         return obj.hpkp_pin
 
-    hpkp_pin.short_description = _("HPKP pin")
+    hpkp_pin.short_description = _("HPKP pin")  # type: ignore[attr-defined] # django standard
 
     def cn_display(self, obj):
         """Display the common name or ``<none>``."""
@@ -183,14 +191,14 @@ class CertificateMixin:
             return obj.cn
         return _("<none>")
 
-    cn_display.short_description = _("CommonName")
+    cn_display.short_description = _("CommonName")  # type: ignore[attr-defined] # django standard
 
     def serial_field(self, obj):
         """Display the serial (with colons added)."""
         return add_colons(obj.serial)
 
-    serial_field.short_description = _("Serial")
-    serial_field.admin_order_field = "serial"
+    serial_field.short_description = _("Serial")  # type: ignore[attr-defined] # django standard
+    serial_field.admin_order_field = "serial"  # type: ignore[attr-defined] # django standard
 
     def get_search_results(self, request, queryset, search_term):
         """Overridden to strip any colons from search terms (so you can search for serials with colons)."""
@@ -979,8 +987,8 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.account.admin_change_url, obj.account)
 
-        account_link.short_description = _("Account")
-        account_link.admin_order_field = "account__contact"
+        account_link.short_description = _("Account")  # type: ignore[attr-defined] # django standard
+        account_link.admin_order_field = "account__contact"  # type: ignore[attr-defined] # django standard
 
     @admin.register(AcmeAuthorization)
     class AcmeAuthorizationAdmin(admin.ModelAdmin):
@@ -1002,8 +1010,8 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
 
-        account.short_description = _("Account")
-        account.admin_order_field = "order__account__contact"
+        account.short_description = _("Account")  # type: ignore[attr-defined] # django standard
+        account.admin_order_field = "order__account__contact"  # type: ignore[attr-defined] # django standard
 
         def ca(self, obj):
             """Property to get a link to the CA."""
@@ -1011,18 +1019,18 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
                 '<a href="{}">{}</a>', obj.order.account.ca.admin_change_url, obj.order.account.ca
             )
 
-        ca.short_description = _("CA")
-        ca.admin_order_field = "account__ca"
+        ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
+        ca.admin_order_field = "account__ca"  # type: ignore[attr-defined] # django standard
 
         def order_display(self, obj):
             """Property to get a link to the ACME order."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
 
-        order_display.short_description = _("Order")
-        order_display.admin_order_field = "order__slug"
+        order_display.short_description = _("Order")  # type: ignore[attr-defined] # django standard
+        order_display.admin_order_field = "order__slug"  # type: ignore[attr-defined] # django standard
 
     @admin.register(AcmeChallenge)
-    class AcmeChallengeAdmin(admin.ModelAdmin):
+    class AcmeChallengeAdmin(AcmeChallengeAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeChallenge`."""
 
         list_display = (
@@ -1035,7 +1043,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         list_filter = ("type", "status", "auth__order")
 
     @admin.register(AcmeCertificate)
-    class AcmeCertificateAdmin(admin.ModelAdmin):
+    class AcmeCertificateAdmin(AcmeCertificateAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeCertificate`."""
 
         list_display = ("slug", "status", "cert", "ca", "account", "order_link")
@@ -1045,32 +1053,32 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         )
         list_select_related = ("order__account__ca",)
 
-        def account(self, obj):
+        def account(self, obj: AcmeCertificate) -> str:
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
 
-        account.short_description = _("Account")
-        account.admin_order_field = "order__account__contact"
+        account.short_description = _("Account")  # type: ignore[attr-defined] # django standard
+        account.admin_order_field = "order__account__contact"  # type: ignore[attr-defined] # django standard
 
-        def ca(self, obj):
+        def ca(self, obj: AcmeCertificate) -> str:
             """Property to get a link to the CA."""
             return format_html(
                 '<a href="{}">{}</a>', obj.order.account.ca.admin_change_url, obj.order.account.ca
             )
 
-        ca.short_description = _("CA")
-        ca.admin_order_field = "order__account__ca"
+        ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
+        ca.admin_order_field = "order__account__ca"  # type: ignore[attr-defined] # django standard
 
-        def order_link(self, obj):
+        def order_link(self, obj: AcmeCertificate) -> str:
             """Property to get a link to the oder."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
 
-        order_link.short_description = _("Order")
-        order_link.admin_order_field = "order"
+        order_link.short_description = _("Order")  # type: ignore[attr-defined] # django standard
+        order_link.admin_order_field = "order"  # type: ignore[attr-defined] # django standard
 
-        def status(self, obj):
+        def status(self, obj: AcmeCertificate) -> str:
             """Property to get the order status."""
             return obj.order.status
 
-        status.short_description = _("Status")
-        status.admin_order_field = "order__status"
+        status.short_description = _("Status")  # type: ignore[attr-defined] # django standard
+        status.admin_order_field = "order__status"  # type: ignore[attr-defined] # django standard
