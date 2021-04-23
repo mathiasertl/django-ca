@@ -775,16 +775,18 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
     #              https://github.com/PyCQA/pylint/issues/3605
     def add_view(  # pylint: disable=missing-function-docstring
-        self, request: HttpRequest,
+        self,
+        request: HttpRequest,
         form_url: str = "",
-        extra_context: typing.Optional[typing.Dict[str, typing.Any]] = None
+        extra_context: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> HttpResponse:
         extra_context = extra_context or {}
         extra_context["profiles_url"] = reverse("admin:%s" % self.profiles_view_name)
         extra_context["csr_details_url"] = reverse("admin:%s" % self.csr_details_view_name)
         return super().add_view(
-            request, form_url=form_url,
-            extra_context=extra_context  # type: ignore[arg-type] # django-stubs wrongly thinks it's None
+            request,
+            form_url=form_url,
+            extra_context=extra_context,  # type: ignore[arg-type] # django-stubs wrongly thinks it's None
         )
 
     @property
@@ -968,7 +970,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         request: HttpRequest,
         obj: Certificate,
         form: typing.Union[ResignCertificateForm, CreateCertificateForm],
-        change: bool
+        change: bool,
     ) -> None:
         data = form.cleaned_data
 
