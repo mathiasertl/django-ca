@@ -1002,7 +1002,7 @@ class ValidateKeyParametersTest(TestCase):
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
-            validate_key_parameters(4096, "FOOBAR")
+            validate_key_parameters(4096, "FOOBAR")  # type: ignore[call-overload]
 
         with self.assertRaisesRegex(ValueError, "^4000: Key size must be a power of two$"):
             validate_key_parameters(4000, "RSA")
@@ -1018,7 +1018,7 @@ class GeneralNameListTestCase(TestCase):
     dns2 = "example.net"
 
     @contextmanager
-    def assertAddTrue(self):  # pylint: disable=invalid-name
+    def assertAddTrue(self) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Just a shortcut when we somehow add True"""
 
         msg = r"^Cannot parse general name True: Must be of type str \(was: bool\)\.$"
@@ -1037,11 +1037,15 @@ class GeneralNameListTestCase(TestCase):
         self.assertEqual(GeneralNameList(dns(self.dns1)), [dns(self.dns1)])
 
         with self.assertAddTrue():
-            GeneralNameList([True])
+            GeneralNameList([True])  # type: ignore[list-item]
 
     def test_add(self) -> None:
         """Test add()."""
-        values = [
+        values: typing.List[typing.Tuple[
+            GeneralNameList,
+            typing.Union[GeneralNameList, typing.List[typing.Union[x509.GeneralName, str]]],
+            GeneralNameList,
+        ]] = [
             (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
             (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
             (GeneralNameList(), [self.dns1], GeneralNameList([self.dns1])),
@@ -1059,18 +1063,18 @@ class GeneralNameListTestCase(TestCase):
 
         empty = GeneralNameList()
         with self.assertAddTrue():
-            empty + [True]  # pylint: disable=pointless-statement
+            empty + [True]  # type: ignore[list-item] # pylint: disable=pointless-statement
 
     def test_append(self) -> None:
         """Test append()."""
         gnl1 = GeneralNameList()
-        self.assertIsNone(gnl1.append(self.dns1))
+        self.assertIsNone(gnl1.append(self.dns1))  # type: ignore[func-returns-value]
         self.assertEqual(gnl1, GeneralNameList([self.dns1]))
-        self.assertIsNone(gnl1.append(dns(self.dns2)))
+        self.assertIsNone(gnl1.append(dns(self.dns2)))  # type: ignore[func-returns-value]
         self.assertEqual(gnl1, GeneralNameList([self.dns1, self.dns2]))
 
         with self.assertAddTrue():
-            gnl1.append(True)
+            gnl1.append(True)  # type: ignore[arg-type]
         self.assertEqual(gnl1, GeneralNameList([self.dns1, self.dns2]))
 
     def test_contains(self) -> None:
@@ -1093,14 +1097,14 @@ class GeneralNameListTestCase(TestCase):
         gnl1 = GeneralNameList()
         self.assertEqual(gnl1.count(self.dns1), 0)
         self.assertEqual(gnl1.count(dns(self.dns2)), 0)
-        self.assertEqual(gnl1.count(True), 0)
+        self.assertEqual(gnl1.count(True), 0)  # type: ignore[arg-type]
 
         gnl1 = GeneralNameList([self.dns1])
         self.assertEqual(gnl1.count(self.dns1), 1)
         self.assertEqual(gnl1.count(dns(self.dns1)), 1)
         self.assertEqual(gnl1.count(dns(self.dns2)), 0)
         self.assertEqual(gnl1.count(self.dns2), 0)
-        self.assertEqual(gnl1.count(True), 0)
+        self.assertEqual(gnl1.count(True), 0)  # type: ignore[arg-type]
 
     def test_eq(self) -> None:
         """Test list equality."""
@@ -1122,20 +1126,24 @@ class GeneralNameListTestCase(TestCase):
     def test_extend(self) -> None:
         """Test extend()."""
         gnl1 = GeneralNameList()
-        self.assertIsNone(gnl1.extend([self.dns1]))
+        self.assertIsNone(gnl1.extend([self.dns1]))  # type: ignore[func-returns-value]
         self.assertEqual(gnl1, GeneralNameList([self.dns1]))
 
         gnl2 = GeneralNameList()
-        self.assertIsNone(gnl2.extend([dns(self.dns1)]))
+        self.assertIsNone(gnl2.extend([dns(self.dns1)]))  # type: ignore[func-returns-value]
         self.assertEqual(gnl2, GeneralNameList([self.dns1]))
 
         gnl3 = GeneralNameList([self.dns1])
-        self.assertIsNone(gnl3.extend([dns(self.dns1), self.dns2]))
+        self.assertIsNone(gnl3.extend([dns(self.dns1), self.dns2]))  # type: ignore[func-returns-value]
         self.assertEqual(gnl3, GeneralNameList([self.dns1, self.dns1, self.dns2]))
 
     def test_iadd(self) -> None:
         """Test infix add (e.g. ``self += value``)."""
-        values = [
+        values: typing.List[typing.Tuple[
+            GeneralNameList,
+            typing.Union[GeneralNameList, typing.List[typing.Union[x509.GeneralName, str]]],
+            GeneralNameList,
+        ]] = [
             (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
             (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
             (GeneralNameList(), [self.dns1], GeneralNameList([self.dns1])),
@@ -1151,7 +1159,7 @@ class GeneralNameListTestCase(TestCase):
 
         empty = GeneralNameList()
         with self.assertAddTrue():
-            empty += [True]
+            empty += [True]  # type: ignore[list-item] # what we're testing
 
     def test_index(self) -> None:
         """Test index()."""
@@ -1179,15 +1187,15 @@ class GeneralNameListTestCase(TestCase):
         self.assertEqual(gnl1, [self.dns2, self.dns1])
 
         with self.assertAddTrue():
-            gnl1.insert(0, True)
+            gnl1.insert(0, True)  # type: ignore[arg-type] # what we're testing
         self.assertEqual(gnl1, [self.dns2, self.dns1])
 
     def test_remove(self) -> None:
         """Test remove()."""
         gnl1 = GeneralNameList([self.dns1, self.dns2])
-        self.assertIsNone(gnl1.remove(self.dns1))
+        self.assertIsNone(gnl1.remove(self.dns1))  # type: ignore[func-returns-value]
         self.assertEqual(gnl1, [self.dns2])
-        self.assertIsNone(gnl1.remove(dns(self.dns2)))
+        self.assertIsNone(gnl1.remove(dns(self.dns2)))  # type: ignore[func-returns-value]
         self.assertEqual(gnl1, [])
 
     def test_repr(self) -> None:
@@ -1224,4 +1232,4 @@ class GeneralNameListTestCase(TestCase):
         # but we can only add parseable stuff
         gnl4 = GeneralNameList([self.dns1])
         with self.assertRaisesRegex(TypeError, r"^0/True: Invalid key/value type\.$"):
-            gnl4[0] = True
+            gnl4[0] = True  # type: ignore[call-overload] # what we're testing
