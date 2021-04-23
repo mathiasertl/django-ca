@@ -182,7 +182,8 @@ class OCSPView(View):
 
         # Check that the private key is of a supported type
         if not isinstance(loaded_key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey)):
-            raise ValueError("%s: Unsupported private key type." % type(key))
+            log.error("%s: Unsupported private key type.", type(loaded_key))
+            raise ValueError("%s: Unsupported private key type." % type(loaded_key))
 
         return loaded_key
 
