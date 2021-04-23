@@ -14,6 +14,7 @@
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
 import textwrap
+import typing
 from typing import Any
 from typing import FrozenSet
 from typing import Iterable
@@ -21,7 +22,6 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Union
-from typing import cast
 
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
@@ -185,7 +185,7 @@ class DistributionPoint:
         return val
 
 
-class PolicyInformation:
+class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
     """Class representing a PolicyInformation object.
 
     This class is internally used by the :py:class:`~django_ca.extensions.CertificatePolicies` extension.
@@ -230,10 +230,13 @@ class PolicyInformation:
         else:
             raise ValueError("PolicyInformation data must be either x509.PolicyInformation or dict")
 
-    def __contains__(self, value: ParsablePolicyQualifier) -> bool:
+    def __contains__(self, value: ParsablePolicyQualifier) -> bool:  # type: ignore[override]
         if self.policy_qualifiers is None:
             return False
-        return self._parse_policy_qualifier(value) in self.policy_qualifiers
+        try:
+            return self._parse_policy_qualifier(value) in self.policy_qualifiers
+        except ValueError:  # not parsable
+            return False
 
     def __delitem__(self, key: Union[int, slice]) -> None:
         if self.policy_qualifiers is None:
@@ -248,6 +251,14 @@ class PolicyInformation:
             and self.policy_identifier == other.policy_identifier
             and self.policy_qualifiers == other.policy_qualifiers
         )
+
+    @typing.overload  # type: ignore[override] # should return non-serialized version
+    def __getitem__(self, key: int) -> SerializedPolicyQualifier:
+        ...
+
+    @typing.overload
+    def __getitem__(self, key: slice) -> List[SerializedPolicyQualifier]:
+        ...
 
     def __getitem__(
         self, key: Union[int, slice]
@@ -269,6 +280,11 @@ class PolicyInformation:
 
         return hash((self.policy_identifier, tup))
 
+    def __iter__(self) -> typing.Iterator[PolicyQualifier]:
+        if self.policy_qualifiers is None:
+            return iter([])
+        return iter(self.policy_qualifiers)
+
     def __len__(self) -> int:
         if self.policy_qualifiers is None:
             return 0
@@ -281,6 +297,25 @@ class PolicyInformation:
             ident = self.policy_identifier.dotted_string
 
         return "<PolicyInformation(oid=%s, qualifiers=%r)>" % (ident, self.serialize_policy_qualifiers())
+
+    def __setitem__(
+        self,
+        key: typing.Union[int, slice],
+        value: typing.Union[ParsablePolicyQualifier, typing.Iterable[ParsablePolicyQualifier]]
+    ) -> None:
+        """Implement item getter (e.g ``pi[0]`` or ``pi[0:1]``)."""
+        if isinstance(key, slice) and isinstance(value, typing.Iterable):
+            qualifiers = [self._parse_policy_qualifier(v) for v in value]
+            if self.policy_qualifiers is None:
+                self.policy_qualifiers = []
+            self.policy_qualifiers[key] = qualifiers
+        elif isinstance(key, int):
+            # NOTE: cast() here b/c Parsable... may also be an Iterable, so we cannot use isinstance() to
+            #       narrow the scope known to mypy.
+            qualifier = self._parse_policy_qualifier(typing.cast(ParsablePolicyQualifier, value))
+            if self.policy_qualifiers is None:
+                self.policy_qualifiers = []
+            self.policy_qualifiers[key] = qualifier
 
     def __str__(self) -> str:
         return repr(self)
@@ -416,7 +451,8 @@ class PolicyInformation:
 
     policy_identifier = property(get_policy_identifier, _set_policy_identifier)
 
-    def pop(self, index: int = -1) -> SerializedPolicyQualifier:
+    # NOTE: should return non-serialized version instead
+    def pop(self, index: int = -1) -> SerializedPolicyQualifier:  # type: ignore[override]
         """Pop qualifier from given index."""
         if self.policy_qualifiers is None:
             return [].pop()
@@ -428,7 +464,7 @@ class PolicyInformation:
 
         return val
 
-    def remove(self, value: ParsablePolicyQualifier) -> PolicyQualifier:
+    def remove(self, value: ParsablePolicyQualifier) -> PolicyQualifier:  # type: ignore[override]
         """Remove the given qualifier from this policy information.
 
         Note that unlike list.remove(), this value returns the parsed value.
