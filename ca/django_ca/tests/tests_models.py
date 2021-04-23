@@ -1011,9 +1011,9 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         )
         self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01)
 
-    def assertChallenge(
+    def assertChallenge(  # pylint: disable=invalid-name
         self, challenge: ChallengeTypeVar, typ: str, token: bytes, cls: typing.Type[ChallengeTypeVar]
-    ) -> None:  # pylint: disable=invalid-name
+    ) -> None:
         """Test that the ACME challenge is of the given type."""
         self.assertIsInstance(challenge, cls)
         self.assertEqual(challenge.typ, typ)
