@@ -31,6 +31,9 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound
 from cryptography.x509 import OCSPNonce
@@ -49,6 +52,7 @@ from django.views.generic.detail import SingleObjectMixin
 from . import ca_settings
 from .models import Certificate
 from .models import CertificateAuthority
+from .typehints import PrivateKeyTypes
 from .utils import SERIAL_RE
 from .utils import get_crl_cache_key
 from .utils import int_to_hex
@@ -119,10 +123,10 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 class OCSPView(View):
     """View to provide an OCSP responder."""
 
-    ca: CertificateAuthority = None
+    ca: str = ""
     """The name or serial of your Certificate Authority."""
 
-    responder_key = None
+    responder_key: str = ""
     """Private key used for signing OCSP responses. A relative path used by :ref:`CA_FILE_STORAGE
     <settings-ca-file-storage>`."""
 
@@ -164,18 +168,24 @@ class OCSPView(View):
             log.exception(e)
             return self.fail()
 
-    def fail(self, status: int = ocsp.OCSPResponseStatus.INTERNAL_ERROR) -> HttpResponse:
+    def fail(self, status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.INTERNAL_ERROR) -> HttpResponse:
         """Generic method to return a failure response."""
         return self.http_response(
             ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
         )
 
-    def get_responder_key(self):
+    def get_responder_key(self) -> PrivateKeyTypes:
         """Get the private key used to sign OCSP responses."""
         key = self.get_responder_key_data()
-        return serialization.load_pem_private_key(key, None, default_backend())
+        loaded_key = serialization.load_pem_private_key(key, None, default_backend())
 
-    def get_responder_key_data(self):
+        # Check that the private key is of a supported type
+        if not isinstance(loaded_key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey)):
+            raise ValueError("%s: Unsupported private key type." % type(key))
+
+        return loaded_key
+
+    def get_responder_key_data(self) -> bytes:
         """Read the file containing the private key used to sign OCSP responses."""
         if os.path.isabs(self.responder_key):
             log.warning(
@@ -186,7 +196,7 @@ class OCSPView(View):
 
         return read_file(self.responder_key)
 
-    def get_responder_cert(self):
+    def get_responder_cert(self) -> x509.Certificate:
         """Get the public key used to sign OCSP responses."""
         # User configured a loaded certificate
         if isinstance(self.responder_cert, x509.Certificate):
@@ -195,7 +205,7 @@ class OCSPView(View):
         responder_cert = self.get_responder_cert_data()
         return load_pem_x509_certificate(responder_cert, default_backend())
 
-    def get_responder_cert_data(self):
+    def get_responder_cert_data(self) -> bytes:
         """Read the file containing the public key used to sign OCSP responses."""
         if self.responder_cert.startswith("-----BEGIN CERTIFICATE-----\n"):
             return self.responder_cert.encode("utf-8")
@@ -213,11 +223,13 @@ class OCSPView(View):
 
         return read_file(self.responder_cert)
 
-    def get_ca(self):
+    def get_ca(self) -> CertificateAuthority:
         """Get the certificate authority for the request."""
         return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
 
-    def get_cert(self, ca, serial):
+    def get_cert(
+        self, ca: CertificateAuthority, serial: str
+    ) -> typing.Union[Certificate, CertificateAuthority]:
         """Get the certificate that was requested in the OCSP request."""
         if self.ca_ocsp is True:
             return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
@@ -228,15 +240,15 @@ class OCSPView(View):
         """Get a HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type="application/ocsp-response")
 
-    def malformed_request(self):
+    def malformed_request(self) -> HttpResponse:
         """Get a response for a malformed request."""
         return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
-    def process_ocsp_request(self, data):
+    def process_ocsp_request(self, data: bytes) -> HttpResponse:
         """Process OCSP request data."""
 
         try:
-            ocsp_req = ocsp.load_der_ocsp_request(data)  # NOQA
+            ocsp_req = ocsp.load_der_ocsp_request(data)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.malformed_request()
@@ -315,6 +327,8 @@ class GenericOCSPView(OCSPView):
     argument must be the serial for this CA.
     """
 
+    auto_ca: CertificateAuthority
+
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, **kwargs: typing.Any
     ) -> HttpResponse:
@@ -322,17 +336,17 @@ class GenericOCSPView(OCSPView):
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
-        self.ca = CertificateAuthority.objects.get(serial=serial)
+        self.auto_ca = CertificateAuthority.objects.get(serial=serial)
         return super().dispatch(request, **kwargs)
 
     def get_ca(self) -> CertificateAuthority:
-        return self.ca
+        return self.auto_ca
 
     def get_responder_key_data(self) -> bytes:
-        return read_file("ocsp/%s.key" % self.ca.serial.replace(":", ""))
+        return read_file("ocsp/%s.key" % self.auto_ca.serial.replace(":", ""))
 
     def get_responder_cert_data(self) -> bytes:
-        return read_file("ocsp/%s.pem" % self.ca.serial.replace(":", ""))
+        return read_file("ocsp/%s.pem" % self.auto_ca.serial.replace(":", ""))
 
 
 class GenericCAIssuersView(View):
