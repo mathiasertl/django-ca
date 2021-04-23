@@ -217,9 +217,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
 
     def __init__(
         self,
-        data: Optional[
-            Union[x509.PolicyInformation, ParsablePolicyInformation, SerializedPolicyInformation]
-        ] = None,
+        data: Optional[Union[x509.PolicyInformation, ParsablePolicyInformation]] = None,
     ) -> None:
         if isinstance(data, x509.PolicyInformation):
             self.policy_identifier = data.policy_identifier
@@ -401,9 +399,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
             self.policy_qualifiers = []
         self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
 
-    def _parse_policy_qualifier(
-        self, qualifier: Union[SerializedPolicyQualifier, ParsablePolicyQualifier]
-    ) -> PolicyQualifier:
+    def _parse_policy_qualifier(self, qualifier: ParsablePolicyQualifier) -> PolicyQualifier:
 
         if isinstance(qualifier, str):
             return qualifier
@@ -429,7 +425,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         raise ValueError("PolicyQualifier must be string, dict or x509.UserNotice")
 
     def parse_policy_qualifiers(
-        self, qualifiers: Optional[Iterable[Union[SerializedPolicyQualifier, ParsablePolicyQualifier]]]
+        self, qualifiers: Optional[Iterable[ParsablePolicyQualifier]]
     ) -> Optional[List[PolicyQualifier]]:
         """Parse given list of policy qualifiers."""
         if qualifiers is None:
