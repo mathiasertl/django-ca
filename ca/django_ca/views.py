@@ -26,6 +26,7 @@ import os
 import typing
 from datetime import datetime
 from datetime import timedelta
+from http import HTTPStatus
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -130,7 +131,7 @@ class OCSPView(View):
     """Private key used for signing OCSP responses. A relative path used by :ref:`CA_FILE_STORAGE
     <settings-ca-file-storage>`."""
 
-    responder_cert = None
+    responder_cert: typing.Union[x509.Certificate, str] = ""
     """Public key of the responder.
 
     This may either be:
@@ -202,26 +203,21 @@ class OCSPView(View):
         if isinstance(self.responder_cert, x509.Certificate):
             return self.responder_cert
 
-        responder_cert = self.get_responder_cert_data()
-        return load_pem_x509_certificate(responder_cert, default_backend())
-
-    def get_responder_cert_data(self) -> bytes:
-        """Read the file containing the public key used to sign OCSP responses."""
         if self.responder_cert.startswith("-----BEGIN CERTIFICATE-----\n"):
-            return self.responder_cert.encode("utf-8")
-
-        if SERIAL_RE.match(self.responder_cert):
+            responder_cert = self.responder_cert.encode("utf-8")
+        elif SERIAL_RE.match(self.responder_cert):
             serial = self.responder_cert.replace(":", "")
-            return Certificate.objects.get(serial=serial).pub.encode("utf-8")
+            responder_cert = Certificate.objects.get(serial=serial).pub.encode("utf-8")
+        else:
+            if os.path.isabs(self.responder_cert):
+                log.warning(
+                    "%s: OCSP responder uses absolute path to certificate. Please see %s.",
+                    self.responder_cert,
+                    ca_settings.CA_FILE_STORAGE_URL,
+                )
+            responder_cert = read_file(self.responder_cert)
 
-        if os.path.isabs(self.responder_cert):
-            log.warning(
-                "%s: OCSP responder uses absolute path to certificate. Please see %s.",
-                self.responder_cert,
-                ca_settings.CA_FILE_STORAGE_URL,
-            )
-
-        return read_file(self.responder_cert)
+        return load_pem_x509_certificate(responder_cert, default_backend())
 
     def get_ca(self) -> CertificateAuthority:
         """Get the certificate authority for the request."""
@@ -236,7 +232,7 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
-    def http_response(self, data: bytes, status: int = 200) -> HttpResponse:
+    def http_response(self, data: bytes, status: int = HTTPStatus.OK) -> HttpResponse:
         """Get a HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type="application/ocsp-response")
 
@@ -345,8 +341,9 @@ class GenericOCSPView(OCSPView):
     def get_responder_key_data(self) -> bytes:
         return read_file("ocsp/%s.key" % self.auto_ca.serial.replace(":", ""))
 
-    def get_responder_cert_data(self) -> bytes:
-        return read_file("ocsp/%s.pem" % self.auto_ca.serial.replace(":", ""))
+    def get_responder_cert(self) -> x509.Certificate:
+        data = read_file("ocsp/%s.pem" % self.auto_ca.serial.replace(":", ""))
+        return load_pem_x509_certificate(data, default_backend())
 
 
 class GenericCAIssuersView(View):
