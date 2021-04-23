@@ -130,6 +130,9 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
         def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar:
             ...
 
+        def valid(self) -> QuerySetTypeVar:
+            ...
+
     def get_common_extensions(
         self,
         issuer_url: Optional[str] = None,
@@ -193,6 +196,15 @@ class CertificateAuthorityManager(
             ...
 
         def default(self) -> "CertificateAuthority":
+            ...
+
+        def disabled(self) -> "CertificateAuthorityQuerySet":
+            ...
+
+        def enabled(self) -> "CertificateAuthorityQuerySet":
+            ...
+
+        def invalid(self) -> "CertificateAuthorityQuerySet":
             ...
 
         def usable(self) -> "CertificateAuthorityQuerySet":
@@ -506,9 +518,6 @@ class CertificateManager(
             ...
 
         def revoked(self) -> "CertificateQuerySet":
-            ...
-
-        def valid(self) -> "CertificateQuerySet":
             ...
 
     def create_cert(
