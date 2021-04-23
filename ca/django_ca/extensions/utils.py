@@ -223,9 +223,7 @@ class PolicyInformation:
             self.policy_qualifiers = data.policy_qualifiers
         elif isinstance(data, dict):
             self.policy_identifier = data["policy_identifier"]
-            self.policy_qualifiers = self.parse_policy_qualifiers(
-                cast(Iterable[ParsablePolicyQualifier], data.get("policy_qualifiers"))
-            )
+            self.policy_qualifiers = self.parse_policy_qualifiers(data.get("policy_qualifiers"))
         elif data is None:
             self.policy_identifier = None
             self.policy_qualifiers = None
