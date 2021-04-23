@@ -1045,11 +1045,13 @@ class GeneralNameListTestCase(TestCase):
 
     def test_add(self) -> None:
         """Test add()."""
-        values: typing.List[typing.Tuple[
-            GeneralNameList,
-            typing.Union[GeneralNameList, typing.List[typing.Union[x509.GeneralName, str]]],
-            GeneralNameList,
-        ]] = [
+        values: typing.List[
+            typing.Tuple[
+                GeneralNameList,
+                typing.Union[GeneralNameList, typing.List[typing.Union[x509.GeneralName, str]]],
+                GeneralNameList,
+            ]
+        ] = [
             (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
             (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
             (GeneralNameList(), [self.dns1], GeneralNameList([self.dns1])),
@@ -1143,11 +1145,13 @@ class GeneralNameListTestCase(TestCase):
 
     def test_iadd(self) -> None:
         """Test infix add (e.g. ``self += value``)."""
-        values: typing.List[typing.Tuple[
-            GeneralNameList,
-            typing.Union[GeneralNameList, typing.List[typing.Union[x509.GeneralName, str]]],
-            GeneralNameList,
-        ]] = [
+        values: typing.List[
+            typing.Tuple[
+                GeneralNameList,
+                typing.Union[GeneralNameList, typing.List[typing.Union[x509.GeneralName, str]]],
+                GeneralNameList,
+            ]
+        ] = [
             (GeneralNameList(), GeneralNameList([self.dns1]), GeneralNameList([self.dns1])),
             (GeneralNameList(), GeneralNameList([dns(self.dns1)]), GeneralNameList([self.dns1])),
             (GeneralNameList(), [self.dns1], GeneralNameList([self.dns1])),

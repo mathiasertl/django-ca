@@ -553,7 +553,7 @@ def validate_key_parameters(
 def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[Literal["RSA"]] = "RSA",
-    ecc_curve: ParsableKeyCurve = None
+    ecc_curve: ParsableKeyCurve = None,
 ) -> Tuple[int, Literal["RSA"], None]:
     ...
 

@@ -161,7 +161,7 @@ ParsablePolicyInformation = TypedDict(
         "policy_identifier": Optional[ParsablePolicyIdentifier],
         "policy_qualifiers": Sequence[ParsablePolicyQualifier],
     },
-    total=False
+    total=False,
 )
 
 PolicyQualifier = Union[str, x509.UserNotice]

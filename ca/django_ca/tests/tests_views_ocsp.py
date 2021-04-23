@@ -557,17 +557,20 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         data = base64.b64encode(req1).decode("utf-8")
 
         with self.assertLogs() as logcm, self.patch(
-            'cryptography.hazmat.primitives.serialization.load_pem_private_key',
+            "cryptography.hazmat.primitives.serialization.load_pem_private_key",
             spec_set=True,
             return_value="wrong",  # usually would be an unsupported key type
         ):
             response = self.client.get(reverse("get", kwargs={"data": data}))
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
-        self.assertEqual(logcm.output, [
-            "ERROR:django_ca.views:<class 'str'>: Unsupported private key type.",
-            "ERROR:django_ca.views:Could not read responder key/cert."
-        ])
+        self.assertEqual(
+            logcm.output,
+            [
+                "ERROR:django_ca.views:<class 'str'>: Unsupported private key type.",
+                "ERROR:django_ca.views:Could not read responder key/cert.",
+            ],
+        )
 
     def test_bad_responder_cert(self) -> None:
         """Test the error when the private key cannot be read.
