@@ -78,7 +78,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
     type = Encoding.DER
     """Encoding for CRL."""
 
-    scope = "user"
+    scope: typing.Optional[typing.Literal["ca", "user", "attribute"]] = "user"
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
     include both."""
 
@@ -99,7 +99,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
         crl = cache.get(cache_key)
         if crl is None:
-            ca = self.get_object()
+            ca = typing.cast(CertificateAuthority, self.get_object())
             encoding = parse_encoding(self.type)
             crl = ca.get_crl(
                 expires=self.expires, algorithm=self.digest, password=self.password, scope=self.scope
@@ -151,12 +151,12 @@ class OCSPView(View):
     def get(self, request: HttpRequest, data: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
-            data = base64.b64decode(data)
+            decoded_data = base64.b64decode(data)
         except binascii.Error:
             return self.malformed_request()
 
         try:
-            return self.process_ocsp_request(data)
+            return self.process_ocsp_request(decoded_data)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
