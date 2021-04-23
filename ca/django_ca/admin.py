@@ -54,8 +54,7 @@ from django.utils.html import escape
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-# TYPE NOTE: Since we only use the baseclass, we do not include a stub
-from django_object_actions import DjangoObjectActions  # type: ignore[import]
+from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
