@@ -311,12 +311,16 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
                 self.policy_qualifiers = []
             self.policy_qualifiers[key] = qualifiers
         elif isinstance(key, int):
+            if self.policy_qualifiers is None:
+                # Note: same as for examle "list()[0] = 3"
+                raise ValueError("Index out of range")
+
             # NOTE: cast() here b/c Parsable... may also be an Iterable, so we cannot use isinstance() to
             #       narrow the scope known to mypy.
             qualifier = self._parse_policy_qualifier(typing.cast(ParsablePolicyQualifier, value))
-            if self.policy_qualifiers is None:
-                self.policy_qualifiers = []
             self.policy_qualifiers[key] = qualifier
+        else:
+            raise TypeError("%s/%s: Invalid key/value type" % (key, value))
 
     def __str__(self) -> str:
         return repr(self)
