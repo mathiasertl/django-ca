@@ -353,10 +353,10 @@ class TypingTestCase(unittest.TestCase):
     def test_default(self) -> CertificateAuthority:
         return CertificateAuthority.objects.default()
 
-    def test_disabled(self) -> CertificateAuthority:
+    def test_disabled(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.disabled()
 
-    def test_enabled(self) -> CertificateAuthority:
+    def test_enabled(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.enabled()
 
     def test_invalid(self) -> CertificateAuthorityQuerySet:
@@ -395,9 +395,6 @@ class TypingTestCase(unittest.TestCase):
 
     def test_cert_not_yet_valid(self) -> CertificateQuerySet:
         return Certificate.objects.not_yet_valid()
-
-    def test_cert_valid(self) -> CertificateQuerySet:
-        return Certificate.objects.valid()
 
     def test_cert_valid(self) -> CertificateQuerySet:
         return Certificate.objects.valid()

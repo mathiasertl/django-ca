@@ -47,7 +47,7 @@ class QuerySetTestCaseMixin(TestCaseMixin):
     """Mixin for QuerySet test cases."""
 
     def assertQuerySet(  # pylint: disable=invalid-name; unittest standard
-        self, qs: "models.QuerySet[models.Model]", *items: typing.Sequence[models.Model]
+        self, qs: "models.QuerySet[models.Model]", *items: models.Model
     ) -> None:
         """Minor shortcut to test querysets."""
         self.assertCountEqual(qs, items)
@@ -169,14 +169,15 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
+        # type ignores because kwargs is Dict[str, Any]
         with self.assertRaisesRegex(ValueError, r"^3072: Key size must be a power of two$"):
-            CertificateAuthority.objects.init(key_size=key_size * 3, **kwargs)
+            CertificateAuthority.objects.init(key_size=key_size * 3, **kwargs)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, r"^1025: Key size must be a power of two$"):
-            CertificateAuthority.objects.init(key_size=key_size + 1, **kwargs)
+            CertificateAuthority.objects.init(key_size=key_size + 1, **kwargs)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, r"^512: Key size must be least 1024 bits$"):
-            CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)
+            CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, r"^256: Key size must be least 1024 bits$"):
-            CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)
+            CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)  # type: ignore[arg-type]
 
     def test_enabled_disabled(self) -> None:
         """Test enabled/disabled filter."""
