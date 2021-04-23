@@ -23,6 +23,7 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
@@ -133,7 +134,7 @@ SerializedPolicyQualifiers = List[SerializedPolicyQualifier]
 
 # Looser variants of the above for incoming arguments
 ParsableNoticeReference = TypedDict(
-    "ParsableNoticeReference", {"organization": str, "notice_numbers": Iterable[int]}
+    "ParsableNoticeReference", {"organization": str, "notice_numbers": Iterable[int]}, total=False
 )
 ParsableUserNotice = TypedDict(
     "ParsableUserNotice",
@@ -157,9 +158,10 @@ ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
 ParsablePolicyInformation = TypedDict(
     "ParsablePolicyInformation",
     {
-        "policy_identifier": ParsablePolicyIdentifier,
-        "policy_qualifiers": Iterable[ParsablePolicyQualifier],
+        "policy_identifier": Optional[ParsablePolicyIdentifier],
+        "policy_qualifiers": Sequence[ParsablePolicyQualifier],
     },
+    total=False
 )
 
 PolicyQualifier = Union[str, x509.UserNotice]
