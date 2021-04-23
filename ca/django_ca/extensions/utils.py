@@ -71,9 +71,9 @@ class DistributionPoint:
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
 
-    full_name: Optional[GeneralNameList] = None
+    full_name: GeneralNameList
     relative_name: Optional[x509.RelativeDistinguishedName] = None
-    crl_issuer: Optional[GeneralNameList] = None
+    crl_issuer: GeneralNameList
     reasons: Optional[Set[x509.ReasonFlags]] = None
 
     def __init__(
@@ -158,8 +158,8 @@ class DistributionPoint:
     @property
     def for_extension_type(self) -> x509.DistributionPoint:
         """Convert instance to a suitable cryptography class."""
-        full_name = self.full_name
-        crl_issuer = self.crl_issuer
+        full_name: typing.Optional[GeneralNameList] = self.full_name
+        crl_issuer: typing.Optional[GeneralNameList] = self.crl_issuer
         if not full_name:
             full_name = None
         if not crl_issuer:

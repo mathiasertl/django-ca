@@ -13,14 +13,16 @@
 
 """Tests for extension utility clases in :py:mod:`django_ca.extensions.utils`."""
 
+import typing
+
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import ObjectIdentifier
 
 from django.test import TestCase
 
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
+from ..typehints import ParsablePolicyInformation
 from .base import certs
 from .base import uri
 from .base.mixins import TestCaseMixin
@@ -62,7 +64,7 @@ class DistributionPointTestCase(TestCase):
     def test_init_errors(self) -> None:
         """Test various invalid input values."""
         with self.assertRaisesRegex(ValueError, r"^data must be x509.DistributionPoint or dict$"):
-            DistributionPoint("foobar")
+            DistributionPoint("foobar")  # type: ignore[arg-type]
 
         with self.assertRaisesRegex(ValueError, r"^full_name and relative_name cannot both have a value$"):
             DistributionPoint(
@@ -139,11 +141,11 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         policy_identifier=ObjectIdentifier(oid),
         policy_qualifiers=[q4, q5],
     )
-    s1 = {
+    s1: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": ["text1"],
     }
-    s2 = {
+    s2: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {
@@ -151,7 +153,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
             }
         ],
     }
-    s3 = {
+    s3: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {
@@ -164,7 +166,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
             }
         ],
     }
-    s4 = {
+    s4: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             "text4",
@@ -177,7 +179,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
             },
         ],
     }
-    s5 = {
+    s5: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {
@@ -251,9 +253,9 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
 
         self.load_named_cas("__all__")
         self.load_named_certs("__all__")
-        for name, cert in list(self.new_cas.items()) + list(self.new_certs.items()):
+        for name, cert in list(self.new_cas.items()) + list(self.new_certs.items()):  # type: ignore[arg-type]
             try:
-                ext = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+                ext = cert.x509_cert.extensions.get_extension_for_class(x509.CertificatePolicies).value
             except x509.ExtensionNotFound:
                 continue
 
@@ -265,9 +267,9 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         """Test for all known certs."""
         self.load_named_cas("__all__")
         self.load_named_certs("__all__")
-        for _name, cert in list(self.new_cas.items()) + list(self.new_certs.items()):
+        for cert in list(self.new_cas.values()) + list(self.new_certs.values()):  # type: ignore[arg-type]
             try:
-                val = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+                val = cert.x509_cert.extensions.get_extension_for_class(x509.CertificatePolicies).value
             except x509.ExtensionNotFound:
                 continue
 
@@ -276,7 +278,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
                 self.assertEqual(pi1.for_extension_type, policy)
 
                 # pass the serialized value to the constructor and see if it's still the same
-                pi2 = PolicyInformation(pi1.serialize())
+                pi2 = PolicyInformation(typing.cast(ParsablePolicyInformation, pi1.serialize()))
                 self.assertEqual(pi1, pi2)
                 self.assertEqual(pi1.serialize(), pi2.serialize())
                 self.assertEqual(pi2.for_extension_type, policy)
@@ -316,13 +318,16 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
 
     def test_constructor_errors(self) -> None:
         """Test various invalid values for the constructor."""
+        # type ignores are because we're testing exactly that here
         with self.assertRaisesRegex(
             ValueError, r"^PolicyInformation data must be either x509.PolicyInformation or dict$"
         ):
-            PolicyInformation(True)
+            PolicyInformation(True)  # type: ignore[arg-type]
 
         with self.assertRaisesRegex(ValueError, r"^PolicyQualifier must be string, dict or x509.UserNotice$"):
-            PolicyInformation({"policy_identifier": "1.2.3", "policy_qualifiers": [True]})
+            PolicyInformation(
+                {"policy_identifier": "1.2.3", "policy_qualifiers": [True]}  # type: ignore[list-item]
+            )
 
         with self.assertRaisesRegex(
             ValueError, r"^NoticeReference must be either None, a dict or an x509.NoticeReference$"
@@ -332,7 +337,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
                     "policy_identifier": "1.2.3",
                     "policy_qualifiers": [
                         {
-                            "notice_reference": True,
+                            "notice_reference": True,  # type: ignore[typeddict-item]
                         }
                     ],
                 }
@@ -361,10 +366,10 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         """Test PolicyInformation.count()."""
         self.assertEqual(self.pi1.count(self.s1["policy_qualifiers"][0]), 1)
         self.assertEqual(self.pi1.count(self.q1), 1)
-        self.assertEqual(self.pi1.count(self.s2), 0)
+        self.assertEqual(self.pi1.count(self.s2), 0)  # type: ignore[arg-type] # full pi is wrong
         self.assertEqual(self.pi1.count(self.q2), 0)
         self.assertEqual(self.pi_empty.count(self.q2), 0)
-        self.assertEqual(self.pi1.count(True), 0)  # pass an unparseable value
+        self.assertEqual(self.pi1.count(True), 0)  # type: ignore[arg-type] # what we're testing here!
 
     def test_delitem(self) -> None:
         """Test item deletion (e.g. ``del pi[0]``)."""
@@ -490,7 +495,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         """Test setting a policy identifier."""
         value = "1.2.3"
         expected = ObjectIdentifier(value)
-        pinfo = PolicyInformation({"policy_identifier": value})
+        pinfo = PolicyInformation({"policy_identifier": value, "policy_qualifiers": []})
         pinfo.policy_identifier = value
         self.assertEqual(pinfo.policy_identifier, expected)
 
@@ -548,7 +553,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r"^.*: not in list\.$"):
             self.pi_empty.remove(self.s3["policy_qualifiers"][0])
 
-    def _test_repr(self, func):
+    def _test_repr(self, func: typing.Callable[[typing.Any], str]) -> None:
         self.assertEqual(func(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
         self.assertEqual(
             func(self.pi2), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=[{'explicit_text': 'text2'}])>"
