@@ -314,14 +314,14 @@ class CertificateMixin(typing.Generic[X509CertMixinTypeVar], MixinBase):
                 # the OID, create a partial function of unknown_oid and attach it under that name to this
                 # admin instance:
                 if isinstance(field, x509.Extension):
-                    func = partial(self.unknown_oid, field.oid)
+                    oid_func = partial(self.unknown_oid, field.oid)
                     desc = "Unkown OID (%s)" % field.oid.dotted_string
-                    func.short_description = desc  # type: ignore[attr-defined]
+                    oid_func.short_description = desc  # type: ignore[attr-defined]
 
                     field = self.get_oid_name(field.oid)
 
                     # attach function to this instance
-                    setattr(self, field, func)
+                    setattr(self, field, oid_func)
 
                 fieldsets[self.x509_fieldset_index][1]["fields"].append(field)
 
@@ -451,7 +451,9 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
     ]
     x509_fieldset_index = 3
 
-    def has_add_permission(self, request: HttpRequest) -> bool:
+    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
+    #              https://github.com/PyCQA/pylint/issues/3605
+    def has_add_permission(self, request: HttpRequest) -> bool:  # pylint: disable=missing-function-docstring
         return False
 
     # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
@@ -704,14 +706,19 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     ]
     x509_fieldset_index = 1
 
-    def has_add_permission(self, request: HttpRequest) -> bool:
+    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
+    #              https://github.com/PyCQA/pylint/issues/3605
+    def has_add_permission(self, request: HttpRequest) -> bool:  # pylint: disable=missing-function-docstring
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
             if ca.key_exists:
                 return True
         return False
 
-    def get_form(  # type: ignore[override] # django-stubs does not use generics
+    # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
+    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
+    #              https://github.com/PyCQA/pylint/issues/3605
+    def get_form(  # type: ignore[override] # pylint: disable=unused-argument
         self,
         request: HttpRequest,
         obj: typing.Optional[Certificate] = None,
@@ -765,7 +772,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
         return data
 
-    def add_view(
+    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
+    #              https://github.com/PyCQA/pylint/issues/3605
+    def add_view(  # pylint: disable=missing-function-docstring
         self, request: HttpRequest,
         form_url: str = "",
         extra_context: typing.Optional[typing.Dict[str, typing.Any]] = None
@@ -951,7 +960,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     expires_date.short_description = _("Expires")  # type: ignore[attr-defined] # django standard
     expires_date.admin_order_field = "expires"  # type: ignore[attr-defined] # django standard
 
-    def save_model(  # type: ignore[override] # django-stubs really shoudl cover this
+    # TYPE NOTE: django-stubs typehints obj as Model, but we can be more specific here
+    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
+    #              https://github.com/PyCQA/pylint/issues/3605
+    def save_model(  # type: ignore[override] # pylint: disable=missing-function-docstring
         self,
         request: HttpRequest,
         obj: Certificate,
