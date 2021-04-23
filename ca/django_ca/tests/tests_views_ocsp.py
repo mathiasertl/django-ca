@@ -57,8 +57,9 @@ from .base.mixins import TestCaseMixin
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
     from typing import OrderedDict
+    OrderedDictType = OrderedDict[str, str]
 else:  # pragma: only py<3.8
-    from typing_extensions import OrderedDict
+    from collections import OrderedDict as OrderedDictType
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
@@ -254,7 +255,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo_str)
 
     def assertOCSPSubject(  # pylint: disable=invalid-name
-        self, got: OrderedDict[str, str], expected: Subject
+        self, got: OrderedDictType, expected: Subject
     ) -> None:
         """Assert that the OCSP subject matches."""
         translated = {}
