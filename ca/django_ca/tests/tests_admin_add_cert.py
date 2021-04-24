@@ -34,6 +34,7 @@ from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
+from ..fields import CertificateSigningRequestField
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import Profile
@@ -438,11 +439,58 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertIn("Enter a valid CSR (in PEM format).", response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
-            response.context["adminform"].form.errors, {"csr": ["Enter a valid CSR (in PEM format)."]}
+            response.context["adminform"].form.errors,
+            {"csr": [CertificateSigningRequestField.simple_validation_error]},
         )
+
+        with self.assertRaises(Certificate.DoesNotExist):
+            Certificate.objects.get(cn=cname)
+
+    @override_tmpcadir()
+    def test_unparseable_csr(self) -> None:
+        """Test passing something that looks like a CSR but isn't.
+
+        This is different from test_wrong_csr() because this passes our initial test, but cryptography itself
+        fails to load the CSR.
+        """
+        ca = self.new_cas["root"]
+        cname = "test-add-wrong-csr.example.com"
+
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": "-----BEGIN CERTIFICATE REQUEST-----\nwrong-----END CERTIFICATE REQUEST-----",
+                    "ca": ca.pk,
+                    "profile": "webserver",
+                    "subject_0": "US",
+                    "subject_5": cname,
+                    "subject_alternative_name_1": True,
+                    "algorithm": "SHA256",
+                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "key_usage_0": [
+                        "digitalSignature",
+                        "keyAgreement",
+                    ],
+                    "key_usage_1": True,
+                    "extended_key_usage_0": [
+                        "clientAuth",
+                        "serverAuth",
+                    ],
+                    "extended_key_usage_1": False,
+                },
+            )
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertFalse(response.context["adminform"].form.is_valid())
+
+        # Not testing exact error message here, as it the one from cryptography. Instead, just check that
+        # there is exactly one message for the "csr" field.
+        self.assertEqual(len(response.context["adminform"].form.errors), 1)
+        self.assertEqual(len(response.context["adminform"].form.errors["csr"]), 1)
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cname)

@@ -15,7 +15,12 @@
 
 import typing
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+
 from django import forms
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 from .extensions import Extension
 from .profiles import profile
@@ -24,6 +29,37 @@ from .utils import SUBJECT_FIELDS
 from .widgets import MultiValueExtensionWidget
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
+
+
+class CertificateSigningRequestField(forms.CharField):
+    """A form field for `~cg:cryptography.x509.CertificateSigningRequest` encoded as PEM."""
+
+    start = "-----BEGIN CERTIFICATE REQUEST-----"
+    end = "-----END CERTIFICATE REQUEST-----"
+    simple_validation_error = _(
+        "Could not parse PEM-encoded CSR. They usually look like this: <pre>%(start)s\n...\n%(end)s</pre>"
+    ) % {"start": start, "end": end}
+
+    def __init__(self, **kwargs: typing.Any) -> None:
+        # COVERAGE NOTE: Below condition is never false, as we never pass a custom help text.
+        if not kwargs.get("help_text"):  # pragma: no branch
+            kwargs["help_text"] = _(
+                """The Certificate Signing Request (CSR) in PEM format. To create a new one:
+<span class="shell">openssl genrsa -out hostname.key 4096
+openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
+                     -subj '/CN=hostname/emailAddress=root@hostname'
+</span>"""
+            )
+        super().__init__(**kwargs)
+
+    def clean(self, value: str) -> str:
+        if not value.startswith(self.start) or not value.strip().endswith(self.end):
+            raise forms.ValidationError(mark_safe(self.simple_validation_error))
+        try:
+            self.x509_csr = x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
+        except ValueError as ex:
+            raise forms.ValidationError(ex) from ex
+        return value
 
 
 class SubjectField(forms.MultiValueField):

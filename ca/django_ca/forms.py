@@ -30,6 +30,7 @@ from . import ca_settings
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import TLSFeature
+from .fields import CertificateSigningRequestField
 from .fields import MultiValueExtensionField
 from .fields import SubjectAltNameField
 from .fields import SubjectField
@@ -145,6 +146,11 @@ class CreateCertificateBaseForm(forms.ModelForm):
     )
     tls_feature = MultiValueExtensionField(extension=TLSFeature)
 
+    # Prevent auto-filling the password field. Browsers will otherwise prefill this field with the *users*
+    # password, which is usually the wrong password. Especially annoying for CAs without a password, as the
+    # browser will prevent form submission without entering a different non-empty password.
+    password.widget.attrs.update({"autocomplete": "new-password"})
+
     def clean_algorithm(self) -> hashes.HashAlgorithm:  # pylint: disable=missing-function-docstring
         algo = self.cleaned_data["algorithm"]
         try:
@@ -209,18 +215,6 @@ class CreateCertificateBaseForm(forms.ModelForm):
 class CreateCertificateForm(CreateCertificateBaseForm):
     """Admin form for creating a completely new certificate."""
 
-    def clean_csr(self) -> str:  # pylint: disable=missing-function-docstring
-        data: str = self.cleaned_data["csr"]
-        lines = data.splitlines()
-        if (
-            not lines
-            or lines[0] != "-----BEGIN CERTIFICATE REQUEST-----"
-            or lines[-1] != "-----END CERTIFICATE REQUEST-----"
-        ):
-            raise forms.ValidationError(_("Enter a valid CSR (in PEM format)."))
-
-        return data
-
     class Meta:
         model = Certificate
         fields = [
@@ -228,14 +222,8 @@ class CreateCertificateForm(CreateCertificateBaseForm):
             "watchers",
             "ca",
         ]
-        help_texts = {
-            "csr": _(
-                """The Certificate Signing Request (CSR) in PEM format. To create a new one:
-<span class="shell">openssl genrsa -out hostname.key 4096
-openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
-                     -subj '/CN=hostname/emailAddress=root@hostname'
-</span>"""
-            ),
+        field_classes = {
+            "csr": CertificateSigningRequestField,
         }
 
 

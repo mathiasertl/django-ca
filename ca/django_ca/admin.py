@@ -89,7 +89,6 @@ from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import add_colons
 from .utils import format_name
-from .utils import parse_csr
 
 log = logging.getLogger(__name__)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
@@ -1000,13 +999,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             profile = profiles[data["profile"]]
 
             if hasattr(request, "_resign_obj"):
-                csr = getattr(request, "_resign_obj").csr
-                obj.csr = csr
+                orig_cert: Certificate = getattr(request, "_resign_obj")
+                obj.csr = orig_cert.csr
+                csr = obj.x509_csr
             else:
-                # Note: CSR is set by model form already
-                csr = data["csr"]
+                # Note: ``obj.csr`` is set by model form already
+                csr = form.fields["csr"].x509_csr
 
-            parsed_csr = parse_csr(csr, Encoding.PEM)
             expires = datetime.combine(data["expires"], datetime.min.time())
 
             extensions = {}
@@ -1023,7 +1022,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             obj.profile = profile.name
             obj.x509_cert = profile.create_cert(
                 data["ca"],
-                parsed_csr,
+                csr,
                 subject=data["subject"],
                 expires=expires,
                 algorithm=data["algorithm"],

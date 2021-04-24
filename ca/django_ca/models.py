@@ -1289,6 +1289,17 @@ class Certificate(X509CertMixin):
 
         return self.ca.root
 
+    @property
+    def x509_csr(self) -> x509.CertificateSigningRequest:
+        """Load the CSR into a cryptography object.
+
+        Returns
+        -------
+        :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+            The CSR as used by cryptography.
+        """
+        return x509.load_pem_x509_csr(self.csr.encode(), default_backend())
+
     def __str__(self) -> str:
         return self.cn
 
