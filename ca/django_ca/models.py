@@ -96,6 +96,7 @@ from .managers import AcmeChallengeManager
 from .managers import AcmeOrderManager
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
+from .modelfields import CertificateSigningRequestField
 from .querysets import AcmeAccountQuerySet
 from .querysets import AcmeAuthorizationQuerySet
 from .querysets import AcmeCertificateQuerySet
@@ -1264,6 +1265,7 @@ class Certificate(X509CertMixin):
         CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
     )
     csr = models.TextField(verbose_name=_("CSR"), blank=True)
+    csr_tmp = CertificateSigningRequestField(verbose_name=_("CSR"), blank=True)
 
     # Note: We don't set choices here because the available profiles might be changed by the user.
     profile = models.CharField(
