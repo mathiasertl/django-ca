@@ -1264,8 +1264,7 @@ class Certificate(X509CertMixin):
     ca = models.ForeignKey(
         CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
     )
-    csr = models.TextField(verbose_name=_("CSR"), blank=True)
-    csr_tmp = CertificateSigningRequestField(verbose_name=_("CSR"), blank=True)
+    csr = CertificateSigningRequestField(verbose_name=_("CSR"), blank=True)
 
     # Note: We don't set choices here because the available profiles might be changed by the user.
     profile = models.CharField(
