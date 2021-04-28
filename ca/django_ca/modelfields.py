@@ -26,13 +26,17 @@ from django.db import models
 
 from .fields import CertificateSigningRequestField as CertificateSigningRequestFormField
 
+DecodableCertificate = typing.Union[str, bytes, x509.Certificate]
 DecodableCertificateSigningRequest = typing.Union[str, bytes, x509.CertificateSigningRequest]
 LoadedTypeVar = typing.TypeVar("LoadedTypeVar", x509.CertificateSigningRequest, x509.Certificate)
+DecodableTypeVar = typing.TypeVar("DecodableTypeVar")
 
 if typing.TYPE_CHECKING:
-    BinaryFieldBase = models.BinaryField[DecodableCertificateSigningRequest, bytes]
+    class LazyBinaryFieldBase(models.BinaryField[DecodableTypeVar, bytes], typing.Generic[DecodableTypeVar]):
+        pass
 else:
-    BinaryFieldBase = models.BinaryField
+    class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar]):
+        pass
 
 
 class LazyField(typing.Generic[LoadedTypeVar], metaclass=abc.ABCMeta):
@@ -91,9 +95,32 @@ class LazyCertificateSigningRequest(LazyField[x509.CertificateSigningRequest]):
         return self._loaded
 
 
-class CertificateSigningRequestField(BinaryFieldBase):
-    """Django model field for CSRs."""
+class LazyCertificate(LazyField[x509.Certificate]):
+    def __init__(self, value: DecodableCertificate) -> None:
+        if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE-----"):
+            self._loaded = x509.load_pem_x509_certificate(value.encode())
+            self._bytes = self._loaded.public_bytes(Encoding.DER)
+        elif isinstance(value, x509.Certificate):
+            self._loaded = value
+            self._bytes = self._loaded.public_bytes(Encoding.DER)
+        elif isinstance(value, bytes):
+            if value.startswith(b"-----BEGIN CERTIFICATE-----"):
+                self._loaded = x509.load_pem_x509_certificate(value)
+                self._bytes = self._loaded.public_bytes(Encoding.DER)
+            else:
+                self._bytes = value
+        else:
+            raise ValueError("%s: Could not parse Certificate Signing Request" % value)
 
+    @property
+    def loaded(self) -> x509.Certificate:
+        """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
+        if self._loaded is None:
+            self._loaded = x509.load_der_x509_certificate(self._bytes)
+        return self._loaded
+
+
+class LazyBinaryField(LazyBinaryFieldBase[DecodableTypeVar], typing.Generic[DecodableTypeVar]):
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         kwargs.setdefault("editable", True)
         kwargs.setdefault("null", True)
@@ -109,6 +136,10 @@ class CertificateSigningRequestField(BinaryFieldBase):
             del kwargs["null"]
 
         return name, path, args, kwargs
+
+
+class CertificateSigningRequestField(LazyBinaryField[DecodableCertificateSigningRequest]):
+    """Django model field for CSRs."""
 
     def formfield(self, **kwargs: typing.Any) -> CertificateSigningRequestFormField:
         """Customize the form field used by model forms."""
