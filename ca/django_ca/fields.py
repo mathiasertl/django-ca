@@ -50,16 +50,29 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
                      -subj '/CN=hostname/emailAddress=root@hostname'
 </span>"""
             )
+        if not kwargs.get("widget"):
+            kwargs["widget"] = forms.Textarea
         super().__init__(**kwargs)
+        self.widget.attrs.update({
+            "cols": "64",
+            # TODO: remove inline CSS, this MUST be done via extra CSS
+            "style": "font-family: monospace; max-height: none;"
+        })
 
-    def clean(self, value: str) -> str:
+    def prepare_value(self, value):
+        if value is None:  # for new objects
+            return ""
+        if isinstance(value, str):  # when form validation fails
+            return value
+        return value.pem
+
+    def to_python(self, value: str) -> x509.CertificateSigningRequest:
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
             raise forms.ValidationError(mark_safe(self.simple_validation_error))
         try:
-            self.x509_csr = x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
+            return x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
         except ValueError as ex:
             raise forms.ValidationError(ex) from ex
-        return value
 
 
 class SubjectField(forms.MultiValueField):

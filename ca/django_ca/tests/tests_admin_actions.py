@@ -369,6 +369,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         obj: typing.Optional[Certificate] = None,
     ) -> None:
         obj = obj or self.cert
+        obj.refresh_from_db()
         resigned = Certificate.objects.filter(cn=obj.cn).exclude(pk=obj.pk).get()
 
         self.assertFalse(resigned.revoked)

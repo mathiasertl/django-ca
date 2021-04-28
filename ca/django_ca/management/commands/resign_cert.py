@@ -114,7 +114,7 @@ default profile, currently %s."""
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
-            cert = Certificate.objects.create_cert(ca=ca, csr=cert.csr, **kwargs)
+            cert = Certificate.objects.create_cert(ca=ca, csr=cert.csr.csr, **kwargs)
         except Exception as ex:
             raise CommandError(ex) from ex
 

@@ -114,7 +114,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr, csr)
+        self.assertEqual(cert.csr.pem.strip(), csr)
         self.assertEqual(cert.profile, "webserver")
 
         # Some extensions are not set
@@ -266,7 +266,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertSubject(cert.x509_cert, [("C", "US"), ("CN", cname)])
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr, csr)
+        self.assertEqual(cert.csr.pem.strip(), csr)
 
         # Some extensions are not set
         self.assertExtensions(
@@ -394,7 +394,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth", "serverAuth"]}))
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr, csr)
+        self.assertEqual(cert.csr.pem.strip(), csr)
 
         # Some extensions are not set
         self.assertIsNone(cert.certificate_policies)

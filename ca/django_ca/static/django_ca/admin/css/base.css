@@ -21,6 +21,7 @@ see <http://www.gnu.org/licenses/>.
 fieldset.as-code .field-csr p:not(.help),
 fieldset.as-code .field-pub p:not(.help),
 fieldset.as-code .field-csr div.readonly,
+fieldset.as-code .field-csr_pem div.readonly,
 fieldset.as-code .field-pub div.readonly,
 .shell
 {

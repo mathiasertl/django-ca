@@ -58,6 +58,9 @@ class LazyCertificateSigningRequest:
         else:
             raise ValueError("%s: Could not parse Certificate Signing Request" % value)
 
+    def __eq__(self, other: typing.Any) -> bool:
+        return isinstance(other, LazyCertificateSigningRequest) and self._bytes == other._bytes
+
     def __repr__(self) -> str:
         return '<CertificateSigningRequest: %s>' % self.csr.subject.rfc4514_string()
 
@@ -98,14 +101,11 @@ class CertificateSigningRequestField(BinaryFieldBase):
 
         return name, path, args, kwargs
 
-    def formfield(self, **kwargs):
+    def formfield(self, **kwargs: typing.Any) -> CertificateSigningRequestFormField:
         """Customize the form field used by model forms."""
-        print("formfield()")
         defaults = {"form_class": CertificateSigningRequestFormField}
         defaults.update(kwargs)
-        val = super().formfield(**defaults)
-        print(val)
-        return val
+        return super().formfield(**defaults)
 
     def from_db_value(  # pylint: disable=unused-argument
         self, value: typing.Optional[bytes], expression: typing.Any, condition: typing.Any
