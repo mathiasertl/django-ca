@@ -266,7 +266,7 @@ class X509CertMixin(DjangoCAModel):
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = models.TextField(verbose_name=_("Public key"))
-    pub_tmp = CertificateField()
+    pub_tmp = CertificateField(verbose_name=_("Public key"))
     cn = models.CharField(max_length=128, verbose_name=_("CommonName"))
     serial = models.CharField(max_length=64, unique=True)
 
