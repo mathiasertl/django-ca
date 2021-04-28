@@ -96,6 +96,7 @@ from .managers import AcmeChallengeManager
 from .managers import AcmeOrderManager
 from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
+from .modelfields import CertificateField
 from .modelfields import CertificateSigningRequestField
 from .querysets import AcmeAccountQuerySet
 from .querysets import AcmeAuthorizationQuerySet
@@ -265,6 +266,7 @@ class X509CertMixin(DjangoCAModel):
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = models.TextField(verbose_name=_("Public key"))
+    pub_tmp = CertificateField()
     cn = models.CharField(max_length=128, verbose_name=_("CommonName"))
     serial = models.CharField(max_length=64, unique=True)
 

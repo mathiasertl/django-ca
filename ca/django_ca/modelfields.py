@@ -22,6 +22,7 @@ import typing
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django import forms
 from django.db import models
 
 from .fields import CertificateSigningRequestField as CertificateSigningRequestFormField
@@ -135,6 +136,7 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
 class LazyBinaryField(
     LazyBinaryFieldBase[DecodableTypeVar], typing.Generic[DecodableTypeVar, WrapperTypeVar]
 ):
+    formfield_class: typing.Type[forms.Field]
     wrapper: typing.Type[WrapperTypeVar]
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -183,6 +185,13 @@ class LazyBinaryField(
             return value.der
         return self.wrapper(value).der
 
+    def formfield(self, **kwargs: typing.Any) -> forms.Field:
+        """Customize the form field used by model forms."""
+        defaults = {"form_class": self.formfield_class}
+        defaults.update(kwargs)
+        # TYPE NOTE: superclass seems to be not typed.
+        return super().formfield(**defaults)  # type: ignore[no-any-return]
+
     def to_python(
         self, value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
     ) -> typing.Optional[WrapperTypeVar]:
@@ -199,11 +208,12 @@ class CertificateSigningRequestField(
 ):
     """Django model field for CSRs."""
 
+    formfield_class = CertificateSigningRequestFormField
     wrapper = LazyCertificateSigningRequest
 
-    def formfield(self, **kwargs: typing.Any) -> CertificateSigningRequestFormField:
-        """Customize the form field used by model forms."""
-        defaults = {"form_class": CertificateSigningRequestFormField}
-        defaults.update(kwargs)
-        # TYPE NOTE: superclass seems to be not typed.
-        return super().formfield(**defaults)  # type: ignore[no-any-return]
+
+class CertificateField(LazyBinaryField[DecodableCertificate, LazyCertificate]):
+    """Django model field for Certificates."""
+
+    formfield_class = CertificateSigningRequestFormField  # TODO
+    wrapper = LazyCertificate
