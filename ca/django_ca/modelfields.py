@@ -16,6 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-model-fields/
 """
 
+import abc
 import typing
 
 from cryptography import x509
@@ -26,6 +27,7 @@ from django.db import models
 from .fields import CertificateSigningRequestField as CertificateSigningRequestFormField
 
 DecodableCertificateSigningRequest = typing.Union[str, bytes, x509.CertificateSigningRequest]
+LoadedTypeVar = typing.TypeVar("LoadedTypeVar", x509.CertificateSigningRequest, x509.Certificate)
 
 if typing.TYPE_CHECKING:
     BinaryFieldBase = models.BinaryField[DecodableCertificateSigningRequest, bytes]
@@ -33,53 +35,60 @@ else:
     BinaryFieldBase = models.BinaryField
 
 
-class LazyCertificateSigningRequest:
-    """Lazily parsed Certificate Signing Request.
-
-    This class exists to avoid parsing a CSR into memory every time a model is accessed.
-    """
-
+class LazyField(typing.Generic[LoadedTypeVar], metaclass=abc.ABCMeta):
     _bytes: bytes
-    _csr: typing.Optional[x509.CertificateSigningRequest] = None
-
-    def __init__(self, value: DecodableCertificateSigningRequest) -> None:
-        if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
-            self._csr = x509.load_pem_x509_csr(value.encode())
-            self._bytes = self._csr.public_bytes(Encoding.DER)
-        elif isinstance(value, x509.CertificateSigningRequest):
-            self._csr = value
-            self._bytes = self._csr.public_bytes(Encoding.DER)
-        elif isinstance(value, bytes):
-            if value.startswith(b"-----BEGIN CERTIFICATE REQUEST-----"):
-                self._csr = x509.load_pem_x509_csr(value)
-                self._bytes = self._csr.public_bytes(Encoding.DER)
-            else:
-                self._bytes = value
-        else:
-            raise ValueError("%s: Could not parse Certificate Signing Request" % value)
+    _loaded: typing.Optional[LoadedTypeVar] = None
 
     def __eq__(self, other: typing.Any) -> bool:
-        return isinstance(other, LazyCertificateSigningRequest) and self._bytes == other._bytes
+        return isinstance(other, self.__class__) and self._bytes == other._bytes
 
     def __repr__(self) -> str:
-        return '<CertificateSigningRequest: %s>' % self.csr.subject.rfc4514_string()
+        return '<%s: %s>' % (self.__class__.__name__, self.loaded.subject.rfc4514_string())
 
     @property
-    def csr(self) -> x509.CertificateSigningRequest:
-        """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
-        if self._csr is None:
-            self._csr = x509.load_der_x509_csr(self._bytes)
-        return self._csr
+    @abc.abstractmethod
+    def loaded(self) -> LoadedTypeVar:
+        """The stored value parsed into a cryptography object."""
 
     @property
     def der(self) -> bytes:
-        """This CSR as its raw DER representation."""
+        """This field in its raw DER representation."""
         return self._bytes
 
     @property
     def pem(self) -> str:
         """This CSR as str-encoded PEM."""
-        return self.csr.public_bytes(Encoding.PEM).decode()
+        return self.loaded.public_bytes(Encoding.PEM).decode()
+
+
+class LazyCertificateSigningRequest(LazyField[x509.CertificateSigningRequest]):
+    """Lazily parsed Certificate Signing Request.
+
+    This class exists to avoid parsing a CSR into memory every time a model is accessed.
+    """
+
+    def __init__(self, value: DecodableCertificateSigningRequest) -> None:
+        if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
+            self._loaded = x509.load_pem_x509_csr(value.encode())
+            self._bytes = self._loaded.public_bytes(Encoding.DER)
+        elif isinstance(value, x509.CertificateSigningRequest):
+            self._loaded = value
+            self._bytes = self._loaded.public_bytes(Encoding.DER)
+        elif isinstance(value, bytes):
+            if value.startswith(b"-----BEGIN CERTIFICATE REQUEST-----"):
+                self._loaded = x509.load_pem_x509_csr(value)
+                self._bytes = self._loaded.public_bytes(Encoding.DER)
+            else:
+                self._bytes = value
+        else:
+            raise ValueError("%s: Could not parse Certificate Signing Request" % value)
+
+    @property
+    def loaded(self) -> x509.CertificateSigningRequest:
+        """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
+        if self._loaded is None:
+            self._loaded = x509.load_der_x509_csr(self._bytes)
+        return self._loaded
 
 
 class CertificateSigningRequestField(BinaryFieldBase):
@@ -105,7 +114,8 @@ class CertificateSigningRequestField(BinaryFieldBase):
         """Customize the form field used by model forms."""
         defaults = {"form_class": CertificateSigningRequestFormField}
         defaults.update(kwargs)
-        return super().formfield(**defaults)
+        # TYPE NOTE: superclass seems to be not typed.
+        return super().formfield(**defaults)  # type: ignore[no-any-return]
 
     def from_db_value(  # pylint: disable=unused-argument
         self, value: typing.Optional[bytes], expression: typing.Any, condition: typing.Any

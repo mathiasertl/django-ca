@@ -1006,7 +1006,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             if hasattr(request, "_resign_obj"):
                 orig_cert: Certificate = getattr(request, "_resign_obj")
-                obj.csr = csr = orig_cert.csr.csr
+                obj.csr = csr = orig_cert.csr.loaded
             else:
                 # Note: ``obj.csr`` is set by model form already
                 csr = data["csr"]
