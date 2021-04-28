@@ -29,7 +29,14 @@ from .fields import CertificateSigningRequestField as CertificateSigningRequestF
 DecodableCertificate = typing.Union[str, bytes, x509.Certificate]
 DecodableCertificateSigningRequest = typing.Union[str, bytes, x509.CertificateSigningRequest]
 LoadedTypeVar = typing.TypeVar("LoadedTypeVar", x509.CertificateSigningRequest, x509.Certificate)
-DecodableTypeVar = typing.TypeVar("DecodableTypeVar")
+DecodableTypeVar = typing.TypeVar(
+    "DecodableTypeVar", DecodableCertificate, DecodableCertificateSigningRequest
+)
+# TYPE NOTE: mypy does not support using generics as bound ("bound=LazyField[DecodableTypeVar, ...]").
+#   If we list concrete subclasses instead, typing functions that take DecodableTypeVar and return a
+#   WrapperTypeVar instance becomes difficult, as mypy has no way of knowing that DecodableTypeVar argument
+#   matches the type in required by the constructor of WrapperTypeVar.
+WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ignore[type-arg]
 
 if typing.TYPE_CHECKING:
     class LazyBinaryFieldBase(models.BinaryField[DecodableTypeVar, bytes], typing.Generic[DecodableTypeVar]):
@@ -39,9 +46,12 @@ else:
         pass
 
 
-class LazyField(typing.Generic[LoadedTypeVar], metaclass=abc.ABCMeta):
+class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta):
     _bytes: bytes
     _loaded: typing.Optional[LoadedTypeVar] = None
+
+    def __init__(self, value: DecodableTypeVar) -> None:
+        """Constructor must accept a decodable type var."""
 
     def __eq__(self, other: typing.Any) -> bool:
         return isinstance(other, self.__class__) and self._bytes == other._bytes
@@ -65,7 +75,9 @@ class LazyField(typing.Generic[LoadedTypeVar], metaclass=abc.ABCMeta):
         return self.loaded.public_bytes(Encoding.PEM).decode()
 
 
-class LazyCertificateSigningRequest(LazyField[x509.CertificateSigningRequest]):
+class LazyCertificateSigningRequest(
+    LazyField[x509.CertificateSigningRequest, DecodableCertificateSigningRequest]
+):
     """Lazily parsed Certificate Signing Request.
 
     This class exists to avoid parsing a CSR into memory every time a model is accessed.
@@ -95,7 +107,7 @@ class LazyCertificateSigningRequest(LazyField[x509.CertificateSigningRequest]):
         return self._loaded
 
 
-class LazyCertificate(LazyField[x509.Certificate]):
+class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
     def __init__(self, value: DecodableCertificate) -> None:
         if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE-----"):
             self._loaded = x509.load_pem_x509_certificate(value.encode())
@@ -120,7 +132,11 @@ class LazyCertificate(LazyField[x509.Certificate]):
         return self._loaded
 
 
-class LazyBinaryField(LazyBinaryFieldBase[DecodableTypeVar], typing.Generic[DecodableTypeVar]):
+class LazyBinaryField(
+    LazyBinaryFieldBase[DecodableTypeVar], typing.Generic[DecodableTypeVar, WrapperTypeVar]
+):
+    wrapper: typing.Type[WrapperTypeVar]
+
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         kwargs.setdefault("editable", True)
         kwargs.setdefault("null", True)
@@ -137,36 +153,22 @@ class LazyBinaryField(LazyBinaryFieldBase[DecodableTypeVar], typing.Generic[Deco
 
         return name, path, args, kwargs
 
-
-class CertificateSigningRequestField(LazyBinaryField[DecodableCertificateSigningRequest]):
-    """Django model field for CSRs."""
-
-    def formfield(self, **kwargs: typing.Any) -> CertificateSigningRequestFormField:
-        """Customize the form field used by model forms."""
-        defaults = {"form_class": CertificateSigningRequestFormField}
-        defaults.update(kwargs)
-        # TYPE NOTE: superclass seems to be not typed.
-        return super().formfield(**defaults)  # type: ignore[no-any-return]
-
     def from_db_value(  # pylint: disable=unused-argument
         self, value: typing.Optional[bytes], expression: typing.Any, condition: typing.Any
-    ) -> typing.Optional[LazyCertificateSigningRequest]:
+    ) -> typing.Optional[WrapperTypeVar]:
         """Called when data is loaded from the database.
 
         This is called when
 
-        * a certificate is loaded from the database (``Certificate.objects.get()``, ...)
-        * a queryset is used (*not* just creating it -> QS are lazy)
+        * An object is loaded from the database (``Certificate.objects.get()``, ...)
+        * A queryset is used (*not* just creating it -> QS are lazy)
         """
         if value is None:
             return None
-        return LazyCertificateSigningRequest(value)
+        return self.wrapper(value)
 
     def get_prep_value(
-        self,
-        value: typing.Optional[
-            typing.Union[LazyCertificateSigningRequest, DecodableCertificateSigningRequest]
-        ],
+        self, value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
     ) -> typing.Optional[bytes]:
         """Get the raw database value.
 
@@ -177,19 +179,31 @@ class CertificateSigningRequestField(LazyBinaryField[DecodableCertificateSigning
         """
         if not value:
             return None
-        if isinstance(value, LazyCertificateSigningRequest):
+        if isinstance(value, self.wrapper):
             return value.der
-        return LazyCertificateSigningRequest(value).der
+        return self.wrapper(value).der
 
     def to_python(
-        self,
-        value: typing.Optional[
-            typing.Union[LazyCertificateSigningRequest, DecodableCertificateSigningRequest]
-        ],
-    ) -> typing.Optional[LazyCertificateSigningRequest]:
+        self, value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
+    ) -> typing.Optional[WrapperTypeVar]:
         """Called during deserialization and during Certificate.full_clean()."""
         if not value:
             return None
-        if isinstance(value, LazyCertificateSigningRequest):
+        if isinstance(value, self.wrapper):
             return value
-        return LazyCertificateSigningRequest(value)
+        return self.wrapper(value)
+
+
+class CertificateSigningRequestField(
+    LazyBinaryField[DecodableCertificateSigningRequest, LazyCertificateSigningRequest]
+):
+    """Django model field for CSRs."""
+
+    wrapper = LazyCertificateSigningRequest
+
+    def formfield(self, **kwargs: typing.Any) -> CertificateSigningRequestFormField:
+        """Customize the form field used by model forms."""
+        defaults = {"form_class": CertificateSigningRequestFormField}
+        defaults.update(kwargs)
+        # TYPE NOTE: superclass seems to be not typed.
+        return super().formfield(**defaults)  # type: ignore[no-any-return]
