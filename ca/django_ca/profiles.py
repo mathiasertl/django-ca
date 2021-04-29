@@ -411,7 +411,7 @@ class Profile:
         if self.issuer_name:
             return self.issuer_name.name
 
-        return ca.x509_cert.subject
+        return ca.pub.loaded.subject
 
     def _update_san_from_cn(
         self,

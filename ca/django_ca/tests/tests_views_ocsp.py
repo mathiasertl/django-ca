@@ -27,7 +27,6 @@ import asn1crypto.x509
 import ocspbuilder
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ocsp
 from oscrypto import asymmetric
 
@@ -479,7 +478,7 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
     def test_no_nonce(self) -> None:
         """Test fetching without a nonce."""
         builder = ocsp.OCSPRequestBuilder()
-        builder = builder.add_certificate(self.cert.x509_cert, self.cert.ca.x509_cert, hashes.SHA1())
+        builder = builder.add_certificate(self.cert.pub.loaded, self.cert.ca.pub.loaded, hashes.SHA1())
         data = base64.b64encode(builder.build().public_bytes(serialization.Encoding.DER))
 
         response = self.client.get(reverse("get", kwargs={"data": data.decode("utf-8")}))
@@ -489,8 +488,8 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
     def test_no_nonce_asn1crypto(self) -> None:
         """Test fetching without a nonce, test using asn1crypto."""
         builder = ocspbuilder.OCSPRequestBuilder(
-            certificate=asn1crypto.x509.Certificate.load(self.cert.x509_cert.public_bytes(Encoding.DER)),
-            issuer=asn1crypto.x509.Certificate.load(self.cert.ca.x509_cert.public_bytes(Encoding.DER)),
+            certificate=asn1crypto.x509.Certificate.load(self.cert.pub.der),
+            issuer=asn1crypto.x509.Certificate.load(self.cert.ca.pub.der),
         )
         builder.nonce = False
         data = base64.b64encode(builder.build().dump()).decode("utf-8")

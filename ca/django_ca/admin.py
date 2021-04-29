@@ -210,7 +210,7 @@ class CertificateMixin(
 
     def distinguished_name(self, obj: X509CertMixinTypeVar) -> str:
         """The certificates distinguished name formatted as string."""
-        return format_name(obj.x509_cert.subject)
+        return format_name(obj.pub.loaded.subject)
 
     distinguished_name.short_description = _("Distinguished Name")  # type: ignore[attr-defined]
 
@@ -299,7 +299,7 @@ class CertificateMixin(
 
     def unknown_oid(self, oid: x509.ObjectIdentifier, obj: X509CertMixinTypeVar) -> str:
         """Generic display for extensions that we do not know about and cannot display."""
-        ext = obj.x509_cert.extensions.get_extension_for_oid(oid)
+        ext = obj.pub.loaded.extensions.get_extension_for_oid(oid)
         html = ""
         if ext.critical is True:
             text = _("Critical")
@@ -1024,7 +1024,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     extensions[key] = None
 
             obj.profile = profile.name
-            obj.x509_cert = profile.create_cert(
+            obj.update_certificate(profile.create_cert(
                 data["ca"],
                 csr,
                 subject=data["subject"],
@@ -1033,7 +1033,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 cn_in_san=cn_in_san,
                 password=data["password"],
                 extensions=extensions,
-            )
+            ))
             obj.save()
             post_issue_cert.send(sender=self.model, cert=obj)
         else:

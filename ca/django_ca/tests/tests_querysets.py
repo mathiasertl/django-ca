@@ -94,7 +94,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(ca.key(None).public_key(), RSAPublicKey)
 
         # verity public key propertiesa
-        self.assertBasic(ca.x509_cert)
+        self.assertBasic(ca.pub.loaded)
         self.assertEqual(ca.subject, Subject({"CN": "ca.example.com"}))
 
         # verify X509 properties

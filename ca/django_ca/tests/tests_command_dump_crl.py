@@ -142,7 +142,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, self.cert.x509_cert.serial_number)
+        self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
 
         # try all possible reasons
@@ -156,7 +156,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             crl = x509.load_pem_x509_crl(stdout, default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
             self.assertEqual(len(list(crl)), 1)
-            self.assertEqual(crl[0].serial_number, self.cert.x509_cert.serial_number)
+            self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
 
             # unspecified is not included (see RFC 5280, 5.3.1)
             if reason != "unspecified":
@@ -176,7 +176,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, self.cert.x509_cert.serial_number)
+        self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 1)
         self.assertEqual(crl[0].extensions[0].oid, CRLEntryExtensionOID.INVALIDITY_DATE)
         self.assertEqual(crl[0].extensions[0].value.invalidity_date, stamp.replace(tzinfo=None))
@@ -209,7 +209,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         crl = x509.load_pem_x509_crl(stdout, default_backend())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, child.x509_cert.serial_number)
+        self.assertEqual(crl[0].serial_number, child.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
 
     @override_tmpcadir()

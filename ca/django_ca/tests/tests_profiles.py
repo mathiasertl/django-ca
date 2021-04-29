@@ -82,7 +82,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
     ) -> Certificate:
         """Shortcut to create a cert with the given profile."""
         cert = Certificate()
-        cert.x509_cert = prof.create_cert(*args, **kwargs)
+        cert.update_certificate(prof.create_cert(*args, **kwargs))
         return cert
 
     def test_copy(self) -> None:

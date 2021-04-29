@@ -74,7 +74,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertBasic(ca.x509_cert, algo=hashes.SHA512)
+        self.assertBasic(ca.pub.loaded, algo=hashes.SHA512)
 
         # test the private key
         key = ca.key(None)
@@ -82,7 +82,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(key.key_size, 1024)
 
         self.assertSubject(
-            ca.x509_cert,
+            ca.pub.loaded,
             [
                 ("C", "AT"),
                 ("ST", "Vienna"),
@@ -94,7 +94,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
-        self.assertEqual(ca.serial, int_to_hex(ca.x509_cert.serial_number))
+        self.assertEqual(ca.serial, int_to_hex(ca.pub.loaded.serial_number))
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self) -> None:
@@ -153,8 +153,8 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsInstance(key, dsa.DSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
-        self.assertTrue(isinstance(ca.x509_cert.signature_hash_algorithm, hashes.SHA1))
-        self.assertTrue(isinstance(ca.x509_cert.public_key(), dsa.DSAPublicKey))
+        self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA1)
+        self.assertIsInstance(ca.pub.loaded.public_key(), dsa.DSAPublicKey)
         self.assertIsNone(ca.crl_distribution_points)
         self.assertEqual(
             ca.authority_information_access,
@@ -330,7 +330,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPostCreateCa(post, ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertSubject(ca.x509_cert, [("CN", "test")])
+        self.assertSubject(ca.pub.loaded, [("CN", "test")])
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 
@@ -347,7 +347,7 @@ class InitCATest(TestCaseMixin, TestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
         self.assertPrivateKey(ca)
-        self.assertSubject(ca.x509_cert, [("OU", "smth"), ("CN", name)])
+        self.assertSubject(ca.pub.loaded, [("OU", "smth"), ("CN", name)])
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 

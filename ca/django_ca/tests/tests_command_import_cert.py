@@ -48,7 +48,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
         self.assertSignature([self.ca], cert)
         self.assertEqual(cert.ca, self.ca)
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertEqual(cert.x509_cert.version, x509.Version.v3)
+        self.assertEqual(cert.pub.loaded.version, x509.Version.v3)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self) -> None:
@@ -63,7 +63,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
         self.assertSignature([self.ca], cert)
         self.assertEqual(cert.ca, self.ca)
         cert.full_clean()  # assert e.g. max_length in serials
-        self.assertEqual(cert.x509_cert.version, x509.Version.v3)
+        self.assertEqual(cert.pub.loaded.version, x509.Version.v3)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self) -> None:

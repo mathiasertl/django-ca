@@ -1291,10 +1291,10 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         cert1 = self.new_certs[self.name1]
         cert2 = self.new_certs[self.name2]
 
-        self.cgx1 = cert1.x509_cert.extensions.get_extension_for_class(
+        self.cgx1 = cert1.pub.loaded.extensions.get_extension_for_class(
             x509.PrecertificateSignedCertificateTimestamps
         )
-        self.cgx2 = cert2.x509_cert.extensions.get_extension_for_class(
+        self.cgx2 = cert2.pub.loaded.extensions.get_extension_for_class(
             x509.PrecertificateSignedCertificateTimestamps
         )
         self.ext1 = PrecertificateSignedCertificateTimestamps(self.cgx1)

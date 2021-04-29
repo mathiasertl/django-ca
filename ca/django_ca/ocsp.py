@@ -63,7 +63,7 @@ def get_index(ca: CertificateAuthority) -> typing.Iterator[str]:
         yield "%s\n" % "\t".join(
             [
                 status,
-                cert.x509_cert.not_valid_after.strftime(DATE_FORMAT),
+                cert.pub.loaded.not_valid_after.strftime(DATE_FORMAT),
                 revocation,
                 cert.serial.replace(":", ""),
                 "unknown",  # we don't save to any file

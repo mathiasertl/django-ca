@@ -248,14 +248,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             parsed_crl = x509.load_der_x509_crl(crl, default_backend())
 
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(parsed_crl.is_signature_valid(signer.x509_cert.public_key()))
-        self.assertEqual(parsed_crl.issuer, signer.x509_cert.subject)
+        self.assertTrue(parsed_crl.is_signature_valid(signer.pub.loaded.public_key()))
+        self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
         self.assertEqual(parsed_crl.last_update, datetime.utcnow())
         self.assertEqual(parsed_crl.next_update, expires_timestamp)
         self.assertCountEqual(list(parsed_crl.extensions), extensions)
 
         entries = {e.serial_number: e for e in parsed_crl}
-        self.assertCountEqual(entries, {c.x509_cert.serial_number: c for c in expected})
+        self.assertCountEqual(entries, {c.pub.loaded.serial_number: c for c in expected})
         for entry in entries.values():
             self.assertEqual(entry.revocation_date, datetime.utcnow())
             self.assertEqual(list(entry.extensions), [])
@@ -296,11 +296,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         mapped_extensions = {e.key: e for e in extensions}
 
         if isinstance(cert, Certificate):
-            pubkey = cert.x509_cert.public_key()
+            pubkey = cert.pub.loaded.public_key()
             actual = {e.key: e for e in cert.extensions}
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
-            pubkey = cert.x509_cert.public_key()
+            pubkey = cert.pub.loaded.public_key()
             actual = {e.key: e for e in cert.extensions}
 
             if cert.parent is None:  # root CA
@@ -686,7 +686,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         kwargs.setdefault("issuer_url", certs[name].get("issuer_url", ""))
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
-        ca.x509_cert = parsed  # calculates serial etc
+        ca.update_certificate(parsed)  # calculates serial etc
         ca.save()
         return ca
 

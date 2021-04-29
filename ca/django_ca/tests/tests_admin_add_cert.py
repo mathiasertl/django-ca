@@ -101,7 +101,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509_cert, [("C", "US"), ("CN", cname)])
+        self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
         self.assertIssuer(ca, cert)
         self.assertExtensions(
             cert,
@@ -263,7 +263,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509_cert, [("C", "US"), ("CN", cname)])
+        self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr.pem.strip(), csr)
@@ -384,7 +384,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.x509_cert, [("C", "US"), ("CN", cname)])
+        self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:%s" % cname]}))

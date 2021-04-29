@@ -291,8 +291,8 @@ class OCSPView(View):
         builder = ocsp.OCSPResponseBuilder()
         expires = datetime.utcnow() + timedelta(seconds=self.expires)
         builder = builder.add_response(
-            cert=cert.x509_cert,
-            issuer=ca.x509_cert,
+            cert=cert.pub.loaded,
+            issuer=ca.pub.loaded,
             algorithm=hashes.SHA1(),
             cert_status=status,
             this_update=now,
@@ -358,5 +358,4 @@ class GenericCAIssuersView(View):
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         ca = CertificateAuthority.objects.get(serial=serial)
-        data = ca.x509_cert.public_bytes(encoding=Encoding.DER)
-        return HttpResponse(data, content_type="application/pkix-cert")
+        return HttpResponse(ca.pub.der, content_type="application/pkix-cert")

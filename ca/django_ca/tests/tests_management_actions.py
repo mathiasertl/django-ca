@@ -350,7 +350,7 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
         """Test matching multiple certs with abbreviation."""
         # Manually set almost the same serial on second cert
         cert = Certificate(ca=self.new_cas["root"])
-        cert.x509_cert = certs["root-cert"]["pub"]["parsed"]
+        cert.update_certificate(certs["root-cert"]["pub"]["parsed"])
         cert.serial = cert.serial[:-1] + "X"
         cert.save()
 
@@ -397,7 +397,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     def test_multiple(self) -> None:
         """Test an abbreviation matching multiple CAs."""
         ca2 = CertificateAuthority(name="child-duplicate")
-        ca2.x509_cert = certs["child"]["pub"]["parsed"]
+        ca2.update_certificate(certs["child"]["pub"]["parsed"])
         ca2.serial = ca2.serial[:-1] + "X"
         ca2.save()
 
