@@ -55,4 +55,4 @@ class Command(CertCommandMixin, BinaryCommand):
         else:
             certs = [cert]
 
-        self.dump(path, b"".join([c.dump_certificate(encoding) for c in certs]))
+        self.dump(path, b"".join([c.pub.encode(encoding) for c in certs]))

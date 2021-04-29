@@ -504,7 +504,7 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
         self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
-        self.assertEqual(response.content, self.cert.dump_certificate(Encoding.DER))
+        self.assertEqual(response.content, self.cert.pub.der)
 
     def test_not_found(self) -> None:
         """Try downloading a certificate that does not exist."""

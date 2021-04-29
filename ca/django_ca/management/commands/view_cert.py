@@ -94,4 +94,4 @@ class Command(CertCommandMixin, BinaryCommand):
 
         if not options["no_pem"]:
             self.stdout.write("")
-            self.stdout.write(cert.dump_certificate(encoding))
+            self.stdout.write(cert.pub.encode(encoding))

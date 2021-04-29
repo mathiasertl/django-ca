@@ -423,14 +423,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         store.set_time(now)
 
         for elem in chain:
-            ca = load_certificate(FILETYPE_PEM, elem.dump_certificate())
+            ca = load_certificate(FILETYPE_PEM, elem.pub.pem.encode())
             store.add_cert(ca)
 
             # Verify that the CA itself is valid
             store_ctx = X509StoreContext(store, ca)
             self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
-        loaded_cert = load_certificate(FILETYPE_PEM, cert.dump_certificate())
+        loaded_cert = load_certificate(FILETYPE_PEM, cert.pub.pem.encode())
         store_ctx = X509StoreContext(store, loaded_cert)
         self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 

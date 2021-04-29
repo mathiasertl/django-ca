@@ -349,18 +349,6 @@ class X509CertMixin(DjangoCAModel):
         """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
         return self.pub.loaded.signature_hash_algorithm
 
-    def dump_certificate(self, encoding: Encoding = Encoding.PEM) -> bytes:
-        """Get the certificate as bytes in the requested format.
-
-        Parameters
-        ----------
-
-        encoding : attr of :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
-            The format to return, defaults to ``Encoding.PEM``.
-        """
-
-        return self.pub.loaded.public_bytes(encoding=encoding)
-
     def get_digest(self, algo: ParsableHash) -> str:
         """Get the digest for a certificate as string, including colons."""
         algo = parse_hash_algorithm(algo)
@@ -955,9 +943,8 @@ class CertificateAuthority(X509CertMixin):
         )
 
         cert_path = ca_storage.generate_filename("ocsp/%s.pem" % self.serial.replace(":", ""))
-        cert_pem = cert.dump_certificate(encoding=Encoding.PEM)
 
-        for path, contents in [(private_path, private_pem), (cert_path, cert_pem)]:
+        for path, contents in [(private_path, private_pem), (cert_path, cert.pub.pem.encode())]:
             if ca_storage.exists(path):
                 with ca_storage.open(path, "wb") as stream:
                     stream.write(contents)

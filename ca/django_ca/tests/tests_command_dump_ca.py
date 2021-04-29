@@ -40,13 +40,12 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_format(self) -> None:
         """Test various formats."""
-        for option in ["PEM", "DER"]:
-            encoding = getattr(Encoding, option)
+        for encoding in [Encoding.PEM, Encoding.DER]:
             stdout, stderr = self.cmd(
                 "dump_ca", self.ca.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
             )
             self.assertEqual(stderr, b"")
-            self.assertEqual(stdout, self.ca.dump_certificate(encoding))
+            self.assertEqual(stdout, self.ca.pub.encode(encoding))
 
     @override_tmpcadir()
     def test_explicit_stdout(self) -> None:

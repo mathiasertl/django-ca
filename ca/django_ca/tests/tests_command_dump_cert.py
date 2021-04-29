@@ -39,13 +39,12 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
 
     def test_format(self) -> None:
         """Test various formats."""
-        for option in ["PEM", "DER"]:
-            encoding = getattr(Encoding, option)
+        for encoding in [Encoding.PEM, Encoding.DER]:
             stdout, stderr = self.cmd(
                 "dump_cert", self.cert.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
             )
             self.assertEqual(stderr, b"")
-            self.assertEqual(stdout, self.cert.dump_certificate(encoding))
+            self.assertEqual(stdout, self.cert.pub.encode(encoding))
 
     def test_explicit_stdout(self) -> None:
         """Test writing to stdout."""
