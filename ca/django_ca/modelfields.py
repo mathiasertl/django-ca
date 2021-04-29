@@ -135,7 +135,7 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
             else:
                 self._bytes = value
         else:
-            raise ValueError("%s: Could not parse Certificate Signing Request" % value)
+            raise ValueError("%s: Could not parse Certificate" % value)
 
     @property
     def loaded(self) -> x509.Certificate:
@@ -207,7 +207,11 @@ class LazyBinaryField(
     def to_python(
         self, value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
     ) -> typing.Optional[WrapperTypeVar]:
-        """Called during deserialization and during Certificate.full_clean()."""
+        """Called during deserialization and during Certificate.full_clean().
+
+        Note that this function is **not** called if the field value is ``None`` or ``b""``. It is however
+        called with ``""`` (the empty string).
+        """
         if not value:
             return None
         if isinstance(value, self.wrapper):

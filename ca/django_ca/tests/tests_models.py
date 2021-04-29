@@ -734,6 +734,104 @@ class CertificateTests(TestCaseMixin, TestCase):
             )
 
 
+class ModelfieldsTests(TestCaseMixin, TestCase):
+    csr = certs['root-cert']['csr']
+    pub = certs['root-cert']['pub']
+    load_cas = ("root",)
+
+    def test_create(self):
+        for prop in ["parsed", "pem", "der"]:
+            cert = Certificate.objects.create(
+                pub=self.pub[prop], csr=self.csr[prop],
+                ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+            )
+            self.assertEqual(cert.pub, self.pub[prop])
+            self.assertEqual(cert.csr, self.csr[prop])
+
+            # Refresh, so that we get lazy values
+            cert.refresh_from_db()
+
+            self.assertEqual(cert.pub.loaded, self.pub['parsed'])
+            self.assertEqual(cert.csr.loaded, self.csr['parsed'])
+
+            cert.delete()  # for next loop iteration
+
+        pub = self.pub["pem"].encode()
+        csr = self.csr["pem"].encode()
+        cert = Certificate.objects.create(
+            pub=pub, csr=csr, ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+        )
+        self.assertEqual(cert.pub, pub)
+        self.assertEqual(cert.csr, csr)
+
+        # Refresh, so that we get lazy values
+        cert.refresh_from_db()
+
+        self.assertEqual(cert.pub.loaded, self.pub['parsed'])
+        self.assertEqual(cert.csr.loaded, self.csr['parsed'])
+
+        cert.delete()  # for next loop iteration
+
+    def test_none_value(self):
+        cert = Certificate.objects.create(
+            pub=self.pub["parsed"], csr=None,
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+        )
+        self.assertIsNone(cert.csr)
+        cert.refresh_from_db()
+        self.assertIsNone(cert.csr)
+
+    def test_filter(self):
+        cert = Certificate.objects.create(
+            pub=self.pub["parsed"], csr=self.csr["parsed"],
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+        )
+
+        for prop in ["parsed", "pem", "der"]:
+            qs = Certificate.objects.filter(pub=self.pub[prop])
+            self.assertCountEqual(qs, [cert])
+            self.assertEqual(qs[0].pub.der, self.pub["der"])
+
+    def test_full_clean(self):
+        cert = Certificate(
+            pub=self.pub["parsed"], csr=self.csr["parsed"],
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(), cn="foo", serial="0"
+        )
+        cert.full_clean()
+        self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+        self.assertEqual(cert.csr.loaded, self.csr["parsed"])
+
+        cert = Certificate(
+            pub=cert.pub, csr=cert.csr,
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(), cn="foo", serial="0"
+        )
+        cert.full_clean()
+        self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+        self.assertEqual(cert.csr.loaded, self.csr["parsed"])
+
+    def test_empty_csr(self):
+        cert = Certificate(
+            pub=self.pub["parsed"], csr="",
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(), cn="foo", serial="0"
+        )
+        cert.full_clean()
+        self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+        self.assertIsNone(cert.csr)
+
+    def test_invalid_value(self):
+        with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate Signing Request$"):
+            Certificate.objects.create(
+                pub=certs['child-cert']['pub']['parsed'],
+                csr=True, ca=self.ca, expires=timezone.now(), valid_from=timezone.now()
+            )
+
+        with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate$"):
+            Certificate.objects.create(
+                csr=certs['child-cert']['csr']['parsed'],
+                pub=True, ca=self.ca, expires=timezone.now(), valid_from=timezone.now()
+            )
+
+
 class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:class:`django_ca.models.AcmeAccount`."""
 
