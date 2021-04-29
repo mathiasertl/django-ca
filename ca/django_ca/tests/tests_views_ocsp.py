@@ -42,6 +42,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
+from ..modelfields import LazyCertificate
 from ..models import Certificate
 from ..subject import Subject
 from ..utils import ca_storage
@@ -605,7 +606,8 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
     @override_tmpcadir()
     def test_bad_ca_cert(self) -> None:
         """Try naming an invalid CA."""
-        self.ca.pub = "foobar"
+        # NOTE: set LazyCertificate because this way we can avoid all value checking while saving.
+        self.ca.pub = LazyCertificate(b"foobar")
         self.ca.save()
 
         data = base64.b64encode(req1).decode("utf-8")

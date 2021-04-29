@@ -73,7 +73,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, subject)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
 
         self.assertEqual(
             cert.key_usage,
@@ -107,7 +107,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.assertPostIssueCert(post, cert)
             self.assertSignature(reversed(ca.bundle), cert)
             self.assertSubject(cert.x509_cert, subject)
-            self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+            self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
 
             self.assertEqual(
                 cert.key_usage,
@@ -141,7 +141,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.assertSignature([self.ca], cert)
 
             self.assertSubject(cert.x509_cert, subject)
-            self.assertEqual(stdout, cert.pub)
+            self.assertEqual(stdout, cert.pub.pem)
             self.assertEqual(
                 cert.key_usage,
                 KeyUsage(
@@ -184,7 +184,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             with open(out_path) as out_stream:
                 from_file = out_stream.read()
 
-            self.assertEqual(cert.pub, from_file)
+            self.assertEqual(cert.pub.pem, from_file)
         finally:
             if os.path.exists(out_path):
                 os.remove(out_path)
@@ -227,7 +227,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertSubject(cert.x509_cert, [("CN", "example.net")])
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
         self.assertEqual(stderr, "")
         self.assertEqual(
             cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
@@ -255,7 +255,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertSubject(cert.x509_cert, subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
         self.assertEqual(stderr, "")
         self.assertIsNone(cert.subject_alternative_name)
 
@@ -294,7 +294,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertSubject(cert.x509_cert, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
 
         # replace subject fields via command-line argument:
         subject = Subject(
@@ -351,7 +351,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, [("CN", "example.com")])
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
         self.assertEqual(cert.key_usage, KeyUsage({"critical": True, "value": ["keyCertSign"]}))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
         self.assertEqual(
@@ -378,7 +378,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.x509_cert, [("CN", "example.com")])
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
         self.assertEqual(stderr, "")
         self.assertEqual(
             cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
@@ -482,7 +482,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.assertSignature([self.ca], cert)
 
             self.assertSubject(cert.x509_cert, subject)
-            self.assertEqual(stdout, cert.pub)
+            self.assertEqual(stdout, cert.pub.pem)
             self.assertEqual(
                 cert.key_usage,
                 KeyUsage(

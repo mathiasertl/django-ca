@@ -122,6 +122,6 @@ default profile, currently %s."""
 
         if options["out"]:
             with open(options["out"], "w") as stream:
-                stream.write(cert.pub)
+                stream.write(cert.pub.pem)
         else:
-            self.stdout.write(cert.pub)
+            self.stdout.write(cert.pub.pem)

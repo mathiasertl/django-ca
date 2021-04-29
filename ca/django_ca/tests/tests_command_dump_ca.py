@@ -35,7 +35,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
         """Basic test of this command."""
         stdout, stderr = self.cmd("dump_ca", self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), self.ca.pub.pem)
 
     @override_tmpcadir()
     def test_format(self) -> None:
@@ -53,7 +53,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
         """Test piping to stdout."""
         stdout, stderr = self.cmd("dump_ca", self.ca.serial, "-", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), self.ca.pub.pem)
 
     @override_tmpcadir()
     def test_bundle(self) -> None:
@@ -62,14 +62,14 @@ class DumpCATestCase(TestCaseMixin, TestCase):
             "dump_ca", self.ca.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
         )
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.ca.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), self.ca.pub.pem)
 
         child = self.load_ca("child")
         stdout, stderr = self.cmd(
             "dump_ca", child.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
         )
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, child.pub.encode("utf-8") + self.ca.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), child.pub.pem + self.ca.pub.pem)
 
     @override_tmpcadir()
     def test_file_output(self) -> None:
@@ -80,7 +80,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, b"")
 
         with open(path) as stream:
-            self.assertEqual(stream.read(), self.ca.pub)
+            self.assertEqual(stream.read(), self.ca.pub.pem)
 
     @override_tmpcadir()
     def test_color_output_error(self) -> None:

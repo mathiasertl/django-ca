@@ -97,4 +97,4 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         self.stdout.write("* Issuer URL: %s" % (ca.issuer_url or None))
         self.stdout.write("* OCSP URL: %s" % (ca.ocsp_url or None))
         self.stdout.write("* Issuer Alternative Name: %s" % (ca.issuer_alt_name or None))
-        self.stdout.write("\n%s" % ca.pub)
+        self.stdout.write("\n%s" % ca.pub.pem)

@@ -218,12 +218,12 @@ class CreateCertificateForm(CreateCertificateBaseForm):
     class Meta:
         model = Certificate
         fields = [
-            #"csr",
+            "csr",
             "watchers",
             "ca",
         ]
         field_classes = {
-            #"csr": CertificateSigningRequestField,
+            "csr": CertificateSigningRequestField,
         }
 
 

@@ -209,7 +209,7 @@ class OCSPView(View):
             responder_cert = self.responder_cert.encode("utf-8")
         elif SERIAL_RE.match(self.responder_cert):
             serial = self.responder_cert.replace(":", "")
-            responder_cert = Certificate.objects.get(serial=serial).pub.encode("utf-8")
+            return Certificate.objects.get(serial=serial).pub.loaded
         else:
             if os.path.isabs(self.responder_cert):
                 log.warning(

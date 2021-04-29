@@ -166,6 +166,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         if out:
             with open(out, "w") as stream:
-                stream.write(cert.pub)
+                stream.write(cert.pub.pem)
         else:
-            self.stdout.write(cert.pub)
+            self.stdout.write(cert.pub.pem)

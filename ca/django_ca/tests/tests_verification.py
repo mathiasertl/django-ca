@@ -61,7 +61,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                 path = os.path.join(tempdir, "%s.pem" % cert.serial)
                 paths.append(path)
                 with open(path, "w") as stream:
-                    stream.write(cert.pub)
+                    stream.write(cert.pub.pem)
 
             yield paths
 

@@ -35,7 +35,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
         """Basic test of this command."""
         stdout, stderr = self.cmd("dump_cert", self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.cert.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), self.cert.pub.pem)
 
     def test_format(self) -> None:
         """Test various formats."""
@@ -51,7 +51,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
         """Test writing to stdout."""
         stdout, stderr = self.cmd("dump_cert", self.cert.serial, "-", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.cert.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), self.cert.pub.pem)
 
     def test_bundle(self) -> None:
         """Test getting the bundle."""
@@ -59,7 +59,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
             "dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO()
         )
         self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, self.cert.pub.encode("utf-8") + self.ca.pub.encode("utf-8"))
+        self.assertEqual(stdout.decode(), self.cert.pub.pem + self.ca.pub.pem)
 
     @override_tmpcadir()
     def test_file_output(self) -> None:
@@ -70,7 +70,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, b"")
 
         with open(path) as stream:
-            self.assertEqual(stream.read(), self.cert.pub)
+            self.assertEqual(stream.read(), self.cert.pub.pem)
 
     def test_errors(self) -> None:
         """Test some error conditions."""

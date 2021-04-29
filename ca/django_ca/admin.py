@@ -28,7 +28,6 @@ from types import MethodType
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
@@ -194,13 +193,13 @@ class CertificateMixin(
 
         if filetype == "PEM":
             if bundle is True:
-                data = "\n".join([cert.pub.strip() for cert in obj.bundle]) + "\n"
+                data = "\n".join([cert.pub.pem.strip() for cert in obj.bundle]) + "\n"
             else:
-                data = obj.pub
+                data = obj.pub.pem
         elif filetype == "DER":
             if bundle is True:
                 return HttpResponseBadRequest(_("DER/ASN.1 certificates cannot be downloaded as a bundle."))
-            data = obj.x509_cert.public_bytes(encoding=Encoding.DER)
+            data = obj.pub.der
         else:
             return HttpResponseBadRequest()
 

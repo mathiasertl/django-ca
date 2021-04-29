@@ -699,7 +699,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         profile = data.get("profile", "")
 
         cert = Certificate(ca=ca, csr=csr, profile=profile)
-        cert.x509_cert = data["pub"]["parsed"]
+        cert.update_certificate(data["pub"]["parsed"])
         cert.save()
         return cert
 
@@ -792,7 +792,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     ) -> None:
         """Assert that the bundle for the given certificate matches the expected chain and filename."""
         url = self.get_url(cert)
-        expected_content = "\n".join([e.pub.strip() for e in expected]) + "\n"
+        expected_content = "\n".join([e.pub.pem.strip() for e in expected]) + "\n"
         response = self.client.get(url, {"format": "PEM"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")

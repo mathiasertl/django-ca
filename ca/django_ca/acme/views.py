@@ -843,7 +843,7 @@ class AcmeCertificateView(AcmePostAsGetView):
         # self.prepared['cert'] = slug
         # self.prepared['csr'] = cert.csr
         # self.prepared['order'] = cert.order.slug
-        bundle = "\n".join([c.pub.strip() for c in cert.cert.bundle])
+        bundle = "\n".join([c.pub.pem.strip() for c in cert.cert.bundle])
         return HttpResponse(bundle, content_type="application/pem-certificate-chain")
 
 
