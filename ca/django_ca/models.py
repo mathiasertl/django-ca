@@ -57,8 +57,6 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
-from django.utils.encoding import force_bytes
-from django.utils.encoding import force_str
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -98,6 +96,7 @@ from .managers import CertificateAuthorityManager
 from .managers import CertificateManager
 from .modelfields import CertificateField
 from .modelfields import CertificateSigningRequestField
+from .modelfields import LazyCertificate
 from .querysets import AcmeAccountQuerySet
 from .querysets import AcmeAuthorizationQuerySet
 from .querysets import AcmeCertificateQuerySet
@@ -332,16 +331,15 @@ class X509CertMixin(DjangoCAModel):
     @property
     def x509_cert(self) -> x509.Certificate:
         """The underlying :py:class:`cg:cryptography.x509.Certificate`."""
-        if self._x509 is None:
-            backend = default_backend()
-            self._x509 = x509.load_pem_x509_certificate(force_bytes(self.pub), backend)
-        return self._x509
+        return self.pub.loaded
 
     @x509_cert.setter
     def x509_cert(self, value: x509.Certificate) -> None:
         """Setter for the underlying :py:class:`cg:cryptography.x509.Certificate`."""
-        self._x509 = value
-        self.pub = force_str(self.dump_certificate(Encoding.PEM))
+        self.update_certificate(value)
+
+    def update_certificate(self, value: x509.Certificate) -> None:
+        self.pub = LazyCertificate(value)
         self.cn = cast(str, self.subject.get("CN", ""))  # pylint: disable=invalid-name
         self.expires = self.not_after
         self.valid_from = self.not_before
