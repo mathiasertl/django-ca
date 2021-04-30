@@ -84,7 +84,7 @@ class CertificateAdminViewTestCase(
     def assertChangeResponse(
         self, response: HttpResponse, obj: Certificate, status: int = HTTPStatus.OK
     ) -> None:
-        super().assertChangeResponse(response, obj=obj, status)
+        super().assertChangeResponse(response, obj=obj, status=status)
 
         info = obj._meta.app_label, obj._meta.model_name
         url = reverse("admin:%s_%s_download" % info, kwargs={"pk": obj.pk})
