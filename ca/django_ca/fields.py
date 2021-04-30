@@ -56,11 +56,13 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
         if not kwargs.get("widget"):  # pragma: no branch # we never pass a custom widget
             kwargs["widget"] = forms.Textarea
         super().__init__(**kwargs)
-        self.widget.attrs.update({
-            "cols": "64",
-            # TODO: remove inline CSS, this MUST be done via extra CSS
-            "style": "font-family: monospace; max-height: none;"
-        })
+        self.widget.attrs.update(
+            {
+                "cols": "64",
+                # TODO: remove inline CSS, this MUST be done via extra CSS
+                "style": "font-family: monospace; max-height: none;",
+            }
+        )
 
     def prepare_value(
         self, value: typing.Optional[typing.Union[str, "LazyCertificateSigningRequest"]]

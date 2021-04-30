@@ -738,16 +738,20 @@ class CertificateTests(TestCaseMixin, TestCase):
 
 class ModelfieldsTests(TestCaseMixin, TestCase):
     """Specialized tests for model fields."""
-    csr = certs['root-cert']['csr']
-    pub = certs['root-cert']['pub']
+
+    csr = certs["root-cert"]["csr"]
+    pub = certs["root-cert"]["pub"]
     load_cas = ("root",)
 
     def test_create(self) -> None:
         """Test create() for the models."""
         for prop in ["parsed", "pem", "der"]:
             cert = Certificate.objects.create(
-                pub=self.pub[prop], csr=self.csr[prop],
-                ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+                pub=self.pub[prop],
+                csr=self.csr[prop],
+                ca=self.ca,
+                expires=timezone.now(),
+                valid_from=timezone.now(),
             )
             self.assertEqual(cert.pub, self.pub[prop])
             self.assertEqual(cert.csr, self.csr[prop])
@@ -755,15 +759,19 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             # Refresh, so that we get lazy values
             cert.refresh_from_db()
 
-            self.assertEqual(cert.pub.loaded, self.pub['parsed'])
-            self.assertEqual(cert.csr.loaded, self.csr['parsed'])
+            self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+            self.assertEqual(cert.csr.loaded, self.csr["parsed"])
 
             cert.delete()  # for next loop iteration
 
         pub = self.pub["pem"].encode()
         csr = self.csr["pem"].encode()
         cert = Certificate.objects.create(
-            pub=pub, csr=csr, ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+            pub=pub,
+            csr=csr,
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
         )
         self.assertEqual(cert.pub, pub)
         self.assertEqual(cert.csr, csr)
@@ -771,8 +779,8 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         # Refresh, so that we get lazy values
         cert.refresh_from_db()
 
-        self.assertEqual(cert.pub.loaded, self.pub['parsed'])
-        self.assertEqual(cert.csr.loaded, self.csr['parsed'])
+        self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+        self.assertEqual(cert.csr.loaded, self.csr["parsed"])
 
         cert.delete()  # for next loop iteration
 
@@ -782,8 +790,11 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         self.assertIsInstance(loaded.pub, LazyCertificate)
         self.assertIsInstance(loaded.csr, LazyCertificateSigningRequest)
         cert = Certificate.objects.create(
-            pub=loaded.pub, csr=loaded.csr,
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+            pub=loaded.pub,
+            csr=loaded.csr,
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
         )
         self.assertEqual(loaded.pub, cert.pub)
         self.assertEqual(loaded.csr, cert.csr)
@@ -795,8 +806,11 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_repr(self) -> None:
         """Test ``repr()`` for custom modelfields."""
         cert = Certificate.objects.create(
-            pub=self.pub["pem"], csr=self.csr["pem"],
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+            pub=self.pub["pem"],
+            csr=self.csr["pem"],
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
         )
         cert.refresh_from_db()
 
@@ -807,8 +821,11 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_none_value(self) -> None:
         """Test that nullable fields work."""
         cert = Certificate.objects.create(
-            pub=self.pub["parsed"], csr=None,
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+            pub=self.pub["parsed"],
+            csr=None,
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
         )
         self.assertIsNone(cert.csr)
         cert.refresh_from_db()
@@ -817,8 +834,11 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_filter(self) -> None:
         """Test that we can use various representations for filtering."""
         cert = Certificate.objects.create(
-            pub=self.pub["parsed"], csr=self.csr["parsed"],
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+            pub=self.pub["parsed"],
+            csr=self.csr["parsed"],
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
         )
 
         for prop in ["parsed", "pem", "der"]:
@@ -829,16 +849,26 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_full_clean(self) -> None:
         """Test the full_clean() method, which invokes ``to_python()`` on the field."""
         cert = Certificate(
-            pub=self.pub["parsed"], csr=self.csr["parsed"],
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(), cn="foo", serial="0"
+            pub=self.pub["parsed"],
+            csr=self.csr["parsed"],
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
+            cn="foo",
+            serial="0",
         )
         cert.full_clean()
         self.assertEqual(cert.pub.loaded, self.pub["parsed"])
         self.assertEqual(cert.csr.loaded, self.csr["parsed"])
 
         cert = Certificate(
-            pub=cert.pub, csr=cert.csr,
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(), cn="foo", serial="0"
+            pub=cert.pub,
+            csr=cert.csr,
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
+            cn="foo",
+            serial="0",
         )
         cert.full_clean()
         self.assertEqual(cert.pub.loaded, self.pub["parsed"])
@@ -847,8 +877,13 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_empty_csr(self) -> None:
         """Test an empty CSR."""
         cert = Certificate(
-            pub=self.pub["parsed"], csr="",
-            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(), cn="foo", serial="0"
+            pub=self.pub["parsed"],
+            csr="",
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
+            cn="foo",
+            serial="0",
         )
         cert.full_clean()
         self.assertEqual(cert.pub.loaded, self.pub["parsed"])
@@ -858,14 +893,20 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         """Test passing invalid values."""
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate Signing Request$"):
             Certificate.objects.create(
-                pub=certs['child-cert']['pub']['parsed'],
-                csr=True, ca=self.ca, expires=timezone.now(), valid_from=timezone.now()
+                pub=certs["child-cert"]["pub"]["parsed"],
+                csr=True,
+                ca=self.ca,
+                expires=timezone.now(),
+                valid_from=timezone.now(),
             )
 
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate$"):
             Certificate.objects.create(
-                csr=certs['child-cert']['csr']['parsed'],
-                pub=True, ca=self.ca, expires=timezone.now(), valid_from=timezone.now()
+                csr=certs["child-cert"]["csr"]["parsed"],
+                pub=True,
+                ca=self.ca,
+                expires=timezone.now(),
+                valid_from=timezone.now(),
             )
 
 

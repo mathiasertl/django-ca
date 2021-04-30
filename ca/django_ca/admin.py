@@ -1030,16 +1030,18 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     extensions[key] = None
 
             obj.profile = profile.name
-            obj.update_certificate(profile.create_cert(
-                data["ca"],
-                csr,
-                subject=data["subject"],
-                expires=expires,
-                algorithm=data["algorithm"],
-                cn_in_san=cn_in_san,
-                password=data["password"],
-                extensions=extensions,
-            ))
+            obj.update_certificate(
+                profile.create_cert(
+                    data["ca"],
+                    csr,
+                    subject=data["subject"],
+                    expires=expires,
+                    algorithm=data["algorithm"],
+                    cn_in_san=cn_in_san,
+                    password=data["password"],
+                    extensions=extensions,
+                )
+            )
             obj.save()
             post_issue_cert.send(sender=self.model, cert=obj)
         else:

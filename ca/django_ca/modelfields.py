@@ -41,13 +41,17 @@ WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ig
 
 # mypy-django makes modelfields a generic class, so we need  a different base when type checking.
 if typing.TYPE_CHECKING:
+
     class LazyBinaryFieldBase(
         models.BinaryField[typing.Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
-        typing.Generic[DecodableTypeVar, WrapperTypeVar]
+        typing.Generic[DecodableTypeVar, WrapperTypeVar],
     ):
         # pylint: disable=missing-class-docstring
         pass
+
+
 else:
+
     class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar, WrapperTypeVar]):
         # pylint: disable=missing-class-docstring
         pass
@@ -59,6 +63,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
     Subclasses of this class can be used by *binary* modelfields to load a cryptography value when first
     accessed.
     """
+
     _bytes: bytes
     _loaded: typing.Optional[LoadedTypeVar] = None
 
@@ -69,7 +74,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
         return isinstance(other, self.__class__) and self._bytes == other._bytes
 
     def __repr__(self) -> str:
-        return '<%s: %s>' % (self.__class__.__name__, self.loaded.subject.rfc4514_string())
+        return "<%s: %s>" % (self.__class__.__name__, self.loaded.subject.rfc4514_string())
 
     @property
     @abc.abstractmethod
@@ -195,7 +200,8 @@ class LazyBinaryField(
         return self.wrapper(value)
 
     def get_prep_value(
-        self, value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
+        self,
+        value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
     ) -> typing.Optional[bytes]:
         """Get the raw database value.
 
@@ -218,7 +224,8 @@ class LazyBinaryField(
         return super().formfield(**defaults)  # type: ignore[no-any-return]
 
     def to_python(
-        self, value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
+        self,
+        value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
     ) -> typing.Optional[WrapperTypeVar]:
         """Called during deserialization and during Certificate.full_clean().
 
