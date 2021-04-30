@@ -45,6 +45,8 @@ from ..extensions import KEY_TO_EXTENSION
 from ..extensions import Extension
 from ..extensions import PrecertificateSignedCertificateTimestamps
 from ..extensions import SubjectAlternativeName
+from ..modelfields import LazyCertificate
+from ..modelfields import LazyCertificateSigningRequest
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
@@ -773,6 +775,22 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         self.assertEqual(cert.csr.loaded, self.csr['parsed'])
 
         cert.delete()  # for next loop iteration
+
+    def test_create_from_instance(self) -> None:
+        """Test creating a certificate from LazyField instances."""
+        loaded = self.load_named_cert("root-cert")
+        self.assertIsInstance(loaded.pub, LazyCertificate)
+        self.assertIsInstance(loaded.csr, LazyCertificateSigningRequest)
+        cert = Certificate.objects.create(
+            pub=loaded.pub, csr=loaded.csr,
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+        )
+        self.assertEqual(loaded.pub, cert.pub)
+        self.assertEqual(loaded.csr, cert.csr)
+
+        reloaded = Certificate.objects.get(pk=cert.pk)
+        self.assertEqual(loaded.pub, reloaded.pub)
+        self.assertEqual(loaded.csr, reloaded.csr)
 
     def test_repr(self) -> None:
         """Test ``repr()`` for custom modelfields."""
