@@ -805,7 +805,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
     def assertChangeResponse(  # pylint: disable=invalid-name
-        self, response: HttpResponse, status: int = HTTPStatus.OK
+        self, response: HttpResponse, obj: DjangoCAModelTypeVar, status: int = HTTPStatus.OK
     ) -> None:
         """Assert that the passed response is a model change view."""
         self.assertEqual(response.status_code, status)
@@ -907,7 +907,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
     def test_change_view(self) -> None:
         """Test that the change view works for all instances."""
         for obj in self.model.objects.all():
-            self.assertChangeResponse(self.get_change_view(obj))
+            self.assertChangeResponse(self.get_change_view(obj), obj)
 
 
 class AcmeValuesMixin:

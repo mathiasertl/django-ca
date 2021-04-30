@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.http import HttpResponse
 from django.test import Client
 from django.test import TestCase
 from django.urls import reverse
@@ -79,6 +80,24 @@ class CertificateAdminViewTestCase(
     load_cas = "__usable__"
     load_certs = "__usable__"
     model = Certificate
+
+    def assertChangeResponse(
+        self, response: HttpResponse, obj: Certificate, status: int = HTTPStatus.OK
+    ) -> None:
+        super().assertChangeResponse(response, obj=obj, status)
+
+        info = obj._meta.app_label, obj._meta.model_name
+        url = reverse("admin:%s_%s_download" % info, kwargs={"pk": obj.pk})
+        bundle_url = reverse("admin:%s_%s_download_bundle" % info, kwargs={"pk": obj.pk})
+        text = response.content.decode()
+        with open("/home/mati/git/mati/django-ca/test.html", "wb") as stream:
+            stream.write(response.content)
+
+        pem = obj.pub.pem.replace("\n", "<br>")  # newlines are replaced with HTML linebreaks by Django
+        self.assertInHTML(f"<div class='readonly'>{pem}</div>", text, 1)
+        self.assertInHTML(f"<a href='{url}?format=PEM'>as PEM</a>", text, 1)
+        self.assertInHTML(f"<a href='{url}?format=DER'>as DER</a>", text, 1)
+        self.assertInHTML(f"<a href='{bundle_url}?format=PEM'>as PEM</a>", text, 1)
 
     def get_changelists(
         self,
@@ -150,7 +169,7 @@ class CertificateAdminViewTestCase(
         self.new_certs["root-cert"].revoke()
 
         response = self.client.get(self.change_url())
-        self.assertChangeResponse(response)
+        self.assertChangeResponse(response, obj=self.new_certs["root-cert"])
 
         self.assertContains(
             response,
@@ -164,7 +183,7 @@ class CertificateAdminViewTestCase(
         """Test viewing a certificate with no extensions."""
         cert = self.new_certs["no-extensions"]
         response = self.client.get(cert.admin_change_url)
-        self.assertChangeResponse(response)
+        self.assertChangeResponse(response, obj=cert)
         self.assertContains(
             response,
             text="""
@@ -192,7 +211,7 @@ class CertificateAdminViewTestCase(
             extensions, "OID_TO_EXTENSION", {}
         ), self.assertLogs() as logs:
             response = self.client.get(cert.admin_change_url)
-            self.assertChangeResponse(response)
+            self.assertChangeResponse(response, obj=cert)
 
         log_msg = "WARNING:django_ca.models:Unknown extension encountered: %s"
         expected = [
