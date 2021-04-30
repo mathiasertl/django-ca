@@ -90,9 +90,6 @@ class CertificateAdminViewTestCase(
         url = reverse("admin:%s_%s_download" % info, kwargs={"pk": obj.pk})
         bundle_url = reverse("admin:%s_%s_download_bundle" % info, kwargs={"pk": obj.pk})
         text = response.content.decode()
-        with open("/home/mati/git/mati/django-ca/test.html", "wb") as stream:
-            stream.write(response.content)
-
         pem = obj.pub.pem.replace("\n", "<br>")  # newlines are replaced with HTML linebreaks by Django
         self.assertInHTML(f"<div class='readonly'>{pem}</div>", text, 1)
         self.assertInHTML(f"<a href='{url}?format=PEM'>as PEM</a>", text, 1)
