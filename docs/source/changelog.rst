@@ -13,8 +13,10 @@ ChangeLog
 This version is currently under development.
 
 * Add support for Django 3.2.
-* Stop loading ``localsetttings.py`` from the same location as ``settings.py``.
-* Properly check permissions when resigning certificates.
+* Store certificates and CSRs as bytes to improve access speed.
+* Prevent auto-completion of the CA password field in the admin interface.
+* Improve CSR validation when using the admin interface.
+* Check permissions when resigning certificates.
 * Require the ``change certificate`` permission when revoking certificates.
 * Preselect profile of original certificate when resigning certificates.
 * ``./dev.py init-demo`` now also saves profiles and CSRs.
@@ -22,23 +24,33 @@ This version is currently under development.
   the base class.
 * Certificate bundles now always end with a newline, as normal bundles do.
 
-Code style changes
-==================
-
-* Use :file:`pyproject.toml` for all tools that support it.
-* Code is now clean according to `black <https://github.com/psf/black>`_.
-* Code is now clean according to `pylint <https://www.pylint.org/>`_.
-* Code is now fully type-hinted. This requires the upcoming release of cryptography (current: 3.4).
-* Documentation is now style-checked using `doc8 <https://github.com/PyCQA/doc8>` and spell-checked using
-  `sphinxcontrib.spelling <https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html>`_.
-
 Backwards incompatible changes
 ==============================
+
+* Don't load configuration from ``localsettings.py`` (deprecated since ``1.15.0``).
+* The ``x509`` property and ``dump_certificate()`` where removed from
+  :py:class:`~django_ca.models.CertificateAuthority` and :py:class:`~django_ca.models.Certificate`: 
+  
+  * To access a string-encoded PEM use ``obj.pub.pem`` (was: ``obj.x509``).
+  * To update an instance with a certificate use :py:func:`~django_ca.models.X509CertMixin.update_certificate`
+    (was: ``obj.x509 = ...``).
+  * Use ``obj.pub.pem`` or ``obj.pub.der`` to get an encoded certificate (was: ``obj.dump_certificate()``).
 
 * Drop support for Django 3.0.
 * Drop support for cryptography 2.8 and 2.9.
 * Drop support for Celery 4.3 and 4.4.
 * Drop support for idna 2.9.
+
+Linting and continuous integration
+==================================
+
+* Use :file:`pyproject.toml` for all tools that support it.
+* Code is now clean according to `black <https://github.com/psf/black>`_.
+* Code is now clean according to `pylint <https://www.pylint.org/>`_.
+* Use `GitHub Actions <https://github.com/features/actions>`_ instead of Travis.
+* Code is now fully type-hinted. This requires the upcoming release of cryptography (current: 3.4).
+* Documentation is now style-checked using `doc8 <https://github.com/PyCQA/doc8>`_ and spell-checked using
+  `sphinxcontrib.spelling <https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html>`_.
 
 Deprecation notices
 ===================
