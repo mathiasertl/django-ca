@@ -171,8 +171,8 @@ def create_csr(key_path, path, subject="/CN=ignored.example.com"):
 def update_cert_data(cert, data):
     data["serial"] = cert.serial
     data["hpkp"] = cert.hpkp_pin
-    data["valid_from"] = cert.x509_cert.not_valid_before.strftime(_timeformat)
-    data["valid_until"] = cert.x509_cert.not_valid_after.strftime(_timeformat)
+    data["valid_from"] = cert.pub.loaded.not_valid_before.strftime(_timeformat)
+    data["valid_until"] = cert.pub.loaded.not_valid_after.strftime(_timeformat)
 
     data["md5"] = cert.get_digest("MD5")
     data["sha1"] = cert.get_digest("SHA1")
@@ -224,7 +224,7 @@ def write_ca(cert, data, password=None):
     # write files to dest
     shutil.copy(ca_storage.path(cert.private_key_path), key_dest)
     with open(pub_dest, "w") as stream:
-        stream.write(cert.pub)
+        stream.write(cert.pub.pem)
 
     if password is None:
         encryption = NoEncryption()
@@ -237,7 +237,7 @@ def write_ca(cert, data, password=None):
     with open(key_der_dest, "wb") as stream:
         stream.write(key_der)
     with open(pub_der_dest, "wb") as stream:
-        stream.write(cert.dump_certificate(Encoding.DER))
+        stream.write(cert.pub.der)
 
     # These keys are only present in CAs:
     data["issuer_url"] = ca.issuer_url
@@ -262,7 +262,7 @@ def copy_cert(cert, data, key_path, csr_path):
     shutil.copy(key_path, key_dest)
     shutil.copy(csr_path, csr_dest)
     with open(pub_dest, "w") as stream:
-        stream.write(cert.pub)
+        stream.write(cert.pub.pem)
 
     with open(key_dest, "rb") as stream:
         priv_key = stream.read()
@@ -273,7 +273,7 @@ def copy_cert(cert, data, key_path, csr_path):
     with open(key_der_dest, "wb") as stream:
         stream.write(key_der)
     with open(pub_der_dest, "wb") as stream:
-        stream.write(cert.dump_certificate(Encoding.DER))
+        stream.write(cert.pub.der)
 
     data["crl"] = cert.ca.crl_url
     data["subject"] = cert.distinguished_name
@@ -315,7 +315,7 @@ def update_contrib(data, cert, name, filename):
                 cert_data[key] = value
 
     try:
-        ext = cert.x509_cert.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
+        ext = cert.pub.loaded.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
         cert_data["policy_texts"] = [PolicyInformation(p).as_text() for p in ext]
     except x509.ExtensionNotFound:
         pass
@@ -753,14 +753,14 @@ if not args.only_contrib:
             builder = builder.not_valid_after(no_ext_now + data[name]["expires"])
             builder = builder.serial_number(x509.random_serial_number())
             builder = builder.subject_name(subject)
-            builder = builder.issuer_name(ca.x509_cert.subject)
+            builder = builder.issuer_name(ca.pub.loaded.subject)
             builder = builder.public_key(parsed_csr.public_key())
 
             x509_cert = builder.sign(
                 private_key=ca.key(pwd), algorithm=hashes.SHA256(), backend=default_backend()
             )
             cert = Certificate(ca=ca)
-            cert.x509_cert = x509_cert
+            cert.update_certificate(x509_cert)
             copy_cert(cert, data[name], key_path, csr_path)
 
         # create a cert with all extensions that we know
@@ -830,8 +830,8 @@ if not args.only_contrib:
             os.makedirs(ocsp_base)
         ocsp_builder = ocsp.OCSPRequestBuilder()
         ocsp_builder = ocsp_builder.add_certificate(
-            data["child-cert"]["parsed_cert"].x509_cert,
-            CertificateAuthority.objects.get(name=data["child-cert"]["ca"]).x509_cert,
+            data["child-cert"]["parsed_cert"].pub.loaded,
+            CertificateAuthority.objects.get(name=data["child-cert"]["ca"]).pub.loaded,
             hashes.SHA1(),
         )
 
@@ -859,7 +859,7 @@ if args.generate_contrib:
 
         parsed = x509.load_pem_x509_certificate(pem, default_backend())
         ca = CertificateAuthority(name=name)
-        ca.x509_cert = parsed
+        ca.update_certificate(parsed)
 
         update_contrib(data, ca, name, filename)
         data[name]["type"] = "ca"
@@ -879,7 +879,7 @@ if args.generate_contrib:
 
         parsed = x509.load_pem_x509_certificate(pem, default_backend())
         cert = Certificate()
-        cert.x509_cert = parsed
+        cert.update_certificate(parsed)
         update_contrib(data, cert, name, filename)
         data[name]["type"] = "cert"
 

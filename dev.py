@@ -470,7 +470,7 @@ Please create %(localsettings)s from %(example)s and try again."""
 
         with open(os.path.join(ca_settings.CA_DIR, cert_data["pub_filename"]), "rb") as stream:
             pem = stream.read()
-        c.x509_cert = x509.load_pem_x509_certificate(pem, default_backend())
+        c.update_certificate(x509.load_pem_x509_certificate(pem, default_backend()))
 
         c.save()
 
@@ -486,7 +486,7 @@ Please create %(localsettings)s from %(example)s and try again."""
     ok()
 
     # create a chain file for the child
-    chain = loaded_cas["child"].pub + loaded_cas["root"].pub
+    chain = loaded_cas["child"].pub.pem + loaded_cas["root"].pub.pem
     chain_path = ca_storage.path(ca_storage.save("child-chain.pem", ContentFile(chain)))
 
     cwd = os.getcwd()
