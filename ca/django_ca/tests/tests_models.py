@@ -772,6 +772,18 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
 
         cert.delete()  # for next loop iteration
 
+    def test_repr(self):
+        """Test ``repr()`` for custom modelfields."""
+        cert = Certificate.objects.create(
+            pub=self.pub["pem"], csr=self.csr["pem"],
+            ca=self.ca, expires=timezone.now(), valid_from=timezone.now(),
+        )
+        cert.refresh_from_db()
+
+        subject = "CN=root-cert.example.com,OU=Django CA Testsuite,O=Django CA,L=Vienna,ST=Vienna,C=AT"
+        self.assertEqual(repr(cert.pub), f"<LazyCertificate: {subject}>")
+        self.assertEqual(repr(cert.csr), "<LazyCertificateSigningRequest: CN=csr.root-cert.example.com>")
+
     def test_none_value(self):
         cert = Certificate.objects.create(
             pub=self.pub["parsed"], csr=None,
