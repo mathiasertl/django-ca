@@ -135,7 +135,7 @@ class WatcherAdmin(WatcherAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
 
 
-if sys.version_info < (3, 7):  # pragma: only py<3.7
+if sys.version_info < (3, 7):  # pragma: py<3.7 branch
     # In Python 3.6, Generic has a special metaclass. So does ModelAdmin in general. This creates a conflict
     # in metaclass base classes:
     #   https://github.com/python/typing/issues/449

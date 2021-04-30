@@ -137,19 +137,36 @@ def test(suites):
 
 
 def exclude_versions(cov, sw, this_version, version, version_str):
+    """
+    Parameters
+    ----------
+    sw : str
+    this_version
+        The currently used version.
+    version
+        The version to add pragmas for.
+    version_str:
+        Same as `version` but as ``str``.
+    """
+
     if version == this_version:
         cov.exclude(r"pragma: only %s>%s" % (sw, version_str))
         cov.exclude(r"pragma: only %s<%s" % (sw, version_str))
+
+        cov.exclude(r"pragma: %s<%s branch" % (sw, version_str))
     else:
         cov.exclude(r"pragma: only %s==%s" % (sw, version_str))
 
-        if version > this_version:
+        if version > this_version:  # 3.7 > 3.6
             cov.exclude(r"pragma: only %s>=%s" % (sw, version_str))
             cov.exclude(r"pragma: only %s>%s" % (sw, version_str))
+            cov.exclude(r"pragma: %s<%s branch" % (sw, version_str), which="partial")
 
-        if version < this_version:
+        if version < this_version:  # 3.6 < 3.7
             cov.exclude(r"pragma: only %s<=%s" % (sw, version_str))
             cov.exclude(r"pragma: only %s<%s" % (sw, version_str))
+
+            cov.exclude(r"pragma: %s<%s branch" % (sw, version_str))
 
 
 if args.command == "test":
