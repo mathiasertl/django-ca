@@ -160,7 +160,9 @@ class LazyBinaryField(
         """Used in migrations."""
         name, path, args, kwargs = super().deconstruct()
 
-        if self.editable is True:
+        # COVERAGE NOTE: parent field sets this to False, so we override the default. But we don't actually
+        #   need a non-editable field, so we never manually set this to False.
+        if self.editable is True:  # pragma: no branch
             del kwargs["editable"]
         if self.null is True:
             del kwargs["null"]
