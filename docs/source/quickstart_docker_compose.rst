@@ -87,6 +87,15 @@ can also download the file for other versions `from github
    Because of how docker-compose works, it is better to put the file in a sub-directory and `not` directly into
    your home directory. We assume you put all files into ``~/ca/`` from now on.
 
+You can also get versions for specific versions of **django-ca** from the table below, which also shows
+bundled third-party Docker images.
+
+====================================================== ===== =========== =====
+Version                                                redis PostgreSQL  NGINX
+====================================================== ===== =========== =====
+:download:`1.18.0 </_files/1.18.0/docker-compose.yml>` 6     12          1.18
+====================================================== ===== =========== =====
+
 Add ``docker-compose.override.yml``
 ===================================
 

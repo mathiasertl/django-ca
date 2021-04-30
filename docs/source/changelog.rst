@@ -27,8 +27,8 @@ Backwards incompatible changes
 
 * Don't load configuration from ``localsettings.py`` (deprecated since ``1.15.0``).
 * The ``x509`` property and ``dump_certificate()`` where removed from
-  :py:class:`~django_ca.models.CertificateAuthority` and :py:class:`~django_ca.models.Certificate`: 
-  
+  :py:class:`~django_ca.models.CertificateAuthority` and :py:class:`~django_ca.models.Certificate`:
+
   * To access a string-encoded PEM use ``obj.pub.pem`` (was: ``obj.x509``).
   * To update an instance with a certificate use :py:func:`~django_ca.models.X509CertMixin.update_certificate`
     (was: ``obj.x509 = ...``).
