@@ -81,7 +81,8 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
         # COVERAGE NOTE: This would happen if the field is editable, but is always read-only.
         return value.pem  # pragma: no cover
 
-    def to_python(self, value: str) -> x509.CertificateSigningRequest:
+    # TYPE NOTE: django-stubs typehints this as Optional[Any], but we only ever observed receiving ``str``.
+    def to_python(self, value: str) -> x509.CertificateSigningRequest:  # type: ignore[override]
         """Coerce given str to correct data type, raises ValidationError if not possible.
 
         This function is called during form validation.
