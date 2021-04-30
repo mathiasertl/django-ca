@@ -740,7 +740,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     pub = certs['root-cert']['pub']
     load_cas = ("root",)
 
-    def test_create(self):
+    def test_create(self) -> None:
         """Test create() for the models."""
         for prop in ["parsed", "pem", "der"]:
             cert = Certificate.objects.create(
@@ -774,7 +774,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
 
         cert.delete()  # for next loop iteration
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         """Test ``repr()`` for custom modelfields."""
         cert = Certificate.objects.create(
             pub=self.pub["pem"], csr=self.csr["pem"],
@@ -786,7 +786,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         self.assertEqual(repr(cert.pub), f"<LazyCertificate: {subject}>")
         self.assertEqual(repr(cert.csr), "<LazyCertificateSigningRequest: CN=csr.root-cert.example.com>")
 
-    def test_none_value(self):
+    def test_none_value(self) -> None:
         """Test that nullable fields work."""
         cert = Certificate.objects.create(
             pub=self.pub["parsed"], csr=None,
@@ -796,7 +796,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         cert.refresh_from_db()
         self.assertIsNone(cert.csr)
 
-    def test_filter(self):
+    def test_filter(self) -> None:
         """Test that we can use various representations for filtering."""
         cert = Certificate.objects.create(
             pub=self.pub["parsed"], csr=self.csr["parsed"],
@@ -808,7 +808,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             self.assertCountEqual(qs, [cert])
             self.assertEqual(qs[0].pub.der, self.pub["der"])
 
-    def test_full_clean(self):
+    def test_full_clean(self) -> None:
         """Test the full_clean() method, which invokes ``to_python()`` on the field."""
         cert = Certificate(
             pub=self.pub["parsed"], csr=self.csr["parsed"],
@@ -826,7 +826,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded, self.pub["parsed"])
         self.assertEqual(cert.csr.loaded, self.csr["parsed"])
 
-    def test_empty_csr(self):
+    def test_empty_csr(self) -> None:
         """Test an empty CSR."""
         cert = Certificate(
             pub=self.pub["parsed"], csr="",
@@ -836,7 +836,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded, self.pub["parsed"])
         self.assertIsNone(cert.csr)
 
-    def test_invalid_value(self):
+    def test_invalid_value(self) -> None:
         """Test passing invalid values."""
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate Signing Request$"):
             Certificate.objects.create(
