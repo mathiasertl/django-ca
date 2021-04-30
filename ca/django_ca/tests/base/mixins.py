@@ -695,12 +695,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Load a certificate with the given mame."""
         data = certs[name]
         ca = CertificateAuthority.objects.get(name=data["ca"])
-        csr = data.get("csr", {}).get("pem", "")
+        csr = data.get("csr", {}).get("parsed", "")
         profile = data.get("profile", "")
 
         cert = Certificate(ca=ca, csr=csr, profile=profile)
         cert.update_certificate(data["pub"]["parsed"])
         cert.save()
+        cert.refresh_from_db()  # make sure we have lazy fields set
         return cert
 
     @contextmanager
