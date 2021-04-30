@@ -39,15 +39,23 @@ DecodableTypeVar = typing.TypeVar(
 #   matches the type in required by the constructor of WrapperTypeVar.
 WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ignore[type-arg]
 
+# mypy-django makes modelfields a generic class, so we need  a different base when type checking.
 if typing.TYPE_CHECKING:
     class LazyBinaryFieldBase(models.BinaryField[DecodableTypeVar, bytes], typing.Generic[DecodableTypeVar]):
+        # pylint: disable=missing-class-docstring
         pass
 else:
     class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar]):
+        # pylint: disable=missing-class-docstring
         pass
 
 
 class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta):
+    """Abstract base class for lazy field values.
+
+    Subclasses of this class can be used by *binary* modelfields to load a cryptography value when first
+    accessed.
+    """
     _bytes: bytes
     _loaded: typing.Optional[LoadedTypeVar] = None
 
@@ -91,12 +99,10 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
 class LazyCertificateSigningRequest(
     LazyField[x509.CertificateSigningRequest, DecodableCertificateSigningRequest]
 ):
-    """Lazily parsed Certificate Signing Request.
-
-    This class exists to avoid parsing a CSR into memory every time a model is accessed.
-    """
+    """A lazy field for a :py:class:`~cg:cryptography.x509.CertificateSigningRequest."""
 
     def __init__(self, value: DecodableCertificateSigningRequest) -> None:
+        # pylint: disable=super-init-not-called # base constructor doesn't do anything
         if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
             self._loaded = x509.load_pem_x509_csr(value.encode())
             self._bytes = self._loaded.public_bytes(Encoding.DER)
@@ -121,7 +127,10 @@ class LazyCertificateSigningRequest(
 
 
 class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
+    """A lazy field for a :py:class:`~cg:cryptography.x509.Certificate."""
+
     def __init__(self, value: DecodableCertificate) -> None:
+        # pylint: disable=super-init-not-called # base constructor doesn't do anything
         if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE-----"):
             self._loaded = x509.load_pem_x509_certificate(value.encode())
             self._bytes = self._loaded.public_bytes(Encoding.DER)
@@ -148,6 +157,8 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
 class LazyBinaryField(
     LazyBinaryFieldBase[DecodableTypeVar], typing.Generic[DecodableTypeVar, WrapperTypeVar]
 ):
+    """Base class for binary modelfields that parse the value when first used."""
+
     formfield_class: typing.Type[forms.Field]
     wrapper: typing.Type[WrapperTypeVar]
 
