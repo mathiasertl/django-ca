@@ -805,7 +805,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
         self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
-    def assertChangeResponse(  # pylint: disable=invalid-name
+    def assertChangeResponse(  # pylint: disable=invalid-name,unused-argument # obj is unused
         self, response: HttpResponse, obj: DjangoCAModelTypeVar, status: int = HTTPStatus.OK
     ) -> None:
         """Assert that the passed response is a model change view."""
