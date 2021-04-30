@@ -30,6 +30,9 @@ from .widgets import MultiValueExtensionWidget
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
 
+if typing.TYPE_CHECKING:
+    from .modelfields import LazyCertificateSigningRequest
+
 
 class CertificateSigningRequestField(forms.CharField):
     """A form field for `~cg:cryptography.x509.CertificateSigningRequest` encoded as PEM."""
@@ -59,16 +62,30 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
             "style": "font-family: monospace; max-height: none;"
         })
 
-    def prepare_value(self, value) -> str:
-        print(f"### prepare_value({value})")
+    def prepare_value(
+        self, value: typing.Optional[typing.Union[str, "LazyCertificateSigningRequest"]]
+    ) -> str:
+        """Prepare a value to a form that can be shown in HTML.
+
+        Unfortunately this function is not documented by Django at all but is called when a form is rendered.
+
+        This function receives ``None`` when viewing an initial form for a new instance. If form validation
+        fails, it receives the string as posted by the user (which might be an invalid string). When viewing
+        an existing certificate, it will receive the LazyField instance of the object.
+        """
         if value is None:  # for new objects
             return ""
         if isinstance(value, str):  # when form validation fails
             return value
-        return value.pem
+
+        # COVERAGE NOTE: This would happen if the field is editable, but is always read-only.
+        return value.pem  # pragma: no cover
 
     def to_python(self, value: str) -> x509.CertificateSigningRequest:
-        print(f"### to_python({value})")
+        """Coerce given str to correct data type, raises ValidationError if not possible.
+
+        This function is called during form validation.
+        """
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
             raise forms.ValidationError(mark_safe(self.simple_validation_error))
         try:
