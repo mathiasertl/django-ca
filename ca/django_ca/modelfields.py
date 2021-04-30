@@ -42,7 +42,7 @@ WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ig
 # mypy-django makes modelfields a generic class, so we need  a different base when type checking.
 if typing.TYPE_CHECKING:
     class LazyBinaryFieldBase(
-        models.BinaryField[DecodableTypeVar, WrapperTypeVar],
+        models.BinaryField[typing.Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
         typing.Generic[DecodableTypeVar, WrapperTypeVar]
     ):
         # pylint: disable=missing-class-docstring
