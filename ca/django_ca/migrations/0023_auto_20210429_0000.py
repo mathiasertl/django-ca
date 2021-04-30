@@ -42,7 +42,7 @@ def noop(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_ca', '0022_auto_20210428_2359'),
+        ('django_ca', '0022_auto_20210430_1124'),
     ]
 
     operations = [

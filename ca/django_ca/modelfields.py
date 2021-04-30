@@ -153,7 +153,6 @@ class LazyBinaryField(
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         kwargs.setdefault("editable", True)
-        kwargs.setdefault("null", True)
         super().__init__(*args, **kwargs)
 
     def deconstruct(self) -> typing.Tuple[str, str, typing.List[str], typing.Dict[str, str]]:
@@ -164,8 +163,6 @@ class LazyBinaryField(
         #   need a non-editable field, so we never manually set this to False.
         if self.editable is True:  # pragma: no branch
             del kwargs["editable"]
-        if self.null is True:
-            del kwargs["null"]
 
         return name, path, args, kwargs
 
