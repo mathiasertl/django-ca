@@ -50,7 +50,7 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
                      -subj '/CN=hostname/emailAddress=root@hostname'
 </span>"""
             )
-        if not kwargs.get("widget"):
+        if not kwargs.get("widget"):  # pragma: no branch # we never pass a custom widget
             kwargs["widget"] = forms.Textarea
         super().__init__(**kwargs)
         self.widget.attrs.update({
@@ -59,7 +59,8 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
             "style": "font-family: monospace; max-height: none;"
         })
 
-    def prepare_value(self, value):
+    def prepare_value(self, value) -> str:
+        print(f"### prepare_value({value})")
         if value is None:  # for new objects
             return ""
         if isinstance(value, str):  # when form validation fails
@@ -67,6 +68,7 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
         return value.pem
 
     def to_python(self, value: str) -> x509.CertificateSigningRequest:
+        print(f"### to_python({value})")
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
             raise forms.ValidationError(mark_safe(self.simple_validation_error))
         try:

@@ -18,11 +18,10 @@ see <http://www.gnu.org/licenses/>.
  *
  * Django 2.0 uses div.readonly, Django<2.0 uses p's
  */
-fieldset.as-code .field-csr p:not(.help),
-fieldset.as-code .field-pub p:not(.help),
 fieldset.as-code .field-csr div.readonly,
 fieldset.as-code .field-csr_pem div.readonly,
 fieldset.as-code .field-pub div.readonly,
+fieldset.as-code .field-pub_pem div.readonly,
 .shell
 {
     white-space: pre;

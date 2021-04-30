@@ -159,6 +159,12 @@ class CertificateMixin(
     form = X509CertMixinAdminForm
     x509_fieldset_index: int
 
+    def pub_pem(self, obj: X509CertMixinTypeVar) -> str:
+        """Get the CSR in PEM form for display."""
+        return obj.pub.pem
+
+    pub_pem.short_description = _("Public key")  # type: ignore[attr-defined] # django standard
+
     def get_urls(self) -> typing.List[URLPattern]:
         """Overridden to add urls for download/download_bundle views."""
         info = self.model._meta.app_label, self.model._meta.model_name
@@ -433,7 +439,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         (
             _("Certificate"),
             {
-                "fields": ["serial_field", "pub", "expires"],
+                "fields": ["serial_field", "pub_pem", "expires"],
                 # The "as-code" class is used so CSS can only match this section (and only in an
                 # existing cert).
                 "classes": ("as-code",),
@@ -462,7 +468,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
     ]
     readonly_fields = [
         "serial_field",
-        "pub",
+        "pub_pem",
         "parent",
         "cn_display",
         "expires",
@@ -602,7 +608,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     readonly_fields = [
         "expires",
         "csr_pem",
-        "pub",
+        "pub_pem",
         "cn_display",
         "serial_field",
         "revoked",
@@ -659,7 +665,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             _("Certificate"),
             {
                 "fields": [
-                    "pub",
+                    "pub_pem",
                     "csr_pem",
                 ],
                 # The "as-code" class is used so CSS can only match this section (and only in an
