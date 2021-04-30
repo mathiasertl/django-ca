@@ -20,6 +20,7 @@ import abc
 import typing
 
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django import forms
@@ -112,14 +113,14 @@ class LazyCertificateSigningRequest(
     def __init__(self, value: DecodableCertificateSigningRequest) -> None:
         # pylint: disable=super-init-not-called # base constructor doesn't do anything
         if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
-            self._loaded = x509.load_pem_x509_csr(value.encode())
+            self._loaded = x509.load_pem_x509_csr(value.encode(), default_backend())
             self._bytes = self._loaded.public_bytes(Encoding.DER)
         elif isinstance(value, x509.CertificateSigningRequest):
             self._loaded = value
             self._bytes = self._loaded.public_bytes(Encoding.DER)
         elif isinstance(value, bytes):
             if value.startswith(b"-----BEGIN CERTIFICATE REQUEST-----"):
-                self._loaded = x509.load_pem_x509_csr(value)
+                self._loaded = x509.load_pem_x509_csr(value, default_backend())
                 self._bytes = self._loaded.public_bytes(Encoding.DER)
             else:
                 self._bytes = value
@@ -130,7 +131,7 @@ class LazyCertificateSigningRequest(
     def loaded(self) -> x509.CertificateSigningRequest:
         """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
         if self._loaded is None:
-            self._loaded = x509.load_der_x509_csr(self._bytes)
+            self._loaded = x509.load_der_x509_csr(self._bytes, default_backend())
         return self._loaded
 
 
@@ -140,14 +141,14 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
     def __init__(self, value: DecodableCertificate) -> None:
         # pylint: disable=super-init-not-called # base constructor doesn't do anything
         if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE-----"):
-            self._loaded = x509.load_pem_x509_certificate(value.encode())
+            self._loaded = x509.load_pem_x509_certificate(value.encode(), default_backend())
             self._bytes = self._loaded.public_bytes(Encoding.DER)
         elif isinstance(value, x509.Certificate):
             self._loaded = value
             self._bytes = self._loaded.public_bytes(Encoding.DER)
         elif isinstance(value, bytes):
             if value.startswith(b"-----BEGIN CERTIFICATE-----"):
-                self._loaded = x509.load_pem_x509_certificate(value)
+                self._loaded = x509.load_pem_x509_certificate(value, default_backend())
                 self._bytes = self._loaded.public_bytes(Encoding.DER)
             else:
                 self._bytes = value
@@ -158,7 +159,7 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
     def loaded(self) -> x509.Certificate:
         """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
         if self._loaded is None:
-            self._loaded = x509.load_der_x509_certificate(self._bytes)
+            self._loaded = x509.load_der_x509_certificate(self._bytes, default_backend())
         return self._loaded
 
 
