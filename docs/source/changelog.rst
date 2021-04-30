@@ -13,13 +13,11 @@ ChangeLog
 This version is currently under development.
 
 * Add support for Django 3.2.
-* Store certificates and CSRs as bytes to improve access speed.
 * Prevent auto-completion of the CA password field in the admin interface.
 * Improve CSR validation when using the admin interface.
 * Check permissions when resigning certificates.
 * Require the ``change certificate`` permission when revoking certificates.
 * Preselect profile of original certificate when resigning certificates.
-* ``./dev.py init-demo`` now also saves profiles and CSRs.
 * Make sure that operators for OrderedSetExtension always return an instance of the implementing class, not of
   the base class.
 * Certificate bundles now always end with a newline, as normal bundles do.
@@ -40,6 +38,11 @@ Backwards incompatible changes
 * Drop support for cryptography 2.8 and 2.9.
 * Drop support for Celery 4.3 and 4.4.
 * Drop support for idna 2.9.
+
+Python API
+==========
+
+* Store certificates and CSRs as bytes to improve access speed.
 
 Linting and continuous integration
 ==================================
