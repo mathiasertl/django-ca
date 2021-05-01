@@ -41,6 +41,7 @@ from cryptography.x509.oid import NameOID
 try:
     from freezegun import freeze_time
 except ImportError:
+
     @contextmanager
     def freeze_time(value):
         yield
@@ -122,7 +123,7 @@ manage("migrate", verbosity=0)
 # Some variables used in various places throughout the code
 out_path = os.path.join(args.dest, "cert-data.json")
 _timeformat = "%Y-%m-%d %H:%M:%S"
-key_size = 1024  # Size for private keys
+key_size = 2048  # Size for private keys
 ca_base_cn = "ca.example.com"
 root_pathlen = None
 child_pathlen = 0
