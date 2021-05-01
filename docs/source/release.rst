@@ -149,7 +149,7 @@ Test update
 * Start with :command:`DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d`.
 * Create initial admin user and certificate authorities:
 
-  .. code-block:: console:
+  .. code-block:: console
 
      $ docker-compose exec backend manage createsuperuser
      $ docker-compose exec backend manage init_ca \
@@ -160,7 +160,7 @@ Test update
 * Log into the admin interface and create some certificates.
 * Update to the newest version:
 
-  .. code-block:: console:
+  .. code-block:: console
 
      $ git checkout master
      $ DJANGO_CA_VERSION=latest docker-compose up -d
