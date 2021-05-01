@@ -128,6 +128,42 @@ Finally, verify that CRL and OCSP validation works:
    Response verify OK
    cert.pem: good
 
+Test update
+===========
+
+* Checkout the previous version on git:
+
+  .. code-block:: console
+
+     $ git checkout $PREVIOUS_VERSION
+
+* Add a basic :file:`.env` file:
+
+  .. code-block:: bash
+
+     DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
+     DJANGO_CA_CA_ENABLE_ACME=true
+     POSTGRES_PASSWORD=mysecretpassword
+
+* If testing ``django_ca<=1.17.3``, update image versions :file:`docker-compose.yml`.
+* Start with :command:`DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d`.
+* Create initial admin user and certificate authorities:
+
+  .. code-block:: console:
+
+     $ docker-compose exec backend manage createsuperuser
+     $ docker-compose exec backend manage init_ca \
+     >   --pathlen=1 Root "/CN=Root CA"
+     $ docker-compose exec backend manage init_ca \
+     >   --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
+
+* Log into the admin interface and create some certificates.
+* Update to the newest version:
+
+  .. code-block:: console:
+
+     $ git checkout master
+     $ DJANGO_CA_VERSION=latest docker-compose up -d
 
 ***************
 Release process
