@@ -113,7 +113,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--dest",
-    default=settings.FIXTURES_DIR,
+    default=getattr(settings, "FIXTURES_DIR", ""),
     help="Where to store generated certificates (default: %(default)s).",
 )
 args = parser.parse_args()
