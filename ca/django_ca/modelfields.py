@@ -67,15 +67,39 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
 
     _bytes: bytes
     _loaded: typing.Optional[LoadedTypeVar] = None
+    _pem_token: typing.ClassVar[bytes]
+    _type: typing.ClassVar[typing.Type[LoadedTypeVar]]
 
     def __init__(self, value: DecodableTypeVar) -> None:
         """Constructor must accept a decodable type var."""
+        if isinstance(value, bytes):  # SQLite passes bytes
+            if value.startswith(self._pem_token):
+                self._loaded = self.load_pem(value)
+                value = self._loaded.public_bytes(Encoding.DER)
+
+            self._bytes = value
+        elif isinstance(value, bytearray):
+            self._bytes = bytes(value)
+        elif isinstance(value, memoryview):  # PostgreSQL driver passes memoryview
+            self._bytes = value.tobytes()
+        elif isinstance(value, str):
+            self._loaded = self.load_pem(value.encode())
+            self._bytes = self._loaded.public_bytes(Encoding.DER)
+        elif isinstance(value, self._type):
+            self._loaded = value
+            self._bytes = self._loaded.public_bytes(Encoding.DER)
+        else:
+            raise ValueError("%s: Could not parse %s" % (value, self._type.__name__))
 
     def __eq__(self, other: typing.Any) -> bool:
         return isinstance(other, self.__class__) and self._bytes == other._bytes
 
     def __repr__(self) -> str:
         return "<%s: %s>" % (self.__class__.__name__, self.loaded.subject.rfc4514_string())
+
+    @abc.abstractmethod
+    def load_pem(self, value: bytes) -> LoadedTypeVar:
+        """Return the loaded value from the given bytes."""
 
     @property
     @abc.abstractmethod
@@ -110,22 +134,11 @@ class LazyCertificateSigningRequest(
 ):
     """A lazy field for a :py:class:`~cg:cryptography.x509.CertificateSigningRequest."""
 
-    def __init__(self, value: DecodableCertificateSigningRequest) -> None:
-        # pylint: disable=super-init-not-called # base constructor doesn't do anything
-        if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
-            self._loaded = x509.load_pem_x509_csr(value.encode(), default_backend())
-            self._bytes = self._loaded.public_bytes(Encoding.DER)
-        elif isinstance(value, x509.CertificateSigningRequest):
-            self._loaded = value
-            self._bytes = self._loaded.public_bytes(Encoding.DER)
-        elif isinstance(value, bytes):
-            if value.startswith(b"-----BEGIN CERTIFICATE REQUEST-----"):
-                self._loaded = x509.load_pem_x509_csr(value, default_backend())
-                self._bytes = self._loaded.public_bytes(Encoding.DER)
-            else:
-                self._bytes = value
-        else:
-            raise ValueError("%s: Could not parse Certificate Signing Request" % value)
+    _pem_token = b"-----BEGIN CERTIFICATE REQUEST-----"
+    _type = x509.CertificateSigningRequest
+
+    def load_pem(self, value: bytes) -> x509.CertificateSigningRequest:
+        return x509.load_pem_x509_csr(value, default_backend())
 
     @property
     def loaded(self) -> x509.CertificateSigningRequest:
@@ -138,22 +151,11 @@ class LazyCertificateSigningRequest(
 class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
     """A lazy field for a :py:class:`~cg:cryptography.x509.Certificate."""
 
-    def __init__(self, value: DecodableCertificate) -> None:
-        # pylint: disable=super-init-not-called # base constructor doesn't do anything
-        if isinstance(value, str) and value.startswith("-----BEGIN CERTIFICATE-----"):
-            self._loaded = x509.load_pem_x509_certificate(value.encode(), default_backend())
-            self._bytes = self._loaded.public_bytes(Encoding.DER)
-        elif isinstance(value, x509.Certificate):
-            self._loaded = value
-            self._bytes = self._loaded.public_bytes(Encoding.DER)
-        elif isinstance(value, bytes):
-            if value.startswith(b"-----BEGIN CERTIFICATE-----"):
-                self._loaded = x509.load_pem_x509_certificate(value, default_backend())
-                self._bytes = self._loaded.public_bytes(Encoding.DER)
-            else:
-                self._bytes = value
-        else:
-            raise ValueError("%s: Could not parse Certificate" % value)
+    _pem_token = b"-----BEGIN CERTIFICATE-----"
+    _type = x509.Certificate
+
+    def load_pem(self, value: bytes) -> x509.Certificate:
+        return x509.load_pem_x509_certificate(value, default_backend())
 
     @property
     def loaded(self) -> x509.Certificate:

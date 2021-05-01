@@ -764,6 +764,8 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
 
             cert.delete()  # for next loop iteration
 
+    def test_create_pem_bytes(self) -> None:
+        """Test creating with bytes-encoded PEM."""
         pub = self.pub["pem"].encode()
         csr = self.csr["pem"].encode()
         cert = Certificate.objects.create(
@@ -782,7 +784,45 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded, self.pub["parsed"])
         self.assertEqual(cert.csr.loaded, self.csr["parsed"])
 
-        cert.delete()  # for next loop iteration
+    def test_create_bytearray(self) -> None:
+        """Test creating with bytes-encoded PEM."""
+        pub = bytearray(self.pub["der"])
+        csr = bytearray(self.csr["der"])
+        cert = Certificate.objects.create(
+            pub=pub,
+            csr=csr,
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
+        )
+        self.assertEqual(cert.pub, pub)
+        self.assertEqual(cert.csr, csr)
+
+        # Refresh, so that we get lazy values
+        cert.refresh_from_db()
+
+        self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+        self.assertEqual(cert.csr.loaded, self.csr["parsed"])
+
+    def test_create_memoryview(self) -> None:
+        """Test creating with bytes-encoded PEM."""
+        pub = memoryview(self.pub["der"])
+        csr = memoryview(self.csr["der"])
+        cert = Certificate.objects.create(
+            pub=pub,
+            csr=csr,
+            ca=self.ca,
+            expires=timezone.now(),
+            valid_from=timezone.now(),
+        )
+        self.assertEqual(cert.pub, pub)
+        self.assertEqual(cert.csr, csr)
+
+        # Refresh, so that we get lazy values
+        cert.refresh_from_db()
+
+        self.assertEqual(cert.pub.loaded, self.pub["parsed"])
+        self.assertEqual(cert.csr.loaded, self.csr["parsed"])
 
     def test_create_from_instance(self) -> None:
         """Test creating a certificate from LazyField instances."""
@@ -891,7 +931,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
 
     def test_invalid_value(self) -> None:
         """Test passing invalid values."""
-        with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate Signing Request$"):
+        with self.assertRaisesRegex(ValueError, r"^True: Could not parse CertificateSigningRequest$"):
             Certificate.objects.create(
                 pub=certs["child-cert"]["pub"]["parsed"],
                 csr=True,
