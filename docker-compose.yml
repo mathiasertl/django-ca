@@ -23,7 +23,7 @@ services:
         restart: unless-stopped
 
     backend:
-        image: mathiasertl/django-ca:latest
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-latest}
         command: ./celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             - cache
@@ -52,7 +52,7 @@ services:
         stop_grace_period: 30s
 
     frontend:
-        image: mathiasertl/django-ca:latest
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-latest}
         depends_on:
             - cache
             - db
