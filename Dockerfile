@@ -75,9 +75,12 @@ ENV SQLITE_NAME=:memory:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-docs.txt \
     -r requirements/requirements-test.txt \
+    -r requirements/requirements-mypy.txt \
     -r requirements/requirements-lint.txt
 
-COPY setup.py dev.py common.py tox.ini pyproject.toml recreate-fixtures.py ./
+# copy this late so that changes do not trigger a cache miss during build
+COPY tox.ini pyproject.toml ./
+COPY setup.py dev.py common.py recreate-fixtures.py ./
 COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 
@@ -89,9 +92,14 @@ RUN chown django-ca:django-ca .coverage /var/lib/django-ca/ /usr/src/django-ca/c
 # From here on, we run as normal user
 USER django-ca:django-ca
 
-# copy this late so that changes do not trigger a cache miss during build
+# Run linters and unit tests
 RUN python dev.py code-quality
 RUN python dev.py coverage --format=text
+
+# Run mypy (not yet - we need coverage 3.5 for that)
+#COPY .mypy.ini ./
+#COPY stubs/ stubs/
+#RUN mypy ca/django_ca/
 
 # Generate documentation
 ADD docker-compose.yml ./
