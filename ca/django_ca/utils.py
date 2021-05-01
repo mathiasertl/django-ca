@@ -358,6 +358,10 @@ def parse_csr(
 ) -> x509.CertificateSigningRequest:
     """Parse a CSR in the given format.
 
+    .. deprecated:: 1.18.0
+
+       This function is no longer useful and will be removed in django-ca 1.20.0.
+
     Parameters
     ----------
 
@@ -367,7 +371,7 @@ def parse_csr(
         The format that the CSR is in.
     """
 
-    if isinstance(csr, x509.CertificateSigningRequest):
+    if isinstance(csr, x509.CertificateSigningRequest):  # pragma: no cover # not used since 1.18.0
         return csr
     if csr_format == Encoding.PEM:
         return x509.load_pem_x509_csr(force_bytes(csr), default_backend())

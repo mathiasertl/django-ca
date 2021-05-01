@@ -546,7 +546,7 @@ class CertificateTests(TestCaseMixin, TestCase):
         # Create a cert with some weirder SANs to test that too
         weird_cert = self.create_cert(
             self.new_cas["child"],
-            certs["child-cert"]["csr"]["pem"],
+            certs["child-cert"]["csr"]["parsed"],
             subject=Subject({"CN": "all.example.com"}),
             extensions=[
                 SubjectAlternativeName(

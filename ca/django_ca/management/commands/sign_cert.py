@@ -16,10 +16,13 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import sys
 import typing
+import warnings
 from datetime import timedelta
 
 from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError
@@ -27,6 +30,7 @@ from django.core.management.base import CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
+from ...deprecation import RemovedInDjangoCA120Warning
 from ...extensions import Extension
 from ...extensions import SubjectAlternativeName
 from ...management.base import BaseSignCommand
@@ -92,7 +96,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         self.add_format(
             parser,
             opts=["--csr-format"],
-            help_text='Format of the CSR ("ASN1" is an alias for "DER", default: %(default)s)',
+            default=None,
+            help_text="Format of the CSR (DEPRECATED, format is now auto-detected).",
         )
 
         self.add_profile(
@@ -101,14 +106,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=too-many-arguments
+    def handle(  # type: ignore[override] # pylint: disable=too-many-arguments,too-many-locals
         self,
         ca: CertificateAuthority,
         subject: typing.Optional[Subject],
         expires: timedelta,
         watch: typing.List[str],
         password: typing.Optional[bytes],
-        encoding: Encoding,
+        encoding: typing.Optional[Encoding],
         cn_in_san: bool,
         csr_path: str,
         profile: typing.Optional[str],
@@ -119,6 +124,11 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             raise CommandError("Certificate Authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
+        if encoding is not None:
+            warnings.warn(
+                "--csr-format option is deprecated and will be removed in django-ca 1.20.0.",
+                category=RemovedInDjangoCA120Warning,
+            )
         self.test_options(ca=ca, expires=expires, password=password, **options)
         subject = subject or Subject()
 
@@ -138,13 +148,15 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Read the CSR
         if csr_path == "-":
             self.stdout.write("Please paste the CSR:")
-            csr = b""
-            while not csr.endswith(b"-----END CERTIFICATE REQUEST-----\n"):
-                csr += b"%s\n" % input().encode("utf-8")
-            csr = csr.strip()
+            csr_bytes = sys.stdin.buffer.read()
         else:
-            with open(csr_path, "rb") as stdin_stream:
-                csr = stdin_stream.read()
+            with open(csr_path, "rb") as csr_stream:
+                csr_bytes = csr_stream.read()
+
+        if csr_bytes.startswith(b"-----BEGIN CERTIFICATE REQUEST-----"):
+            csr = x509.load_pem_x509_csr(csr_bytes, default_backend())
+        else:
+            csr = x509.load_der_x509_csr(csr_bytes, default_backend())
 
         try:
             cert = Certificate.objects.create_cert(
@@ -152,7 +164,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr,
                 profile=profile,
                 cn_in_san=cn_in_san,
-                csr_format=encoding,
                 # TODO: since expires option has a default, it currently overrides profile values
                 expires=expires,
                 extensions=extensions,

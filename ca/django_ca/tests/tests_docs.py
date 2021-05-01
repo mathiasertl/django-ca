@@ -42,7 +42,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
             "ca_serial": self.ca.serial,
             "cert": self.cert,
             "cert_serial": self.cert.serial,
-            "csr": certs["root-cert"]["csr"]["pem"],
+            "csr": certs["root-cert"]["csr"]["parsed"],
         }
 
     @override_tmpcadir()

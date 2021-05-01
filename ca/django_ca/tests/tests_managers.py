@@ -16,11 +16,14 @@
 import typing
 import unittest
 
+from cryptography.hazmat.primitives.serialization import Encoding
+
 from django.test import TestCase
 
 from freezegun import freeze_time
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA120Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -264,7 +267,7 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
 class CreateCertTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
 
-    csr = certs["root-cert"]["csr"]["pem"]
+    csr = certs["root-cert"]["csr"]["parsed"]
     load_cas = ("root",)
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
@@ -272,7 +275,8 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         """Test creating the most basic cert possible."""
         subject = "/CN=example.com"
 
-        cert = Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
+        with self.assertCreateCertSignals():
+            cert = Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
         self.assertEqual(cert.subject, Subject(subject))
         self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
 
@@ -281,9 +285,10 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         """Test creating a cert with a profile."""
         subject = "/CN=example.com"
 
-        cert = Certificate.objects.create_cert(
-            self.ca, self.csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
-        )
+        with self.assertCreateCertSignals():
+            cert = Certificate.objects.create_cert(
+                self.ca, self.csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
+            )
         self.assertEqual(cert.subject, Subject(subject))
         self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
 
@@ -293,7 +298,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         subject = None
 
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with self.assertRaisesRegex(ValueError, msg):
+        with self.assertRaisesRegex(ValueError, msg), self.assertCreateCertSignals(False, False):
             Certificate.objects.create_cert(
                 self.ca, self.csr, subject=subject, extensions=[SubjectAlternativeName()]
             )
@@ -303,11 +308,57 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         """Test that creating a cert with no profiles throws an error."""
         subject = "/CN=example.com"
 
-        with self.assertRaisesRegex(KeyError, r"^'webserver'$"):
+        with self.assertRaisesRegex(KeyError, r"^'webserver'$"), self.assertCreateCertSignals(False, False):
             Certificate.objects.create_cert(
                 self.ca,
                 self.csr,
                 subject=subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+            )
+
+    @override_tmpcadir()
+    def test_csr_formats(self) -> None:
+        """Test passing a CSR in various deprecated formats."""
+        common_name = "csr-formats.example.com"
+        msg = r"^Passing str as csr is deprecated, pass an x509.CertificateSigningRequest instead\.$"
+        with self.assertCreateCertSignals(), self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
+            cert = Certificate.objects.create_cert(
+                self.ca,
+                certs["root-cert"]["csr"]["pem"],
+                subject="CN=%s" % common_name,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+            )
+        self.assertEqual(cert.csr.der, certs["root-cert"]["csr"]["der"])
+
+        msg = r"^Passing bytes as csr is deprecated, pass an x509.CertificateSigningRequest instead\.$"
+        with self.assertCreateCertSignals(), self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
+            cert = Certificate.objects.create_cert(
+                self.ca,
+                certs["root-cert"]["csr"]["der"],
+                csr_format=Encoding.DER,
+                subject="CN=%s" % common_name,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+            )
+        self.assertEqual(cert.csr.der, certs["root-cert"]["csr"]["der"])
+
+    def test_csr_bad_value(self) -> None:
+        """Test bassing a bad CSR format that cannot even be parsed."""
+        common_name = "csr-bad-format.example.com"
+        msg = r"^Passing bytes as csr is deprecated, pass an x509.CertificateSigningRequest instead\.$"
+        with self.assertCreateCertSignals(False, False), self.assertWarnsRegex(
+            RemovedInDjangoCA120Warning, msg
+        ), self.assertRaisesRegex(ValueError, r"^Unknown CSR format passed: FOO$"):
+            Certificate.objects.create_cert(
+                self.ca,
+                csr=certs["root-cert"]["csr"]["der"],
+                csr_format="FOO",  # type: ignore[arg-type] # what we're testing
+                subject="CN=%s" % common_name,
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,

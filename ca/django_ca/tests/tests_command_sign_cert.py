@@ -13,14 +13,12 @@
 
 """Test the sign_cert management command."""
 
+import io
 import os
 import stat
 import unittest
 from datetime import datetime
 from datetime import timedelta
-from io import StringIO
-
-from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
@@ -29,6 +27,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA120Warning
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
@@ -62,7 +61,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_from_stdin(self) -> None:
         """Test reading CSR from stdin."""
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         subject = Subject([("CN", "example.com")])
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
@@ -92,7 +91,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         for name, ca in self.new_cas.items():
             cname = "%s-signed.example.com" % name
-            stdin = StringIO(self.csr_pem)
+            stdin = self.csr_pem.encode()
             subject = Subject([("CN", cname)])
 
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -159,7 +158,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_to_file(self) -> None:
         """Test writing PEM to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
 
         try:
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -195,7 +194,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
         # should fail.
 
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         cname = "foo bar"
         msg = r"^%s: Could not parse CommonName as subjectAlternativeName\.$" % cname
 
@@ -209,7 +208,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_cn_not_in_san(self) -> None:
         """Test adding a CN that is not in the SAN."""
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert",
@@ -236,7 +235,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_san(self) -> None:
         """Test signing without passing any SANs."""
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         subject = Subject([("CN", "example.net")])
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
@@ -276,7 +275,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == "OU"), "MyOrgUnit")
 
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert",
@@ -308,7 +307,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 ("emailAddress", "user@example.net"),
             ]
         )
-        stdin = StringIO(self.csr_pem)
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd(
                 "sign_cert",
@@ -331,7 +329,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.ca.issuer_alt_name = "DNS:ian.example.com"
         self.ca.save()
 
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             "--subject=%s" % Subject([("CN", "example.com")]),
@@ -366,7 +364,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_no_subject(self) -> None:
         """Test signing without a subject (but SANs)."""
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert", ca=self.ca, alt=SubjectAlternativeName({"value": ["example.com"]}), stdin=stdin
@@ -394,7 +392,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
         # Giving no password raises a CommandError
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
         ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -403,7 +401,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(post.call_count, 0)
 
         # Pass a password
-        stdin = StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd(
@@ -417,7 +414,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(post.call_count, 1)
 
         # Pass the wrong password
-        stdin = StringIO(self.csr_pem)
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCommandError(self.re_false_password), self.mockSignal(
             pre_issue_cert
@@ -453,7 +449,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             msg += r" The data may be in an incorrect format or it may be encrypted with an unsupported algorithm\."  # NOQA: E501
         msg += "$"
 
-        stdin = StringIO(self.csr_pem)
+        stdin = io.StringIO(self.csr_pem)
         with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post:
@@ -471,9 +467,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         try:
             subject = Subject([("CN", "example.com"), ("emailAddress", "user@example.com")])
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-                stdout, stderr = self.cmd(
-                    "sign_cert", ca=self.ca, subject=subject, csr=csr_path, csr_format=Encoding.DER
-                )
+                stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, csr=csr_path)
             self.assertEqual(pre.call_count, 1)
             self.assertEqual(stderr, "")
 
@@ -501,7 +495,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with an expiry after the CA expires."""
         time_left = (self.ca.expires - datetime.now()).days
         expires = timedelta(days=time_left + 3)
-        stdin = StringIO(self.csr_pem)
+        stdin = io.StringIO(self.csr_pem)
 
         with self.assertCommandError(
             r"^Certificate would outlive CA, maximum expiry for this CA is {} days\.$".format(time_left)
@@ -521,29 +515,60 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir()
-    def test_wrong_format(self) -> None:
-        """Test signing with an invalid CSR format."""
-        stdin = StringIO(self.csr_pem)
-
-        with self.assertCommandError("Unknown CSR format passed: foo$"), self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd(
-                "sign_cert",
-                ca=self.ca,
-                alt=SubjectAlternativeName({"value": ["example.com"]}),
-                csr_format="foo",
-                stdin=stdin,
+    def test_pass_format(self) -> None:
+        """Test passing a format, which is deprecated."""
+        common_name = "pass-format.example.com"
+        warning_msg = r"^--csr-format option is deprecated and will be removed in django-ca 1\.20\.0\.$"
+        with self.assertCreateCertSignals() as (pre, post), self.assertWarnsRegex(
+            RemovedInDjangoCA120Warning, warning_msg
+        ):
+            stdout, stderr = self.cmd_e2e(
+                [
+                    "sign_cert",
+                    "--subject=CN=%s" % common_name,
+                    "--csr-format=PEM",
+                ],
+                stdin=self.csr_pem.encode(),
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
+
+        cert = Certificate.objects.get(cn=common_name)
+        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stderr, "")
+
+    @override_tmpcadir()
+    def test_unparsable_format(self) -> None:
+        """Test signing with an invalid CSR format."""
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        # with self.assertCreateCertSignals(False, False) as (pre, post),
+        # with self.assertWarnsRegex(
+        #    RemovedInDjangoCA120Warning, warning_msg
+        # ):
+        with self.assertSystemExit(2), self.assertCreateCertSignals(False, False) as (pre, post):
+            self.cmd_e2e(
+                [
+                    "sign_cert",
+                    "--alt=example.com",
+                    "--csr-format=foo",
+                ],
+                stdin=self.csr_pem.encode(),
+                stdout=stdout,
+                stderr=stderr,
+            )
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertTrue(
+            stderr.getvalue()
+            .strip()
+            .endswith("sign_cert: error: argument --csr-format: Unknown encoding: foo")
+        )
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
     def test_revoked_ca(self) -> None:
         """Test signing with a revoked CA."""
         self.ca.revoke()
-        stdin = StringIO(self.csr_pem)
+        stdin = io.StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 
         with self.assertCommandError(r"^Certificate Authority is revoked\.$"), self.mockSignal(
@@ -560,7 +585,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         path = ca_storage.path(self.ca.private_key_path)
         os.remove(path)
         msg = r"^\[Errno 2\] No such file or directory: u?'%s'" % path
-        stdin = StringIO(self.csr_pem)
+        stdin = io.StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 
         with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
@@ -574,7 +599,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_expired"])
     def test_expired_ca(self) -> None:
         """Test signing with an expired CA."""
-        stdin = StringIO(self.csr_pem)
+        stdin = io.StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 
         with self.assertCommandError(r"^Certificate Authority has expired\.$"), self.mockSignal(

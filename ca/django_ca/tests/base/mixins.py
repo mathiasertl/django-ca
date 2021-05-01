@@ -556,7 +556,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         if isinstance(stdin, io.StringIO):
             stdin_mock = mock.patch("sys.stdin", stdin)
         else:
-            stdin_mock = mock.patch("sys.stdin.buffer.read", side_effect=lambda: stdin)
+            # TYPE NOTE: mypy detects a different type, but important thing is its a context manager
+            stdin_mock = mock.patch(  # type: ignore[assignment]
+                "sys.stdin.buffer.read", side_effect=lambda: stdin
+            )
 
         with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
             util = ManagementUtility(["manage.py"] + list(cmd))

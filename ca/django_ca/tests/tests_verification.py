@@ -19,7 +19,6 @@ import subprocess
 import tempfile
 import typing
 from contextlib import contextmanager
-from io import StringIO
 
 from django.test import TestCase
 
@@ -70,7 +69,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         self, ca: CertificateAuthority, hostname: str = "example.com", **kwargs: typing.Any
     ) -> typing.Iterator[str]:
         """Create a signed certificate in a temporary directory."""
-        stdin = StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
 
         with tempfile.TemporaryDirectory() as tempdir:
             out_path = os.path.join(tempdir, "%s.pem" % hostname)

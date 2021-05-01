@@ -108,6 +108,8 @@ Manager methods
 :py:class:`~django_ca.models.Certificate`, meaning you can access it
 using ``Certificate.objects``, e.g.::
 
+   >>> csr  # doctest: +ELLIPSIS
+   <cryptography.hazmat.backends.openssl.x509._CertificateSigningRequest object at ...>
    >>> from django_ca.models import Certificate
    >>> Certificate.objects.create_cert(csr=csr, ca=ca, subject='/CN=example.com')
    <Certificate: example.com>
