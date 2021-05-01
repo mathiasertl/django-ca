@@ -15,8 +15,6 @@ see <http://www.gnu.org/licenses/>.
 
 /**
  * Viewing the CSR and PEM as code. 
- *
- * Django 2.0 uses div.readonly, Django<2.0 uses p's
  */
 fieldset.as-code .field-csr div.readonly,
 fieldset.as-code .field-csr_pem div.readonly,
