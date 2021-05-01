@@ -73,6 +73,7 @@ from ...signals import post_create_ca
 from ...signals import post_issue_cert
 from ...signals import post_revoke_cert
 from ...signals import pre_create_ca
+from ...signals import pre_issue_cert
 from ...subject import Subject
 from ...typehints import ParsableSubject
 from ...utils import ca_storage
@@ -284,6 +285,18 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             finally:
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
+
+    @contextmanager
+    def assertCreateCertSignals(  # pylint: disable=invalid-name
+        self, pre: bool = True, post: bool = True
+    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+        """Context manager mocking both pre and post_create_ca signals."""
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            try:
+                yield (pre, post)
+            finally:
+                self.assertTrue(pre.called is pre)
+                self.assertTrue(post.called is post)
 
     def assertExtensions(  # pylint: disable=invalid-name
         self,
