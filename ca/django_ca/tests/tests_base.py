@@ -35,6 +35,7 @@ from ..extensions import PolicyConstraints
 from ..extensions import PrecertPoison
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
+from ..utils import add_colons
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -185,11 +186,14 @@ class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
 class CommandTestCase(TestCaseMixin, TestCase):
     """Test the cmd_e2e function."""
 
-    load_cas = "__all__"
+    load_cas = ("root",)
 
     def test_basic(self) -> None:
         """Trivial basic test."""
-        self.cmd_e2e(["list_cas"])
+        stdout, stderr = self.cmd_e2e(["list_cas"])
+        serial = add_colons(self.ca.serial)
+        self.assertEqual(stdout, f"{serial} - {self.ca.name}\n")
+        self.assertEqual(stderr, "")
 
 
 class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a subclass of TestCase
