@@ -291,12 +291,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, pre: bool = True, post: bool = True
     ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.mockSignal(pre_issue_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
             try:
-                yield (pre, post)
+                yield (pre_sig, post_sig)
             finally:
-                self.assertTrue(pre.called is pre)
-                self.assertTrue(post.called is post)
+                self.assertTrue(pre_sig.called is pre)
+                self.assertTrue(post_sig.called is post)
 
     def assertExtensions(  # pylint: disable=invalid-name
         self,
@@ -456,6 +456,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
 
     @contextmanager
+    def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+        """Assert that SystemExit is raised."""
+        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+            yield
+        self.assertEqual(excm.exception.args, (2,))
+
+    @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard
         self, errors: typing.Dict[str, typing.List[str]]
     ) -> typing.Iterator[None]:
@@ -533,7 +540,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def cmd_e2e(
         self,
         cmd: typing.Sequence[str],
-        stdin: typing.Optional[io.StringIO] = None,
+        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
         stdout: typing.Optional[io.StringIO] = None,
         stderr: typing.Optional[io.StringIO] = None,
     ) -> typing.Tuple[str, str]:
@@ -546,9 +553,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         if stdin is None:
             stdin = io.StringIO()
 
-        with mock.patch("sys.stdin", stdin), mock.patch("sys.stdout", stdout), mock.patch(
-            "sys.stderr", stderr
-        ):
+        if isinstance(stdin, io.StringIO):
+            stdin_mock = mock.patch("sys.stdin", stdin)
+        else:
+            stdin_mock = mock.patch("sys.stdin.buffer.read", side_effect=lambda: stdin)
+
+        with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
             util = ManagementUtility(["manage.py"] + list(cmd))
             util.execute()
 
