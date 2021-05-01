@@ -19,13 +19,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='certificate',
             name='pub_tmp',
-            field=django_ca.modelfields.CertificateField(default=b'', verbose_name='Public key'),
+            field=django_ca.modelfields.CertificateField(default=b'', null=True, verbose_name='Public key'),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='certificateauthority',
             name='pub_tmp',
-            field=django_ca.modelfields.CertificateField(default=b'', verbose_name='Public key'),
+            field=django_ca.modelfields.CertificateField(default=b'', null=True, verbose_name='Public key'),
             preserve_default=False,
         ),
     ]
