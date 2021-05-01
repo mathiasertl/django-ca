@@ -20,6 +20,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 from unittest.mock import patch
@@ -37,12 +38,18 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
-from freezegun import freeze_time
+try:
+    from freezegun import freeze_time
+except ImportError:
+    @contextmanager
+    def freeze_time(value):
+        yield
+
 
 _rootdir = os.path.dirname(os.path.realpath(__file__))  # NOQA: E402
 _sphinx_dir = os.path.join(_rootdir, "docs", "source", "_files")  # NOQA: E402
 sys.path.insert(0, os.path.join(_rootdir, "ca"))  # NOQA: E402
-os.environ["DJANGO_SETTINGS_MODULE"] = "ca.test_settings"  # NOQA: E402
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.test_settings")  # NOQA: E402
 # pylint: disable=wrong-import-position
 import django  # NOQA: E402 isort:skip
 
