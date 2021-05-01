@@ -103,7 +103,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     def add_format(
         self,
         parser: CommandParser,
-        default: Encoding = Encoding.PEM,
+        default: typing.Optional[Encoding] = Encoding.PEM,
         help_text: str = "",
         opts: typing.Optional[typing.Sequence[str]] = None,
         dest: str = "encoding",
@@ -114,7 +114,12 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             opts = ["-f", "--format"]
         if not help_text:
             help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
-        help_text = help_text % {"default": default.name}
+        if default is not None:
+            default_text = default.name
+        else:
+            default_text = "None"
+
+        help_text = help_text % {"default": default_text}
         parser.add_argument(
             *opts,
             metavar="{PEM,ASN1,DER}",
