@@ -508,8 +508,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             stderr = io.StringIO()
         stdin = kwargs.pop("stdin", io.StringIO())
 
-        with mock.patch("sys.stdin", stdin):
-            call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
+        if isinstance(stdin, io.StringIO):
+            with mock.patch("sys.stdin", stdin):
+                call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
+        else:
+            with mock.patch("sys.stdin.buffer.read", side_effect=lambda: stdin):
+                call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
+
         return stdout.getvalue(), stderr.getvalue()
 
     def cmd_e2e(
