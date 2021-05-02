@@ -51,6 +51,26 @@ Make sure that the demo works::
    # test commands from the output:
    openssl verify -CAfile...
 
+***********
+Test update
+***********
+
+Checkout the previous version and create a test data:
+
+.. code-block:: console
+
+   $ git checkout $PREVIOUS_VERSION
+   $ rm -rf ca/db.sqlite3 ca/files
+   $ devscripts/create-testdata.py
+
+Then checkout the current master, run migrations and validate the testdata:
+
+.. code-block:: console
+
+   $ git checkout master
+   $ python ca/manage.py migrate
+   $ devscripts/validate-testdata.py
+
 ********************
 Test admin interface
 ********************
@@ -170,6 +190,17 @@ Test update
 
      $ git checkout master
      $ DJANGO_CA_VERSION=latest docker-compose up -d
+
+* Finally, validate that data was correctly migrated:
+
+  .. code-block:: console
+
+     $ docker cp devscripts/validate-testdata.py \
+     >   django-ca_backend_1:/usr/src/django-ca/ca/
+     $ docker cp devscripts/validate-testdata.py \
+     >   django-ca_frontend_1:/usr/src/django-ca/ca/
+     $ docker-compose exec backend ./validate-testdata.py --env backend
+     $ docker-compose exec frontend ./validate-testdata.py --env frontend
 
 ***************
 Release process
