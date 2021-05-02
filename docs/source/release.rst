@@ -146,16 +146,22 @@ Test update
      POSTGRES_PASSWORD=mysecretpassword
 
 * If testing ``django_ca<=1.17.3``, update image versions :file:`docker-compose.yml`.
-* Start with :command:`DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d`.
-* Create initial admin user and certificate authorities:
+* Start the old version with:
 
   .. code-block:: console
 
-     $ docker-compose exec backend manage createsuperuser
-     $ docker-compose exec backend manage init_ca \
-     >   --pathlen=1 Root "/CN=Root CA"
-     $ docker-compose exec backend manage init_ca \
-     >   --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
+     $ DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d
+
+* Create test data:
+
+  .. code-block:: console
+
+     $ docker cp devscripts/create-testdata.py \
+     >   django-ca_backend_1:/usr/src/django-ca/ca/
+     $ docker cp devscripts/create-testdata.py \
+     >   django-ca_frontend_1:/usr/src/django-ca/ca/
+     $ docker-compose exec backend ./create-testdata.py --env backend
+     $ docker-compose exec frontend ./create-testdata.py --env frontend
 
 * Log into the admin interface and create some certificates.
 * Update to the newest version:
