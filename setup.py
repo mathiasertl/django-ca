@@ -95,7 +95,11 @@ setup(
             "josepy>=1.5.0",
             "requests",
         ],
-        "redis": ["hiredis>=1.0", "redis>=3.2", "django-redis-cache>=1.8.0"],
+        "redis": [
+            "hiredis>=1.1",
+            "redis>=3.5",
+            "django-redis-cache>=2.1",  # 3.0 drops support for Django 2.2
+        ],
         "celery": ["celery>=5.0"],
     },
     classifiers=[

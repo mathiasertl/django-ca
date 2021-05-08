@@ -1,4 +1,0 @@
-# NOTE: django-redis-cache drops support for Django<3.0
-django-redis-cache>=2.0
-hiredis>=2.0
-redis>=3.5

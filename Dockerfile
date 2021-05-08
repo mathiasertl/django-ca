@@ -24,7 +24,7 @@ COPY requirements/ requirements/
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
     -r requirements.txt \
     -r requirements/requirements-docker.txt \
-    -r requirements/requirements-redis.txt \
+    -e .[redis] \
     -r requirements/requirements-mysql.txt \
     -r requirements/requirements-postgres.txt
 
