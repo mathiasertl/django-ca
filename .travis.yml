@@ -31,8 +31,7 @@ env:  # https://www.djangoproject.com/download/
 install:
   # Build/test dependencies
   - pip install -U pip setuptools wheel
-  - pip install -r requirements/requirements-core.txt
-  - pip install -r requirements/requirements-libs.txt
+  - pip install -r requirements.txt
   - pip install Django==$DJANGO cryptography==$CRYPTOGRAPHY
 stages:
   - "Code Quality"
@@ -61,7 +60,6 @@ jobs:
 #        - mypy --strict ca/django_ca/utils.py ca/django_ca/subject.py
     - name: "Generate documentation"
       script:
-        # We need core/libs as conf.py has to call django.setup()
         - pip install -r requirements/requirements-docs.txt
         - make -C docs html-check
     - name: "Initialize demo"
