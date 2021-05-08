@@ -63,7 +63,7 @@ Checkout the previous version and create a test data:
    $ rm -rf ca/db.sqlite3 ca/files
    $ devscripts/create-testdata.py
 
-Then checkout the current master, run migrations and validate the testdata:
+Then checkout the current master, run migrations and validate the test data:
 
 .. code-block:: console
 

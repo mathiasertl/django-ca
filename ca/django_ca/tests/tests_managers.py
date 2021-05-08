@@ -363,6 +363,41 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 add_ocsp_url=False,
                 add_issuer_url=False,
             )
+        self.assertFalse(Certificate.objects.filter(cn=common_name).exists())
+
+    @override_tmpcadir()
+    def test_profile_deprecated_type(self) -> None:
+        """Test passing a profile with a deprecated type."""
+        common_name = "csr-profile-deprecated-type.example.com"
+        msg = r"^Passing a str as a profile is deprecated and will be removed in django-ca==1\.20\.0\.$"
+        with self.assertCreateCertSignals(), self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
+            cert = Certificate.objects.create_cert(
+                self.ca,
+                csr=certs["root-cert"]["csr"]["parsed"],
+                profile="ocsp",  # type: ignore[arg-type] # what we're testing
+                subject="CN=%s" % common_name,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+            )
+        self.assertEqual(cert.profile, "ocsp")
+
+    @override_tmpcadir()
+    def test_profile_unsupported_type(self) -> None:
+        """Test passing a profile with an unsupported type."""
+        common_name = "csr-profile-bad-type.example.com"
+        msg = r"^profile must be of type django_ca\.profiles\.Profile\.$"
+        with self.assertCreateCertSignals(False, False), self.assertRaisesRegex(TypeError, msg):
+            Certificate.objects.create_cert(
+                self.ca,
+                csr=certs["root-cert"]["csr"]["parsed"],
+                profile=False,  # type: ignore[arg-type] # what we're testing
+                subject="CN=%s" % common_name,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+            )
+        self.assertFalse(Certificate.objects.filter(cn=common_name).exists())
 
 
 @unittest.skip("Only for type checkers.")

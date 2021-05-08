@@ -37,6 +37,7 @@ from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import CertificateAuthority
 from ...models import Watcher
+from ...profiles import profiles
 from ...subject import Subject
 
 
@@ -162,7 +163,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             cert = Certificate.objects.create_cert(
                 ca,
                 csr,
-                profile=profile,
+                profile=profiles[profile],
                 cn_in_san=cn_in_san,
                 # TODO: since expires option has a default, it currently overrides profile values
                 expires=expires,

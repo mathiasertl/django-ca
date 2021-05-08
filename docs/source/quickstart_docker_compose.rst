@@ -91,7 +91,7 @@ You can also get versions for specific versions of **django-ca** from the table 
 bundled third-party Docker images.
 
 ====================================================== ===== =========== =====
-Version                                                redis PostgreSQL  NGINX
+Version                                                Redis PostgreSQL  NGINX
 ====================================================== ===== =========== =====
 :download:`1.18.0 </_files/1.18.0/docker-compose.yml>` 6     12          1.18
 :download:`1.17.3 </_files/1.17.3/docker-compose.yml>` 6     12          1.18
