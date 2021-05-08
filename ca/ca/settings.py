@@ -4,14 +4,16 @@ import os
 from typing import List
 from typing import Optional
 
-import yaml
-
 from django.core.exceptions import ImproperlyConfigured
 
 try:
-    from yaml import CLoader as Loader
+    import yaml
+    try:
+        from yaml import CLoader as Loader
+    except ImportError:
+        from yaml import Loader  # type: ignore
 except ImportError:
-    from yaml import Loader  # type: ignore
+    yaml = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -208,7 +210,7 @@ _settings_files = sorted(_settings_files)
 if os.path.exists(SETTINGS_YAML):
     _settings_files.append((SETTINGS_YAML, os.path.dirname(SETTINGS_YAML)))
 
-if not _skip_local_config:
+if not _skip_local_config and yaml is not False:
     for _filename, _path in _settings_files:
         _full_path = os.path.join(_path, _filename)
         with open(_full_path) as stream:
