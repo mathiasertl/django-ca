@@ -90,7 +90,6 @@ setup(
     extras_require={
         "acme": [
             "acme>=1.12",
-
             # https://josepy.readthedocs.io/en/stable/changelog/
             # * 1.5.0 (2020-11-03) adds support for Python 3.9
             "josepy>=1.5.0",
