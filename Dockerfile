@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
-COPY requirements.txt ./
+COPY ca/django_ca/__init__.py ca/django_ca/
+COPY requirements.txt setup.py ./
 COPY requirements/ requirements/
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
     -r requirements.txt \

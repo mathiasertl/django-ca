@@ -8,6 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 try:
     import yaml
+
     try:
         from yaml import CLoader as Loader
     except ImportError:
