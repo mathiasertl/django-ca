@@ -41,11 +41,11 @@ Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
 install_requires = [
-    "django>=2.2",
+    "Django>=2.2",
     "asn1crypto>=1.0.1",
-    "cryptography>=2.8",
+    "cryptography>=3.0",
     "django-object-actions>=1.1",
-    "idna>=2.9",
+    "idna>=2.10",
     "packaging",
     "typing-extensions; python_version < '3.8'",
 ]
@@ -88,9 +88,16 @@ setup(
     zip_safe=False,  # because of the static files
     install_requires=install_requires,
     extras_require={
-        "acme": ["acme>=1.10", "josepy>=1.3.0", "requests"],
+        "acme": [
+            "acme>=1.12",
+
+            # https://josepy.readthedocs.io/en/stable/changelog/
+            # * 1.5.0 (2020-11-03) adds support for Python 3.9
+            "josepy>=1.5.0",
+            "requests",
+        ],
         "redis": ["hiredis>=1.0", "redis>=3.2", "django-redis-cache>=1.8.0"],
-        "celery": ["celery>=4.3"],
+        "celery": ["celery>=5.0"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
