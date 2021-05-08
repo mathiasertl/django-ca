@@ -21,6 +21,8 @@ import sys
 from setuptools import find_packages
 from setuptools import setup
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # directory of this file
+
 LONG_DESCRIPTION = """django-ca is a tool to manage TLS certificate authorities and easily issue and revoke
 certificates. It is based `cryptography <https://cryptography.io/>`_ and `Django
 <https://www.djangoproject.com/>`_. It can be used as an app in an existing Django project or stand-alone with
@@ -48,7 +50,8 @@ install_requires = [
     "typing-extensions; python_version < '3.8'",
 ]
 
-package_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ca")
+
+package_path = os.path.join(BASE_DIR, "ca")
 package_root = os.path.join(package_path, "django_ca")
 
 if os.path.exists(package_path):
