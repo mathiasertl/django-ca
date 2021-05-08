@@ -13,6 +13,8 @@
 
 """Module for handling certificate profiles."""
 
+import typing
+import warnings
 from copy import deepcopy
 from datetime import timedelta
 from threading import local
@@ -26,8 +28,10 @@ from typing import cast
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA120Warning
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -163,7 +167,7 @@ class Profile:
         csr: x509.CertificateSigningRequest,
         subject: Optional[Subject] = None,
         expires: Expires = None,
-        algorithm: ParsableHash = None,
+        algorithm: typing.Optional[HashAlgorithm] = None,
         extensions: Optional[
             Union[
                 Dict[str, Union["x509.Extension[x509.ExtensionType]", Extension[Any, Any, Any]]],
@@ -178,6 +182,13 @@ class Profile:
         password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
+
+        .. deprecated:: 1.18.0
+
+           Since ``django-ca==1.18.0``, passing unparsed values is deprecated and will be removed in
+           ``django-ca==1.20.0``. This affects the following parameters:
+
+           * Passing a ``str`` as `algorithm`.
 
         This function is the core function used to create x509 certificates. In it's simplest form, you only
         need to pass a ca, a CSR and a subject to get a valid certificate::
@@ -206,9 +217,8 @@ class Profile:
             values from the passed subject will update the profiles subject.
         expires : int or datetime or timedelta, optional
             Override when this certificate will expire.
-        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Override the hash algorithm used when signing the certificate, passed to
-            :py:func:`~django_ca.utils.parse_hash_algorithm`.
+        algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Override the hash algorithm used when signing the certificate.
         extensions : list or dict of :py:class:`~django_ca.extensions.base.Extension`
             List or dict of additional extensions to set for the certificate. Note that values from the CA
             might update the passed extensions: For example, if you pass an
@@ -291,7 +301,12 @@ class Profile:
             expires = self.expires
         if algorithm is None:
             algorithm = self.algorithm
-        else:
+        elif isinstance(algorithm, str):
+            warnings.warn(
+                "Passing a str as algorithm is deprecated and will be removed in django-ca==1.20.0.",
+                category=RemovedInDjangoCA120Warning,
+                stacklevel=2,
+            )
             algorithm = parse_hash_algorithm(algorithm)
 
         # Make sure that expires is a fixed timestamp

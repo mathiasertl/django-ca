@@ -555,7 +555,7 @@ class CertificateManager(
         csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             If passing `csr` as ``str`` or ``bytes``, the format of the certificate signing request. This
             parameter will be removed in django-ca 1.20.0.
-        profile : str or :py:class:`~django_ca.profiles.Profile`, optional
+        profile : :py:class:`~django_ca.profiles.Profile`, optional
             The name of a profile or a manually created :py:class:`~django_ca.profiles.Profile` instance. If
             not given, the profile configured by :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` is
             used.
@@ -573,6 +573,7 @@ class CertificateManager(
             warnings.warn(
                 "Passing a str as a profile is deprecated and will be removed in django-ca==1.20.0.",
                 category=RemovedInDjangoCA120Warning,
+                stacklevel=2,
             )
             profile = profiles[profile]
         elif not isinstance(profile, Profile):
@@ -582,7 +583,7 @@ class CertificateManager(
             msg = "Passing %s as csr is deprecated, pass an x509.CertificateSigningRequest instead." % (
                 type(csr).__name__
             )
-            warnings.warn(msg, category=RemovedInDjangoCA120Warning)
+            warnings.warn(msg, category=RemovedInDjangoCA120Warning, stacklevel=2)
             csr = parse_csr(csr, csr_format=csr_format)
 
         cert = profile.create_cert(ca, csr, **kwargs)

@@ -20,6 +20,7 @@ from datetime import timedelta
 from django.test import TestCase
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA120Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
@@ -226,7 +227,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         issuer = Subject("/CN=issuer.example.com")
 
         prof = Profile("example", subject=Subject(), issuer_name=issuer)
-        with self.mockSignal(pre_issue_cert) as pre:
+        msg = r"^Passing a str as algorithm is deprecated and will be removed in django-ca==1\.20\.0\.$"
+        with self.mockSignal(pre_issue_cert) as pre, self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
             cert = self.create_cert(
                 prof,
                 ca,
