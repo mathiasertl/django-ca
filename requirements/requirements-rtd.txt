@@ -1,3 +1,2 @@
--rrequirements-core.txt
--rrequirements-libs.txt
--rrequirements-docs.txt
+-r ../requirements.txt
+-r requirements-docs.txt

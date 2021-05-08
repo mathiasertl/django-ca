@@ -1,2 +1,1 @@
--rrequirements/requirements-core.txt
--rrequirements/requirements-libs.txt
+-e .[celery,acme]
