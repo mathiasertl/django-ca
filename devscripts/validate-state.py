@@ -32,6 +32,7 @@ except ImportError:
 CANONICAL_PYPI_NAMES = {
     "django": "Django",
     "cryptography": "cryptography",
+    "idna": "idna",
 }
 
 
@@ -121,7 +122,7 @@ def check_tox():
     tox_deps = tox_config["testenv"]["deps"].splitlines()
     tox_env_reqs = dict([line.split(": ", 1) for line in tox_deps if ": " in line])
 
-    for component in ["django", "cryptography"]:
+    for component in ["django", "cryptography", "idna"]:
         # First, check if there are any left over conditional settings for this component
         errors += simple_diff(
             f"{component} conditional dependencies present",
@@ -153,6 +154,7 @@ config = data["django-ca"]["release"]
 config["python-map"] = {minor_to_major(pyver): pyver for pyver in config["python"]}
 config["django-map"] = {djver.rsplit(".", 1)[0]: djver for djver in config["django"]}
 config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["cryptography"]}
+config["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in config["idna"]}
 
 total_errors = check(check_travis)
 print()
