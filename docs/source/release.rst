@@ -11,7 +11,7 @@ Check versions
 
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Make sure that ``setup.py`` has proper requirements.
-* Check ``.travis.yaml``.
+* Run ``devscripts/validate-state.py``.
 * Check ``tox.ini``.
 * Check ``NEWEST_PYTHON``, ``NEWEST_DJANGO`` and ``NEWEST_CRYPTOGRAPHY`` in ``test_settings.py``.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
