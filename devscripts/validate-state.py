@@ -122,6 +122,17 @@ def check_tox():
     tox_deps = tox_config["testenv"]["deps"].splitlines()
     tox_env_reqs = dict([line.split(": ", 1) for line in tox_deps if ": " in line])
 
+    # Check that there is a testenv listing all versions
+    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-idna{%s}" % (
+        ",".join([pyver.replace(".", "") for pyver in config["python-map"]]),
+        ",".join(config["django-map"]),
+        ",".join(config["cryptography-map"]),
+        ",".join(config["idna-map"]),
+    )
+    if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
+        errors += fail("Expected envlist item not found: %s" % expected_envlist)
+
+    # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "idna"]:
         # First, check if there are any left over conditional settings for this component
         errors += simple_diff(
