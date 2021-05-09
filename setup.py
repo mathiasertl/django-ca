@@ -40,6 +40,7 @@ Features:
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
+# these values are separate variables, since they are validated automatically
 install_requires = [
     "Django>=2.2",
     "asn1crypto>=1.0.1",
@@ -48,6 +49,25 @@ install_requires = [
     "idna>=2.10",
     "packaging",
     "typing-extensions; python_version < '3.8'",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django :: 2.2",
+    "Framework :: Django :: 3.1",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Security",
 ]
 
 
@@ -104,22 +124,5 @@ setup(
         "mysql": ["mysqlclient>=1.4"],  # 2.0 release: 2020-07-02
         "postgres": ["psycopg2>2.8"],
     },
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Framework :: Django :: 2.2",
-        "Framework :: Django :: 3.1",
-        "Framework :: Django :: 3.2",
-        "Framework :: Django",
-        "Intended Audience :: Developers",
-        "Intended Audience :: System Administrators",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3 :: Only",
-        "Topic :: Security :: Cryptography",
-        "Topic :: Security",
-    ],
+    classifiers=classifiers
 )

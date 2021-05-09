@@ -154,6 +154,17 @@ def check_tox():
     return errors
 
 
+def check_setup_py():
+    check_path("setup.py")
+    errors = 0
+
+#    spec = importlib.util.spec_from_file_location("setup", os.path.join(ROOT_DIR, "setup.py"))
+#    foo = importlib.util.module_from_spec(spec)
+#    spec.loader.exec_module(foo)
+
+    return errors
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 PYPROJECT_PATH = os.path.join(os.path.dirname(BASE_DIR), "pyproject.toml")
@@ -172,6 +183,8 @@ print()
 total_errors += check(check_github_actions_tests)
 print()
 total_errors += check(check_tox)
+print()
+total_errors += check(check_setup_py)
 
 if total_errors != 0:
     sys.exit(1)
