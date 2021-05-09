@@ -1,3 +1,4 @@
+PyYAML==5.4.1
 astroid==2.5.6
 black==20.8b1
 flake8==3.9.2
