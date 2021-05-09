@@ -2,6 +2,7 @@
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
 -rrequirements/requirements-mypy.txt
+PyYAML==5.4.1
 ipython
 docker-compose
 pip>=19.3
