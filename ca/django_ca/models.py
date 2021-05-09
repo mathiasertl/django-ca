@@ -23,6 +23,8 @@ import json
 import logging
 import random
 import re
+import typing
+import warnings
 from datetime import datetime
 from datetime import timedelta
 from typing import Dict
@@ -66,6 +68,7 @@ from .acme.constants import BASE64_URL_ALPHABET
 from .acme.constants import IdentifierType
 from .acme.constants import Status
 from .constants import ReasonFlags
+from .deprecation import RemovedInDjangoCA120Warning
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -1008,7 +1011,7 @@ class CertificateAuthority(X509CertMixin):
     def get_crl(
         self,
         expires: int = 86400,
-        algorithm: ParsableHash = None,
+        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
         password: Optional[Union[str, bytes]] = None,
         scope: Optional[Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,
@@ -1022,14 +1025,21 @@ class CertificateAuthority(X509CertMixin):
         The former defaults to the ``crl_url`` field, pass ``None`` to not include the value. At most one of
         the two may be set.
 
+        .. deprecated:: 1.18.0
+
+           Since ``django-ca==1.18.0``, passing unparsed values is deprecated and will be removed in
+           ``django-ca==1.20.0``. This affects the following parameters:
+
+           * Passing a ``str`` as `algorithm` (pass a
+             :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instead).
+
         Parameters
         ----------
 
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
-        algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.Hash` or str, optional
-            The hash algorithm to use, passed to :py:func:`~django_ca.utils.parse_hash_algorithm`. The default
-            is to use :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
+        algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            The hash algorithm to use, defaults to :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
@@ -1057,7 +1067,15 @@ class CertificateAuthority(X509CertMixin):
         # It's not easy to create a CRL. Sorry.
 
         now = now_builder = timezone.now()
-        algorithm = parse_hash_algorithm(algorithm)
+        if algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        elif isinstance(algorithm, str):
+            warnings.warn(
+                "Passing a str as algorithm is deprecated and will be removed in django-ca==1.20.0.",
+                category=RemovedInDjangoCA120Warning,
+                stacklevel=2,
+            )
+            algorithm = parse_hash_algorithm(algorithm)
 
         if timezone.is_aware(now_builder):
             now_builder = timezone.make_naive(now, pytz.utc)
