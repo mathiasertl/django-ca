@@ -1,6 +1,6 @@
 astroid==2.5.6
 black==20.8b1
-flake8==3.9.1
+flake8==3.9.2
 isort==5.8.0
 pylint-django==2.4.4
 pylint==2.8.2
