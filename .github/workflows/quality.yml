@@ -44,5 +44,9 @@ jobs:
       - name: Run black, isort and flake8
         run: python dev.py code-quality
 
+      # Will show outdate dependencies, etc
+      - name: Validate state
+        run: devscripts/validate-state.py
+
       - name: Run pylint
         run: pylint --verbose ca/django_ca/
