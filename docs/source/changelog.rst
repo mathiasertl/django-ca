@@ -21,6 +21,7 @@ This version is currently under development.
 * Make sure that operators for OrderedSetExtension always return an instance of the implementing class, not of
   the base class.
 * Certificate bundles now always end with a newline, as normal bundles do.
+* Add setuptools extras for ``mysql`` and ``postgres``.
 
 Backwards incompatible changes
 ==============================
