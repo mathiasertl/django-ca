@@ -17,6 +17,7 @@
 
 import configparser
 import difflib
+import importlib.util
 import os
 import sys
 
@@ -38,6 +39,13 @@ CANONICAL_PYPI_NAMES = {
 
 def check_path(path):
     print("* Checking %s:" % colored(path, attrs=["bold"]))
+
+
+def import_mod(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def ok(msg):
@@ -71,6 +79,7 @@ def check(func):
         print(colored(f"{errors} errors reported.", "red", attrs=["bold"]))
     else:
         print(colored("No errors reported.", "green"))
+    print()  # to get a delimiter line to next check or summary
     return errors
 
 
@@ -165,6 +174,26 @@ def check_setup_py():
     return errors
 
 
+def check_test_settings():
+    relpath = os.path.join("ca", "ca", "test_settings.py")
+    fullpath = os.path.join(ROOT_DIR, relpath)
+    check_path(relpath)
+    errors = 0
+
+    test_settings = import_mod("test_settings", fullpath)
+    for component in ["python", "django", "cryptography"]:
+        config_key = f"{component}-map"
+        setting = f"NEWEST_{component.upper()}_VERSION"
+        value = getattr(test_settings, setting)
+        expected = tuple(int(e) for e in list(config[config_key])[-1].split("."))
+        if value == expected:
+            ok(f"{setting} = {value}")
+        else:
+            errors += fail(f"{setting}: Have {value}, expected {expected}")
+
+    return errors
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 PYPROJECT_PATH = os.path.join(os.path.dirname(BASE_DIR), "pyproject.toml")
@@ -179,12 +208,13 @@ config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["
 config["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in config["idna"]}
 
 total_errors = check(check_travis)
-print()
 total_errors += check(check_github_actions_tests)
-print()
 total_errors += check(check_tox)
-print()
 total_errors += check(check_setup_py)
+total_errors += check(check_test_settings)
 
 if total_errors != 0:
+    print(colored("A total of %s error(s) reported!" % total_errors, "red", attrs=["bold"]))
     sys.exit(1)
+else:
+    print(colored("Congratulations. All clean.", "green"))

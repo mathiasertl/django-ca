@@ -234,11 +234,18 @@ CA_OCSP_URLS = {
 }
 CA_ENABLE_ACME = True
 
+# Newest versions of software components.
+# NOTE: These values are validated by various release scripts
+NEWEST_PYTHON_VERSION = (3, 9)
+NEWEST_CRYPTOGRAPHY_VERSION = (3, 4)
+NEWEST_DJANGO_VERSION = (3, 2)
+
+# Determine if we're running on the respective newest versions
 _parsed_cg_version = packaging.version.parse(cryptography.__version__).release
 CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]  # type: ignore[index]
-NEWEST_PYTHON = sys.version_info[0:2] == (3, 9)
-NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == (3, 4)
-NEWEST_DJANGO = django.VERSION[:2] == (3, 2)
+NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
+NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
+NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
 NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
 
 # For Selenium test cases
