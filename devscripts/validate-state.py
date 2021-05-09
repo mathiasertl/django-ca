@@ -45,16 +45,20 @@ def fail(msg):
     print(colored("[ERR]", "red", attrs=["bold"]), msg)
 
 
+def simple_diff(what, actual, expected):
+    if expected == actual:
+        ok(what)
+    else:
+        fail(f"{what}: Have {actual}, expected {expected}.")
+
+
 def check_travis():
     check(".travis.yml")
     with open(os.path.join(ROOT_DIR, ".travis.yml")) as stream:
         travis_config = yaml.load(stream, Loader=Loader)
 
     # check the list of tested python versions
-    if list(sorted(travis_config["python"])) == pyver_major:
-        ok("Python versions")
-    else:
-        fail("Python versions: Have %s, expected %s" % (list(sorted(travis_config["python"])), pyver_major))
+    simple_diff("Python versions", travis_config["python"], pyver_major)
 
     # check the job matrix
     expected_matrix = []
@@ -69,6 +73,19 @@ def check_travis():
         ok("Job matrix (%s items)" % len(expected_matrix))
 
 
+def check_github_actions_tests():
+    relpath = os.path.join(".github", "workflows", "tests.yml")
+    full_path = os.path.join(ROOT_DIR, relpath)
+    check(relpath)
+    with open(full_path) as stream:
+        action_config = yaml.load(stream, Loader=Loader)
+    matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
+
+    simple_diff("Python versions", matrix["python-version"], pyver_major)
+    simple_diff("Django versions", matrix["django-version"], config["django"])
+    simple_diff("cryptography versions", matrix["cryptography-version"], config["cryptography"])
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 PYPROJECT_PATH = os.path.join(os.path.dirname(BASE_DIR), "pyproject.toml")
@@ -80,6 +97,8 @@ config = data["django-ca"]["release"]
 pyver_major = list(sorted([pyver.rsplit(".", 1)[0] for pyver in config["python"]]))
 
 check_travis()
+print()
+check_github_actions_tests()
 
 if no_errors != 0:
     sys.exit(1)

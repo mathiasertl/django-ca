@@ -1,10 +1,10 @@
 dist: "focal"  # https://docs.travis-ci.com/user/reference/overview/
 language: python
 python:  # https://devguide.python.org/#status-of-python-branches
-  - "3.9"
-  - "3.8"
-  - "3.7"
   - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"
   #- "nightly"
 
 # Enable pip cache: https://docs.travis-ci.com/user/caching/
@@ -14,17 +14,17 @@ env:  # https://www.djangoproject.com/download/
     - DJANGO_CA_SECRET_KEY=dummy
   jobs:
     - DJANGO=2.2.22 CRYPTOGRAPHY=3.0
-    - DJANGO=2.2.22 CRYPTOGRAPHY=3.1
+    - DJANGO=2.2.22 CRYPTOGRAPHY=3.1.1
     - DJANGO=2.2.22 CRYPTOGRAPHY=3.2.1
     - DJANGO=2.2.22 CRYPTOGRAPHY=3.3.2
     - DJANGO=2.2.22 CRYPTOGRAPHY=3.4.7
     - DJANGO=3.1.10 CRYPTOGRAPHY=3.0
-    - DJANGO=3.1.10 CRYPTOGRAPHY=3.1
+    - DJANGO=3.1.10 CRYPTOGRAPHY=3.1.1
     - DJANGO=3.1.10 CRYPTOGRAPHY=3.2.1
     - DJANGO=3.1.10 CRYPTOGRAPHY=3.3.2
     - DJANGO=3.1.10 CRYPTOGRAPHY=3.4.7
     - DJANGO=3.2.2 CRYPTOGRAPHY=3.0
-    - DJANGO=3.2.2 CRYPTOGRAPHY=3.1
+    - DJANGO=3.2.2 CRYPTOGRAPHY=3.1.1
     - DJANGO=3.2.2 CRYPTOGRAPHY=3.2.1
     - DJANGO=3.2.2 CRYPTOGRAPHY=3.3.2
     - DJANGO=3.2.2 CRYPTOGRAPHY=3.4.7
