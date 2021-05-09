@@ -29,20 +29,19 @@ try:
 except ImportError:
     from yaml import Loader
 
-no_errors = 0
-
 CANONICAL_PYPI_NAMES = {
     "django": "Django",
     "cryptography": "cryptography",
 }
 
 
-def check(path):
+def check_path(path):
     print("* Checking %s:" % colored(path, attrs=["bold"]))
 
 
 def ok(msg):
     print(colored("[OK]", "green"), msg)
+    return 0
 
 
 def minor_to_major(version):
@@ -52,25 +51,36 @@ def minor_to_major(version):
 
 
 def fail(msg):
-    global no_errors
-    no_errors += 1
     print(colored("[ERR]", "red", attrs=["bold"]), msg)
+    return 1
 
 
-def simple_diff(what, actual, expected):
+def simple_diff(what, actual, expected) -> int:
     if expected == actual:
-        ok(what)
+        return ok(what)
     else:
-        fail(f"{what}: Have {actual}, expected {expected}.")
+        return fail(f"{what}: Have {actual}, expected {expected}.")
+
+
+def check(func):
+    errors = func()
+    if errors == 1:
+        print(colored(f"{errors} error reported.", "red", attrs=["bold"]))
+    elif errors:
+        print(colored(f"{errors} errors reported.", "red", attrs=["bold"]))
+    else:
+        print(colored("No errors reported.", "green"))
+    return errors
 
 
 def check_travis():
-    check(".travis.yml")
+    errors = 0
+    check_path(".travis.yml")
     with open(os.path.join(ROOT_DIR, ".travis.yml")) as stream:
         travis_config = yaml.load(stream, Loader=Loader)
 
     # check the list of tested python versions
-    simple_diff("Python versions", travis_config["python"], pyver_major)
+    errors += simple_diff("Python versions", travis_config["python"], pyver_major)
 
     # check the job matrix
     expected_matrix = []
@@ -79,27 +89,31 @@ def check_travis():
             expected_matrix.append(f"DJANGO={djver} CRYPTOGRAPHY={cgver}")
 
     if expected_matrix != travis_config["env"]["jobs"]:
+        errors += 1
         for line in difflib.Differ().compare(travis_config["env"]["jobs"], expected_matrix):
             print(line)
     else:
         ok("Job matrix (%s items)" % len(expected_matrix))
+    return errors
 
 
 def check_github_actions_tests():
     relpath = os.path.join(".github", "workflows", "tests.yml")
     full_path = os.path.join(ROOT_DIR, relpath)
-    check(relpath)
+    check_path(relpath)
     with open(full_path) as stream:
         action_config = yaml.load(stream, Loader=Loader)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
-    simple_diff("Python versions", matrix["python-version"], pyver_major)
-    simple_diff("Django versions", matrix["django-version"], config["django"])
-    simple_diff("cryptography versions", matrix["cryptography-version"], config["cryptography"])
+    errors = simple_diff("Python versions", matrix["python-version"], pyver_major)
+    errors += simple_diff("Django versions", matrix["django-version"], config["django"])
+    errors += simple_diff("cryptography versions", matrix["cryptography-version"], config["cryptography"])
+    return errors
 
 
 def check_tox():
-    check("tox.ini")
+    errors = 0
+    check_path("tox.ini")
     tox_config = configparser.ConfigParser()
     tox_config.read(os.path.join(ROOT_DIR, "tox.ini"))
 
@@ -109,20 +123,23 @@ def check_tox():
 
     for component in ["django", "cryptography"]:
         # First, check if there are any left over conditional settings for this component
-        simple_diff(
-            f"{component} conditional settings",
+        errors += simple_diff(
+            f"{component} conditional dependencies present",
             [e for e in tox_env_reqs if e.startswith(component)],
             [f"{component}{major}" for major in config[f"{component}-map"]]
         )
 
         for major, minor in config[f"{component}-map"].items():
             name = f"{component}{major}"
+            actual = tox_env_reqs[name]
             expected = f"{CANONICAL_PYPI_NAMES[component]}=={minor}"
             if name not in tox_env_reqs:
                 continue  # handled in simple-diff above
 
-            if tox_env_reqs[name] != f"{CANONICAL_PYPI_NAMES[component]}=={minor}":
-                fail(f"conditional dependency for {name}: Have {tox_env_reqs[name]}, expected {expected}.")
+            if actual != expected:
+                errors += fail(f"conditional dependency for {name}: Have {actual}, expected {expected}.")
+
+    return errors
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -138,11 +155,11 @@ config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["
 
 pyver_major = list(sorted([pyver.rsplit(".", 1)[0] for pyver in config["python"]]))
 
-check_travis()
+total_errors = check(check_travis)
 print()
-check_github_actions_tests()
+total_errors += check(check_github_actions_tests)
 print()
-check_tox()
+total_errors += check(check_tox)
 
-if no_errors != 0:
+if total_errors != 0:
     sys.exit(1)
