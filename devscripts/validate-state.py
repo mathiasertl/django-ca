@@ -80,7 +80,7 @@ def check_travis():
         travis_config = yaml.load(stream, Loader=Loader)
 
     # check the list of tested python versions
-    errors += simple_diff("Python versions", travis_config["python"], pyver_major)
+    errors += simple_diff("Python versions", travis_config["python"], list(config["python-map"]))
 
     # check the job matrix
     expected_matrix = []
@@ -105,7 +105,7 @@ def check_github_actions_tests():
         action_config = yaml.load(stream, Loader=Loader)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
-    errors = simple_diff("Python versions", matrix["python-version"], pyver_major)
+    errors = simple_diff("Python versions", matrix["python-version"], list(config["python-map"]))
     errors += simple_diff("Django versions", matrix["django-version"], config["django"])
     errors += simple_diff("cryptography versions", matrix["cryptography-version"], config["cryptography"])
     return errors
@@ -150,10 +150,9 @@ with open(os.path.join(ROOT_DIR, "pyproject.toml")) as stream:
     data = toml.load(stream)
 
 config = data["django-ca"]["release"]
+config["python-map"] = {minor_to_major(pyver): pyver for pyver in config["python"]}
 config["django-map"] = {djver.rsplit(".", 1)[0]: djver for djver in config["django"]}
 config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["cryptography"]}
-
-pyver_major = list(sorted([pyver.rsplit(".", 1)[0] for pyver in config["python"]]))
 
 total_errors = check(check_travis)
 print()
