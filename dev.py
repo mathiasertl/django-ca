@@ -241,7 +241,7 @@ elif args.command == "coverage":
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == "code-quality":
-    files = ["ca/"] + glob.glob("*.py")
+    files = ["ca/", "devscripts/"] + glob.glob("*.py")
     print("isort --check-only --diff %s" % " ".join(files))
     subprocess.run(["isort", "--check-only", "--diff"] + files, check=True)
 

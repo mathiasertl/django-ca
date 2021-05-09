@@ -100,15 +100,11 @@ def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
 
     # Create the most basic CSR
     csr_builder = x509.CertificateSigningRequestBuilder()
-    csr_builder = csr_builder.subject_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, common_name)
-    ]))
+    csr_builder = csr_builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)]))
     csr_request = csr_builder.sign(cert_key, hashes.SHA256())
 
     # Create a certificate
-    cert = Certificate.objects.create_cert(
-        ca=ca, csr=csr_request, subject=f"/CN={common_name}", **kwargs
-    )
+    cert = Certificate.objects.create_cert(ca=ca, csr=csr_request, subject=f"/CN={common_name}", **kwargs)
     return cert
 
 
@@ -121,7 +117,10 @@ if args.env != "frontend":
 
     rsa_root = CertificateAuthority.objects.init(name="rsa.example.com", subject="/CN=rsa.example.com")
     dsa_root = CertificateAuthority.objects.init(
-        name="dsa.example.org", subject="/CN=dsa.example.org", key_type="DSA", algorithm=hashes.SHA1(),
+        name="dsa.example.org",
+        subject="/CN=dsa.example.org",
+        key_type="DSA",
+        algorithm=hashes.SHA1(),
     )
     ecc_root = CertificateAuthority.objects.init(
         name="ecc.example.net", subject="/CN=ecc.example.net", key_type="ECC"
@@ -136,11 +135,14 @@ if args.env != "frontend":
         key_type="DSA",
         parent=dsa_root,
         algorithm=hashes.SHA1(),
-        path="ca/shared/"
+        path="ca/shared/",
     )
     ecc_child = CertificateAuthority.objects.init(
-        name="child.ecc.example.net", subject="/CN=child.ecc.example.net", key_type="ECC", parent=ecc_root,
-        path="ca/shared/"
+        name="child.ecc.example.net",
+        subject="/CN=child.ecc.example.net",
+        key_type="ECC",
+        parent=ecc_root,
+        path="ca/shared/",
     )
 else:
     rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")

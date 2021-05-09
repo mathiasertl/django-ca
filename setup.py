@@ -124,5 +124,5 @@ setup(
         "mysql": ["mysqlclient>=1.4"],  # 2.0 release: 2020-07-02
         "postgres": ["psycopg2>2.8"],
     },
-    classifiers=classifiers
+    classifiers=classifiers,
 )

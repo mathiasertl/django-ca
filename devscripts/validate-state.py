@@ -138,7 +138,7 @@ def check_tox():
         errors += simple_diff(
             f"{component} conditional dependencies present",
             [e for e in tox_env_reqs if e.startswith(component)],
-            [f"{component}{major}" for major in config[f"{component}-map"]]
+            [f"{component}{major}" for major in config[f"{component}-map"]],
         )
 
         for major, minor in config[f"{component}-map"].items():
@@ -158,9 +158,9 @@ def check_setup_py():
     check_path("setup.py")
     errors = 0
 
-#    spec = importlib.util.spec_from_file_location("setup", os.path.join(ROOT_DIR, "setup.py"))
-#    foo = importlib.util.module_from_spec(spec)
-#    spec.loader.exec_module(foo)
+    #    spec = importlib.util.spec_from_file_location("setup", os.path.join(ROOT_DIR, "setup.py"))
+    #    foo = importlib.util.module_from_spec(spec)
+    #    spec.loader.exec_module(foo)
 
     return errors
 
