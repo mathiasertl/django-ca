@@ -10,10 +10,9 @@ Check versions
 ==============
 
 * Update ``requirements*.txt`` (use ``pip list -o``).
+* Update ``[django-ca.release]`` in ``pyproject.toml``.
 * Make sure that ``setup.py`` has proper requirements.
-* Run ``devscripts/validate-state.py``.
-* Check ``tox.ini``.
-* Check ``NEWEST_PYTHON``, ``NEWEST_DJANGO`` and ``NEWEST_CRYPTOGRAPHY`` in ``test_settings.py``.
+* Run ``devscripts/validate-state.py`` and fix any errors.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update the docker images in `dev.py docker-test`.
