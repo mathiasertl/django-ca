@@ -12,7 +12,7 @@ Check versions
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Update ``[django-ca.release]`` in ``pyproject.toml``.
 * Run ``devscripts/validate-state.py`` and fix any errors.
-* Make sure that ``setup.py`` has proper requirements.
+* Make sure that ``setup.py`` has proper extra requirements.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update the docker images in `dev.py docker-test`.
