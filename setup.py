@@ -40,17 +40,6 @@ Features:
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 """
 
-# these values are separate variables, since they are validated automatically
-install_requires = [
-    "Django>=2.2",
-    "asn1crypto>=1.0.1",
-    "cryptography>=3.0",
-    "django-object-actions>=1.1",
-    "idna>=2.10",
-    "packaging",
-    "typing-extensions; python_version < '3.8'",
-]
-
 package_path = os.path.join(BASE_DIR, "ca")
 package_root = os.path.join(package_path, "django_ca")
 
@@ -86,7 +75,6 @@ setup(
     package_data={"": package_data},
     python_requires=">=3.6",
     zip_safe=False,  # because of the static files
-    install_requires=install_requires,
     extras_require={
         "acme": [
             "acme>=1.12",

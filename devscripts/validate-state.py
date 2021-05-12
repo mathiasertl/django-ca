@@ -170,8 +170,9 @@ def check_setup_cfg():
     setup_config = configparser.ConfigParser()
     setup_config.read(os.path.join(ROOT_DIR, "setup.cfg"))
 
-    # parse classifiers
+    # parse data from setup.cfg
     classifiers = setup_config["metadata"]["classifiers"].strip().splitlines()
+    install_requires = setup_config["options"]["install_requires"].strip().splitlines()
 
     # validate that we have the proper language/django classifiers
     for pyver in config["python-map"]:
@@ -180,6 +181,18 @@ def check_setup_cfg():
     for djver in config["django-map"]:
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += fail(f"Django {djver} classifier not found.")
+
+    expected_django_req = "Django>=%s" % config["django-major"][0]
+    if expected_django_req not in install_requires:
+        errors += fail(f"{expected_django_req}: Expected Django requirement not found.")
+
+    expected_cg_req = "cryptography>=%s" % config["cryptography-major"][0]
+    if expected_cg_req not in install_requires:
+        errors += fail(f"{expected_cg_req}: Expected cryptography requirement not found.")
+
+    expected_idna_req = "idna>=%s" % config["idna-major"][0]
+    if expected_idna_req not in install_requires:
+        errors += fail(f"{expected_idna_req}: Expected idna requirement not found.")
 
     return errors
 
@@ -214,8 +227,11 @@ with open(os.path.join(ROOT_DIR, "pyproject.toml")) as stream:
 config = data["django-ca"]["release"]
 config["python-map"] = {minor_to_major(pyver): pyver for pyver in config["python"]}
 config["django-map"] = {djver.rsplit(".", 1)[0]: djver for djver in config["django"]}
+config["django-major"] = [djver.rsplit(".", 1)[0] for djver in config["django"]]
 config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["cryptography"]}
+config["cryptography-major"] = [minor_to_major(cgver) for cgver in config["cryptography"]]
 config["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in config["idna"]}
+config["idna-major"] = [minor_to_major(idnaver) for idnaver in config["idna"]]
 
 total_errors = check(check_travis)
 total_errors += check(check_github_actions_tests)
