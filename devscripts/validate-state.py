@@ -74,11 +74,11 @@ def simple_diff(what, actual, expected) -> int:
 def check(func):
     errors = func()
     if errors == 1:
-        print(colored(f"{errors} error reported.", "red", attrs=["bold"]))
+        print(colored(f"{errors} error found.", "red", attrs=["bold"]))
     elif errors:
-        print(colored(f"{errors} errors reported.", "red", attrs=["bold"]))
+        print(colored(f"{errors} errors found.", "red", attrs=["bold"]))
     else:
-        print(colored("No errors reported.", "green"))
+        print(colored("No errors found.", "green"))
     print()  # to get a delimiter line to next check or summary
     return errors
 
@@ -182,6 +182,11 @@ def check_setup_cfg():
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += fail(f"Django {djver} classifier not found.")
 
+    expected_py_req = ">=%s" % config["python-major"][0]
+    actual_py_req = setup_config["options"]["python_requires"]
+    if actual_py_req != expected_py_req:
+        errors += fail(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
+
     expected_django_req = "Django>=%s" % config["django-major"][0]
     if expected_django_req not in install_requires:
         errors += fail(f"{expected_django_req}: Expected Django requirement not found.")
@@ -226,6 +231,7 @@ with open(os.path.join(ROOT_DIR, "pyproject.toml")) as stream:
 
 config = data["django-ca"]["release"]
 config["python-map"] = {minor_to_major(pyver): pyver for pyver in config["python"]}
+config["python-major"] = [minor_to_major(pyver) for pyver in config["python"]]
 config["django-map"] = {djver.rsplit(".", 1)[0]: djver for djver in config["django"]}
 config["django-major"] = [djver.rsplit(".", 1)[0] for djver in config["django"]]
 config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["cryptography"]}
@@ -240,7 +246,7 @@ total_errors += check(check_setup_cfg)
 total_errors += check(check_test_settings)
 
 if total_errors != 0:
-    print(colored("A total of %s error(s) reported!" % total_errors, "red", attrs=["bold"]))
+    print(colored("A total of %s error(s) found!" % total_errors, "red", attrs=["bold"]))
     sys.exit(1)
 else:
     print(colored("Congratulations. All clean.", "green"))

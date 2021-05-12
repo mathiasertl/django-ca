@@ -73,7 +73,6 @@ setup(
     packages=find_packages("ca", exclude=("ca", "django_ca.tests", "django_ca.tests.base")),
     package_dir={"": "ca"},
     package_data={"": package_data},
-    python_requires=">=3.6",
     zip_safe=False,  # because of the static files
     extras_require={
         "acme": [
