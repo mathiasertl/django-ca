@@ -26,7 +26,6 @@ Other tasks
   * `Django <https://www.djangoproject.com/download/>`_
   * `Alpine Linux <https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases>`_
 
-* Make sure that ``setup.py`` has proper classifiers.
 * Make sure that ``docs/source/changelog.rst`` is up to date.
 
 Run test suite

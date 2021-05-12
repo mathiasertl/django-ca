@@ -163,13 +163,23 @@ def check_tox():
     return errors
 
 
-def check_setup_py():
-    check_path("setup.py")
+def check_setup_cfg():
+    check_path("setup.cfg")
     errors = 0
 
-    #    spec = importlib.util.spec_from_file_location("setup", os.path.join(ROOT_DIR, "setup.py"))
-    #    foo = importlib.util.module_from_spec(spec)
-    #    spec.loader.exec_module(foo)
+    setup_config = configparser.ConfigParser()
+    setup_config.read(os.path.join(ROOT_DIR, "setup.cfg"))
+
+    # parse classifiers
+    classifiers = setup_config["metadata"]["classifiers"].strip().splitlines()
+
+    # validate that we have the proper language/django classifiers
+    for pyver in config["python-map"]:
+        if f"Programming Language :: Python :: {pyver}" not in classifiers:
+            errors += fail(f"Python {pyver} classifier not found.")
+    for djver in config["django-map"]:
+        if f"Framework :: Django :: {djver}" not in classifiers:
+            errors += fail(f"Django {djver} classifier not found.")
 
     return errors
 
@@ -210,7 +220,7 @@ config["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in config["id
 total_errors = check(check_travis)
 total_errors += check(check_github_actions_tests)
 total_errors += check(check_tox)
-total_errors += check(check_setup_py)
+total_errors += check(check_setup_cfg)
 total_errors += check(check_test_settings)
 
 if total_errors != 0:

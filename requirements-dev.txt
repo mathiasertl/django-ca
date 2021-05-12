@@ -8,7 +8,8 @@ pip>=19.3
 
 # >=24.2.0: python_requires argument to setuptools.setup()
 #           https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires
-setuptools>=24.2.0
+# >= 30.3.0: configuring setup.py using setup.cfg
+setuptools>=30.3.0
 tox>=3.23
 
 flake8-isort==4.0.0
