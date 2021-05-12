@@ -74,21 +74,4 @@ setup(
     package_dir={"": "ca"},
     package_data={"": package_data},
     zip_safe=False,  # because of the static files
-    extras_require={
-        "acme": [
-            "acme>=1.12",
-            # https://josepy.readthedocs.io/en/stable/changelog/
-            # * 1.5.0 (2020-11-03) adds support for Python 3.9
-            "josepy>=1.5.0",
-            "requests",
-        ],
-        "redis": [
-            "hiredis>=1.1",  # 2.0 released: 2021-03-28
-            "redis>=3.5",
-            "django-redis-cache>=2.1",  # 3.0 drops support for Django 2.2
-        ],
-        "celery": ["celery>=5.0"],
-        "mysql": ["mysqlclient>=1.4"],  # 2.0 release: 2020-07-02
-        "postgres": ["psycopg2>2.8"],
-    },
 )

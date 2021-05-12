@@ -12,7 +12,7 @@ Check versions
 * Update ``requirements*.txt`` (use ``pip list -o``).
 * Update ``[django-ca.release]`` in ``pyproject.toml``.
 * Run ``devscripts/validate-state.py`` and fix any errors.
-* Make sure that ``setup.py`` has proper extra requirements.
+* Check that :file:`setup.cfg` has proper requirements and extra requirements.
 * Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update the docker images in `dev.py docker-test`.
@@ -20,7 +20,8 @@ Check versions
 Other tasks
 ===========
 
-* Check if any version of a dependency is no longer supported and we can deprecate support for it:
+* Check if any version of a dependency is no longer supported and we can deprecate support for it
+  in the next release:
 
   * `Python <https://devguide.python.org/#status-of-python-branches>`_
   * `Django <https://www.djangoproject.com/download/>`_
