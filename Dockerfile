@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
 COPY ca/django_ca/__init__.py ca/django_ca/
-COPY requirements.txt setup.py ./
+COPY requirements.txt setup.cfg setup.py ./
 COPY requirements/ requirements/
 COPY docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
