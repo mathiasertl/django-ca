@@ -281,7 +281,7 @@ elif args.command == "docker-test":
     images = args.images or [
         "default",
         # Currently supported Alpine releases:
-        #   https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
+        #   https://alpinelinux.org/releases/
         "python:3.6-alpine3.13",
         "python:3.7-alpine3.13",
         "python:3.8-alpine3.13",

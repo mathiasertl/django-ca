@@ -26,7 +26,7 @@ Other tasks
 
   * `Python <https://devguide.python.org/#status-of-python-branches>`_
   * `Django <https://www.djangoproject.com/download/>`_
-  * `Alpine Linux <https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases>`_
+  * `Alpine Linux <https://alpinelinux.org/releases/>`_
 
 * Make sure that :file:`docs/source/changelog.rst` is up to date.
 
