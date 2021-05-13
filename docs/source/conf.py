@@ -444,6 +444,14 @@ qualname_overrides = {
     "ca": "str",
     "user": "str",
     "attribute": "str",
+
+    # Only required in Python 3.6 (and maybe 3.7?)
+    'typing.Optional[typing_extensions.Literal["ca", "user", "attribute"]]': "str",
+    "Optional[typing_extensions.Literal['ca', 'user', 'attribute']]": "str",
+    "typing.ExtensionTypeTypeVar": "cg:cryptography.x509.ExtensionType",
+    "typing.ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
+    "typing.SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
+    "NoneType": "None",
 }
 
 text_overrides = {
