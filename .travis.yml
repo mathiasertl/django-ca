@@ -1,15 +1,16 @@
 dist: "focal"  # https://docs.travis-ci.com/user/reference/overview/
 language: python
-python:  # https://devguide.python.org/#status-of-python-branches
-  - "3.6"
-  - "3.7"
-  - "3.8"
+python:
+  # NOTE: Travis uses the first version as a default for non-matrix jobs, e.g. linting
   - "3.9"
+  - "3.8"
+  - "3.7"
+  - "3.6"
   #- "nightly"
 
 # Enable pip cache: https://docs.travis-ci.com/user/caching/
 cache: pip
-env:  # https://www.djangoproject.com/download/
+env:
   global:
     - DJANGO_CA_SECRET_KEY=dummy
   jobs:

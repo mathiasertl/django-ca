@@ -92,7 +92,8 @@ def check_travis():
         travis_config = yaml.load(stream, Loader=Loader)
 
     # check the list of tested python versions
-    errors += simple_diff("Python versions", travis_config["python"], list(CONFIG["python-map"]))
+    # NOTE: Travis needs newest job first (see .travis.yml), so we reverse expected list
+    errors += simple_diff("Python versions", travis_config["python"], list(reversed(CONFIG["python-map"])))
 
     # check the job matrix
     expected_matrix = []
