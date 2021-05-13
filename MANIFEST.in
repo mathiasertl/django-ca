@@ -3,3 +3,5 @@ recursive-include ca/django_ca/templates *
 recursive-exclude ca/django_ca/tests *
 include LICENSE
 include README.md
+# Files read by setup.py, used when installing a source distribution
+include docs/source/intro.rst

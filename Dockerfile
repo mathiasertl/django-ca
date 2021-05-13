@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pi
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY requirements.txt setup.py ./
 COPY requirements/ requirements/
+COPY docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
     -r requirements.txt \
     -r requirements/requirements-docker.txt \
@@ -29,13 +30,19 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script
 # Finally, copy sources
 COPY ca/ ca/
 
-###################
-# Test setuptools #
-###################
-FROM build as sdist-test
-COPY setup.py ./
-RUN python setup.py sdist
-RUN rm -rf ca/
+###############################
+# Build sdist and wheel #
+###############################
+# Build artifacts are tested individually in later stages
+FROM build as dist-base
+COPY setup.py setup.cfg MANIFEST.in ./
+RUN python setup.py sdist bdist_wheel
+RUN rm -rf ca/ setup.py setup.cfg MANIFEST.in
+
+##############
+# Test sdist #
+##############
+FROM dist-base as sdist-test
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.tar.gz
 COPY test-imports.py ./
 RUN ./test-imports.py
@@ -43,24 +50,20 @@ RUN ./test-imports.py
 ############################
 # Test wheels (and extras) #
 ############################
-FROM build as wheel-test
-COPY setup.py ./
-RUN python setup.py bdist_wheel
-RUN rm -rf ca/
-RUN ls dist/
+FROM dist-base as wheel-test
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django_ca*.whl
 COPY test-imports.py ./
 RUN ./test-imports.py
 
-FROM wheel-test as wheel-test-acme
+FROM dist-base as wheel-test-acme
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[acme]
 RUN ./test-imports.py --extra=acme
 
-FROM wheel-test as wheel-test-redis
+FROM dist-base as wheel-test-redis
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[redis]
 RUN ./test-imports.py --extra=redis
 
-FROM wheel-test as wheel-test-celery
+FROM dist-base as wheel-test-celery
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[celery]
 RUN ./test-imports.py --extra=celery
 
@@ -97,14 +100,20 @@ USER django-ca:django-ca
 RUN python dev.py code-quality
 RUN python dev.py coverage --format=text
 
-# Run mypy (not yet - we need coverage 3.5 for that)
+# Run mypy (not yet - we need cryptography 3.5 for that)
 #COPY .mypy.ini ./
 #COPY stubs/ stubs/
 #RUN mypy ca/django_ca/
 
+# Use twine to check source distribution and wheel
+COPY --from=dist-base dist/ dist/
+RUN twine check --strict dist/*
+
 # Generate documentation
 ADD docker-compose.yml ./
 RUN make -C docs html-check
+
+# create demo
 RUN python dev.py init-demo
 
 ###############
