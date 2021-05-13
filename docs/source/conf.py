@@ -40,10 +40,10 @@ sys.path.insert(0, _SRC_DIR)
 sys.path.insert(0, os.path.join(_ROOT_DIR, "devscripts"))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
 
-import django  # NOQA
-from django.conf import settings  # NOQA
+import django  # NOQA: E402
+from django.conf import settings  # NOQA: E402
 
-from dev.config import CONFIG
+from dev.config import CONFIG  # NOQA: E402
 
 settings.configure(
     SECRET_KEY='dummy',
@@ -114,8 +114,7 @@ project = 'django-ca'
 copyright = '2016 - 2020, Mathias Ertl'
 author = 'Mathias Ertl'
 
-import django_ca  # NOQA
-from django_ca.models import CertificateAuthority  # NOQA: [E402]
+import django_ca  # NOQA: E402
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
