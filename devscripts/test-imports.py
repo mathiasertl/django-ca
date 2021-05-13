@@ -13,7 +13,17 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Test if various imports work, mainly used to test that all dependencies are installed."""
+"""Script to test if all runtime dependencies are installed.
+
+This script is used mainly to test that build artifacts (e.g. wheels) install all dependencies. The
+:file:`Dockerfile` in this project will install the source distribution and wheel in pristine environments
+and run this script to detect any mistakes.
+
+.. NOTE::
+
+    Do not use any libraries here that are not needed in production. Installing extra dependencies for the
+    test defeats the main purpose of this script.
+"""
 
 # flake8: NOQA: E408
 # pylint: disable=wrong-import-position,unused-import,reimported
@@ -26,7 +36,7 @@ import django
 from django.conf import settings
 
 parser = argparse.ArgumentParser("Test imports.")
-parser.add_argument("--extra", help="Test extras_require.")
+parser.add_argument("--extra", help="Test an extra from extras_require.")
 args = parser.parse_args()
 
 settings.configure(
@@ -36,6 +46,9 @@ settings.configure(
         "django.contrib.contenttypes",
         "django.contrib.staticfiles",
         "django.contrib.admin",
+        # Third-party django apps
+        "django_object_actions",
+        # django-ca itself
         "django_ca",
     ],
     BASE_DIR=os.getcwd(),
@@ -62,6 +75,8 @@ from django.template.loader import TemplateDoesNotExist
 from django.template.loader import get_template
 
 from django_ca import models
+from django_ca import subject
+from django_ca import utils
 from django_ca import views
 from django_ca.acme import constants
 from django_ca.extensions import Extension

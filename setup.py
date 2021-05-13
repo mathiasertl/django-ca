@@ -22,9 +22,9 @@ from setuptools import find_packages
 from setuptools import setup
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # directory of this file
-DOCS_DIR = os.path.join(BASE_DIR, 'docs', 'source')
+DOCS_DIR = os.path.join(BASE_DIR, "docs", "source")
 
-with open(os.path.join(DOCS_DIR, 'intro.rst')) as stream:
+with open(os.path.join(DOCS_DIR, "intro.rst")) as stream:
     LONG_DESCRIPTION = stream.read().strip()
 
 LONG_DESCRIPTION += "\n\nPlease see https://django-ca.readthedocs.org for more extensive documentation."
