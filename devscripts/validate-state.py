@@ -21,9 +21,11 @@ import importlib.util
 import os
 import sys
 
-import toml
 import yaml
 from termcolor import colored
+
+from dev.config import CONFIG
+from dev.config import ROOT_DIR
 
 try:
     from yaml import CLoader as Loader
@@ -90,12 +92,12 @@ def check_travis():
         travis_config = yaml.load(stream, Loader=Loader)
 
     # check the list of tested python versions
-    errors += simple_diff("Python versions", travis_config["python"], list(config["python-map"]))
+    errors += simple_diff("Python versions", travis_config["python"], list(CONFIG["python-map"]))
 
     # check the job matrix
     expected_matrix = []
-    for djver in sorted(config["django"]):
-        for cgver in sorted(config["cryptography"]):
+    for djver in sorted(CONFIG["django"]):
+        for cgver in sorted(CONFIG["cryptography"]):
             expected_matrix.append(f"DJANGO={djver} CRYPTOGRAPHY={cgver}")
 
     if expected_matrix != travis_config["env"]["jobs"]:
@@ -115,9 +117,9 @@ def check_github_actions_tests():
         action_config = yaml.load(stream, Loader=Loader)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
-    errors = simple_diff("Python versions", matrix["python-version"], list(config["python-map"]))
-    errors += simple_diff("Django versions", matrix["django-version"], config["django"])
-    errors += simple_diff("cryptography versions", matrix["cryptography-version"], config["cryptography"])
+    errors = simple_diff("Python versions", matrix["python-version"], list(CONFIG["python-map"]))
+    errors += simple_diff("Django versions", matrix["django-version"], CONFIG["django"])
+    errors += simple_diff("cryptography versions", matrix["cryptography-version"], CONFIG["cryptography"])
     return errors
 
 
@@ -133,10 +135,10 @@ def check_tox():
 
     # Check that there is a testenv listing all versions
     expected_envlist = "py{%s}-django{%s}-cryptography{%s}-idna{%s}" % (
-        ",".join([pyver.replace(".", "") for pyver in config["python-map"]]),
-        ",".join(config["django-map"]),
-        ",".join(config["cryptography-map"]),
-        ",".join(config["idna-map"]),
+        ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
+        ",".join(CONFIG["django-map"]),
+        ",".join(CONFIG["cryptography-map"]),
+        ",".join(CONFIG["idna-map"]),
     )
     if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
         errors += fail("Expected envlist item not found: %s" % expected_envlist)
@@ -147,10 +149,10 @@ def check_tox():
         errors += simple_diff(
             f"{component} conditional dependencies present",
             [e for e in tox_env_reqs if e.startswith(component)],
-            [f"{component}{major}" for major in config[f"{component}-map"]],
+            [f"{component}{major}" for major in CONFIG[f"{component}-map"]],
         )
 
-        for major, minor in config[f"{component}-map"].items():
+        for major, minor in CONFIG[f"{component}-map"].items():
             name = f"{component}{major}"
             actual = tox_env_reqs[name]
             expected = f"{CANONICAL_PYPI_NAMES[component]}=={minor}"
@@ -175,27 +177,27 @@ def check_setup_cfg():
     install_requires = setup_config["options"]["install_requires"].strip().splitlines()
 
     # validate that we have the proper language/django classifiers
-    for pyver in config["python-map"]:
+    for pyver in CONFIG["python-map"]:
         if f"Programming Language :: Python :: {pyver}" not in classifiers:
             errors += fail(f"Python {pyver} classifier not found.")
-    for djver in config["django-map"]:
+    for djver in CONFIG["django-map"]:
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += fail(f"Django {djver} classifier not found.")
 
-    expected_py_req = ">=%s" % config["python-major"][0]
+    expected_py_req = ">=%s" % CONFIG["python-major"][0]
     actual_py_req = setup_config["options"]["python_requires"]
     if actual_py_req != expected_py_req:
         errors += fail(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
-    expected_django_req = "Django>=%s" % config["django-major"][0]
+    expected_django_req = "Django>=%s" % CONFIG["django-major"][0]
     if expected_django_req not in install_requires:
         errors += fail(f"{expected_django_req}: Expected Django requirement not found.")
 
-    expected_cg_req = "cryptography>=%s" % config["cryptography-major"][0]
+    expected_cg_req = "cryptography>=%s" % CONFIG["cryptography-major"][0]
     if expected_cg_req not in install_requires:
         errors += fail(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
-    expected_idna_req = "idna>=%s" % config["idna-major"][0]
+    expected_idna_req = "idna>=%s" % CONFIG["idna-major"][0]
     if expected_idna_req not in install_requires:
         errors += fail(f"{expected_idna_req}: Expected idna requirement not found.")
 
@@ -213,7 +215,7 @@ def check_test_settings():
         config_key = f"{component}-map"
         setting = f"NEWEST_{component.upper()}_VERSION"
         value = getattr(test_settings, setting)
-        expected = tuple(int(e) for e in list(config[config_key])[-1].split("."))
+        expected = tuple(int(e) for e in list(CONFIG[config_key])[-1].split("."))
         if value == expected:
             ok(f"{setting} = {value}")
         else:
@@ -221,23 +223,6 @@ def check_test_settings():
 
     return errors
 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-PYPROJECT_PATH = os.path.join(os.path.dirname(BASE_DIR), "pyproject.toml")
-
-with open(os.path.join(ROOT_DIR, "pyproject.toml")) as stream:
-    data = toml.load(stream)
-
-config = data["django-ca"]["release"]
-config["python-map"] = {minor_to_major(pyver): pyver for pyver in config["python"]}
-config["python-major"] = [minor_to_major(pyver) for pyver in config["python"]]
-config["django-map"] = {djver.rsplit(".", 1)[0]: djver for djver in config["django"]}
-config["django-major"] = [djver.rsplit(".", 1)[0] for djver in config["django"]]
-config["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in config["cryptography"]}
-config["cryptography-major"] = [minor_to_major(cgver) for cgver in config["cryptography"]]
-config["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in config["idna"]}
-config["idna-major"] = [minor_to_major(idnaver) for idnaver in config["idna"]]
 
 total_errors = check(check_travis)
 total_errors += check(check_github_actions_tests)
