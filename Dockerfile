@@ -96,6 +96,7 @@ RUN chown django-ca:django-ca .coverage /var/lib/django-ca/ /usr/src/django-ca/c
 USER django-ca:django-ca
 
 # Run linters and unit tests
+COPY devscripts/ devscripts/
 RUN python dev.py code-quality
 RUN python dev.py coverage --format=text
 
