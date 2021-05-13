@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.18.0:
 
-************
-1.18.0 (TBR)
-************
+*******************
+1.18.0 (2021-05-13)
+*******************
 
 This version is currently under development.
 

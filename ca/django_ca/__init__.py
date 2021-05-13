@@ -4,10 +4,10 @@
 # https://www.python.org/dev/peps/pep-0440/
 # https://www.python.org/dev/peps/pep-0396/
 # https://www.python.org/dev/peps/pep-0386/
-VERSION = (1, 18, 0, "dev", 1)
+VERSION = (1, 18, 0)
 
 # __version__ specified in PEP 0396, but we use PEP 0440 format instead of PEP 0386.
-__version__ = "1.18.0.dev1"
+__version__ = "1.18.0"
 
 # Path to default Django app configuration
 # pylint: disable=invalid-name
