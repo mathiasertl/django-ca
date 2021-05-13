@@ -38,7 +38,7 @@ FROM build as dist-base
 COPY setup.py setup.cfg MANIFEST.in ./
 RUN python setup.py sdist bdist_wheel
 RUN rm -rf ca/ setup.py setup.cfg MANIFEST.in
-COPY test-imports.py ./
+COPY devscripts/test-imports.py ./
 
 ##############
 # Test sdist #
