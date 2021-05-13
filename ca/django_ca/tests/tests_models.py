@@ -215,7 +215,9 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
         msg = r"^Passing a str as algorithm is deprecated and will be removed in django-ca==1\.20\.0\.$"
         with self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
-            crl = self.ca.get_crl(full_name=[full_name], algorithm="SHA512").public_bytes(Encoding.PEM)
+            crl = self.ca.get_crl(
+                full_name=[full_name], algorithm="SHA512"  # type: ignore[arg-type] # what we test
+            ).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=self.ca)
 
     @freeze_time(timestamps["everything_valid"])
