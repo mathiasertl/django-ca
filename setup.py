@@ -22,23 +22,12 @@ from setuptools import find_packages
 from setuptools import setup
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # directory of this file
+DOCS_DIR = os.path.join(BASE_DIR, 'docs', 'source')
 
-LONG_DESCRIPTION = """django-ca is a tool to manage TLS certificate authorities and easily issue and revoke
-certificates. It is based `cryptography <https://cryptography.io/>`_ and `Django
-<https://www.djangoproject.com/>`_. It can be used as an app in an existing Django project or stand-alone with
-the basic project included.  Everything can be managed via the command line via `manage.py` commands - so no
-webserver is needed, if you’re happy with the command-line.
+with open(os.path.join(DOCS_DIR, 'intro.rst')) as stream:
+    LONG_DESCRIPTION = stream.read().strip()
 
-Features:
-
-* Set up a secure local certificate authority in just a few minutes.
-* Written in Python Python3.6+, requires Django 2.2+ or later.
-* Manage your entire certificate authority from the command line and/or via Djangos admin interface.
-* Get email notifications about certificates about to expire.
-* Certificate validation using Certificate Revocation Lists (CRLs) and via an included OCSP responder.
-
-Please see https://django-ca.readthedocs.org for more extensive documentation.
-"""
+LONG_DESCRIPTION += "\n\nPlease see https://django-ca.readthedocs.org for more extensive documentation."
 
 package_path = os.path.join(BASE_DIR, "ca")
 package_root = os.path.join(package_path, "django_ca")
