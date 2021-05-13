@@ -2,6 +2,8 @@
 Release process
 ###############
 
+.. highlight:: console
+
 **************
 Before release
 **************
@@ -9,11 +11,10 @@ Before release
 Check versions
 ==============
 
-* Update ``requirements*.txt`` (use ``pip list -o``).
-* Update ``[django-ca.release]`` in ``pyproject.toml``.
-* Run ``devscripts/validate-state.py`` and fix any errors.
-* Check that :file:`setup.cfg` has proper requirements and extra requirements.
-* Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py``
+* Update requirements in :file:`requirements*.txt` and :file:`setup.cfg` (use :command:`pip list -o`).
+* Update ``[django-ca.release]`` in :file:`pyproject.toml`.
+* Run :command:`devscripts/validate-state.py` and fix any errors.
+* Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py`
   (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update the docker images in `dev.py docker-test`.
 
@@ -27,7 +28,7 @@ Other tasks
   * `Django <https://www.djangoproject.com/download/>`_
   * `Alpine Linux <https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases>`_
 
-* Make sure that ``docs/source/changelog.rst`` is up to date.
+* Make sure that :file:`docs/source/changelog.rst` is up to date.
 
 Run test suite
 ==============
@@ -54,17 +55,13 @@ Make sure that the demo works::
 Test update
 ***********
 
-Checkout the previous version and create a test data:
-
-.. code-block:: console
+Checkout the previous version and create a test data::
 
    $ git checkout $PREVIOUS_VERSION
    $ rm -rf ca/db.sqlite3 ca/files
    $ devscripts/create-testdata.py
 
-Then checkout the current master, run migrations and validate the test data:
-
-.. code-block:: console
+Then checkout the current master, run migrations and validate the test data::
 
    $ git checkout master
    $ python ca/manage.py migrate
@@ -82,9 +79,7 @@ Test admin interface
 Docker
 ******
 
-Create a docker image:
-
-.. code-block:: console
+Create a docker image::
 
    export DOCKER_BUILDKIT=1
    docker build --progress=plain -t mathiasertl/django-ca .
@@ -165,15 +160,11 @@ Test update
      POSTGRES_PASSWORD=mysecretpassword
 
 * If testing ``django_ca<=1.17.3``, update image versions :file:`docker-compose.yml`.
-* Start the old version with:
-
-  .. code-block:: console
+* Start the old version with::
 
      $ DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d
 
-* Create test data:
-
-  .. code-block:: console
+* Create test data::
 
      $ docker cp devscripts/create-testdata.py \
      >   django-ca_backend_1:/usr/src/django-ca/ca/
@@ -183,16 +174,12 @@ Test update
      $ docker-compose exec frontend ./create-testdata.py --env frontend
 
 * Log into the admin interface and create some certificates.
-* Update to the newest version:
-
-  .. code-block:: console
+* Update to the newest version::
 
      $ git checkout master
      $ DJANGO_CA_VERSION=latest docker-compose up -d
 
-* Finally, validate that data was correctly migrated:
-
-  .. code-block:: console
+* Finally, validate that data was correctly migrated::
 
      $ docker cp devscripts/validate-testdata.py \
      >   django-ca_backend_1:/usr/src/django-ca/ca/
@@ -209,24 +196,29 @@ Release process
 * Tag the release: ``git tag -s $version -m "release $version"``
 * Push the tag: ``git push origin --tags``
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
-* Create package for PyPi: ``python setup.py sdist bdist_wheel``.
-* Upload package to PyPi: ``twine upload dist/*``
+* Create package for PyPi::
+
+      $ ./dev.py clean
+      $ python setup.py sdist bdist_wheel
+      $ twine check --strict dist/*
+
+* Upload package to PyPi: :command:`twine upload dist/*`
 * Tag and upload the docker image  (note that we create a image revision by appending ``-1``)::
 
-      docker tag mathiasertl/django-ca mathiasertl/django-ca:$version
-      docker tag mathiasertl/django-ca mathiasertl/django-ca:$version-1
-      docker push mathiasertl/django-ca:$version-1
-      docker push mathiasertl/django-ca:$version
-      docker push mathiasertl/django-ca
+      $ docker tag mathiasertl/django-ca mathiasertl/django-ca:$version
+      $ docker tag mathiasertl/django-ca mathiasertl/django-ca:$version-1
+      $ docker push mathiasertl/django-ca:$version-1
+      $ docker push mathiasertl/django-ca:$version
+      $ docker push mathiasertl/django-ca
 
 ***************
 After a release
 ***************
 
-* Update ``VERSION`` and ``__version__`` in ``ca/django_ca/__init__.py`` to the next
+* Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py` to the next
   development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
-* Update ``django_ca/deprecation.py``.
-* Drop support for older software versions in ``.travis.yml``, ``tox.ini`` and ``dev.py docker-test``.
-* Remove files in dist: ``rm -rf dist/*``
-* Update ``docker-compose.yml`` to use the ``latest`` version of **django-ca**.
-* Start new changelog entry in ``docs/source/changelog.rst``.
+* Update :file:`django_ca/deprecation.py`.
+* Drop support for older software versions in the ``[django-ca.release]`` section of in :file:`pyproject.toml`.
+* Run :command:`devscripts/validate-state.py` and fix any errors.
+* Update :file:`docker-compose.yml` to use the ``latest`` version of **django-ca**.
+* Start new changelog entry in :file:`docs/source/changelog.rst`.

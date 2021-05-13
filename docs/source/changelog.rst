@@ -48,13 +48,15 @@ Python API
 Linting and continuous integration
 ==================================
 
-* Use :file:`pyproject.toml` for all tools that support it.
-* Code is now clean according to `black <https://github.com/psf/black>`_.
-* Code is now clean according to `pylint <https://www.pylint.org/>`_.
 * Use `GitHub Actions <https://github.com/features/actions>`_ instead of Travis.
-* Code is now fully type-hinted. This requires the upcoming release of cryptography (current: 3.4).
-* Documentation is now style-checked using `doc8 <https://github.com/PyCQA/doc8>`_ and spell-checked using
-  `sphinxcontrib.spelling <https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html>`_.
+* Use :file:`pyproject.toml` for all tools that support it.
+* Code is now formatted with `black <https://github.com/psf/black>`_.
+* Code is now linted using `pylint <https://www.pylint.org/>`_.
+* Code is now fully type-hinted and type safe according to `mypy <https://mypy.readthedocs.io/>`_. This
+  requires the upcoming release of cryptography (current: 3.4).
+* Documentation is now cleaned with `doc8 <https://github.com/PyCQA/doc8>`_.
+* Documentation is now spell-checked using `sphinxcontrib.spelling
+  <https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html>`_.
 
 Deprecation notices
 ===================
@@ -62,6 +64,10 @@ Deprecation notices
 * This is the last release to support cryptography 3.0, 3.1 and 3.2.
 * Passing a ``str`` or ``bytes`` to :py:func:`~django_ca.managers.CertificateManager.create_cert` will be
   removed in django-ca 1.20.0.
+* Passing a ``str`` as an algorithm in :py:func:`~django_ca.models.CertificateAuthority.get_crl`,
+  :py:func:`~django_ca.profiles.Profile.create_cert` is deprecated and will no longer work in django-ca
+  1.20.0. Pass a :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance instead.
+* ``django_ca.utils.parse_csr()`` is no longer useful and will be removed in django-ca 1.20.0.
 * Creating an index for running an OCSP responder with :manpage:`openssl-ocsp(1SSL)` is deprecated and will be
   removed in django-ca 1.20.0. The man page explicitly states it "is only useful for test and demonstration
   purposes", and we can solidly run our own responders by now.
