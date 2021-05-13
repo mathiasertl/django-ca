@@ -33,11 +33,12 @@ Other tasks
 Run test suite
 ==============
 
-* First, run ``./dev.py clean``.
-* Check code quality (``./dev.py code-quality``).
-* Check test coverage (``./dev.py coverage``).
-* Make sure that ``./dev.py docker-test`` runs through.
-* Make sure that ``tox`` runs through for all environments.
+* First, run :command:`./dev.py clean`.
+* Check code quality (:command:`./dev.py code-quality`).
+* Check test coverage (:command:`./dev.py coverage`).
+* Check that documentation builds properly: :command:`make -C docs html-check`
+* Make sure that :command:`./dev.py docker-test` runs through.
+* Make sure that :command:`tox` runs through for all environments.
 
 *********
 Test demo
@@ -192,9 +193,9 @@ Test update
 Release process
 ***************
 
-* Push the last commit and make sure that Travis and Read The Docs are updated.
-* Tag the release: ``git tag -s $version -m "release $version"``
-* Push the tag: ``git push origin --tags``
+* Push the last commit and make sure that GitHub actions, Travis and Read The Docs run through.
+* Tag the release: :command:`git tag -s $version -m "release $version"`
+* Push the tag: :command:`git push origin --tags`
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Create package for PyPi::
 
