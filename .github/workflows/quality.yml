@@ -48,5 +48,10 @@ jobs:
       - name: Validate state
         run: devscripts/validate-state.py
 
+      - name: Validate sdist/wheel
+        run: |
+            python setup.py sdist bdist_wheel
+            twine check --strict dist/*
+
       - name: Run pylint
         run: pylint --verbose ca/django_ca/
