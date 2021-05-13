@@ -33,10 +33,18 @@ Other tasks
 Run test suite
 ==============
 
-* First, run :command:`./dev.py clean`.
-* Check code quality (:command:`./dev.py code-quality`).
-* Check test coverage (:command:`./dev.py coverage`).
-* Check that documentation builds properly: :command:`make -C docs html-check`
+Run all continuous integration tasks locally::
+
+   $ ./dev.py clean
+   $ ./dev.py code-quality
+   $ ./dev.py coverage
+
+Verify the documentation::
+
+   $ doc8 docs/source
+   $ make -C docs spelling
+   $ make -C docs html-check
+
 * Make sure that :command:`./dev.py docker-test` runs through.
 * Make sure that :command:`tox` runs through for all environments.
 
@@ -219,7 +227,8 @@ After a release
 * Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py` to the next
   development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update :file:`django_ca/deprecation.py`.
-* Drop support for older software versions in the ``[django-ca.release]`` section of in :file:`pyproject.toml`.
+* Drop support for older software versions in the ``[django-ca.release]`` section of in
+  :file:`pyproject.toml`.
 * Run :command:`devscripts/validate-state.py` and fix any errors.
 * Update :file:`docker-compose.yml` to use the ``latest`` version of **django-ca**.
 * Start new changelog entry in :file:`docs/source/changelog.rst`.
