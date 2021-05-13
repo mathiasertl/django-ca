@@ -225,11 +225,43 @@ def check_test_settings():
     return errors
 
 
+def check_intro():
+    errors = 0
+    intro_path = os.path.join("docs", "source", "intro.rst")
+    intro_fullpath = os.path.join(ROOT_DIR, intro_path)
+    check_path(intro_path)
+    with open(intro_fullpath) as stream:
+        intro = stream.read()
+
+    if f"#. {exp_version_line}" not in intro.splitlines():
+        errors += fail('Does not contain correct version line ("Written in ...").')
+    return errors
+
+
+def check_readme():
+    errors = 0
+    check_path("README.md")
+    readme_fullpath = os.path.join(ROOT_DIR, "README.md")
+    with open(readme_fullpath) as stream:
+        readme = stream.read()
+    if f"{exp_version_line}" not in readme:
+        errors += fail('Does not contain correct version line ("Written in ...").')
+
+    return errors
+
+
+min_pyver = CONFIG["python-major"][0]
+min_djver = CONFIG["django-major"][0]
+min_cgver = CONFIG["cryptography-major"][0]
+exp_version_line = f"Written in Python {min_pyver}+, Django {min_djver}+ and cryptography {min_cgver}+."
+
 total_errors = check(check_travis)
 total_errors += check(check_github_actions_tests)
 total_errors += check(check_tox)
 total_errors += check(check_setup_cfg)
 total_errors += check(check_test_settings)
+total_errors += check(check_intro)
+total_errors += check(check_readme)
 
 if total_errors != 0:
     print(colored("A total of %s error(s) found!" % total_errors, "red", attrs=["bold"]))

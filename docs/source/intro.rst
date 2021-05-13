@@ -6,9 +6,9 @@ command-line.
 
 Features:
 
-1. Set up a secure local certificate authority in just a few minutes.
-2. Certificate revocation via CRLs and OCSP.
-3. Preliminary ACMEv2 support.
-4. Written in Python 3.6+, Django 2.2+ and cryptography 2.8+.
-5. Management via command line and/or via Djangos admin interface.
-6. Get email notifications about certificates about to expire.
+#. Set up a secure local certificate authority in just a few minutes.
+#. Certificate revocation via CRLs and OCSP.
+#. Preliminary ACMEv2 support.
+#. Written in Python 3.6+, Django 2.2+ and cryptography 3.0+.
+#. Management via command line and/or via Djangos admin interface.
+#. Get email notifications about certificates about to expire.
