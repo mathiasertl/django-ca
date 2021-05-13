@@ -385,7 +385,7 @@ elif args.command == "docker-test":
         else:
             error("  %s: %s" % (run["image"], run["error"]))
 
-    failed_images = [r for r in docker_runs if r["success"]]
+    failed_images = [r["image"] for r in docker_runs if not r["success"]]
     if not failed_images:
         ok("\nCongratulations :)")
     else:
