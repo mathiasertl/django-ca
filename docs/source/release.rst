@@ -52,13 +52,11 @@ Verify the documentation::
 Test demo
 *********
 
-Make sure that the demo works::
+Make sure that the demo works and test the commands from the output::
 
-   rm -rf ca/db.sqlite3 ca/files/
-   ./dev.py init-demo
-
-   # test commands from the output:
-   openssl verify -CAfile...
+   $ rm -rf ca/db.sqlite3 ca/files/
+   $ ./dev.py init-demo
+   $ openssl verify -CAfile...
 
 ***********
 Test update
@@ -90,8 +88,8 @@ Docker
 
 Create a docker image::
 
-   export DOCKER_BUILDKIT=1
-   docker build --progress=plain -t mathiasertl/django-ca .
+   $ export DOCKER_BUILDKIT=1
+   $ docker build --progress=plain -t mathiasertl/django-ca .
 
 ... and follow instructions at :ref:`docker-use` to test the Docker image.
 
