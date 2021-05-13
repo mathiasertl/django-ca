@@ -59,7 +59,7 @@ Linting and continuous integration
 Deprecation notices
 ===================
 
-* This is the last release to support cryptography 3.1 and 3.2.
+* This is the last release to support cryptography 3.0, 3.1 and 3.2.
 * Passing a ``str`` or ``bytes`` to :py:func:`~django_ca.managers.CertificateManager.create_cert` will be
   removed in django-ca 1.20.0.
 * Creating an index for running an OCSP responder with :manpage:`openssl-ocsp(1SSL)` is deprecated and will be
