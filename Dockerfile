@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pi
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY requirements.txt setup.cfg setup.py ./
 COPY requirements/ requirements/
-COPY docs/source/intro.rst docs/source/intro.rst
+COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
     -r requirements.txt \
     -r requirements/requirements-docker.txt \
@@ -77,6 +77,7 @@ ENV SQLITE_NAME=:memory:
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-docs.txt \
+    -r requirements/requirements-dist.txt \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-mypy.txt \
     -r requirements/requirements-lint.txt
@@ -106,7 +107,7 @@ RUN python dev.py coverage --format=text
 #RUN mypy ca/django_ca/
 
 # Use twine to check source distribution and wheel
-COPY --from=dist-base dist/ dist/
+COPY --from=dist-base /usr/src/django-ca/dist/ dist/
 RUN twine check --strict dist/*
 
 # Generate documentation
