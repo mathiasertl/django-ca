@@ -56,6 +56,7 @@ setup(
     version=django_ca.__version__,
     description="A Django app providing a SSL/TLS certificate authority.",
     long_description=LONG_DESCRIPTION,
+    long_description_content_type="text/x-rst",
     author="Mathias Ertl",
     author_email="mati@er.tl",
     url="https://github.com/mathiasertl/django-ca",
