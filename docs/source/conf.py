@@ -451,6 +451,7 @@ qualname_overrides = {
     "typing.ExtensionTypeTypeVar": "cg:cryptography.x509.ExtensionType",
     "typing.ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
     "typing.SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
+    "typing_extensions.Literal": "python:typing.Literal",
     "NoneType": "None",
 }
 
