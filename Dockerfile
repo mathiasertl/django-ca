@@ -131,7 +131,7 @@ COPY nginx/ nginx/
 RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
 
 # Test that imports are working
-COPY dev.py common.py .
+COPY dev.py common.py ./
 RUN cp -a /install/* /usr/local/
 ENV DJANGO_CA_SECRET_KEY=dummy
 RUN ./dev.py test-imports
