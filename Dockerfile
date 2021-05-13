@@ -38,13 +38,13 @@ FROM build as dist-base
 COPY setup.py setup.cfg MANIFEST.in ./
 RUN python setup.py sdist bdist_wheel
 RUN rm -rf ca/ setup.py setup.cfg MANIFEST.in
+COPY test-imports.py ./
 
 ##############
 # Test sdist #
 ##############
 FROM dist-base as sdist-test
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.tar.gz
-COPY test-imports.py ./
 RUN ./test-imports.py
 
 ############################
@@ -52,7 +52,6 @@ RUN ./test-imports.py
 ############################
 FROM dist-base as wheel-test
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django_ca*.whl
-COPY test-imports.py ./
 RUN ./test-imports.py
 
 FROM dist-base as wheel-test-acme
