@@ -38,14 +38,6 @@ Documentation is available at https://django-ca.readthedocs.org/.
 
 Please see https://django-ca.readthedocs.io/en/latest/changelog.html
 
-## ToDo
-
-Ideas on what we could do for future releases:
-
-1. Test CRL signing certificates.
-2. Only send out one notification if multiple certificates expire for a user.
-3. Add ability to automatically regenerate CRLs when a certificate is revoked.
-
 ## License
 
 This project is free software licensed under the [GPLv3](https://www.gnu.org/licenses/gpl.txt).
