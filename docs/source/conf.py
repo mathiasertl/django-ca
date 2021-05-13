@@ -37,10 +37,13 @@ _ROOT_DIR = os.path.dirname(os.path.dirname(_BASE_DIR))
 _SRC_DIR = os.path.join(_ROOT_DIR, 'ca')
 _FIXTURES = os.path.join(_SRC_DIR, 'django_ca', 'tests', 'fixtures')
 sys.path.insert(0, _SRC_DIR)
+sys.path.insert(0, os.path.join(_ROOT_DIR, "devscripts"))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ca.settings')
 
 import django  # NOQA
 from django.conf import settings  # NOQA
+
+from dev.config import CONFIG
 
 settings.configure(
     SECRET_KEY='dummy',
@@ -359,8 +362,11 @@ autodoc_mock_imports = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
-    'cg': ('https://cryptography.io/en/latest/', None),
-    'django': ('https://docs.djangoproject.com/en/dev/', 'https://docs.djangoproject.com/en/dev/_objects/'),
+    'cg': ('https://cryptography.io/en/%s/' % CONFIG["cryptography-major"][-1], None),
+    'django': (
+        'https://docs.djangoproject.com/en/%s/' % CONFIG["django-major"][-1],
+        'https://docs.djangoproject.com/en/%s/_objects/' % CONFIG["django-major"][-1],
+    ),
     'acme': ('https://acme-python.readthedocs.io/en/stable/', None),
 }
 
