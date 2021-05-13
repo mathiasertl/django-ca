@@ -1,4 +1,5 @@
 -rrequirements/requirements-docs.txt
+-rrequirements/requirements-dist.txt
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
 -rrequirements/requirements-mypy.txt
@@ -16,4 +17,3 @@ flake8-isort==4.0.0
 tabulate==0.8.9
 termcolor==1.1.0
 toml>=0.10
-wheel==0.36.2

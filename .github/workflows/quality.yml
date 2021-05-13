@@ -50,6 +50,7 @@ jobs:
 
       - name: Validate sdist/wheel
         run: |
+            pip install -r requirements/requirements-dist.txt
             python setup.py sdist bdist_wheel
             twine check --strict dist/*
 
