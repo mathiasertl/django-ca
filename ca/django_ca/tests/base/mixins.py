@@ -533,7 +533,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
         else:
             # mock https://docs.python.org/3/library/io.html#io.BufferedReader.read
-            def _read_mock(size: typing.Optional[int] = None):  # pylint: disable=unused-argument
+            def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
                 return stdin
 
             with mock.patch("sys.stdin.buffer.read", side_effect=_read_mock):
@@ -561,7 +561,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             stdin_mock = mock.patch("sys.stdin", stdin)
         else:
 
-            def _read_mock(size: typing.Optional[int] = None):  # pylint: disable=unused-argument
+            def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
                 return stdin
 
             # TYPE NOTE: mypy detects a different type, but important thing is its a context manager
