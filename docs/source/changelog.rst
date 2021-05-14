@@ -7,7 +7,7 @@ ChangeLog
 .. _changelog-1.18.0:
 
 *******************
-1.18.0 (2021-05-13)
+1.18.0 (2021-05-14)
 *******************
 
 This version is currently under development.
