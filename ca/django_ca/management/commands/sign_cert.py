@@ -149,7 +149,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Read the CSR
         if csr_path == "-":
             self.stdout.write("Please paste the CSR:")
-            csr_bytes = sys.stdin.buffer.read()
+            csr_bytes = b""
+            while True:
+                csr_bytes += sys.stdin.buffer.read(1)
+                # COVERAGE NOTE: mock function always returns the full string, so we always break right away
+                if csr_bytes.strip().endswith(b"-----END CERTIFICATE REQUEST-----"):  # pragma: no branch
+                    break
         else:
             with open(csr_path, "rb") as csr_stream:
                 csr_bytes = csr_stream.read()
