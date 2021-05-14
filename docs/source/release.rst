@@ -66,6 +66,7 @@ Checkout the previous version and create a test data::
 
    $ git checkout $PREVIOUS_VERSION
    $ rm -rf ca/db.sqlite3 ca/files
+   $ python ca/manage.py migrate
    $ devscripts/create-testdata.py
 
 Then checkout the current master, run migrations and validate the test data::
@@ -98,14 +99,23 @@ docker-compose
 **************
 
 * Verify that docker-compose uses up-to-date version of 3rd-party containers.
-* Follow :doc:`quickstart_docker_compose` to set up a CA.
+* Follow :doc:`quickstart_docker_compose` to set up a CA (but skip the TLS parts - no CA will issue a
+  certificate for localhost). Don't forget to add an admin user and set up CAs.
+* For this for your :file:`.env` file:
 
-  * Use ``localhost`` as hostname.
-  * Do not set ``NGINX_TEMPLATE`` in :file:`.env`.
-  * Do not add a :file:`docker-compose.override.yml` (it's only for TLS).
+  .. code-block:: bash
 
-You should now be able to visit http://localhost/admin and log in. You are able to sign a certificate, but
-*only* for the "child" CA.
+     DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
+     DJANGO_CA_CA_ENABLE_ACME=true
+     POSTGRES_PASSWORD=mysecretpassword
+
+After starting the setup, first verify that you're running the correct version::
+
+   $ docker-compose exec backend manage shell -c "import django_ca; print(django_ca.__version__)"
+   $ docker-compose exec frontend manage shell -c "import django_ca; print(django_ca.__version__)"
+
+You should now be able to log in at http://localhost/admin. You are able to sign a certificate, but *only* for
+the "child" CA.
 
 In order to sign a certificate, we first need a private key and a CSR:
 
@@ -132,6 +142,8 @@ Check that the same fails in the frontend container (because the root CA is only
 
    $ docker-compose exec frontend manage sign_cert --ca="Root CA" \
    >     --subject="/CN=signed-in-backend.example.com"
+   ...
+   manage sign_cert: error: argument --ca: Root: ca/...key: Private key does not exist.
 
 Finally, verify that CRL and OCSP validation works:
 

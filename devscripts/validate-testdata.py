@@ -109,3 +109,5 @@ for cert in Certificate.objects.all():
     if not isinstance(cert.pub.loaded, x509.Certificate):
         print(f"{cert}: Cannot load certificate.")
         sys.exit(1)
+
+print("No errors reported.")
