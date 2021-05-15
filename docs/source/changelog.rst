@@ -10,8 +10,6 @@ ChangeLog
 1.18.0 (2021-05-15)
 *******************
 
-This version is currently under development.
-
 * Add support for Django 3.2.
 * Prevent auto-completion of the CA password field in the admin interface.
 * Improve CSR validation when using the admin interface.
