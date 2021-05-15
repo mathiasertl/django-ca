@@ -35,6 +35,12 @@ import sys
 import django
 from django.conf import settings
 
+# Add source dir to path if not present. This happens at least when this script started in a Docker image.
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+SRC_DIR = os.path.join(ROOT_DIR, "ca")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
 parser = argparse.ArgumentParser("Test imports.")
 parser.add_argument("--extra", help="Test an extra from extras_require.")
 args = parser.parse_args()
