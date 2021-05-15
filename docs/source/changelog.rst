@@ -4,6 +4,19 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.19.0:
+
+************
+1.19.0 (TBR)
+************
+
+This version is currently under development.
+
+Backwards incompatible changes
+==============================
+
+* Drop support for cryptography 3.0, 3.1 and 3.2.
+
 .. _changelog-1.18.0:
 
 *******************
