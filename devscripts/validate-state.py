@@ -22,6 +22,7 @@ import os
 import sys
 
 import yaml
+from setuptools.config import read_configuration
 from termcolor import colored
 
 from dev.config import CONFIG
@@ -170,12 +171,11 @@ def check_setup_cfg():
     check_path("setup.cfg")
     errors = 0
 
-    setup_config = configparser.ConfigParser()
-    setup_config.read(os.path.join(ROOT_DIR, "setup.cfg"))
+    setup_config = read_configuration(os.path.join(ROOT_DIR, "setup.cfg"))
 
     # parse data from setup.cfg
-    classifiers = setup_config["metadata"]["classifiers"].strip().splitlines()
-    install_requires = setup_config["options"]["install_requires"].strip().splitlines()
+    classifiers = setup_config["metadata"]["classifiers"]
+    install_requires = setup_config["options"]["install_requires"]
 
     # validate that we have the proper language/django classifiers
     for pyver in CONFIG["python-map"]:
