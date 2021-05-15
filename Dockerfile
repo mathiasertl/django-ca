@@ -45,6 +45,7 @@ COPY devscripts/test-imports.py ./
 ##############
 FROM dist-base as sdist-test
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.tar.gz
+ADD setup.cfg ./
 RUN ./test-imports.py
 
 ############################
@@ -52,19 +53,33 @@ RUN ./test-imports.py
 ############################
 FROM dist-base as wheel-test
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django_ca*.whl
+ADD setup.cfg ./
 RUN ./test-imports.py
 
 FROM dist-base as wheel-test-acme
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[acme]
+ADD setup.cfg ./
 RUN ./test-imports.py --extra=acme
 
 FROM dist-base as wheel-test-redis
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[redis]
+ADD setup.cfg ./
 RUN ./test-imports.py --extra=redis
 
 FROM dist-base as wheel-test-celery
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[celery]
+ADD setup.cfg ./
 RUN ./test-imports.py --extra=celery
+
+FROM dist-base as wheel-test-mysql
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[mysql]
+ADD setup.cfg ./
+RUN ./test-imports.py --extra=mysql
+
+FROM dist-base as wheel-test-postgres
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[postgres]
+ADD setup.cfg ./
+RUN ./test-imports.py --extra=postgres
 
 ##############
 # Test stage #
@@ -146,6 +161,8 @@ COPY --from=wheel-test /usr/src/django-ca/test-imports.py /tmp
 COPY --from=wheel-test-acme /usr/src/django-ca/test-imports.py /tmp
 COPY --from=wheel-test-redis /usr/src/django-ca/test-imports.py /tmp
 COPY --from=wheel-test-celery /usr/src/django-ca/test-imports.py /tmp
+COPY --from=wheel-test-mysql /usr/src/django-ca/test-imports.py /tmp
+COPY --from=wheel-test-postgres /usr/src/django-ca/test-imports.py /tmp
 
 ###############
 # final stage #
