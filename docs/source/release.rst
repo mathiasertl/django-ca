@@ -87,10 +87,23 @@ Test admin interface
 Docker
 ******
 
-Create a docker image::
+Create the docker image::
 
+   $ docker system prune -af
    $ export DOCKER_BUILDKIT=1
    $ docker build --progress=plain -t mathiasertl/django-ca .
+
+Do some basic sanity checking of the Docker image::
+
+   $ docker run -e DJANGO_CA_SECRET_KEY=dummy --rm \
+   >     mathiasertl/django-ca manage shell -c \
+   >     "import django_ca; print(django_ca.__version__)"
+   ...
+   $ docker run --rm \
+   >     -v `pwd`/setup.cfg:/usr/src/django-ca/setup.cfg \
+   >     -v `pwd`/devscripts/:/usr/src/django-ca/devscripts \
+   >     -w /usr/src/django-ca/ \
+   >     mathiasertl/django-ca devscripts/test-imports.py --all-extras
 
 ... and follow instructions at :ref:`docker-use` to test the Docker image.
 

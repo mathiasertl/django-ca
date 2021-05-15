@@ -7,7 +7,7 @@ ChangeLog
 .. _changelog-1.18.0:
 
 *******************
-1.18.0 (2021-05-14)
+1.18.0 (2021-05-15)
 *******************
 
 This version is currently under development.
@@ -22,6 +22,7 @@ This version is currently under development.
   the base class.
 * Certificate bundles now always end with a newline, as normal bundles do.
 * Add setuptools extras for ``mysql`` and ``postgres``.
+* Add MySQL support for the Docker image.
 
 Backwards incompatible changes
 ==============================
