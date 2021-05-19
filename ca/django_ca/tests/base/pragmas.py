@@ -21,9 +21,9 @@ import sys
 VERSION = sys.version_info[:2]  # e.g. ``(3, 8)`` or ``(3, 8)``
 
 
-def noop(pragma: str) -> None:  # pylint: disable=unnecessary-pass,unused-argument
+# PYLINT NOTE: pragma argument so we can optionally add a print() for testing
+def noop(pragma: str) -> None:  # pylint: disable=unused-argument
     """Dummy function called in branches to make sure that coverage detects executed LOCs."""
-    pass
 
 
 # NOTE: You can also use "django" or "cryptography" as software version
