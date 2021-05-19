@@ -1,6 +1,6 @@
-****************
+################
 Coding standards
-****************
+################
 
 This document describes the coding standards used in this project.
 
