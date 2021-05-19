@@ -136,37 +136,76 @@ def test(suites):
     call_command("test", *suites, parallel=True)
 
 
-def exclude_versions(cov, sw, this_version, version, version_str):
+def exclude_versions(cov, sw, current_version, pragma_version, version_str):
     """
     Parameters
     ----------
     sw : str
-    this_version
+    current_version
         The currently used version.
-    version
+    pragma_version
         The version to add pragmas for.
     version_str:
         Same as `version` but as ``str``.
     """
 
-    if version == this_version:
+    if current_version == pragma_version:
         cov.exclude(r"pragma: only %s>%s" % (sw, version_str))
         cov.exclude(r"pragma: only %s<%s" % (sw, version_str))
 
         cov.exclude(r"pragma: %s<%s branch" % (sw, version_str))
+        cov.exclude(r"pragma: %s!=%s" % (sw, version_str))
+
+        # branches
+        cov.exclude(r"pragma: %s>=%s" % (sw, version_str), which="partial")
+        cov.exclude(r"pragma: %s<=%s" % (sw, version_str), which="partial")
+
+        # completely exclude pragma branches that just don't match.
+        # For example, when running python 3.9:
+        #
+        # if sys.version_info[:2] > (3, 9):  # pragma: py>3.9 branch
+        #     print("Only python 3.10 or later")
+        #
+        # --> just completely exclude the block, as it is never executed
+        cov.exclude(r"pragma: %s>%s branch" % (sw, version_str))
+        cov.exclude(r"pragma: %s<%s branch" % (sw, version_str))
     else:
         cov.exclude(r"pragma: only %s==%s" % (sw, version_str))
+        cov.exclude(r"pragma: %s!=%s" % (sw, version_str), which="partial")
 
-        if version > this_version:  # 3.7 > 3.6
+        if current_version < pragma_version:
             cov.exclude(r"pragma: only %s>=%s" % (sw, version_str))
             cov.exclude(r"pragma: only %s>%s" % (sw, version_str))
-            cov.exclude(r"pragma: %s<%s branch" % (sw, version_str), which="partial")
 
-        if version < this_version:  # 3.6 < 3.7
+            # Branches that run in the current version
+            cov.exclude(r"pragma: %s<%s branch" % (sw, version_str), which="partial")
+            cov.exclude(r"pragma: %s<=%s branch" % (sw, version_str), which="partial")
+
+            # Completely exclude branches only used in *newer* versions. For example, if you use Python 3.8:
+            #
+            # if sys.version_info[:2] > (3, 9):  # pragma: py>3.9 branch
+            #     print("Only python 3.9 or later")
+            #
+            # --> The branch is never executed on Python 3.8.
+            cov.exclude(r"pragma: %s>%s branch" % (sw, version_str))
+            cov.exclude(r"pragma: %s>=%s branch" % (sw, version_str))
+
+        if current_version > pragma_version:
             cov.exclude(r"pragma: only %s<=%s" % (sw, version_str))
             cov.exclude(r"pragma: only %s<%s" % (sw, version_str))
 
+            # Branches that run in the current version
+            cov.exclude(r"pragma: %s>%s branch" % (sw, version_str), which="partial")
+            cov.exclude(r"pragma: %s>=%s branch" % (sw, version_str), which="partial")
+
+            # Completely exclude branches only used in *older* versions. For example, if you use Python 3.9:
+            #
+            # if sys.version_info[:2] < (3, 9):  # pragma: py<3.9 branch
+            #     print("Only before Python 3.9")
+            #
+            # --> The branch is never executed on Python 3.9.
             cov.exclude(r"pragma: %s<%s branch" % (sw, version_str))
+            cov.exclude(r"pragma: %s<=%s branch" % (sw, version_str))
 
 
 if args.command == "test":
@@ -200,7 +239,7 @@ elif args.command == "coverage":
     )
 
     # exclude python version specific code
-    py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
+    py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10)]
     for version in py_versions:
         version_str = ".".join([str(v) for v in version])
         exclude_versions(cov, "py", sys.version_info[:2], version, version_str)

@@ -61,6 +61,7 @@ Welcome to django-ca's documentation!
 
    development
    contribute
+   standards
    release
    ca_examples
    extensions

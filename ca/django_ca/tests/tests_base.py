@@ -39,6 +39,7 @@ from ..utils import add_colons
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
+from .base import pragmas  # NOQA: F401  # import module to enable pragma checks
 from .base.mixins import TestCaseMixin
 
 
