@@ -19,6 +19,7 @@ import configparser
 import difflib
 import importlib.util
 import os
+import re
 import sys
 
 import yaml
@@ -27,6 +28,8 @@ from termcolor import colored
 
 from dev.config import CONFIG
 from dev.config import ROOT_DIR
+from dev.out import err
+from dev.out import ok
 
 try:
     from yaml import CLoader as Loader
@@ -51,27 +54,17 @@ def import_mod(name, path):
     return mod
 
 
-def ok(msg):
-    print(colored("[OK]", "green"), msg)
-    return 0
-
-
 def minor_to_major(version):
     if version.count(".") == 1:
         return version
     return ".".join(version.split(".", 2)[:2])
 
 
-def fail(msg):
-    print(colored("[ERR]", "red", attrs=["bold"]), msg)
-    return 1
-
-
 def simple_diff(what, actual, expected) -> int:
     if expected == actual:
         return ok(what)
     else:
-        return fail(f"{what}: Have {actual}, expected {expected}.")
+        return err(f"{what}: Have {actual}, expected {expected}.")
 
 
 def check(func):
@@ -143,7 +136,7 @@ def check_tox():
         ",".join(CONFIG["idna-map"]),
     )
     if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
-        errors += fail("Expected envlist item not found: %s" % expected_envlist)
+        errors += err("Expected envlist item not found: %s" % expected_envlist)
 
     # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "idna"]:
@@ -162,7 +155,7 @@ def check_tox():
                 continue  # handled in simple-diff above
 
             if actual != expected:
-                errors += fail(f"conditional dependency for {name}: Have {actual}, expected {expected}.")
+                errors += err(f"conditional dependency for {name}: Have {actual}, expected {expected}.")
 
     return errors
 
@@ -178,29 +171,39 @@ def check_setup_cfg():
     install_requires = setup_config["options"]["install_requires"]
 
     # validate that we have the proper language/django classifiers
-    for pyver in CONFIG["python-map"]:
-        if f"Programming Language :: Python :: {pyver}" not in classifiers:
-            errors += fail(f"Python {pyver} classifier not found.")
+    pyver_cfs = [
+        m.groups(0)[0] for m in filter(None, [re.search(r"Python :: (3\.[0-9]+)$", cf) for cf in classifiers])
+    ]
+    if pyver_cfs != CONFIG["python-major"]:
+        errors += err(f'Wrong python classifiers: Have {pyver_cfs}, wanted {CONFIG["python-major"]}')
+
+    djver_cfs = [
+        m.groups(0)[0]
+        for m in filter(None, [re.search(r"Django :: ([0-9]\.[0-9]+)$", cf) for cf in classifiers])
+    ]
+    if djver_cfs != CONFIG["django-major"]:
+        errors += err(f'Wrong python classifiers: Have {djver_cfs}, wanted {CONFIG["django-major"]}')
+
     for djver in CONFIG["django-map"]:
         if f"Framework :: Django :: {djver}" not in classifiers:
-            errors += fail(f"Django {djver} classifier not found.")
+            errors += err(f"Django {djver} classifier not found.")
 
     expected_py_req = ">=%s" % CONFIG["python-major"][0]
     actual_py_req = setup_config["options"]["python_requires"]
     if actual_py_req != expected_py_req:
-        errors += fail(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
+        errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
     expected_django_req = "Django>=%s" % CONFIG["django-major"][0]
     if expected_django_req not in install_requires:
-        errors += fail(f"{expected_django_req}: Expected Django requirement not found.")
+        errors += err(f"{expected_django_req}: Expected Django requirement not found.")
 
     expected_cg_req = "cryptography>=%s" % CONFIG["cryptography-major"][0]
     if expected_cg_req not in install_requires:
-        errors += fail(f"{expected_cg_req}: Expected cryptography requirement not found.")
+        errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
     expected_idna_req = "idna>=%s" % CONFIG["idna-major"][0]
     if expected_idna_req not in install_requires:
-        errors += fail(f"{expected_idna_req}: Expected idna requirement not found.")
+        errors += err(f"{expected_idna_req}: Expected idna requirement not found.")
 
     return errors
 
@@ -220,7 +223,7 @@ def check_test_settings():
         if value == expected:
             ok(f"{setting} = {value}")
         else:
-            errors += fail(f"{setting}: Have {value}, expected {expected}")
+            errors += err(f"{setting}: Have {value}, expected {expected}")
 
     return errors
 
@@ -234,7 +237,7 @@ def check_intro():
         intro = stream.read()
 
     if f"#. {exp_version_line}" not in intro.splitlines():
-        errors += fail('Does not contain correct version line ("Written in ...").')
+        errors += err('Does not contain correct version line ("Written in ...").')
     return errors
 
 
@@ -245,7 +248,7 @@ def check_readme():
     with open(readme_fullpath) as stream:
         readme = stream.read()
     if f"{exp_version_line}" not in readme:
-        errors += fail('Does not contain correct version line ("Written in ...").')
+        errors += err('Does not contain correct version line ("Written in ...").')
 
     return errors
 
