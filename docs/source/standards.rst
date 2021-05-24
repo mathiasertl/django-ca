@@ -86,7 +86,7 @@ To run all checkers with `tox <https://tox.readthedocs.io/en/latest/>`_, simply 
 
 .. code-block:: console
 
-   $ tox -e lint,pylint,mypy,docs
+   $ tox -e lint,pylint,mypy,docs,dist-test
 
 Note that pylint (currently) runs for an extremely long time.
 
@@ -137,5 +137,5 @@ documentation (note that pylint currently takes a long time).
 
 .. code-block:: console
 
-   $ tox -e lint,pylint,mypy,docs
+   $ tox -e lint,pylint,mypy,docs,dist-test
    $ ./dev.py coverage
