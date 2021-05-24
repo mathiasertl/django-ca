@@ -21,6 +21,10 @@ def err(msg):
     return 1
 
 
+def warn(msg):
+    print(colored("[WARN]", "yellow", attrs=["bold"]), msg)
+
+
 def ok(msg):
     print(colored("[OK]", "green"), msg)
     return 0
