@@ -51,6 +51,7 @@ class MagicWordsFilter(Filter):
         "cRLNumber",
         "caIssuers",
         "Pre-Authorization",  # term from ACME, don't remove "-" here
+        "Precertificate",
         "Django",
         "Djangos",
         "IPv4",
@@ -62,6 +63,8 @@ class MagicWordsFilter(Filter):
         "base64url",
         "LibreSSL",
         "OpenSSL",
+        "pyOpenSSL",
+        "libffi",
     }
 
     def __init__(self, *args, **kwargs):
@@ -80,8 +83,12 @@ class TypeHintsFilter(Filter):
     Return type annotations that are actually ``typing.TypeVar`` are not recognized as such. Sphinx also
     doesn't link them properly in HTML. This appears to also make them show up as spelling errors.
     """
-    typehints = [str(getattr(typehints, tv)) for tv in dir(typehints)
-                 if isinstance(getattr(typehints, tv), typing.TypeVar)]
+
+    typehints = [
+        str(getattr(typehints, tv))
+        for tv in dir(typehints)
+        if isinstance(getattr(typehints, tv), typing.TypeVar)
+    ]
 
     def _skip(self, word):
         return word in self.typehints
