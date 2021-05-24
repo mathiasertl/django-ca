@@ -142,28 +142,31 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         return
 
     # General data for challenge validation
-    token = challenge.token
+    token = challenge.encoded_token
     value = challenge.auth.value
-    encoded = jose.encode_b64jose(token.encode("utf-8"))
     thumbprint = challenge.auth.order.account.thumbprint
-    expected = f"{encoded}.{thumbprint}"
+    expected = f"{token}.{thumbprint}"
+    expected_bytes = expected.encode("utf-8")
 
     # Challenge is marked as invalid by default
     challenge_valid = False
 
+    # Validate HTTP challenge (only thing supported so far)
     if challenge.type == AcmeChallenge.TYPE_HTTP_01:
         if requests is None:  # pragma: no cover
             log.error("requests is not installed, cannot do http-01 challenge validation.")
             return
 
-        url = f"http://{value}/.well-known/acme-challenge/{encoded}"
+        url = f"http://{value}/.well-known/acme-challenge/{token}"
 
-        # Validate HTTP challenge (only thing supported so far)
         try:
-            response = requests.get(url, timeout=1)
-
-            if response.status_code == HTTPStatus.OK:
-                challenge_valid = response.text == expected
+            with requests.get(url, timeout=1, stream=True) as response:
+                # Only fetch the response body if the status code is HTTP 200 (OK)
+                if response.status_code == HTTPStatus.OK:
+                    # Only fetch the expected number of bytes to prevent a large file ending up in memory
+                    # But fetch one extra byte (if available) to make sure that response has no extra bytes
+                    received = response.raw.read(len(expected_bytes) + 1, decode_content=True)
+                    challenge_valid = received == expected_bytes
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
     else:

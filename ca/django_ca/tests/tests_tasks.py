@@ -14,12 +14,16 @@
 """Basic tests for various celery tasks."""
 
 import importlib
+import io
 import types
+import typing
+from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
 from unittest import mock
 
 import josepy as jose
+from urllib3.response import HTTPResponse
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -30,6 +34,7 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
 
+import requests_mock
 from freezegun import freeze_time
 
 from .. import ca_settings
@@ -204,6 +209,29 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
 
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,
+        content: typing.Optional[bytes] = None,
+        call_count: int = 1,
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        challenge = challenge or self.chall
+        auth = challenge.auth
+        account = auth.order.account
+
+        if content is None:
+            content = io.BytesIO(f"{challenge.encoded_token}.{account.thumbprint}".encode("utf-8"))
+
+        url = f"http://{auth.value}/.well-known/acme-challenge/{challenge.encoded_token}"
+
+        with requests_mock.Mocker() as mock:
+            matcher = mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
+            yield mock
+
+        self.assertEqual(matcher.call_count, call_count)
+
     def refresh_from_db(self) -> None:
         """Refresh objects from database."""
         self.account.refresh_from_db()
@@ -269,27 +297,21 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.patch("requests.get", side_effect=Exception("foo")) as req_mock:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
+        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
 
     def test_response_not_ok(self) -> None:
         """Test the server not returning a HTTP status code 200."""
 
-        with self.patch("requests.get") as req_mock:
-            req_mock.return_value.status_code = HTTPStatus.NOT_FOUND
-            req_mock.return_value.text = self.expected
+        with self.mock_challenge(status=HTTPStatus.NOT_FOUND):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
 
-        with self.patch("requests.get") as req_mock:
-            req_mock.return_value.status_code = HTTPStatus.OK
-            req_mock.return_value.text = "wrong answer!"
+        with self.mock_challenge(content=b"wrong answer"):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
     def test_unsupported_challenge(self) -> None:
         """Test what happens when challenge type is not supported."""
@@ -297,22 +319,16 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
 
-        with self.patch("requests.get") as req_mock:
-            req_mock.return_value.status_code = HTTPStatus.OK
-            req_mock.return_value.text = self.expected
+        with self.mock_challenge(call_count=0):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        req_mock.assert_not_called()
 
     def test_basic(self) -> None:
         """Test validation actually working."""
 
-        with self.patch("requests.get") as req_mock:
-            req_mock.return_value.status_code = HTTPStatus.OK
-            req_mock.return_value.text = self.expected
+        with self.mock_challenge():
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertValid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
     def test_multiple_auths(self) -> None:
         """If other authentications exist that are not in the valid state, order does not become valid."""
@@ -320,13 +336,10 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         AcmeAuthorization.objects.create(
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value="other.example.com"
         )
-        with self.patch("requests.get") as req_mock:
-            req_mock.return_value.status_code = HTTPStatus.OK
-            req_mock.return_value.text = self.expected
+        with self.mock_challenge():
             tasks.acme_validate_challenge(self.chall.pk)
 
         self.assertValid(AcmeOrder.STATUS_PENDING)
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1})])
 
 
 @freeze_time(timestamps["everything_valid"])

@@ -12,6 +12,8 @@ ChangeLog
 
 This version is currently under development.
 
+* Only fetch expected number of bytes when validating ACME challenges via HTTP to prevent DOS attacks.
+
 Backwards incompatible changes
 ==============================
 

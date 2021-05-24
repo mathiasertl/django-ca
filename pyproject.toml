@@ -32,7 +32,7 @@ known_crypto = [
 ]
 known_django = "django"
 known_django_addon = "django_object_actions"
-known_test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay"]
+known_test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock"]
 known_third_party = "OpenSSL"
 known_local_folder = "django_ca"
 sections = [

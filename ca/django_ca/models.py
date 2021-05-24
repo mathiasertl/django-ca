@@ -35,6 +35,7 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
+import josepy as jose
 import pytz
 
 from cryptography import x509
@@ -1674,6 +1675,11 @@ class AcmeChallenge(DjangoCAModel):
         if timezone.is_naive(self.validated):
             return timezone.make_aware(self.validated, timezone=pytz.UTC)
         return self.validated
+
+    @property
+    def encoded_token(self) -> str:
+        """Token in base64url encoded form."""
+        return jose.encode_b64jose(self.token.encode("ascii"))
 
     def get_challenge(self, request: HttpRequest) -> "messages.ChallengeBody":
         """Get the ACME challenge body for this challenge.
