@@ -68,7 +68,6 @@ selenium_grp.add_argument(
 parser = argparse.ArgumentParser(description="Helper-script for various tasks during development.")
 commands = parser.add_subparsers(dest="command")
 cq_parser = commands.add_parser("code-quality", help="Run various checks for coding standards.")
-ti_parser = commands.add_parser("test-imports", help="Import django-ca modules to test dependencies.")
 dt_parser = commands.add_parser("docker-test", help="Build the Docker image using various base images.")
 dt_parser.add_argument(
     "-i",
@@ -304,25 +303,6 @@ elif args.command == "code-quality":
         check=True,
         env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"),
     )
-elif args.command == "test-imports":
-    setup_django("ca.settings")
-
-    # pylint: disable=ungrouped-imports; have to call setup_django() first
-    # pylint: disable=unused-import; this command just tests if import is working
-
-    # useful when run in docker-test, where localsettings uses YAML
-    from django.conf import settings  # NOQA: F401
-
-    # import some modules - if any dependency is not installed, this will fail
-    from django_ca import extensions  # NOQA: F401
-    from django_ca import models  # NOQA: F401
-    from django_ca import subject  # NOQA: F401
-    from django_ca import tasks  # NOQA: F401
-    from django_ca import utils  # NOQA: F401
-    from django_ca import views  # NOQA: F401
-
-    # pylint: enable=ungrouped-imports,unused-import
-
 elif args.command == "docker-test":
     docker_runs = []
 

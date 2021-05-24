@@ -149,7 +149,8 @@ RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localse
 COPY dev.py common.py ./
 RUN cp -a /install/* /usr/local/
 ENV DJANGO_CA_SECRET_KEY=dummy
-RUN ./dev.py test-imports
+COPY devscripts/test-imports.py ./
+RUN ./test-imports.py
 
 # Remove files from working directory
 RUN rm dev.py
