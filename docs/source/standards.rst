@@ -76,7 +76,7 @@ the documentation, simply run:
 
 .. code-block:: console
 
-   $ make -C docs html-check
+   $ make -C docs html
 
 ***
 tox

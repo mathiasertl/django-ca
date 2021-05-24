@@ -127,7 +127,7 @@ RUN twine check --strict dist/*
 
 # Generate documentation
 ADD docker-compose.yml ./
-RUN make -C docs html-check
+RUN make -C docs html
 
 # create demo
 RUN python dev.py init-demo

@@ -12,6 +12,8 @@ ChangeLog
 
 This version is currently under development.
 
+* Documentation is now always generated in nitpicky mode and with warnings turned into errors.
+* Remove the now redundant ``html-check`` target for documentation generation.
 * Only fetch expected number of bytes when validating ACME challenges via HTTP to prevent DOS attacks.
 
 Backwards incompatible changes
