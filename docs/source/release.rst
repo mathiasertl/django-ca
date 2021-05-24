@@ -4,53 +4,31 @@ Release process
 
 .. highlight:: console
 
-**************
-Before release
-**************
+***********
+Preparation
+***********
 
-Check versions
-==============
+Run these steps when you begin to create a new release:
 
+* Double-check that the changelog is up to date.
 * Update requirements in :file:`requirements*.txt` and :file:`setup.cfg` (use :command:`pip list -o`).
-* Update ``[django-ca.release]`` in :file:`pyproject.toml`.
+* Check versions of major software dependencies and:
+
+  * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.
+  * Add a deprecation notice for versions no longer supported upstream.
+
+* Verify that :file:`docker-compose.yml` uses up-to-date version of 3rd-party containers.
 * Run :command:`devscripts/validate-state.py` and fix any errors.
-* Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py`
-  (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
-* Update the docker images in `dev.py docker-test`.
 
-Other tasks
-===========
+******************
+Test current state
+******************
 
-* Check if any version of a dependency is no longer supported and we can deprecate support for it
-  in the next release:
-
-  * `Python <https://devguide.python.org/#status-of-python-branches>`_
-  * `Django <https://www.djangoproject.com/download/>`_
-  * `Alpine Linux <https://alpinelinux.org/releases/>`_
-
-* Make sure that :file:`docs/source/changelog.rst` is up to date.
-
-Run test suite
-==============
-
-Run all continuous integration tasks locally::
-
-   $ ./dev.py clean
-   $ ./dev.py code-quality
-   $ ./dev.py coverage
-
-Verify the documentation::
-
-   $ doc8 docs/source
-   $ make -C docs spelling
-   $ make -C docs html-check
-
-* Make sure that :command:`./dev.py docker-test` runs through.
 * Make sure that :command:`tox` runs through for all environments.
+* Make sure that :command:`./dev.py docker-test` runs through.
 
-*********
 Test demo
-*********
+=========
 
 Make sure that the demo works and test the commands from the output::
 
@@ -58,9 +36,8 @@ Make sure that the demo works and test the commands from the output::
    $ ./dev.py init-demo
    $ openssl verify -CAfile...
 
-***********
 Test update
-***********
+===========
 
 Checkout the previous version and create a test data::
 
@@ -75,13 +52,19 @@ Then checkout the current master, run migrations and validate the test data::
    $ python ca/manage.py migrate
    $ devscripts/validate-testdata.py
 
-********************
 Test admin interface
-********************
+====================
 
 * Check if the output of CAs and certs look okay: http://localhost:8000/admin
 * Check if the profile selection when creating a certificate works.
 * Check if pasting a CSR shows values from the CSR next to the "Subject" field.
+
+**************
+Update version
+**************
+
+* Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py`
+  (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_) to the version number you want to release.
 
 ******
 Docker
@@ -111,7 +94,6 @@ Do some basic sanity checking of the Docker image::
 docker-compose
 **************
 
-* Verify that docker-compose uses up-to-date version of 3rd-party containers.
 * Follow :doc:`quickstart_docker_compose` to set up a CA (but skip the TLS parts - no CA will issue a
   certificate for localhost). Don't forget to add an admin user and set up CAs.
 * For this for your :file:`.env` file:

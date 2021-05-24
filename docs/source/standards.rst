@@ -4,6 +4,10 @@ Coding standards
 
 This document describes the coding standards used in this project.
 
+.. NOTE::
+
+   Just want to run all quality checks and tests? See :ref:`testing-checklist` below.
+
 *******
 Linters
 *******
@@ -67,7 +71,12 @@ Documentation is checked using `doc8 <https://github.com/pycqa/doc8>`_ and spell
    $ doc8 docs/source/
    $ make -C docs spelling
 
-Warnings are always turned into errors, as this uncovers various mistakes such as broken references.
+Warnings are always turned into errors, as this uncovers various mistakes such as broken references. To build
+the documentation, simply run:
+
+.. code-block:: console
+
+   $ make -C docs html-check
 
 ***
 tox
@@ -115,4 +124,18 @@ of Python, Django, cryptography.
 
 Please check :file:`ca/django_ca/tests/base/pragmas.py` for a tested file that includes all supported pragmas.
 Correctly using the pragmas is mandatory, as they are also used for finding outdated code when older versions
-are deprecated.
+are deprecated.a
+
+.. _testing-checklist:
+
+*****************
+Testing checklist
+*****************
+
+The following commands, assuming you have a virtualenv active, run all linters, test code coverage and check
+documentation (note that pylint currently takes a long time).
+
+.. code-block:: console
+
+   $ tox -e lint,pylint,mypy,docs
+   $ ./dev.py coverage
