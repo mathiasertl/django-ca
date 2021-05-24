@@ -40,3 +40,19 @@ CONFIG["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in CONFIG["
 CONFIG["cryptography-major"] = [minor_to_major(cgver) for cgver in CONFIG["cryptography"]]
 CONFIG["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in CONFIG["idna"]}
 CONFIG["idna-major"] = [minor_to_major(idnaver) for idnaver in CONFIG["idna"]]
+
+DOCKER_CONFIG = FULL_CONFIG["django-ca"].setdefault("docker", {})
+_alpine_images = DOCKER_CONFIG.setdefault("alpine-images", [])
+if "default" not in _alpine_images:
+    _alpine_images.append("default")
+
+DOCKER_CONFIG["metavar"] = "default|python:{%s-%s}-alpine{%s-%s}" % (
+    CONFIG["python-major"][0],
+    CONFIG["python-major"][-1],
+    CONFIG["alpine"][0],
+    CONFIG["alpine"][-1],
+)
+for pyver in reversed(CONFIG["python-major"]):
+    for alpver in reversed(CONFIG["alpine"]):
+        if f"python:{pyver}-alpine{alpver}" not in _alpine_images:
+            _alpine_images.append(f"python:{pyver}-alpine{alpver}")

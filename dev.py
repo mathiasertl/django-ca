@@ -42,6 +42,10 @@ from common import error
 from common import ok
 from common import setup_django
 
+sys.path.insert(0, os.path.join(ROOTDIR, "devscripts"))
+
+from dev.config import DOCKER_CONFIG  # NOQA: E402 # requires devscripts in path
+
 test_base = argparse.ArgumentParser(add_help=False)
 test_base.add_argument("-s", "--suites", default=[], nargs="+", help="Modules to test (e.g. tests_modules).")
 selenium_grp = test_base.add_argument_group("Selenium tests")
@@ -71,6 +75,9 @@ dt_parser.add_argument(
     "--image",
     action="append",
     dest="images",
+    choices=DOCKER_CONFIG["alpine-images"],
+    metavar=DOCKER_CONFIG["metavar"],
+    default=DOCKER_CONFIG["alpine-images"],
     help="Base images to test on, may be given multiple times.",
 )
 dt_parser.add_argument(
@@ -79,7 +86,7 @@ dt_parser.add_argument(
 dt_parser.add_argument(
     "--fail-fast", action="store_true", default=False, help="Stop if any docker process fails."
 )
-dt_parser.add_argument("--keep-image", action="store_true", default=False, help="Do not remove images..")
+dt_parser.add_argument("--keep-image", action="store_true", default=False, help="Do not remove images.")
 
 test_parser = commands.add_parser("test", parents=[test_base])
 cov_parser = commands.add_parser("coverage", parents=[test_base])
@@ -317,23 +324,9 @@ elif args.command == "test-imports":
     # pylint: enable=ungrouped-imports,unused-import
 
 elif args.command == "docker-test":
-    images = args.images or [
-        "default",
-        # Currently supported Alpine releases:
-        #   https://alpinelinux.org/releases/
-        "python:3.6-alpine3.13",
-        "python:3.7-alpine3.13",
-        "python:3.8-alpine3.13",
-        "python:3.9-alpine3.13",
-        "python:3.6-alpine3.12",
-        "python:3.7-alpine3.12",
-        "python:3.8-alpine3.12",
-        "python:3.9-alpine3.12",
-    ]
-
     docker_runs = []
 
-    for image in images:
+    for image in args.images:
         print("### Testing %s ###" % image)
         tag = "django-ca-test-%s" % image
 
