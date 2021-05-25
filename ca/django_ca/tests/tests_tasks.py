@@ -217,6 +217,7 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         content: typing.Optional[bytes] = None,
         call_count: int = 1,
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock a request to satisfy an ACME challenge."""
         challenge = challenge or self.chall
         auth = challenge.auth
         account = auth.order.account
@@ -226,9 +227,9 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         url = f"http://{auth.value}/.well-known/acme-challenge/{challenge.encoded_token}"
 
-        with requests_mock.Mocker() as mock:
-            matcher = mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
-            yield mock
+        with requests_mock.Mocker() as req_mock:
+            matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
+            yield req_mock
 
         self.assertEqual(matcher.call_count, call_count)
 

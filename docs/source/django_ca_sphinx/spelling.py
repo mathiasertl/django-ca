@@ -29,6 +29,8 @@ from django_ca.extensions import KeyUsage
 
 
 class URIFilter(URLFilter):
+    """Overwrite URIFilter to only allow http/https URLs."""
+
     _pattern = re.compile(r"URI:https?://[^\s]*")
 
 
