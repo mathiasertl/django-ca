@@ -16,12 +16,14 @@ hashable
 hostname
 installable
 instantiation
+isort
 iterable
 linters
 localhost
 middlewares
 mixin
 monospace
+mypy
 nitpicky
 oldoldstable
 parsable
@@ -31,6 +33,7 @@ precomputed
 preloaded
 preselect
 programmatically
+pylint
 pythonic
 reproducibility
 responder
@@ -47,6 +50,7 @@ submodule
 subtree
 subtrees
 themself
+tox
 unencrypted
 unparsed
 untrusted
