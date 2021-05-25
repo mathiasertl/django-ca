@@ -563,7 +563,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
                 "CRL",
                 "full name",
                 "relative name",
-                "only attr certs",
+                "only attribute certs",
                 "only ca certs",
                 "only user certs",
                 "reasons",
