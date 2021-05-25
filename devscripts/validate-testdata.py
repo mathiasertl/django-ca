@@ -55,8 +55,11 @@ except ModuleNotFoundError as ex:
     print("Error setting up Django: %s" % ex)
     sys.exit(1)
 
+# pylint: disable=wrong-import-position # django_setup needs to be called first.
 from django_ca.models import Certificate  # NOQA: E402
 from django_ca.models import CertificateAuthority  # NOQA: E402
+
+# pylint: enable=wrong-import-position
 
 rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")
 dsa_root = CertificateAuthority.objects.get(name="dsa.example.org")

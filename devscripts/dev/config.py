@@ -19,6 +19,7 @@ import toml
 
 
 def minor_to_major(version):
+    """Convert minor to major version."""
     if version.count(".") == 1:
         return version
     return ".".join(version.split(".", 2)[:2])

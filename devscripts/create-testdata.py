@@ -58,8 +58,11 @@ except ModuleNotFoundError as ex:
     print("Error setting up Django: %s" % ex)
     sys.exit(1)
 
+# pylint: disable=wrong-import-position # django_setup needs to be called first
 from django_ca.models import Certificate  # NOQA: E402
 from django_ca.models import CertificateAuthority  # NOQA: E402
+
+# pylint: enable=wrong-import-position
 
 User = get_user_model()
 
@@ -94,6 +97,7 @@ def test_initial_state(env):
 
 
 def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
+    """Shortcut to create a certificate."""
     common_name = "cert.%s" % ca.subject["CN"]
     # NOTE: We don't care about the type of private key, as the CA only ever receives the CSR
     cert_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())

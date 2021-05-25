@@ -25,6 +25,7 @@ and run this script to detect any mistakes.
     test defeats the main purpose of this script.
 """
 
+# NOTE: Disable import warnings, the whole point of this module to do imports later
 # flake8: NOQA: E408
 # pylint: disable=wrong-import-position,unused-import,reimported
 

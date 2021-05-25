@@ -46,6 +46,9 @@ load-plugins = "pylint_django"
 # Allow both snake-case and UPPER_CASE for class constants/enums
 class-const-rgx = "(?:(?P<snake>[a-z_]+)|(?P<upper>[A-Z_]+))"
 
+# Allow dashes in module names (= top level scripts)
+module-rgx = "[a-z_][a-z_-]+"
+
 # Configure Django
 init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
 django-settings-module = "ca.settings"
@@ -99,6 +102,9 @@ disable = [
     #   https://github.com/landscapeio/landscape-issues/issues/214
     "cyclic-import",
 
+    # devscripts have some larger overlapping parts
+    "duplicate-code",
+
     # These are just annoying
     "too-few-public-methods",
     "no-self-use",
@@ -151,4 +157,4 @@ ignore-docstrings = "yes"
 ignore-imports = "yes"
 
 # Minimum lines number of a similarity.
-min-similarity-lines = 8
+min-similarity-lines = 16

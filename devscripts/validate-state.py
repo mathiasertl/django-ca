@@ -26,10 +26,13 @@ import yaml
 from setuptools.config import read_configuration
 from termcolor import colored
 
+# pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev.config import CONFIG
 from dev.config import ROOT_DIR
 from dev.out import err
 from dev.out import ok
+
+# pylint: enable=no-name-in-module
 
 try:
     from yaml import CLoader as Loader
@@ -44,30 +47,27 @@ CANONICAL_PYPI_NAMES = {
 
 
 def check_path(path):
+    """Output the path to check."""
     print("* Checking %s:" % colored(path, attrs=["bold"]))
 
 
 def import_mod(name, path):
+    """Import the module from the given path."""
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
-def minor_to_major(version):
-    if version.count(".") == 1:
-        return version
-    return ".".join(version.split(".", 2)[:2])
-
-
 def simple_diff(what, actual, expected) -> int:
+    """Simply compare two values and output any difference."""
     if expected == actual:
         return ok(what)
-    else:
-        return err(f"{what}: Have {actual}, expected {expected}.")
+    return err(f"{what}: Have {actual}, expected {expected}.")
 
 
 def check(func):
+    """Run a given check."""
     errors = func()
     if errors == 1:
         print(colored(f"{errors} error found.", "red", attrs=["bold"]))
@@ -80,6 +80,7 @@ def check(func):
 
 
 def check_travis():
+    """Check travis.yml."""
     errors = 0
     check_path(".travis.yml")
     with open(os.path.join(ROOT_DIR, ".travis.yml")) as stream:
@@ -105,6 +106,7 @@ def check_travis():
 
 
 def check_github_actions_tests():
+    """Check github actions."""
     relpath = os.path.join(".github", "workflows", "tests.yml")
     full_path = os.path.join(ROOT_DIR, relpath)
     check_path(relpath)
@@ -119,6 +121,7 @@ def check_github_actions_tests():
 
 
 def check_tox():
+    """Check tox.ini."""
     errors = 0
     check_path("tox.ini")
     tox_config = configparser.ConfigParser()
@@ -161,6 +164,7 @@ def check_tox():
 
 
 def check_setup_cfg():
+    """Check setup.cfg"""
     check_path("setup.cfg")
     errors = 0
 
@@ -209,6 +213,7 @@ def check_setup_cfg():
 
 
 def check_test_settings():
+    """Check test_settings.py"""
     relpath = os.path.join("ca", "ca", "test_settings.py")
     fullpath = os.path.join(ROOT_DIR, relpath)
     check_path(relpath)
@@ -229,6 +234,7 @@ def check_test_settings():
 
 
 def check_intro():
+    """Check intro.rst (reused in a couple of places)."""
     errors = 0
     intro_path = os.path.join("docs", "source", "intro.rst")
     intro_fullpath = os.path.join(ROOT_DIR, intro_path)
@@ -242,6 +248,7 @@ def check_intro():
 
 
 def check_readme():
+    """Check contents of README.md."""
     errors = 0
     check_path("README.md")
     readme_fullpath = os.path.join(ROOT_DIR, "README.md")
