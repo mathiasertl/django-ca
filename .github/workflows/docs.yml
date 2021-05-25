@@ -38,7 +38,7 @@ jobs:
         run: doc8 docs/source/
 
       - name: Generate documentation
-        run: make -C docs html-check
+        run: make -C docs html
 
       - name: Spelling
         run: make -C docs spelling

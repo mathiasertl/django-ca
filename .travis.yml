@@ -53,7 +53,7 @@ jobs:
     - name: "Generate documentation"
       script:
         - pip install -r requirements/requirements-docs.txt
-        - make -C docs html-check
+        - make -C docs html
     - name: "Initialize demo"
       script:
         # test libs are required for recreating fixtures
