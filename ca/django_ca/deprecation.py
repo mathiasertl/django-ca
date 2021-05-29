@@ -14,12 +14,16 @@
 """Deprecation classes in django-ca."""
 
 
-class RemovedInDjangoCA119Warning(DeprecationWarning):
-    """Warning if a feature will be removed in the next django-ca version."""
-
-
 class RemovedInDjangoCA120Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in the version after the next django-ca version."""
+    """Warning if a feature will be removed in django-ca==1.20."""
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA119Warning
+class RemovedInDjangoCA121Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==1.21."""
+
+
+class RemovedInDjangoCA122Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==1.22."""
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA120Warning
