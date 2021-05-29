@@ -342,7 +342,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
             The decoded bytes of the nonce.
         """
         if ca is None:
-            ca = self.new_cas["root"]
+            ca = self.cas["root"]
 
         url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)

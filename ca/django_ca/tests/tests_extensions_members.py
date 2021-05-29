@@ -253,7 +253,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
 
         self.load_named_cas("__all__")
         self.load_named_certs("__all__")
-        for name, cert in list(self.new_cas.items()) + list(self.new_certs.items()):  # type: ignore[arg-type]
+        for name, cert in list(self.cas.items()) + list(self.certs.items()):  # type: ignore[arg-type]
             try:
                 ext = cert.pub.loaded.extensions.get_extension_for_class(x509.CertificatePolicies).value
             except x509.ExtensionNotFound:
@@ -267,7 +267,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         """Test for all known certs."""
         self.load_named_cas("__all__")
         self.load_named_certs("__all__")
-        for cert in list(self.new_cas.values()) + list(self.new_certs.values()):  # type: ignore[arg-type]
+        for cert in list(self.cas.values()) + list(self.certs.values()):  # type: ignore[arg-type]
             try:
                 val = cert.pub.loaded.extensions.get_extension_for_class(x509.CertificatePolicies).value
             except x509.ExtensionNotFound:

@@ -86,7 +86,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_password(self) -> None:
         """Test creating a CRL with a CA with a password."""
 
-        ca = self.new_cas["pwd"]
+        ca = self.cas["pwd"]
 
         # Giving no password raises a CommandError
         with self.assertCommandError("^Password was not given but private key is encrypted$"):
@@ -115,7 +115,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_disabled(self) -> None:
         """Test creating a CRL with a disabled CA."""
 
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         self.assertIsNotNone(ca.key(password=None))
         ca.enabled = False
         ca.save()

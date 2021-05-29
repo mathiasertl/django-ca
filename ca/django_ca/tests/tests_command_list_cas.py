@@ -45,13 +45,13 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
     ) -> None:
         """Assert the output of this command."""
         context.update(certs)
-        for ca_name in self.new_cas:
+        for ca_name in self.cas:
             context.setdefault("%s_state" % ca_name, "")
         self.assertEqual(output, expected.format(**context))
 
     def test_all_cas(self) -> None:
         """Test list with all CAs."""
-        for name in [k for k, v in certs.items() if v.get("type") == "ca" and k not in self.new_cas]:
+        for name in [k for k, v in certs.items() if v.get("type") == "ca" and k not in self.cas]:
             self.load_ca(name)
 
         stdout, stderr = self.cmd("list_cas")
@@ -140,7 +140,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         # manually create Certificate objects
         expires = timezone.now() + timedelta(days=3)
         valid_from = timezone.now() - timedelta(days=3)
-        root = self.new_cas["root"]
+        root = self.cas["root"]
         pub = certs["child-cert"]["pub"]["parsed"]
         child3 = CertificateAuthority.objects.create(
             name="child3", serial="child3", parent=root, expires=expires, valid_from=valid_from, pub=pub

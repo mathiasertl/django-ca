@@ -63,9 +63,7 @@ class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCas
 
     def test_child(self) -> None:
         """Test downloading the bundle for a child CA."""
-        self.assertBundle(
-            self.new_cas["child"], [self.new_cas["child"], self.ca], "child_example_com_bundle.pem"
-        )
+        self.assertBundle(self.cas["child"], [self.cas["child"], self.ca], "child_example_com_bundle.pem")
 
     def test_invalid_format(self) -> None:
         """Test downloading the bundle in an invalid format."""

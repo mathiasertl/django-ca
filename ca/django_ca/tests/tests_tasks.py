@@ -98,7 +98,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         hash_cls = hashes.SHA512
         enc_cls = Encoding.DER
 
-        for data in self.new_cas.values():
+        for data in self.cas.values():
             tasks.cache_crl(data.serial)
 
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
@@ -116,7 +116,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         enc_cls = Encoding.DER
         tasks.cache_crls()
 
-        for data in self.new_cas.values():
+        for data in self.cas.values():
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
@@ -133,7 +133,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         enc_cls = Encoding.DER
         tasks.cache_crls()
 
-        for data in self.new_cas.values():
+        for data in self.cas.values():
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
             self.assertIsNone(cache.get(key))
 
@@ -143,13 +143,13 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
 
         msg = r"^Password was not given but private key is encrypted$"
         with self.settings(CA_PASSWORDS={}), self.assertRaisesRegex(TypeError, msg):
-            tasks.cache_crl(self.new_cas["pwd"].serial)
+            tasks.cache_crl(self.cas["pwd"].serial)
 
     def test_no_private_key(self) -> None:
         """Test creating a CRL for a CA where no private key is available."""
 
         with self.assertRaises(FileNotFoundError):
-            tasks.cache_crl(self.new_cas["pwd"].serial)
+            tasks.cache_crl(self.cas["pwd"].serial)
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -162,7 +162,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     def test_single(self) -> None:
         """Test creating a single key."""
 
-        for ca in self.new_cas.values():
+        for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
             self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
@@ -173,7 +173,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         tasks.generate_ocsp_keys()
 
-        for ca in self.new_cas.values():
+        for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
             self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
@@ -189,7 +189,7 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
@@ -353,7 +353,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             pem=self.ACME_PEM_1,
@@ -480,7 +480,7 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             pem=self.ACME_PEM_1,

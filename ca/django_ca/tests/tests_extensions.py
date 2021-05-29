@@ -1288,8 +1288,8 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         super().setUp()
         self.name1 = "letsencrypt_x3-cert"
         self.name2 = "comodo_ev-cert"
-        cert1 = self.new_certs[self.name1]
-        cert2 = self.new_certs[self.name2]
+        cert1 = self.certs[self.name1]
+        cert2 = self.certs[self.name2]
 
         self.cgx1 = cert1.pub.loaded.extensions.get_extension_for_class(
             x509.PrecertificateSignedCertificateTimestamps

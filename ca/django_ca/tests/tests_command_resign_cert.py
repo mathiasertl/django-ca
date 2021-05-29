@@ -107,15 +107,15 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_different_ca(self) -> None:
         """Test writing with a different CA."""
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.new_cas["child"])
+            stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
 
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.cert, new, new_ca=self.new_cas["child"])
-        self.assertEqualExt(self.cert, new, new_ca=self.new_cas["child"])
+        self.assertResigned(self.cert, new, new_ca=self.cas["child"])
+        self.assertEqualExt(self.cert, new, new_ca=self.cas["child"])
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_overwrite(self) -> None:
@@ -188,7 +188,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_no_cn(self) -> None:
         """Test resigning with a subject that has no CN."""
         subject = "/C=AT"  # has no CN
-        cert = self.new_certs["no-extensions"]
+        cert = self.certs["no-extensions"]
 
         msg = r"^Must give at least a CN in --subject or one or more --alt arguments\."
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(

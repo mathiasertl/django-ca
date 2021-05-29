@@ -175,7 +175,7 @@ class OCSPIndexTestCase(TestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_ecc_ca(self) -> None:
         # test another CA
-        self.assertIndex(ca=self.new_cas["ecc"], expected=ECC_CA)
+        self.assertIndex(ca=self.cas["ecc"], expected=ECC_CA)
 
     @freeze_time(timestamps["everything_valid"])
     def test_file(self) -> None:
@@ -185,7 +185,7 @@ class OCSPIndexTestCase(TestCaseMixin, TestCase):
             path = os.path.join(tmpdir, "ocsp-index.txt")
 
             with self.assertDeprecation():
-                stdout, stderr = self.cmd("dump_ocsp_index", path, ca=self.new_cas["child"])
+                stdout, stderr = self.cmd("dump_ocsp_index", path, ca=self.cas["child"])
             self.assertEqual(stdout, "")
             self.assertEqual(stderr, "")
 
@@ -198,13 +198,13 @@ class OCSPIndexTestCase(TestCaseMixin, TestCase):
     def test_revoked(self) -> None:
         with freeze_time(timestamps["everything_valid"]) as frozen_timestamp:
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
-            cert = self.new_certs["ecc-cert"]
+            cert = self.certs["ecc-cert"]
             cert.revoke()
 
-            self.assertIndex(expected=REVOKED_FIRST, ca=self.new_cas["ecc"], revoked=revoked_timestamp)
+            self.assertIndex(expected=REVOKED_FIRST, ca=self.cas["ecc"], revoked=revoked_timestamp)
 
             frozen_timestamp.tick(timedelta(seconds=3600))
 
             revoked_timestamp = datetime.utcnow().strftime(self.timeformat)
             cert.revoke(ReasonFlags.key_compromise)
-            self.assertIndex(expected=REVOKED_SECOND, ca=self.new_cas["ecc"], revoked=revoked_timestamp)
+            self.assertIndex(expected=REVOKED_SECOND, ca=self.cas["ecc"], revoked=revoked_timestamp)

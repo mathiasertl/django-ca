@@ -46,7 +46,7 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-        for ca in self.new_cas.values():
+        for ca in self.cas.values():
             key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
             crl = x509.load_der_x509_crl(cache.get(key), default_backend())
             self.assertIsNotNone(crl)

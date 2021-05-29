@@ -58,11 +58,11 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         self.load_named_cas("__usable__")
         self.load_named_certs("__usable__")
 
-        self.assertExtensions(self.new_certs["no-extensions"], [], expect_defaults=False)
-        self.assertExtensions(self.new_certs["no-extensions"].pub.loaded, [], expect_defaults=False)
+        self.assertExtensions(self.certs["no-extensions"], [], expect_defaults=False)
+        self.assertExtensions(self.certs["no-extensions"].pub.loaded, [], expect_defaults=False)
 
         cert_key = "all-extensions"
-        cert = self.new_certs[cert_key]
+        cert = self.certs[cert_key]
         data = certs[cert_key]
         all_extensions = [
             OCSPNoCheck(),
@@ -96,7 +96,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
 
         # now test root and child ca
         cert_key = "root"
-        ca = self.new_cas[cert_key]
+        ca = self.cas[cert_key]
         data = certs[cert_key]
 
         root_extensions = [
@@ -106,7 +106,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         self.assertExtensions(ca, root_extensions)
 
         cert_key = "child"
-        ca = self.new_cas[cert_key]
+        ca = self.cas[cert_key]
         data = certs[cert_key]
 
         root_extensions = [

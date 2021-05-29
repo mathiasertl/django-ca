@@ -327,14 +327,14 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             args = self.parser.parse_args([certs[name]["serial"]])
             self.assertEqual(args.cert, cert)
 
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
         args = self.parser.parse_args([certs["root-cert"]["serial"][:6]])
-        self.assertEqual(args.cert, self.new_certs["root-cert"])
+        self.assertEqual(args.cert, self.certs["root-cert"])
 
     def test_missing(self) -> None:
         """Test giving an unknown cert."""
@@ -349,7 +349,7 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
     def test_multiple(self) -> None:
         """Test matching multiple certs with abbreviation."""
         # Manually set almost the same serial on second cert
-        cert = Certificate(ca=self.new_cas["root"])
+        cert = Certificate(ca=self.cas["root"])
         cert.update_certificate(certs["root-cert"]["pub"]["parsed"])
         cert.serial = cert.serial[:-1] + "X"
         cert.save()
@@ -384,7 +384,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
         args = self.parser.parse_args([certs["ecc"]["serial"][:6]])
-        self.assertEqual(args.ca, self.new_cas["ecc"])
+        self.assertEqual(args.ca, self.cas["ecc"])
 
     def test_missing(self) -> None:
         """Test giving an unknown CA."""
@@ -444,7 +444,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     def test_password(self) -> None:
         """Test that the action works with a password-encrypted CA."""
         args = self.parser.parse_args([certs["pwd"]["serial"]])
-        self.assertEqual(args.ca, self.new_cas["pwd"])
+        self.assertEqual(args.ca, self.cas["pwd"])
 
 
 class URLActionTestCase(ParserTestCaseMixin, TestCase):

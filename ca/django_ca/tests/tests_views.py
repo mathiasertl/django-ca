@@ -118,8 +118,8 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
-        root = self.new_cas["root"]
-        child = self.new_cas["child"]
+        root = self.cas["root"]
+        child = self.cas["child"]
         idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
         self.assertIsNotNone(root.key(password=None))
 
@@ -147,7 +147,7 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_ca_crl_intermediate(self) -> None:
         """Test getting CRL for an intermediate CA."""
-        child = self.new_cas["child"]
+        child = self.cas["child"]
         full_name = [
             x509.UniformResourceIdentifier(
                 "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
@@ -164,7 +164,7 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_password(self) -> None:
         """Test getting a CRL with a password."""
-        ca = self.new_cas["pwd"]
+        ca = self.cas["pwd"]
 
         # getting CRL from view directly doesn't work
         with self.assertRaisesRegex(TypeError, r"^Password was not given but private key is encrypted$"):
@@ -207,7 +207,7 @@ class GenericCAIssuersViewTests(TestCaseMixin, TestCase):
 
     def test_view(self) -> None:
         """Basic test for the view."""
-        for ca in self.new_cas.values():
+        for ca in self.cas.values():
             url = reverse("django_ca:issuer", kwargs={"serial": ca.root.serial})
             resp = self.client.get(url)
             self.assertEqual(resp["Content-Type"], "application/pkix-cert")

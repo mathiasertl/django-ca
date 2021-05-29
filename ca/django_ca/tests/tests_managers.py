@@ -246,7 +246,7 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
     def test_default_ca(self) -> None:
         """Test what is returned when **no** CA is configured as default."""
         self.load_named_cas("__all__")
-        ca = sorted(self.new_cas.values(), key=lambda ca: (ca.expires, ca.serial))[-1]
+        ca = sorted(self.cas.values(), key=lambda ca: (ca.expires, ca.serial))[-1]
         self.assertEqual(CertificateAuthority.objects.default(), ca)
 
     @override_settings(CA_DEFAULT_CA="")

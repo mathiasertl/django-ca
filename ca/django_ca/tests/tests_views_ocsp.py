@@ -281,7 +281,7 @@ class OCSPViewTestMixin(TestCaseMixin):
 
         # pylint: disable=too-many-locals
 
-        ocsp_cert = ocsp_cert or self.new_certs["profile-ocsp"]
+        ocsp_cert = ocsp_cert or self.certs["profile-ocsp"]
         self.assertEqual(http_response["Content-Type"], "application/ocsp-response")
 
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(http_response.content)

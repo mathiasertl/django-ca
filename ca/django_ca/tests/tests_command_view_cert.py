@@ -724,7 +724,7 @@ HPKP pin: {hpkp}
     @override_tmpcadir()
     def test_no_san_with_watchers(self) -> None:
         """Test a cert with no subjectAltNames but with watchers."""
-        cert = self.new_certs["no-extensions"]
+        cert = self.certs["no-extensions"]
         watcher = Watcher.from_addr("user@example.com")
         cert.watchers.add(watcher)
 
@@ -750,7 +750,7 @@ HPKP pin: %(hpkp)s
 
     def assertContrib(self, name: str, expected: str, **context: str) -> None:  # pylint: disable=invalid-name
         """Assert basic contrib output."""
-        cert = self.new_certs[name]
+        cert = self.certs[name]
         stdout, stderr = self.cmd(
             "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
         )

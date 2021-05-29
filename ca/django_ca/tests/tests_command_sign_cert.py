@@ -89,7 +89,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
 
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             cname = "%s-signed.example.com" % name
             stdin = self.csr_pem.encode()
             subject = Subject([("CN", cname)])
@@ -386,7 +386,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_with_password(self) -> None:
         """Test signing with a CA that is protected with a password."""
         password = b"testpassword"
-        ca = self.new_cas["pwd"]
+        ca = self.cas["pwd"]
         self.assertIsNotNone(ca.key(password=password))
 
         ca = CertificateAuthority.objects.get(pk=ca.pk)

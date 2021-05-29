@@ -90,20 +90,20 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        self.assertKey(self.new_cas["root"])
+        self.assertKey(self.cas["root"])
 
     @override_tmpcadir()
     def test_all(self) -> None:
         """Test for all CAs."""
         # Delete pwd_ca, because it will fail, since we do not give a password
-        self.new_cas["pwd"].delete()
-        del self.new_cas["pwd"]
+        self.cas["pwd"].delete()
+        del self.cas["pwd"]
 
         stdout, stderr = self.cmd("regenerate_ocsp_keys")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        for name in self.new_cas:
-            self.assertKey(self.new_cas[name])
+        for name in self.cas:
+            self.assertKey(self.cas[name])
 
     @override_tmpcadir()
     def test_overwrite(self) -> None:
@@ -111,7 +111,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        priv, cert = self.assertKey(self.new_cas["root"])
+        priv, cert = self.assertKey(self.cas["root"])
 
         # get list of existing certificates
         excludes = list(Certificate.objects.all().values_list("pk", flat=True))
@@ -120,7 +120,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        new_priv, new_cert = self.assertKey(self.new_cas["root"], excludes=excludes)
+        new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)
 
         # Key/Cert should now be different
         self.assertNotEqual(priv, new_priv)
@@ -145,7 +145,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_private_key(self) -> None:
         """Try when there is no private key."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         ca_storage.delete(ca.private_key_path)
         stdout, stderr = self.cmd("regenerate_ocsp_keys", ca.serial, no_color=True)
         self.assertEqual(stdout, "")

@@ -154,28 +154,28 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_key_str_password(self) -> None:
         """Test accessing the private key with a string password."""
-        ca = self.new_cas["pwd"]
+        ca = self.cas["pwd"]
         pwd = certs["pwd"]["password"].decode("utf-8")
 
         self.assertIsNotNone(ca.key(pwd))
 
     def test_pathlen(self) -> None:
         """Test the pathlen attribute."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(ca.pathlen, certs[name].get("pathlen"))
 
     def test_root(self) -> None:
         """Test the root attribute."""
-        self.assertEqual(self.new_cas["root"].root, self.new_cas["root"])
-        self.assertEqual(self.new_cas["child"].root, self.new_cas["root"])
+        self.assertEqual(self.cas["root"].root, self.cas["root"])
+        self.assertEqual(self.cas["child"].root, self.cas["root"])
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
     def test_full_crl(self) -> None:
         """Test getting the CRL for a CertificateAuthority."""
-        ca = self.new_cas["root"]
-        child = self.new_cas["child"]
-        cert = self.new_certs["root-cert"]
+        ca = self.cas["root"]
+        child = self.cas["child"]
+        cert = self.certs["root-cert"]
         full_name = "http://localhost/crl"
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
@@ -224,8 +224,8 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_intermediate_crl(self) -> None:
         """Test getting the CRL of an intermediate CA."""
-        child = self.new_cas["child"]
-        cert = self.new_certs["child-cert"]
+        child = self.cas["child"]
+        cert = self.certs["child-cert"]
         full_name = "http://localhost/crl"
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
@@ -241,9 +241,9 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     def test_full_crl_tz(self) -> None:
         """Test full CRL but with timezone support enabled."""
         # otherwise we get TZ warnings for preloaded objects
-        ca = self.new_cas["root"]
-        child = self.new_cas["child"]
-        cert = self.new_certs["root-cert"]
+        ca = self.cas["root"]
+        child = self.cas["child"]
+        cert = self.certs["root-cert"]
 
         ca.refresh_from_db()
         child.refresh_from_db()
@@ -255,18 +255,18 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
 
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL only contains CA
-        child_ca = self.new_cas["child"]
+        child_ca = self.cas["child"]
         child_ca.revoke()
-        self.new_cas["ecc"].revoke()
-        self.new_certs["root-cert"].revoke()
-        self.new_certs["child-cert"].revoke()
+        self.cas["ecc"].revoke()
+        self.certs["root-cert"].revoke()
+        self.certs["child-cert"].revoke()
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[child_ca], idp=idp, crl_number=1, signer=ca)
 
@@ -289,17 +289,17 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_user_crl(self) -> None:
         """Test getting a user CRL."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
 
         crl = ca.get_crl(scope="user").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL only contains cert
-        cert = self.new_certs["root-cert"]
+        cert = self.certs["root-cert"]
         cert.revoke()
-        self.new_certs["child-cert"].revoke()
-        self.new_cas["child"].revoke()
+        self.certs["child-cert"].revoke()
+        self.cas["child"].revoke()
         crl = ca.get_crl(scope="user").public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=ca)
 
@@ -307,16 +307,16 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_attr_crl(self) -> None:
         """Test getting an Attribute CRL (always an empty list)."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         idp = self.get_idp(only_contains_attribute_certs=True)
 
         crl = ca.get_crl(scope="attribute").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         # revoke ca and cert, CRL is empty (we don't know attribute certs)
-        self.new_certs["root-cert"].revoke()
-        self.new_certs["child-cert"].revoke()
-        self.new_cas["child"].revoke()
+        self.certs["root-cert"].revoke()
+        self.certs["child-cert"].revoke()
+        self.cas["child"].revoke()
         crl = ca.get_crl(scope="attribute").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, crl_number=1, signer=ca)
 
@@ -374,7 +374,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
         self.assertTrue(re.match("Must be valid JSON: ", exc_cm.exception.message_dict["crl_number"][0]))
 
     def test_crl_invalid_scope(self) -> None:
-        """"Try getting a CRL with an invalid scope."""
+        """ "Try getting a CRL with an invalid scope."""
         with self.assertRaisesRegex(ValueError, r'^scope must be either None, "ca", "user" or "attribute"$'):
             self.ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)  # type: ignore[arg-type]
 
@@ -451,7 +451,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
                 "PEM",
             ]
 
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         algo = hashes.SHA256()
         der_user_key = get_crl_cache_key(ca.serial, algo, Encoding.DER, "user")
         pem_user_key = get_crl_cache_key(ca.serial, algo, Encoding.PEM, "user")
@@ -478,9 +478,9 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
 
     def test_allows_intermediate(self) -> None:
         """Test checking if this CA allows intermediate CAs."""
-        self.assertTrue(self.new_cas["root"].allows_intermediate_ca)
-        self.assertTrue(self.new_cas["ecc"].allows_intermediate_ca)
-        self.assertFalse(self.new_cas["child"].allows_intermediate_ca)
+        self.assertTrue(self.cas["root"].allows_intermediate_ca)
+        self.assertTrue(self.cas["ecc"].allows_intermediate_ca)
+        self.assertFalse(self.cas["child"].allows_intermediate_ca)
 
 
 class CertificateTests(TestCaseMixin, TestCase):
@@ -519,11 +519,11 @@ class CertificateTests(TestCaseMixin, TestCase):
 
     def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(ca.valid_from, certs[name]["valid_from"])
             self.assertEqual(ca.expires, certs[name]["valid_until"])
 
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             self.assertEqual(cert.valid_from, certs[name]["valid_from"])
             self.assertEqual(cert.expires, certs[name]["valid_until"])
 
@@ -537,30 +537,30 @@ class CertificateTests(TestCaseMixin, TestCase):
 
     def test_root(self) -> None:
         """Test the root property."""
-        self.assertEqual(self.new_certs["root-cert"].root, self.new_cas["root"])
-        self.assertEqual(self.new_certs["child-cert"].root, self.new_cas["root"])
+        self.assertEqual(self.certs["root-cert"].root, self.cas["root"])
+        self.assertEqual(self.certs["child-cert"].root, self.cas["root"])
 
     @override_tmpcadir()
     def test_serial(self) -> None:
         """Test getting the serial."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(ca.serial, certs[ca.name].get("serial"))
 
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             self.assertEqual(cert.serial, certs[name].get("serial"))
 
     @override_tmpcadir()
     def test_subject_alternative_name(self) -> None:
         """Test getting the subjectAlternativeName extension."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(ca.subject_alternative_name, certs[ca.name].get("subject_alternative_name"))
 
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             self.assertEqual(cert.subject_alternative_name, certs[name].get("subject_alternative_name"))
 
         # Create a cert with some weirder SANs to test that too
         weird_cert = self.create_cert(
-            self.new_cas["child"],
+            self.cas["child"],
             certs["child-cert"]["csr"]["parsed"],
             subject=Subject({"CN": "all.example.com"}),
             extensions=[
@@ -650,13 +650,13 @@ class CertificateTests(TestCaseMixin, TestCase):
 
     def test_digest(self) -> None:
         """Test getting the digest value."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(ca.get_digest("MD5"), certs[name]["md5"])
             self.assertEqual(ca.get_digest("SHA1"), certs[name]["sha1"])
             self.assertEqual(ca.get_digest("SHA256"), certs[name]["sha256"])
             self.assertEqual(ca.get_digest("SHA512"), certs[name]["sha512"])
 
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             self.assertEqual(cert.get_digest("MD5"), certs[name]["md5"])
             self.assertEqual(cert.get_digest("SHA1"), certs[name]["sha1"])
             self.assertEqual(cert.get_digest("SHA256"), certs[name]["sha256"])
@@ -668,17 +668,17 @@ class CertificateTests(TestCaseMixin, TestCase):
         #   openssl x509 -in cert1.pem -pubkey -noout \
         #       | openssl rsa -pubin -outform der \
         #       | openssl dgst -sha256 -binary | base64
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(ca.hpkp_pin, certs[name]["hpkp"])
             self.assertIsInstance(ca.hpkp_pin, str)
 
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             self.assertEqual(cert.hpkp_pin, certs[name]["hpkp"])
             self.assertIsInstance(cert.hpkp_pin, str)
 
     def test_get_authority_key_identifier(self) -> None:
         """Test getting the authority key identifier."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(
                 ca.get_authority_key_identifier().key_identifier, certs[name]["subject_key_identifier"].value
             )
@@ -688,7 +688,7 @@ class CertificateTests(TestCaseMixin, TestCase):
             # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
-        ca = self.new_cas["child"]
+        ca = self.cas["child"]
         with mock.patch(
             "cryptography.x509.extensions.Extensions.get_extension_for_class", side_effect=side_effect
         ):
@@ -699,7 +699,7 @@ class CertificateTests(TestCaseMixin, TestCase):
 
     def test_get_authority_key_identifier_extension(self) -> None:
         """Test getting the authority key id extension for CAs."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             self.assertEqual(
                 ca.get_authority_key_identifier_extension().key_identifier,
                 certs[name]["subject_key_identifier"].value,
@@ -718,16 +718,16 @@ class CertificateTests(TestCaseMixin, TestCase):
                 # data if instantiated from dict (b/c we cannot create the cryptography objects).
                 continue
 
-            for name, ca in self.new_cas.items():
+            for name, ca in self.cas.items():
                 self.assertExtension(ca, name, key, cls)
 
-            for name, cert in self.new_certs.items():
+            for name, cert in self.certs.items():
                 self.assertExtension(cert, name, key, cls)
 
     # @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
     def test_precertificate_signed_certificate_timestamps(self) -> None:
         """Test getting the SCT timestamp extension."""
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             ext = getattr(cert, PrecertificateSignedCertificateTimestamps.key)
 
             if PrecertificateSignedCertificateTimestamps.key in certs[name]:
@@ -973,11 +973,9 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.kid1 = self.absolute_uri(
-            ":acme-account", serial=self.new_cas["root"].serial, slug=self.ACME_SLUG_1
-        )
+        self.kid1 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=self.ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
@@ -986,11 +984,9 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             slug=self.ACME_SLUG_1,
             kid=self.kid1,
         )
-        self.kid2 = self.absolute_uri(
-            ":acme-account", serial=self.new_cas["child"].serial, slug=self.ACME_SLUG_2
-        )
+        self.kid2 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=self.ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
-            ca=self.new_cas["child"],
+            ca=self.cas["child"],
             contact="mailto:user@example.net",
             terms_of_service_agreed=False,
             status=AcmeAccount.STATUS_REVOKED,
@@ -1008,8 +1004,8 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_serial(self) -> None:
         """Test the ``serial`` property."""
-        self.assertEqual(self.account1.serial, self.new_cas["root"].serial)
-        self.assertEqual(self.account2.serial, self.new_cas["child"].serial)
+        self.assertEqual(self.account1.serial, self.cas["root"].serial)
+        self.assertEqual(self.account2.serial, self.cas["child"].serial)
 
         # pylint: disable=no-member; false positive: pylint does not detect RelatedObjectDoesNotExist member
         with self.assertRaisesRegex(AcmeAccount.ca.RelatedObjectDoesNotExist, r"^AcmeAccount has no ca\.$"):
@@ -1087,7 +1083,7 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
@@ -1126,7 +1122,7 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_serial(self) -> None:
         """Test getting the serial of the associated CA."""
-        self.assertEqual(self.order1.serial, self.new_cas["root"].serial)
+        self.assertEqual(self.order1.serial, self.cas["root"].serial)
 
 
 class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
@@ -1137,7 +1133,7 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
@@ -1166,11 +1162,11 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         """Test acme_url property."""
         self.assertEqual(
             self.auth1.acme_url,
-            "/django_ca/acme/%s/authz/%s/" % (self.new_cas["root"].serial, self.auth1.slug),
+            "/django_ca/acme/%s/authz/%s/" % (self.cas["root"].serial, self.auth1.slug),
         )
         self.assertEqual(
             self.auth2.acme_url,
-            "/django_ca/acme/%s/authz/%s/" % (self.new_cas["root"].serial, self.auth2.slug),
+            "/django_ca/acme/%s/authz/%s/" % (self.cas["root"].serial, self.auth2.slug),
         )
 
     def test_expires(self) -> None:
@@ -1229,7 +1225,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         super().setUp()
         self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
@@ -1319,7 +1315,7 @@ class AcmeCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.new_cas["root"],
+            ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,

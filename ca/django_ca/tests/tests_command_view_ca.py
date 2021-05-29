@@ -1102,7 +1102,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
-        for name, ca in sorted(self.new_cas.items(), key=lambda t: t[0]):
+        for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial)
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data))
@@ -1111,7 +1111,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_properties(self) -> None:
         """Test viewing of various optional properties."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         hostname = "ca.example.com"
         ca.website = f"https://website.{hostname}"
         ca.terms_of_service = f"{ca.website}/tos/"
@@ -1128,7 +1128,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_acme_disabled(self) -> None:
         """Test viewing when ACME is disabled."""
-        stdout, stderr = self.cmd("view_ca", self.new_cas["root"].serial)
+        stdout, stderr = self.cmd("view_ca", self.cas["root"].serial)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         self.assertMultiLineEqual(stdout, expected["root-acme-disabled"].format(**data))
@@ -1144,12 +1144,12 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         with self.patch(ca_storage % "path", side_effect=side_effect) as path_mock, self.patch(
             ca_storage % "exists", return_value=True
         ) as exists_mock:
-            stdout, stderr = self.cmd("view_ca", self.new_cas["root"].serial)
+            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial)
 
-        path_mock.assert_called_once_with(self.new_cas["root"].private_key_path)
-        exists_mock.assert_called_once_with(self.new_cas["root"].private_key_path)
+        path_mock.assert_called_once_with(self.cas["root"].private_key_path)
+        exists_mock.assert_called_once_with(self.cas["root"].private_key_path)
         data = self.get_cert_context("root")
-        data["key_path"] = self.new_cas["root"].private_key_path
+        data["key_path"] = self.cas["root"].private_key_path
         self.assertMultiLineEqual(stdout, expected["root"].format(**data))
         self.assertEqual(stderr, "")
 

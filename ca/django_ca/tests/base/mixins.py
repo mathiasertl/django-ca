@@ -99,8 +99,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     load_certs: typing.Union[str, typing.Tuple[str, ...]] = tuple()
     default_ca = "child"
     default_cert = "child-cert"
-    new_cas: typing.Dict[str, CertificateAuthority] = {}
-    new_certs: typing.Dict[str, Certificate] = {}
+    cas: typing.Dict[str, CertificateAuthority] = {}
+    certs: typing.Dict[str, Certificate] = {}
 
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
@@ -109,26 +109,26 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         super().setUp()
         cache.clear()
 
-        self.new_cas = {}
-        self.new_certs = {}
+        self.cas = {}
+        self.certs = {}
         self.load_cas = self.load_named_cas(self.load_cas)
         self.load_certs = self.load_named_certs(self.load_certs)
 
         # Set `self.ca` as a default certificate authority (if at least one is loaded)
         if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
-            self.ca = self.new_cas[self.load_cas[0]]
+            self.ca = self.cas[self.load_cas[0]]
         elif self.load_cas:
             if self.default_ca not in self.load_cas:  # pragma: no cover
                 self.fail(f"{self.default_ca}: Not in {self.load_cas}.")
-            self.ca = self.new_cas[self.default_ca]
+            self.ca = self.cas[self.default_ca]
 
         # Set `self.cert` as a default certificate (if at least one is loaded)
         if len(self.load_certs) == 1:  # only one CA specified, set self.cert for convenience
-            self.cert = self.new_certs[self.load_certs[0]]
+            self.cert = self.certs[self.load_certs[0]]
         elif self.load_certs:
             if self.default_cert not in self.load_certs:  # pragma: no cover
                 self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
-            self.cert = self.new_certs[self.default_cert]
+            self.cert = self.certs[self.default_cert]
 
     def load_named_cas(self, cas: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
         """Load CAs by the given name."""
@@ -140,11 +140,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.fail(f"{cas}: Unknown alias for load_cas.")
 
         # Filter CAs that we already loaded
-        cas = tuple(ca for ca in cas if ca not in self.new_cas)
+        cas = tuple(ca for ca in cas if ca not in self.cas)
 
         # Load all CAs (sort by len() of parent so that root CAs are loaded first)
         for name in sorted(cas, key=lambda n: len(certs[n].get("parent", ""))):
-            self.new_cas[name] = self.load_ca(name)
+            self.cas[name] = self.load_ca(name)
         return cas
 
     def load_named_certs(self, names: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
@@ -157,11 +157,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.fail(f"{names}: Unknown alias for load_certs.")
 
         # Filter certificates that are already loaded
-        names = tuple(name for name in names if name not in self.new_certs)
+        names = tuple(name for name in names if name not in self.certs)
 
         for name in names:
             try:
-                self.new_certs[name] = self.load_named_cert(name)
+                self.certs[name] = self.load_named_cert(name)
             except CertificateAuthority.DoesNotExist:  # pragma: no cover
                 self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
         return names
@@ -223,7 +223,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             List of CAs/certs to be expected in this CRL
         """
         expected = expected or []
-        signer = signer or self.new_cas["child"]
+        signer = signer or self.cas["child"]
         algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
         extensions = extensions or []
         expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
@@ -474,7 +474,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @property
     def ca_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
         """Yield loaded certificates for each certificate authority."""
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             if name in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]:
                 yield name, cert
 
@@ -789,14 +789,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @property
     def usable_cas(self) -> typing.Iterator[typing.Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
-        for name, ca in self.new_cas.items():
+        for name, ca in self.cas.items():
             if certs[name]["key_filename"]:
                 yield name, ca
 
     @property
     def usable_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
         """Yield loaded generated certificates."""
-        for name, cert in self.new_certs.items():
+        for name, cert in self.certs.items():
             if certs[name]["cat"] == "generated":
                 yield name, cert
 

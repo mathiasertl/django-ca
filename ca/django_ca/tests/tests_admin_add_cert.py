@@ -144,13 +144,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_add(self) -> None:
         """Test to actually add a certificate."""
         self.add_cert("test-child-add.example.com", self.ca)
-        self.add_cert("test-root-add.example.com", self.new_cas["root"])
-        self.add_cert("test-ecc-add.example.com", self.new_cas["ecc"])
+        self.add_cert("test-root-add.example.com", self.cas["root"])
+        self.add_cert("test-ecc-add.example.com", self.cas["ecc"])
 
     @override_tmpcadir()
     def test_required_subject(self) -> None:
         """Test that we have to enter a complete subject value."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
@@ -189,7 +189,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_empty_subject(self) -> None:
         """Test passing an empty subject."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
@@ -234,7 +234,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_no_key_usage(self) -> None:
         """Test adding a cert with no (extended) key usage."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cname = "test-add2.example.com"
         san = "test-san.example.com"
@@ -283,7 +283,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_with_password(self) -> None:
         """Test adding with a password."""
-        ca = self.new_cas["pwd"]
+        ca = self.cas["pwd"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "with-password.example.com"
 
@@ -409,7 +409,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_wrong_csr(self) -> None:
         """Test passing an unparseable CSR."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -455,7 +455,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         This is different from test_wrong_csr() because this passes our initial test, but cryptography itself
         fails to load the CSR.
         """
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -498,7 +498,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_wrong_algorithm(self) -> None:
         """Test selecting an unknown algorithm."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-add-wrong-algo.example.com"
 
@@ -542,7 +542,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_expires_in_the_past(self) -> None:
         """Test creating a cert that expires in the past."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-expires-in-the-past.example.com"
         expires = datetime.now() - timedelta(days=3)
@@ -586,7 +586,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_expires_too_late(self) -> None:
         """Test that creating a cert that expires after the CA expires throws an error."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         cname = "test-expires-too-late.example.com"
         expires = ca.expires + timedelta(days=3)
@@ -636,7 +636,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """
         cname = "Foo Bar"
         error = "The CommonName cannot be parsed as general name. Either change the CommonName or do not include it."  # NOQA
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -677,7 +677,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         CertificateAuthority.objects.update(enabled=False)
         response = self.client.get(self.add_url)
@@ -713,7 +713,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_add_unusable_cas(self) -> None:
         """Try adding with an unusable CA."""
-        ca = self.new_cas["root"]
+        ca = self.cas["root"]
         csr = certs["pwd-cert"]["csr"]["pem"]
         CertificateAuthority.objects.update(private_key_path="not/exist/add-unusable-cas")
 
