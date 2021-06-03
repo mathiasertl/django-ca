@@ -35,7 +35,6 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
-import josepy as jose
 import pytz
 
 from cryptography import x509
@@ -141,10 +140,11 @@ log = logging.getLogger(__name__)
 
 try:
     # Optional ACME imports
+    import josepy as jose
     from acme import challenges
     from acme import messages
 except ImportError:  # pragma: nocover
-    challenges = messages = None  # type: ignore[assignment]
+    jose = challenges = messages = None  # type: ignore[assignment]
 
 
 def acme_slug() -> str:
