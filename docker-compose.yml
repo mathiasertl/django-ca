@@ -1,4 +1,4 @@
-version: "3.6"
+version: "3.9"
 services:
     cache:
         image: redis:6-alpine
@@ -31,6 +31,7 @@ services:
         networks:
             - cache
             - database
+            - public
         volumes:
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/

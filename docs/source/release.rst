@@ -202,6 +202,46 @@ Test update
      $ docker-compose exec backend ./validate-testdata.py --env backend
      $ docker-compose exec frontend ./validate-testdata.py --env frontend
 
+Test ACMEv2
+===========
+
+First, make sure you're starting from a clean slate::
+
+   $ docker-compose down -v
+
+Start the stack again, but this time add a second docker-compose override-file (we use the ``COMPOSE_FILE``
+environment variable here)::
+
+   $ export COMPOSE_FILE="docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml"
+   $ docker-compose up -d
+   $ docker-compose exec backend manage createsuperuser
+   $ docker-compose exec backend manage init_ca \
+   >  --pathlen=1 Root "/CN=Root CA"
+   $ docker-compose exec backend manage init_ca \
+   >  --acme-enable \
+   >  --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
+
+You should be able to view the admin interface at http://localhost/admin. But the additional docker-compose
+override file adds a certbot container, that you can use to get certificates::
+
+   $ docker-compose exec certbot /bin/bash
+   root@...:~# certbot register --server http://ca.example.com/django_ca/acme/directory/ \
+   >  --email user@example.com --agree-tos --non-interactive
+   IMPORTANT NOTES:
+    - Your account credentials have been saved in your Certbot
+   ...
+   root@...:~# certbot certonly --server http://ca.example.com/django_ca/acme/directory/ \
+   >  --standalone --preferred-challenges http -d http-01.example.com
+   ...
+   http-01 challenge for http-01.example.com
+   ...
+
+   IMPORTANT NOTES:
+    - Congratulations! Your certificate and chain have been saved at:
+
+
+In the certbot container, 
+
 ***************
 Release process
 ***************

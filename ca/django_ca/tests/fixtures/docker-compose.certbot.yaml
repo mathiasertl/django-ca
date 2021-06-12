@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+    db:
+        environment:
+            POSTGRES_PASSWORD: mysecretpassword
+    backend:
+        environment:
+            DJANGO_CA_ALLOWED_HOSTS: ca.example.com localhost
+            DJANGO_CA_CA_ENABLE_ACME: "true"
+            DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
+            POSTGRES_PASSWORD: mysecretpassword
+        networks:
+            - cache
+            - database
+            - public
+    frontend:
+        environment:
+            DJANGO_CA_ALLOWED_HOSTS: ca.example.com localhost
+            DJANGO_CA_CA_ENABLE_ACME: "true"
+            DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
+            POSTGRES_PASSWORD: mysecretpassword
+    webserver:
+        environment:
+            NGINX_HOST: ca.example.com webserver localhost
+        networks:
+            frontend: {}
+            public:
+                aliases:
+                    - ca.example.com
+    certbot:
+        build: 
+            context: .
+            dockerfile: ca/django_ca/tests/fixtures/Dockerfile.certbot
+
+        # enable terminal: https://stackoverflow.com/a/39150040
+        stdin_open: true
+        tty: true
+
+        networks:
+            public:
+                aliases:
+                    - example
+                    - http-01.example.com

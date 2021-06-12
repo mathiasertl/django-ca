@@ -1,0 +1,8 @@
+ARG IMAGE=debian:buster
+FROM $IMAGE
+
+RUN apt-get update && \
+    apt-get install -y certbot curl && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root/
