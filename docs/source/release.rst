@@ -240,8 +240,6 @@ override file adds a certbot container, that you can use to get certificates::
     - Congratulations! Your certificate and chain have been saved at:
 
 
-In the certbot container, 
-
 ***************
 Release process
 ***************
