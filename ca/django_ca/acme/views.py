@@ -553,7 +553,11 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
             account.full_clean()
             account.save()
         except ValidationError as ex:
-            raise AcmeMalformed(message="Account cannot be stored.") from ex
+            # Add a pretty list of validation errors to the
+            subproblems = ", ".join(
+                sorted(["%s: %s" % (k, v1.rstrip(".")) for k, v in ex.message_dict.items() for v1 in v])
+            )
+            raise AcmeMalformed(message="Invalid account: %s." % subproblems) from ex
 
         # self.prepared['thumbprint'] = account.thumbprint
         # self.prepared['pem'] = account.pem

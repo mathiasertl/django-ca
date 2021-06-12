@@ -907,6 +907,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
         Note that at present it's probably inpossible to have such an error in real life as no fields have any
         validation of user-generated input that would not be captured before model validation.
         """
+        msg = "Invalid account: thumbprint: Ensure this value has at most 64 characters (it has 256)."
         with mock.patch("josepy.jwk.JWKRSA.thumbprint", return_value=b"abc" * 64):
             resp = self.acme(
                 self.url,
@@ -915,7 +916,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
                     terms_of_service_agreed=True,
                 ),
             )
-            self.assertMalformed(resp, "Account cannot be stored.")
+            self.assertMalformed(resp, msg)
 
 
 @freeze_time(timestamps["everything_valid"])
