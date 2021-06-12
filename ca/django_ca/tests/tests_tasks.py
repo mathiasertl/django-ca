@@ -214,7 +214,7 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self,
         challenge: typing.Optional[AcmeChallenge] = None,
         status: int = HTTPStatus.OK,
-        content: typing.Optional[bytes] = None,
+        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
         call_count: int = 1,
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
