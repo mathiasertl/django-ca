@@ -21,6 +21,9 @@ import typing
 from datetime import timedelta
 from http import HTTPStatus
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -33,6 +36,8 @@ from .models import AcmeOrder
 from .models import Certificate
 from .models import CertificateAuthority
 from .profiles import profiles
+from .utils import ELLIPTIC_CURVE_NAMES
+from .utils import HASH_ALGORITHM_NAMES
 
 log = logging.getLogger(__name__)
 
@@ -94,10 +99,29 @@ def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
 
 
 @shared_task
-def generate_ocsp_key(serial: str, **kwargs: typing.Any) -> typing.Tuple[str, str, int]:
+def generate_ocsp_key(
+    serial: str,
+    expires: typing.Optional[int] = None,
+    algorithm: typing.Optional[str] = None,
+    ecc_curve: typing.Optional[str] = None,
+    **kwargs: typing.Any,
+) -> typing.Tuple[str, str, int]:
     """Task to generate an OCSP key for the CA named by `serial`."""
+
+    parsed_expires: typing.Optional[timedelta] = None
+    parsed_algorithm: typing.Optional[hashes.HashAlgorithm] = None
+    parsed_curve: typing.Optional[ec.EllipticCurve] = None
+    if expires is not None:
+        parsed_expires = timedelta(seconds=expires)
+    if algorithm is not None:
+        parsed_algorithm = HASH_ALGORITHM_NAMES[algorithm]()
+    if ecc_curve is not None:
+        parsed_curve = ELLIPTIC_CURVE_NAMES[ecc_curve]()
+
     ca = CertificateAuthority.objects.get(serial=serial)
-    private_path, cert_path, cert = ca.generate_ocsp_key(**kwargs)
+    private_path, cert_path, cert = ca.generate_ocsp_key(
+        expires=parsed_expires, algorithm=parsed_algorithm, ecc_curve=parsed_curve, **kwargs
+    )
     return private_path, cert_path, cert.pk
 
 

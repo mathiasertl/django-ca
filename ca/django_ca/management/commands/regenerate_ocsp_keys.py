@@ -108,10 +108,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 generate_ocsp_key,
                 ca.serial,
                 profile=profile,
-                expires=expires,
-                algorithm=algorithm,
+                expires=expires.total_seconds(),
+                algorithm=algorithm.name,
                 key_size=key_size,
                 key_type=key_type,
-                ecc_curve=ecc_curve,
+                ecc_curve=ecc_curve.name,
                 password=password,
             )
