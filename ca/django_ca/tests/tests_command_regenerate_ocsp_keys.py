@@ -92,6 +92,15 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
         self.assertKey(self.cas["root"])
 
+    @override_tmpcadir(CA_USE_CELERY=True)
+    def test_with_celery(self) -> None:
+        """Basic test."""
+        with self.mute_celery() as mock:
+            stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertTrue(mock.called)
+
     @override_tmpcadir()
     def test_all(self) -> None:
         """Test for all CAs."""
