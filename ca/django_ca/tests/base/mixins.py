@@ -15,6 +15,7 @@
 
 import copy
 import io
+import json
 import typing
 from contextlib import contextmanager
 from datetime import datetime
@@ -765,10 +766,41 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             signal.disconnect(signal_mock)
 
     @contextmanager
-    def mute_celery(self) -> typing.Iterator[mock.MagicMock]:
-        """Mock celery invocations."""
+    def mute_celery(self, *calls: typing.Any) -> typing.Iterator[mock.MagicMock]:
+        """Context manager to mock celery invocations.
+
+        This context manager mocks ``celery.app.task.Task.apply_async``, the final function in celery before
+        the message is passed to the handlers for the configured message transport (Redis, MQTT, ...). The
+        context manager will validate the mock was called as specified in the passed *calls* arguments.
+
+        The context manager will also assert that the args and kwargs passed to the tasks are JSON
+        serializable.
+
+        .. WARNING::
+
+           The args and kwargs passed to the task are the first and second *argument* passed to the mocked
+           ``apply_async``. You must consider this when passing calls. For example::
+
+               with self.mute_celery((((), {}), {})):
+                   cache_crls.delay()
+
+               with self.mute_celery(((("foo"), {"key": "bar"}), {})):
+                   cache_crls.delay("foo", key="bar")
+        """
+
         with mock.patch("celery.app.task.Task.apply_async", spec_set=True) as mocked:
             yield mocked
+
+        # Make sure that all invocations are JSON serializable
+        for invocation in mocked.call_args_list:
+            # invocation apply_async() has task args as arg[0] and arg[1]
+            self.assertIsInstance(json.dumps(invocation.args[0]), str)
+            self.assertIsInstance(json.dumps(invocation.args[1]), str)
+
+        # Make sure that task was called the right number of times
+        self.assertEqual(len(calls), len(mocked.call_args_list))
+        for expected, actual in zip(calls, mocked.call_args_list):
+            self.assertEqual(expected, actual)
 
     @contextmanager
     def patch(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[mock.MagicMock]:

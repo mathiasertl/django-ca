@@ -84,10 +84,12 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertFalse(ca_storage.exists(priv_path))
         self.assertFalse(ca_storage.exists(cert_path))
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
     def test_basic(self) -> None:
         """Basic test."""
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
+        with self.mute_celery():
+            stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
+
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertKey(self.cas["root"])
@@ -95,11 +97,26 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_USE_CELERY=True)
     def test_with_celery(self) -> None:
         """Basic test."""
-        with self.mute_celery() as mock:
+        with self.mute_celery(
+            (
+                (
+                    (certs["root"]["serial"],),
+                    {
+                        "profile": "ocsp",
+                        "expires": 172800.0,
+                        "algorithm": "sha512",
+                        "key_size": 1024,
+                        "key_type": "RSA",
+                        "ecc_curve": "secp256r1",
+                        "password": None,
+                    },
+                ),
+                {},
+            ),
+        ):
             stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        self.assertTrue(mock.called)
 
     @override_tmpcadir()
     def test_all(self) -> None:

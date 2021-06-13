@@ -81,9 +81,8 @@ class TestBasic(TestCaseMixin, TestCase):
             self.assertEqual(task_mock.call_count, 1)
 
         # finally, run_task() with celery
-        with self.settings(CA_USE_CELERY=True), self.mute_celery() as test_mock:
+        with self.settings(CA_USE_CELERY=True), self.mute_celery((((), {}), {})):
             tasks.run_task(tasks.cache_crls)
-            self.assertEqual(test_mock.call_count, 1)
 
 
 class TestCacheCRLs(TestCaseMixin, TestCase):
