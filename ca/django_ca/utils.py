@@ -155,7 +155,7 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
 }
 
 #: Mapping of cannonical elliptic curve names to the implementing classes
-ELLIPTIC_CURVE_NAMES = {
+ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
     ec.SECT571R1.name: ec.SECT571R1,
     ec.SECT409R1.name: ec.SECT409R1,
     ec.SECT283R1.name: ec.SECT283R1,

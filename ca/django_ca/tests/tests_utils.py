@@ -103,11 +103,11 @@ class ConstantsTestCase(TestCase):
 
         # filter out hash algorithms that are not supported right now due to them having a digest size as
         # parameter
-        subclasses = [
+        subclasses = set(
             sc
             for sc in subclasses
             if sc not in [hashes.SHAKE128, hashes.SHAKE256, hashes.BLAKE2b, hashes.BLAKE2s]
-        ]
+        )
 
         self.assertEqual(len(utils.HASH_ALGORITHM_NAMES), len(subclasses))
         self.assertEqual(utils.HASH_ALGORITHM_NAMES, {e.name: e for e in subclasses})
