@@ -131,6 +131,53 @@ MULTIPLE_OIDS = (
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
+
+#: Mapping of cannonical hash algorithm names to the implementing classes
+HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
+    # NOTE: shake128, shake256, blake2b and blake2s require a digest size, which is not currently supported
+    hashes.SHA1.name: hashes.SHA1,
+    hashes.SHA512_224.name: hashes.SHA512_224,
+    hashes.SHA512_256.name: hashes.SHA512_256,
+    hashes.SHA224.name: hashes.SHA224,
+    hashes.SHA256.name: hashes.SHA256,
+    hashes.SHA384.name: hashes.SHA384,
+    hashes.SHA512.name: hashes.SHA512,
+    hashes.SHA3_224.name: hashes.SHA3_224,
+    hashes.SHA3_256.name: hashes.SHA3_256,
+    hashes.SHA3_384.name: hashes.SHA3_384,
+    hashes.SHA3_512.name: hashes.SHA3_512,
+    # hashes.SHAKE128.name: hashes.SHAKE128,
+    # hashes.SHAKE256.name: hashes.SHAKE256,
+    hashes.MD5.name: hashes.MD5,
+    # hashes.BLAKE2b.name: hashes.BLAKE2b,
+    # hashes.BLAKE2s.name: hashes.BLAKE2s,
+    hashes.SM3.name: hashes.SM3,
+}
+
+#: Mapping of cannonical elliptic curve names to the implementing classes
+ELLIPTIC_CURVE_NAMES = {
+    ec.SECT571R1.name: ec.SECT571R1,
+    ec.SECT409R1.name: ec.SECT409R1,
+    ec.SECT283R1.name: ec.SECT283R1,
+    ec.SECT233R1.name: ec.SECT233R1,
+    ec.SECT163R2.name: ec.SECT163R2,
+    ec.SECT571K1.name: ec.SECT571K1,
+    ec.SECT409K1.name: ec.SECT409K1,
+    ec.SECT283K1.name: ec.SECT283K1,
+    ec.SECT233K1.name: ec.SECT233K1,
+    ec.SECT163K1.name: ec.SECT163K1,
+    ec.SECP521R1.name: ec.SECP521R1,
+    ec.SECP384R1.name: ec.SECP384R1,
+    ec.SECP256R1.name: ec.SECP256R1,
+    ec.SECP256K1.name: ec.SECP256K1,
+    ec.SECP224R1.name: ec.SECP224R1,
+    ec.SECP192R1.name: ec.SECP192R1,
+    ec.BrainpoolP256R1.name: ec.BrainpoolP256R1,
+    ec.BrainpoolP384R1.name: ec.BrainpoolP384R1,
+    ec.BrainpoolP512R1.name: ec.BrainpoolP512R1,
+}
+
+
 try:
     # pylint: disable=unused-import,useless-import-alias
     #         Import alias is for mypy (explicit re-export)
@@ -863,6 +910,8 @@ def parse_hash_algorithm(
     if isinstance(value, hashes.HashAlgorithm):
         return value
     if isinstance(value, str):
+        if value in HASH_ALGORITHM_NAMES:
+            return HASH_ALGORITHM_NAMES[value]()
         try:
             algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
             return algo()
@@ -966,6 +1015,9 @@ def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
         return value  # name was already parsed
     if value is None:
         return ca_settings.CA_DEFAULT_ECC_CURVE
+
+    if value in ELLIPTIC_CURVE_NAMES:
+        return ELLIPTIC_CURVE_NAMES[value]()
 
     curve: Type[ec.EllipticCurve] = getattr(ec, value.strip(), type)
     if not issubclass(curve, ec.EllipticCurve):
