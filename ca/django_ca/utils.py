@@ -151,7 +151,8 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     hashes.MD5.name: hashes.MD5,
     # hashes.BLAKE2b.name: hashes.BLAKE2b,
     # hashes.BLAKE2s.name: hashes.BLAKE2s,
-    hashes.SM3.name: hashes.SM3,
+    # NOTE: SM3 is added in cryptography 35.0
+    # hashes.SM3.name: hashes.SM3,
 }
 
 #: Mapping of cannonical elliptic curve names to the implementing classes
