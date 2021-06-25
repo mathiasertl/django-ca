@@ -1,6 +1,6 @@
-mypy==0.902
+mypy==0.910
 django-stubs==1.8.0
-types-freezegun==0.1.2
-types-pyRFC3339==0.1.0
-types-requests==0.1.10
-types-pytz==0.1.0
+types-freezegun==0.1.4
+types-pyRFC3339==0.1.1
+types-requests==2.25.0
+types-pytz==2021.1.0
