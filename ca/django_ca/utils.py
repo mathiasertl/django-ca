@@ -132,7 +132,7 @@ MULTIPLE_OIDS = (
 NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
 
 
-#: Mapping of cannonical hash algorithm names to the implementing classes
+#: Mapping of canonical hash algorithm names to the implementing classes
 HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # NOTE: shake128, shake256, blake2b and blake2s require a digest size, which is not currently supported
     hashes.SHA1.name: hashes.SHA1,
@@ -155,7 +155,7 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # hashes.SM3.name: hashes.SM3,
 }
 
-#: Mapping of cannonical elliptic curve names to the implementing classes
+#: Mapping of canonical elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
     ec.SECT571R1.name: ec.SECT571R1,
     ec.SECT409R1.name: ec.SECT409R1,
