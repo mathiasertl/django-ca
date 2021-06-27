@@ -21,8 +21,6 @@ import unittest
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
-from unittest import TestLoader
-from unittest import TestSuite
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -70,8 +68,8 @@ SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=typing.Type[object
 
 
 def load_tests(  # pylint: disable=unused-argument
-    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
-) -> TestSuite:
+    loader: unittest.TestLoader, tests: unittest.TestSuite, ignore: typing.Optional[str] = None
+) -> unittest.TestSuite:
     """Load doctests."""
     tests.addTests(doctest.DocTestSuite(utils))
     return tests
