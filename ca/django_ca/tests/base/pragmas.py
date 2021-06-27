@@ -18,7 +18,7 @@
 
 import sys
 
-VERSION = sys.version_info[:2]  # e.g. ``(3, 8)`` or ``(3, 8)``
+VERSION = sys.version_info[:2]  # e.g. ``(3, 8)`` or ``(3, 9)``
 
 
 # PYLINT NOTE: pragma argument so we can optionally add a print() for testing
