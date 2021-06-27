@@ -1,6 +1,6 @@
 import typing
 
-from .results import AsyncResult
+from .result import AsyncResult
 
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
