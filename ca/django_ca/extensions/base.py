@@ -252,7 +252,6 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
 class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
     """Class wrapping any extension this module does **not** support."""
 
-    # pylint: disable=abstract-method; We don't know the extension_type
     # pylint: disable=super-init-not-called; UnrecognizedExtension really is a special case
 
     name: str  # type: ignore[misc]
@@ -280,10 +279,10 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
     def extension_type(self) -> x509.UnrecognizedExtension:
         return self.value
 
-    def from_dict(self, value: Any) -> NoReturn:  # pragma: no cover
+    def from_dict(self, value: Any) -> NoReturn:
         raise NotImplementedError
 
-    def from_extension(self, value: Any) -> NoReturn:  # pragma: no cover
+    def from_extension(self, value: Any) -> NoReturn:
         raise NotImplementedError
 
     def as_text(self) -> str:

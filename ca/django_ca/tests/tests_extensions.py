@@ -1541,6 +1541,20 @@ class UnknownExtensionTestCase(TestCase):
         with self.assertRaisesRegex(TypeError, r"Value must be a x509\.Extension instance$"):
             UnrecognizedExtension({"value": "foo"})  # type: ignore[arg-type]
 
+    def test_abstract_methods(self) -> None:
+        """Test overwritten abstract methods that are of no use in this class."""
+        oid = x509.ObjectIdentifier("1.2.1")
+        cgext = x509.Extension(
+            oid=oid, value=x509.UnrecognizedExtension(oid=oid, value=b"unrecognized"), critical=True
+        )
+        ext = UnrecognizedExtension(cgext)
+
+        with self.assertRaises(NotImplementedError):
+            ext.from_dict("foo")
+
+        with self.assertRaises(NotImplementedError):
+            ext.from_extension("foo")
+
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
     """Test SubjectAlternativeName extension."""
