@@ -801,7 +801,7 @@ class SignedCertificateTimestampsBase(
         )
 
     def repr_value(self) -> str:
-        if len(self.value) == 1:  # pragma: no cover - we cannot currently create such an extension
+        if len(self.value) == 1:  # pragma: no cover  # We cannot currently create such an extension
             return "1 timestamp"
         return "%s timestamps" % len(self.value)
 
@@ -813,10 +813,9 @@ class SignedCertificateTimestampsBase(
         for sct in self.value:
             if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
                 entry_type = "Precertificate"
-            elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover - unseen in the wild
+            elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover  # Unseen in the wild
                 entry_type = "x509 certificate"
-            else:  # pragma: no cover
-                # we support everything that has been specified so far
+            else:  # pragma: no cover  # We support everything that has been specified so far
                 entry_type = "unknown"
 
             yield {
