@@ -17,6 +17,7 @@ import typing
 from contextlib import contextmanager
 
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from django.db import models
@@ -151,6 +152,42 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         child = CertificateAuthority.objects.init(name="Child", parent=parent, pathlen=0, **kwargs)
 
         self.assertAuthorityKeyIdentifier(parent, child)
+
+    @override_tmpcadir()
+    def test_openssh_ca(self) -> None:
+        """Test OpenSSH CA support"""
+
+        kwargs = dict(
+            name="OpenSSH CA",
+            key_size=None,
+            key_type="EdDSA",
+            expires=self.expires(720),
+            subject=Subject([("CN", "openssh.example.com")]),
+            openssh_ca=False,
+        )
+
+        with self.assertRaisesRegex(ValueError, "EdDSA only supported for OpenSSH"):
+            CertificateAuthority.objects.init(**kwargs)
+
+        kwargs['openssh_ca'] = True
+        ca = CertificateAuthority.objects.init(**kwargs)
+
+        self.assertEqual(ca.name, kwargs["name"])
+
+        # verify private key properties
+        self.assertIsInstance(ca.key(None).public_key(), Ed25519PublicKey)
+
+        # verity public key properties
+        self.assertEqual(ca.subject, kwargs['subject'])
+
+        # verify X509 properties
+        self.assertEqual(ca.key_usage, KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}))
+        self.assertIsNone(ca.subject_alternative_name, None)
+
+        self.assertIsNone(ca.extended_key_usage)
+        self.assertIsNone(ca.tls_feature)
+        self.assertIsNone(ca.issuer_alternative_name)
+        self.assertTrue(ca.is_openssh_ca)
 
     @override_tmpcadir()
     def test_key_size(self) -> None:
