@@ -3,7 +3,7 @@
 python = ["3.6.13", "3.7.10", "3.8.9", "3.9.5"]
 
 # https://www.djangoproject.com/download/
-django = ["2.2.23", "3.1.11", "3.2.3"]
+django = ["2.2.24", "3.1.13", "3.2.5"]
 cryptography = ["3.3.2", "3.4.7"]
 idna = ["2.10"]
 
@@ -94,14 +94,6 @@ max-module-lines = 3000
 [tool.pylint.messages_control]
 # https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
 disable = [
-    # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
-    # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually
-    # protected by TYPE_CHECKING - but pylint doesn't know that.
-    #   https://github.com/PyCQA/pylint/issues/850
-    #   https://github.com/PyCQA/pylint/issues/59
-    #   https://github.com/landscapeio/landscape-issues/issues/214
-    "cyclic-import",
-
     # devscripts have some larger overlapping parts
     "duplicate-code",
 
@@ -144,6 +136,17 @@ disable = [
     #   https://github.com/PyCQA/astroid/pull/927
     "no-member",
 
+    # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
+    # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually
+    # protected by TYPE_CHECKING - but pylint doesn't know that.
+    #   https://github.com/PyCQA/pylint/issues/850
+    #   https://github.com/PyCQA/pylint/issues/59
+    #   https://github.com/landscapeio/landscape-issues/issues/214
+    "cyclic-import",
+
+    # pylint==2.9.3 does not detect methods returning a sequence as such:
+    #   https://github.com/PyCQA/pylint/issues/4696
+    "unpacking-non-sequence",
 ]
 
 [tool.pylint.similarities]
