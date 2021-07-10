@@ -129,13 +129,6 @@ disable = [
     "import-error",  # mypy: import
     "abstract-class-instantiated",  # mypy: abstract
 
-    
-    # no-member is covered by mypy, and it is broken with Generic grandparents in
-    # pylint==2.7.4 and astroid==2.5.2.
-    #   https://github.com/PyCQA/pylint/issues/3131
-    #   https://github.com/PyCQA/astroid/pull/927
-    "no-member",
-
     # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
     # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually
     # protected by TYPE_CHECKING - but pylint doesn't know that.
