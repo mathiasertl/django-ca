@@ -142,10 +142,11 @@ class DistributionPoint:
 
     def as_text(self) -> str:
         """Show as text."""
+        text = ""
         if self.full_name:
             names = [textwrap.indent("* %s" % s, "  ") for s in self.full_name.serialize()]
             text = "* Full Name:\n%s" % "\n".join(names)
-        elif self.relative_name is not None:  # pragma: no branch
+        elif self.relative_name is not None:
             text = "* Relative Name: %s" % format_relative_name(self.relative_name)
 
         if self.crl_issuer:

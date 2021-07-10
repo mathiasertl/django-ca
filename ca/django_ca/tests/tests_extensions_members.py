@@ -79,6 +79,25 @@ class DistributionPointTestCase(TestCase):
         dpoint = DistributionPoint({"full_name": "http://example.com"})
         self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
+    def test_as_text(self) -> None:
+        """Test as_text()."""
+
+        url = "http://example.com"
+        url2 = "http://example.net"
+        self.assertEqual(DistributionPoint().as_text(), "")
+        self.assertEqual(DistributionPoint({"full_name": url}).as_text(), f"* Full Name:\n  * URI:{url}")
+        self.assertEqual(
+            DistributionPoint({"relative_name": f"/CN='{url}'"}).as_text(), f"* Relative Name: /CN={url}"
+        )
+        self.assertEqual(
+            DistributionPoint({"full_name": url, "crl_issuer": url2}).as_text(),
+            f"* Full Name:\n  * URI:{url}\n* CRL Issuer:\n  * URI:{url2}",
+        )
+        self.assertEqual(
+            DistributionPoint({"full_name": url, "reasons": ["ca_compromise"]}).as_text(),
+            f"* Full Name:\n  * URI:{url}\n* Reasons: ca_compromise",
+        )
+
     def test_reasons(self) -> None:
         """Test DPs with different reason types."""
 
