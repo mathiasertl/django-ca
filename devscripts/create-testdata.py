@@ -73,7 +73,7 @@ def test_initial_state(env):
     # Make sure that migrations where run
     try:
         CertificateAuthority.objects.all().exists()
-    except OperationalError as ex:
+    except OperationalError as ex:  # pylint: disable=redefined-outer-name
         print("Error accessing database: %s" % ex)
         print("HINT: Did you run migrations yet?")
         sys.exit(1)

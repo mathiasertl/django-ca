@@ -251,14 +251,14 @@ elif args.command == "coverage":
         exclude_versions(cov, "py", sys.version_info[:2], version, version_str)
 
     # exclude django-version specific code
-    django_versions = [(2, 2), (3, 0), (3, 1)]
+    django_versions = [(2, 2), (3, 0), (3, 1), (4, 0)]
     for version in django_versions:
         version_str = ".".join([str(v) for v in version])
         exclude_versions(cov, "django", django.VERSION[:2], version, version_str)
 
     # exclude cryptography-version specific code
     this_version = packaging.version.parse(cryptography.__version__).release[:2]
-    cryptography_versions = [(2, 7), (2, 8), (2, 9), (3, 0), (3, 1)]
+    cryptography_versions = [(3, 3), (3, 4), (35, 0), (36, 0)]
     for ver in cryptography_versions:
         version_str = ".".join([str(v) for v in ver])
         exclude_versions(cov, "cryptography", this_version, ver, version_str)
