@@ -155,7 +155,8 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # hashes.SM3.name: hashes.SM3,
 }
 if hasattr(hashes, "SM3"):  # pragma: cryptography>=35.0
-    HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3
+    # NOTE: Remove pylint override once cryptography>=35.0 is used
+    HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3  # pylint: disable=no-member  # We check above
 
 #: Mapping of canonical elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
