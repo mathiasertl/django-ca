@@ -128,8 +128,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("regenerate_ocsp_keys")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        for name in self.cas:
-            self.assertKey(self.cas[name])
+        for ca in self.cas.values():
+            self.assertKey(ca)
 
     @override_tmpcadir()
     def test_overwrite(self) -> None:

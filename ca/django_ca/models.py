@@ -1344,7 +1344,7 @@ class AcmeAccount(DjangoCAModel):
 
     def __str__(self) -> str:
         try:
-            return self.contact.split("\n")[0].split(":", 1)[1]
+            return self.contact.split("\n", maxsplit=1)[0].split(":", 1)[1]
         except IndexError:
             return ""
 

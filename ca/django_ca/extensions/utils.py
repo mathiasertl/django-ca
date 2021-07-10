@@ -383,12 +383,12 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
 
         return self.policy_qualifiers.count(parsed_value)
 
-    def extend(self, value: Iterable[ParsablePolicyQualifier]) -> None:
+    def extend(self, values: Iterable[ParsablePolicyQualifier]) -> None:
         """Extend qualifiers with given iterable."""
         if self.policy_qualifiers is None:
             self.policy_qualifiers = []
 
-        self.policy_qualifiers.extend([self._parse_policy_qualifier(v) for v in value])
+        self.policy_qualifiers.extend([self._parse_policy_qualifier(v) for v in values])
 
     @property
     def for_extension_type(self) -> x509.PolicyInformation:

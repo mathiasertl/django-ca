@@ -250,8 +250,8 @@ class Subject:
             for key, value in e:
                 self[key] = value
 
-        for k in f:
-            self[k] = f[k]
+        for k, val in f.items():
+            self[k] = val
 
     def values(self) -> Iterator[str]:
         """View on subject values, in order."""

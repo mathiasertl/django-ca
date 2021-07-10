@@ -29,7 +29,20 @@ from .acme.constants import Status
 from .typehints import Protocol
 from .utils import sanitize_serial
 
-if TYPE_CHECKING:
+if not TYPE_CHECKING:
+    # Inverting TYPE_CHECKING check here to make pylint==2.9.3 happy:
+    #   https://github.com/PyCQA/pylint/issues/4697
+    AcmeAccountQuerySetBase = (
+        AcmeAuthorizationQuerySetBase
+    ) = (
+        AcmeCertificateQuerySetBase
+    ) = (
+        AcmeChallengeQuerySetBase
+    ) = AcmeOrderQuerySetBase = CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
+
+    QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
+    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
+else:
     from .models import AcmeAccount
     from .models import AcmeAuthorization
     from .models import AcmeCertificate
@@ -49,17 +62,6 @@ if TYPE_CHECKING:
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet[X509CertMixin])
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
-else:
-    AcmeAccountQuerySetBase = (
-        AcmeAuthorizationQuerySetBase
-    ) = (
-        AcmeCertificateQuerySetBase
-    ) = (
-        AcmeChallengeQuerySetBase
-    ) = AcmeOrderQuerySetBase = CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
-
-    QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
-    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
 
 
 class QuerySetProtocol(
