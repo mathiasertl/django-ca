@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest ] # , macos-latest, windows-latest ]
         python-version: [ "3.6", "3.7", "3.8", "3.9" ]
-        django-version: [ "2.2.23", "3.1.11", "3.2.3" ] 
+        django-version: [ "2.2.24", "3.1.13", "3.2.5" ]
         cryptography-version: [ "3.3.2", "3.4.7" ]
 
     env:
