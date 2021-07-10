@@ -42,7 +42,7 @@ if not TYPE_CHECKING:
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
-else:
+else:  # pragma: no cover  # only used for type checking
     from .models import AcmeAccount
     from .models import AcmeAuthorization
     from .models import AcmeCertificate
