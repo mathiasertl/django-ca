@@ -60,6 +60,7 @@ Welcome to django-ca's documentation!
    :caption: Development
 
    development
+   dev/acme
    contribute
    standards
    release
