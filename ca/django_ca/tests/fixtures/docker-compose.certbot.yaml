@@ -32,6 +32,7 @@ services:
             context: .
             dockerfile: ca/django_ca/tests/fixtures/Dockerfile.certbot
 
+        hostname: certbot
         # enable terminal: https://stackoverflow.com/a/39150040
         stdin_open: true
         tty: true
