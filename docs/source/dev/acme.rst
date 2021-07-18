@@ -2,6 +2,8 @@
 ACME development
 ################
 
+.. highlight:: console
+
 *********
 Standards
 *********
@@ -10,6 +12,40 @@ Standards
 * `RFC 7515: JSON Web Signature (JWS) <https://tools.ietf.org/html/rfc7515>`_
 * `RFC 7517: JSON Web Key (JWK) <https://tools.ietf.org/html/rfc7515>`_
 * `RFC 7638: JSON Web Key (JWK) Thumbprint <https://tools.ietf.org/html/rfc7638>`_
+
+*******
+Testing
+*******
+
+Test using certbot
+==================
+
+The project includes a specialized docker-compose override file so that you can start django-ca using
+docker-compose and then use a container to use certbot. 
+
+If you want to test the current development state, you must first locally build the image::
+
+   $ docker build -t mathiasertl/django-ca:latest .
+
+The CA is then available at the fake hostname ``ca.example.com``::
+
+   $ export COMPOSE_FILE=docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml
+   $ docker-compose up -d
+   ...
+   $ docker-compose exec backend manage createsuperuser
+   ...
+   $ docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root
+   $ docker-compose exec backend manage init_ca --pathlen=0 --path=ca/shared/ \
+   >     --parent=Root --acme-enable Intermediate /CN=Intermediate
+
+After that, you can login to the web interface at http://localhost/admin/ to view progress.
+
+You can now start a shell in the ``certbot`` container and request a certificate. Note that certbot is
+preconfigured to use the django-ca registry in the container next to it::
+
+   $ docker-compose exec certbot /bin/bash
+   root@certbot:~# certbot register
+   root@certbot:~# certbot certonly --standalone --preferred-challenges http -d http-01.example.com
 
 ***************
 Tips and tricks
@@ -33,6 +69,10 @@ Use local server::
 
 base64url encoding
 ==================
+
+ACMEv2 uses the `Base 64 Encoding with URL and Filename Safe Alphabet
+<https://datatracker.ietf.org/doc/html/rfc4648#section-5>`_ encoding for binary data. This is similar but not
+identical to standard  base64 encoding.
 
 The ACME library does that with `josepy <https://pypi.org/project/josepy/>`_ (which is **not** the
 similar/forked? `python-jose <https://pypi.org/project/python-jose/>`_):
