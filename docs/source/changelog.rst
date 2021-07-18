@@ -16,6 +16,8 @@ This version is currently under development.
 * Remove the now redundant ``html-check`` target for documentation generation.
 * Only fetch expected number of bytes when validating ACME challenges via HTTP to prevent DOS attacks.
 * Enable ACMEv2 paths in NGINX configuration included in Docker images.
+* Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
+  Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
 
 Backwards incompatible changes
 ==============================
