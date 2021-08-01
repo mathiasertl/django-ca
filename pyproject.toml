@@ -1,3 +1,7 @@
+[build-system]
+# Minimum requirements for the build system to execute (PEP-518)
+requires = ["setuptools>=30.3.0", "wheel"]  # PEP 508 specifications.
+
 [django-ca.release]
 # https://devguide.python.org/#status-of-python-branches
 python = ["3.6.13", "3.7.10", "3.8.9", "3.9.5"]
