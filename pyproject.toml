@@ -23,6 +23,13 @@ exclude_lines = [
     "pragma: no ?cover",
 ]
 
+[tool.doc8]
+max_line_length = 110
+
+# NOTE: ideally, we would use ignore-path-errors to only ignore long lines, but doc8
+#       does not support directories for that.
+ignore_path = "docs/source/generated/"
+
 [tool.isort]
 line_length = 110
 skip = ["migrations", "stubs"]
