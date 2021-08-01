@@ -27,7 +27,6 @@ from typing import Tuple
 from typing import Union
 
 from cryptography import x509
-from cryptography.x509 import ObjectIdentifier
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID
@@ -620,8 +619,9 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
 
 
 class ExtendedKeyUsage(
-    OrderedSetExtension[x509.ExtendedKeyUsage, Union[ObjectIdentifier, str], str, ObjectIdentifier]
+    OrderedSetExtension[x509.ExtendedKeyUsage, Union[x509.ObjectIdentifier, str], str, x509.ObjectIdentifier]
 ):
+    # class ExtendedKeyUsage():
     """Class representing a ExtendedKeyUsage extension."""
 
     key = "extended_key_usage"
@@ -637,12 +637,12 @@ class ExtendedKeyUsage(
         "timeStamping": ExtendedKeyUsageOID.TIME_STAMPING,
         "OCSPSigning": ExtendedKeyUsageOID.OCSP_SIGNING,
         "anyExtendedKeyUsage": ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE,
-        "smartcardLogon": ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
-        "msKDC": ObjectIdentifier("1.3.6.1.5.2.3.5"),
+        "smartcardLogon": x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
+        "msKDC": x509.ObjectIdentifier("1.3.6.1.5.2.3.5"),
         # Defined in RFC 3280, occurs in TrustID Server A52 CA
-        "ipsecEndSystem": ObjectIdentifier("1.3.6.1.5.5.7.3.5"),
-        "ipsecTunnel": ObjectIdentifier("1.3.6.1.5.5.7.3.6"),
-        "ipsecUser": ObjectIdentifier("1.3.6.1.5.5.7.3.7"),
+        "ipsecEndSystem": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.5"),
+        "ipsecTunnel": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6"),
+        "ipsecUser": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7"),
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
 
@@ -676,8 +676,8 @@ class ExtendedKeyUsage(
     def serialize_item(self, value: x509.ObjectIdentifier) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
 
-    def parse_value(self, value: Union[ObjectIdentifier, str]) -> ObjectIdentifier:
-        if isinstance(value, ObjectIdentifier) and value in self._CRYPTOGRAPHY_MAPPING_REVERSED:
+    def parse_value(self, value: Union[x509.ObjectIdentifier, str]) -> x509.ObjectIdentifier:
+        if isinstance(value, x509.ObjectIdentifier) and value in self._CRYPTOGRAPHY_MAPPING_REVERSED:
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
