@@ -60,10 +60,11 @@ except ImportError:
 
 # requests and josepy are optional dependencies for acme tasks
 try:
+    import dns.resolver as resolver
     import josepy as jose
     import requests
 except ImportError:  # pragma: no cover
-    jose = requests = None  # type: ignore[assignment]
+    jose = resolver = requests = None  # type: ignore[assignment]
 
 
 def run_task(task: "Proxy[FuncTypeVar]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
@@ -193,6 +194,19 @@ def acme_validate_challenge(challenge_pk: int) -> None:
                     challenge_valid = received == expected_bytes
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
+    elif challenge.type == AcmeChallenge.TYPE_DNS_01:
+        dns_name = f"_acme_challenge.{value}"
+        log.info("Validating DNS-01 challenge with querying TXT %s.", dns_name)
+        try:
+            answer = resolver.query(dns_name, "TXT", lifetime=3)
+        except resolver.NXDOMAIN:
+            log.error("TXT %s: record does not exist.", dns_name)
+
+        else:
+            if len(answer) != 1:
+                log.error("%s: %s DNS records returned", value, len(answer))
+            else:
+                challenge_valid = answer[0].strings[-1] == expected_bytes
     elif challenge.type == AcmeChallenge.TYPE_TLS_ALPN_01:
         # host = socket.gethostbyname(value)
         # sni_cert = crypto_util.probe_sni(
