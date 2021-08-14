@@ -193,6 +193,12 @@ def acme_validate_challenge(challenge_pk: int) -> None:
                     challenge_valid = received == expected_bytes
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
+    elif challenge.type == AcmeChallenge.TYPE_TLS_ALPN_01:
+        # host = socket.gethostbyname(value)
+        # sni_cert = crypto_util.probe_sni(
+        #    host=host, port=443, name=value, alpn_protocols=[TLS_ALPN_PROTOCOL.V1]
+        # )
+        log.error("%s: TLS-ALPN-01 challenges not supported yet.", challenge)
     else:
         log.error("%s: Only HTTP-01 challenges supported so far", challenge)
 

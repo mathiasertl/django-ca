@@ -57,3 +57,13 @@ class IdentifierType(enum.Enum):
     """
 
     DNS = "dns"  # equivalent to acme.messages.IDENTIFIER_FQDN
+
+
+@enum.unique
+class TLS_ALPN_PROTOCOL(enum.Enum):
+    """Protocol versions for TLS-ALPN-01 challenges.
+
+    .. see-also:: https://datatracker.ietf.org/doc/html/rfc8737
+    """
+
+    V1 = "acme-tls/1"
