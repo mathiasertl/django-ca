@@ -28,6 +28,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import ca_settings
+from .acme.validation import validate_dns_01
 from .extensions import SubjectAlternativeName
 from .models import AcmeAuthorization
 from .models import AcmeCertificate
@@ -60,11 +61,10 @@ except ImportError:
 
 # requests and josepy are optional dependencies for acme tasks
 try:
-    import dns.resolver as resolver
     import josepy as jose
     import requests
 except ImportError:  # pragma: no cover
-    jose = resolver = requests = None  # type: ignore[assignment]
+    jose = requests = None  # type: ignore[assignment]
 
 
 def run_task(task: "Proxy[FuncTypeVar]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
@@ -195,22 +195,11 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
     elif challenge.type == AcmeChallenge.TYPE_DNS_01:
-        dns_name = f"_acme_challenge.{value}"
-        log.info("Validating DNS-01 challenge with querying TXT %s.", dns_name)
-        try:
-            answer = resolver.query(dns_name, "TXT", lifetime=3)
-        except resolver.NXDOMAIN:
-            log.error("TXT %s: record does not exist.", dns_name)
-
-        else:
-            if len(answer) != 1:
-                log.error("%s: %s DNS records returned", value, len(answer))
-            else:
-                challenge_valid = answer[0].strings[-1] == expected_bytes
+        challenge_valid = validate_dns_01(challenge)
     elif challenge.type == AcmeChallenge.TYPE_TLS_ALPN_01:
         # host = socket.gethostbyname(value)
         # sni_cert = crypto_util.probe_sni(
-        #    host=host, port=443, name=value, alpn_protocols=[TLS_ALPN_PROTOCOL.V1]
+        #    host=host, port=443, name=value, alpn_protocols=[TlsAlpnProtocol.V1]
         # )
         log.error("%s: TLS-ALPN-01 challenges not supported yet.", challenge)
     else:

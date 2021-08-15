@@ -60,7 +60,7 @@ class IdentifierType(enum.Enum):
 
 
 @enum.unique
-class TLS_ALPN_PROTOCOL(enum.Enum):
+class TlsAlpnProtocol(enum.Enum):
     """Protocol versions for TLS-ALPN-01 challenges.
 
     .. see-also:: https://datatracker.ietf.org/doc/html/rfc8737
