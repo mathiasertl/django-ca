@@ -1639,6 +1639,11 @@ class AcmeChallenge(DjangoCAModel):
         return "%s (%s)" % (self.auth.value, self.type)
 
     @property
+    def account(self) -> AcmeAccount:
+        """Account that this challenge belongs to."""
+        return self.auth.account
+
+    @property
     def acme_url(self) -> str:
         """Get the ACME URL path for this challenge."""
         return reverse("django_ca:acme-challenge", kwargs={"slug": self.slug, "serial": self.serial})
