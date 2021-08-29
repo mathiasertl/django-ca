@@ -19,6 +19,10 @@ services:
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
             POSTGRES_PASSWORD: mysecretpassword
+        depends_on:
+            - db
+            - cache
+            - certbot
     webserver:
         environment:
             NGINX_HOST: ca.example.com webserver localhost
@@ -37,8 +41,20 @@ services:
         stdin_open: true
         tty: true
 
+        # dnsmasq needs NET_ADMIN, see https://hub.docker.com/r/vimagick/dnsmasq
+        cap_add:
+            - NET_ADMIN
+
+        # inotify
+        volumes:
+            - certbot-config:/etc/dnsmasq.d/
+
         networks:
+            frontend:
             public:
                 aliases:
                     - example
                     - http-01.example.com
+
+volumes:
+    certbot-config:

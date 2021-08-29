@@ -1,9 +1,16 @@
 ARG IMAGE=debian:buster
 FROM $IMAGE
 
+# NOTE: procps/bind9-hosts to help with debugging
 RUN apt-get update && \
-    apt-get install -y certbot curl dnsmasq && \
+    apt-get install -y certbot curl dnsmasq inotify-tools && \
+    apt-get install -y procps bind9-host && \
     rm -rf /var/lib/apt/lists/*
 ADD ca/django_ca/tests/fixtures/cli.ini /etc/letsencrypt/cli.ini
+ADD ca/django_ca/tests/fixtures/dnsmasq.sh /usr/local/bin/
+
+env DNSMASQ_CONF_DIR=/etc/dnsmasq.d/
 
 WORKDIR /root/
+ENTRYPOINT ["/usr/local/bin/dnsmasq.sh"]
+CMD ["--log-queries"]
