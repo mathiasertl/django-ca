@@ -28,7 +28,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import ca_settings
-from .acme.validation import validate_dns_01
 from .extensions import SubjectAlternativeName
 from .models import AcmeAuthorization
 from .models import AcmeCertificate
@@ -63,8 +62,10 @@ except ImportError:
 try:
     import josepy as jose
     import requests
+
+    from .acme.validation import validate_dns_01
 except ImportError:  # pragma: no cover
-    jose = requests = None  # type: ignore[assignment]
+    jose = requests = validate_dns_01 = None  # type: ignore[assignment]
 
 
 def run_task(task: "Proxy[FuncTypeVar]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
