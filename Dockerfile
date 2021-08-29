@@ -114,7 +114,8 @@ USER django-ca:django-ca
 # Run linters and unit tests
 COPY devscripts/ devscripts/
 RUN python dev.py code-quality
-RUN python dev.py coverage --format=text
+ARG FAIL_UNDER=100
+RUN python dev.py coverage --format=text --fail-under=$FAIL_UNDER
 
 # Run mypy (not yet - we need cryptography 3.5 for that)
 #COPY .mypy.ini ./
