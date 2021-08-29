@@ -2,7 +2,7 @@ ARG IMAGE=debian:buster
 FROM $IMAGE
 
 RUN apt-get update && \
-    apt-get install -y certbot curl && \
+    apt-get install -y certbot curl dnsmasq && \
     rm -rf /var/lib/apt/lists/*
 ADD ca/django_ca/tests/fixtures/cli.ini /etc/letsencrypt/cli.ini
 
