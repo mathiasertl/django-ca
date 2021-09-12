@@ -29,10 +29,13 @@ while true; do
     dnsmasq --no-daemon --conf-dir=$DNSMASQ_CONF_DIR,*.conf "$@" &
     PID=$!
 
-	# Wait for configuration changes.
-	# WARNING: $DNSMASQ_CONF_DIR must be a bind mount for this to work!
+    # Wait for configuration changes.
+    # WARNING: $DNSMASQ_CONF_DIR must be a bind mount for this to work!
     inotifywait -e modify -e move -e create -e delete -e attrib -r $DNSMASQ_CONF_DIR
 
     kill $PID
+
+    # Sleep for one second, otherwise dnsmasq might complain about the port still being in use
+    sleep 1
 done
 
