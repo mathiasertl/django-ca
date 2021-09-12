@@ -46,7 +46,8 @@ preconfigured to use the django-ca registry in the container next to it::
 
    $ docker-compose exec certbot /bin/bash
    root@certbot:~# certbot register
-   root@certbot:~# certbot certonly --standalone --preferred-challenges http -d http-01.example.com
+   root@certbot:~# django-ca-test-validation.sh http http-01.example.com
+   root@certbot:~# django-ca-test-validation.sh dns dns-01.example.com
 
 ***************
 Tips and tricks
