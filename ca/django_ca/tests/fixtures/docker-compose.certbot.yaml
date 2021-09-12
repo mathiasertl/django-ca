@@ -10,9 +10,13 @@ services:
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
             POSTGRES_PASSWORD: mysecretpassword
         networks:
-            - cache
-            - database
-            - public
+            cache: {}
+            database: {}
+            public: {}
+            dns:
+                ipv4_address: "10.5.0.4"
+        dns:
+            - "10.5.0.5"
     frontend:
         environment:
             DJANGO_CA_ALLOWED_HOSTS: ca.example.com webserver localhost
@@ -23,6 +27,14 @@ services:
             - db
             - cache
             - certbot
+        networks:
+            cache: {}
+            database: {}
+            frontend: {}
+            dns:
+                ipv4_address: "10.5.0.3"
+        dns:
+            - "10.5.0.5"
     webserver:
         environment:
             NGINX_HOST: ca.example.com webserver localhost
@@ -50,6 +62,8 @@ services:
             - certbot-config:/etc/dnsmasq.d/
 
         networks:
+            dns:
+                ipv4_address: "10.5.0.5"
             frontend:
             public:
                 aliases:
@@ -58,3 +72,11 @@ services:
 
 volumes:
     certbot-config:
+
+networks:
+    dns:
+        driver: bridge
+        ipam:
+            config: 
+                - subnet: "10.5.0.0/16"
+                  gateway: "10.5.0.1"
