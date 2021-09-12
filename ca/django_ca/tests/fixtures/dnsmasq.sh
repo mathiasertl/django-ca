@@ -26,7 +26,7 @@
 # NOTE: inotify only works inside a Docker container if the watched directory is a bind mount.
 
 while true; do
-    dnsmasq --no-daemon --conf-dir=$DNSMASQ_CONF_DIR,*.conf "$@" &
+    dnsmasq --no-daemon --log-queries --conf-dir=$DNSMASQ_CONF_DIR,*.conf "$@" &
     PID=$!
 
     # Wait for configuration changes.
