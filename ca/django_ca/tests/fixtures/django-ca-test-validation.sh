@@ -17,17 +17,32 @@
 
 TYPE=$1
 DOMAIN=$2
+shift
+shift
 
 usage () {
-    echo "$0 [dns|http] domain"
+    echo "$0 [dns|http] [domain] [certbot-args]...
+
+Shortcut to request an ACMEv2 certificate in the local test setup via certbot.
+
+This script takes a challenge type (http/dns) and a single domain. Any further args are passed to certbot.
+
+Example:
+
+	`basename $0` http http-01.example.com --verbose
+
+See also:
+
+	https://django-ca.readthedocs.io/en/latest/dev/acme.html
+"
 }
 
 if [[ $TYPE == "dns" ]]; then
     set -x
-    certbot certonly --manual --preferred-challenges dns --manual-auth-hook django-ca-dns-auth --manual-cleanup-hook django-ca-dns-clean -d $DOMAIN
+    certbot certonly --manual --preferred-challenges dns --manual-auth-hook django-ca-dns-auth --manual-cleanup-hook django-ca-dns-clean -d $DOMAIN "$@"
 elif [[ $TYPE == "http" ]]; then
     set -x
-    certbot certonly --standalone --preferred-challenges http -d $DOMAIN
+    certbot certonly --standalone --preferred-challenges http -d $DOMAIN "$@"
 else
     usage
     exit 1
