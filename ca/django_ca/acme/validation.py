@@ -23,7 +23,7 @@ from ..models import AcmeChallenge
 try:
     import dns.exception
     from dns import resolver
-except ImportError:
+except ImportError:  # pragma: no cover
     resolver = None  # type: ignore[assignment]
 
 log = logging.getLogger(__name__)

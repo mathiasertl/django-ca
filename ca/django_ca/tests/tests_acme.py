@@ -16,8 +16,13 @@
 import typing
 from contextlib import contextmanager
 from importlib import reload
+from unittest import mock
 
 import acme
+import dns.exception
+import dns.name
+from dns import resolver
+from dns.rdtypes.txtbase import TXTBase
 
 from django.test import TestCase
 from django.urls import include
@@ -26,9 +31,15 @@ from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 
 from .. import urls
+from ..acme import validation
 from ..acme.constants import IdentifierType
 from ..acme.constants import Status
+from ..models import AcmeAccount
+from ..models import AcmeAuthorization
+from ..models import AcmeChallenge
+from ..models import AcmeOrder
 from .base import override_settings
+from .base.mixins import TestCaseMixin
 
 urlpatterns = [
     path("django_ca/", include("django_ca.urls")),
@@ -96,3 +107,75 @@ class TestConstantsTestCase(TestCase):
             actual.append("ip")
 
         self.assertCountEqual(actual, [s.value for s in IdentifierType])
+
+
+class Dns01ValidationTestCase(TestCaseMixin, TestCase):
+    """Test dns-01 validation."""
+
+    load_cas = ["root", "child"]
+
+    def setUp(self):
+        super().setUp()
+        self.domain = "example.invalid"
+        self.account = AcmeAccount.objects.create(thumbprint="test-thumbprint", ca=self.ca)
+        self.order = AcmeOrder.objects.create(account=self.account)
+        self.auth = AcmeAuthorization(value=self.domain, order=self.order)
+        self.chall = AcmeChallenge(type=AcmeChallenge.TYPE_DNS_01, auth=self.auth)
+
+    @contextmanager
+    def mock_response(self, domain, *records):
+        dns.resolver.reset_default_resolver()
+        responses = [
+            TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, rec) for rec in records
+        ]
+        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as rm:
+            rm.return_value = responses
+            yield rm
+
+        # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
+        rm.assert_called_once()
+        self.assertEqual(rm.call_args_list[0].args[:2], (f"_acme_challenge.{domain}", "TXT"))
+
+    def test_wrong_txt_response(self):
+        with self.mock_response(self.domain, "foo"):
+            self.assertFalse(validation.validate_dns_01(self.chall))
+        with self.mock_response(self.domain, "foo", "bar"):
+            self.assertFalse(validation.validate_dns_01(self.chall))
+
+    def test_dns_exception(self):
+        with mock.patch("dns.resolver.resolve", side_effect=dns.exception.DNSException) as rm:
+            self.assertFalse(validation.validate_dns_01(self.chall))
+        rm.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)
+
+    def test_nxdomain(self):
+        """Test validating a domain where the record simply does not exist."""
+
+        with mock.patch("dns.resolver.resolve", side_effect=resolver.NXDOMAIN) as rm, self.assertLogs(
+            "django_ca.acme.validation", level="DEBUG"
+        ) as logcm:
+            self.assertFalse(validation.validate_dns_01(self.chall))
+
+        self.assertEqual(
+            logcm.output,
+            [
+                f"INFO:django_ca.acme.validation:DNS-01 validation of {self.domain}",
+                f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist.",
+            ],
+        )
+        rm.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)
+
+    def test_wrong_acme_challenge(self):
+        """Test passing an ACME challenge of the wrong type."""
+        with self.assertRaisesRegex(ValueError, r"^This function can only validate DNS-01 challenges$"):
+            validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_HTTP_01))
+        with self.assertRaisesRegex(ValueError, r"^This function can only validate DNS-01 challenges$"):
+            validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_TLS_ALPN_01))
+
+    def test_no_dnspython(self):
+        with mock.patch("django_ca.acme.validation.resolver", None), self.assertLogs() as logcm:
+            validation.validate_dns_01("Foo")
+
+        self.assertEqual(
+            logcm.output,
+            ["ERROR:django_ca.acme.validation:Cannot validate DNS-01 challenge: dnspython is not installed"],
+        )
