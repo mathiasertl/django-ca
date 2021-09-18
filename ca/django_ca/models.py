@@ -1479,6 +1479,7 @@ class AcmeAuthorization(DjangoCAModel):
     """
 
     # Choices from RFC 8555, section 9.7.7.
+    # TODO: acme.messages defines an "ip" identifier, present in acme >= 1.19.0
     TYPE_DNS = IdentifierType.DNS.value
     TYPE_CHOICES = ((TYPE_DNS, _("DNS")),)
 
