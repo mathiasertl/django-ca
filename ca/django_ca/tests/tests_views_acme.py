@@ -47,6 +47,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..acme.errors import AcmeUnauthorized
+from ..acme.messages import CertificateRequest
 from ..acme.messages import NewOrder
 from ..acme.responses import AcmeResponseUnauthorized
 from ..models import AcmeAccount
@@ -1336,7 +1337,7 @@ class AcmeChallengeViewTestCase(
 
 @freeze_time(timestamps["everything_valid"])
 class AcmeOrderFinalizeViewTestCase(
-    AcmeWithAccountViewTestCaseMixin[acme.messages.CertificateRequest], TransactionTestCase
+    AcmeWithAccountViewTestCaseMixin[CertificateRequest], TransactionTestCase
 ):
     """Test retrieving a challenge."""
 
@@ -1373,13 +1374,13 @@ class AcmeOrderFinalizeViewTestCase(
 
     def get_message(  # type: ignore[override]
         self, csr: x509.CertificateSigningRequest
-    ) -> acme.messages.CertificateRequest:
+    ) -> CertificateRequest:
         """Get a message for the given cryptography CSR object."""
         req = X509Req.from_cryptography(csr)
-        return acme.messages.CertificateRequest(csr=jose.ComparableX509(req))
+        return CertificateRequest(csr=jose.ComparableX509(req))
 
     @property
-    def message(self) -> acme.messages.CertificateRequest:
+    def message(self) -> CertificateRequest:
         """Default message to send to the server."""
         return self.get_message(self.csr)
 

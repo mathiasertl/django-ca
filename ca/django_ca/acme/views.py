@@ -78,6 +78,7 @@ from .errors import AcmeException
 from .errors import AcmeForbidden
 from .errors import AcmeMalformed
 from .errors import AcmeUnauthorized
+from .messages import CertificateRequest
 from .messages import NewOrder
 from .responses import AcmeResponse
 from .responses import AcmeResponseAccount
@@ -722,7 +723,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
 
-    message_cls = messages.CertificateRequest
+    message_cls = CertificateRequest
 
     def validate_csr(
         self, message: messages.CertificateRequest, authorizations: Iterable[AcmeAuthorization]
