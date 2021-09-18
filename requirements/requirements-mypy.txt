@@ -1,5 +1,5 @@
 mypy==0.910
-django-stubs==1.8.0
+django-stubs==1.9.0
 types-freezegun==1.1.0
 types-pyRFC3339==0.1.2
 types-requests==2.25.6
