@@ -287,22 +287,36 @@ elif args.command == "coverage":
 
 elif args.command == "code-quality":
     files = ["ca/", "devscripts/", "docs/source/"] + glob.glob("*.py")
-    print("isort --check-only --diff %s" % " ".join(files))
-    subprocess.run(["isort", "--check-only", "--diff"] + files, check=True)
+    print("+ isort --check-only --diff %s" % " ".join(files))
+    try:
+        subprocess.run(["isort", "--check-only", "--diff"] + files, check=True)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
 
-    print("flake8 %s" % " ".join(files))
-    subprocess.run(["flake8"] + files, check=True)
+    print("+ flake8 %s" % " ".join(files))
+    try:
+        subprocess.run(["flake8"] + files, check=True)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
+    print("")
 
-    print("black --check %s" % " ".join(files))
-    subprocess.run(["black", "--check"] + files, check=True)
+    print("+ black --check %s" % " ".join(files))
+    try:
+        subprocess.run(["black", "--check"] + files, check=True)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
+    print("")
 
-    print("python -Wd manage.py check")
-    subprocess.run(
-        ["python", "-Wd", "manage.py", "check"],
-        cwd=CADIR,
-        check=True,
-        env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"),
-    )
+    print("+ python -Wd manage.py check")
+    try:
+        subprocess.run(
+            ["python", "-Wd", "manage.py", "check"],
+            cwd=CADIR,
+            check=True,
+            env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"),
+        )
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
 elif args.command == "docker-test":
     docker_runs = []
 
