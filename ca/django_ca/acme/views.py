@@ -392,8 +392,8 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         try:
             message = self.message_cls.json_loads(self.jws.payload)
-        except jose.DeserializationError:
-            return AcmeResponseMalformedPayload()
+        except jose.DeserializationError as e:
+            return AcmeResponseMalformedPayload(message=", ".join(e.args))
 
         return self.acme_request(message, slug)
 

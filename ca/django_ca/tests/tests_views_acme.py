@@ -1040,7 +1040,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
         """Test sending no identifiers."""
 
         resp = self.acme(self.url, acme.messages.NewOrder(), kid=self.kid)
-        self.assertMalformed(resp, "Malformed payload.")
+        self.assertMalformed(resp, "The following fields are required: identifiers")
 
         # try empty tuple too
         resp = self.acme(
