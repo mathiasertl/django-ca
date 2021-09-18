@@ -621,7 +621,8 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         if not_before and not_after and not_before > not_after:
             raise AcmeMalformed(message="notBefore must be before notAfter.")
         if not message.identifiers:
-            raise AcmeMalformed(message="Malformed payload.")
+            # NOTE: Catches sending an empty tuple, which is not caught in message deserialization
+            raise AcmeMalformed(message="The following fields are required: identifiers")
 
         if not settings.USE_TZ and not_before:
             not_before = timezone.make_naive(not_before)

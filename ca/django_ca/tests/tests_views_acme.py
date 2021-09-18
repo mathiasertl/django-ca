@@ -1049,7 +1049,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
             kid=self.kid,
             payload_cb=lambda d: dict(d, identifiers=()),
         )
-        self.assertMalformed(resp, "Malformed payload.")
+        self.assertMalformed(resp, "The following fields are required: identifiers")
 
         self.assertEqual(AcmeOrder.objects.all().count(), 0)
 
