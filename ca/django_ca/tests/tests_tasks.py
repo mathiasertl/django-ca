@@ -431,11 +431,15 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         rm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
         self.assertInvalid()
 
+        domain = self.hostname
+        exp = self.chall.expected
+        acme_domain = f"_acme_challenge.{domain}"
+        logger = "django_ca.acme.validation"
         self.assertEqual(
             logcm.output,
             [
-                f"INFO:django_ca.acme.validation:DNS-01 validation of {self.hostname}: Expect {self.chall.expected} on _acme_challenge.{self.hostname}",
-                f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.hostname}: record does not exist.",
+                f"INFO:{logger}:DNS-01 validation of {domain}: Expect {exp} on {acme_domain}",
+                f"DEBUG:{logger}:TXT {acme_domain}: record does not exist.",
                 f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
             ],
         )

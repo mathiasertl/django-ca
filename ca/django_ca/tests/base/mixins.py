@@ -80,6 +80,7 @@ from ...typehints import ParsableSubject
 from ...utils import ca_storage
 from . import certs
 from . import timestamps
+from .typehints import DjangoCAModelTypeVar
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -89,7 +90,6 @@ if typing.TYPE_CHECKING:
 else:
     TestCaseProtocol = object
 
-DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 

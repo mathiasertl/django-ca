@@ -13,13 +13,16 @@
 
 """Test cases for the admin interface for Certificate Authorities."""
 
+import typing
 from http import HTTPStatus
 
+from django.http import HttpResponse
 from django.test import Client
 from django.test import TestCase
 from django.test import override_settings
 
 from ..models import CertificateAuthority
+from ..models import DjangoCAModel
 from .base.mixins import AdminTestCaseMixin
 from .base.mixins import StandardAdminViewTestCaseMixin
 
@@ -34,6 +37,24 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateauthorityadmin.css",
     )
+
+    def get_change_view(
+        self, obj: DjangoCAModel, data: typing.Optional[typing.Dict[str, str]] = None
+    ) -> HttpResponse:
+        """Get the response to a change view for the given model instance."""
+        if obj.name == "startssl_root":
+            # StartSSL root has unknown extensions
+            with self.assertLogs() as logcm:
+                response = self.client.get(self.change_url(obj), data)
+
+            template = "WARNING:django_ca.models:Unknown extension encountered: Unknown OID (%s)"
+            self.assertEqual(
+                logcm.output,
+                [template % "2.16.840.1.113730.1.1", template % "2.16.840.1.113730.1.13"],
+            )
+            return response
+        else:
+            return self.client.get(self.change_url(obj), data)
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_change_view_with_acme(self) -> None:

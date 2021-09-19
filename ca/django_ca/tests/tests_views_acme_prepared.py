@@ -149,8 +149,12 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
             cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
             self.before_prepared_request(data)
 
-            with mock.patch("django.views.generic.base.View.dispatch", side_effect=Exception("foo")):
-                response = self.post(self.get_url(data), data["body"], content_type="application/json")
+            url = self.get_url(data)
+            view = "django.views.generic.base.View.dispatch"
+            msg = f"{url} mock-exception"
+
+            with mock.patch(view, side_effect=Exception(msg)), self.assertLogs() as logcm:
+                response = self.post(url, data["body"], content_type="application/json")
             self.assertEqual(response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
             self.assertEqual(
                 response.json(),
@@ -160,6 +164,8 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
                     "type": "urn:ietf:params:acme:error:serverInternal",
                 },
             )
+            self.assertEqual(len(logcm.output), 1)
+            self.assertIn(msg, logcm.output[0])
 
     def test_duplicate_nonce_use(self) -> None:
         """Test that a Nonce can really only be used once."""

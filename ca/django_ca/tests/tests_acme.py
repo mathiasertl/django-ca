@@ -201,9 +201,13 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
             self.assertFalse(validation.validate_dns_01(self.chall))
 
     def test_dns_exception(self):
-        with mock.patch("dns.resolver.resolve", side_effect=dns.exception.DNSException) as rm:
+        with mock.patch(
+            "dns.resolver.resolve", side_effect=dns.exception.DNSException
+        ) as rm, self.assertLogs() as logcm:
             self.assertFalse(validation.validate_dns_01(self.chall))
         rm.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)
+        self.assertEqual(len(logcm.output), 2)
+        self.assertIn("dns.exception.DNSException", logcm.output[1])
 
     def test_nxdomain(self):
         """Test validating a domain where the record simply does not exist."""
