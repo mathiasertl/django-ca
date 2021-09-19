@@ -567,6 +567,21 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
     @override_tmpcadir()
+    def test_unknown_ca(self) -> None:
+        """Try requesting an unknown CA in a CA OCSP view."""
+
+        data = base64.b64encode(req1).decode("utf-8")
+        with self.assertLogs() as logcm:
+            response = self.client.get(reverse("get-ca", kwargs={"data": data}))
+        serial = self.certs["child-cert"].serial
+        self.assertEqual(
+            logcm.output, [f"WARNING:django_ca.views:{serial}: OCSP request for unknown CA received."]
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
+        self.assertEqual(ocsp_response["response_status"].native, "internal_error")
+
+    @override_tmpcadir()
     def test_bad_private_key_type(self) -> None:
         """Test that we log an error when the private key is of an unsupported type."""
         data = base64.b64encode(req1).decode("utf-8")
