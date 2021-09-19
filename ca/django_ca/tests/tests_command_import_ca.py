@@ -154,7 +154,7 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         try:
             serial = certs["root"]["serial"].replace(":", "")
-            error = r"^%s.key: Permission denied: Could not open file for writing$" % serial
+            error = rf"^{serial}\.key: Permission denied: Could not open file for writing$"
             with self.assertCommandError(error):
                 self.cmd("import_ca", name, key_path, pem_path)
         finally:
@@ -183,7 +183,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             os.chmod(tempdir, 0o000)
             ca_dir = os.path.join(tempdir, "foo", "bar")
-            msg = r"^%s: Could not create CA_DIR: Permission denied.$" % ca_dir
+            msg = rf"^{ca_dir}: Could not create CA_DIR: Permission denied.$"
             with mock_cadir(ca_dir), self.assertCommandError(msg):
                 self.cmd("import_ca", name, key_path, pem_path)
 

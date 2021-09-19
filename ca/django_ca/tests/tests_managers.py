@@ -66,16 +66,16 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         parent_ski = parent_ca.subject_key_identifier.value  # type: ignore[union-attr] # always present
         issuer = parent_ca.subject
 
-        base_url = "http://%s/django_ca/" % ca_settings.CA_DEFAULT_HOSTNAME
+        base_url = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
         self.assertEqual(ca.name, name)
         self.assertEqual(ca.issuer, issuer)
         self.assertEqual(ca.subject, Subject(subject))
         self.assertTrue(ca.enabled)
         self.assertEqual(ca.parent, parent)
-        self.assertEqual(ca.crl_url, "%scrl/%s/" % (base_url, ca.serial))
+        self.assertEqual(ca.crl_url, f"{base_url}crl/{ca.serial}/")
         self.assertEqual(ca.crl_number, '{"scope": {}}')
-        self.assertEqual(ca.issuer_url, "%sissuer/%s.der" % (base_url, parent_serial))
-        self.assertEqual(ca.ocsp_url, "%socsp/%s/cert/" % (base_url, ca.serial))
+        self.assertEqual(ca.issuer_url, f"{base_url}issuer/{parent_serial}.der")
+        self.assertEqual(ca.ocsp_url, f"{base_url}ocsp/{ca.serial}/cert/")
         self.assertEqual(ca.issuer_alt_name, "")
         self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)  # type: ignore[union-attr]
 
@@ -111,8 +111,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             AuthorityInformationAccess(
                 {
                     "value": {
-                        "ocsp": ["URI:http://%s%s" % (host, self.reverse("ocsp-ca-post", serial=ca.serial))],
-                        "issuers": ["URI:http://%s%s" % (host, self.reverse("issuer", serial=ca.serial))],
+                        "ocsp": [f"URI:http://{host}{self.reverse('ocsp-ca-post', serial=ca.serial)}"],
+                        "issuers": [f"URI:http://{host}{self.reverse('issuer', serial=ca.serial)}"],
                     }
                 }
             ),
@@ -120,11 +120,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             child.crl_distribution_points,
             CRLDistributionPoints(
-                {
-                    "value": [
-                        {"full_name": ["URI:http://%s%s" % (host, self.reverse("ca-crl", serial=ca.serial))]}
-                    ]
-                }
+                {"value": [{"full_name": [f"URI:http://{host}{self.reverse('ca-crl', serial=ca.serial)}"]}]}
             ),
         )
 
@@ -138,10 +134,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             AuthorityInformationAccess(
                 {
                     "value": {
-                        "ocsp": [
-                            "URI:http://%s%s" % (host, self.reverse("ocsp-ca-post", serial=child.serial))
-                        ],
-                        "issuers": ["URI:http://%s%s" % (host, self.reverse("issuer", serial=child.serial))],
+                        "ocsp": [f"URI:http://{host}{self.reverse('ocsp-ca-post', serial=child.serial)}"],
+                        "issuers": [f"URI:http://{host}{self.reverse('issuer', serial=child.serial)}"],
                     }
                 }
             ),
@@ -151,11 +145,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             CRLDistributionPoints(
                 {
                     "value": [
-                        {
-                            "full_name": [
-                                "URI:http://%s%s" % (host, self.reverse("ca-crl", serial=child.serial))
-                            ]
-                        }
+                        {"full_name": [f"URI:http://{host}{self.reverse('ca-crl', serial=child.serial)}"]}
                     ]
                 }
             ),
@@ -200,7 +190,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_unknown_extension_type(self) -> None:
         """Test that creating a CA with an unknown extension throws an error."""
         name = "unknown-extension-type"
-        subject = "/CN=%s.example.com" % name
+        subject = f"/CN={name}.example.com"
         with self.assertRaisesRegex(ValueError, r"^Cannot add extension of type bool$"):
             CertificateAuthority.objects.init(
                 name, subject, extra_extensions=[True]  # type: ignore[list-item]
@@ -227,19 +217,19 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
         self.ca.enabled = False
         self.ca.save()
 
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: %s is disabled\.$" % self.ca.serial):
+        with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is disabled\.$"):
             CertificateAuthority.objects.default()
 
     @freeze_time(timestamps["everything_expired"])
     def test_expired(self) -> None:
         """Test that an exception is raised if CA is expired."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: %s is expired\.$" % self.ca.serial):
+        with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is expired\.$"):
             CertificateAuthority.objects.default()
 
     @freeze_time(timestamps["before_everything"])
     def test_not_yet_valid(self) -> None:
         """Test that an exception is raised if CA is not yet valid."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: %s is not yet valid\.$" % self.ca.serial):
+        with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is not yet valid\.$"):
             CertificateAuthority.objects.default()
 
     @override_settings(CA_DEFAULT_CA="")
@@ -327,7 +317,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
             cert = Certificate.objects.create_cert(
                 self.ca,
                 certs["root-cert"]["csr"]["pem"],
-                subject="CN=%s" % common_name,
+                subject=f"CN={common_name}",
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -340,7 +330,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca,
                 certs["root-cert"]["csr"]["der"],
                 csr_format=Encoding.DER,
-                subject="CN=%s" % common_name,
+                subject=f"CN={common_name}",
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -358,7 +348,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca,
                 csr=certs["root-cert"]["csr"]["der"],
                 csr_format="FOO",  # type: ignore[arg-type] # what we're testing
-                subject="CN=%s" % common_name,
+                subject=f"CN={common_name}",
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -375,7 +365,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca,
                 csr=certs["root-cert"]["csr"]["parsed"],
                 profile="ocsp",  # type: ignore[arg-type] # what we're testing
-                subject="CN=%s" % common_name,
+                subject=f"CN={common_name}",
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -392,7 +382,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca,
                 csr=certs["root-cert"]["csr"]["parsed"],
                 profile=False,  # type: ignore[arg-type] # what we're testing
-                subject="CN=%s" % common_name,
+                subject=f"CN={common_name}",
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,

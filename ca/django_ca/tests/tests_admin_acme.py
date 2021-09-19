@@ -74,7 +74,7 @@ class AcmeAdminTestCaseMixin(
         kid1 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1)
         account1 = AcmeAccount.objects.create(
             ca=self.cas["child"],
-            contact="mailto:%s" % self.user.email,
+            contact=f"mailto:{self.user.email}",
             status=AcmeAccount.STATUS_VALID,
             kid=kid1,
             terms_of_service_agreed=True,
@@ -85,7 +85,7 @@ class AcmeAdminTestCaseMixin(
         kid2 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1)
         account2 = AcmeAccount.objects.create(
             ca=self.cas["root"],
-            contact="mailto:%s" % self.user.email,
+            contact=f"mailto:{self.user.email}",
             status=AcmeAccount.STATUS_REVOKED,
             kid=kid2,
             terms_of_service_agreed=False,
@@ -144,14 +144,14 @@ class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], TestCase):
     def test_expired_filter(self) -> None:
         """Test the "expired" list filter."""
         self.assertChangelistResponse(
-            self.client.get("%s?expired=0" % self.changelist_url), self.order1, self.order2
+            self.client.get(f"{self.changelist_url}?expired=0"), self.order1, self.order2
         )
-        self.assertChangelistResponse(self.client.get("%s?expired=1" % self.changelist_url))
+        self.assertChangelistResponse(self.client.get(f"{self.changelist_url}?expired=1"))
 
         with self.freeze_time("everything_expired"):
-            self.assertChangelistResponse(self.client.get("%s?expired=0" % self.changelist_url))
+            self.assertChangelistResponse(self.client.get(f"{self.changelist_url}?expired=0"))
             self.assertChangelistResponse(
-                self.client.get("%s?expired=1" % self.changelist_url), self.order1, self.order2
+                self.client.get(f"{self.changelist_url}?expired=1"), self.order1, self.order2
             )
 
 

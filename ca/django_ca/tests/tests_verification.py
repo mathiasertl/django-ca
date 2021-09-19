@@ -39,7 +39,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
     def init_ca(self, name: str, **kwargs: typing.Any) -> CertificateAuthority:
         """Create a CA."""
-        self.cmd("init_ca", name, "/CN=%s" % name, **kwargs)
+        self.cmd("init_ca", name, f"/CN={name}", **kwargs)
         return CertificateAuthority.objects.get(name=name)
 
     @contextmanager
@@ -47,7 +47,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         """Dump CRL to a tmpdir, yield path to it."""
         kwargs["ca"] = ca
         with tempfile.TemporaryDirectory() as tempdir:
-            path = os.path.join(tempdir, "%s.%s.crl" % (ca.name, kwargs.get("scope")))
+            path = os.path.join(tempdir, f"{ca.name}.{kwargs.get('scope')}.crl")
             self.cmd("dump_crl", path, **kwargs)
             yield path
 
@@ -57,9 +57,9 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             paths = []
             for cert in certificates:
-                path = os.path.join(tempdir, "%s.pem" % cert.serial)
+                path = os.path.join(tempdir, f"{cert.serial}.pem")
                 paths.append(path)
-                with open(path, "w") as stream:
+                with open(path, "w", encoding="ascii") as stream:
                     stream.write(cert.pub.pem)
 
             yield paths
@@ -72,7 +72,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
 
         with tempfile.TemporaryDirectory() as tempdir:
-            out_path = os.path.join(tempdir, "%s.pem" % hostname)
+            out_path = os.path.join(tempdir, f"{hostname}.pem")
             self.cmd(
                 "sign_cert", ca=ca, subject=Subject([("CN", hostname)]), out=out_path, stdin=stdin, **kwargs
             )
@@ -98,11 +98,13 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     ) -> None:
         """Run openssl verify."""
         if untrusted:
-            cmd = "%s %s" % (" ".join("-untrusted %s" % path for path in untrusted), cmd)
+            untrusted_args = " ".join(f"-untrusted {path}" for path in untrusted)
+            cmd = f"{untrusted_args} {cmd}"
         if crl:
-            cmd = "%s %s" % (" ".join("-CRLfile %s" % path for path in crl), cmd)
+            crlfile_args = " ".join(f"-CRLfile {path}" for path in crl)
+            cmd = f"{crlfile_args} {cmd}"
 
-        self.openssl("verify %s" % cmd, *args, **kwargs)
+        self.openssl(f"verify {cmd}", *args, **kwargs)
 
     @override_tmpcadir()
     def test_root_ca(self) -> None:

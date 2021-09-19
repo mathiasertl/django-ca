@@ -29,7 +29,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 PYPROJECT_PATH = os.path.join(ROOT_DIR, "pyproject.toml")
 
-with open(PYPROJECT_PATH) as stream:
+with open(PYPROJECT_PATH, encoding="utf-8") as stream:
     FULL_CONFIG = toml.load(stream)
 
 CONFIG = FULL_CONFIG["django-ca"]["release"]
@@ -47,7 +47,9 @@ _alpine_images = DOCKER_CONFIG.setdefault("alpine-images", [])
 if "default" not in _alpine_images:
     _alpine_images.append("default")
 
-DOCKER_CONFIG["metavar"] = "default|python:{%s-%s}-alpine{%s-%s}" % (
+DOCKER_CONFIG[
+    "metavar"
+] = "default|python:{%s-%s}-alpine{%s-%s}" % (  # pylint: disable=consider-using-f-string
     CONFIG["python-major"][0],
     CONFIG["python-major"][-1],
     CONFIG["alpine"][0],

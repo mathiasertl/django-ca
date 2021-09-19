@@ -42,11 +42,8 @@ from ...subject import Subject
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
-    help = (
-        """Sign a CSR and output signed certificate. The defaults depend on the configured
-default profile, currently %s."""
-        % ca_settings.CA_DEFAULT_PROFILE
-    )
+    help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
+default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
     add_extensions_help = """Values for more complex x509 extensions. This is for advanced usage only, the
 profiles already set the correct values for the most common use cases. See
@@ -58,7 +55,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
     def add_cn_in_san(self, parser: CommandParser) -> None:
         """Add argument group for the CommonName-in-SubjectAlternativeName options."""
-        default = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
+        if ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]:
+            cn_in_san_default = " (default)"
+            cn_not_in_san_default = ""
+        else:
+            cn_in_san_default = ""
+            cn_not_in_san_default = " (default)"
 
         group = parser.add_argument_group(
             "CommonName in subjectAltName",
@@ -72,15 +74,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             default=None,
             action="store_false",
             dest="cn_in_san",
-            help="Do not add the CommonName as subjectAlternativeName%s."
-            % (" (default)" if not default else ""),
+            help=f"Do not add the CommonName as subjectAlternativeName{cn_not_in_san_default}.",
         )
         group.add_argument(
             "--cn-in-san",
             default=None,
             action="store_true",
             dest="cn_in_san",
-            help="Add the CommonName as subjectAlternativeName%s." % (" (default)" if default else ""),
+            help=f"Add the CommonName as subjectAlternativeName{cn_in_san_default}.",
         )
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -119,7 +120,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         csr_path: str,
         profile: typing.Optional[str],
         out: typing.Optional[str],
-        **options: typing.Any
+        **options: typing.Any,
     ) -> None:
         if ca.expires < timezone.now():
             raise CommandError("Certificate Authority has expired.")
@@ -182,7 +183,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         cert.watchers.add(*watchers)
 
         if out:
-            with open(out, "w") as stream:
+            with open(out, "w", encoding="ascii") as stream:
                 stream.write(cert.pub.pem)
         else:
             self.stdout.write(cert.pub.pem)

@@ -570,7 +570,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         cname = "foo bar"
 
         prof = Profile("example", subject=Subject({"C": "AT"}))
-        msg = r"^%s: Could not parse CommonName as subjectAlternativeName\.$" % cname
+        msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
         with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 0)
@@ -654,12 +654,12 @@ class ProfileTestCase(TestCaseMixin, TestCase):
     def test_str(self) -> None:
         """Test str()."""
         for name in ca_settings.CA_PROFILES:
-            self.assertEqual(str(profiles[name]), "<Profile: '%s'>" % name)
+            self.assertEqual(str(profiles[name]), f"<Profile: {name}>")
 
     def test_repr(self) -> None:
         """Test repr()."""
         for name in ca_settings.CA_PROFILES:
-            self.assertEqual(repr(profiles[name]), "<Profile: '%s'>" % name)
+            self.assertEqual(repr(profiles[name]), f"<Profile: {name}>")
 
 
 class GetProfileTestCase(TestCase):
@@ -696,8 +696,8 @@ class ProfilesTestCase(TestCase):
     def test_default_proxy(self) -> None:
         """Test using the default proxy."""
         self.assertEqual(profile.name, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertEqual(str(profile), "<DefaultProfile: '%s'>" % ca_settings.CA_DEFAULT_PROFILE)
-        self.assertEqual(repr(profile), "<DefaultProfile: '%s'>" % ca_settings.CA_DEFAULT_PROFILE)
+        self.assertEqual(str(profile), f"<DefaultProfile: {ca_settings.CA_DEFAULT_PROFILE}>")
+        self.assertEqual(repr(profile), f"<DefaultProfile: {ca_settings.CA_DEFAULT_PROFILE}>")
 
         self.assertEqual(profile, profile)
         self.assertEqual(profile, profiles[ca_settings.CA_DEFAULT_PROFILE])

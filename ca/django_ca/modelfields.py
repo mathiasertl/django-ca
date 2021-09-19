@@ -89,13 +89,15 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
             self._loaded = value
             self._bytes = self._loaded.public_bytes(Encoding.DER)
         else:
-            raise ValueError("%s: Could not parse %s" % (value, self._type.__name__))
+            raise ValueError(f"{value}: Could not parse {self._type.__name__}")
 
     def __eq__(self, other: typing.Any) -> bool:
         return isinstance(other, self.__class__) and self._bytes == other._bytes
 
     def __repr__(self) -> str:
-        return "<%s: %s>" % (self.__class__.__name__, self.loaded.subject.rfc4514_string())
+        name = self.__class__.__name__
+        value = self.loaded.subject.rfc4514_string()
+        return f"<{name}: {value}>"
 
     @abc.abstractmethod
     def load_pem(self, value: bytes) -> LoadedTypeVar:

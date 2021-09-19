@@ -84,7 +84,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         import_password: typing.Optional[bytes],
         issuer_alternative_name: typing.Optional[str],
         issuer_url: typing.Optional[str],
-        **options: typing.Any
+        **options: typing.Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):
             try:
@@ -93,7 +93,7 @@ Note that the private key will be copied to the directory configured by the CA_D
                 pem.close()
                 key.close()
                 raise CommandError(
-                    "%s: Could not create CA_DIR: Permission denied." % ca_settings.CA_DIR
+                    f"{ca_settings.CA_DIR}: Could not create CA_DIR: Permission denied."
                 ) from ex
             # FileNotFoundError shouldn't happen, whole point of this block is to create it
 
@@ -125,7 +125,8 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception as ex:
                 raise CommandError("Unable to load public key.") from ex
         ca.update_certificate(pem_loaded)
-        ca.private_key_path = ca_storage.generate_filename("%s.key" % ca.serial.replace(":", ""))
+        serial = ca.serial.replace(":", "")
+        ca.private_key_path = ca_storage.generate_filename(f"{serial}.key")
 
         # load private key
         try:
@@ -150,7 +151,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             ca_storage.save(ca.private_key_path, ContentFile(pem_as_bytes))
         except PermissionError as ex:
             raise CommandError(
-                "%s: Permission denied: Could not open file for writing" % ca.private_key_path
+                f"{ca.private_key_path}: Permission denied: Could not open file for writing"
             ) from ex
 
         # Only save CA to database if we loaded all data and copied private key

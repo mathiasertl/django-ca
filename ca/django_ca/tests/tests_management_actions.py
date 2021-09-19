@@ -458,7 +458,7 @@ class URLActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         for url in ["http://example.com", "https://www.example.org"]:
-            args = self.parser.parse_args(["--url=%s" % url])
+            args = self.parser.parse_args([f"--url={url}"])
             self.assertEqual(args.url, url)
 
     def test_error(self) -> None:
@@ -504,9 +504,9 @@ class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
         """Test false option values."""
         value = "foobar"
         self.assertParserError(
-            ["--expires=%s" % value],
+            [f"--expires={value}"],
             "usage: dev.py [-h] [--expires EXPIRES]\n"
-            "{script}: error: argument --expires: %s: Value must be an integer.\n" % value,
+            f"{{script}}: error: argument --expires: {value}: Value must be an integer.\n",
         )
 
 
@@ -553,12 +553,12 @@ class MultipleURLActionTestCase(ParserTestCaseMixin, TestCase):
             parser = argparse.ArgumentParser()
             parser.add_argument("--url", action=actions.MultipleURLAction)
 
-            args = parser.parse_args(["--url=%s" % url])
+            args = parser.parse_args([f"--url={url}"])
             self.assertEqual(args.url, [url])
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--url", action=actions.MultipleURLAction)
-        args = parser.parse_args(["--url=%s" % urls[0], "--url=%s" % urls[1]])
+        args = parser.parse_args([f"--url={urls[0]}", f"--url={urls[1]}"])
         self.assertEqual(args.url, urls)
 
     def test_none(self) -> None:

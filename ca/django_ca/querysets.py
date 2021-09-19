@@ -146,14 +146,14 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
                 ca = self.get(serial=ca_settings.CA_DEFAULT_CA)
             except self.model.DoesNotExist:
                 # pylint: disable=raise-missing-from; not useful here
-                raise ImproperlyConfigured("CA_DEFAULT_CA: %s: CA not found." % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA}: CA not found.")
 
             if ca.enabled is False:
-                raise ImproperlyConfigured("CA_DEFAULT_CA: %s is disabled." % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is disabled.")
             if ca.expires < now:
-                raise ImproperlyConfigured("CA_DEFAULT_CA: %s is expired." % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is expired.")
             if ca.valid_from > now:  # OK, how could this ever happen? ;-)
-                raise ImproperlyConfigured("CA_DEFAULT_CA: %s is not yet valid." % ca_settings.CA_DEFAULT_CA)
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is not yet valid.")
             return ca
 
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users

@@ -167,7 +167,7 @@ CA_DEFAULT_CA = getattr(settings, "CA_DEFAULT_CA", "").replace(":", "").upper()
 if CA_DEFAULT_CA != "0":
     CA_DEFAULT_CA = CA_DEFAULT_CA.lstrip("0")
 if re.search("[^0-9A-F]", CA_DEFAULT_CA):
-    raise ImproperlyConfigured("CA_DEFAULT_CA: %s: Serial contains invalid characters." % CA_DEFAULT_CA)
+    raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
 CA_DEFAULT_SUBJECT = getattr(settings, "CA_DEFAULT_SUBJECT", {})
 
@@ -219,13 +219,13 @@ try:
     CA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DIGEST_ALGORITHM)()
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured("Unkown CA_DIGEST_ALGORITHM: %s" % _CA_DIGEST_ALGORITHM)
+    raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", 730)
 if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
 elif not isinstance(CA_DEFAULT_EXPIRES, timedelta):
-    raise ImproperlyConfigured("CA_DEFAULT_EXPIRES: %s: Must be int or timedelta" % CA_DEFAULT_EXPIRES)
+    raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must be int or timedelta")
 if isinstance(ACME_MAX_CERT_VALIDITY, int):
     ACME_MAX_CERT_VALIDITY = timedelta(days=ACME_MAX_CERT_VALIDITY)
 if isinstance(ACME_DEFAULT_CERT_VALIDITY, int):
@@ -233,19 +233,19 @@ if isinstance(ACME_DEFAULT_CERT_VALIDITY, int):
 if isinstance(ACME_ORDER_VALIDITY, int):
     ACME_ORDER_VALIDITY = timedelta(days=ACME_ORDER_VALIDITY)
 if CA_DEFAULT_EXPIRES <= timedelta():
-    raise ImproperlyConfigured("CA_DEFAULT_EXPIRES: %s: Must have positive value" % CA_DEFAULT_EXPIRES)
+    raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must have positive value")
 
 if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
-    raise ImproperlyConfigured("CA_DEFAULT_KEY_SIZE cannot be lower then %s" % CA_MIN_KEY_SIZE)
+    raise ImproperlyConfigured(f"CA_DEFAULT_KEY_SIZE cannot be lower then {CA_MIN_KEY_SIZE}")
 
 _CA_DEFAULT_ECC_CURVE = getattr(settings, "CA_DEFAULT_ECC_CURVE", "SECP256R1").strip()
 try:
     CA_DEFAULT_ECC_CURVE: ec.EllipticCurve = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
     if not isinstance(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
-        raise ImproperlyConfigured("%s: Not an EllipticCurve." % _CA_DEFAULT_ECC_CURVE)
+        raise ImproperlyConfigured(f"{_CA_DEFAULT_ECC_CURVE}: Not an EllipticCurve.")
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured("Unkown CA_DEFAULT_ECC_CURVE: %s" % _CA_DEFAULT_ECC_CURVE)
+    raise ImproperlyConfigured(f"Unkown CA_DEFAULT_ECC_CURVE: {_CA_DEFAULT_ECC_CURVE}")
 
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(

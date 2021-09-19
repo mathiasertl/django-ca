@@ -165,8 +165,8 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
-            self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
     def test_all(self) -> None:
@@ -176,8 +176,8 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
-            self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
@@ -399,10 +399,10 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     def mock_challenge(
         self,
         challenge: typing.Optional[AcmeChallenge] = None,
-        status: int = HTTPStatus.OK,
+        status: int = HTTPStatus.OK,  # pylint: disable=unused-argument  # used in subclasses
         content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
         call_count: int = 1,
-        token: typing.Optional[str] = None,
+        token: typing.Optional[str] = None,  # pylint: disable=unused-argument  # used in subclasses
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
 
@@ -412,23 +412,26 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         if content is None:
             content = challenge.expected
 
-        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as rm:
-            rm.return_value = [TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content])]
-            yield rm
+        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_cm:
+            resolve_cm.return_value = [
+                TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content])
+            ]
+            yield resolve_cm
 
-        # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
         if call_count == 0:
-            rm.assert_not_called()
+            resolve_cm.assert_not_called()
         else:
-            rm.assert_called_once()
-            self.assertEqual(rm.call_args_list[0].args[:2], (f"_acme_challenge.{domain}", "TXT"))
+            # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
+            resolve_cm.assert_called_once()
+            self.assertEqual(resolve_cm.call_args_list[0].args[:2], (f"_acme_challenge.{domain}", "TXT"))
 
     def test_nxdomain(self) -> None:
-        with mock.patch("dns.resolver.resolve", side_effect=dns.resolver.NXDOMAIN) as rm, self.assertLogs(
+        """Test a ACME validation where the domain does not exist."""
+        with mock.patch("dns.resolver.resolve", side_effect=dns.resolver.NXDOMAIN) as rmcm, self.assertLogs(
             level="DEBUG"
         ) as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
-        rm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
+        rmcm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
         self.assertInvalid()
 
         domain = self.hostname
@@ -516,7 +519,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName({"value": ["dns:%s" % self.hostname]}),
+            SubjectAlternativeName({"value": [f"dns:{self.hostname}"]}),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
@@ -539,8 +542,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             SubjectAlternativeName(
                 {
                     "value": [
-                        "dns:%s" % self.hostname,
-                        "dns:%s" % hostname2,
+                        f"dns:{self.hostname}",
+                        f"dns:{hostname2}",
                     ]
                 }
             ),
@@ -566,7 +569,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName({"value": ["dns:%s" % self.hostname]}),
+            SubjectAlternativeName({"value": [f"dns:{self.hostname}"]}),
         )
         self.assertEqual(self.acme_cert.cert.expires, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)

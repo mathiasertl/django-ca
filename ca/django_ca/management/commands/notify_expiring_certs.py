@@ -49,7 +49,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 continue
 
             timestamp = cert.expires.strftime("%Y-%m-%d")
-            subj = "Certificate expiration for %s on %s" % (cert.cn, timestamp)
-            msg = "The certificate for %s will expire on %s." % (cert.cn, timestamp)
+            subj = f"Certificate expiration for {cert.cn} on {timestamp}"
+            msg = f"The certificate for {cert.cn} will expire on {timestamp}."
             recipient = list(cert.watchers.values_list("mail", flat=True))
             send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, recipient)

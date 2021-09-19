@@ -86,9 +86,9 @@ class CertificateAdminViewTestCase(
     ) -> None:
         super().assertChangeResponse(response, obj=obj, status=status)
 
-        info = obj._meta.app_label, obj._meta.model_name
-        url = reverse("admin:%s_%s_download" % info, kwargs={"pk": obj.pk})
-        bundle_url = reverse("admin:%s_%s_download_bundle" % info, kwargs={"pk": obj.pk})
+        prefix = f"admin:{obj._meta.app_label}_{obj._meta.model_name}"
+        url = reverse(f"{prefix}_download", kwargs={"pk": obj.pk})
+        bundle_url = reverse(f"{prefix}_download_bundle", kwargs={"pk": obj.pk})
         text = response.content.decode()
         pem = obj.pub.pem.replace("\n", "<br>")  # newlines are replaced with HTML linebreaks by Django
         self.assertInHTML(f"<div class='readonly'>{pem}</div>", text, 1)
@@ -210,6 +210,7 @@ class CertificateAdminViewTestCase(
             response = self.client.get(cert.admin_change_url)
             self.assertChangeResponse(response, obj=cert)
 
+        # pylint: disable=consider-using-f-string  # to avoid repeating the common prefix
         log_msg = "WARNING:django_ca.models:Unknown extension encountered: %s"
         expected = [
             log_msg % "AuthorityInfoAccess (1.3.6.1.5.5.7.1.1)",
@@ -229,6 +230,7 @@ class CertificateAdminViewTestCase(
             log_msg % "SubjectKeyIdentifier (2.5.29.14)",
             log_msg % "TLSFeature (1.3.6.1.5.5.7.1.24)",
         ]
+        # pylint: enable=consider-using-f-string
 
         self.assertEqual(logs.output, sorted(expected))
 
@@ -286,7 +288,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
-        subject = [(f, "AT" if f == "C" else "test-%s" % f) for f in SUBJECT_FIELDS]
+        subject = [(f, "AT" if f == "C" else f"test-{f}") for f in SUBJECT_FIELDS]
         csr = self.create_csr(subject)[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
 
@@ -519,13 +521,13 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.get_url(self.cert), {"format": "DER"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
-        self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
+        self.assertEqual(response["Content-Disposition"], f"attachment; filename={filename}")
         self.assertEqual(response.content, self.cert.pub.der)
 
     def test_not_found(self) -> None:
         """Try downloading a certificate that does not exist."""
         url = reverse("admin:django_ca_certificate_download", kwargs={"pk": "123"})
-        response = self.client.get("%s?format=DER" % url)
+        response = self.client.get(f"{url}?format=DER")
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_bad_format(self) -> None:
@@ -582,11 +584,11 @@ class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_invalid_format(self) -> None:
         """Try downloading an invalid format."""
         url = self.get_url(self.cert)
-        response = self.client.get("%s?format=INVALID" % url)
+        response = self.client.get(f"{url}?format=INVALID")
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"")
 
         # DER is not supported for bundles
-        response = self.client.get("%s?format=DER" % url)
+        response = self.client.get(f"{url}?format=DER")
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")

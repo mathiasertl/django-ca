@@ -93,14 +93,14 @@ class Subject:
                 Iterable[Tuple[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]]], subject
             )
         else:
-            raise ValueError("Invalid subject: %s" % subject)
+            raise ValueError(f"Invalid subject: {subject}")
 
         for oid, value in iterable:
             if isinstance(oid, str):
                 try:
                     oid = NAME_OID_MAPPINGS[oid]
                 except KeyError as ex:
-                    raise ValueError("Invalid OID: %s" % oid) from ex
+                    raise ValueError(f"Invalid OID: {oid}") from ex
 
             if not value:
                 continue
@@ -108,7 +108,7 @@ class Subject:
             if oid not in self._data:
                 self._data[oid] = [value]
             elif oid not in MULTIPLE_OIDS:
-                raise ValueError("%s: Must not occur multiple times" % OID_NAME_MAPPINGS[oid])
+                raise ValueError(f"{OID_NAME_MAPPINGS[oid]}: Must not occur multiple times")
             else:
                 self._data[oid].append(value)
 
@@ -154,12 +154,12 @@ class Subject:
             raise ValueError("Value must be str or list")
 
         if len(value) > 1 and key not in MULTIPLE_OIDS:
-            raise ValueError("%s: Must not occur multiple times" % OID_NAME_MAPPINGS[key])
+            raise ValueError(f"{OID_NAME_MAPPINGS[key]}: Must not occur multiple times")
 
         self._data[key] = value
 
     def __repr__(self) -> str:
-        return 'Subject("%s")' % str(self)
+        return f'Subject("{str(self)}")'
 
     def __str__(self) -> str:
         data = []
@@ -167,8 +167,8 @@ class Subject:
             for val in values:
                 data.append((OID_NAME_MAPPINGS[oid], val))
 
-        joined_data = ["%s=%s" % (k, v) for k, v in sort_name(data)]
-        return "/%s" % "/".join(joined_data)
+        joined_data = "/".join([f"{k}={v}" for k, v in sort_name(data)])
+        return f"/{joined_data}"
 
     @property
     def _iter(self) -> List[Tuple[x509.ObjectIdentifier, List[str]]]:
@@ -223,7 +223,7 @@ class Subject:
             raise ValueError("Value must be str or list")
 
         if len(value) > 1 and oid not in MULTIPLE_OIDS:
-            raise ValueError("%s: Must not occur multiple times" % OID_NAME_MAPPINGS[oid])
+            raise ValueError(f"{OID_NAME_MAPPINGS[oid]}: Must not occur multiple times")
 
         self._data[oid] = value
         return value
@@ -290,4 +290,4 @@ def get_default_subject() -> Subject:
     try:
         return Subject(ca_settings.CA_DEFAULT_SUBJECT)
     except (ValueError, KeyError) as ex:
-        raise ImproperlyConfigured("CA_DEFAULT_SUBJECT: %s" % ex) from ex
+        raise ImproperlyConfigured(f"CA_DEFAULT_SUBJECT: {ex}") from ex

@@ -150,7 +150,7 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
         child = self.cas["child"]
         full_name = [
             x509.UniformResourceIdentifier(
-                "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, child.serial)
+                f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/"
             )
         ]
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)

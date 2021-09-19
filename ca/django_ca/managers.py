@@ -180,7 +180,7 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
             elif isinstance(ext, Extension):
                 builder = builder.add_extension(*ext.for_builder())
             else:
-                raise ValueError("Cannot add extension of type %s" % type(ext).__name__)
+                raise ValueError(f"Cannot add extension of type {type(ext).__name__}")
         return builder
 
 
@@ -364,25 +364,25 @@ class CertificateAuthorityManager(
             # Set OCSP urls
             if not ocsp_url:
                 ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": hex_serial})
-                ocsp_url = "http://%s%s" % (default_hostname, ocsp_path)
+                ocsp_url = f"http://{default_hostname}{ocsp_path}"
             if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
                 ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": root_serial})
-                ca_ocsp_url = "http://%s%s" % (default_hostname, ocsp_path)
+                ca_ocsp_url = f"http://{default_hostname}{ocsp_path}"
 
             # Set issuer path
             issuer_path = reverse("django_ca:issuer", kwargs={"serial": root_serial})
             if parent and not ca_issuer_url:
-                ca_issuer_url = "http://%s%s" % (default_hostname, issuer_path)
+                ca_issuer_url = f"http://{default_hostname}{issuer_path}"
             if not issuer_url:
-                issuer_url = "http://%s%s" % (default_hostname, issuer_path)
+                issuer_url = f"http://{default_hostname}{issuer_path}"
 
             # Set CRL URLs
             if not crl_url:
                 crl_path = reverse("django_ca:crl", kwargs={"serial": hex_serial})
-                crl_url = ["http://%s%s" % (default_hostname, crl_path)]
+                crl_url = [f"http://{default_hostname}{crl_path}"]
             if parent and not ca_crl_url:  # CRL for CA only makes sense in intermediate CAs
                 ca_crl_path = reverse("django_ca:ca-crl", kwargs={"serial": root_serial})
-                ca_crl_url = ["http://%s%s" % (default_hostname, ca_crl_path)]
+                ca_crl_url = [f"http://{default_hostname}{ca_crl_path}"]
 
         pre_create_ca.send(
             sender=self.model,
@@ -496,7 +496,8 @@ class CertificateAuthorityManager(
         )
 
         # write private key to file
-        path = path / pathlib.PurePath("%s.key" % ca.serial.replace(":", ""))
+        safe_serial = ca.serial.replace(":", "")
+        path = path / pathlib.PurePath(f"{safe_serial}.key")
         ca.private_key_path = ca_storage.save(str(path), ContentFile(pem))
         ca.save()
 
@@ -580,9 +581,8 @@ class CertificateManager(
             raise TypeError("profile must be of type django_ca.profiles.Profile.")
 
         if not isinstance(csr, x509.CertificateSigningRequest):
-            msg = "Passing %s as csr is deprecated, pass an x509.CertificateSigningRequest instead." % (
-                type(csr).__name__
-            )
+            clsname = type(csr).__name__
+            msg = f"Passing {clsname} as csr is deprecated, pass an x509.CertificateSigningRequest instead."
             warnings.warn(msg, category=RemovedInDjangoCA120Warning, stacklevel=2)
             csr = parse_csr(csr, csr_format=csr_format)
 

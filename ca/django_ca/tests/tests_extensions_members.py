@@ -664,7 +664,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pi, self.pi1)
 
         pi = PolicyInformation(self.s1)
-        with self.assertRaisesRegex(TypeError, r"^bar/%s: Invalid key/value type$" % self.q1):
+        with self.assertRaisesRegex(TypeError, rf"^bar/{self.q1}: Invalid key/value type$"):
             pi["bar"] = self.q1  # type: ignore[index]
         self.assertEqual(pi, self.pi1)
 

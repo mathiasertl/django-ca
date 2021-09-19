@@ -109,7 +109,7 @@ class AcmeDirectory(View):
     """
 
     def _url(self, request: HttpRequest, name: str, ca: CertificateAuthority) -> str:
-        return request.build_absolute_uri(reverse("django_ca:%s" % name, kwargs={"serial": ca.serial}))
+        return request.build_absolute_uri(reverse(f"django_ca:{name}", kwargs={"serial": ca.serial}))
 
     def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
@@ -127,7 +127,7 @@ class AcmeDirectory(View):
                 # NOTE: Serial is already sanitized by URL converter
                 ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                return AcmeResponseNotFound(message="%s: CA not found." % serial)
+                return AcmeResponseNotFound(message=f"{serial}: CA not found.")
 
         # Get some random data into the directory view, as explained in the Let's Encrypt directory:
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
@@ -172,13 +172,13 @@ class AcmeGetNonceViewMixin:
 
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.encode_b64jose(data)
-        cache_key = "acme-nonce-%s-%s" % (self.kwargs["serial"], nonce)
+        cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
         cache.set(cache_key, 0)
         return nonce
 
     def validate_nonce(self, nonce: str) -> bool:
         """Validate that the given nonce was issued and was not used before."""
-        cache_key = "acme-nonce-%s-%s" % (self.kwargs["serial"], nonce)
+        cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
         try:
             count = cache.incr(cache_key)
         except ValueError:
@@ -221,7 +221,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
         kwargs["index"] = reverse("django_ca:acme-directory", kwargs={"serial": self.kwargs["serial"]})
         response["Link"] = ", ".join(
-            '<%s>;rel="%s"' % (self.request.build_absolute_uri(v), k) for k, v in kwargs.items()
+            f'<{self.request.build_absolute_uri(v)}>;rel="{k}"' for k, v in kwargs.items()
         )
 
     # def log_request(self):
@@ -476,19 +476,19 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
                 # NOTE: ',' appears to be valid in the local part according to RFC 5322
                 _local, domain = addr.split("@", 1)
                 if "?" in domain:
-                    raise AcmeMalformed("invalidContact", "%s: hfields are not allowed." % domain)
+                    raise AcmeMalformed("invalidContact", f"{domain}: hfields are not allowed.")
 
                 # Finally, verify that we're getting at least a valid domain.
                 try:
                     validate_email(addr)
                 except ValueError as ex:
-                    raise AcmeMalformed("invalidContact", "%s: Not a valid email address." % domain) from ex
+                    raise AcmeMalformed("invalidContact", f"{domain}: Not a valid email address.") from ex
             else:
                 # RFC 8555, section 7.3
                 #
                 #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
                 #   error of type "unsupportedContact", ...
-                raise AcmeMalformed("unsupportedContact", "%s: Unsupported address scheme." % contact)
+                raise AcmeMalformed("unsupportedContact", f"{contact}: Unsupported address scheme.")
 
     # TODO: possible to make slug non-optional?
     def acme_request(  # pylint: disable=unused-argument
@@ -556,9 +556,9 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
         except ValidationError as ex:
             # Add a pretty list of validation errors to the detail field in the response
             subproblems = ", ".join(
-                sorted(["%s: %s" % (k, v1.rstrip(".")) for k, v in ex.message_dict.items() for v1 in v])
+                sorted([f"{k}: {v1.rstrip('.')}" for k, v in ex.message_dict.items() for v1 in v])
             )
-            raise AcmeMalformed(message="Invalid account: %s." % subproblems) from ex
+            raise AcmeMalformed(message=f"Invalid account: {subproblems}.") from ex
 
         # self.prepared['thumbprint'] = account.thumbprint
         # self.prepared['pem'] = account.pem
@@ -740,7 +740,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
 
         # Do not accept MD5 or SHA1 signatures
         if isinstance(csr.signature_hash_algorithm, (hashes.MD5, hashes.SHA1)):
-            raise AcmeBadCSR(message="%s: Insecure hash algorithm." % csr.signature_hash_algorithm.name)
+            raise AcmeBadCSR(message=f"{csr.signature_hash_algorithm.name}: Insecure hash algorithm.")
 
         # Get list of general names from the authorizations
         names_from_order = set(

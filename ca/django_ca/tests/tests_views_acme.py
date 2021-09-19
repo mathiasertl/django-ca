@@ -93,9 +93,9 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
-                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % self.ca.serial),
-                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % self.ca.serial),
-                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % self.ca.serial),
+                "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
+                "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
+                "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
             },
         )
 
@@ -114,9 +114,9 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
-                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % self.ca.serial),
-                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % self.ca.serial),
-                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % self.ca.serial),
+                "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
+                "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
+                "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
             },
         )
 
@@ -140,9 +140,9 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
                 "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
-                "newAccount": req.build_absolute_uri("/django_ca/acme/%s/new-account/" % self.ca.serial),
-                "newNonce": req.build_absolute_uri("/django_ca/acme/%s/new-nonce/" % self.ca.serial),
-                "newOrder": req.build_absolute_uri("/django_ca/acme/%s/new-order/" % self.ca.serial),
+                "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
+                "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
+                "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
                 "meta": {
                     "termsOfService": self.ca.terms_of_service,
                     "caaIdentities": [
@@ -184,7 +184,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             response.json(),
             {
-                "detail": "%s: CA not found." % self.ca.serial,
+                "detail": f"{self.ca.serial}: CA not found.",
                 "status": 404,
                 "type": "urn:ietf:params:acme:error:not-found",
             },
@@ -289,7 +289,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         self.assertEqual(response["Content-Type"], "application/problem+json")
         self.assertLinkRelations(response, ca=ca, **link_relations)
         data = response.json()
-        self.assertEqual(data["type"], "urn:ietf:params:acme:error:%s" % typ)
+        self.assertEqual(data["type"], f"urn:ietf:params:acme:error:{typ}")
         self.assertEqual(data["status"], status)
         self.assertEqual(data["detail"], message)
         self.assertIn("Replay-Nonce", response)
@@ -476,7 +476,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     def get_url(self, **kwargs: typing.Any) -> str:
         """Get a URL for this view with the given kwargs."""
-        return reverse("django_ca:%s" % self.view_name, kwargs=kwargs)
+        return reverse(f"django_ca:{self.view_name}", kwargs=kwargs)
 
     @property
     def message(self) -> typing.Union[bytes, MessageTypeVar]:
@@ -487,7 +487,8 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     def test_disabled_acme(self) -> None:
         """Test that we get HTTP 404 if ACME is disabled."""
         resp = self.acme(self.url, self.message, nonce=b"foo")
-        self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)
+        # PYLINT NOTE: pylint 2.11.1 falsely thinks that resp is a WSGIRequest (not a HttpResponse)
+        self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)  # pylint: disable=no-member
 
     @override_tmpcadir()
     def test_invalid_content_type(self) -> None:
@@ -1108,6 +1109,8 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
 
         resp_data = resp.json()
         resp_challenges = resp_data.pop("challenges")
+        slug0 = challenges[0].slug
+        slug1 = challenges[1].slug
         self.assertCountEqual(
             resp_challenges,
             [
@@ -1115,15 +1118,13 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
                     "type": challenges[0].type,
                     "status": "pending",
                     "token": jose.encode_b64jose(challenges[0].token.encode("utf-8")),
-                    "url": "http://%s/django_ca/acme/%s/chall/%s/"
-                    % (self.SERVER_NAME, self.ca.serial, challenges[0].slug),
+                    "url": f"http://{self.SERVER_NAME}/django_ca/acme/{self.ca.serial}/chall/{slug0}/",
                 },
                 {
                     "type": challenges[1].type,
                     "status": "pending",
                     "token": jose.encode_b64jose(challenges[1].token.encode("utf-8")),
-                    "url": "http://%s/django_ca/acme/%s/chall/%s/"
-                    % (self.SERVER_NAME, self.ca.serial, challenges[1].slug),
+                    "url": f"http://{self.SERVER_NAME}/django_ca/acme/{self.ca.serial}/chall/{slug1}/",
                 },
             ],
         )
@@ -1166,6 +1167,7 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
 
         resp_data = resp.json()
         resp_challenges = resp_data.pop("challenges")
+        slug = challenges[0].slug
         self.assertCountEqual(
             resp_challenges,
             [
@@ -1174,8 +1176,7 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
                     "status": "valid",
                     "validated": pyrfc3339.generate(timezone.now()),  # time is frozen anyway
                     "token": jose.encode_b64jose(challenges[0].token.encode("utf-8")),
-                    "url": "http://%s/django_ca/acme/%s/chall/%s/"
-                    % (self.SERVER_NAME, self.ca.serial, challenges[0].slug),
+                    "url": f"http://{self.SERVER_NAME}/django_ca/acme/{self.ca.serial}/chall/{slug}/",
                 },
             ],
         )
@@ -1269,10 +1270,7 @@ class AcmeChallengeViewTestCase(
 
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(
-            resp,
-            link_relations={
-                "up": "http://%s%s" % (self.SERVER_NAME, self.authz.acme_url),
-            },
+            resp, link_relations={"up": f"http://{self.SERVER_NAME}{self.authz.acme_url}"}
         )
 
         self.assertEqual(
@@ -1281,7 +1279,7 @@ class AcmeChallengeViewTestCase(
                 "status": "processing",
                 "type": self.challenge.type,
                 "token": jose.encode_b64jose(self.challenge.token.encode()),
-                "url": "http://%s%s" % (self.SERVER_NAME, self.challenge.acme_url),
+                "url": f"http://{self.SERVER_NAME}{self.challenge.acme_url}",
             },
         )
 
@@ -1304,10 +1302,7 @@ class AcmeChallengeViewTestCase(
         # ... but response is still ok
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(
-            resp,
-            link_relations={
-                "up": "http://%s%s" % (self.SERVER_NAME, self.authz.acme_url),
-            },
+            resp, link_relations={"up": f"http://{self.SERVER_NAME}{self.authz.acme_url}"}
         )
 
         self.assertEqual(
@@ -1316,7 +1311,7 @@ class AcmeChallengeViewTestCase(
                 "status": "valid",
                 "type": self.challenge.type,
                 "token": jose.encode_b64jose(self.challenge.token.encode()),
-                "url": "http://%s%s" % (self.SERVER_NAME, self.challenge.acme_url),
+                "url": f"http://{self.SERVER_NAME}{self.challenge.acme_url}",
             },
         )
 
@@ -1401,7 +1396,7 @@ class AcmeOrderFinalizeViewTestCase(
         self.assertEqual(
             resp.json(),
             {
-                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
                 "expires": pyrfc3339.generate(order.expires, accept_naive=accept_naive),
                 "identifiers": [{"type": "dns", "value": self.hostname}],
                 "status": "processing",
@@ -1528,7 +1523,7 @@ class AcmeOrderFinalizeViewTestCase(
         self.assertEqual(
             resp.json(),
             {
-                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
                 "expires": pyrfc3339.generate(order.expires, accept_naive=True),
                 "identifiers": [{"type": "dns", "value": self.hostname}],
                 "status": "processing",
@@ -1644,7 +1639,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWith
         self.assertEqual(
             resp.json(),
             {
-                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
                 "expires": pyrfc3339.generate(expires, accept_naive=accept_naive),
                 "identifiers": [{"type": "dns", "value": self.hostname}],
                 "status": "pending",
@@ -1673,8 +1668,8 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWith
         self.assertEqual(
             resp.json(),
             {
-                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
-                "certificate": "http://%s%s" % (self.SERVER_NAME, acmecert.acme_url),
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
+                "certificate": f"http://{self.SERVER_NAME}{acmecert.acme_url}",
                 "expires": pyrfc3339.generate(expires, accept_naive=True),
                 "identifiers": [{"type": "dns", "value": self.hostname}],
                 "status": "valid",
@@ -1702,7 +1697,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWith
         self.assertEqual(
             resp.json(),
             {
-                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
                 "expires": pyrfc3339.generate(expires, accept_naive=True),
                 "identifiers": [{"type": "dns", "value": self.hostname}],
                 "status": "valid",
@@ -1730,7 +1725,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWith
         self.assertEqual(
             resp.json(),
             {
-                "authorizations": ["http://%s%s" % (self.SERVER_NAME, self.authz.acme_url)],
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
                 "expires": pyrfc3339.generate(expires, accept_naive=True),
                 "identifiers": [{"type": "dns", "value": self.hostname}],
                 "status": "processing",

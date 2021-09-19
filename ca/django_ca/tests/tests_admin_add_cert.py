@@ -108,7 +108,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             [
                 ExtendedKeyUsage({"value": ["clientAuth", "serverAuth"]}),
                 KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement"]}),
-                SubjectAlternativeName({"value": ["DNS:%s" % cname]}),
+                SubjectAlternativeName({"value": [f"DNS:{cname}"]}),
                 TLSFeature({"value": ["OCSPMustStaple", "MultipleCertStatusRequest"]}),
             ],
         )
@@ -272,7 +272,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                SubjectAlternativeName({"value": ["DNS:%s" % san, "DNS:%s" % cname]}),
+                SubjectAlternativeName({"value": [f"DNS:{san}", f"DNS:{cname}"]}),
             ],
         )
 
@@ -387,7 +387,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:%s" % cname]}))
+        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{cname}"]}))
         self.assertEqual(cert.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": False}}))
         self.assertEqual(
             cert.key_usage, KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement"]})
@@ -591,7 +591,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "test-expires-too-late.example.com"
         expires = ca.expires + timedelta(days=3)
         correct_expires = ca.expires.strftime("%Y-%m-%d")
-        error = "CA expires on %s, certificate must not expire after that." % correct_expires
+        error = f"CA expires on {correct_expires}, certificate must not expire after that."
 
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             response = self.client.post(
@@ -847,7 +847,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         """Test that pasting a CSR shows text next to subject input fields."""
         self.login()
 
-        self.selenium.get("%s%s" % (self.live_server_url, self.add_url))
+        self.selenium.get(f"{self.live_server_url}{self.add_url}")
 
         cert = certs["all-extensions"]
         csr = self.find("textarea#id_csr")
@@ -880,7 +880,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
 
         self.login()
 
-        self.selenium.get("%s%s" % (self.live_server_url, self.add_url))
+        self.selenium.get(f"{self.live_server_url}{self.add_url}")
         select = Select(self.find("select#id_profile"))
         ku_select = Select(self.find("select#id_key_usage_0"))
         ku_critical = self.find("input#id_key_usage_1")

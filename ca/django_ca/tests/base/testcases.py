@@ -66,7 +66,7 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
 
     def login(self, username: str = "admin", password: str = "admin") -> None:
         """Login the given user."""
-        self.selenium.get("%s%s" % (self.live_server_url, reverse("admin:login")))
+        self.selenium.get(f"{self.live_server_url}{reverse('admin:login')}")
         self.find("#id_username").send_keys(username)
         self.find("#id_password").send_keys(password)
         self.find('input[type="submit"]').click()

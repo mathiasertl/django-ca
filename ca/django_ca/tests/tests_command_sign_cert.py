@@ -72,7 +72,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.pub.loaded, subject)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         self.assertEqual(
             cert.key_usage,
@@ -90,7 +90,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with all usable CAs."""
 
         for name, ca in self.cas.items():
-            cname = "%s-signed.example.com" % name
+            cname = f"{name}-signed.example.com"
             stdin = self.csr_pem.encode()
             subject = Subject([("CN", cname)])
 
@@ -106,7 +106,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.assertPostIssueCert(post, cert)
             self.assertSignature(reversed(ca.bundle), cert)
             self.assertSubject(cert.pub.loaded, subject)
-            self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+            self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
             self.assertEqual(
                 cert.key_usage,
@@ -116,7 +116,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             )
             self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
             self.assertEqual(
-                cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:%s" % cname]})
+                cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{cname}"]})
             )
             self.assertIssuer(ca, cert)
             self.assertAuthorityKeyIdentifier(ca, cert)
@@ -125,7 +125,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_from_file(self) -> None:
         """Test reading CSR from file."""
         csr_path = os.path.join(ca_settings.CA_DIR, "test.csr")
-        with open(csr_path, "w") as csr_stream:
+        with open(csr_path, "w", encoding="ascii") as csr_stream:
             csr_stream.write(self.csr_pem)
 
         try:
@@ -180,7 +180,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.assertIssuer(self.ca, cert)
             self.assertAuthorityKeyIdentifier(self.ca, cert)
 
-            with open(out_path) as out_stream:
+            with open(out_path, encoding="ascii") as out_stream:
                 from_file = out_stream.read()
 
             self.assertEqual(cert.pub.pem, from_file)
@@ -196,7 +196,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         stdin = self.csr_pem.encode()
         cname = "foo bar"
-        msg = r"^%s: Could not parse CommonName as subjectAlternativeName\.$" % cname
+        msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
 
         with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
@@ -226,7 +226,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertSubject(cert.pub.loaded, [("CN", "example.net")])
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertEqual(
             cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
@@ -254,7 +254,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertSubject(cert.pub.loaded, subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertIsNone(cert.subject_alternative_name)
 
@@ -293,7 +293,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertSubject(cert.pub.loaded, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         # replace subject fields via command-line argument:
         subject = Subject(
@@ -332,8 +332,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
-            "--subject=%s" % Subject([("CN", "example.com")]),
-            "--ca=%s" % self.ca.serial,
+            f"--subject={Subject([('CN', 'example.com')])}",
+            f"--ca={self.ca.serial}",
             "--key-usage=critical,keyCertSign",
             "--ext-key-usage=clientAuth",
             "--alt=URI:https://example.net",
@@ -349,7 +349,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.pub.loaded, [("CN", "example.com")])
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(cert.key_usage, KeyUsage({"critical": True, "value": ["keyCertSign"]}))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
         self.assertEqual(
@@ -376,7 +376,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
         self.assertSubject(cert.pub.loaded, [("CN", "example.com")])
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertEqual(
             cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
@@ -438,7 +438,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         key_path = os.path.join(ca_storage.location, self.ca.private_key_path)  # type: ignore[attr-defined]
 
         os.chmod(key_path, stat.S_IWUSR | stat.S_IRUSR)
-        with open(key_path, "w") as stream:
+        with open(key_path, "w", encoding="ascii") as stream:
             stream.write("bogus")
         os.chmod(key_path, stat.S_IRUSR)
 
@@ -498,7 +498,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = io.StringIO(self.csr_pem)
 
         with self.assertCommandError(
-            r"^Certificate would outlive CA, maximum expiry for this CA is {} days\.$".format(time_left)
+            rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
         ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=self.ca, alt={"value": ["example.com"]}, expires=expires, stdin=stdin)
         self.assertFalse(pre.called)
@@ -525,14 +525,14 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd_e2e(
                 [
                     "sign_cert",
-                    "--subject=CN=%s" % common_name,
+                    f"--subject=CN={common_name}",
                     "--csr-format=PEM",
                 ],
                 stdin=self.csr_pem.encode(),
             )
 
         cert = Certificate.objects.get(cn=common_name)
-        self.assertEqual(stdout, "Please paste the CSR:\n%s" % cert.pub.pem)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
 
     @override_tmpcadir()
@@ -584,7 +584,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with an unusable CA."""
         path = ca_storage.path(self.ca.private_key_path)
         os.remove(path)
-        msg = r"^\[Errno 2\] No such file or directory: u?'%s'" % path
+        msg = rf"^\[Errno 2\] No such file or directory: '{path}'"
         stdin = io.StringIO(self.csr_pem)
         subject = Subject([("CN", "example.com")])
 

@@ -114,13 +114,13 @@ class DistributionPoint:
     def __get_values(self) -> List[str]:
         values: List[str] = []
         if self.full_name:
-            values.append("full_name=%r" % list(self.full_name.serialize()))
+            values.append(f"full_name={list(self.full_name.serialize())}")
         if self.relative_name:
-            values.append("relative_name='%s'" % format_relative_name(self.relative_name))
+            values.append(f"relative_name='{format_relative_name(self.relative_name)}'")
         if self.crl_issuer:
-            values.append("crl_issuer=%r" % list(self.crl_issuer.serialize()))
+            values.append(f"crl_issuer={list(self.crl_issuer.serialize())}")
         if self.reasons:
-            values.append("reasons=%s" % sorted([r.name for r in self.reasons]))
+            values.append(f"reasons={sorted([r.name for r in self.reasons])}")
         return values
 
     def __hash__(self) -> int:
@@ -130,7 +130,8 @@ class DistributionPoint:
         return hash((full_name, self.relative_name, crl_issuer, reasons))
 
     def __repr__(self) -> str:
-        return "<DistributionPoint: %s>" % ", ".join(self.__get_values())
+        values = ", ".join(self.__get_values())
+        return f"<DistributionPoint: {values}>"
 
     def __str__(self) -> str:
         return repr(self)
@@ -144,16 +145,17 @@ class DistributionPoint:
         """Show as text."""
         text = ""
         if self.full_name:
-            names = [textwrap.indent("* %s" % s, "  ") for s in self.full_name.serialize()]
-            text = "* Full Name:\n%s" % "\n".join(names)
+            names = "\n".join([textwrap.indent(f"* {s}", "  ") for s in self.full_name.serialize()])
+            text = f"* Full Name:\n{names}"
         elif self.relative_name is not None:
-            text = "* Relative Name: %s" % format_relative_name(self.relative_name)
+            text = f"* Relative Name: {format_relative_name(self.relative_name)}"
 
         if self.crl_issuer:
-            names = [textwrap.indent("* %s" % s, "  ") for s in self.crl_issuer.serialize()]
-            text += "\n* CRL Issuer:\n%s" % "\n".join(names)
+            names = "\n".join([textwrap.indent(f"* {s}", "  ") for s in self.crl_issuer.serialize()])
+            text += f"\n* CRL Issuer:\n{names}"
         if self.reasons:
-            text += "\n* Reasons: %s" % ", ".join(sorted([r.name for r in self.reasons]))
+            reasons = ", ".join(sorted([r.name for r in self.reasons]))
+            text += f"\n* Reasons: {reasons}"
         return text
 
     @property
@@ -298,7 +300,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         else:
             ident = self.policy_identifier.dotted_string
 
-        return "<PolicyInformation(oid=%s, qualifiers=%r)>" % (ident, self.serialize_policy_qualifiers())
+        return f"<PolicyInformation(oid={ident}, qualifiers={self.serialize_policy_qualifiers()})>"
 
     def __setitem__(
         self,
@@ -321,7 +323,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
             qualifier = self._parse_policy_qualifier(typing.cast(ParsablePolicyQualifier, value))
             self.policy_qualifiers[key] = qualifier
         else:
-            raise TypeError("%s/%s: Invalid key/value type" % (key, value))
+            raise TypeError(f"{key}/{value}: Invalid key/value type")
 
     def __str__(self) -> str:
         return repr(self)
@@ -335,23 +337,25 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
     def as_text(self, width: int = 76) -> str:
         """Show as text."""
         if self.policy_identifier is None:
-            text = "Policy Identifier: %s\n" % None
+            text = "Policy Identifier: None\n"
         else:
-            text = "Policy Identifier: %s\n" % self.policy_identifier.dotted_string
+            text = f"Policy Identifier: {self.policy_identifier.dotted_string}\n"
 
         if self.policy_qualifiers:
             text += "Policy Qualifiers:\n"
             for qualifier in self.policy_qualifiers:
                 if isinstance(qualifier, str):
-                    lines = textwrap.wrap(qualifier, initial_indent="* ", subsequent_indent="  ", width=width)
-                    text += "%s\n" % "\n".join(lines)
+                    lines = "\n".join(
+                        textwrap.wrap(qualifier, initial_indent="* ", subsequent_indent="  ", width=width)
+                    )
+                    text += f"{lines}\n"
                 else:
                     text += "* UserNotice:\n"
                     if qualifier.explicit_text:
                         text += (
                             "\n".join(
                                 textwrap.wrap(
-                                    "Explicit text: %s\n" % qualifier.explicit_text,
+                                    f"Explicit text: {qualifier.explicit_text}\n",
                                     initial_indent="  * ",
                                     subsequent_indent="    ",
                                     width=width - 2,
@@ -361,8 +365,8 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
                         )
                     if qualifier.notice_reference:
                         text += "  * Reference:\n"
-                        text += "    * Organiziation: %s\n" % qualifier.notice_reference.organization
-                        text += "    * Notice Numbers: %s\n" % qualifier.notice_reference.notice_numbers
+                        text += f"    * Organiziation: {qualifier.notice_reference.organization}\n"
+                        text += f"    * Notice Numbers: {qualifier.notice_reference.notice_numbers}\n"
         else:
             text += "No Policy Qualifiers"
 
@@ -477,7 +481,7 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         """
         if self.policy_qualifiers is None:
             # Shortcut to raise the same Value error as if the element is not in the list
-            raise ValueError("%s: not in list." % value)
+            raise ValueError(f"{value}: not in list.")
 
         parsed_value = self._parse_policy_qualifier(value)
         self.policy_qualifiers.remove(parsed_value)

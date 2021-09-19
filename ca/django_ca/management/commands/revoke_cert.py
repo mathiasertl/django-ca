@@ -40,6 +40,6 @@ class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-d
         self, cert: Certificate, reason: ReasonFlags, **options: typing.Any
     ) -> None:
         if cert.revoked:
-            raise CommandError("%s: Certificate is already revoked." % cert.serial)
+            raise CommandError(f"{cert.serial}: Certificate is already revoked.")
 
         cert.revoke(reason=reason)

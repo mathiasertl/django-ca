@@ -52,7 +52,7 @@ class InitCATest(TestCaseMixin, TestCase):
         return self.cmd(
             "init_ca",
             name,
-            "/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN=%s" % name,
+            f"/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN={name}",
             stdout=stdout,
             stderr=stderr,
             **kwargs,
@@ -60,7 +60,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
-        """"Basic tests for the command."""
+        """ "Basic tests for the command."""
 
         name = "test_basic"
         with self.assertCreateCASignals() as (pre, post):
@@ -414,15 +414,13 @@ class InitCATest(TestCaseMixin, TestCase):
                 }
             ),
         )
+        issuers = f"URI:http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/issuer/{parent.serial}.der"
         self.assertEqual(
             child.authority_information_access,
             AuthorityInformationAccess(
                 {
                     "value": {
-                        "issuers": [
-                            "URI:http://%s/django_ca/issuer/%s.der"
-                            % (ca_settings.CA_DEFAULT_HOSTNAME, parent.serial)
-                        ],
+                        "issuers": [issuers],
                         "ocsp": ["URI:http://ca.ocsp.example.com"],
                     }
                 }
@@ -662,32 +660,24 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
 
-        self.assertEqual(ca.issuer_url, "http://%s/django_ca/issuer/%s.der" % (hostname, root.serial))
-        self.assertEqual(ca.ocsp_url, "http://%s/django_ca/ocsp/%s/cert/" % (hostname, ca.serial))
+        self.assertEqual(ca.issuer_url, f"http://{hostname}/django_ca/issuer/{root.serial}.der")
+        self.assertEqual(ca.ocsp_url, f"http://{hostname}/django_ca/ocsp/{ca.serial}/cert/")
         self.assertEqual(
             ca.authority_information_access,
             AuthorityInformationAccess(
                 {
                     "value": {
-                        "issuers": ["URI:http://%s/django_ca/issuer/%s.der" % (hostname, root.serial)],
-                        "ocsp": ["URI:http://%s/django_ca/ocsp/%s/ca/" % (hostname, root.serial)],
+                        "issuers": [f"URI:http://{hostname}/django_ca/issuer/{root.serial}.der"],
+                        "ocsp": [f"URI:http://{hostname}/django_ca/ocsp/{root.serial}/ca/"],
                     }
                 }
             ),
         )
 
-        ca_crl_url = "http://%s%s" % (hostname, self.reverse("ca-crl", serial=root.serial))
+        ca_crl_urlpath = self.reverse("ca-crl", serial=root.serial)
         self.assertEqual(
             ca.crl_distribution_points,
-            CRLDistributionPoints(
-                {
-                    "value": [
-                        {
-                            "full_name": [ca_crl_url],
-                        }
-                    ]
-                }
-            ),
+            CRLDistributionPoints({"value": [{"full_name": [f"http://{hostname}{ca_crl_urlpath}"]}]}),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

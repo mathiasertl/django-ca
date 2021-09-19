@@ -184,7 +184,7 @@ class OCSPView(View):
         # Check that the private key is of a supported type
         if not isinstance(loaded_key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey)):
             log.error("%s: Unsupported private key type.", type(loaded_key))
-            raise ValueError("%s: Unsupported private key type." % type(loaded_key))
+            raise ValueError(f"{type(loaded_key)}: Unsupported private key type.")
 
         return loaded_key
 
@@ -335,10 +335,12 @@ class GenericOCSPView(OCSPView):
         return self.auto_ca
 
     def get_responder_key_data(self) -> bytes:
-        return read_file("ocsp/%s.key" % self.auto_ca.serial.replace(":", ""))
+        serial = self.auto_ca.serial.replace(":", "")
+        return read_file(f"ocsp/{serial}.key")
 
     def get_responder_cert(self) -> x509.Certificate:
-        data = read_file("ocsp/%s.pem" % self.auto_ca.serial.replace(":", ""))
+        serial = self.auto_ca.serial.replace(":", "")
+        data = read_file(f"ocsp/{serial}.pem")
         return load_pem_x509_certificate(data, default_backend())
 
 

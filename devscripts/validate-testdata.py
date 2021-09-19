@@ -52,7 +52,7 @@ if os.path.exists(CA_DIR):
 try:
     django.setup()
 except ModuleNotFoundError as ex:
-    print("Error setting up Django: %s" % ex)
+    print(f"Error setting up Django: {ex}")
     sys.exit(1)
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first.

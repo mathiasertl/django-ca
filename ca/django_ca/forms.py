@@ -73,9 +73,9 @@ class X509CertMixinAdminForm(forms.ModelForm):
             # help_texts is always set since we have a Meta class, but keeping this here as a precaution.
             meta.help_texts = {}
 
-        info = self.instance._meta.app_label, self.instance._meta.model_name
-        url = reverse("admin:%s_%s_download" % info, kwargs={"pk": self.instance.pk})
-        bundle_url = reverse("admin:%s_%s_download_bundle" % info, kwargs={"pk": self.instance.pk})
+        info = f"{self.instance._meta.app_label}_{self.instance._meta.model_name}"
+        url = reverse(f"admin:{info}_download", kwargs={"pk": self.instance.pk})
+        bundle_url = reverse(f"admin:{info}_download_bundle", kwargs={"pk": self.instance.pk})
         meta.help_texts["pub_pem"] = _(
             'Download: <a href="%s?format=PEM">as PEM</a> | <a href="%s?format=DER">as DER</a><br />'
             'Certificate bundle: <a href="%s?format=PEM">as PEM</a>'

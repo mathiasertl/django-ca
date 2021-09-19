@@ -74,9 +74,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         parser.add_argument("name", help="Human-readable name of the CA")
         self.add_subject(
             parser,
-            help_text="""The subject of the CA in the format "/key1=value1/key2=value2/...",
-                                 valid keys are %s. If "CN" is not set, the name is used."""
-            % self.valid_subject_keys,
+            help_text=f"""The subject of the CA in the format "/key1=value1/key2=value2/...",
+                          valid keys are {self.valid_subject_keys}. If "CN" is not set, the name is used.""",
         )
         self.add_password(
             parser,
@@ -99,10 +98,10 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
 
         group = parser.add_argument_group(
             "Default hostname",
-            "The default hostname is used to compute default URLs for services like OCSP. The hostname is "
-            "usually configured in your settings (current setting: %s), but you can override that value "
-            "here. The value must be just the hostname and optionally a port, *without* a protocol, e.g. "
-            '"ca.example.com" or "ca.example.com:8000".' % ca_settings.CA_DEFAULT_HOSTNAME,
+            f"""The default hostname is used to compute default URLs for services like OCSP. The hostname is
+            usually configured in your settings (current setting: {ca_settings.CA_DEFAULT_HOSTNAME}), but you
+            can override that value here. The value must be just the hostname and optionally a port, *without*
+            a protocol, e.g.  "ca.example.com" or "ca.example.com:8000".""",
         )
         group = group.add_mutually_exclusive_group()
         group.add_argument(
@@ -198,7 +197,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         caa: str,
         website: str,
         tos: str,
-        **options: typing.Any
+        **options: typing.Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             # TODO: set permissions
@@ -267,7 +266,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 caa=caa,
                 website=website,
                 terms_of_service=tos,
-                **kwargs
+                **kwargs,
             )
         except Exception as ex:
             raise CommandError(ex) from ex

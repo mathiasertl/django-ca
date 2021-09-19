@@ -142,9 +142,9 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
                 {"issuers": [uri(uri1)]},
             ],
             "expected": {"issuers": [uri(uri1)], "ocsp": []},
-            "expected_repr": "issuers=['URI:%s'], ocsp=[]" % uri1,
-            "expected_serialized": {"issuers": ["URI:%s" % uri1]},
-            "expected_text": "CA Issuers:\n  * URI:%s" % uri1,
+            "expected_repr": f"issuers=['URI:{uri1}'], ocsp=[]",
+            "expected_serialized": {"issuers": [f"URI:{uri1}"]},
+            "expected_text": f"CA Issuers:\n  * URI:{uri1}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri1))]
             ),
@@ -155,9 +155,9 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
                 {"ocsp": [uri(uri2)]},
             ],
             "expected": {"ocsp": [uri(uri2)], "issuers": []},
-            "expected_repr": "issuers=[], ocsp=['URI:%s']" % uri2,
-            "expected_serialized": {"ocsp": ["URI:%s" % uri2]},
-            "expected_text": "OCSP:\n  * URI:%s" % uri2,
+            "expected_repr": f"issuers=[], ocsp=['URI:{uri2}']",
+            "expected_serialized": {"ocsp": [f"URI:{uri2}"]},
+            "expected_text": f"OCSP:\n  * URI:{uri2}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2))]
             ),
@@ -168,9 +168,9 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
                 {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
             ],
             "expected": {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
-            "expected_repr": "issuers=['URI:%s'], ocsp=['URI:%s']" % (uri2, uri1),
-            "expected_serialized": {"ocsp": ["URI:%s" % uri1], "issuers": ["URI:%s" % uri2]},
-            "expected_text": "CA Issuers:\n  * URI:%s\nOCSP:\n  * URI:%s" % (uri2, uri1),
+            "expected_repr": f"issuers=['URI:{uri2}'], ocsp=['URI:{uri1}']",
+            "expected_serialized": {"ocsp": [f"URI:{uri1}"], "issuers": [f"URI:{uri2}"]},
+            "expected_text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
                     x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
@@ -185,14 +185,13 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
                 {"ocsp": [uri(uri1), uri(uri2)], "issuers": [uri(uri3), uri(uri4)]},
             ],
             "expected": {"ocsp": [uri(uri1), uri(uri2)], "issuers": [uri(uri3), uri(uri4)]},
-            "expected_repr": "issuers=['URI:%s', 'URI:%s'], ocsp=['URI:%s', 'URI:%s']"
-            % (uri3, uri4, uri1, uri2),
+            "expected_repr": f"issuers=['URI:{uri3}', 'URI:{uri4}'], ocsp=['URI:{uri1}', 'URI:{uri2}']",
             "expected_serialized": {
-                "ocsp": ["URI:%s" % uri1, "URI:%s" % uri2],
-                "issuers": ["URI:%s" % uri3, "URI:%s" % uri4],
+                "ocsp": [f"URI:{uri1}", f"URI:{uri2}"],
+                "issuers": [f"URI:{uri3}", f"URI:{uri4}"],
             },
-            "expected_text": "CA Issuers:\n  * URI:%s\n  * URI:%s\n"
-            "OCSP:\n  * URI:%s\n  * URI:%s" % (uri3, uri4, uri1, uri2),
+            "expected_text": f"CA Issuers:\n  * URI:{uri3}\n  * URI:{uri4}\n"
+            f"OCSP:\n  * URI:{uri1}\n  * URI:{uri2}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
                     x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
@@ -270,9 +269,9 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
                 hex1,
             ],
             "expected": b1,
-            "expected_repr": "keyid: %s" % hex1,
+            "expected_repr": f"keyid: {hex1}",
             "expected_serialized": {"key_identifier": hex1},
-            "expected_text": "* KeyID: %s" % hex1,
+            "expected_text": f"* KeyID: {hex1}",
             "extension_type": x509.AuthorityKeyIdentifier(b1, None, None),
         },
         "two": {
@@ -280,9 +279,9 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
                 hex2,
             ],
             "expected": b2,
-            "expected_repr": "keyid: %s" % hex2,
+            "expected_repr": f"keyid: {hex2}",
             "expected_serialized": {"key_identifier": hex2},
-            "expected_text": "* KeyID: %s" % hex2,
+            "expected_text": f"* KeyID: {hex2}",
             "extension_type": x509.AuthorityKeyIdentifier(b2, None, None),
         },
         "three": {
@@ -290,20 +289,20 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
                 hex3,
             ],
             "expected": b3,
-            "expected_repr": "keyid: %s" % hex3,
+            "expected_repr": f"keyid: {hex3}",
             "expected_serialized": {"key_identifier": hex3},
-            "expected_text": "* KeyID: %s" % hex3,
+            "expected_text": f"* KeyID: {hex3}",
             "extension_type": x509.AuthorityKeyIdentifier(b3, None, None),
         },
         "issuer/serial": {
             "expected": {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
             "values": [{"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1}],
-            "expected_repr": "issuer: ['DNS:%s'], serial: %s" % (dns1, s1),
+            "expected_repr": f"issuer: ['DNS:{dns1}'], serial: {s1}",
             "expected_serialized": {
-                "authority_cert_issuer": ["DNS:%s" % dns1],
+                "authority_cert_issuer": [f"DNS:{dns1}"],
                 "authority_cert_serial_number": s1,
             },
-            "expected_text": "* Issuer:\n  * DNS:%s\n* Serial: %s" % (dns1, s1),
+            "expected_text": f"* Issuer:\n  * DNS:{dns1}\n* Serial: {s1}",
             "extension_type": x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
         },
     }
@@ -437,7 +436,7 @@ class CertificatePoliciesTestCase(
 
     oid = "2.5.29.32.0"
 
-    text1, text2, text3, text4, text5, text6 = ["text%s" % i for i in range(1, 7)]
+    text1, text2, text3, text4, text5, text6 = [f"text{i}" for i in range(1, 7)]
 
     un1: ParsablePolicyInformation = {
         "policy_identifier": oid,
@@ -510,7 +509,7 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p1],
             "expected_repr": "1 policy",
             "expected_serialized": [un1],
-            "expected_text": "* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s" % (oid, text1),
+            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text1}",
             "extension_type": xcp1,
         },
         "two": {
@@ -519,8 +518,8 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p2],
             "expected_repr": "1 policy",
             "expected_serialized": [un2],
-            "expected_text": "* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n"
-            "    * Explicit text: %s" % (oid, text2),
+            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * UserNotice:\n"
+            f"    * Explicit text: {text2}",
             "extension_type": xcp2,
         },
         "three": {
@@ -529,9 +528,8 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p3],
             "expected_repr": "1 policy",
             "expected_serialized": [un3],
-            "expected_text": "* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n"
-            "    * Reference:\n      * Organiziation: %s\n"
-            "      * Notice Numbers: [1]" % (oid, text3),
+            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * UserNotice:\n"
+            f"    * Reference:\n      * Organiziation: {text3}\n      * Notice Numbers: [1]",
             "extension_type": xcp3,
         },
         "four": {
@@ -540,9 +538,9 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p4],
             "expected_repr": "1 policy",
             "expected_serialized": [un4],
-            "expected_text": "* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n  * UserNotice:\n"
-            "    * Explicit text: %s\n    * Reference:\n      * Organiziation: %s\n"
-            "      * Notice Numbers: [1, 2, 3]" % (oid, text4, text5, text6),
+            "expected_text": f"""* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text4}
+  * UserNotice:\n    * Explicit text: {text5}\n    * Reference:\n      * Organiziation: {text6}
+      * Notice Numbers: [1, 2, 3]""",
             "extension_type": xcp4,
         },
         "five": {
@@ -551,12 +549,12 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p1, p2, p4],
             "expected_repr": "3 policies",
             "expected_serialized": [un1, un2, un4],
-            "expected_text": "* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n"
-            "* Policy Identifier: %s\n  Policy Qualifiers:\n  * UserNotice:\n"
-            "    * Explicit text: %s\n"
-            "* Policy Identifier: %s\n  Policy Qualifiers:\n  * %s\n  * UserNotice:\n"
-            "    * Explicit text: %s\n    * Reference:\n      * Organiziation: %s\n"
-            "      * Notice Numbers: [1, 2, 3]" % (oid, text1, oid, text2, oid, text4, text5, text6),
+            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text1}\n"
+            f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * UserNotice:\n"
+            f"    * Explicit text: {text2}\n"
+            f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text4}\n  * UserNotice:\n"
+            f"    * Explicit text: {text5}\n    * Reference:\n      * Organiziation: {text6}\n"
+            "      * Notice Numbers: [1, 2, 3]",
             "extension_type": xcp5,
         },
     }
@@ -663,25 +661,25 @@ class IssuerAlternativeNameTestCase(
         "uri": {
             "values": [[uri1], [uri(uri1)]],
             "expected": [uri(uri1)],
-            "expected_repr": "['URI:%s']" % uri1,
-            "expected_serialized": ["URI:%s" % uri1],
-            "expected_text": "* URI:%s" % uri1,
+            "expected_repr": f"['URI:{uri1}']",
+            "expected_serialized": [f"URI:{uri1}"],
+            "expected_text": f"* URI:{uri1}",
             "extension_type": ext_class_type([uri(uri1)]),
         },
         "dns": {
             "values": [[dns1], [dns(dns1)]],
             "expected": [dns(dns1)],
-            "expected_repr": "['DNS:%s']" % dns1,
-            "expected_serialized": ["DNS:%s" % dns1],
-            "expected_text": "* DNS:%s" % dns1,
+            "expected_repr": f"['DNS:{dns1}']",
+            "expected_serialized": [f"DNS:{dns1}"],
+            "expected_text": f"* DNS:{dns1}",
             "extension_type": ext_class_type([dns(dns1)]),
         },
         "both": {
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             "expected": [uri(uri1), dns(dns1)],
-            "expected_repr": "['URI:%s', 'DNS:%s']" % (uri1, dns1),
-            "expected_serialized": ["URI:%s" % uri1, "DNS:%s" % dns1],
-            "expected_text": "* URI:%s\n* DNS:%s" % (uri1, dns1),
+            "expected_repr": f"['URI:{uri1}', 'DNS:{dns1}']",
+            "expected_serialized": [f"URI:{uri1}", f"DNS:{dns1}"],
+            "expected_text": f"* URI:{uri1}\n* DNS:{dns1}",
             "extension_type": ext_class_type([uri(uri1), dns(dns1)]),
         },
         "all": {
@@ -692,9 +690,9 @@ class IssuerAlternativeNameTestCase(
                 [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
             ],
             "expected": [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
-            "expected_repr": "['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s']" % (uri1, uri2, dns1, dns2),
-            "expected_serialized": ["URI:%s" % uri1, "URI:%s" % uri2, "DNS:%s" % dns1, "DNS:%s" % dns2],
-            "expected_text": "* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s" % (uri1, uri2, dns1, dns2),
+            "expected_repr": f"['URI:{uri1}', 'URI:{uri2}', 'DNS:{dns1}', 'DNS:{dns2}']",
+            "expected_serialized": [f"URI:{uri1}", f"URI:{uri2}", f"DNS:{dns1}", f"DNS:{dns2}"],
+            "expected_text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
             "extension_type": ext_class_type([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
         },
         "order": {  # same as "all" above but other order
@@ -705,9 +703,9 @@ class IssuerAlternativeNameTestCase(
                 [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
             ],
             "expected": [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
-            "expected_repr": "['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s']" % (dns2, dns1, uri2, uri1),
-            "expected_serialized": ["DNS:%s" % dns2, "DNS:%s" % dns1, "URI:%s" % uri2, "URI:%s" % uri1],
-            "expected_text": "* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s" % (dns2, dns1, uri2, uri1),
+            "expected_repr": f"['DNS:{dns2}', 'DNS:{dns1}', 'URI:{uri2}', 'URI:{uri1}']",
+            "expected_serialized": [f"DNS:{dns2}", f"DNS:{dns1}", f"URI:{uri2}", f"URI:{uri1}"],
+            "expected_text": f"* DNS:{dns2}\n* DNS:{dns1}\n* URI:{uri2}\n* URI:{uri1}",
             "extension_type": ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
         },
     }
@@ -1104,40 +1102,40 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
         "permitted": {
             "values": [
                 {"permitted": [d1]},
-                {"permitted": ["DNS:%s" % d1]},
+                {"permitted": [f"DNS:{d1}"]},
                 {"permitted": [dns(d1)]},
                 {"permitted": [dns(d1)], "excluded": []},
             ],
             "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
-            "expected_repr": "permitted=['DNS:%s'], excluded=[]" % d1,
-            "expected_serialized": {"excluded": [], "permitted": ["DNS:%s" % d1]},
-            "expected_text": "Permitted:\n  * DNS:%s" % d1,
+            "expected_repr": f"permitted=['DNS:{d1}'], excluded=[]",
+            "expected_serialized": {"excluded": [], "permitted": [f"DNS:{d1}"]},
+            "expected_text": f"Permitted:\n  * DNS:{d1}",
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
         },
         "excluded": {
             "values": [
                 {"excluded": [d1]},
-                {"excluded": ["DNS:%s" % d1]},
+                {"excluded": [f"DNS:{d1}"]},
                 {"excluded": [dns(d1)]},
                 {"excluded": [dns(d1)], "permitted": []},
             ],
             "expected": x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
-            "expected_repr": "permitted=[], excluded=['DNS:%s']" % d1,
-            "expected_serialized": {"excluded": ["DNS:%s" % d1], "permitted": []},
-            "expected_text": "Excluded:\n  * DNS:%s" % d1,
+            "expected_repr": f"permitted=[], excluded=['DNS:{d1}']",
+            "expected_serialized": {"excluded": [f"DNS:{d1}"], "permitted": []},
+            "expected_text": f"Excluded:\n  * DNS:{d1}",
             "extension_type": x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
         },
         "both": {
             "values": [
                 {"permitted": [d1], "excluded": [d2]},
-                {"permitted": ["DNS:%s" % d1], "excluded": ["DNS:%s" % d2]},
+                {"permitted": [f"DNS:{d1}"], "excluded": [f"DNS:{d2}"]},
                 {"permitted": [dns(d1)], "excluded": [dns(d2)]},
                 {"permitted": [dns(d1)], "excluded": [d2]},
             ],
             "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
-            "expected_repr": "permitted=['DNS:%s'], excluded=['DNS:%s']" % (d1, d2),
-            "expected_serialized": {"excluded": ["DNS:%s" % d2], "permitted": ["DNS:%s" % d1]},
-            "expected_text": "Permitted:\n  * DNS:%s\nExcluded:\n  * DNS:%s" % (d1, d2),
+            "expected_repr": f"permitted=['DNS:{d1}'], excluded=['DNS:{d2}']",
+            "expected_serialized": {"excluded": [f"DNS:{d2}"], "permitted": [f"DNS:{d1}"]},
+            "expected_text": f"Permitted:\n  * DNS:{d1}\nExcluded:\n  * DNS:{d2}",
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
         },
     }
@@ -1510,11 +1508,11 @@ class UnknownExtensionTestCase(TestCase):
         )
         ext = UnrecognizedExtension(cgext)
 
-        self.assertEqual(ext.name, "Unsupported extension (OID %s)" % oid.dotted_string)
+        self.assertEqual(ext.name, f"Unsupported extension (OID {oid.dotted_string})")
         self.assertEqual(ext.as_text(), "Could not parse extension")
         self.assertEqual(ext.as_extension(), cgext)
         self.assertEqual(
-            str(ext), "<Unsupported extension (OID %s): <unprintable>, critical=True>" % oid.dotted_string
+            str(ext), f"<Unsupported extension (OID {oid.dotted_string}): <unprintable>, critical=True>"
         )
 
         with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
@@ -1524,7 +1522,7 @@ class UnknownExtensionTestCase(TestCase):
         error = "my error"
         ext = UnrecognizedExtension(cgext, name=name, error=error)
         self.assertEqual(ext.name, name)
-        self.assertEqual(ext.as_text(), "Could not parse extension (%s)" % error)
+        self.assertEqual(ext.as_text(), f"Could not parse extension ({error})")
 
     def test_invalid_extension(self) -> None:
         """Test creating from an actually recognized extension."""
@@ -1582,25 +1580,25 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         "uri": {
             "values": [[uri1], [uri(uri1)]],
             "expected": [uri(uri1)],
-            "expected_repr": "['URI:%s']" % uri1,
-            "expected_serialized": ["URI:%s" % uri1],
-            "expected_text": "* URI:%s" % uri1,
+            "expected_repr": f"['URI:{uri1}']",
+            "expected_serialized": [f"URI:{uri1}"],
+            "expected_text": f"* URI:{uri1}",
             "extension_type": x509.SubjectAlternativeName([uri(uri1)]),
         },
         "dns": {
             "values": [[dns1], [dns(dns1)]],
             "expected": [dns(dns1)],
-            "expected_repr": "['DNS:%s']" % dns1,
-            "expected_serialized": ["DNS:%s" % dns1],
-            "expected_text": "* DNS:%s" % dns1,
+            "expected_repr": f"['DNS:{dns1}']",
+            "expected_serialized": [f"DNS:{dns1}"],
+            "expected_text": f"* DNS:{dns1}",
             "extension_type": x509.SubjectAlternativeName([dns(dns1)]),
         },
         "both": {
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             "expected": [uri(uri1), dns(dns1)],
-            "expected_repr": "['URI:%s', 'DNS:%s']" % (uri1, dns1),
-            "expected_serialized": ["URI:%s" % uri1, "DNS:%s" % dns1],
-            "expected_text": "* URI:%s\n* DNS:%s" % (uri1, dns1),
+            "expected_repr": f"['URI:{uri1}', 'DNS:{dns1}']",
+            "expected_serialized": [f"URI:{uri1}", f"DNS:{dns1}"],
+            "expected_text": f"* URI:{uri1}\n* DNS:{dns1}",
             "extension_type": x509.SubjectAlternativeName([uri(uri1), dns(dns1)]),
         },
         "all": {
@@ -1611,9 +1609,9 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
                 [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
             ],
             "expected": [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
-            "expected_repr": "['URI:%s', 'URI:%s', 'DNS:%s', 'DNS:%s']" % (uri1, uri2, dns1, dns2),
-            "expected_serialized": ["URI:%s" % uri1, "URI:%s" % uri2, "DNS:%s" % dns1, "DNS:%s" % dns2],
-            "expected_text": "* URI:%s\n* URI:%s\n* DNS:%s\n* DNS:%s" % (uri1, uri2, dns1, dns2),
+            "expected_repr": f"['URI:{uri1}', 'URI:{uri2}', 'DNS:{dns1}', 'DNS:{dns2}']",
+            "expected_serialized": [f"URI:{uri1}", f"URI:{uri2}", f"DNS:{dns1}", f"DNS:{dns2}"],
+            "expected_text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
             "extension_type": x509.SubjectAlternativeName([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
         },
         "order": {  # same as "all" above but other order
@@ -1624,9 +1622,9 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
                 [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
             ],
             "expected": [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
-            "expected_repr": "['DNS:%s', 'DNS:%s', 'URI:%s', 'URI:%s']" % (dns2, dns1, uri2, uri1),
-            "expected_serialized": ["DNS:%s" % dns2, "DNS:%s" % dns1, "URI:%s" % uri2, "URI:%s" % uri1],
-            "expected_text": "* DNS:%s\n* DNS:%s\n* URI:%s\n* URI:%s" % (dns2, dns1, uri2, uri1),
+            "expected_repr": f"['DNS:{dns2}', 'DNS:{dns1}', 'URI:{uri2}', 'URI:{uri1}']",
+            "expected_serialized": [f"DNS:{dns2}", f"DNS:{dns1}", f"URI:{uri2}", f"URI:{uri1}"],
+            "expected_text": f"* DNS:{dns2}\n* DNS:{dns1}\n* URI:{uri2}\n* URI:{uri1}",
             "extension_type": x509.SubjectAlternativeName([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
         },
     }

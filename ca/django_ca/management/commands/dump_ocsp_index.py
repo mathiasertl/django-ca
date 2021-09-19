@@ -45,6 +45,6 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             for line in get_index(ca):
                 self.stdout.write(line)
         else:
-            with open(path, "w") as stream:
+            with open(path, "w", encoding="ascii") as stream:
                 for line in get_index(ca):
                     stream.write(line)

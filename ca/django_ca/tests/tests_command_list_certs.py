@@ -41,14 +41,15 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             if cert.expires < timezone.now():
                 word = "expired"
 
-            info = "%s: %s" % (word, cert.expires.strftime("%Y-%m-%d"))
-        return "%s - %s (%s)" % (add_colons(cert.serial), cert.cn, info)
+            strftime = cert.expires.strftime("%Y-%m-%d")
+            info = f"{word}: {strftime}"
+        return f"{add_colons(cert.serial)} - {cert.cn} ({info})"
 
     def assertCerts(self, *certs: Certificate, **kwargs: typing.Any) -> None:  # pylint: disable=invalid-name
         """Assert that command outputs the given certs."""
         stdout, stderr = self.cmd("list_certs", **kwargs)
         sorted_certs = sorted(certs, key=lambda c: (c.expires, c.cn, c.serial))
-        self.assertEqual(stdout, "".join(["%s\n" % self._line(c) for c in sorted_certs]))
+        self.assertEqual(stdout, "".join([f"{self._line(c)}\n" for c in sorted_certs]))
         self.assertEqual(stderr, "")
 
     @freeze_time(timestamps["everything_valid"])

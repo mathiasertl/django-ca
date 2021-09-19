@@ -65,7 +65,7 @@ class Profile:
     class can be used to create a signed certificate based on the given CA::
 
         >>> Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
-        <Profile: 'example'>
+        <Profile: example>
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -156,7 +156,7 @@ class Profile:
         return KEY_TO_EXTENSION[key](value)
 
     def __repr__(self) -> str:
-        return "<Profile: %r>" % self.name
+        return f"<Profile: {self.name}>"
 
     def __str__(self) -> str:
         return repr(self)
@@ -391,7 +391,7 @@ class Profile:
             crldp = extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints())
             if not isinstance(crldp, CRLDistributionPoints):
                 raise ValueError(
-                    "extensions[%s] is not of type CRLDistributionPoints" % CRLDistributionPoints.key
+                    f"extensions[{CRLDistributionPoints.key}] is not of type CRLDistributionPoints"
                 )
             crldp.append({"full_name": [url.strip() for url in ca.crl_url.split()]})
 
@@ -399,8 +399,7 @@ class Profile:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
             if not isinstance(aia, AuthorityInformationAccess):
                 raise ValueError(
-                    "extensions[%s] is not of type AuthorityInformationAccess"
-                    % AuthorityInformationAccess.key
+                    f"extensions[{AuthorityInformationAccess.key}] is not of type AuthorityInformationAccess"
                 )
             aia.ocsp.append(parse_general_name(ca.ocsp_url))
 
@@ -408,8 +407,7 @@ class Profile:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
             if not isinstance(aia, AuthorityInformationAccess):
                 raise ValueError(
-                    "extensions[%s] is not of type AuthorityInformationAccess"
-                    % AuthorityInformationAccess.key
+                    f"extensions[{AuthorityInformationAccess.key}] is not of type AuthorityInformationAccess"
                 )
             aia.issuers.append(parse_general_name(ca.issuer_url))
 
@@ -417,7 +415,7 @@ class Profile:
             ian = extensions.get(IssuerAlternativeName.key, IssuerAlternativeName())
             if not isinstance(ian, IssuerAlternativeName):
                 raise ValueError(
-                    "extensions[%s] is not of type IssuerAlternativeName" % IssuerAlternativeName.key
+                    f"extensions[{IssuerAlternativeName.key}] is not of type IssuerAlternativeName"
                 )
 
             ian.extend(shlex_split(ca.issuer_alt_name, ","))
@@ -439,7 +437,7 @@ class Profile:
                 common_name = parse_general_name(cast(str, subject["CN"]))
             except ValueError as e:
                 raise ValueError(
-                    "%s: Could not parse CommonName as subjectAlternativeName." % subject["CN"]
+                    f"{subject['CN']}: Could not parse CommonName as subjectAlternativeName."
                 ) from e
 
             extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName())
@@ -512,7 +510,7 @@ class DefaultProfileProxy:
         return profiles[ca_settings.CA_DEFAULT_PROFILE] == other
 
     def __repr__(self) -> str:
-        return "<DefaultProfile: %r>" % self.name
+        return f"<DefaultProfile: {self.name}>"
 
     def __str__(self) -> str:
         return repr(self)

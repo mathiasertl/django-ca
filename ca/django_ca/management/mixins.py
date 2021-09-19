@@ -48,16 +48,12 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     def add_algorithm(self, parser: CommandParser) -> None:
         """Add the --algorithm option."""
 
-        help_text = "The HashAlgorithm that will be used to generate the signature (default: %s)." % (
-            ca_settings.CA_DIGEST_ALGORITHM.name
-        )
-
         parser.add_argument(
             "--algorithm",
             metavar="{sha512,sha256,...}",
             default=ca_settings.CA_DIGEST_ALGORITHM,
             action=actions.AlgorithmAction,
-            help=help_text,
+            help="The HashAlgorithm that will be used to generate the signature (default: {default}).",
         )
 
     def add_ca(
@@ -91,7 +87,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
         help_text = help_text % {"default": add_colons(default.serial) if default else None}
         parser.add_argument(
-            "%s" % arg,
+            arg,
             metavar="SERIAL",
             help=help_text,
             default=default,
@@ -126,7 +122,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             default=default,
             action=actions.FormatAction,
             dest=dest,
-            help=help_text
+            help=help_text,
         )
 
     def add_password(self, parser: CommandParser, help_text: str = "") -> None:
@@ -151,24 +147,24 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             if isinstance(ext, NullExtension):
                 if ext.critical:
                     # NOTE: Only PrecertPoison is ever marked as critical
-                    self.stdout.write("%s (critical): Yes" % ext.name)
+                    self.stdout.write(f"{ext.name} (critical): Yes")
                 else:
-                    self.stdout.write("%s: Yes" % ext.name)
+                    self.stdout.write(f"{ext.name}: Yes")
             else:
                 if ext.critical:
-                    self.stdout.write("%s (critical):" % ext.name)
+                    self.stdout.write(f"{ext.name} (critical):")
                 else:
-                    self.stdout.write("%s:" % ext.name)
+                    self.stdout.write(f"{ext.name}:")
 
                 self.stdout.write(self.indent(ext.as_text()))
         elif isinstance(ext, x509.Extension):
             oid_name = ext.oid._name  # pylint: disable=protected-access; only way to get name
             if ext.critical:  # pragma: no cover - all unrecognized extensions that we have are non-critical
-                self.stdout.write("%s (critical): %s" % (oid_name, ext.oid.dotted_string))
+                self.stdout.write(f"{oid_name} (critical): {ext.oid.dotted_string}")
             else:
-                self.stdout.write("%s: %s" % (oid_name, ext.oid.dotted_string))
+                self.stdout.write(f"{oid_name}: {ext.oid.dotted_string}")
         else:  # pragma: no cover
-            raise ValueError("Received unknown extension type: %s" % type(ext))
+            raise ValueError(f"Received unknown extension type: {type(ext)}")
 
     def print_extensions(self, cert: X509CertMixin) -> None:
         """Print all extensions for the given certificate."""

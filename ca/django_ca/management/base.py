@@ -113,8 +113,8 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     @property
     def valid_subject_keys(self) -> str:
         """Return human-readable enumeration of valid subject keys (CN/...)."""
-        fields = ['"%s"' % f for f in SUBJECT_FIELDS]
-        return "%s and %s" % (", ".join(fields[:-1]), fields[-1])
+        fields = [f'"{f}"' for f in SUBJECT_FIELDS]
+        return f"{', '.join(fields[:-1])} and {fields[-1]}"
 
     def add_subject(
         self,
@@ -128,15 +128,13 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def add_ecc_curve(self, parser: CommandParser) -> None:
         """Add --ecc-curve option."""
-        curve_help = "Elliptic Curve used for ECC keys (default: %(default)s)." % {
-            "default": ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__,
-        }
+        default = ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__
         parser.add_argument(
             "--ecc-curve",
             metavar="CURVE",
             action=actions.KeyCurveAction,
             default=ca_settings.CA_DEFAULT_ECC_CURVE,
-            help=curve_help,
+            help=f"Elliptic Curve used for ECC keys (default: {default}).",
         )
 
     def add_key_size(self, parser: CommandParser) -> None:
@@ -163,7 +161,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         group = group.add_mutually_exclusive_group()
         for name, profile in ca_settings.CA_PROFILES.items():
             group.add_argument(
-                "--%s" % name,
+                f"--{name}",
                 action="store_const",
                 const=name,
                 dest="profile",
@@ -234,9 +232,8 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             group,
             arg="--subject",
             metavar="/key1=value1/key2=value2/...",
-            help_text="""Valid keys are %s. Pass an empty value (e.g. "/C=/ST=...") to remove a field
-                      from the subject."""
-            % self.valid_subject_keys,
+            help_text=f"""Valid keys are {self.valid_subject_keys}. Pass an empty value (e.g. "/C=/ST=...")
+            to remove a field from the subject.""",
         )
 
     def add_extensions(self, parser: CommandParser) -> None:
@@ -269,14 +266,14 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         ca: CertificateAuthority,
         expires: timedelta,
         password: typing.Optional[bytes],
-        **options: typing.Any
+        **options: typing.Any,
     ) -> None:
         """Additional tests for validity of some options."""
 
         if ca.expires < timezone.now() + expires:
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
-                "Certificate would outlive CA, maximum expiry for this CA is %s days." % max_days
+                f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."
             )
 
         # See if we can work with the private key

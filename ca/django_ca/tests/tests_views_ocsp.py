@@ -233,7 +233,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         else:
             # OCSPResponseBuilder (used server-side) statically uses sha256, so this should never
             # happen for now.
-            raise ValueError("Unknown algorithm: %s" % algo.native)
+            raise ValueError(f"Unknown algorithm: {algo.native}")
 
         # from ocspbuilder.OCSPResponseBuilder.build:
         if self.ocsp_private_key.algorithm == "rsa":
@@ -673,20 +673,13 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         msg = "ERROR:django_ca.views:Could not read responder key/cert."
         prefix = "WARNING:django_ca.views"
 
-        pem_msg = "%s:%%s: OCSP responder uses absolute path to certificate. Please see %s." % (
-            prefix,
-            ca_settings.CA_FILE_STORAGE_URL,
-        )
+        url = ca_settings.CA_FILE_STORAGE_URL
+        urlpath = "/false/foobar/"
+        pem_msg = f"{prefix}:{urlpath}: OCSP responder uses absolute path to certificate. Please see {url}."
 
         with self.assertLogs() as logcm:
             response = self.client.get(reverse("false-pem", kwargs={"data": data}))
-        self.assertEqual(
-            logcm.output,
-            [
-                pem_msg % "/false/foobar/",
-                msg,
-            ],
-        )
+        self.assertEqual(logcm.output, [pem_msg, msg])
         self.assertEqual(response.status_code, HTTPStatus.OK)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")

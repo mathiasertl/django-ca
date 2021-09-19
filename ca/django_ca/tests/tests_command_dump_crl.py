@@ -77,9 +77,8 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, "test", "crl-test.crl")
-        msg = r"^\[Errno 2\] No such file or directory: '%s'$" % re.escape(path)
 
-        with self.assertCommandError(msg):
+        with self.assertCommandError(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
             self.cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()

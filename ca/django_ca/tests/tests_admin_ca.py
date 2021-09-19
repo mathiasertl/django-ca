@@ -47,14 +47,16 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
             with self.assertLogs() as logcm:
                 response = self.client.get(self.change_url(obj), data)
 
+            # pylint: disable=consider-using-f-string  # used as template
             template = "WARNING:django_ca.models:Unknown extension encountered: Unknown OID (%s)"
             self.assertEqual(
                 logcm.output,
                 [template % "2.16.840.1.113730.1.1", template % "2.16.840.1.113730.1.13"],
             )
+            # pylint: enable=consider-using-f-string
             return response
-        else:
-            return self.client.get(self.change_url(obj), data)
+
+        return self.client.get(self.change_url(obj), data)
 
     @override_settings(CA_ENABLE_ACME=False)
     def test_change_view_with_acme(self) -> None:
@@ -88,12 +90,12 @@ class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCas
 
     def test_invalid_format(self) -> None:
         """Test downloading the bundle in an invalid format."""
-        response = self.client.get("%s?format=INVALID" % self.url)
+        response = self.client.get(f"{self.url}?format=INVALID")
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.content, b"")
 
         # DER is not supported for bundles
-        response = self.client.get("%s?format=DER" % self.url)
+        response = self.client.get(f"{self.url}?format=DER")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")
 
@@ -102,7 +104,7 @@ class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCas
         self.user.is_superuser = False
         self.user.save()
 
-        response = self.client.get("%s?format=PEM" % self.url)
+        response = self.client.get(f"{self.url}?format=PEM")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_unauthorized(self) -> None:

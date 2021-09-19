@@ -41,7 +41,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     def list_ca(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list line for a given CA."""
 
-        text = "%s%s - %s" % (indent, add_colons(ca.serial), ca.name)
+        text = f"{indent}{add_colons(ca.serial)} - {ca.name}"
         if ca.enabled is False:
             text += " (disabled)"
 
