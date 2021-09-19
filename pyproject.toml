@@ -62,7 +62,7 @@ module-rgx = "[a-z_][a-z_-]+"
 
 # Configure Django
 init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
-django-settings-module = "ca.settings"
+django-settings-module = "ca.test_settings"
 
 [tool.pylint.basic]
 good-names = [

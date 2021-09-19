@@ -14,7 +14,6 @@
 """Reusable utility functions used throughout django-ca."""
 
 import binascii
-import os
 import re
 import shlex
 import typing
@@ -154,8 +153,8 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # NOTE: SM3 is added in cryptography 35.0
     # hashes.SM3.name: hashes.SM3,
 }
-if hasattr(hashes, "SM3"):  # pragma: only cryptography>=35.0
-    # NOTE: Remove pylint override once cryptography>=35.0 is used
+if hasattr(hashes, "SM3"):  # pragma: cryptography>=35.0 branch
+    # PYLINT NOTE: Remove pylint override once cryptography>=35.0 is used
     HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3  # pylint: disable=no-member  # We check above
 
 #: Mapping of canonical elliptic curve names to the implementing classes
