@@ -168,22 +168,21 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         return
 
     # General data for challenge validation
-    token = challenge.encoded_token
     value = challenge.auth.value
-    thumbprint = challenge.auth.order.account.thumbprint
-    expected = f"{token}.{thumbprint}"
-    expected_bytes = expected.encode("utf-8")
 
     # Challenge is marked as invalid by default
     challenge_valid = False
 
     # Validate HTTP challenge (only thing supported so far)
     if challenge.type == AcmeChallenge.TYPE_HTTP_01:
+        decoded_token = challenge.encoded_token.decode("utf-8")
+        expected = challenge.expected
+
         if requests is None:  # pragma: no cover
             log.error("requests is not installed, cannot do http-01 challenge validation.")
             return
 
-        url = f"http://{value}/.well-known/acme-challenge/{token}"
+        url = f"http://{value}/.well-known/acme-challenge/{decoded_token}"
 
         try:
             with requests.get(url, timeout=1, stream=True) as response:
@@ -191,20 +190,21 @@ def acme_validate_challenge(challenge_pk: int) -> None:
                 if response.status_code == HTTPStatus.OK:
                     # Only fetch the expected number of bytes to prevent a large file ending up in memory
                     # But fetch one extra byte (if available) to make sure that response has no extra bytes
-                    received = response.raw.read(len(expected_bytes) + 1, decode_content=True)
-                    challenge_valid = received == expected_bytes
+                    received = response.raw.read(len(expected) + 1, decode_content=True)
+                    challenge_valid = received == expected
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
     elif challenge.type == AcmeChallenge.TYPE_DNS_01:
         challenge_valid = validate_dns_01(challenge)
-    elif challenge.type == AcmeChallenge.TYPE_TLS_ALPN_01:
-        # host = socket.gethostbyname(value)
-        # sni_cert = crypto_util.probe_sni(
-        #    host=host, port=443, name=value, alpn_protocols=[TlsAlpnProtocol.V1]
-        # )
-        log.error("%s: TLS-ALPN-01 challenges not supported yet.", challenge)
+
+    # TODO: support ALPN_01 challenges
+    # elif challenge.type == AcmeChallenge.TYPE_TLS_ALPN_01:
+    #     host = socket.gethostbyname(value)
+    #     sni_cert = crypto_util.probe_sni(
+    #         host=host, port=443, name=value, alpn_protocols=[TlsAlpnProtocol.V1]
+    #     )
     else:
-        log.error("%s: Only HTTP-01 challenges supported so far", challenge)
+        log.error("%s: Challenge type is not supported.", challenge)
 
     # Transition state of the challenge depending on if the challenge is valid or not. RFC8555, Section 7.1.6:
     #
@@ -247,7 +247,7 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         #   If an error occurs at any of these stages, the order moves to the "invalid" state.
         challenge.auth.order.status = AcmeOrder.STATUS_INVALID
 
-    log.info("Challenge %s is %s", challenge.pk, challenge.status)
+    log.info("%s is %s", challenge, challenge.status)
     challenge.save()
     challenge.auth.save()
     challenge.auth.order.save()

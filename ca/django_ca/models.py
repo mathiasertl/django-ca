@@ -1684,16 +1684,14 @@ class AcmeChallenge(DjangoCAModel):
         return self.validated
 
     @property
-    def encoded_token(self) -> str:
+    def encoded_token(self) -> bytes:
         """Token in base64url encoded form."""
-        # TODO: this is probably replaced by expected?
-        return jose.encode_b64jose(self.token.encode("ascii"))
+        return jose.b64encode(self.token.encode("ascii"))
 
     @property
     def expected(self) -> bytes:
         thumbprint = self.account.thumbprint.encode("ascii")
-        token = jose.b64encode(self.token.encode("ascii"))
-        value = token + b"." + thumbprint
+        value = self.encoded_token + b"." + thumbprint
 
         if self.type == AcmeChallenge.TYPE_HTTP_01:
             return value

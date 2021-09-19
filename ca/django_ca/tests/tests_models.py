@@ -1292,6 +1292,30 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.chall.validated = timezone.now()
             self.assertEqual(self.chall.acme_validated, timezone.now())
 
+    def test_encoded(self) -> None:
+        self.chall.token = "ADwFxCAXrnk47rcCnnbbtGYSo_l61MCYXqtBziPt26mk7-QzpYNNKnTsKjbBYPzD"
+        self.chall.save()
+        self.assertEqual(
+            self.chall.encoded_token,
+            b"QUR3RnhDQVhybms0N3JjQ25uYmJ0R1lTb19sNjFNQ1lYcXRCemlQdDI2bWs3LVF6cFlOTktuVHNLamJCWVB6RA",
+        )
+
+    def test_expected(self) -> None:
+        self.chall.token = "ADwFxCAXrnk47rcCnnbbtGYSo_l61MCYXqtBziPt26mk7-QzpYNNKnTsKjbBYPzD"
+        self.chall.save()
+        self.assertEqual(
+            self.chall.expected, self.chall.encoded_token + b"." + self.account.thumbprint.encode("utf-8")
+        )
+
+        self.chall.type = AcmeChallenge.TYPE_DNS_01
+        self.chall.save()
+        self.assertEqual(self.chall.expected, b"LoNgngEeuLw4rWDFpplPA0XBp9dd9spzuuqbsRFcKug")
+
+        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
+        self.chall.save()
+        with self.assertRaisesRegex(ValueError, r"^tls-alpn-01: Unsupported challenge type\.$"):
+            self.chall.expected
+
     def test_get_challenge(self) -> None:
         """Test the get_challenge() function."""
 

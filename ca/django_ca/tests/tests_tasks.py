@@ -215,16 +215,18 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         status: int = HTTPStatus.OK,
         content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
         call_count: int = 1,
+        token: typing.Optional[str] = None,
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
         challenge = challenge or self.chall
         auth = challenge.auth
-        account = auth.order.account
 
         if content is None:
-            content = io.BytesIO(f"{challenge.encoded_token}.{account.thumbprint}".encode("utf-8"))
+            content = io.BytesIO(challenge.expected)
 
-        url = f"http://{auth.value}/.well-known/acme-challenge/{challenge.encoded_token}"
+        if token is None:
+            token = challenge.encoded_token.decode("utf-8")
+        url = f"http://{auth.value}/.well-known/acme-challenge/{token}"
 
         with requests_mock.Mocker() as req_mock:
             matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
@@ -309,9 +311,17 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
 
-        with self.mock_challenge(content=b"wrong answer"):
+        with self.mock_challenge(content=b"wrong answer"), self.assertLogs(
+            "django_ca.tasks", "DEBUG"
+        ) as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
+        self.assertEqual(
+            logcm.output,
+            [
+                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+            ],
+        )
 
     def test_unsupported_challenge(self) -> None:
         """Test what happens when challenge type is not supported."""
@@ -319,9 +329,18 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
 
-        with self.mock_challenge(call_count=0):
+        with self.mock_challenge(call_count=0, content="foo", token="foo"), self.assertLogs(
+            "django_ca.tasks", "DEBUG"
+        ) as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
+        self.assertEqual(
+            logcm.output,
+            [
+                f"ERROR:django_ca.tasks:{str(self.chall)}: Challenge type is not supported.",
+                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+            ],
+        )
 
     def test_basic(self) -> None:
         """Test validation actually working."""
