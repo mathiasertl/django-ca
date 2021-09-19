@@ -22,7 +22,9 @@ from datetime import timedelta
 from http import HTTPStatus
 from unittest import mock
 
+import dns.resolver
 import josepy as jose
+from dns.rdtypes.txtbase import TXTBase
 from requests.packages.urllib3.response import HTTPResponse
 
 from cryptography import x509
@@ -178,8 +180,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
             self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
 
 
-@freeze_time(timestamps["everything_valid"])
-class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
     load_cas = ("root",)
@@ -200,39 +201,13 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value=self.hostname
         )
         self.chall = AcmeChallenge.objects.create(
-            auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01, status=AcmeChallenge.STATUS_PROCESSING
+            auth=self.auth, type=self.type, status=AcmeChallenge.STATUS_PROCESSING
         )
 
         encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
         thumbprint = self.account.thumbprint
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
-
-    @contextmanager
-    def mock_challenge(
-        self,
-        challenge: typing.Optional[AcmeChallenge] = None,
-        status: int = HTTPStatus.OK,
-        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
-        call_count: int = 1,
-        token: typing.Optional[str] = None,
-    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
-        """Mock a request to satisfy an ACME challenge."""
-        challenge = challenge or self.chall
-        auth = challenge.auth
-
-        if content is None:
-            content = io.BytesIO(challenge.expected)
-
-        if token is None:
-            token = challenge.encoded_token.decode("utf-8")
-        url = f"http://{auth.value}/.well-known/acme-challenge/{token}"
-
-        with requests_mock.Mocker() as req_mock:
-            matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
-            yield req_mock
-
-        self.assertEqual(matcher.call_count, call_count)
 
     def refresh_from_db(self) -> None:
         """Refresh objects from database."""
@@ -294,20 +269,6 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         self.assertEqual(logcm.output, [f"ERROR:django_ca.tasks:{self.chall}: Authentication is not usable"])
 
-    def test_request_exception(self) -> None:
-        """Test requests throwing an exception."""
-        with self.patch("requests.get", side_effect=Exception("foo")) as req_mock:
-            tasks.acme_validate_challenge(self.chall.pk)
-        self.assertInvalid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
-
-    def test_response_not_ok(self) -> None:
-        """Test the server not returning a HTTP status code 200."""
-
-        with self.mock_challenge(status=HTTPStatus.NOT_FOUND):
-            tasks.acme_validate_challenge(self.chall.pk)
-        self.assertInvalid()
-
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
 
@@ -359,6 +320,125 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             tasks.acme_validate_challenge(self.chall.pk)
 
         self.assertValid(AcmeOrder.STATUS_PENDING)
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, TestCase):
+    """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
+
+    load_cas = ("root",)
+    type = AcmeChallenge.TYPE_HTTP_01
+
+    def setUp(self) -> None:
+        super().setUp()
+        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        thumbprint = self.account.thumbprint
+        self.expected = f"{encoded}.{thumbprint}"
+        self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
+
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,
+        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
+        call_count: int = 1,
+        token: typing.Optional[str] = None,
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock a request to satisfy an ACME challenge."""
+        challenge = challenge or self.chall
+        auth = challenge.auth
+
+        if content is None:
+            content = io.BytesIO(challenge.expected)
+
+        if token is None:
+            token = challenge.encoded_token.decode("utf-8")
+        url = f"http://{auth.value}/.well-known/acme-challenge/{token}"
+
+        with requests_mock.Mocker() as req_mock:
+            matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
+            yield req_mock
+
+        self.assertEqual(matcher.call_count, call_count)
+
+    def test_response_not_ok(self) -> None:
+        """Test the server not returning a HTTP status code 200."""
+
+        with self.mock_challenge(status=HTTPStatus.NOT_FOUND):
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+
+    def test_request_exception(self) -> None:
+        """Test requests throwing an exception."""
+        val = f"{__name__}.{self.__class__.__name__}.test_request_exception"
+        with self.patch("requests.get", side_effect=Exception(val)) as req_mock, self.assertLogs() as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
+        self.assertEqual(len(logcm.output), 2)
+        self.assertIn(val, logcm.output[0])
+        self.assertEqual(logcm.output[1], f"INFO:django_ca.tasks:{str(self.chall)} is invalid")
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, TestCase):
+    """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
+
+    load_cas = ("root",)
+    type = AcmeChallenge.TYPE_DNS_01
+
+    def setUp(self) -> None:
+        super().setUp()
+        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        thumbprint = self.account.thumbprint
+        self.expected = f"{encoded}.{thumbprint}"
+        self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
+
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,
+        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
+        call_count: int = 1,
+        token: typing.Optional[str] = None,
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock a request to satisfy an ACME challenge."""
+
+        dns.resolver.reset_default_resolver()
+        challenge = challenge or self.chall
+        domain = self.auth.value
+        if content is None:
+            content = challenge.expected
+
+        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as rm:
+            rm.return_value = [TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content])]
+            yield rm
+
+        # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
+        if call_count == 0:
+            rm.assert_not_called()
+        else:
+            rm.assert_called_once()
+            self.assertEqual(rm.call_args_list[0].args[:2], (f"_acme_challenge.{domain}", "TXT"))
+
+    def test_nxdomain(self) -> None:
+        with mock.patch("dns.resolver.resolve", side_effect=dns.resolver.NXDOMAIN) as rm, self.assertLogs(
+            level="DEBUG"
+        ) as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+        rm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
+        self.assertInvalid()
+
+        self.assertEqual(
+            logcm.output,
+            [
+                f"INFO:django_ca.acme.validation:DNS-01 validation of {self.hostname}: Expect {self.chall.expected} on _acme_challenge.{self.hostname}",
+                f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.hostname}: record does not exist.",
+                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+            ],
+        )
 
 
 @freeze_time(timestamps["everything_valid"])

@@ -77,7 +77,7 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
 
 
-class AcmeTestCase(TestCaseMixin, TestCase):
+class AcmeTestCase(TestCaseMixin, TestCase):  # pragma: no cover
     """Basic test case that loads root and child CA and enables ACME for the latter."""
 
     load_cas = ["root", "child"]
