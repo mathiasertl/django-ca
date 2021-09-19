@@ -264,13 +264,14 @@ class OCSPView(View):
             log.error("%s: Certificate Authority could not be found.", self.ca)
             return self.fail()
 
+        cert_serial = int_to_hex(ocsp_req.serial_number)
         try:
-            cert = self.get_cert(ca, int_to_hex(ocsp_req.serial_number))
+            cert = self.get_cert(ca, cert_serial)
         except Certificate.DoesNotExist:
-            log.warning("OCSP request for unknown cert received.")
+            log.warning("%s: OCSP request for unknown cert received.", cert_serial)
             return self.fail()
         except CertificateAuthority.DoesNotExist:
-            log.warning("OCSP request for unknown CA received.")
+            log.warning("%s: OCSP request for unknown CA received.", cert_serial)
             return self.fail()
 
         # get key/cert for OCSP responder
