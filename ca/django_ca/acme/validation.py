@@ -13,10 +13,7 @@
 
 """Module collecting methods for ACME challenge validation."""
 
-import hashlib
 import logging
-
-import josepy as jose
 
 from ..models import AcmeChallenge
 
@@ -46,12 +43,10 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
         raise ValueError("This function can only validate DNS-01 challenges")
 
     domain = challenge.auth.value  # domain to validate
-    thumbprint = challenge.account.thumbprint  # account thumbprint
-    token = challenge.encoded_token  # challenge token
-    log.info("DNS-01 validation of %s", domain)
 
     dns_name = f"_acme_challenge.{domain}"
-    expected_value = jose.b64encode(hashlib.sha256(f"{token}.{thumbprint}".encode("ascii")).digest())
+    expected = challenge.expected
+    log.info("DNS-01 validation of %s: Expect %s on %s", domain, expected, dns_name)
 
     try:
         answers = resolver.resolve(dns_name, "TXT", lifetime=timeout, search=False)
@@ -68,7 +63,7 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
 
         # A single TXT record can have multiple string values, even if rarely seen in practice
         for value in txt_data:
-            if value == expected_value:
+            if value == expected:
                 return True
 
     return False

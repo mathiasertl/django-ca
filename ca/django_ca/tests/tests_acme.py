@@ -29,6 +29,7 @@ from django.urls import include
 from django.urls import path
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
+from django.utils.crypto import get_random_string
 
 from .. import urls
 from ..acme import validation
@@ -117,17 +118,35 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.domain = "example.invalid"
-        self.account = AcmeAccount.objects.create(thumbprint="test-thumbprint", ca=self.ca)
+        self.account = AcmeAccount(thumbprint=get_random_string(length=12), ca=self.ca, pem="none")
+        self.account.kid = "http://testserver%s" % reverse(
+            "django_ca:acme-account", kwargs={"slug": self.account.slug, "serial": self.account.ca.serial}
+        )
+        self.account.save()
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth = AcmeAuthorization(value=self.domain, order=self.order)
         self.chall = AcmeChallenge(type=AcmeChallenge.TYPE_DNS_01, auth=self.auth)
 
     @contextmanager
-    def mock_response(self, domain, *records):
+    def assertLogMessages(self, *messages, challenge=None):
+        with self.assertLogs("django_ca.acme.validation", level="DEBUG") as logcm:
+            yield logcm
+
+        if challenge is None:
+            challenge = self.chall
+
+        self.assertEqual(logcm.output, [self.get_log_message(challenge)] + list(messages))
+
+    def get_log_message(self, chall):
+        prefix = "INFO:django_ca.acme.validation"
+        domain = chall.auth.value
+        return f"{prefix}:DNS-01 validation of {domain}: Expect {chall.expected} on _acme_challenge.{domain}"
+
+    @contextmanager
+    def mock_response(self, domain, *responses):
         dns.resolver.reset_default_resolver()
-        responses = [
-            TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, rec) for rec in records
-        ]
+        responses = [self.to_txt_record(resp) for resp in responses]
+
         with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as rm:
             rm.return_value = responses
             yield rm
@@ -136,10 +155,49 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         rm.assert_called_once()
         self.assertEqual(rm.call_args_list[0].args[:2], (f"_acme_challenge.{domain}", "TXT"))
 
+    def to_txt_record(self, values):
+        return TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, values)
+
+    def test_validation(self):
+        with self.mock_response(self.domain, [self.chall.expected]), self.assertLogMessages():
+            self.assertTrue(validation.validate_dns_01(self.chall))
+        with self.mock_response(self.domain, [self.chall.expected, "foo"]), self.assertLogMessages():
+            self.assertTrue(validation.validate_dns_01(self.chall))
+        with self.mock_response(self.domain, ["data"], [self.chall.expected]), self.assertLogMessages():
+            self.assertTrue(validation.validate_dns_01(self.chall))
+        with self.mock_response(
+            self.domain, ["data"], ["multiple", self.chall.expected]
+        ), self.assertLogMessages():
+            self.assertTrue(validation.validate_dns_01(self.chall))
+
+    def test_precomputed(self):
+        account = AcmeAccount(thumbprint="R6tWUSaH6DQH", ca=self.ca, pem="test_precomputed")
+        account.kid = "http://testserver%s" % reverse(
+            "django_ca:acme-account", kwargs={"slug": account.slug, "serial": account.ca.serial}
+        )
+        account.save()
+        order = AcmeOrder.objects.create(account=account)
+        auth = AcmeAuthorization(value=self.domain, order=order)
+        chall = AcmeChallenge(type=AcmeChallenge.TYPE_DNS_01, auth=auth, token="5I4xiP4z29Mu")
+        expected = chall.expected
+
+        with self.mock_response(self.domain, [chall.expected]), self.assertLogMessages(challenge=chall):
+            self.assertTrue(validation.validate_dns_01(chall))
+        with self.mock_response(self.domain, [expected, "foo"]), self.assertLogMessages(challenge=chall):
+            self.assertTrue(validation.validate_dns_01(chall))
+        with self.mock_response(self.domain, ["data"], [expected]), self.assertLogMessages(challenge=chall):
+            self.assertTrue(validation.validate_dns_01(chall))
+        with self.mock_response(self.domain, ["data"], ["foo", expected]), self.assertLogMessages(
+            challenge=chall
+        ):
+            self.assertTrue(validation.validate_dns_01(chall))
+
     def test_wrong_txt_response(self):
-        with self.mock_response(self.domain, "foo"):
+        with self.mock_response(self.domain, ["foo"]), self.assertLogMessages():
             self.assertFalse(validation.validate_dns_01(self.chall))
-        with self.mock_response(self.domain, "foo", "bar"):
+        with self.mock_response(self.domain, "foo", "bar"), self.assertLogMessages():
+            self.assertFalse(validation.validate_dns_01(self.chall))
+        with self.mock_response(self.domain, ["foo", "bar"], "bar"), self.assertLogMessages():
             self.assertFalse(validation.validate_dns_01(self.chall))
 
     def test_dns_exception(self):
@@ -150,18 +208,10 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
     def test_nxdomain(self):
         """Test validating a domain where the record simply does not exist."""
 
-        with mock.patch("dns.resolver.resolve", side_effect=resolver.NXDOMAIN) as rm, self.assertLogs(
-            "django_ca.acme.validation", level="DEBUG"
-        ) as logcm:
+        with mock.patch("dns.resolver.resolve", side_effect=resolver.NXDOMAIN) as rm, self.assertLogMessages(
+            f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist."
+        ):
             self.assertFalse(validation.validate_dns_01(self.chall))
-
-        self.assertEqual(
-            logcm.output,
-            [
-                f"INFO:django_ca.acme.validation:DNS-01 validation of {self.domain}",
-                f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist.",
-            ],
-        )
         rm.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)
 
     def test_wrong_acme_challenge(self):

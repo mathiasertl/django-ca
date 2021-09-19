@@ -1686,7 +1686,20 @@ class AcmeChallenge(DjangoCAModel):
     @property
     def encoded_token(self) -> str:
         """Token in base64url encoded form."""
+        # TODO: this is probably replaced by expected?
         return jose.encode_b64jose(self.token.encode("ascii"))
+
+    @property
+    def expected(self) -> bytes:
+        thumbprint = self.account.thumbprint.encode("ascii")
+        token = jose.b64encode(self.token.encode("ascii"))
+        value = token + b"." + thumbprint
+
+        if self.type == AcmeChallenge.TYPE_HTTP_01:
+            return value
+        if self.type == AcmeChallenge.TYPE_DNS_01:
+            return jose.b64encode(hashlib.sha256(value).digest())
+        raise ValueError("%s: Unsupported challenge type." % self.type)
 
     def get_challenge(self, request: HttpRequest) -> "messages.ChallengeBody":
         """Get the ACME challenge body for this challenge.

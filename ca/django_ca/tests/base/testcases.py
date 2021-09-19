@@ -15,6 +15,7 @@
 
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from pyvirtualdisplay import Display
@@ -74,3 +75,15 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
     def wait_for_page_load(self, wait: int = 2) -> None:
         """Wait for the page to load."""
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
+
+
+class AcmeTestCase(TestCaseMixin, TestCase):
+    """Basic test case that loads root and child CA and enables ACME for the latter."""
+
+    load_cas = ["root", "child"]
+
+    def setUp(self):
+        super().setUp()
+        self.ca = self.cas["child"]
+        self.ca.acme_enabled = True
+        self.ca.save()
