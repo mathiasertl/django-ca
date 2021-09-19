@@ -23,6 +23,9 @@ Backwards incompatible changes
 ==============================
 
 * Drop support for cryptography 3.0, 3.1 and 3.2.
+* Remove support for configuring absolute paths for manually configured :py:class:`django_ca.views.OCSPView`.
+  This functionality was officially supposed to be removed in django-ca 1.14.0.
+  
 
 .. _changelog-1.18.0:
 

@@ -1067,10 +1067,6 @@ def read_file(path: str) -> bytes:
     If ``path`` is an absolute path, reads a file from the local file system. For relative paths, read the
     file using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
-    if os.path.isabs(path):
-        with open(path, "rb") as abs_stream:
-            return abs_stream.read()
-
     stream = ca_storage.open(path)
 
     try:

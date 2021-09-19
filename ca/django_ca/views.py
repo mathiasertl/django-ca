@@ -190,13 +190,6 @@ class OCSPView(View):
 
     def get_responder_key_data(self) -> bytes:
         """Read the file containing the private key used to sign OCSP responses."""
-        if os.path.isabs(self.responder_key):
-            log.warning(
-                "%s: OCSP responder uses absolute path to private key. Please see %s.",
-                self.responder_key,
-                ca_settings.CA_FILE_STORAGE_URL,
-            )
-
         return read_file(self.responder_key)
 
     def get_responder_cert(self) -> x509.Certificate:
