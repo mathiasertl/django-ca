@@ -65,6 +65,7 @@ from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = [
+    "DC",
     "C",
     "ST",
     "L",
@@ -104,6 +105,7 @@ SAN_NAME_MAPPINGS = {
 
 #: Map OID objects to IDs used in subject strings
 OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
+    NameOID.DOMAIN_COMPONENT: "DC",
     NameOID.COUNTRY_NAME: "C",
     NameOID.STATE_OR_PROVINCE_NAME: "ST",
     NameOID.LOCALITY_NAME: "L",
@@ -124,6 +126,7 @@ NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 
 # Some OIDs can occur multiple times
 MULTIPLE_OIDS = (
+    NameOID.DOMAIN_COMPONENT,
     NameOID.ORGANIZATIONAL_UNIT_NAME,
     NameOID.STREET_ADDRESS,
 )
@@ -209,8 +212,14 @@ except ImportError:  # pragma: no cover
 
 
 def sort_name(subject: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
-    """Returns the subject in the correct order for a x509 subject."""
-    return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
+    """Returns the subject in the correct order for a x509 subject, while respecting
+    the original list order for possible subject fields allowing for MULTIPLE_OIDS."""
+    half_index = len(subject) // 2
+    relative_index = lambda x: len(subject) - subject.index(x) \
+        if subject.index(x)+1 > half_index \
+        else subject.index(x) - len(subject)
+    sorted_fields = sorted(subject, key=lambda e: (SUBJECT_FIELDS.index(e[0]), relative_index(e)))
+    return sorted(subject, key=lambda e: (SUBJECT_FIELDS.index(e[0]), relative_index(e)))
 
 
 def encode_url(url: str) -> str:
