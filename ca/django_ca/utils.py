@@ -214,12 +214,9 @@ except ImportError:  # pragma: no cover
 def sort_name(subject: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
     """Returns the subject in the correct order for a x509 subject, while respecting
     the original list order for possible subject fields allowing for MULTIPLE_OIDS."""
-    half_index = len(subject) // 2
-    relative_index = lambda x: len(subject) - subject.index(x) \
-        if subject.index(x)+1 > half_index \
-        else subject.index(x) - len(subject)
-    sorted_fields = sorted(subject, key=lambda e: (SUBJECT_FIELDS.index(e[0]), relative_index(e)))
-    return sorted(subject, key=lambda e: (SUBJECT_FIELDS.index(e[0]), relative_index(e)))
+    if SUBJECT_FIELDS.index(subject[0][0]) > SUBJECT_FIELDS.index(subject[-1][0]):
+        return sorted(subject[::-1], key=lambda k: SUBJECT_FIELDS.index(k[0]))
+    return sorted(subject, key=lambda k: SUBJECT_FIELDS.index(k[0]))
 
 
 def encode_url(url: str) -> str:
