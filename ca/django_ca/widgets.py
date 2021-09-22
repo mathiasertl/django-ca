@@ -103,6 +103,7 @@ class SubjectWidget(CustomMultiWidget):
 
     def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None) -> None:
         _widgets = (
+            SubjectTextInput(label=_("Domain Component")),
             SubjectTextInput(label=_("Country"), attrs={"placeholder": "2 character country code"}),
             SubjectTextInput(label=_("State")),
             SubjectTextInput(label=_("Location")),
@@ -118,7 +119,11 @@ class SubjectWidget(CustomMultiWidget):
     ) -> typing.List[typing.Union[str, typing.List[str]]]:
         if value is None:  # pragma: no cover
             return ["", "", "", "", "", ""]
-
+        
+        # Multiple OUs are not supported in webinterface
+        domain_component = value.get("DC", "")
+        if isinstance(domain_component, list) and domain_component:
+            domain_component = domain_component[0]
         # Multiple OUs are not supported in webinterface
         org_unit = value.get("OU", "")
         if isinstance(org_unit, list) and org_unit:
@@ -126,6 +131,7 @@ class SubjectWidget(CustomMultiWidget):
 
         # Used e.g. for initial form data (e.g. resigning a cert)
         return [
+            domain_component,
             value.get("C", ""),
             value.get("ST", ""),
             value.get("L", ""),
