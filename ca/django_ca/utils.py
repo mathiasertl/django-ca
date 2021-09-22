@@ -20,6 +20,7 @@ import shlex
 import typing
 from collections import abc
 from datetime import datetime
+from datetime import timezone
 from datetime import timedelta
 from ipaddress import ip_address
 from ipaddress import ip_network
@@ -49,6 +50,7 @@ from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
+from django.utils.timezone import get_current_timezone
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
@@ -965,8 +967,10 @@ def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
 def parse_expires(expires: Expires = None) -> datetime:
     """Parse a value specifying an expiry into a concrete datetime."""
 
-    now = datetime.utcnow().replace(second=0, microsecond=0)
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
 
+    if not expires.tzinfo:
+        expires = expires.replace(tzinfo=get_current_timezone())
     if isinstance(expires, int):
         return now + timedelta(days=expires)
     if isinstance(expires, timedelta):
@@ -1046,7 +1050,7 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
         to generate such a value. By default, a value will be generated.
     """
 
-    now = datetime.utcnow().replace(second=0, microsecond=0)
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
 
     # NOTE: Explicitly passing a serial is used when creating a CA, where we want to add extensions where the
     # value references the serial.

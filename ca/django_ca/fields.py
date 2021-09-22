@@ -96,6 +96,7 @@ class SubjectField(forms.MultiValueField):
 
     def __init__(self, **kwargs: typing.Any) -> None:
         fields = (
+            forms.CharField(required=False),  # DC
             forms.CharField(required=False),  # C
             forms.CharField(required=False),  # ST
             forms.CharField(required=False),  # L
