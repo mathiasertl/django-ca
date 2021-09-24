@@ -969,7 +969,7 @@ def parse_expires(expires: Expires = None) -> datetime:
 
     now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
 
-    if not expires.tzinfo:
+    if hasattr(expires, 'tzinfo') and not expires.tzinfo:
         expires = expires.replace(tzinfo=get_current_timezone())
     if isinstance(expires, int):
         return now + timedelta(days=expires)
