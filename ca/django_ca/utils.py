@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 
 import idna
 
-from asn1crypto.core import OctetString
+from asn1crypto.core import OctetString, UTF8String
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -845,7 +845,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         if match is not None:
             oid, asn_typ, val = match.groups()
             if asn_typ == "UTF8":
-                parsed_value = val.encode("utf-8")
+                parsed_value = UTF8String(val)
             elif asn_typ == "OctetString":
                 parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
