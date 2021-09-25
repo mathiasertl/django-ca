@@ -106,6 +106,25 @@ You can also disable adding the CommonName as ``subjectAltName``:
 
 ... this will only have "example.net" but not example.com as ``subjectAltName``.
 
+Advanced subject alternative names
+=============================
+
+`django-ca` supports storing custom OID fields in the Subject alternative name extension – e.g. Microsoft's 
+`User Principal Name` (`UPN`).
+
+To add a custom field you must specify the corresponding `OID`, `encoding` and `value`. 
+
+Syntax: `otherName:<oid>;<encoding>:<value>`
+
+.. code-block:: console
+
+    $ python manage.py sign_cert --subject /C=AT/.../CN=example.com --alt="otherName:1.3.6.1.4.1.311.20.2.3;UTF8:dummy@domain.tld"
+
+To easily dissect a reference certificate's custom SAN fields it is recommended to use a tool 
+like [ASN.1 Editor](https://www.codeproject.com/Articles/4910/ASN-1-Editor). 
+
+
+
 Using profiles
 ==============
 
