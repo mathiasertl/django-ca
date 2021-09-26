@@ -47,6 +47,8 @@ from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
 from .modelfields import LazyCertificateSigningRequest
+from .openssh import SshHostCaExtension
+from .openssh import SshUserCaExtension
 from .profiles import Profile
 from .profiles import profiles
 from .signals import post_create_ca
@@ -233,7 +235,7 @@ class CertificateAuthorityManager(
         password: Optional[bytes] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         ecc_curve: Optional[ec.EllipticCurve] = None,
-        key_type: Literal["RSA", "DSA", "ECC"] = "RSA",
+        key_type: Literal["RSA", "DSA", "ECC", "EdDSA"] = "RSA",
         key_size: Optional[int] = None,
         extra_extensions: Optional[
             Iterable[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
@@ -244,6 +246,7 @@ class CertificateAuthorityManager(
         terms_of_service: str = "",
         acme_enabled: bool = False,
         acme_requires_contact: bool = True,
+        openssh_ca: bool = False,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
@@ -265,7 +268,7 @@ class CertificateAuthorityManager(
             :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
-            authority.
+            authority. Let unset if this CA will be used for OpenSSH.
         default_hostname : str, optional
             Override the URLconfigured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
@@ -303,11 +306,12 @@ class CertificateAuthorityManager(
             The elliptic curve to use for ECC type keys, passed verbatim to
             :py:func:`~django_ca.utils.parse_key_curve`.
         key_type: str, optional
-            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"`` or ``"ECC"``, with
-            ``"RSA"`` being the default.
+            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"``, ``"ECC"``, or
+            ``"EdDSA"`` , with ``"RSA"`` being the default.
         key_size : int, optional
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
-            the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if ``key_type="ECC"``.
+            the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if
+            ``key_type="ECC"`` or ``key_type="EdDSA"``.
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
                 :py:class:`django_ca.extensions.base.Extension`, optional
             An optional list of additional extensions to add to the certificate.
@@ -323,6 +327,8 @@ class CertificateAuthorityManager(
             Set to ``True`` to enable ACME support for this CA.
         acme_requires_contact : bool, optional
             Set to ``False`` if you do not want to force clients to register with an email address.
+        openssh_ca : bool, optional
+            Set to ``True`` if you want to use this to use this CA for signing OpenSSH certs.
 
         Raises
         ------
@@ -336,8 +342,20 @@ class CertificateAuthorityManager(
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly.
         generate_key_args = validate_key_parameters(key_size, key_type, ecc_curve)
-        algorithm = parse_hash_algorithm(algorithm)
+        if not openssh_ca:
+            algorithm = parse_hash_algorithm(algorithm)
+        else:
+            algorithm = None
         expires = parse_expires(expires)
+
+        if openssh_ca and parent:
+            raise ValueError("OpenSSH does not support intermediate authorities")
+        if not openssh_ca and key_type == "EdDSA":
+            raise ValueError("EdDSA only supported for OpenSSH authorities")
+
+        if openssh_ca:
+            extra_extensions = extra_extensions or []
+            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if not isinstance(subject, Subject):

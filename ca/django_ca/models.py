@@ -43,7 +43,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ed448
-from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -100,6 +99,8 @@ from .managers import CertificateManager
 from .modelfields import CertificateField
 from .modelfields import CertificateSigningRequestField
 from .modelfields import LazyCertificate
+from .openssh import SshHostCaExtension
+from .openssh import SshUserCaExtension
 from .profiles import profiles
 from .querysets import AcmeAccountQuerySet
 from .querysets import AcmeAuthorizationQuerySet
@@ -792,12 +793,9 @@ class CertificateAuthority(X509CertMixin):
             key_data = read_file(self.private_key_path)
 
             self._key = load_pem_private_key(key_data, password, default_backend())
-
-        # type checks only exist to make mypy happy
-        if isinstance(self._key, ed25519.Ed25519PrivateKey):  # pragma: nocover
-            raise ValueError("Ed25519 private keys are not supported.")
         if isinstance(self._key, ed448.Ed448PrivateKey):  # pragma: nocover
-            raise ValueError("Ed25519 private keys are not supported.")
+            raise ValueError("Ed448 private keys are not supported.")
+
         return self._key
 
     @property
@@ -893,7 +891,7 @@ class CertificateAuthority(X509CertMixin):
         key_size : int, optional
             The key size of the private key, defaults to :ref:`CA_DEFAULT_KEY_SIZE
             <settings-ca-default-key-size>`.
-        key_type : {"RSA", "DSA", "ECC"}, optional
+        key_type : {"RSA", "DSA", "ECC", "EdDSA"}, optional
             The private key type to use, the default is ``"RSA"``.
         ecc_curve : str, optional
             Passed to :py:func:`~django_ca.utils.parse_key_curve`, defaults to the :ref:`CA_DEFAULT_ECC_CURVE
@@ -1242,6 +1240,12 @@ class CertificateAuthority(X509CertMixin):
     def usable(self) -> bool:
         """True if the CA is currently usable or not."""
         return self.enabled and self.valid_from < timezone.now() < self.expires
+
+    @property
+    def is_openssh_ca(self) -> bool:
+        if SshHostCaExtension() in self.extensions:
+            return True
+        return SshUserCaExtension() in self.extensions
 
     class Meta:
         verbose_name = _("Certificate Authority")
