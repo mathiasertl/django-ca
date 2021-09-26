@@ -13,6 +13,7 @@
 
 """Test some common ACME functionality."""
 
+import sys
 import typing
 from contextlib import contextmanager
 from importlib import reload
@@ -160,7 +161,12 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
         # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
         resolve_mock.assert_called_once()
-        self.assertEqual(resolve_mock.call_args_list[0].args[:2], (f"_acme_challenge.{domain}", "TXT"))
+        expected = (f"_acme_challenge.{domain}", "TXT")
+        if sys.version_info[0:2] < (3, 8):  # pragma: only py<3.8
+            args, kwargs = list(resolve_mock.call_args_list[0])
+            self.assertEqual(args[:2], expected)
+        else:
+            self.assertEqual(resolve_mock.call_args_list[0].args[:2], expected)
 
     @contextmanager
     def resolve(self, side_effect: typing.Any) -> typing.Iterator[mock.Mock]:
