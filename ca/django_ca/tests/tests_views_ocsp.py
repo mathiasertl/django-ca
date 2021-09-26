@@ -626,7 +626,10 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "malformed_request")
         self.assertEqual(len(logcm.output), 1)
-        self.assertIn("error parsing asn1 value: ShortData", logcm.output[0])
+        if settings.CRYPTOGRAPHY_VERSION >= (35, 0):
+            self.assertIn("ValueError: error parsing asn1 value", logcm.output[0], logcm.output[0])
+        else:
+            self.assertIn("ValueError: Unable to load OCSP request", logcm.output[0])
 
     def test_multiple(self) -> None:
         """Try making multiple OCSP requests (not currently supported)."""
