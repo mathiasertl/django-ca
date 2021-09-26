@@ -406,7 +406,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Assert some basic properties for a private key."""
         key = ca.key(password)
         self.assertIsNotNone(key)
-        if not isinstance(key, ed25519.Ed25519PrivateKey):
+        if not isinstance(key, ed25519.Ed25519PrivateKey):  # pragma: no branch  # only used for RSA keys
             self.assertTrue(key.key_size > 0)
 
     def assertRevoked(  # pylint: disable=invalid-name
