@@ -620,6 +620,13 @@ def validate_key_parameters(
     ...
 
 
+@typing.overload
+def validate_key_parameters(
+    key_size: Optional[int], key_type: Literal["EdDSA"], ecc_curve: ParsableKeyCurve = None
+) -> Tuple[None, Literal["EdDSA"], None]:
+    ...
+
+
 def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = "RSA",

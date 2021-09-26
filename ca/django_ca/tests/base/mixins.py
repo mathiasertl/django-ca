@@ -32,6 +32,7 @@ from OpenSSL.crypto import load_certificate
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -311,11 +312,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         if isinstance(cert, Certificate):
             pubkey = cert.pub.loaded.public_key()
-            actual = {e.key: e for e in cert.extensions}
+            # TYPE NOTE: only used for CAs with known extensions, so this is never a x509.Extension
+            actual = {e.key: e for e in cert.extensions}  # type: ignore[union-attr]
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
             pubkey = cert.pub.loaded.public_key()
-            actual = {e.key: e for e in cert.extensions}
+            # TYPE NOTE: only used for CAs with known extensions, so this is never a x509.Extension
+            actual = {e.key: e for e in cert.extensions}  # type: ignore[union-attr]
 
             if cert.parent is None:  # root CA
                 signer = cert
@@ -403,7 +406,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Assert some basic properties for a private key."""
         key = ca.key(password)
         self.assertIsNotNone(key)
-        self.assertTrue(key.key_size > 0)
+        if not isinstance(key, ed25519.Ed25519PrivateKey):
+            self.assertTrue(key.key_size > 0)
 
     def assertRevoked(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, reason: typing.Optional[str] = None

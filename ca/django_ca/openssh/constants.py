@@ -11,12 +11,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+"""Constants for OpenSSH certificate authority support."""
+
 import enum
 
 
 @enum.unique
 class OpenSshCertificateType(enum.IntEnum):
-    """Enum of possible OpenSSH Certificate Types.
-    """
+    """Enum of possible OpenSSH Certificate Types."""
+
     USER = 1
     HOST = 2

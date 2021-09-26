@@ -16,11 +16,21 @@
 
 """Module providing extensions for x509 authorities supporting OpenSSH."""
 
-from cryptography.x509 import Extension, ObjectIdentifier, UnrecognizedExtension
+import typing
+
+from cryptography.x509 import Extension
+from cryptography.x509 import ObjectIdentifier
+from cryptography.x509 import UnrecognizedExtension
+
+SSH_HOST_CA = ObjectIdentifier("1.2.22.2")
+SSH_USER_CA = ObjectIdentifier("1.2.22.1")
 
 
-SSH_HOST_CA = ObjectIdentifier('1.2.22.2')
-SSH_USER_CA = ObjectIdentifier('1.2.22.1')
+if typing.TYPE_CHECKING:
+    SshHostCaExtensionBase = Extension["SshHostCaType"]
+    SshUserCaExtensionBase = Extension["SshUserCaType"]
+else:
+    SshHostCaExtensionBase = SshUserCaExtensionBase = Extension
 
 
 class SshHostCaType(UnrecognizedExtension):
@@ -28,13 +38,14 @@ class SshHostCaType(UnrecognizedExtension):
     CA Certs with this extension can sign OpenSSH Host keys.
     """
 
-    def __init__(self):
-        super().__init__(SSH_HOST_CA, b'OpenSSH Host CA')
+    def __init__(self) -> None:
+        super().__init__(SSH_HOST_CA, b"OpenSSH Host CA")
 
 
-class SshHostCaExtension(Extension):
+class SshHostCaExtension(SshHostCaExtensionBase):
+    """Small wrapper class for an extension to use the SshHostCaType."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(SSH_HOST_CA, True, SshHostCaType())
 
 
@@ -43,11 +54,12 @@ class SshUserCaType(UnrecognizedExtension):
     CA Certs with this extension can sign OpenSSH Client / User keys.
     """
 
-    def __init__(self):
-        super().__init__(SSH_USER_CA, b'OpenSSH User CA')
+    def __init__(self) -> None:
+        super().__init__(SSH_USER_CA, b"OpenSSH User CA")
 
 
-class SshUserCaExtension(Extension):
+class SshUserCaExtension(SshUserCaExtensionBase):
+    """Small wrapper class for an extension to use the SshUserCaType."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(SSH_USER_CA, True, SshUserCaType())

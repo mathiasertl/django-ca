@@ -15,6 +15,7 @@
 
 import os
 import tempfile
+import typing
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -66,7 +67,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            key = ca.key(data["password"])
+            key = typing.cast(RSAPrivateKey, ca.key(data["password"]))
             self.assertIsInstance(key, RSAPrivateKey)
             self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
@@ -105,7 +106,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            key = ca.key(None)
+            key = typing.cast(RSAPrivateKey, ca.key(None))
             self.assertIsInstance(key, RSAPrivateKey)
             self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
@@ -134,9 +135,9 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         # test the private key
         with self.assertRaisesRegex(TypeError, "^Password was not given but private key is encrypted$"):
-            key = ca.key(None)
+            ca.key(None)
 
-        key = ca.key(password)
+        key = typing.cast(RSAPrivateKey, ca.key(password))
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, certs["root"]["key_size"])
         self.assertEqual(ca.serial, certs["root"]["serial"])

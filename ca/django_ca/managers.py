@@ -15,6 +15,7 @@
 
 
 import pathlib
+import typing
 import warnings
 from typing import TYPE_CHECKING
 from typing import Any
@@ -238,7 +239,7 @@ class CertificateAuthorityManager(
         key_type: Literal["RSA", "DSA", "ECC", "EdDSA"] = "RSA",
         key_size: Optional[int] = None,
         extra_extensions: Optional[
-            Iterable[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
+            typing.Collection[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
         ] = None,
         path: Union[pathlib.PurePath, str] = "ca",
         caa: str = "",
@@ -353,9 +354,16 @@ class CertificateAuthorityManager(
         if not openssh_ca and key_type == "EdDSA":
             raise ValueError("EdDSA only supported for OpenSSH authorities")
 
+        # Cast extra_extensions to list if set (so that we can extend if necessary)
+        if extra_extensions:
+            extra_extensions = list(extra_extensions)
+        else:
+            extra_extensions = []
+
+        # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
-            extra_extensions = extra_extensions or []
-            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
+            # TYPE NOTE: This seems to be a false positive
+            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])  # type: ignore[list-item]
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if not isinstance(subject, Subject):

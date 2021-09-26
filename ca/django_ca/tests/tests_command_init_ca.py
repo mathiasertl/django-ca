@@ -77,7 +77,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertBasic(ca.pub.loaded, algo=hashes.SHA512)
 
         # test the private key
-        key = ca.key(None)
+        key = typing.cast(RSAPrivateKey, ca.key(None))
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
@@ -149,7 +149,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
         # test the private key
-        key = ca.key(None)
+        key = typing.cast(RSAPrivateKey, ca.key(None))
         self.assertIsInstance(key, dsa.DSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
@@ -606,7 +606,7 @@ class InitCATest(TestCaseMixin, TestCase):
             parent.key(b"wrong")
 
         # test the private key
-        key = parent.key(password)
+        key = typing.cast(RSAPrivateKey, parent.key(password))
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
@@ -637,7 +637,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertSignature([parent], child)
 
         # test the private key
-        key = child.key(child_password)
+        key = typing.cast(RSAPrivateKey, child.key(child_password))
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 

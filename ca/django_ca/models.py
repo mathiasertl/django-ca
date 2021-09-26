@@ -519,7 +519,14 @@ class X509CertMixin(DjangoCAModel):
         return fields
 
     @cached_property
-    def extensions(self) -> List[Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue]]:
+    def extensions(
+        self,
+    ) -> List[
+        typing.Union[
+            Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue],
+            "x509.Extension[x509.ExtensionType]",
+        ]
+    ]:
         """List of all extensions for this certificate."""
         exts = []
 
@@ -1247,7 +1254,8 @@ class CertificateAuthority(X509CertMixin):
         """True if this CA is an OpenSSH CA."""
         if SshHostCaExtension() in self.extensions:
             return True
-        return SshUserCaExtension() in self.extensions
+        # COVERAGE NOTE: currently both extensions are always present
+        return SshUserCaExtension() in self.extensions  # pragma: no cover
 
     class Meta:
         verbose_name = _("Certificate Authority")

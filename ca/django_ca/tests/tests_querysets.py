@@ -17,8 +17,8 @@ import typing
 from contextlib import contextmanager
 
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from django.db import models
 from django.test import TestCase
@@ -91,8 +91,10 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.name, "Root CA")
 
         # verify private key properties
-        self.assertEqual(ca.key(None).key_size, 1024)
-        self.assertIsInstance(ca.key(None).public_key(), RSAPublicKey)
+        key = typing.cast(rsa.RSAPrivateKey, ca.key(None))
+        self.assertIsInstance(key.public_key(), rsa.RSAPrivateKey)
+        self.assertEqual(key.key_size, 1024)
+        self.assertIsInstance(ca.key(None).public_key(), rsa.RSAPublicKey)
 
         # verity public key propertiesa
         self.assertBasic(ca.pub.loaded)
@@ -108,6 +110,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertIsNone(ca.extended_key_usage)
         self.assertIsNone(ca.tls_feature)
         self.assertIsNone(ca.issuer_alternative_name)
+        self.assertFalse(ca.is_openssh_ca)
 
     @override_tmpcadir()
     def test_pathlen(self) -> None:
@@ -157,28 +160,38 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     def test_openssh_ca(self) -> None:
         """Test OpenSSH CA support"""
 
-        kwargs = dict(
-            name="OpenSSH CA",
-            key_size=None,
-            key_type="EdDSA",
-            expires=self.expires(720),
-            subject=Subject([("CN", "openssh.example.com")]),
-            openssh_ca=False,
-        )
+        ca_name = "OpenSSH CA"
+        subject = Subject([("CN", "openssh.example.com")])
 
         with self.assertRaisesRegex(ValueError, "EdDSA only supported for OpenSSH"):
-            CertificateAuthority.objects.init(**kwargs)
+            CertificateAuthority.objects.init(
+                name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=False
+            )
+        self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
-        kwargs['openssh_ca'] = True
-        ca = CertificateAuthority.objects.init(**kwargs)
+        # try creating a CA with a parent
+        with self.assertRaisesRegex(ValueError, "OpenSSH does not support intermediate authorities"):
+            CertificateAuthority.objects.init(
+                name=ca_name,
+                key_size=None,
+                key_type="EdDSA",
+                subject=subject,
+                parent=self.ca,
+                openssh_ca=True,
+            )
+        self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
-        self.assertEqual(ca.name, kwargs["name"])
+        ca = CertificateAuthority.objects.init(
+            name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=True
+        )
+
+        self.assertEqual(ca.name, ca_name)
 
         # verify private key properties
         self.assertIsInstance(ca.key(None).public_key(), Ed25519PublicKey)
 
         # verity public key properties
-        self.assertEqual(ca.subject, kwargs['subject'])
+        self.assertEqual(ca.subject, subject)
 
         # verify X509 properties
         self.assertEqual(ca.key_usage, KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}))
