@@ -953,7 +953,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
-        self, obj: DjangoCAModel, data: typing.Optional[typing.Dict[str, str]] = None
+        self, obj: DjangoCAModelTypeVar, data: typing.Optional[typing.Dict[str, str]] = None
     ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)

@@ -183,6 +183,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
+    type: str
     load_cas = ("root",)
 
     def setUp(self) -> None:
@@ -229,6 +230,19 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         self.assertEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
         self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_VALID)
         self.assertEqual(self.order.status, order_state)
+
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,
+        content: typing.Optional[bytes] = None,
+        call_count: int = 1,
+        token: typing.Optional[str] = None,
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock the client fullfilling the challenge."""
+
+        raise NotImplementedError
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
@@ -290,7 +304,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
 
-        with self.mock_challenge(call_count=0, content="foo", token="foo"), self.assertLogs(
+        with self.mock_challenge(call_count=0, content=b"foo", token="foo"), self.assertLogs(
             "django_ca.tasks", "DEBUG"
         ) as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
@@ -400,7 +414,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         self,
         challenge: typing.Optional[AcmeChallenge] = None,
         status: int = HTTPStatus.OK,  # pylint: disable=unused-argument  # used in subclasses
-        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
+        content: typing.Optional[bytes] = None,
         call_count: int = 1,
         token: typing.Optional[str] = None,  # pylint: disable=unused-argument  # used in subclasses
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:

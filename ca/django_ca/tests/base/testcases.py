@@ -80,9 +80,12 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
 class AcmeTestCase(TestCaseMixin, TestCase):  # pragma: no cover
     """Basic test case that loads root and child CA and enables ACME for the latter."""
 
-    load_cas = ["root", "child"]
+    load_cas = (
+        "root",
+        "child",
+    )
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.ca = self.cas["child"]
         self.ca.acme_enabled = True

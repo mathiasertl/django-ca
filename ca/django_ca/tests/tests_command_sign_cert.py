@@ -611,7 +611,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir()
-    def test_help_text(self):
+    def test_help_text(self) -> None:
         """Test the help text."""
         with self.assertCreateCertSignals(False, False):
             help_text = self.cmd_help_text("sign_cert")

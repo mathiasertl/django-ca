@@ -36,10 +36,17 @@ from .fields import SubjectAltNameField
 from .fields import SubjectField
 from .models import Certificate
 from .models import CertificateAuthority
+from .models import X509CertMixin
 from .utils import EXTENDED_KEY_USAGE_DESC
 from .utils import KEY_USAGE_DESC
 from .utils import parse_general_name
 from .widgets import ProfileWidget
+
+if typing.TYPE_CHECKING:
+    CertificateModelForm = forms.ModelForm[Certificate]
+    X509CertMixinModelForm = forms.ModelForm[X509CertMixin]
+else:
+    CertificateModelForm = X509CertMixinModelForm = forms.ModelForm
 
 
 def _initial_expires() -> datetime:
@@ -50,7 +57,7 @@ def _profile_choices() -> typing.Iterable[typing.Tuple[str, str]]:
     return sorted([(p, p) for p in ca_settings.CA_PROFILES], key=lambda e: e[0])
 
 
-class X509CertMixinAdminForm(forms.ModelForm):
+class X509CertMixinAdminForm(X509CertMixinModelForm):
     """Admin form to add a dynamic help text to the ``pub`` field.
 
     The help_text is set by adding a value to the help_texts dictionary of the models Meta class. We use this
@@ -91,7 +98,7 @@ on Wikipedia."""
         }
 
 
-class CreateCertificateBaseForm(forms.ModelForm):
+class CreateCertificateBaseForm(CertificateModelForm):
     """Base class for forms that create a certificate.
 
     This is used by forms for creating a new certificate and resigning an existing one."""
@@ -231,7 +238,7 @@ class ResignCertificateForm(CreateCertificateBaseForm):
     """Admin form for resigning an existing certificate."""
 
 
-class RevokeCertificateForm(forms.ModelForm):
+class RevokeCertificateForm(CertificateModelForm):
     """Admin form for revoking a certificate."""
 
     class Media:

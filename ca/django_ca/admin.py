@@ -105,6 +105,7 @@ if typing.TYPE_CHECKING:
     QuerySet = models.QuerySet[models.Model]
     WatcherAdminBase = admin.ModelAdmin[Watcher]
     MixinBase = ModelAdminBase
+    CertificateModelForm = ModelForm[Certificate]
 else:
     AcmeAccountAdminBase = admin.ModelAdmin
     AcmeAuthorizationAdminBase = admin.ModelAdmin
@@ -118,6 +119,7 @@ else:
     QuerySet = models.QuerySet
     WatcherAdminBase = admin.ModelAdmin
     MixinBase = object
+    CertificateModelForm = ModelForm
 
 FieldSets = typing.List[typing.Tuple[typing.Optional[str], typing.Dict[str, typing.Any]]]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
@@ -753,7 +755,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         obj: typing.Optional[Certificate] = None,
         change: bool = False,
         **kwargs: typing.Any,
-    ) -> typing.Type[ModelForm]:
+    ) -> typing.Type[CertificateModelForm]:
         """Override to get specialized forms for signing/resigning certs."""
         if hasattr(request, "_resign_obj"):
             return ResignCertificateForm
@@ -761,7 +763,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return CreateCertificateForm
 
         # TYPE NOTE: django-stubs does not seem to add typehints for this function
-        return typing.cast(typing.Type[ModelForm], super().get_form(request, obj=obj, **kwargs))
+        return typing.cast(typing.Type[CertificateModelForm], super().get_form(request, obj=obj, **kwargs))
 
     def get_changeform_initial_data(self, request: HttpRequest) -> typing.Dict[str, typing.Any]:
         """Get initial data based on default profile.

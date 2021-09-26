@@ -22,6 +22,7 @@
 import abc
 import logging
 import secrets
+import typing
 from datetime import datetime
 from http import HTTPStatus
 from typing import Dict
@@ -99,6 +100,10 @@ from .utils import parse_acme_csr
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
 DirectoryMetaAlias = Dict[str, Union[str, List[str]]]
+
+
+if typing.TYPE_CHECKING:
+    from django.http.response import HttpResponseBase
 
 
 class AcmeDirectory(View):
@@ -208,7 +213,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         either create an object or do not process any object.
         """
 
-    def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
+    def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
         """Set Link releations headers according to RFC8288.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
@@ -241,7 +246,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
-    ) -> HttpResponse:
+    ) -> "HttpResponseBase":
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -410,7 +415,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
        * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
 
-    def dispatch(self, request: HttpRequest, serial: str) -> HttpResponse:  # type: ignore[override]
+    def dispatch(self, request: HttpRequest, serial: str) -> "HttpResponseBase":  # type: ignore[override]
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -711,7 +716,7 @@ class AcmeOrderView(AcmePostAsGetView):
         return response
 
 
-class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
+class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
     """Implements endpoint for applying for certificate issuance, that is ``/acme/order/<slug>/finalize``.
 
     The client is supposed to call this URL to submit its CSR, once "it believes it has fulfilled the server's
@@ -725,9 +730,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
 
     message_cls = CertificateRequest
 
-    def validate_csr(
-        self, message: messages.CertificateRequest, authorizations: Iterable[AcmeAuthorization]
-    ) -> str:
+    def validate_csr(self, message: CertificateRequest, authorizations: Iterable[AcmeAuthorization]) -> str:
         """Parse and validate the CSR, returns the PEM as str."""
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
@@ -768,7 +771,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
 
         return csr.public_bytes(Encoding.PEM).decode("utf-8")
 
-    def acme_request(self, message: messages.CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
+    def acme_request(self, message: CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
         """Process ACME request."""
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
@@ -926,7 +929,7 @@ class AcmeChallengeView(AcmePostAsGetView):
 
     ignore_body = True
 
-    def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
+    def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
         """Set the "up" link header to the matching authorization.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:

@@ -63,8 +63,15 @@ from .utils import read_file
 
 log = logging.getLogger(__name__)
 
+if typing.TYPE_CHECKING:
+    from django.http.response import HttpResponseBase
 
-class CertificateRevocationListView(View, SingleObjectMixin):
+    SingleObjectMixinBase = SingleObjectMixin[CertificateAuthority]
+else:
+    SingleObjectMixinBase = SingleObjectMixin
+
+
+class CertificateRevocationListView(View, SingleObjectMixinBase):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
 
     slug_field = "serial"
@@ -100,7 +107,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
         crl = cache.get(cache_key)
         if crl is None:
-            ca = typing.cast(CertificateAuthority, self.get_object())
+            ca = self.get_object()
             encoding = parse_encoding(self.type)
             crl = ca.get_crl(
                 expires=self.expires, algorithm=self.digest, password=self.password, scope=self.scope
@@ -323,7 +330,7 @@ class GenericOCSPView(OCSPView):
 
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, **kwargs: typing.Any
-    ) -> HttpResponse:
+    ) -> "HttpResponseBase":
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:

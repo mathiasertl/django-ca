@@ -22,7 +22,6 @@ from django.test import TestCase
 from django.test import override_settings
 
 from ..models import CertificateAuthority
-from ..models import DjangoCAModel
 from .base.mixins import AdminTestCaseMixin
 from .base.mixins import StandardAdminViewTestCaseMixin
 
@@ -39,7 +38,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
     )
 
     def get_change_view(
-        self, obj: DjangoCAModel, data: typing.Optional[typing.Dict[str, str]] = None
+        self, obj: CertificateAuthority, data: typing.Optional[typing.Dict[str, str]] = None
     ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         if obj.name == "startssl_root":

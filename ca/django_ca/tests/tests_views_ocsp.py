@@ -44,6 +44,7 @@ from ..constants import ReasonFlags
 from ..modelfields import LazyCertificate
 from ..models import Certificate
 from ..models import CertificateAuthority
+from ..models import X509CertMixin
 from ..subject import Subject
 from ..utils import ca_storage
 from ..utils import hex_to_bytes
@@ -261,7 +262,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         # pylint: disable=invalid-name
         self,
         http_response: HttpResponse,
-        requested: typing.List[Certificate],
+        requested: typing.List[typing.Union[Certificate, CertificateAuthority]],
         status: str = "successful",
         nonce: typing.Optional[bytes] = None,
         expires: int = 600,
@@ -325,7 +326,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         responses = {int_to_hex(r["cert_id"]["serial_number"].native): r for r in responses}
         for serial, response in responses.items():
             if ca_request:
-                cert = CertificateAuthority.objects.get(serial=serial)
+                cert: X509CertMixin = CertificateAuthority.objects.get(serial=serial)
             else:
                 cert = Certificate.objects.get(serial=serial)
 
