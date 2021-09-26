@@ -92,7 +92,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         # verify private key properties
         key = typing.cast(rsa.RSAPrivateKey, ca.key(None))
-        self.assertIsInstance(key.public_key(), rsa.RSAPrivateKey)
+        self.assertIsInstance(key, rsa.RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
         self.assertIsInstance(ca.key(None).public_key(), rsa.RSAPublicKey)
 

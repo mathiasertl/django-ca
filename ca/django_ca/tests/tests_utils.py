@@ -258,7 +258,7 @@ class ReadFileTestCase(TestCase):
         name = "test-data"
         path = os.path.join(ca_settings.CA_DIR, name)
 
-        msg = rf"\[Errno 2\] No such file or directory: u?'{path}'"
+        msg = rf"\[Errno 2\] No such file or directory: '{path}'"
         with self.assertRaisesRegex(FileNotFoundError, msg):
             read_file(str(name))
 
