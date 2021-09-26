@@ -26,6 +26,11 @@ Backwards incompatible changes
 * Remove support for configuring absolute paths for manually configured :py:class:`django_ca.views.OCSPView`.
   This functionality was officially supposed to be removed in django-ca 1.14.0.
   
+Deprecation notices
+===================
+
+* This is the last release to support Python 3.6.
+* This is the last release to support Django 3.1.
 
 .. _changelog-1.18.0:
 
