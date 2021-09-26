@@ -15,6 +15,7 @@
 
 import io
 import os
+import re
 import stat
 import unittest
 from datetime import datetime
@@ -608,6 +609,27 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
+
+    @override_tmpcadir()
+    def test_help_text(self):
+        """Test the help text."""
+        with self.assertCreateCertSignals(False, False):
+            help_text = self.cmd_help_text("sign_cert")
+
+        # Remove newlines and multiple spaces from text for matching independent of terminal width
+        help_text = re.sub(r"\s+", " ", help_text.replace("\n", ""))
+
+        self.assertIn("Do not add the CommonName as subjectAlternativeName.", help_text)
+        self.assertIn("Add the CommonName as subjectAlternativeName (default).", help_text)
+
+        with self.assertCreateCertSignals(False, False), self.settings(
+            CA_PROFILES={"webserver": {"cn_in_san": False}}
+        ):
+            help_text = self.cmd_help_text("sign_cert")
+        help_text = re.sub(r"\s+", " ", help_text.replace("\n", ""))
+
+        self.assertIn("Do not add the CommonName as subjectAlternativeName (default).", help_text)
+        self.assertIn("Add the CommonName as subjectAlternativeName.", help_text)
 
 
 @override_settings(USE_TZ=True)

@@ -435,7 +435,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         self.assertInvalid()
 
         domain = self.hostname
-        exp = self.chall.expected
+        exp = self.chall.expected.decode("ascii")
         acme_domain = f"_acme_challenge.{domain}"
         logger = "django_ca.acme.validation"
         self.assertEqual(

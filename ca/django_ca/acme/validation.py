@@ -46,7 +46,7 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
 
     dns_name = f"_acme_challenge.{domain}"
     expected = challenge.expected
-    log.info("DNS-01 validation of %s: Expect %s on %s", domain, expected, dns_name)
+    log.info("DNS-01 validation of %s: Expect %s on %s", domain, expected.decode("utf-8"), dns_name)
 
     try:
         answers = resolver.resolve(dns_name, "TXT", lifetime=timeout, search=False)
