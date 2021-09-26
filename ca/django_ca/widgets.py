@@ -120,7 +120,7 @@ class SubjectWidget(CustomMultiWidget):
         if value is None:  # pragma: no cover
             return ["", "", "", "", "", ""]
         
-        # Multiple OUs are not supported in webinterface
+        # Multiple DCs are not supported in webinterface
         domain_component = value.get("DC", "")
         if isinstance(domain_component, list) and domain_component:
             domain_component = domain_component[0]

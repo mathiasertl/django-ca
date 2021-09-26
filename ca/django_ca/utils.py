@@ -50,7 +50,6 @@ from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
-from django.utils.timezone import get_current_timezone
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
@@ -845,7 +844,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         if match is not None:
             oid, asn_typ, val = match.groups()
             if asn_typ == "UTF8":
-                parsed_value = UTF8String(val)
+                parsed_value = UTF8String(val).dump()
             elif asn_typ == "OctetString":
                 parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
@@ -970,7 +969,7 @@ def parse_expires(expires: Expires = None) -> datetime:
     now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
 
     if hasattr(expires, 'tzinfo') and not expires.tzinfo:
-        expires = expires.replace(tzinfo=get_current_timezone())
+        expires = expires.replace(tzinfo=timezone.utc)
     if isinstance(expires, int):
         return now + timedelta(days=expires)
     if isinstance(expires, timedelta):

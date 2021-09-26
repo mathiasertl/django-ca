@@ -309,6 +309,14 @@ class ParseNameTestCase(TestCase):
         """Test subject with multiple tokens."""
         self.assertSubject("/C=AT/OU=foo/CN=example.com", [("C", "AT"), ("OU", "foo"), ("CN", "example.com")])
 
+    def test_multiple_sorting(self) -> None:
+        """Test subject with multiple tokens of the same OID - especially focusing 
+        on sorting here, keeping the original subject's ordering integrity """
+        self.assertSubject(
+            "/CN=example.com/OU=foo/OU=bar/DC=domain/DC=tld", 
+            [("DC", "tld"), ("DC", "domain"), ("OU", "bar"), ("OU", "foo"), ("CN", "example.com")]
+        )
+
     def test_case(self) -> None:
         """Test that case doesn't matter."""
         self.assertSubject(
@@ -563,8 +571,8 @@ class ParseGeneralNameTest(TestCase):
     def test_othername(self) -> None:
         """Test parsing an otherName name."""
         self.assertEqual(
-            parse_general_name("otherName:2.5.4.3;UTF8:example.com"),
-            x509.OtherName(NameOID.COMMON_NAME, b"example.com"),
+            parse_general_name("otherName:2.5.4.3;UTF8:dummy@domain.tld"),
+            x509.OtherName(NameOID.COMMON_NAME, b'\x0c\x10dummy@domain.tld'),
         )
 
     def test_unicode_domains(self) -> None:
