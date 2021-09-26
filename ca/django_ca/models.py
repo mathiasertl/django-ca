@@ -1244,6 +1244,7 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def is_openssh_ca(self) -> bool:
+        """True if this CA is an OpenSSH CA."""
         if SshHostCaExtension() in self.extensions:
             return True
         return SshUserCaExtension() in self.extensions
