@@ -50,3 +50,14 @@ def resolve(
     search : typing.Optional[bool] = None
 ) -> Answer[A]:
     ...
+
+
+class Resolver:
+    ...
+
+
+def reset_default_resolver() -> None:
+    ...
+
+
+default_resolver = Resolver

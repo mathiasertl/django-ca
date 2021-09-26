@@ -1,6 +1,8 @@
 import abc
 import typing
 
+import OpenSSL.crypto
+
 from .util import ImmutableMap
 
 T = typing.TypeVar('T')
@@ -56,4 +58,12 @@ def decode_b64jose(
 
 
 def encode_b64jose(data: bytes) -> str:
+    ...
+
+
+def decode_csr(csr: str) -> OpenSSL.crypto.X509Req:
+    ...
+
+
+def encode_csr(csr: OpenSSL.crypto.X509Req) -> str:
     ...
