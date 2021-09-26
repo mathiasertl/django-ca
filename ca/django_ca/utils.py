@@ -39,6 +39,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -623,7 +624,7 @@ def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = "RSA",
     ecc_curve: ParsableKeyCurve = None,
-) -> Tuple[Optional[int], Literal["RSA", "DSA", "ECC"], Optional[ec.EllipticCurve]]:
+) -> Tuple[Optional[int], Literal["RSA", "DSA", "ECC", "EdDSA"], Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
@@ -653,6 +654,8 @@ def validate_key_parameters(
             raise ValueError(f"{key_size}: Key size must be a power of two")
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
+    elif key_type == "EdDSA":
+        key_size = ecc_curve = None
     else:
         raise ValueError(f"{key_type}: Unknown key type")
 
@@ -676,8 +679,17 @@ def generate_private_key(
     ...
 
 
+@typing.overload
 def generate_private_key(
-    key_size: Optional[int], key_type: Literal["RSA", "DSA", "ECC"], ecc_curve: Optional[ec.EllipticCurve]
+    key_size: int, key_type: Literal["EdDSA"], ecc_curve: None
+) -> ed25519.Ed25519PrivateKey:
+    ...
+
+
+def generate_private_key(
+    key_size: Optional[int],
+    key_type: Literal["RSA", "DSA", "ECC", "EdDSA"],
+    ecc_curve: Optional[ec.EllipticCurve],
 ) -> PrivateKeyTypes:
     """Generate a private key.
 
@@ -704,6 +716,8 @@ def generate_private_key(
         return dsa.generate_private_key(key_size=key_size, backend=default_backend())
     if key_type == "ECC" and ecc_curve is not None:
         return ec.generate_private_key(ecc_curve, default_backend())
+    if key_type == "EdDSA" and ecc_curve is None and key_size is None:
+        return ed25519.Ed25519PrivateKey.generate()
     if key_type == "RSA" and key_size is not None:
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 

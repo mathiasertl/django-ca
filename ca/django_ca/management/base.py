@@ -147,10 +147,10 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         )
 
     def add_key_type(self, parser: CommandParser) -> None:
-        """Add --key-type option (type of private key - RSA/DSA/ECC)."""
+        """Add --key-type option (type of private key - RSA/DSA/ECC/EdDSA)."""
         parser.add_argument(
             "--key-type",
-            choices=["RSA", "DSA", "ECC"],
+            choices=["RSA", "DSA", "ECC", "EdDSA"],
             default="RSA",
             help="Key type for the private key (default: %(default)s).",
         )
