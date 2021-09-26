@@ -32,6 +32,7 @@ from OpenSSL.crypto import load_certificate
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -80,6 +81,7 @@ from ...typehints import ParsableSubject
 from ...utils import ca_storage
 from . import certs
 from . import timestamps
+from .typehints import DjangoCAModelTypeVar
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -89,7 +91,6 @@ if typing.TYPE_CHECKING:
 else:
     TestCaseProtocol = object
 
-DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 
@@ -178,10 +179,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             hostname = settings.ALLOWED_HOSTS[0]
 
         if name.startswith("/"):
-            return "http://%s%s" % (hostname, name)
+            return f"http://{hostname}{name}"
         if name.startswith(":"):  # pragma: no branch
-            name = "django_ca%s" % name
-        return "http://%s%s" % (hostname, reverse(name, kwargs=kwargs))
+            name = f"django_ca{name}"
+        return f"http://{hostname}{reverse(name, kwargs=kwargs)}"
 
     def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
         self, issuer: CertificateAuthority, cert: X509CertMixin
@@ -311,11 +312,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         if isinstance(cert, Certificate):
             pubkey = cert.pub.loaded.public_key()
-            actual = {e.key: e for e in cert.extensions}
+            # TYPE NOTE: only used for CAs with known extensions, so this is never a x509.Extension
+            actual = {e.key: e for e in cert.extensions}  # type: ignore[union-attr]
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
             pubkey = cert.pub.loaded.public_key()
-            actual = {e.key: e for e in cert.extensions}
+            # TYPE NOTE: only used for CAs with known extensions, so this is never a x509.Extension
+            actual = {e.key: e for e in cert.extensions}  # type: ignore[union-attr]
 
             if cert.parent is None:  # root CA
                 signer = cert
@@ -403,7 +406,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Assert some basic properties for a private key."""
         key = ca.key(password)
         self.assertIsNotNone(key)
-        self.assertTrue(key.key_size > 0)
+        if not isinstance(key, ed25519.Ed25519PrivateKey):  # pragma: no branch  # only used for RSA keys
+            self.assertTrue(key.key_size > 0)
 
     def assertRevoked(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, reason: typing.Optional[str] = None
@@ -459,7 +463,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Assert that SystemExit is raised."""
-        with self.assertRaisesRegex(SystemExit, r"^%s$" % code) as excm:
+        with self.assertRaisesRegex(SystemExit, fr"^{code}$") as excm:
             yield
         self.assertEqual(excm.exception.args, (code,))
 
@@ -576,6 +580,20 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return stdout.getvalue(), stderr.getvalue()
 
+    def cmd_help_text(self, cmd: str) -> str:
+        """Get the help message for a given management command.
+
+        Also asserts that stderr is empty and the command exists with status code 0."""
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
+            util = ManagementUtility(["manage.py", cmd, "--help"])
+            with self.assertSystemExit(0):
+                util.execute()
+
+        self.assertEqual(stderr.getvalue(), "")
+        return stdout.getvalue()
+
     @classmethod
     def create_cert(
         cls,
@@ -669,30 +687,30 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 continue  # special extension b/c it cannot be created
             elif key == "pathlen":
                 ctx[key] = value
-                ctx["%s_text" % key] = "unlimited" if value is None else value
+                ctx[f"{key}_text"] = "unlimited" if value is None else value
             elif isinstance(value, Extension):
                 ctx[key] = value
 
                 if isinstance(value, ListExtension):
                     for i, val in enumerate(value):
-                        ctx["%s_%s" % (key, i)] = val
+                        ctx[f"{key}_{i}"] = val
 
                 else:
-                    ctx["%s_text" % key] = value.as_text()
+                    ctx[f"{key}_text"] = value.as_text()
 
                 if value.critical:
-                    ctx["%s_critical" % key] = " (critical)"
+                    ctx[f"{key}_critical"] = " (critical)"
                 else:
-                    ctx["%s_critical" % key] = ""
+                    ctx[f"{key}_critical"] = ""
             else:
                 ctx[key] = value
 
             if isinstance(value, CRLDistributionPointsBase):
                 for i, ext_value in enumerate(value.value):
-                    ctx["%s_%s" % (key, i)] = ext_value
+                    ctx[f"{key}_{i}"] = ext_value
             elif isinstance(value, IterableExtension):
                 for i, ext_value in enumerate(value.serialize_value()):
-                    ctx["%s_%s" % (key, i)] = ext_value
+                    ctx[f"{key}_{i}"] = ext_value
 
         if certs[name].get("parent"):
             parent = certs[certs[name]["parent"]]
@@ -713,7 +731,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         **kwargs: typing.Any,
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
-        path = "%s.key" % name
+        path = f"{name}.key"
         if parsed is None:
             parsed = certs[name]["pub"]["parsed"]
         if parent is None and certs[name].get("parent"):
@@ -816,7 +834,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
         """Shortcut to reverse an URI name."""
-        return reverse("django_ca:%s" % name, args=args, kwargs=kwargs)
+        return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
 
     @property
     def usable_cas(self) -> typing.Iterator[typing.Tuple[str, CertificateAuthority]]:
@@ -868,12 +886,12 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         response = self.client.get(url, {"format": "PEM"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
-        self.assertEqual(response["Content-Disposition"], "attachment; filename=%s" % filename)
+        self.assertEqual(response["Content-Disposition"], f"attachment; filename={filename}")
         self.assertEqual(response.content.decode("utf-8"), expected_content)
 
     def assertCSS(self, response: HttpResponse, path: str) -> None:  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
-        css = '<link href="%s" type="text/css" media="all" rel="stylesheet" />' % static(path)
+        css = f'<link href="{static(path)}" type="text/css" media="all" rel="stylesheet" />'
         self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
     def assertChangeResponse(  # pylint: disable=invalid-name,unused-argument # obj is unused
@@ -906,8 +924,9 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self, response: HttpResponse, **kwargs: typing.Any
     ) -> None:
         """Assert that the given response is a redirect to the login page."""
-        expected = "%s?next=%s" % (reverse("admin:login"), quote(response.wsgi_request.get_full_path()))
-        self.assertRedirects(response, expected, **kwargs)
+        path = reverse("admin:login")
+        qs = quote(response.wsgi_request.get_full_path())
+        self.assertRedirects(response, f"{path}?next={qs}", **kwargs)
 
     def change_url(self, obj: typing.Optional[DjangoCAModel] = None) -> str:
         """Shortcut for the change URL of the given instance."""
@@ -938,7 +957,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
-        self, obj: DjangoCAModel, data: typing.Optional[typing.Dict[str, str]] = None
+        self, obj: DjangoCAModelTypeVar, data: typing.Optional[typing.Dict[str, str]] = None
     ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
@@ -949,7 +968,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
 
     def get_url(self, obj: DjangoCAModelTypeVar) -> str:
         """Get URL for the given object for this test case."""
-        return reverse("admin:%s" % self.view_name, kwargs={"pk": obj.pk})
+        return reverse(f"admin:{self.view_name}", kwargs={"pk": obj.pk})
 
 
 class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):

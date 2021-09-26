@@ -43,7 +43,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ed448
-from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -100,6 +99,8 @@ from .managers import CertificateManager
 from .modelfields import CertificateField
 from .modelfields import CertificateSigningRequestField
 from .modelfields import LazyCertificate
+from .openssh import SshHostCaExtension
+from .openssh import SshUserCaExtension
 from .profiles import profiles
 from .querysets import AcmeAccountQuerySet
 from .querysets import AcmeAuthorizationQuerySet
@@ -199,17 +200,17 @@ class DjangoCAModel(models.Model):
     @classproperty
     def admin_add_url(cls) -> str:  # pylint: disable=no-self-argument; false positive
         """URL to add an instance in the admin interface."""
-        return reverse("admin:%s_%s_add" % (cls._meta.app_label, cls._meta.model_name))
+        return reverse(f"admin:{cls._meta.app_label}_{cls._meta.model_name}_add")
 
     @classproperty
     def admin_changelist_url(cls) -> str:  # pylint: disable=no-self-argument; false positive
         """Changelist URL in the admin interface for the model."""
-        return reverse("admin:%s_%s_changelist" % (cls._meta.app_label, cls._meta.model_name))
+        return reverse(f"admin:{cls._meta.app_label}_{cls._meta.model_name}_changelist")
 
     @property
     def admin_change_url(self) -> str:
         """Change URL in the admin interface for the model instance."""
-        return reverse("admin:%s_%s_change" % (self._meta.app_label, self._meta.model_name), args=(self.pk,))
+        return reverse(f"admin:{self._meta.app_label}_{self._meta.model_name}_change", args=(self.pk,))
 
 
 class Watcher(models.Model):
@@ -240,7 +241,7 @@ class Watcher(models.Model):
 
     def __str__(self) -> str:
         if self.name:
-            return "%s <%s>" % (self.name, self.mail)
+            return f"{self.name} <{self.mail}>"
         return self.mail
 
 
@@ -373,8 +374,8 @@ class X509CertMixin(DjangoCAModel):
         slug = slugify(self.cn.replace(".", "_"))
 
         if bundle is True:
-            return "%s_bundle.%s" % (slug, ext.lower())
-        return "%s.%s" % (slug, ext.lower())
+            return f"{slug}_bundle.{ext.lower()}"
+        return f"{slug}.{ext.lower()}"
 
     def get_revocation(self) -> x509.RevokedCertificate:
         """Get the `RevokedCertificate` instance for this certificate for CRLs.
@@ -518,7 +519,14 @@ class X509CertMixin(DjangoCAModel):
         return fields
 
     @cached_property
-    def extensions(self) -> List[Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue]]:
+    def extensions(
+        self,
+    ) -> List[
+        typing.Union[
+            Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue],
+            "x509.Extension[x509.ExtensionType]",
+        ]
+    ]:
         """List of all extensions for this certificate."""
         exts = []
 
@@ -792,12 +800,9 @@ class CertificateAuthority(X509CertMixin):
             key_data = read_file(self.private_key_path)
 
             self._key = load_pem_private_key(key_data, password, default_backend())
-
-        # type checks only exist to make mypy happy
-        if isinstance(self._key, ed25519.Ed25519PrivateKey):  # pragma: nocover
-            raise ValueError("Ed25519 private keys are not supported.")
         if isinstance(self._key, ed448.Ed448PrivateKey):  # pragma: nocover
-            raise ValueError("Ed25519 private keys are not supported.")
+            raise ValueError("Ed448 private keys are not supported.")
+
         return self._key
 
     @property
@@ -893,7 +898,7 @@ class CertificateAuthority(X509CertMixin):
         key_size : int, optional
             The key size of the private key, defaults to :ref:`CA_DEFAULT_KEY_SIZE
             <settings-ca-default-key-size>`.
-        key_type : {"RSA", "DSA", "ECC"}, optional
+        key_type : {"RSA", "DSA", "ECC", "EdDSA"}, optional
             The private key type to use, the default is ``"RSA"``.
         ecc_curve : str, optional
             Passed to :py:func:`~django_ca.utils.parse_key_curve`, defaults to the :ref:`CA_DEFAULT_ECC_CURVE
@@ -915,6 +920,7 @@ class CertificateAuthority(X509CertMixin):
         priv_key_params = validate_key_parameters(key_size, key_type, ecc_curve)
         expires = parse_expires(expires)
         algorithm = parse_hash_algorithm(algorithm)
+        safe_serial = self.serial.replace(":", "")
 
         # generate the private key
         # NOTE: Since priv_key_params is a union of tuples, mypy is unable to determine that all overloaded
@@ -926,7 +932,7 @@ class CertificateAuthority(X509CertMixin):
             format=PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
-        private_path = ca_storage.generate_filename("ocsp/%s.key" % self.serial.replace(":", ""))
+        private_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.key")
 
         csr = (
             x509.CertificateSigningRequestBuilder()
@@ -947,7 +953,7 @@ class CertificateAuthority(X509CertMixin):
             add_ocsp_url=False,
         )
 
-        cert_path = ca_storage.generate_filename("ocsp/%s.pem" % self.serial.replace(":", ""))
+        cert_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.pem")
 
         for path, contents in [(private_path, private_pem), (cert_path, cert.pub.pem.encode())]:
             if ca_storage.exists(path):
@@ -1107,7 +1113,7 @@ class CertificateAuthority(X509CertMixin):
         elif scope == "ca" and ca_settings.CA_DEFAULT_HOSTNAME:
             crl_path = reverse("django_ca:ca-crl", kwargs={"serial": self.serial})
             parsed_full_name = [
-                x509.UniformResourceIdentifier("http://%s%s" % (ca_settings.CA_DEFAULT_HOSTNAME, crl_path))
+                x509.UniformResourceIdentifier(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
             ]
         elif scope in ("user", None) and self.crl_url:
             crl_url = [url.strip() for url in self.crl_url.split()]
@@ -1242,6 +1248,14 @@ class CertificateAuthority(X509CertMixin):
     def usable(self) -> bool:
         """True if the CA is currently usable or not."""
         return self.enabled and self.valid_from < timezone.now() < self.expires
+
+    @property
+    def is_openssh_ca(self) -> bool:
+        """True if this CA is an OpenSSH CA."""
+        if SshHostCaExtension() in self.extensions:
+            return True
+        # COVERAGE NOTE: currently both extensions are always present
+        return SshUserCaExtension() in self.extensions  # pragma: no cover
 
     class Meta:
         verbose_name = _("Certificate Authority")
@@ -1417,7 +1431,7 @@ class AcmeOrder(DjangoCAModel):
         verbose_name_plural = _("ACME Orders")
 
     def __str__(self) -> str:
-        return "%s (%s)" % (self.slug, self.account)
+        return f"{self.slug} ({self.account})"
 
     @property
     def acme_url(self) -> str:
@@ -1479,6 +1493,7 @@ class AcmeAuthorization(DjangoCAModel):
     """
 
     # Choices from RFC 8555, section 9.7.7.
+    # TODO: acme.messages defines an "ip" identifier, present in acme >= 1.19.0
     TYPE_DNS = IdentifierType.DNS.value
     TYPE_CHOICES = ((TYPE_DNS, _("DNS")),)
 
@@ -1520,7 +1535,7 @@ class AcmeAuthorization(DjangoCAModel):
         verbose_name_plural = _("ACME Authorizations")
 
     def __str__(self) -> str:
-        return "%s: %s" % (self.type, self.value)
+        return f"{self.type}: {self.value}"
 
     @property
     def account(self) -> AcmeAccount:
@@ -1547,7 +1562,7 @@ class AcmeAuthorization(DjangoCAModel):
         """
         if self.type == AcmeAuthorization.TYPE_DNS:
             return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
-        raise ValueError("Unknown identifier type: %s" % self.type)
+        raise ValueError(f"Unknown identifier type: {self.type}")
 
     @property
     def serial(self) -> str:
@@ -1561,7 +1576,7 @@ class AcmeAuthorization(DjangoCAModel):
         This method is intended to be used when creating the
         :py:class:`~django_ca.extensions.SubjectAlternativeName` extension for a certificate to be signed.
         """
-        return "%s:%s" % (self.type, self.value)
+        return f"{self.type}:{self.value}"
 
     def get_challenges(self) -> List["AcmeChallenge"]:
         """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
@@ -1570,6 +1585,7 @@ class AcmeAuthorization(DjangoCAModel):
         """
         return [
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
+            # AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_TLS_ALPN_01)[0],
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
         ]
 
@@ -1635,7 +1651,12 @@ class AcmeChallenge(DjangoCAModel):
         verbose_name_plural = _("ACME Challenges")
 
     def __str__(self) -> str:
-        return "%s (%s)" % (self.auth.value, self.type)
+        return f"{self.auth.value} ({self.type})"
+
+    @property
+    def account(self) -> AcmeAccount:
+        """Account that this challenge belongs to."""
+        return self.auth.account
 
     @property
     def acme_url(self) -> str:
@@ -1659,7 +1680,7 @@ class AcmeChallenge(DjangoCAModel):
         if self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
             return challenges.TLSALPN01(token=token)
 
-        raise ValueError("%s: Unsupported challenge type." % self.type)
+        raise ValueError(f"{self.type}: Unsupported challenge type.")
 
     @property
     def acme_validated(self) -> Optional[datetime]:
@@ -1677,9 +1698,21 @@ class AcmeChallenge(DjangoCAModel):
         return self.validated
 
     @property
-    def encoded_token(self) -> str:
+    def encoded_token(self) -> bytes:
         """Token in base64url encoded form."""
-        return jose.encode_b64jose(self.token.encode("ascii"))
+        return jose.b64encode(self.token.encode("ascii"))
+
+    @property
+    def expected(self) -> bytes:
+        """Expected value for the challenge based on its type."""
+        thumbprint = self.account.thumbprint.encode("ascii")
+        value = self.encoded_token + b"." + thumbprint
+
+        if self.type == AcmeChallenge.TYPE_HTTP_01:
+            return value
+        if self.type == AcmeChallenge.TYPE_DNS_01:
+            return jose.b64encode(hashlib.sha256(value).digest())
+        raise ValueError(f"{self.type}: Unsupported challenge type.")
 
     def get_challenge(self, request: HttpRequest) -> "messages.ChallengeBody":
         """Get the ACME challenge body for this challenge.

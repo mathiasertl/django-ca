@@ -189,7 +189,7 @@ class OCSPIndexTestCase(TestCaseMixin, TestCase):
             self.assertEqual(stdout, "")
             self.assertEqual(stderr, "")
 
-            with open(path) as stream:
+            with open(path, encoding="ascii") as stream:
                 data = stream.read()
             self.assertEqual(data, BASIC.format(**certs))
         finally:

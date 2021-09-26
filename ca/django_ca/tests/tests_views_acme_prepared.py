@@ -41,7 +41,7 @@ from .tests_views_acme import AcmeTestCaseMixin
 
 ACCOUNT_SLUG = "DzW4PQ6L76PE"
 
-with open(os.path.join(settings.FIXTURES_DIR, "prepared-acme-requests.json")) as stream:
+with open(os.path.join(settings.FIXTURES_DIR, "prepared-acme-requests.json"), encoding="ascii") as stream:
     prepared_requests: typing.Dict[str, typing.List[typing.Dict[str, typing.Any]]] = json.load(stream)
 
 
@@ -104,7 +104,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         """Test requests collected from certbot."""
 
         for data in self.requests:
-            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
+            cache.set(f"acme-nonce-{self.ca.serial}-{data['nonce']}", 0)
             self.before_prepared_request(data)
             with self.mute_celery() as celery_mock:
                 response = self.post(self.get_url(data), data["body"])
@@ -121,7 +121,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def test_disabled(self) -> None:
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         for data in self.requests:
-            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
+            cache.set(f"acme-nonce-{self.ca.serial}-{data['nonce']}", 0)
             self.before_prepared_request(data)
             response = self.post(self.get_url(data), data["body"])
             self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
@@ -131,7 +131,7 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
     def test_invalid_content_type(self) -> None:
         """Test sending an invalid content type."""
         for data in self.requests:
-            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
+            cache.set(f"acme-nonce-{self.ca.serial}-{data['nonce']}", 0)
             self.before_prepared_request(data)
             response = self.post(self.get_url(data), data["body"], content_type="application/json")
             self.assertAcmeProblem(
@@ -146,11 +146,15 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
         """Test the dispatch function raising a generic exception."""
 
         for data in self.requests:
-            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
+            cache.set(f"acme-nonce-{self.ca.serial}-{data['nonce']}", 0)
             self.before_prepared_request(data)
 
-            with mock.patch("django.views.generic.base.View.dispatch", side_effect=Exception("foo")):
-                response = self.post(self.get_url(data), data["body"], content_type="application/json")
+            url = self.get_url(data)
+            view = "django.views.generic.base.View.dispatch"
+            msg = f"{url} mock-exception"
+
+            with mock.patch(view, side_effect=Exception(msg)), self.assertLogs() as logcm:
+                response = self.post(url, data["body"], content_type="application/json")
             self.assertEqual(response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
             self.assertEqual(
                 response.json(),
@@ -160,11 +164,13 @@ class AcmePreparedRequestsTestCaseMixin(AcmeTestCaseMixin):
                     "type": "urn:ietf:params:acme:error:serverInternal",
                 },
             )
+            self.assertEqual(len(logcm.output), 1)
+            self.assertIn(msg, logcm.output[0])
 
     def test_duplicate_nonce_use(self) -> None:
         """Test that a Nonce can really only be used once."""
         for data in self.requests:
-            cache.set("acme-nonce-%s-%s" % (self.ca.serial, data["nonce"]), 0)
+            cache.set(f"acme-nonce-{self.ca.serial}-{data['nonce']}", 0)
             self.before_prepared_request(data)
             with self.mute_celery() as celery_mock:
                 response = self.post(self.get_url(data), data["body"])

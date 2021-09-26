@@ -22,6 +22,7 @@
 import abc
 import logging
 import secrets
+import typing
 from datetime import datetime
 from http import HTTPStatus
 from typing import Dict
@@ -78,6 +79,7 @@ from .errors import AcmeException
 from .errors import AcmeForbidden
 from .errors import AcmeMalformed
 from .errors import AcmeUnauthorized
+from .messages import CertificateRequest
 from .messages import NewOrder
 from .responses import AcmeResponse
 from .responses import AcmeResponseAccount
@@ -100,6 +102,10 @@ MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
 DirectoryMetaAlias = Dict[str, Union[str, List[str]]]
 
 
+if typing.TYPE_CHECKING:
+    from django.http.response import HttpResponseBase
+
+
 class AcmeDirectory(View):
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory>`__
@@ -108,7 +114,7 @@ class AcmeDirectory(View):
     """
 
     def _url(self, request: HttpRequest, name: str, ca: CertificateAuthority) -> str:
-        return request.build_absolute_uri(reverse("django_ca:%s" % name, kwargs={"serial": ca.serial}))
+        return request.build_absolute_uri(reverse(f"django_ca:{name}", kwargs={"serial": ca.serial}))
 
     def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
@@ -126,7 +132,7 @@ class AcmeDirectory(View):
                 # NOTE: Serial is already sanitized by URL converter
                 ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                return AcmeResponseNotFound(message="%s: CA not found." % serial)
+                return AcmeResponseNotFound(message=f"{serial}: CA not found.")
 
         # Get some random data into the directory view, as explained in the Let's Encrypt directory:
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
@@ -171,13 +177,13 @@ class AcmeGetNonceViewMixin:
 
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.encode_b64jose(data)
-        cache_key = "acme-nonce-%s-%s" % (self.kwargs["serial"], nonce)
+        cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
         cache.set(cache_key, 0)
         return nonce
 
     def validate_nonce(self, nonce: str) -> bool:
         """Validate that the given nonce was issued and was not used before."""
-        cache_key = "acme-nonce-%s-%s" % (self.kwargs["serial"], nonce)
+        cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
         try:
             count = cache.incr(cache_key)
         except ValueError:
@@ -207,7 +213,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         either create an object or do not process any object.
         """
 
-    def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
+    def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
         """Set Link releations headers according to RFC8288.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
@@ -220,7 +226,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
         kwargs["index"] = reverse("django_ca:acme-directory", kwargs={"serial": self.kwargs["serial"]})
         response["Link"] = ", ".join(
-            '<%s>;rel="%s"' % (self.request.build_absolute_uri(v), k) for k, v in kwargs.items()
+            f'<{self.request.build_absolute_uri(v)}>;rel="{k}"' for k, v in kwargs.items()
         )
 
     # def log_request(self):
@@ -240,7 +246,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
-    ) -> HttpResponse:
+    ) -> "HttpResponseBase":
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -392,8 +398,8 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         try:
             message = self.message_cls.json_loads(self.jws.payload)
-        except jose.DeserializationError:
-            return AcmeResponseMalformedPayload()
+        except jose.DeserializationError as e:
+            return AcmeResponseMalformedPayload(message=", ".join(e.args))
 
         return self.acme_request(message, slug)
 
@@ -409,7 +415,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
        * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
 
-    def dispatch(self, request: HttpRequest, serial: str) -> HttpResponse:  # type: ignore[override]
+    def dispatch(self, request: HttpRequest, serial: str) -> "HttpResponseBase":  # type: ignore[override]
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -475,19 +481,19 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
                 # NOTE: ',' appears to be valid in the local part according to RFC 5322
                 _local, domain = addr.split("@", 1)
                 if "?" in domain:
-                    raise AcmeMalformed("invalidContact", "%s: hfields are not allowed." % domain)
+                    raise AcmeMalformed("invalidContact", f"{domain}: hfields are not allowed.")
 
                 # Finally, verify that we're getting at least a valid domain.
                 try:
                     validate_email(addr)
                 except ValueError as ex:
-                    raise AcmeMalformed("invalidContact", "%s: Not a valid email address." % domain) from ex
+                    raise AcmeMalformed("invalidContact", f"{domain}: Not a valid email address.") from ex
             else:
                 # RFC 8555, section 7.3
                 #
                 #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
                 #   error of type "unsupportedContact", ...
-                raise AcmeMalformed("unsupportedContact", "%s: Unsupported address scheme." % contact)
+                raise AcmeMalformed("unsupportedContact", f"{contact}: Unsupported address scheme.")
 
     # TODO: possible to make slug non-optional?
     def acme_request(  # pylint: disable=unused-argument
@@ -555,9 +561,9 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
         except ValidationError as ex:
             # Add a pretty list of validation errors to the detail field in the response
             subproblems = ", ".join(
-                sorted(["%s: %s" % (k, v1.rstrip(".")) for k, v in ex.message_dict.items() for v1 in v])
+                sorted([f"{k}: {v1.rstrip('.')}" for k, v in ex.message_dict.items() for v1 in v])
             )
-            raise AcmeMalformed(message="Invalid account: %s." % subproblems) from ex
+            raise AcmeMalformed(message=f"Invalid account: {subproblems}.") from ex
 
         # self.prepared['thumbprint'] = account.thumbprint
         # self.prepared['pem'] = account.pem
@@ -621,7 +627,8 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         if not_before and not_after and not_before > not_after:
             raise AcmeMalformed(message="notBefore must be before notAfter.")
         if not message.identifiers:
-            raise AcmeMalformed(message="Malformed payload.")
+            # NOTE: Catches sending an empty tuple, which is not caught in message deserialization
+            raise AcmeMalformed(message="The following fields are required: identifiers")
 
         if not settings.USE_TZ and not_before:
             not_before = timezone.make_naive(not_before)
@@ -709,7 +716,7 @@ class AcmeOrderView(AcmePostAsGetView):
         return response
 
 
-class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
+class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
     """Implements endpoint for applying for certificate issuance, that is ``/acme/order/<slug>/finalize``.
 
     The client is supposed to call this URL to submit its CSR, once "it believes it has fulfilled the server's
@@ -721,11 +728,9 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
 
-    message_cls = messages.CertificateRequest
+    message_cls = CertificateRequest
 
-    def validate_csr(
-        self, message: messages.CertificateRequest, authorizations: Iterable[AcmeAuthorization]
-    ) -> str:
+    def validate_csr(self, message: CertificateRequest, authorizations: Iterable[AcmeAuthorization]) -> str:
         """Parse and validate the CSR, returns the PEM as str."""
 
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
@@ -738,7 +743,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
 
         # Do not accept MD5 or SHA1 signatures
         if isinstance(csr.signature_hash_algorithm, (hashes.MD5, hashes.SHA1)):
-            raise AcmeBadCSR(message="%s: Insecure hash algorithm." % csr.signature_hash_algorithm.name)
+            raise AcmeBadCSR(message=f"{csr.signature_hash_algorithm.name}: Insecure hash algorithm.")
 
         # Get list of general names from the authorizations
         names_from_order = set(
@@ -766,7 +771,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[messages.CertificateRequest]):
 
         return csr.public_bytes(Encoding.PEM).decode("utf-8")
 
-    def acme_request(self, message: messages.CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
+    def acme_request(self, message: CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
         """Process ACME request."""
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).get(slug=slug)
@@ -924,7 +929,7 @@ class AcmeChallengeView(AcmePostAsGetView):
 
     ignore_body = True
 
-    def set_link_relations(self, response: HttpResponse, **kwargs: str) -> None:
+    def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
         """Set the "up" link header to the matching authorization.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:

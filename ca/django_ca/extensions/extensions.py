@@ -112,18 +112,18 @@ class AuthorityInformationAccess(
         return tuple(self._issuers), tuple(self._ocsp)
 
     def repr_value(self) -> str:
-        return "issuers=%r, ocsp=%r" % (self._issuers.serialize(), self._ocsp.serialize())
+        return f"issuers={self._issuers.serialize()}, ocsp={self._ocsp.serialize()}"
 
     def as_text(self) -> str:
         text = ""
         if self._issuers:
             text += "CA Issuers:\n"
             for name in self._issuers.serialize():
-                text += "  * %s\n" % name
+                text += f"  * {name}\n"
         if self._ocsp:
             text += "OCSP:\n"
             for name in self._ocsp.serialize():
-                text += "  * %s\n" % name
+                text += f"  * {name}\n"
 
         return text.strip()
 
@@ -233,23 +233,23 @@ class AuthorityKeyIdentifier(
     def repr_value(self) -> str:
         values = []
         if self.key_identifier is not None:
-            values.append("keyid: %s" % bytes_to_hex(self.key_identifier))
+            values.append(f"keyid: {bytes_to_hex(self.key_identifier)}")
         if self.authority_cert_issuer:
-            values.append("issuer: %r" % self.authority_cert_issuer.serialize())
+            values.append(f"issuer: {self.authority_cert_issuer.serialize()}")
         if self.authority_cert_serial_number is not None:
-            values.append("serial: %s" % self.authority_cert_serial_number)
+            values.append(f"serial: {self.authority_cert_serial_number}")
 
         return ", ".join(values)
 
     def as_text(self) -> str:
         values = []
         if self.key_identifier is not None:
-            values.append("* KeyID: %s" % bytes_to_hex(self.key_identifier))
+            values.append(f"* KeyID: {bytes_to_hex(self.key_identifier)}")
         if self.authority_cert_issuer:
             values.append("* Issuer:")
             values += [textwrap.indent(v, "  * ") for v in self.authority_cert_issuer.serialize()]
         if self.authority_cert_serial_number is not None:
-            values.append("* Serial: %s" % self.authority_cert_serial_number)
+            values.append(f"* Serial: {self.authority_cert_serial_number}")
 
         return "\n".join(values)
 
@@ -337,9 +337,9 @@ class BasicConstraints(
         return self.ca, self.pathlen
 
     def repr_value(self) -> str:
-        val = "ca=%s" % self.ca
+        val = f"ca={self.ca}"
         if self.ca:
-            val += ", pathlen=%s" % self.pathlen
+            val += f", pathlen={self.pathlen}"
         return val
 
     def from_extension(self, value: x509.BasicConstraints) -> None:
@@ -363,7 +363,7 @@ class BasicConstraints(
         else:
             val = "CA:FALSE"
         if self.pathlen is not None:
-            val += ", pathlen:%s" % self.pathlen
+            val += f", pathlen:{self.pathlen}"
 
         return val
 
@@ -373,7 +373,7 @@ class BasicConstraints(
             try:
                 return int(value)
             except ValueError as ex:
-                raise ValueError('Could not parse pathlen: "%s"' % value) from ex
+                raise ValueError(f'Could not parse pathlen: "{value}"') from ex
         return value
 
     def serialize_value(self) -> SerializedBasicConstraints:
@@ -456,10 +456,10 @@ class CertificatePolicies(
     def repr_value(self) -> str:
         if len(self.value) == 1:
             return "1 policy"
-        return "%s policies" % len(self.value)
+        return f"{len(self.value)} policies"
 
     def as_text(self) -> str:
-        return "\n".join("* %s" % textwrap.indent(p.as_text(), "  ").strip() for p in self.value)
+        return "\n".join(f"* {textwrap.indent(p.as_text(), '  ').strip()}" for p in self.value)
 
     @property
     def extension_type(self) -> x509.CertificatePolicies:
@@ -610,9 +610,9 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
         try:
             return self.CRYPTOGRAPHY_MAPPING[value]
         except KeyError as ex:
-            raise ValueError("Unknown value: %s" % value) from ex
+            raise ValueError(f"Unknown value: {value}") from ex
         # Just a safe-guard to make sure that the function always returns or raises a ValueError
-        raise ValueError("Unknown value: %s" % value)  # pragma: no cover  # function returns/raises before
+        raise ValueError(f"Unknown value: {value}")  # pragma: no cover  # function returns/raises before
 
     def serialize_item(self, value: str) -> str:
         return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
@@ -681,7 +681,7 @@ class ExtendedKeyUsage(
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
-        raise ValueError("Unknown value: %s" % value)
+        raise ValueError(f"Unknown value: {value}")
 
 
 class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
@@ -735,9 +735,9 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
 
     def _test_value(self) -> None:
         if not isinstance(self.skip_certs, int):
-            raise ValueError("%s: must be an int" % self.skip_certs)
+            raise ValueError(f"{self.skip_certs}: must be an int")
         if self.skip_certs < 0:
-            raise ValueError("%s: must be a positive int" % self.skip_certs)
+            raise ValueError(f"{self.skip_certs}: must be a positive int")
 
     @property
     def extension_type(self) -> x509.InhibitAnyPolicy:
@@ -784,8 +784,7 @@ class PolicyConstraints(
     inhibit_policy_mapping: Optional[int]
 
     default_critical = True
-    """This extension is marked as critical by default (RFC 5280 requires this extension to be marked as
-    critical)."""
+    """This extension is marked as critical by default (RFC 5280 requires this)."""
 
     def hash_value(self) -> Tuple[Optional[int], Optional[int]]:
         return self.require_explicit_policy, self.inhibit_policy_mapping
@@ -795,9 +794,9 @@ class PolicyConstraints(
             return "-"
         values = []
         if self.inhibit_policy_mapping is not None:
-            values.append("inhibit_policy_mapping=%s" % self.inhibit_policy_mapping)
+            values.append(f"inhibit_policy_mapping={self.inhibit_policy_mapping}")
         if self.require_explicit_policy is not None:
-            values.append("require_explicit_policy=%s" % self.require_explicit_policy)
+            values.append(f"require_explicit_policy={self.require_explicit_policy}")
         return ", ".join(values)
 
     def _test_value(self) -> None:
@@ -805,21 +804,21 @@ class PolicyConstraints(
         ipm = self.inhibit_policy_mapping
         if rep is not None:
             if not isinstance(rep, int):
-                raise ValueError("%s: require_explicit_policy must be int or None" % rep)
+                raise ValueError(f"{rep}: require_explicit_policy must be int or None")
             if rep < 0:
-                raise ValueError("%s: require_explicit_policy must be a positive int" % rep)
+                raise ValueError(f"{rep}: require_explicit_policy must be a positive int")
         if ipm is not None:
             if not isinstance(ipm, int):
-                raise ValueError("%s: inhibit_policy_mapping must be int or None" % ipm)
+                raise ValueError(f"{ipm}: inhibit_policy_mapping must be int or None")
             if ipm < 0:
-                raise ValueError("%s: inhibit_policy_mapping must be a positive int" % ipm)
+                raise ValueError(f"{ipm}: inhibit_policy_mapping must be a positive int")
 
     def as_text(self) -> str:
         lines = []
         if self.inhibit_policy_mapping is not None:
-            lines.append("* InhibitPolicyMapping: %s" % self.inhibit_policy_mapping)
+            lines.append(f"* InhibitPolicyMapping: {self.inhibit_policy_mapping}")
         if self.require_explicit_policy is not None:
-            lines.append("* RequireExplicitPolicy: %s" % self.require_explicit_policy)
+            lines.append(f"* RequireExplicitPolicy: {self.require_explicit_policy}")
 
         return "\n".join(lines)
 
@@ -899,18 +898,18 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         permitted = list(self._permitted.serialize())
         excluded = list(self._excluded.serialize())
 
-        return "permitted=%r, excluded=%r" % (permitted, excluded)
+        return f"permitted={permitted}, excluded={excluded}"
 
     def as_text(self) -> str:
         text = ""
         if self._permitted:
             text += "Permitted:\n"
             for name in self._permitted.serialize():
-                text += "  * %s\n" % name
+                text += f"  * {name}\n"
         if self._excluded:
             text += "Excluded:\n"
             for name in self._excluded.serialize():
-                text += "  * %s\n" % name
+                text += f"  * {name}\n"
 
         return text.strip()
 
@@ -1183,4 +1182,4 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
-        raise ValueError("Unknown value: %s" % value)
+        raise ValueError(f"Unknown value: {value}")

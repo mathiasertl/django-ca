@@ -14,6 +14,7 @@
 """Test the dump_cert management command."""
 
 import os
+import re
 from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -68,15 +69,13 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, b"")
 
-        with open(path) as stream:
+        with open(path, encoding="ascii") as stream:
             self.assertEqual(stream.read(), self.cert.pub.pem)
 
     def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_cert.pem")
-        msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_cert\.pem'$" % (
-            ca_settings.CA_DIR
-        )
+        msg = rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"
         with self.assertCommandError(msg):
             self.cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
 

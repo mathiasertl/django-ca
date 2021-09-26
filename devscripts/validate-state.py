@@ -48,7 +48,7 @@ CANONICAL_PYPI_NAMES = {
 
 def check_path(path):
     """Output the path to check."""
-    print("* Checking %s:" % colored(path, attrs=["bold"]))
+    print(f"* Checking {colored(path, attrs=['bold'])}")
 
 
 def import_mod(name, path):
@@ -83,7 +83,7 @@ def check_travis():
     """Check travis.yml."""
     errors = 0
     check_path(".travis.yml")
-    with open(os.path.join(ROOT_DIR, ".travis.yml")) as stream:
+    with open(os.path.join(ROOT_DIR, ".travis.yml"), encoding="utf-8") as stream:
         travis_config = yaml.load(stream, Loader=Loader)
 
     # check the list of tested python versions
@@ -101,7 +101,7 @@ def check_travis():
         for line in difflib.Differ().compare(travis_config["env"]["jobs"], expected_matrix):
             print(line)
     else:
-        ok("Job matrix (%s items)" % len(expected_matrix))
+        ok(f"Job matrix ({len(expected_matrix)} items)")
     return errors
 
 
@@ -110,7 +110,7 @@ def check_github_actions_tests():
     relpath = os.path.join(".github", "workflows", "tests.yml")
     full_path = os.path.join(ROOT_DIR, relpath)
     check_path(relpath)
-    with open(full_path) as stream:
+    with open(full_path, encoding="utf-8") as stream:
         action_config = yaml.load(stream, Loader=Loader)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
@@ -132,14 +132,16 @@ def check_tox():
     tox_env_reqs = dict([line.split(": ", 1) for line in tox_deps if ": " in line])
 
     # Check that there is a testenv listing all versions
-    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-idna{%s}" % (
+    # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
+    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{1.19,1.18,1.17}-idna{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
         ",".join(CONFIG["django-map"]),
         ",".join(CONFIG["cryptography-map"]),
         ",".join(CONFIG["idna-map"]),
     )
+    # pylint: enable=consider-using-f-string
     if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
-        errors += err("Expected envlist item not found: %s" % expected_envlist)
+        errors += err(f"Expected envlist item not found: {expected_envlist}")
 
     # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "idna"]:
@@ -192,20 +194,20 @@ def check_setup_cfg():
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += err(f"Django {djver} classifier not found.")
 
-    expected_py_req = ">=%s" % CONFIG["python-major"][0]
+    expected_py_req = f">={CONFIG['python-major'][0]}"
     actual_py_req = setup_config["options"]["python_requires"]
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
-    expected_django_req = "Django>=%s" % CONFIG["django-major"][0]
+    expected_django_req = f"Django>={CONFIG['django-major'][0]}"
     if expected_django_req not in install_requires:
         errors += err(f"{expected_django_req}: Expected Django requirement not found.")
 
-    expected_cg_req = "cryptography>=%s" % CONFIG["cryptography-major"][0]
+    expected_cg_req = f"cryptography>={CONFIG['cryptography-major'][0]}"
     if expected_cg_req not in install_requires:
         errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
-    expected_idna_req = "idna>=%s" % CONFIG["idna-major"][0]
+    expected_idna_req = f"idna>={CONFIG['idna-major'][0]}"
     if expected_idna_req not in install_requires:
         errors += err(f"{expected_idna_req}: Expected idna requirement not found.")
 
@@ -239,7 +241,7 @@ def check_intro():
     intro_path = os.path.join("docs", "source", "intro.rst")
     intro_fullpath = os.path.join(ROOT_DIR, intro_path)
     check_path(intro_path)
-    with open(intro_fullpath) as stream:
+    with open(intro_fullpath, encoding="utf-8") as stream:
         intro = stream.read()
 
     if f"#. {exp_version_line}" not in intro.splitlines():
@@ -252,7 +254,7 @@ def check_readme():
     errors = 0
     check_path("README.md")
     readme_fullpath = os.path.join(ROOT_DIR, "README.md")
-    with open(readme_fullpath) as stream:
+    with open(readme_fullpath, encoding="utf-8") as stream:
         readme = stream.read()
     if f"{exp_version_line}" not in readme:
         errors += err('Does not contain correct version line ("Written in ...").')
@@ -274,7 +276,7 @@ total_errors += check(check_intro)
 total_errors += check(check_readme)
 
 if total_errors != 0:
-    print(colored("A total of %s error(s) found!" % total_errors, "red", attrs=["bold"]))
+    print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
     sys.exit(1)
 else:
     print(colored("Congratulations. All clean.", "green"))

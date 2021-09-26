@@ -25,9 +25,10 @@ docker-compose and then use a container to use certbot.
 
 If you want to test the current development state, you must first locally build the image::
 
-   $ docker build -t mathiasertl/django-ca:latest .
+   $ DOCKER_BUILDKIT=1 docker build -t mathiasertl/django-ca:latest .
 
-The CA is then available at the fake hostname ``ca.example.com``::
+Then start the setup with the override file and you'll get a complete setup and a `certbot` container that can
+be used to retrieve certificates. The DNS of setup so that the CA can be reached at ``ca.example.com``::
 
    $ export COMPOSE_FILE=docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml
    $ docker-compose up -d
@@ -45,7 +46,8 @@ preconfigured to use the django-ca registry in the container next to it::
 
    $ docker-compose exec certbot /bin/bash
    root@certbot:~# certbot register
-   root@certbot:~# certbot certonly --standalone --preferred-challenges http -d http-01.example.com
+   root@certbot:~# django-ca-test-validation.sh http http-01.example.com
+   root@certbot:~# django-ca-test-validation.sh dns dns-01.example.com
 
 ***************
 Tips and tricks

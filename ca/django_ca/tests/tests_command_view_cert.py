@@ -548,6 +548,7 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
 
     def assertBasicOutput(self, status: str) -> None:  # pylint: disable=invalid-name
         """Test basic properties of output."""
+        # pylint: disable=consider-using-f-string
         for key, cert in self.ca_certs:
             stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())
             if cert.subject_alternative_name is None:
@@ -667,6 +668,7 @@ HPKP pin: {hpkp}
     @freeze_time(timestamps["everything_valid"])
     def test_der(self) -> None:
         """Test viewing a cert as DER."""
+        # pylint: disable=consider-using-f-string
         stdout, stderr = self.cmd(
             "view_cert", self.cert.serial, format=Encoding.DER, stdout=BytesIO(), stderr=BytesIO()
         )
@@ -694,6 +696,7 @@ HPKP pin: {hpkp}
 
     def test_revoked(self) -> None:
         """Test viewing a revoked cert."""
+        # pylint: disable=consider-using-f-string
         self.cert.revoked = True
         self.cert.save()
         stdout, stderr = self.cmd(
@@ -870,6 +873,7 @@ HPKP pin: {hpkp}
     @freeze_time("2019-07-05")
     def test_contrib_letsencrypt_jabber_at(self) -> None:
         """Test contrib letsencrypt cert."""
+        # pylint: disable=consider-using-f-string
         name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
         sct = """PrecertificateSignedCertificateTimestamps{sct_critical}:
@@ -937,6 +941,7 @@ HPKP pin: {hpkp}
     @freeze_time("2018-12-01")
     def test_contrib_cloudflare_1(self) -> None:
         """Test contrib cloudflare cert."""
+        # pylint: disable=consider-using-f-string
         self.assertContrib(
             "cloudflare_1",
             """Common Name: {cn}
@@ -1089,7 +1094,7 @@ HPKP pin: {hpkp}
     def test_unknown_cert(self) -> None:
         """Test viewing an unknown certificate."""
         name = "foobar"
-        with self.assertCommandError(r"^Error: argument cert: %s: Certificate not found\.$" % name):
+        with self.assertCommandError(rf"^Error: argument cert: {name}: Certificate not found\.$"):
             self.cmd("view_cert", name, no_pem=True)
 
 

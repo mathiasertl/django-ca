@@ -104,6 +104,6 @@ if ca_settings.CA_ENABLE_ACME:
 for name, kwargs in getattr(settings, "CA_OCSP_URLS", {}).items():
     kwargs.setdefault("ca", name)
     urlpatterns += [
-        path("ocsp/%s/" % name, views.OCSPView.as_view(**kwargs), name="ocsp-post-%s" % name),
-        path("ocsp/%s/<base64:data>" % name, views.OCSPView.as_view(**kwargs), name="ocsp-get-%s" % name),
+        path(f"ocsp/{name}/", views.OCSPView.as_view(**kwargs), name=f"ocsp-post-{name}"),
+        path(f"ocsp/{name}/<base64:data>", views.OCSPView.as_view(**kwargs), name=f"ocsp-get-{name}"),
     ]

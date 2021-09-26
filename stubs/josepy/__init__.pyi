@@ -11,10 +11,14 @@ from typing import Union
 
 from OpenSSL import crypto
 
+from .b64 import b64decode
+from .b64 import b64encode
 from .json_util import Field
 from .json_util import JSONDeSerializable
 from .json_util import JSONObjectWithFields
 from .json_util import TypedJSONObjectWithFields
+from .json_util import decode_csr
+from .json_util import encode_csr
 from .json_util import decode_b64jose
 from .json_util import encode_b64jose
 from .jwk import JWK
@@ -92,6 +96,10 @@ __all__ = (
     "JWK",
     "JWKRSA",
     "TypedJSONObjectWithFields",
-    "encode_b64jose",
+    "b64decode",
+    "b64encode",
     "decode_b64jose",
+    "decode_csr",
+    "encode_b64jose",
+    "encode_csr",
 )

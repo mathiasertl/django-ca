@@ -76,7 +76,7 @@ class TestWatcher(TestCase):
         mail = "user@example.com"
         name = "Firstname Lastname"
 
-        watcher = Watcher.from_addr("%s <%s>" % (name, mail))
+        watcher = Watcher.from_addr(f"{name} <{mail}>")
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, name)
 
@@ -85,11 +85,11 @@ class TestWatcher(TestCase):
         mail = "user@example.com"
         name = "Firstname Lastname"
 
-        watcher = Watcher.from_addr("%s     <%s>" % (name, mail))
+        watcher = Watcher.from_addr(f"{name}     <{mail}>")
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, name)
 
-        watcher = Watcher.from_addr("%s<%s>" % (name, mail))
+        watcher = Watcher.from_addr(f"{name}<{mail}>")
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, name)
 
@@ -106,8 +106,8 @@ class TestWatcher(TestCase):
         name = "Firstname Lastname"
         newname = "Newfirst Newlast"
 
-        Watcher.from_addr("%s <%s>" % (name, mail))
-        watcher = Watcher.from_addr("%s <%s>" % (newname, mail))
+        Watcher.from_addr(f"{name} <{mail}>")
+        watcher = Watcher.from_addr(f"{newname} <{mail}>")
         self.assertEqual(watcher.mail, mail)
         self.assertEqual(watcher.name, newname)
 
@@ -120,7 +120,7 @@ class TestWatcher(TestCase):
         self.assertEqual(str(watcher), mail)
 
         watcher.name = name
-        self.assertEqual(str(watcher), "%s <%s>" % (name, mail))
+        self.assertEqual(str(watcher), f"{name} <{mail}>")
 
 
 class CertificateAuthorityTests(TestCaseMixin, TestCase):
@@ -277,7 +277,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
         # Intermediate CAs have a DP in the CRL that has the CA url
         full_name = [
             x509.UniformResourceIdentifier(
-                "http://%s/django_ca/crl/ca/%s/" % (ca_settings.CA_DEFAULT_HOSTNAME, self.ca.serial)
+                f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{self.ca.serial}/"
             )
         ]
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
@@ -1066,11 +1066,11 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.account1.full_clean()
 
         # So far we only test first and last line, so we just append/prepend a character
-        self.account1.pem = "x%s" % self.account1.pem
+        self.account1.pem = f"x{self.account1.pem}"
         with self.assertValidationError({"pem": ["Not a valid PEM."]}):
             self.account1.full_clean()
 
-        self.account1.pem = "%sx" % self.account1.pem[1:]
+        self.account1.pem = f"{self.account1.pem}x"[1:]
         with self.assertValidationError({"pem": ["Not a valid PEM."]}):
             self.account1.full_clean()
 
@@ -1094,19 +1094,19 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_str(self) -> None:
         """Test the str function."""
-        self.assertEqual(str(self.order1), "%s (%s)" % (self.order1.slug, self.account))
+        self.assertEqual(str(self.order1), f"{self.order1.slug} ({self.account})")
 
     def test_acme_url(self) -> None:
         """Test the acme url function."""
         self.assertEqual(
-            self.order1.acme_url, "/django_ca/acme/%s/order/%s/" % (self.account.ca.serial, self.order1.slug)
+            self.order1.acme_url, f"/django_ca/acme/{self.account.ca.serial}/order/{self.order1.slug}/"
         )
 
     def test_acme_finalize_url(self) -> None:
         """Test the acme finalize url function."""
         self.assertEqual(
             self.order1.acme_finalize_url,
-            "/django_ca/acme/%s/order/%s/finalize/" % (self.account.ca.serial, self.order1.slug),
+            f"/django_ca/acme/{self.account.ca.serial}/order/{self.order1.slug}/finalize/",
         )
 
     def test_add_authorizations(self) -> None:
@@ -1162,11 +1162,11 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         """Test acme_url property."""
         self.assertEqual(
             self.auth1.acme_url,
-            "/django_ca/acme/%s/authz/%s/" % (self.cas["root"].serial, self.auth1.slug),
+            f"/django_ca/acme/{self.cas['root'].serial}/authz/{self.auth1.slug}/",
         )
         self.assertEqual(
             self.auth2.acme_url,
-            "/django_ca/acme/%s/authz/%s/" % (self.cas["root"].serial, self.auth2.slug),
+            f"/django_ca/acme/{self.cas['root'].serial}/authz/{self.auth2.slug}/",
         )
 
     def test_expires(self) -> None:
@@ -1248,7 +1248,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_str(self) -> None:
         """Test the __str__ method."""
-        self.assertEqual(str(self.chall), "%s (%s)" % (self.hostname, self.chall.type))
+        self.assertEqual(str(self.chall), f"{self.hostname} ({self.chall.type})")
 
     def test_acme_url(self) -> None:
         """Test acme_url property."""
@@ -1291,6 +1291,32 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.settings(USE_TZ=True):
             self.chall.validated = timezone.now()
             self.assertEqual(self.chall.acme_validated, timezone.now())
+
+    def test_encoded(self) -> None:
+        """Test the encoded property."""
+        self.chall.token = "ADwFxCAXrnk47rcCnnbbtGYSo_l61MCYXqtBziPt26mk7-QzpYNNKnTsKjbBYPzD"
+        self.chall.save()
+        self.assertEqual(
+            self.chall.encoded_token,
+            b"QUR3RnhDQVhybms0N3JjQ25uYmJ0R1lTb19sNjFNQ1lYcXRCemlQdDI2bWs3LVF6cFlOTktuVHNLamJCWVB6RA",
+        )
+
+    def test_expected(self) -> None:
+        """Test the expected property."""
+        self.chall.token = "ADwFxCAXrnk47rcCnnbbtGYSo_l61MCYXqtBziPt26mk7-QzpYNNKnTsKjbBYPzD"
+        self.chall.save()
+        self.assertEqual(
+            self.chall.expected, self.chall.encoded_token + b"." + self.account.thumbprint.encode("utf-8")
+        )
+
+        self.chall.type = AcmeChallenge.TYPE_DNS_01
+        self.chall.save()
+        self.assertEqual(self.chall.expected, b"LoNgngEeuLw4rWDFpplPA0XBp9dd9spzuuqbsRFcKug")
+
+        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
+        self.chall.save()
+        with self.assertRaisesRegex(ValueError, r"^tls-alpn-01: Unsupported challenge type\.$"):
+            self.chall.expected  # pylint: disable=pointless-statement  # this is a computed property
 
     def test_get_challenge(self) -> None:
         """Test the get_challenge() function."""

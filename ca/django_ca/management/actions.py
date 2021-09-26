@@ -103,9 +103,9 @@ class CertificateAction(SingleValueAction[Certificate]):
         try:
             return queryset.get_by_serial_or_cn(value)
         except Certificate.DoesNotExist as ex:
-            raise argparse.ArgumentError(self, "%s: Certificate not found." % value) from ex
+            raise argparse.ArgumentError(self, f"{value}: Certificate not found.") from ex
         except Certificate.MultipleObjectsReturned as ex:
-            raise argparse.ArgumentError(self, "%s: Multiple certificates match." % value) from ex
+            raise argparse.ArgumentError(self, f"{value}: Multiple certificates match.") from ex
 
 
 class CertificateAuthorityAction(SingleValueAction[CertificateAuthority]):
@@ -127,9 +127,9 @@ class CertificateAuthorityAction(SingleValueAction[CertificateAuthority]):
         try:
             ca = qs.get_by_serial_or_cn(value)
         except CertificateAuthority.DoesNotExist as ex:
-            raise argparse.ArgumentError(self, "%s: Certificate authority not found." % value) from ex
+            raise argparse.ArgumentError(self, f"{value}: Certificate authority not found.") from ex
         except CertificateAuthority.MultipleObjectsReturned as ex:
-            raise argparse.ArgumentError(self, "%s: Multiple Certificate authorities match." % value) from ex
+            raise argparse.ArgumentError(self, f"{value}: Multiple Certificate authorities match.") from ex
 
         # verify that the private key exists
         if not self.allow_unusable and not ca.key_exists:
@@ -255,7 +255,7 @@ class MultipleURLAction(argparse.Action):
         try:
             validator(values)
         except ValidationError:
-            parser.error("%s: Not a valid URL." % values)
+            parser.error(f"{values}: Not a valid URL.")
 
         getattr(namespace, self.dest).append(values)
 
@@ -406,7 +406,7 @@ class OrderedSetExtensionAction(ExtensionAction):
         try:
             ext |= ext_values
         except ValueError as e:
-            parser.error("Invalid extension value: %s: %s" % (values, e))
+            parser.error(f"Invalid extension value: {values}: {e}")
 
         setattr(namespace, self.dest, ext)
 

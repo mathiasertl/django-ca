@@ -32,6 +32,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
@@ -66,11 +67,12 @@ PrivateKeyTypes = Union[
     rsa.RSAPrivateKey,
     dsa.DSAPrivateKey,
     ec.EllipticCurvePrivateKey,
+    ed25519.Ed25519PrivateKey,
 ]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
-ParsableKeyType = Literal["RSA", "DSA", "ECC"]
+ParsableKeyType = Literal["RSA", "DSA", "ECC", "EdDSA"]
 ParsableKeyCurve = Optional[Union[ec.EllipticCurve, str]]
 ParsableSubject = Union[
     str,

@@ -15,6 +15,7 @@
 
 import os
 import tempfile
+import typing
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -66,7 +67,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            key = ca.key(data["password"])
+            key = typing.cast(RSAPrivateKey, ca.key(data["password"]))
             self.assertIsInstance(key, RSAPrivateKey)
             self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
@@ -105,7 +106,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            key = ca.key(None)
+            key = typing.cast(RSAPrivateKey, ca.key(None))
             self.assertIsInstance(key, RSAPrivateKey)
             self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
@@ -134,9 +135,9 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         # test the private key
         with self.assertRaisesRegex(TypeError, "^Password was not given but private key is encrypted$"):
-            key = ca.key(None)
+            ca.key(None)
 
-        key = ca.key(password)
+        key = typing.cast(RSAPrivateKey, ca.key(password))
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, certs["root"]["key_size"])
         self.assertEqual(ca.serial, certs["root"]["serial"])
@@ -154,7 +155,7 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         try:
             serial = certs["root"]["serial"].replace(":", "")
-            error = r"^%s.key: Permission denied: Could not open file for writing$" % serial
+            error = rf"^{serial}\.key: Permission denied: Could not open file for writing$"
             with self.assertCommandError(error):
                 self.cmd("import_ca", name, key_path, pem_path)
         finally:
@@ -183,7 +184,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             os.chmod(tempdir, 0o000)
             ca_dir = os.path.join(tempdir, "foo", "bar")
-            msg = r"^%s: Could not create CA_DIR: Permission denied.$" % ca_dir
+            msg = rf"^{ca_dir}: Could not create CA_DIR: Permission denied.$"
             with mock_cadir(ca_dir), self.assertCommandError(msg):
                 self.cmd("import_ca", name, key_path, pem_path)
 

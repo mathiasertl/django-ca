@@ -227,7 +227,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
                     self.assertEqual(self.ext(config["extension_type"], critical=critical), expected)
 
     def test_init_no_bool_critical(self) -> None:
-        """"Test creating an extension with a non-bool critical value."""
+        """ "Test creating an extension with a non-bool critical value."""
         class_name = "example_class"
 
         class _Example:
@@ -239,7 +239,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
                 if isinstance(value, x509.extensions.ExtensionType):
                     continue  # self.ext() would construct an x509.Extension and the constructor would fail
 
-                with self.assertRaisesRegex(ValueError, "^%s: Invalid critical value passed$" % class_name):
+                with self.assertRaisesRegex(ValueError, f"^{class_name}: Invalid critical value passed$"):
                     self.ext(value, critical=_Example())  # type: ignore[arg-type]
 
     def test_init_unknown_type(self) -> None:
@@ -1159,12 +1159,12 @@ class CRLDistributionPointsTestCaseBase(
     dns1 = "example.org"
     rdn1 = "/CN=example.com"
 
-    s1: ParsableDistributionPoint = {"full_name": ["URI:%s" % uri1]}
-    s2: ParsableDistributionPoint = {"full_name": ["URI:%s" % uri1, "DNS:%s" % dns1]}
+    s1: ParsableDistributionPoint = {"full_name": [f"URI:{uri1}"]}
+    s2: ParsableDistributionPoint = {"full_name": [f"URI:{uri1}", f"DNS:{dns1}"]}
     s3: ParsableDistributionPoint = {"relative_name": rdn1}
     s4: ParsableDistributionPoint = {
-        "full_name": ["URI:%s" % uri2],
-        "crl_issuer": ["URI:%s" % uri3],
+        "full_name": [f"URI:{uri2}"],
+        "crl_issuer": [f"URI:{uri3}"],
         "reasons": ["ca_compromise", "key_compromise"],
     }
     dp1 = DistributionPoint(s1)
@@ -1205,9 +1205,9 @@ class CRLDistributionPointsTestCaseBase(
                 ],
                 "expected": [self.s1],
                 "expected_djca": [self.dp1],
-                "expected_repr": "[<DistributionPoint: full_name=['URI:%s']>]" % self.uri1,
+                "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri1}']>]",
                 "expected_serialized": [self.s1],
-                "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s" % self.uri1,
+                "expected_text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}",
                 "extension_type": self.cg_dps1,
             },
             "two": {
@@ -1220,32 +1220,30 @@ class CRLDistributionPointsTestCaseBase(
                 ],
                 "expected": [self.s2],
                 "expected_djca": [self.dp2],
-                "expected_repr": "[<DistributionPoint: full_name=['URI:%s', 'DNS:%s']>]"
-                % (self.uri1, self.dns1),
+                "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri1}', 'DNS:{self.dns1}']>]",
                 "expected_serialized": [self.s2],
-                "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s\n    "
-                "* DNS:%s" % (self.uri1, self.dns1),
+                "expected_text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}\n    "
+                f"* DNS:{self.dns1}",
                 "extension_type": self.cg_dps2,
             },
             "rdn": {
                 "values": [[self.s3], [self.dp3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
                 "expected": [self.s3],
                 "expected_djca": [self.dp3],
-                "expected_repr": "[<DistributionPoint: relative_name='%s'>]" % self.rdn1,
+                "expected_repr": f"[<DistributionPoint: relative_name='{self.rdn1}'>]",
                 "expected_serialized": [self.s3],
-                "expected_text": "* DistributionPoint:\n  * Relative Name: %s" % self.rdn1,
+                "expected_text": f"* DistributionPoint:\n  * Relative Name: {self.rdn1}",
                 "extension_type": self.cg_dps3,
             },
             "adv": {
                 "values": [[self.s4], [self.dp4], [self.cg_dp4]],
                 "expected": [self.s4],
                 "expected_djca": [self.dp4],
-                "expected_repr": "[<DistributionPoint: full_name=['URI:%s'], crl_issuer=['URI:%s'], "
-                "reasons=['ca_compromise', 'key_compromise']>]" % (self.uri2, self.uri3),
+                "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri2}'], "
+                f"crl_issuer=['URI:{self.uri3}'], reasons=['ca_compromise', 'key_compromise']>]",
                 "expected_serialized": [self.s4],
-                "expected_text": "* DistributionPoint:\n  * Full Name:\n    * URI:%s\n"
-                "  * CRL Issuer:\n    * URI:%s\n"
-                "  * Reasons: ca_compromise, key_compromise" % (self.uri2, self.uri3),
+                "expected_text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri2}\n"
+                f"  * CRL Issuer:\n    * URI:{self.uri3}\n  * Reasons: ca_compromise, key_compromise",
                 "extension_type": self.cg_dps4,
             },
         }

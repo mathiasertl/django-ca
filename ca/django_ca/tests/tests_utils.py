@@ -258,7 +258,7 @@ class ReadFileTestCase(TestCase):
         name = "test-data"
         path = os.path.join(ca_settings.CA_DIR, name)
 
-        msg = r"\[Errno 2\] No such file or directory: u?'%s'" % path
+        msg = rf"\[Errno 2\] No such file or directory: '{path}'"
         with self.assertRaisesRegex(FileNotFoundError, msg):
             read_file(str(name))
 
@@ -276,7 +276,7 @@ class ReadFileTestCase(TestCase):
         os.chmod(path, 0o000)
 
         try:
-            msg = r"\[Errno 13\] Permission denied: u?'%s'" % path
+            msg = rf"\[Errno 13\] Permission denied: '{path}'"
             with self.assertRaisesRegex(PermissionError, msg):
                 read_file(str(name))
 
@@ -371,8 +371,8 @@ class ParseNameTestCase(TestCase):
         """Test unknown field."""
         field = "ABC"
         with self.assertRaisesRegex(ValueError, "^Unknown x509 name field: ABC$") as e:
-            parse_name("/%s=example.com" % field)
-        self.assertEqual(e.exception.args, ("Unknown x509 name field: %s" % field,))
+            parse_name(f"/{field}=example.com")
+        self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
 
 
 class RelativeNameTestCase(TestCase):
@@ -517,12 +517,14 @@ class ParseGeneralNameTest(TestCase):
         # wildcard in the outermost level
         msg = r"^Could not parse name: %s$"
 
+        # pylint: disable=consider-using-f-string  # reuse the message string
         with self.assertRaisesRegex(ValueError, msg % r"test\.\*\.example\.com"):
             parse_general_name("test.*.example.com")
         with self.assertRaisesRegex(ValueError, msg % r"\*\.\*\.example\.com"):
             parse_general_name("*.*.example.com")
         with self.assertRaisesRegex(ValueError, msg % r"example\.com\.\*"):
             parse_general_name("example.com.*")
+        # pylint: enable=consider-using-f-string
 
     def test_dirname(self) -> None:
         """Test parsing a dirname."""
@@ -562,7 +564,7 @@ class ParseGeneralNameTest(TestCase):
         """Test parsing a URI."""
         url = "https://example.com"
         self.assertEqual(parse_general_name(url), x509.UniformResourceIdentifier(url))
-        self.assertEqual(parse_general_name("uri:%s" % url), x509.UniformResourceIdentifier(url))
+        self.assertEqual(parse_general_name(f"uri:{url}"), x509.UniformResourceIdentifier(url))
 
     def test_rid(self) -> None:
         """Test parsing a Registered ID."""
@@ -1284,15 +1286,13 @@ class GeneralNameListTestCase(TestCase):
     def test_repr(self) -> None:
         """Test repr()."""
         self.assertEqual(repr(GeneralNameList()), "<GeneralNameList: []>")
-        self.assertEqual(repr(GeneralNameList([self.dns1])), "<GeneralNameList: ['DNS:%s']>" % self.dns1)
-        self.assertEqual(repr(GeneralNameList([dns(self.dns1)])), "<GeneralNameList: ['DNS:%s']>" % self.dns1)
+        self.assertEqual(repr(GeneralNameList([self.dns1])), f"<GeneralNameList: ['DNS:{self.dns1}']>")
+        self.assertEqual(repr(GeneralNameList([dns(self.dns1)])), f"<GeneralNameList: ['DNS:{self.dns1}']>")
 
     def test_serialize(self) -> None:
         """Test serialization."""
         gnl1 = GeneralNameList([self.dns1, dns(self.dns2), self.dns1])
-        self.assertEqual(
-            list(gnl1.serialize()), ["DNS:%s" % self.dns1, "DNS:%s" % self.dns2, "DNS:%s" % self.dns1]
-        )
+        self.assertEqual(list(gnl1.serialize()), [f"DNS:{self.dns1}", f"DNS:{self.dns2}", f"DNS:{self.dns1}"])
 
     def test_setitem(self) -> None:
         """Test setter, e.g. ``e[0] = ...``."""

@@ -156,7 +156,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         # assert overwritten extensions
         self.assertEqual(new.subject, Subject(subject))
-        self.assertEqual(new.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:%s" % alt]}))
+        self.assertEqual(new.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{alt}"]}))
         self.assertEqual(new.key_usage, KeyUsage({"value": [key_usage], "critical": False}))
         self.assertEqual(
             new.extended_key_usage,
@@ -177,7 +177,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
-        with open(out_path) as stream:
+        with open(out_path, encoding="ascii") as stream:
             pub = stream.read()
 
         new = Certificate.objects.get(pub=pub)
@@ -204,7 +204,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_error(self) -> None:
         """Test resign function throwing a random exception."""
         msg = "foobar"
-        msg_re = r"^%s$" % msg
+        msg_re = rf"^{msg}$"
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post, patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
         ), self.assertCommandError(msg_re):

@@ -75,7 +75,7 @@ class Authorization(ResourceBody):
 
 
 class CertificateRequest(ResourceMixin, jose.JSONObjectWithFields):
-    ...
+    resource_type: str
 
 
 class Order(ResourceBody):

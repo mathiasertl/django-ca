@@ -44,9 +44,9 @@ class TestDjangoCATestCase(TestCase):
     def test_base(self) -> None:
         """Test warning messages."""
 
-        with self.assertWarnsRegex(RemovedInDjangoCA120Warning, r"^%s$" % self.msg_in_120):
+        with self.assertWarnsRegex(RemovedInDjangoCA120Warning, rf"^{self.msg_in_120}$"):
             self.deprecated_in_120()
-        with self.assertWarnsRegex(RemovedInDjangoCA121Warning, r"^%s$" % self.msg_in_121):
+        with self.assertWarnsRegex(RemovedInDjangoCA121Warning, rf"^{self.msg_in_121}$"):
             self.deprecated_in_121()
-        with self.assertWarnsRegex(RemovedInNextVersionWarning, r"^%s$" % self.msg_in_next):
+        with self.assertWarnsRegex(RemovedInNextVersionWarning, rf"^{self.msg_in_next}$"):
             self.deprecated_in_next()

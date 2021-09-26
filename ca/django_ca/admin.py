@@ -105,6 +105,7 @@ if typing.TYPE_CHECKING:
     QuerySet = models.QuerySet[models.Model]
     WatcherAdminBase = admin.ModelAdmin[Watcher]
     MixinBase = ModelAdminBase
+    CertificateModelForm = ModelForm[Certificate]
 else:
     AcmeAccountAdminBase = admin.ModelAdmin
     AcmeAuthorizationAdminBase = admin.ModelAdmin
@@ -118,6 +119,7 @@ else:
     QuerySet = models.QuerySet
     WatcherAdminBase = admin.ModelAdmin
     MixinBase = object
+    CertificateModelForm = ModelForm
 
 FieldSets = typing.List[typing.Tuple[typing.Optional[str], typing.Dict[str, typing.Any]]]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
@@ -167,17 +169,15 @@ class CertificateMixin(
 
     def get_urls(self) -> typing.List[URLPattern]:
         """Overridden to add urls for download/download_bundle views."""
-        info = self.model._meta.app_label, self.model._meta.model_name
+        info = f"{self.model._meta.app_label}_{self.model._meta.model_name}"
         urls = [
             path(
-                "<int:pk>/download/",
-                self.admin_site.admin_view(self.download_view),
-                name="%s_%s_download" % info,
+                "<int:pk>/download/", self.admin_site.admin_view(self.download_view), name=f"{info}_download"
             ),
             path(
                 "<int:pk>/download_bundle/",
                 self.admin_site.admin_view(self.download_bundle_view),
-                name="%s_%s_download_bundle" % info,
+                name=f"{info}_download_bundle",
             ),
         ]
         urls += super().get_urls()
@@ -211,7 +211,7 @@ class CertificateMixin(
 
         filename = obj.get_filename(ext=filetype, bundle=bundle)
         response = HttpResponse(data, content_type="application/pkix-cert")
-        response["Content-Disposition"] = "attachment; filename=%s" % filename
+        response["Content-Disposition"] = f"attachment; filename={filename}"
         return response
 
     def distinguished_name(self, obj: X509CertMixinTypeVar) -> str:
@@ -287,7 +287,7 @@ class CertificateMixin(
         """Render extension for the given object."""
 
         ext = getattr(obj, key)
-        templates = ["django_ca/admin/extensions/%s.html" % key]
+        templates = [f"django_ca/admin/extensions/{key}.html"]
 
         if isinstance(ext, NullExtension):
             templates.append("django_ca/admin/extensions/base/null_extension.html")
@@ -309,9 +309,9 @@ class CertificateMixin(
         html = ""
         if ext.critical is True:
             text = _("Critical")
-            html = '<img src="/static/admin/img/icon-yes.svg" alt="%s"> %s' % (text, text)
+            html = f'<img src="/static/admin/img/icon-yes.svg" alt="{text}"> {text}'
 
-        html += "<p>%s<p>" % escape(ext.value)
+        html += f"<p>{escape(ext.value)}<p>"
         return html
 
     def get_oid_name(self, oid: x509.ObjectIdentifier) -> str:
@@ -340,7 +340,7 @@ class CertificateMixin(
                 # admin instance:
                 if isinstance(field, x509.Extension):
                     oid_func = partial(self.unknown_oid, field.oid)
-                    desc = "Unkown OID (%s)" % field.oid.dotted_string
+                    desc = f"Unkown OID ({field.oid.dotted_string})"
                     oid_func.short_description = desc  # type: ignore[attr-defined]
 
                     field = self.get_oid_name(field.oid)
@@ -755,7 +755,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         obj: typing.Optional[Certificate] = None,
         change: bool = False,
         **kwargs: typing.Any,
-    ) -> typing.Type[ModelForm]:
+    ) -> typing.Type[CertificateModelForm]:
         """Override to get specialized forms for signing/resigning certs."""
         if hasattr(request, "_resign_obj"):
             return ResignCertificateForm
@@ -763,7 +763,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return CreateCertificateForm
 
         # TYPE NOTE: django-stubs does not seem to add typehints for this function
-        return typing.cast(typing.Type[ModelForm], super().get_form(request, obj=obj, **kwargs))
+        return typing.cast(typing.Type[CertificateModelForm], super().get_form(request, obj=obj, **kwargs))
 
     def get_changeform_initial_data(self, request: HttpRequest) -> typing.Dict[str, typing.Any]:
         """Get initial data based on default profile.
@@ -812,8 +812,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         extra_context: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ) -> HttpResponse:
         extra_context = extra_context or {}
-        extra_context["profiles_url"] = reverse("admin:%s" % self.profiles_view_name)
-        extra_context["csr_details_url"] = reverse("admin:%s" % self.csr_details_view_name)
+        extra_context["profiles_url"] = reverse(f"admin:{self.profiles_view_name}")
+        extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
         return super().add_view(
             request,
             form_url=form_url,
@@ -823,7 +823,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     @property
     def csr_details_view_name(self) -> str:
         """URL for the CSR details view."""
-        return "%s_%s_csr_details" % (self.model._meta.app_label, self.model._meta.verbose_name)
+        return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_csr_details"
 
     def csr_details_view(self, request: HttpRequest) -> JsonResponse:
         """Returns details of a CSR request."""
@@ -843,7 +843,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     @property
     def profiles_view_name(self) -> str:
         """URL for the profiles view."""
-        return "%s_%s_profiles" % (self.model._meta.app_label, self.model._meta.verbose_name)
+        return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_profiles"
 
     def profiles_view(self, request: HttpRequest) -> JsonResponse:
         """Returns profiles."""

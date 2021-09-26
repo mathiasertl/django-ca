@@ -63,8 +63,15 @@ from .utils import read_file
 
 log = logging.getLogger(__name__)
 
+if typing.TYPE_CHECKING:
+    from django.http.response import HttpResponseBase
 
-class CertificateRevocationListView(View, SingleObjectMixin):
+    SingleObjectMixinBase = SingleObjectMixin[CertificateAuthority]
+else:
+    SingleObjectMixinBase = SingleObjectMixin
+
+
+class CertificateRevocationListView(View, SingleObjectMixinBase):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
 
     slug_field = "serial"
@@ -100,7 +107,7 @@ class CertificateRevocationListView(View, SingleObjectMixin):
 
         crl = cache.get(cache_key)
         if crl is None:
-            ca = typing.cast(CertificateAuthority, self.get_object())
+            ca = self.get_object()
             encoding = parse_encoding(self.type)
             crl = ca.get_crl(
                 expires=self.expires, algorithm=self.digest, password=self.password, scope=self.scope
@@ -184,19 +191,12 @@ class OCSPView(View):
         # Check that the private key is of a supported type
         if not isinstance(loaded_key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey)):
             log.error("%s: Unsupported private key type.", type(loaded_key))
-            raise ValueError("%s: Unsupported private key type." % type(loaded_key))
+            raise ValueError(f"{type(loaded_key)}: Unsupported private key type.")
 
         return loaded_key
 
     def get_responder_key_data(self) -> bytes:
         """Read the file containing the private key used to sign OCSP responses."""
-        if os.path.isabs(self.responder_key):
-            log.warning(
-                "%s: OCSP responder uses absolute path to private key. Please see %s.",
-                self.responder_key,
-                ca_settings.CA_FILE_STORAGE_URL,
-            )
-
         return read_file(self.responder_key)
 
     def get_responder_cert(self) -> x509.Certificate:
@@ -264,13 +264,14 @@ class OCSPView(View):
             log.error("%s: Certificate Authority could not be found.", self.ca)
             return self.fail()
 
+        cert_serial = int_to_hex(ocsp_req.serial_number)
         try:
-            cert = self.get_cert(ca, int_to_hex(ocsp_req.serial_number))
+            cert = self.get_cert(ca, cert_serial)
         except Certificate.DoesNotExist:
-            log.warning("OCSP request for unknown cert received.")
+            log.warning("%s: OCSP request for unknown cert received.", cert_serial)
             return self.fail()
         except CertificateAuthority.DoesNotExist:
-            log.warning("OCSP request for unknown CA received.")
+            log.warning("%s: OCSP request for unknown CA received.", cert_serial)
             return self.fail()
 
         # get key/cert for OCSP responder
@@ -329,7 +330,7 @@ class GenericOCSPView(OCSPView):
 
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, **kwargs: typing.Any
-    ) -> HttpResponse:
+    ) -> "HttpResponseBase":
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:
@@ -341,10 +342,12 @@ class GenericOCSPView(OCSPView):
         return self.auto_ca
 
     def get_responder_key_data(self) -> bytes:
-        return read_file("ocsp/%s.key" % self.auto_ca.serial.replace(":", ""))
+        serial = self.auto_ca.serial.replace(":", "")
+        return read_file(f"ocsp/{serial}.key")
 
     def get_responder_cert(self) -> x509.Certificate:
-        data = read_file("ocsp/%s.pem" % self.auto_ca.serial.replace(":", ""))
+        serial = self.auto_ca.serial.replace(":", "")
+        data = read_file(f"ocsp/{serial}.pem")
         return load_pem_x509_certificate(data, default_backend())
 
 

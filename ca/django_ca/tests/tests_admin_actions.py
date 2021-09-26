@@ -40,7 +40,7 @@ from ..signals import pre_revoke_cert
 from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import AdminTestCaseMixin
-from .base.mixins import DjangoCAModelTypeVar
+from .base.typehints import DjangoCAModelTypeVar
 
 
 class AdminActionTestCaseMixin(
@@ -94,8 +94,8 @@ class AdminActionTestCaseMixin(
 
         # Test if the view permission is not the only action required anyway. If yes, that would mean the code
         # below would actually succeed.
-        view_codename = "view_%s" % self.model._meta.model_name
-        if self.required_permissions == ["%s.%s" % (self.model._meta.app_label, view_codename)]:
+        view_codename = f"view_{self.model._meta.model_name}"
+        if self.required_permissions == [f"{self.model._meta.app_label}{view_codename}"]:
             return
 
         # Add view permission for the model. If we do not have it, Django will just return FORBIDDEN like in
@@ -146,7 +146,7 @@ class AdminChangeActionTestCaseMixin(
 
     def get_url(self, obj: DjangoCAModelTypeVar) -> str:
         """Get action URL of the given object."""
-        view_name = "admin:%s_%s_actions" % (self.model._meta.app_label, self.model._meta.model_name)
+        view_name = f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_actions"
         return reverse(view_name, kwargs={"pk": obj.pk, "tool": self.tool})
 
     def assertFailedRequest(  # pylint: disable=invalid-name

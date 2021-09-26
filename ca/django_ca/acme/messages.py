@@ -55,3 +55,16 @@ class NewOrder(messages.ResourceBody):
     identifiers: IdentifiersType = jose.Field("identifiers", omitempty=False, decoder=identifiers_decoder)
     not_before = fields.RFC3339Field("notBefore", omitempty=True)
     not_after = fields.RFC3339Field("notAfter", omitempty=True)
+
+
+class CertificateRequest(messages.ResourceBody):
+    """ACME message expected when finalizing an order.
+
+    This class differs from :py:class:`acme:acme.messages.CertificateRequest` in that it does not set the
+    resource type.
+
+    .. seealso:: `RFC 8555, section 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`__
+    """
+
+    resource_type = messages.CertificateRequest.resource_type
+    csr = jose.Field("csr", decoder=jose.decode_csr, encoder=jose.encode_csr)

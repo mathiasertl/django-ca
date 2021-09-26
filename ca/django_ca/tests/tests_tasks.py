@@ -15,6 +15,7 @@
 
 import importlib
 import io
+import sys
 import types
 import typing
 from contextlib import contextmanager
@@ -22,7 +23,9 @@ from datetime import timedelta
 from http import HTTPStatus
 from unittest import mock
 
+import dns.resolver
 import josepy as jose
+from dns.rdtypes.txtbase import TXTBase
 from requests.packages.urllib3.response import HTTPResponse
 
 from cryptography import x509
@@ -163,8 +166,8 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
-            self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
     def test_all(self) -> None:
@@ -174,14 +177,14 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists("ocsp/%s.key" % ca.serial))
-            self.assertTrue(ca_storage.exists("ocsp/%s.pem" % ca.serial))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
 
-@freeze_time(timestamps["everything_valid"])
-class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
+    type: str
     load_cas = ("root",)
 
     def setUp(self) -> None:
@@ -200,37 +203,13 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value=self.hostname
         )
         self.chall = AcmeChallenge.objects.create(
-            auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01, status=AcmeChallenge.STATUS_PROCESSING
+            auth=self.auth, type=self.type, status=AcmeChallenge.STATUS_PROCESSING
         )
 
         encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
         thumbprint = self.account.thumbprint
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
-
-    @contextmanager
-    def mock_challenge(
-        self,
-        challenge: typing.Optional[AcmeChallenge] = None,
-        status: int = HTTPStatus.OK,
-        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
-        call_count: int = 1,
-    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
-        """Mock a request to satisfy an ACME challenge."""
-        challenge = challenge or self.chall
-        auth = challenge.auth
-        account = auth.order.account
-
-        if content is None:
-            content = io.BytesIO(f"{challenge.encoded_token}.{account.thumbprint}".encode("utf-8"))
-
-        url = f"http://{auth.value}/.well-known/acme-challenge/{challenge.encoded_token}"
-
-        with requests_mock.Mocker() as req_mock:
-            matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
-            yield req_mock
-
-        self.assertEqual(matcher.call_count, call_count)
 
     def refresh_from_db(self) -> None:
         """Refresh objects from database."""
@@ -252,6 +231,19 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
         self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_VALID)
         self.assertEqual(self.order.status, order_state)
+
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,
+        content: typing.Optional[bytes] = None,
+        call_count: int = 1,
+        token: typing.Optional[str] = None,
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock the client fullfilling the challenge."""
+
+        raise NotImplementedError
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
@@ -292,26 +284,20 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         self.assertEqual(logcm.output, [f"ERROR:django_ca.tasks:{self.chall}: Authentication is not usable"])
 
-    def test_request_exception(self) -> None:
-        """Test requests throwing an exception."""
-        with self.patch("requests.get", side_effect=Exception("foo")) as req_mock:
-            tasks.acme_validate_challenge(self.chall.pk)
-        self.assertInvalid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
-
-    def test_response_not_ok(self) -> None:
-        """Test the server not returning a HTTP status code 200."""
-
-        with self.mock_challenge(status=HTTPStatus.NOT_FOUND):
-            tasks.acme_validate_challenge(self.chall.pk)
-        self.assertInvalid()
-
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
 
-        with self.mock_challenge(content=b"wrong answer"):
+        with self.mock_challenge(content=b"wrong answer"), self.assertLogs(
+            "django_ca.tasks", "DEBUG"
+        ) as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
+        self.assertEqual(
+            logcm.output,
+            [
+                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+            ],
+        )
 
     def test_unsupported_challenge(self) -> None:
         """Test what happens when challenge type is not supported."""
@@ -319,9 +305,18 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
 
-        with self.mock_challenge(call_count=0):
+        with self.mock_challenge(call_count=0, content=b"foo", token="foo"), self.assertLogs(
+            "django_ca.tasks", "DEBUG"
+        ) as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
+        self.assertEqual(
+            logcm.output,
+            [
+                f"ERROR:django_ca.tasks:{str(self.chall)}: Challenge type is not supported.",
+                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+            ],
+        )
 
     def test_basic(self) -> None:
         """Test validation actually working."""
@@ -340,6 +335,138 @@ class AcmeValidateChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             tasks.acme_validate_challenge(self.chall.pk)
 
         self.assertValid(AcmeOrder.STATUS_PENDING)
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, TestCase):
+    """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
+
+    load_cas = ("root",)
+    type = AcmeChallenge.TYPE_HTTP_01
+
+    def setUp(self) -> None:
+        super().setUp()
+        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        thumbprint = self.account.thumbprint
+        self.expected = f"{encoded}.{thumbprint}"
+        self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
+
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,
+        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
+        call_count: int = 1,
+        token: typing.Optional[str] = None,
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock a request to satisfy an ACME challenge."""
+        challenge = challenge or self.chall
+        auth = challenge.auth
+
+        if content is None:
+            content = io.BytesIO(challenge.expected)
+
+        if token is None:
+            token = challenge.encoded_token.decode("utf-8")
+        url = f"http://{auth.value}/.well-known/acme-challenge/{token}"
+
+        with requests_mock.Mocker() as req_mock:
+            matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
+            yield req_mock
+
+        self.assertEqual(matcher.call_count, call_count)
+
+    def test_response_not_ok(self) -> None:
+        """Test the server not returning a HTTP status code 200."""
+
+        with self.mock_challenge(status=HTTPStatus.NOT_FOUND):
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+
+    def test_request_exception(self) -> None:
+        """Test requests throwing an exception."""
+        val = f"{__name__}.{self.__class__.__name__}.test_request_exception"
+        with self.patch("requests.get", side_effect=Exception(val)) as req_mock, self.assertLogs() as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+        self.assertInvalid()
+        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
+        self.assertEqual(len(logcm.output), 2)
+        self.assertIn(val, logcm.output[0])
+        self.assertEqual(logcm.output[1], f"INFO:django_ca.tasks:{str(self.chall)} is invalid")
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, TestCase):
+    """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
+
+    load_cas = ("root",)
+    type = AcmeChallenge.TYPE_DNS_01
+
+    def setUp(self) -> None:
+        super().setUp()
+        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        thumbprint = self.account.thumbprint
+        self.expected = f"{encoded}.{thumbprint}"
+        self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
+
+    @contextmanager
+    def mock_challenge(
+        self,
+        challenge: typing.Optional[AcmeChallenge] = None,
+        status: int = HTTPStatus.OK,  # pylint: disable=unused-argument  # used in subclasses
+        content: typing.Optional[bytes] = None,
+        call_count: int = 1,
+        token: typing.Optional[str] = None,  # pylint: disable=unused-argument  # used in subclasses
+    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        """Mock a request to satisfy an ACME challenge."""
+
+        dns.resolver.reset_default_resolver()
+        challenge = challenge or self.chall
+        domain = self.auth.value
+        if content is None:
+            content = challenge.expected
+
+        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_cm:
+            resolve_cm.return_value = [
+                TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content])
+            ]
+            yield resolve_cm
+
+        if call_count == 0:
+            resolve_cm.assert_not_called()
+        else:
+            # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
+            resolve_cm.assert_called_once()
+            expected = (f"_acme_challenge.{domain}", "TXT")
+
+            if sys.version_info[0:2] < (3, 8):  # pragma: only py<3.8
+                args, kwargs = list(resolve_cm.call_args_list[0])
+                self.assertEqual(args[:2], expected)
+            else:
+                self.assertEqual(resolve_cm.call_args_list[0].args[:2], expected)
+
+    def test_nxdomain(self) -> None:
+        """Test a ACME validation where the domain does not exist."""
+        with mock.patch("dns.resolver.resolve", side_effect=dns.resolver.NXDOMAIN) as rmcm, self.assertLogs(
+            level="DEBUG"
+        ) as logcm:
+            tasks.acme_validate_challenge(self.chall.pk)
+        rmcm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
+        self.assertInvalid()
+
+        domain = self.hostname
+        exp = self.chall.expected.decode("ascii")
+        acme_domain = f"_acme_challenge.{domain}"
+        logger = "django_ca.acme.validation"
+        self.assertEqual(
+            logcm.output,
+            [
+                f"INFO:{logger}:DNS-01 validation of {domain}: Expect {exp} on {acme_domain}",
+                f"DEBUG:{logger}:TXT {acme_domain}: record does not exist.",
+                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+            ],
+        )
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -413,7 +540,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName({"value": ["dns:%s" % self.hostname]}),
+            SubjectAlternativeName({"value": [f"dns:{self.hostname}"]}),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
@@ -436,8 +563,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             SubjectAlternativeName(
                 {
                     "value": [
-                        "dns:%s" % self.hostname,
-                        "dns:%s" % hostname2,
+                        f"dns:{self.hostname}",
+                        f"dns:{hostname2}",
                     ]
                 }
             ),
@@ -463,7 +590,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName({"value": ["dns:%s" % self.hostname]}),
+            SubjectAlternativeName({"value": [f"dns:{self.hostname}"]}),
         )
         self.assertEqual(self.acme_cert.cert.expires, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)

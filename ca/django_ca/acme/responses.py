@@ -104,7 +104,7 @@ class AcmeResponseError(AcmeResponse):
     def __init__(self, typ: Optional[str] = None, message: str = "") -> None:
         super().__init__(
             {
-                "type": "urn:ietf:params:acme:error:%s" % (typ or self.type),
+                "type": f"urn:ietf:params:acme:error:{typ or self.type}",
                 "status": self.status_code,
                 "detail": message or self.message,
             },

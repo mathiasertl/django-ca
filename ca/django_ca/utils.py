@@ -14,7 +14,6 @@
 """Reusable utility functions used throughout django-ca."""
 
 import binascii
-import os
 import re
 import shlex
 import typing
@@ -42,6 +41,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
@@ -158,8 +158,8 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # NOTE: SM3 is added in cryptography 35.0
     # hashes.SM3.name: hashes.SM3,
 }
-if hasattr(hashes, "SM3"):  # pragma: only cryptography>=35.0
-    # NOTE: Remove pylint override once cryptography>=35.0 is used
+if hasattr(hashes, "SM3"):  # pragma: cryptography>=35.0 branch
+    # PYLINT NOTE: Remove pylint override once cryptography>=35.0 is used
     HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3  # pylint: disable=no-member  # We check above
 
 #: Mapping of canonical elliptic curve names to the implementing classes
@@ -235,7 +235,7 @@ def encode_url(url: str) -> str:
     parsed = urlparse(url)
     if parsed.hostname and parsed.port:
         hostname = idna.encode(parsed.hostname).decode("utf-8")
-        parsed = parsed._replace(netloc="%s:%s" % (hostname, parsed.port))
+        parsed = parsed._replace(netloc=f"{hostname}:{parsed.port}")
     else:
         parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode("utf-8"))
     return parsed.geturl()
@@ -256,9 +256,9 @@ def encode_dns(name: str) -> str:
         '*.xn--exmple-cua.com'
     """
     if name.startswith("*."):
-        return "*.%s" % idna.encode(name[2:]).decode("utf-8")
+        return f"*.{idna.encode(name[2:]).decode('utf-8')}"
     if name.startswith("."):
-        return ".%s" % idna.encode(name[1:]).decode("utf-8")
+        return f".{idna.encode(name[1:]).decode('utf-8')}"
     return idna.encode(name).decode("utf-8")
 
 
@@ -277,7 +277,8 @@ def format_name(subject: Union[x509.Name, Iterable[Tuple[str, str]]]) -> str:
     if isinstance(subject, x509.Name):
         subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
 
-    return "/%s" % ("/".join(["%s=%s" % (k, v) for k, v in subject]))
+    values = "/".join([f"{k}={v}" for k, v in subject])
+    return f"/{values}"
 
 
 def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
@@ -295,7 +296,8 @@ def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tu
     if isinstance(name, x509.RelativeDistinguishedName):
         name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
 
-    return "/%s" % ("/".join(["%s=%s" % (k, v) for k, v in name]))
+    values = "/".join([f"{k}={v}" for k, v in name])
+    return f"/{values}"
 
 
 def format_general_name(name: x509.GeneralName) -> str:
@@ -312,7 +314,7 @@ def format_general_name(name: x509.GeneralName) -> str:
         value = format_name(name.value)
     else:
         value = name.value
-    return "%s:%s" % (SAN_NAME_MAPPINGS[type(name)], value)
+    return f"{SAN_NAME_MAPPINGS[type(name)]}:{value}"
 
 
 def is_power2(num: int) -> bool:
@@ -356,7 +358,7 @@ def add_colons(value: str, pad: str = "0") -> str:
     """
 
     if len(value) % 2 == 1 and pad:
-        value = "%s%s" % (pad, value)
+        value = f"{pad}{value}"
 
     return ":".join([value[i : i + 2] for i in range(0, len(value), 2)])
 
@@ -407,7 +409,7 @@ def sanitize_serial(value: str) -> str:
     if serial != "0":
         serial = serial.lstrip("0")
     if re.search("[^0-9A-F]", serial):
-        raise ValueError("%s: Serial has invalid characters" % value)
+        raise ValueError(f"{value}: Serial has invalid characters")
     return serial
 
 
@@ -436,7 +438,7 @@ def parse_csr(
     if csr_format == Encoding.DER:
         return x509.load_der_x509_csr(force_bytes(csr), default_backend())
 
-    raise ValueError("Unknown CSR format passed: %s" % csr_format)
+    raise ValueError(f"Unknown CSR format passed: {csr_format}")
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:
@@ -488,12 +490,12 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     try:
         items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_str(t[2])) for t in NAME_RE.findall(name)]
     except KeyError as e:
-        raise ValueError("Unknown x509 name field: %s" % e.args[0]) from e
+        raise ValueError(f"Unknown x509 name field: {e.args[0]}") from e
 
     # Check that no OIDs not in MULTIPLE_OIDS occur more then once
     for key, oid in NAME_OID_MAPPINGS.items():
         if sum(1 for t in items if t[0] == key) > 1 and oid not in MULTIPLE_OIDS:
-            raise ValueError('Subject contains multiple "%s" fields' % key)
+            raise ValueError(f'Subject contains multiple "{key}" fields')
 
     return sort_name(items)
 
@@ -546,15 +548,15 @@ def validate_email(addr: str) -> str:
 
     """
     if "@" not in addr:
-        raise ValueError("Invalid email address: %s" % addr)
+        raise ValueError(f"Invalid email address: {addr}")
 
     node, domain = addr.rsplit("@", 1)
     try:
         domain = idna.encode(domain).decode("utf-8")
     except idna.IDNAError as e:
-        raise ValueError("Invalid domain: %s" % domain) from e
+        raise ValueError(f"Invalid domain: {domain}") from e
 
-    return "%s@%s" % (node, domain)
+    return f"{node}@{domain}"
 
 
 def validate_hostname(hostname: str, allow_port: bool = False) -> str:
@@ -586,19 +588,19 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
         try:
             port = int(port_str)
-        except ValueError as e:
-            raise ValueError("%s: Port must be an integer" % port_str) from e
+        except ValueError as ex:
+            raise ValueError(f"{port_str}: Port must be an integer") from ex
 
         if port < 1 or port > 65535:
-            raise ValueError("%s: Port must be between 1 and 65535" % port)
+            raise ValueError(f"{port}: Port must be between 1 and 65535")
 
     try:
         encoded: str = idna.encode(hostname).decode("utf-8")
-    except idna.IDNAError as e:
-        raise ValueError("%s: Not a valid hostname" % hostname) from e
+    except idna.IDNAError as ex:
+        raise ValueError(f"{hostname}: Not a valid hostname") from ex
 
     if allow_port is True and port is not None:
-        return "%s:%s" % (encoded, port)
+        return f"{encoded}:{port}"
     return encoded
 
 
@@ -625,11 +627,18 @@ def validate_key_parameters(
     ...
 
 
+@typing.overload
+def validate_key_parameters(
+    key_size: Optional[int], key_type: Literal["EdDSA"], ecc_curve: ParsableKeyCurve = None
+) -> Tuple[None, Literal["EdDSA"], None]:
+    ...
+
+
 def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = "RSA",
     ecc_curve: ParsableKeyCurve = None,
-) -> Tuple[Optional[int], Literal["RSA", "DSA", "ECC"], Optional[ec.EllipticCurve]]:
+) -> Tuple[Optional[int], Literal["RSA", "DSA", "ECC", "EdDSA"], Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
@@ -656,11 +665,13 @@ def validate_key_parameters(
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
 
         if not is_power2(key_size):
-            raise ValueError("%s: Key size must be a power of two" % key_size)
+            raise ValueError(f"{key_size}: Key size must be a power of two")
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
-            raise ValueError("%s: Key size must be least %s bits" % (key_size, ca_settings.CA_MIN_KEY_SIZE))
+            raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
+    elif key_type == "EdDSA":
+        key_size = ecc_curve = None
     else:
-        raise ValueError("%s: Unknown key type" % key_type)
+        raise ValueError(f"{key_type}: Unknown key type")
 
     return key_size, key_type, ecc_curve
 
@@ -682,8 +693,17 @@ def generate_private_key(
     ...
 
 
+@typing.overload
 def generate_private_key(
-    key_size: Optional[int], key_type: Literal["RSA", "DSA", "ECC"], ecc_curve: Optional[ec.EllipticCurve]
+    key_size: int, key_type: Literal["EdDSA"], ecc_curve: None
+) -> ed25519.Ed25519PrivateKey:
+    ...
+
+
+def generate_private_key(
+    key_size: Optional[int],
+    key_type: Literal["RSA", "DSA", "ECC", "EdDSA"],
+    ecc_curve: Optional[ec.EllipticCurve],
 ) -> PrivateKeyTypes:
     """Generate a private key.
 
@@ -710,10 +730,12 @@ def generate_private_key(
         return dsa.generate_private_key(key_size=key_size, backend=default_backend())
     if key_type == "ECC" and ecc_curve is not None:
         return ec.generate_private_key(ecc_curve, default_backend())
+    if key_type == "EdDSA" and ecc_curve is None and key_size is None:
+        return ed25519.Ed25519PrivateKey.generate()
     if key_type == "RSA" and key_size is not None:
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
-    raise ValueError("%s: Invalid key type." % key_type)
+    raise ValueError(f"{key_type}: Invalid key type.")
 
 
 def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
@@ -777,7 +799,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         return name
     if not isinstance(name, str):
         raise ValueError(
-            "Cannot parse general name %s: Must be of type str (was: %s)." % (name, type(name).__name__)
+            f"Cannot parse general name {name}: Must be of type str (was: {type(name).__name__})."
         )
 
     typ = None
@@ -816,13 +838,13 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
         try:
             return x509.DNSName(encode_dns(name))
         except idna.IDNAError as e:
-            raise ValueError("Could not parse name: %s" % name) from e
+            raise ValueError(f"Could not parse name: {name}") from e
 
     if typ == "uri":
         try:
             return x509.UniformResourceIdentifier(encode_url(name))
         except idna.IDNAError as e:
-            raise ValueError("Could not parse DNS name in URL: %s" % name) from e
+            raise ValueError(f"Could not parse DNS name in URL: {name}") from e
     elif typ == "email":
         return x509.RFC822Name(validate_email(name))  # validate_email already raises ValueError
     elif typ == "ip":
@@ -848,18 +870,18 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
             elif asn_typ == "OctetString":
                 parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
-                raise ValueError("Unsupported ASN type in otherName: %s" % asn_typ)
+                raise ValueError(f"Unsupported ASN type in otherName: {asn_typ}")
 
             return x509.OtherName(x509.ObjectIdentifier(oid), parsed_value)
 
-        raise ValueError("Incorrect otherName format: %s" % name)
+        raise ValueError(f"Incorrect otherName format: {name}")
     elif typ == "dirname":
         return x509.DirectoryName(x509_name(name))
     else:
         try:
             return x509.DNSName(encode_dns(name))
         except idna.IDNAError as e:
-            raise ValueError("Could not parse DNS name: %s" % name) from e
+            raise ValueError(f"Could not parse DNS name: {name}") from e
 
 
 def parse_hash_algorithm(
@@ -927,9 +949,9 @@ def parse_hash_algorithm(
             algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
             return algo()
         except AttributeError as e:
-            raise ValueError("Unknown hash algorithm: %s" % value) from e
+            raise ValueError(f"Unknown hash algorithm: {value}") from e
 
-    raise ValueError("Unknown type passed: %s" % type(value).__name__)
+    raise ValueError(f"Unknown type passed: {type(value).__name__}")
 
 
 def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
@@ -958,9 +980,9 @@ def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
         try:
             return Encoding[value]
         except KeyError as e:
-            raise ValueError("Unknown encoding: %s" % value) from e
+            raise ValueError(f"Unknown encoding: {value}") from e
 
-    raise ValueError("Unknown type passed: %s" % type(value).__name__)
+    raise ValueError(f"Unknown type passed: {type(value).__name__}")
 
 
 def parse_expires(expires: Expires = None) -> datetime:
@@ -1034,7 +1056,7 @@ def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
 
     curve: Type[ec.EllipticCurve] = getattr(ec, value.strip(), type)
     if not issubclass(curve, ec.EllipticCurve):
-        raise ValueError("%s: Not a known Eliptic Curve" % value)
+        raise ValueError(f"{value}: Not a known Eliptic Curve")
     return curve()
 
 
@@ -1076,10 +1098,6 @@ def read_file(path: str) -> bytes:
     If ``path`` is an absolute path, reads a file from the local file system. For relative paths, read the
     file using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
     """
-    if os.path.isabs(path):
-        with open(path, "rb") as abs_stream:
-            return abs_stream.read()
-
     stream = ca_storage.open(path)
 
     try:
@@ -1179,7 +1197,8 @@ class GeneralNameList(List[x509.GeneralName]):
         return list.__iadd__(self, (parse_general_name(v) for v in value))
 
     def __repr__(self) -> str:
-        return "<GeneralNameList: %r>" % [format_general_name(v) for v in self]
+        names = [format_general_name(v) for v in self]
+        return f"<GeneralNameList: {names}>"
 
     @typing.overload
     def __setitem__(self, key: SupportsIndex, value: ParsableGeneralName) -> None:  # pragma: no cover
@@ -1199,7 +1218,7 @@ class GeneralNameList(List[x509.GeneralName]):
             # equivalent to l[0] = 'example.com'
             list.__setitem__(self, key, parse_general_name(value))
         else:
-            raise TypeError("%s/%s: Invalid key/value type." % (key, value))
+            raise TypeError(f"{key}/{value}: Invalid key/value type.")
 
     def append(self, value: ParsableGeneralName) -> None:
         """Equivalent to list.append()."""
@@ -1238,7 +1257,7 @@ def get_crl_cache_key(
     scope: Optional[str] = None,
 ) -> str:
     """Get the cache key for a CRL with the given parameters."""
-    return "crl_%s_%s_%s_%s" % (serial, algorithm.name, encoding.name, scope)
+    return f"crl_{serial}_{algorithm.name}_{encoding.name}_{scope}"
 
 
 # NOTE: get_storage_class is typed to Storage (but really returns the subclass FileSystemStorage).

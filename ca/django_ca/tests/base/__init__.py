@@ -103,7 +103,7 @@ def _load_pub(data: typing.Dict[typing.Any, typing.Any]) -> PubDict:
 
 cryptography_version = tuple(int(t) for t in cryptography.__version__.split(".")[:2])
 
-with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json")) as cert_data_stream:
+with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
     _fixture_data = json.load(cert_data_stream)
 certs = _fixture_data.get("certs")
 
@@ -319,7 +319,7 @@ for cert_name, cert_data in certs.items():
     # parse extensions
     for ext_key, ext_cls in KEY_TO_EXTENSION.items():
         if cert_data.get(ext_key):
-            cert_data["%s_serialized" % ext_key] = cert_data[ext_key]
+            cert_data[f"{ext_key}_serialized"] = cert_data[ext_key]
             cert_data[ext_key] = ext_cls(cert_data[ext_key])
 
 # Calculate some fixted timestamps that we reuse throughout the tests

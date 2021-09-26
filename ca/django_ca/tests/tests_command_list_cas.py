@@ -46,7 +46,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         """Assert the output of this command."""
         context.update(certs)
         for ca_name in self.cas:
-            context.setdefault("%s_state" % ca_name, "")
+            context.setdefault(f"{ca_name}_state", "")
         self.assertEqual(output, expected.format(**context))
 
     def test_all_cas(self) -> None:
@@ -57,37 +57,35 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("list_cas")
         self.assertEqual(
             stdout,
-            """{letsencrypt_x1[serial_colons]} - {letsencrypt_x1[name]}
-{dsa[serial_colons]} - {dsa[name]}
-{ecc[serial_colons]} - {ecc[name]}
-{pwd[serial_colons]} - {pwd[name]}
-{root[serial_colons]} - {root[name]}
-{child[serial_colons]} - {child[name]}
-{letsencrypt_x3[serial_colons]} - {letsencrypt_x3[name]}
-{dst_root_x3[serial_colons]} - {dst_root_x3[name]}
-{google_g3[serial_colons]} - {google_g3[name]}
-{globalsign_r2_root[serial_colons]} - {globalsign_r2_root[name]}
-{trustid_server_a52[serial_colons]} - {trustid_server_a52[name]}
-{rapidssl_g3[serial_colons]} - {rapidssl_g3[name]}
-{geotrust[serial_colons]} - {geotrust[name]}
-{startssl_class2[serial_colons]} - {startssl_class2[name]}
-{digicert_sha2[serial_colons]} - {digicert_sha2[name]}
-{globalsign_dv[serial_colons]} - {globalsign_dv[name]}
-{comodo_ev[serial_colons]} - {comodo_ev[name]}
-{globalsign[serial_colons]} - {globalsign[name]}
-{digicert_ha_intermediate[serial_colons]} - {digicert_ha_intermediate[name]}
-{comodo_dv[serial_colons]} - {comodo_dv[name]}
-{startssl_class3[serial_colons]} - {startssl_class3[name]}
-{godaddy_g2_intermediate[serial_colons]} - {godaddy_g2_intermediate[name]}
-{digicert_ev_root[serial_colons]} - {digicert_ev_root[name]}
-{digicert_global_root[serial_colons]} - {digicert_global_root[name]}
-{identrust_root_1[serial_colons]} - {identrust_root_1[name]}
-{startssl_root[serial_colons]} - {startssl_root[name]}
-{godaddy_g2_root[serial_colons]} - {godaddy_g2_root[name]}
-{comodo[serial_colons]} - {comodo[name]}
-""".format(
-                **certs
-            ),
+            f"""{certs['letsencrypt_x1']['serial_colons']} - {certs['letsencrypt_x1']['name']}
+{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
+{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['pwd']['serial_colons']} - {certs['pwd']['name']}
+{certs['root']['serial_colons']} - {certs['root']['name']}
+{certs['child']['serial_colons']} - {certs['child']['name']}
+{certs['letsencrypt_x3']['serial_colons']} - {certs['letsencrypt_x3']['name']}
+{certs['dst_root_x3']['serial_colons']} - {certs['dst_root_x3']['name']}
+{certs['google_g3']['serial_colons']} - {certs['google_g3']['name']}
+{certs['globalsign_r2_root']['serial_colons']} - {certs['globalsign_r2_root']['name']}
+{certs['trustid_server_a52']['serial_colons']} - {certs['trustid_server_a52']['name']}
+{certs['rapidssl_g3']['serial_colons']} - {certs['rapidssl_g3']['name']}
+{certs['geotrust']['serial_colons']} - {certs['geotrust']['name']}
+{certs['startssl_class2']['serial_colons']} - {certs['startssl_class2']['name']}
+{certs['digicert_sha2']['serial_colons']} - {certs['digicert_sha2']['name']}
+{certs['globalsign_dv']['serial_colons']} - {certs['globalsign_dv']['name']}
+{certs['comodo_ev']['serial_colons']} - {certs['comodo_ev']['name']}
+{certs['globalsign']['serial_colons']} - {certs['globalsign']['name']}
+{certs['digicert_ha_intermediate']['serial_colons']} - {certs['digicert_ha_intermediate']['name']}
+{certs['comodo_dv']['serial_colons']} - {certs['comodo_dv']['name']}
+{certs['startssl_class3']['serial_colons']} - {certs['startssl_class3']['name']}
+{certs['godaddy_g2_intermediate']['serial_colons']} - {certs['godaddy_g2_intermediate']['name']}
+{certs['digicert_ev_root']['serial_colons']} - {certs['digicert_ev_root']['name']}
+{certs['digicert_global_root']['serial_colons']} - {certs['digicert_global_root']['name']}
+{certs['identrust_root_1']['serial_colons']} - {certs['identrust_root_1']['name']}
+{certs['startssl_root']['serial_colons']} - {certs['startssl_root']['name']}
+{certs['godaddy_g2_root']['serial_colons']} - {certs['godaddy_g2_root']['name']}
+{certs['comodo']['serial_colons']} - {certs['comodo']['name']}
+""",
         )
         self.assertEqual(stderr, "")
 
@@ -126,14 +124,12 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("list_cas", tree=True)
         self.assertEqual(
             stdout,
-            """{dsa[serial_colons]} - {dsa[name]}
-{ecc[serial_colons]} - {ecc[name]}
-{pwd[serial_colons]} - {pwd[name]}
-{root[serial_colons]} - {root[name]}
-└───{child[serial_colons]} - {child[name]}
-""".format(
-                **certs
-            ),
+            f"""{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
+{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['pwd']['serial_colons']} - {certs['pwd']['name']}
+{certs['root']['serial_colons']} - {certs['root']['name']}
+└───{certs['child']['serial_colons']} - {certs['child']['name']}
+""",
         )
         self.assertEqual(stderr, "")
 
@@ -153,21 +149,17 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         )
 
         stdout, stderr = self.cmd("list_cas", tree=True)
-        context = {}
-        context.update(certs)
         self.assertEqual(
             stdout,
-            """{dsa[serial_colons]} - {dsa[name]}
-{ecc[serial_colons]} - {ecc[name]}
-{pwd[serial_colons]} - {pwd[name]}
-{root[serial_colons]} - {root[name]}
+            f"""{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
+{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['pwd']['serial_colons']} - {certs['pwd']['name']}
+{certs['root']['serial_colons']} - {certs['root']['name']}
 │───ch:il:d3 - child3
 │   └───ch:il:d3:.1 - child3.1
 │───ch:il:d4 - child4
-└───{child[serial_colons]} - {child[name]}
-""".format(
-                **context
-            ),
+└───{certs['child']['serial_colons']} - {certs['child']['name']}
+""",
         )
 
 

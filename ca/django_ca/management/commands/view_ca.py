@@ -42,16 +42,16 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
             path = ca.private_key_path
 
-        self.stdout.write("%s (%s):" % (ca.name, "enabled" if ca.enabled else "disabled"))
-        self.stdout.write("* Serial: %s" % add_colons(ca.serial))
+        self.stdout.write(f"{ca.name} (%s):" % ("enabled" if ca.enabled else "disabled"))
+        self.stdout.write(f"* Serial: {add_colons(ca.serial)}")
 
         if ca_storage.exists(ca.private_key_path):
-            self.stdout.write("* Path to private key:\n  %s" % path)
+            self.stdout.write(f"* Path to private key:\n  {path}")
         else:
             self.stdout.write("* Private key not available locally.")
 
         if ca.parent:
-            self.stdout.write("* Parent: %s (%s)" % (ca.parent.name, ca.parent.serial))
+            self.stdout.write(f"* Parent: {ca.parent.name} ({ca.parent.serial})")
         else:
             self.stdout.write("* Is a root CA.")
 
@@ -59,7 +59,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         if children:
             self.stdout.write("* Children:")
             for child in children:
-                self.stdout.write("  * %s (%s)" % (child.name, child.serial))
+                self.stdout.write(f"  * {child.name} ({child.serial})")
         else:
             self.stdout.write("* Has no children.")
 
@@ -68,23 +68,23 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         else:
             pathlen = str(ca.pathlen)
 
-        self.stdout.write("* Distinguished Name: %s" % ca.distinguished_name)
-        self.stdout.write("* Maximum levels of sub-CAs (pathlen): %s" % pathlen)
-        self.stdout.write("* HPKP pin: %s" % ca.hpkp_pin)
+        self.stdout.write(f"* Distinguished Name: {ca.distinguished_name}")
+        self.stdout.write(f"* Maximum levels of sub-CAs (pathlen): {pathlen}")
+        self.stdout.write(f"* HPKP pin: {ca.hpkp_pin}")
 
         if ca.website:
-            self.stdout.write("* Website: %s" % ca.website)
+            self.stdout.write(f"* Website: {ca.website}")
         if ca.terms_of_service:
-            self.stdout.write("* Terms of service: %s" % ca.terms_of_service)
+            self.stdout.write(f"* Terms of service: {ca.terms_of_service}")
         if ca.caa_identity:
-            self.stdout.write("* CAA identity: %s" % ca.caa_identity)
+            self.stdout.write(f"* CAA identity: {ca.caa_identity}")
 
         if ca_settings.CA_ENABLE_ACME:
             self.stdout.write("")
             self.stdout.write("ACMEv2 support:")
-            self.stdout.write("* Enabled: %s" % ca.acme_enabled)
+            self.stdout.write(f"* Enabled: {ca.acme_enabled}")
             if ca.acme_enabled:
-                self.stdout.write("* Requires contact: %s" % ca.acme_requires_contact)
+                self.stdout.write(f"* Requires contact: {ca.acme_requires_contact}")
 
         self.stdout.write("")
         self.stdout.write("X509 v3 certificate extensions for CA:")
@@ -93,8 +93,8 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         self.stdout.write("")
         self.stdout.write("X509 v3 certificate extensions for signed certificates:")
-        self.stdout.write("* Certificate Revokation List (CRL): %s" % (ca.crl_url or None))
-        self.stdout.write("* Issuer URL: %s" % (ca.issuer_url or None))
-        self.stdout.write("* OCSP URL: %s" % (ca.ocsp_url or None))
-        self.stdout.write("* Issuer Alternative Name: %s" % (ca.issuer_alt_name or None))
-        self.stdout.write("\n%s" % ca.pub.pem)
+        self.stdout.write(f"* Certificate Revokation List (CRL): {ca.crl_url or None}")
+        self.stdout.write(f"* Issuer URL: {ca.issuer_url or None}")
+        self.stdout.write(f"* OCSP URL: {ca.ocsp_url or None}")
+        self.stdout.write(f"* Issuer Alternative Name: {ca.issuer_alt_name or None}")
+        self.stdout.write(f"\n{ca.pub.pem}")

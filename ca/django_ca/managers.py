@@ -15,6 +15,7 @@
 
 
 import pathlib
+import typing
 import warnings
 from typing import TYPE_CHECKING
 from typing import Any
@@ -47,6 +48,8 @@ from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
 from .modelfields import LazyCertificateSigningRequest
+from .openssh import SshHostCaExtension
+from .openssh import SshUserCaExtension
 from .profiles import Profile
 from .profiles import profiles
 from .signals import post_create_ca
@@ -180,7 +183,7 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
             elif isinstance(ext, Extension):
                 builder = builder.add_extension(*ext.for_builder())
             else:
-                raise ValueError("Cannot add extension of type %s" % type(ext).__name__)
+                raise ValueError(f"Cannot add extension of type {type(ext).__name__}")
         return builder
 
 
@@ -233,10 +236,10 @@ class CertificateAuthorityManager(
         password: Optional[bytes] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         ecc_curve: Optional[ec.EllipticCurve] = None,
-        key_type: Literal["RSA", "DSA", "ECC"] = "RSA",
+        key_type: Literal["RSA", "DSA", "ECC", "EdDSA"] = "RSA",
         key_size: Optional[int] = None,
         extra_extensions: Optional[
-            Iterable[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
+            typing.Collection[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
         ] = None,
         path: Union[pathlib.PurePath, str] = "ca",
         caa: str = "",
@@ -244,6 +247,7 @@ class CertificateAuthorityManager(
         terms_of_service: str = "",
         acme_enabled: bool = False,
         acme_requires_contact: bool = True,
+        openssh_ca: bool = False,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
@@ -265,7 +269,7 @@ class CertificateAuthorityManager(
             :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
-            authority.
+            authority. Let unset if this CA will be used for OpenSSH.
         default_hostname : str, optional
             Override the URLconfigured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
@@ -303,11 +307,12 @@ class CertificateAuthorityManager(
             The elliptic curve to use for ECC type keys, passed verbatim to
             :py:func:`~django_ca.utils.parse_key_curve`.
         key_type: str, optional
-            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"`` or ``"ECC"``, with
-            ``"RSA"`` being the default.
+            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"``, ``"ECC"``, or
+            ``"EdDSA"`` , with ``"RSA"`` being the default.
         key_size : int, optional
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
-            the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if ``key_type="ECC"``.
+            the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if
+            ``key_type="ECC"`` or ``key_type="EdDSA"``.
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
                 :py:class:`django_ca.extensions.base.Extension`, optional
             An optional list of additional extensions to add to the certificate.
@@ -323,6 +328,8 @@ class CertificateAuthorityManager(
             Set to ``True`` to enable ACME support for this CA.
         acme_requires_contact : bool, optional
             Set to ``False`` if you do not want to force clients to register with an email address.
+        openssh_ca : bool, optional
+            Set to ``True`` if you want to use this to use this CA for signing OpenSSH certs.
 
         Raises
         ------
@@ -336,8 +343,27 @@ class CertificateAuthorityManager(
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly.
         generate_key_args = validate_key_parameters(key_size, key_type, ecc_curve)
-        algorithm = parse_hash_algorithm(algorithm)
+        if not openssh_ca:
+            algorithm = parse_hash_algorithm(algorithm)
+        else:
+            algorithm = None
         expires = parse_expires(expires)
+
+        if openssh_ca and parent:
+            raise ValueError("OpenSSH does not support intermediate authorities")
+        if not openssh_ca and key_type == "EdDSA":
+            raise ValueError("EdDSA only supported for OpenSSH authorities")
+
+        # Cast extra_extensions to list if set (so that we can extend if necessary)
+        if extra_extensions:
+            extra_extensions = list(extra_extensions)
+        else:
+            extra_extensions = []
+
+        # Append OpenSSH extensions if an OpenSSH CA was requested
+        if openssh_ca:
+            # TYPE NOTE: This seems to be a false positive
+            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])  # type: ignore[list-item]
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if not isinstance(subject, Subject):
@@ -364,25 +390,25 @@ class CertificateAuthorityManager(
             # Set OCSP urls
             if not ocsp_url:
                 ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": hex_serial})
-                ocsp_url = "http://%s%s" % (default_hostname, ocsp_path)
+                ocsp_url = f"http://{default_hostname}{ocsp_path}"
             if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
                 ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": root_serial})
-                ca_ocsp_url = "http://%s%s" % (default_hostname, ocsp_path)
+                ca_ocsp_url = f"http://{default_hostname}{ocsp_path}"
 
             # Set issuer path
             issuer_path = reverse("django_ca:issuer", kwargs={"serial": root_serial})
             if parent and not ca_issuer_url:
-                ca_issuer_url = "http://%s%s" % (default_hostname, issuer_path)
+                ca_issuer_url = f"http://{default_hostname}{issuer_path}"
             if not issuer_url:
-                issuer_url = "http://%s%s" % (default_hostname, issuer_path)
+                issuer_url = f"http://{default_hostname}{issuer_path}"
 
             # Set CRL URLs
             if not crl_url:
                 crl_path = reverse("django_ca:crl", kwargs={"serial": hex_serial})
-                crl_url = ["http://%s%s" % (default_hostname, crl_path)]
+                crl_url = [f"http://{default_hostname}{crl_path}"]
             if parent and not ca_crl_url:  # CRL for CA only makes sense in intermediate CAs
                 ca_crl_path = reverse("django_ca:ca-crl", kwargs={"serial": root_serial})
-                ca_crl_url = ["http://%s%s" % (default_hostname, ca_crl_path)]
+                ca_crl_url = [f"http://{default_hostname}{ca_crl_path}"]
 
         pre_create_ca.send(
             sender=self.model,
@@ -496,7 +522,8 @@ class CertificateAuthorityManager(
         )
 
         # write private key to file
-        path = path / pathlib.PurePath("%s.key" % ca.serial.replace(":", ""))
+        safe_serial = ca.serial.replace(":", "")
+        path = path / pathlib.PurePath(f"{safe_serial}.key")
         ca.private_key_path = ca_storage.save(str(path), ContentFile(pem))
         ca.save()
 
@@ -580,9 +607,8 @@ class CertificateManager(
             raise TypeError("profile must be of type django_ca.profiles.Profile.")
 
         if not isinstance(csr, x509.CertificateSigningRequest):
-            msg = "Passing %s as csr is deprecated, pass an x509.CertificateSigningRequest instead." % (
-                type(csr).__name__
-            )
+            clsname = type(csr).__name__
+            msg = f"Passing {clsname} as csr is deprecated, pass an x509.CertificateSigningRequest instead."
             warnings.warn(msg, category=RemovedInDjangoCA120Warning, stacklevel=2)
             csr = parse_csr(csr, csr_format=csr_format)
 

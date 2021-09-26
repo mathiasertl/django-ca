@@ -160,23 +160,13 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.NullHandler",
-            #'class': 'logging.StreamHandler',
-        },
-        "mail_admins": {
-            "level": "ERROR",
-            "filters": ["require_debug_false"],
-            "class": "django.utils.log.AdminEmailHandler",
         },
     },
     "loggers": {
         "django.request": {
-            "handlers": ["mail_admins"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "django_ca": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "ERROR",
+            "propagate": False,
         },
     },
 }

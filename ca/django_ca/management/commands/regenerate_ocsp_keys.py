@@ -75,7 +75,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         key_type: ParsableKeyType,
         password: typing.Optional[bytes],
         quiet: bool,
-        **options: typing.Any
+        **options: typing.Any,
     ) -> None:
         profile = profile or "ocsp"
 
@@ -83,7 +83,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         # existing profiles. The only case is when the user undefines the "ocsp" profile, which is the
         # default.
         if profile not in ca_settings.CA_PROFILES:
-            raise CommandError("%s: Undefined profile." % profile)
+            raise CommandError(f"{profile}: Undefined profile.")
 
         if not serials:
             serials = CertificateAuthority.objects.all().order_by("serial").values_list("serial", flat=True)
@@ -94,13 +94,13 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             try:
                 ca = CertificateAuthority.objects.get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                self.stderr.write(self.style.ERROR("%s: Unknown CA." % hr_serial))
+                self.stderr.write(self.style.ERROR(f"{hr_serial}: Unknown CA."))
                 continue
 
             if not ca.key_exists:
                 if quiet is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.
-                    self.stderr.write(self.style.WARNING("%s: CA has no private key." % hr_serial))
+                    self.stderr.write(self.style.WARNING(f"{hr_serial}: CA has no private key."))
 
                 continue
 

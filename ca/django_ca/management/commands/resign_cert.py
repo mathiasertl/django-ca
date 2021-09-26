@@ -38,11 +38,8 @@ from ...subject import Subject
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
-    help = (
-        """Sign a CSR and output signed certificate. The defaults depend on the configured
-default profile, currently %s."""
-        % ca_settings.CA_DEFAULT_PROFILE
-    )
+    help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
+default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
     add_extensions_help = "TODO"
     subject_help = "TODO"
@@ -61,7 +58,7 @@ default profile, currently %s."""
         expires: timedelta,
         watch: typing.List[str],
         password: typing.Optional[bytes],
-        **options: typing.Any
+        **options: typing.Any,
     ) -> None:
         if not ca:
             ca = cert.ca
@@ -121,7 +118,7 @@ default profile, currently %s."""
         cert.watchers.add(*watchers)
 
         if options["out"]:
-            with open(options["out"], "w") as stream:
+            with open(options["out"], "w", encoding="ascii") as stream:
                 stream.write(cert.pub.pem)
         else:
             self.stdout.write(cert.pub.pem)

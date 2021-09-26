@@ -14,6 +14,7 @@
 """Test the dump_ca management command."""
 
 import os
+import re
 from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -78,7 +79,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, b"")
 
-        with open(path) as stream:
+        with open(path, encoding="ascii") as stream:
             self.assertEqual(stream.read(), self.ca.pub.pem)
 
     @override_tmpcadir()
@@ -91,11 +92,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_ca.pem")
-        msg = r"^\[Errno 2\] No such file or directory: '%s/does-not-exist/test_ca\.pem'$" % (
-            ca_settings.CA_DIR
-        )
-
-        with self.assertCommandError(msg):
+        with self.assertCommandError(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
             self.cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
         with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):

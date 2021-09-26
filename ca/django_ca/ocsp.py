@@ -55,10 +55,11 @@ def get_index(ca: CertificateAuthority) -> typing.Iterator[str]:
 
             revocation = cert.revoked_date.strftime(DATE_FORMAT)  # type: ignore[union-attr]
             if cert.revoked_reason != ReasonFlags.unspecified.name:
-                revocation += ",%s" % cert.revoked_reason
+                revocation += f",{cert.revoked_reason}"
         else:
             status = "V"
 
+        # pylint: disable=consider-using-f-string  # removed in next version, who cares?
         # Format see: http://pki-tutorial.readthedocs.org/en/latest/cadb.html
         yield "%s\n" % "\t".join(
             [

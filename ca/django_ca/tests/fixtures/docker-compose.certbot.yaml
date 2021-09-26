@@ -4,21 +4,39 @@ services:
         environment:
             POSTGRES_PASSWORD: mysecretpassword
     backend:
+        command: ./celery.sh -l ${CELERY_LOG_LEVEL:-debug}
         environment:
             DJANGO_CA_ALLOWED_HOSTS: ca.example.com localhost
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
             POSTGRES_PASSWORD: mysecretpassword
+            CELERY_LOG_LEVEL: debug
         networks:
-            - cache
-            - database
-            - public
+            cache: {}
+            database: {}
+            public: {}
+            dns:
+                ipv4_address: "10.5.0.4"
+        dns:
+            - "10.5.0.5"
     frontend:
         environment:
             DJANGO_CA_ALLOWED_HOSTS: ca.example.com webserver localhost
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
             POSTGRES_PASSWORD: mysecretpassword
+        depends_on:
+            - db
+            - cache
+            - certbot
+        networks:
+            cache: {}
+            database: {}
+            frontend: {}
+            dns:
+                ipv4_address: "10.5.0.3"
+        dns:
+            - "10.5.0.5"
     webserver:
         environment:
             NGINX_HOST: ca.example.com webserver localhost
@@ -37,8 +55,30 @@ services:
         stdin_open: true
         tty: true
 
+        # dnsmasq needs NET_ADMIN, see https://hub.docker.com/r/vimagick/dnsmasq
+        cap_add:
+            - NET_ADMIN
+
+        # inotify
+        volumes:
+            - certbot-config:/etc/dnsmasq.d/
+
         networks:
+            dns:
+                ipv4_address: "10.5.0.5"
+            frontend:
             public:
                 aliases:
                     - example
                     - http-01.example.com
+
+volumes:
+    certbot-config:
+
+networks:
+    dns:
+        driver: bridge
+        ipam:
+            config: 
+                - subnet: "10.5.0.0/16"
+                  gateway: "10.5.0.1"

@@ -15,6 +15,7 @@
 
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from pyvirtualdisplay import Display
@@ -65,7 +66,7 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
 
     def login(self, username: str = "admin", password: str = "admin") -> None:
         """Login the given user."""
-        self.selenium.get("%s%s" % (self.live_server_url, reverse("admin:login")))
+        self.selenium.get(f"{self.live_server_url}{reverse('admin:login')}")
         self.find("#id_username").send_keys(username)
         self.find("#id_password").send_keys(password)
         self.find('input[type="submit"]').click()
@@ -74,3 +75,18 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
     def wait_for_page_load(self, wait: int = 2) -> None:
         """Wait for the page to load."""
         WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
+
+
+class AcmeTestCase(TestCaseMixin, TestCase):  # pragma: no cover
+    """Basic test case that loads root and child CA and enables ACME for the latter."""
+
+    load_cas = (
+        "root",
+        "child",
+    )
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.ca = self.cas["child"]
+        self.ca.acme_enabled = True
+        self.ca.save()

@@ -142,7 +142,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         else:
             self.from_other(value)
         if not isinstance(self.critical, bool):
-            raise ValueError("%s: Invalid critical value passed" % self.critical)
+            raise ValueError(f"{self.critical}: Invalid critical value passed")
 
     def __eq__(self, other: Any) -> bool:
         return (
@@ -160,7 +160,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         )
 
     def __repr__(self) -> str:
-        return "<%s: %s, critical=%r>" % (self.name, self.repr_value(), self.critical)
+        return f"<{self.name}: {self.repr_value()}, critical={self.critical}>"
 
     def __str__(self) -> str:
         return repr(self)
@@ -212,7 +212,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         """Load class from any other value type.
 
         This class can be overwritten to allow loading classes from different types."""
-        raise ValueError("Value is of unsupported type %s" % type(value).__name__)
+        raise ValueError(f"Value is of unsupported type {type(value).__name__}")
 
     def hash_value(self) -> Hashable:
         """Return the current extension value in hashable form.
@@ -269,7 +269,7 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
         self.oid = value.oid
 
         if not name:
-            name = "Unsupported extension (OID %s)" % (self.oid.dotted_string)
+            name = f"Unsupported extension (OID {self.oid.dotted_string})"
         self.name = name
 
     def repr_value(self) -> str:
@@ -287,7 +287,7 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
 
     def as_text(self) -> str:
         if self._error:
-            return "Could not parse extension (%s)" % self._error
+            return f"Could not parse extension ({self._error})"
         return "Could not parse extension"
 
     def serialize_value(self) -> NoReturn:
@@ -329,7 +329,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
         return isinstance(other, type(self)) and self.critical == other.critical
 
     def __repr__(self) -> str:
-        return "<%s: critical=%r>" % (self.__class__.__name__, self.critical)
+        return f"<{self.__class__.__name__}: critical={self.critical}>"
 
     def repr_value(self) -> str:
         return ""
@@ -402,10 +402,11 @@ class IterableExtension(
         raise NotImplementedError
 
     def repr_value(self) -> str:
-        return "[%s]" % ", ".join([repr(v) for v in self.serialize_value()])
+        joined = ", ".join([repr(v) for v in self.serialize_value()])
+        return f"[{joined}]"
 
     def as_text(self) -> str:
-        return "\n".join(["* %s" % v for v in self.serialize_value()])
+        return "\n".join([f"* {v}" for v in self.serialize_value()])
 
     def parse_value(self, value: Union[ParsableItem, IterableItem]) -> IterableItem:
         """Parse a single value (presumably from an iterable)."""
@@ -732,9 +733,7 @@ class CRLDistributionPointsBase(
         )
 
     def as_text(self) -> str:
-        return "\n".join(
-            "* DistributionPoint:\n%s" % textwrap.indent(dp.as_text(), "  ") for dp in self.value
-        )
+        return "\n".join(f"* DistributionPoint:\n{textwrap.indent(dp.as_text(), '  ')}" for dp in self.value)
 
     def parse_value(self, value: Union[DistributionPoint, ParsableDistributionPoint]) -> DistributionPoint:
         if isinstance(value, DistributionPoint):
@@ -743,7 +742,8 @@ class CRLDistributionPointsBase(
 
     def repr_value(self) -> str:
         # Overwritten so that we can use repr() of utils.DistributionPoint
-        return "[%s]" % ", ".join([repr(v) for v in self.value])
+        joined = ", ".join([repr(v) for v in self.value])
+        return f"[{joined}]"
 
     def serialize(self) -> SerializedDistributionPoints:
         return {
@@ -803,7 +803,7 @@ class SignedCertificateTimestampsBase(
     def repr_value(self) -> str:
         if len(self.value) == 1:  # pragma: no cover  # We cannot currently create such an extension
             return "1 timestamp"
-        return "%s timestamps" % len(self.value)
+        return f"{len(self.value)} timestamps"
 
     def __setitem__(self, key, value):  # type: ignore
         raise NotImplementedError
@@ -828,6 +828,7 @@ class SignedCertificateTimestampsBase(
     def as_text(self) -> str:
         lines = []
         for val in self.human_readable_timestamps():
+            # pylint: disable=consider-using-f-string
             line = "* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}".format(**val)
             lines.append(line)
 

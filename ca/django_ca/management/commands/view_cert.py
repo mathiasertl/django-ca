@@ -56,11 +56,11 @@ class Command(CertCommandMixin, BinaryCommand):
     def handle(  # type: ignore[override]
         self, cert: Certificate, encoding: Encoding, **options: typing.Any
     ) -> None:
-        self.stdout.write("Common Name: %s" % cert.cn)
+        self.stdout.write(f"Common Name: {cert.cn}")
 
         # self.stdout.write notBefore/notAfter
-        self.stdout.write("Valid from: %s" % cert.not_before.strftime("%Y-%m-%d %H:%M"))
-        self.stdout.write("Valid until: %s" % cert.not_after.strftime("%Y-%m-%d %H:%M"))
+        self.stdout.write(f"Valid from: {cert.not_before.strftime('%Y-%m-%d %H:%M')}")
+        self.stdout.write(f"Valid until: {cert.not_after.strftime('%Y-%m-%d %H:%M')}")
 
         # self.stdout.write status
         now = datetime.utcnow()
@@ -83,14 +83,14 @@ class Command(CertCommandMixin, BinaryCommand):
 
         self.stdout.write("Watchers:")
         for watcher in cert.watchers.all():
-            self.stdout.write("* %s" % watcher)
+            self.stdout.write(f"* {watcher}")
 
         self.stdout.write("Digest:")
         for algorithm_key in ["MD5", "SHA1", "SHA256", "SHA512"]:
             algo = parse_hash_algorithm(algorithm_key)
-            self.stdout.write("    %s: %s" % (algo.name, cert.get_digest(algo)))
+            self.stdout.write(f"    {algo.name}: {cert.get_digest(algo)}")
 
-        self.stdout.write("HPKP pin: %s" % cert.hpkp_pin)
+        self.stdout.write(f"HPKP pin: {cert.hpkp_pin}")
 
         if not options["no_pem"]:
             self.stdout.write("")

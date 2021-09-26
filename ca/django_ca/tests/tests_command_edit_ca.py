@@ -44,17 +44,18 @@ class EditCATestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test command with e2e cli argument parsing."""
 
+        crl = "\n".join(self.crl)
         stdout, stderr = self.cmd_e2e(
             [
                 "edit_ca",
                 self.ca.serial,
-                "--issuer-url=%s" % self.issuer,
-                "--issuer-alt-name=%s" % self.ian,
-                "--ocsp-url=%s" % self.ocsp,
-                "--crl-url=%s" % "\n".join(self.crl),
-                "--caa=%s" % self.caa,
-                "--website=%s" % self.website,
-                "--tos=%s" % self.tos,
+                f"--issuer-url={self.issuer}",
+                f"--issuer-alt-name={self.ian}",
+                f"--ocsp-url={self.ocsp}",
+                f"--crl-url={crl}",
+                f"--caa={self.caa}",
+                f"--website={self.website}",
+                f"--tos={self.tos}",
             ]
         )
         self.assertEqual(stdout, "")
@@ -62,7 +63,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
 
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         self.assertEqual(ca.issuer_url, self.issuer)
-        self.assertEqual(ca.issuer_alt_name, "URI:%s" % self.ian)
+        self.assertEqual(ca.issuer_alt_name, f"URI:{self.ian}")
         self.assertEqual(ca.ocsp_url, self.ocsp)
         self.assertEqual(ca.crl_url, "\n".join(self.crl))
         self.assertEqual(ca.caa_identity, self.caa)

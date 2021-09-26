@@ -49,8 +49,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         excludes: typing.Optional[typing.Iterable[int]] = None,
     ) -> typing.Tuple[PrivateKeyTypes, x509.Certificate]:
         """Assert that they key ispresent and can be read."""
-        priv_path = "ocsp/%s.key" % ca.serial
-        cert_path = "ocsp/%s.pem" % ca.serial
+        priv_path = f"ocsp/{ca.serial}.key"
+        cert_path = f"ocsp/{ca.serial}.pem"
 
         self.assertTrue(ca_storage.exists(priv_path))
         self.assertTrue(ca_storage.exists(cert_path))
@@ -79,8 +79,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
 
     def assertHasNoKey(self, serial: str) -> None:  # pylint: disable=invalid-name
         """Assert that the key is **not** present."""
-        priv_path = "ocsp/%s.key" % serial
-        cert_path = "ocsp/%s.pem" % serial
+        priv_path = f"ocsp/{serial}.key"
+        cert_path = f"ocsp/{serial}.pem"
         self.assertFalse(ca_storage.exists(priv_path))
         self.assertFalse(ca_storage.exists(cert_path))
 
@@ -175,7 +175,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         ca_storage.delete(ca.private_key_path)
         stdout, stderr = self.cmd("regenerate_ocsp_keys", ca.serial, no_color=True)
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "%s: CA has no private key.\n" % add_colons(ca.serial))
+        self.assertEqual(stderr, f"{add_colons(ca.serial)}: CA has no private key.\n")
         self.assertHasNoKey(ca.serial)
 
         # and in quiet mode
