@@ -32,6 +32,7 @@ from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
 from . import ca_settings
 from .deprecation import RemovedInDjangoCA120Warning
+from .deprecation import RemovedInDjangoCA121Warning
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -103,10 +104,12 @@ class Profile:
         else:
             self.subject = Subject(ca_settings.CA_DEFAULT_SUBJECT)
 
+        if issuer_name is not None:
+            warnings.warn("issuer_name profile parameter is deprecated", category=RemovedInDjangoCA121Warning)
+
         self.algorithm = parse_hash_algorithm(algorithm)
         self.cn_in_san = cn_in_san
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
-        self.issuer_name = issuer_name
         self.add_crl_url = add_crl_url
         self.add_issuer_url = add_issuer_url
         self.add_ocsp_url = add_ocsp_url
@@ -137,7 +140,6 @@ class Profile:
             and self.extensions == o.extensions
             and self.cn_in_san == o.cn_in_san
             and self.expires == o.expires
-            and self.issuer_name == o.issuer_name
             and self.add_crl_url == o.add_crl_url
             and self.add_issuer_url == o.add_issuer_url
             and self.add_ocsp_url == o.add_ocsp_url
@@ -284,7 +286,7 @@ class Profile:
             for key in {k for k, v in extensions.items() if v is None and k in cert_extensions}:
                 del cert_extensions[key]
 
-        issuer_name = self._update_from_ca(
+        self._update_from_ca(
             ca,
             cert_extensions,
             add_crl_url=add_crl_url,
@@ -335,7 +337,7 @@ class Profile:
         public_key = csr.public_key()
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-        builder = builder.issuer_name(issuer_name)
+        builder = builder.issuer_name(ca.pub.loaded.subject)
         builder = builder.subject_name(cert_subject.name)
 
         for _key, extension in cert_extensions.items():
@@ -376,7 +378,7 @@ class Profile:
         add_ocsp_url: bool,
         add_issuer_url: bool,
         add_issuer_alternative_name: bool,
-    ) -> x509.Name:
+    ):
         """Update data from the given CA.
 
         * Sets the AuthorityKeyIdentifier extension
@@ -420,11 +422,6 @@ class Profile:
 
             ian.extend(shlex_split(ca.issuer_alt_name, ","))
             extensions[IssuerAlternativeName.key] = ian
-
-        if self.issuer_name:
-            return self.issuer_name.name
-
-        return ca.pub.loaded.subject
 
     def _update_san_from_cn(
         self,

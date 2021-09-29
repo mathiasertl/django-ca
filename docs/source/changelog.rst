@@ -16,6 +16,7 @@ This version is currently under development.
 * Remove the now redundant ``html-check`` target for documentation generation.
 * Only fetch expected number of bytes when validating ACME challenges via HTTP to prevent DOS attacks.
 * Enable ACMEv2 paths in NGINX configuration included in Docker images.
+* Ensure that a certificates ``issuer`` always matches the ``subject`` from the CA that signed it.
 * Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
 
@@ -31,6 +32,8 @@ Deprecation notices
 
 * This is the last release to support Python 3.6.
 * This is the last release to support Django 3.1.
+* The ``issuer_name`` field in a profile is deprececated and no longer has any effect. The parameter will be
+  removed in django-ca 1.22.
 
 .. _changelog-1.18.0:
 
