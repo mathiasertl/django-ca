@@ -1,4 +1,4 @@
-coverage[toml]==5.5
+coverage[toml]==6.0
 django-webtest==1.9.7
 freezegun==1.1.0
 ocspbuilder==0.10.2
