@@ -16,10 +16,13 @@ env:
   jobs:
     - DJANGO=2.2.24 CRYPTOGRAPHY=3.3.2
     - DJANGO=2.2.24 CRYPTOGRAPHY=3.4.7
+    - DJANGO=2.2.24 CRYPTOGRAPHY=35.0.0
     - DJANGO=3.1.13 CRYPTOGRAPHY=3.3.2
     - DJANGO=3.1.13 CRYPTOGRAPHY=3.4.7
+    - DJANGO=3.1.13 CRYPTOGRAPHY=35.0.0
     - DJANGO=3.2.7 CRYPTOGRAPHY=3.3.2
     - DJANGO=3.2.7 CRYPTOGRAPHY=3.4.7
+    - DJANGO=3.2.7 CRYPTOGRAPHY=35.0.0
 install:
   # Build/test dependencies
   - pip install -U pip setuptools wheel

@@ -19,6 +19,7 @@ This version is currently under development.
 * Ensure that a certificates ``issuer`` always matches the ``subject`` from the CA that signed it.
 * Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
+* Add support for cryptography 35.0.0.
 
 Backwards incompatible changes
 ==============================
