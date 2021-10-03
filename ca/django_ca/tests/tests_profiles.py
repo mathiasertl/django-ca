@@ -15,8 +15,10 @@
 
 import doctest
 import typing
+import unittest
 from datetime import timedelta
 
+from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
@@ -45,6 +47,9 @@ from .base.mixins import TestCaseMixin
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
+@unittest.skipIf(  # https://github.com/pyca/cryptography/issues/6363
+    settings.CRYPTOGRAPHY_VERSION >= (35, 0), "cg>=35.0 has broken subject name strings"
+)
 class DocumentationTestCase(TestCaseMixin, TestCase):
     """Test sphinx docs."""
 
@@ -61,6 +66,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
             "ca_serial": self.ca.serial,
             "csr": certs["root-cert"]["csr"]["parsed"],
         }
+        print(certs["root-cert"]["csr"]["parsed"])
 
     @override_tmpcadir()
     def test_module(self) -> None:

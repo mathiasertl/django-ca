@@ -444,11 +444,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         os.chmod(key_path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
-        msg = r"^Could not deserialize key data\."
-        if settings.CRYPTOGRAPHY_VERSION >= (3, 3):
-            # msg got changed in version 3.3
-            msg += r" The data may be in an incorrect format or it may be encrypted with an unsupported algorithm\."  # NOQA: E501
-        msg += "$"
+        # NOTE: cryptography>=35.0 returns a tuple with OpenSSL internals as second element. We thus match
+        #       without '^' and '$' as this would not match otherwise.
+        msg = r"Could not deserialize key data\. The data may be in an incorrect format or it may be encrypted with an unsupported algorithm\."  # NOQA: E501
 
         stdin = io.StringIO(self.csr_pem)
         with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(

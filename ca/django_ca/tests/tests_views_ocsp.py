@@ -656,7 +656,7 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
         self.assertEqual(len(logcm.output), 1)
-        self.assertIn("ValueError: Unable to load certificate", logcm.output[0])
+        self.assertIn("ValueError: ", logcm.output[0])
 
     @override_tmpcadir()
     def test_bad_responder_key(self) -> None:

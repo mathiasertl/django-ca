@@ -16,6 +16,7 @@
 import doctest
 import os
 import typing
+import unittest
 
 from django.conf import settings
 from django.test import TestCase
@@ -50,6 +51,9 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         """Test python/intro.rst."""
         doctest.testfile(f"{BASE}/python/intro.rst", globs=self.get_globs())
 
+    @unittest.skipIf(  # https://github.com/pyca/cryptography/issues/6363
+        settings.CRYPTOGRAPHY_VERSION < (35, 0), "cg==35.0 changed CertificateSigningRequest.__str__"
+    )
     @override_tmpcadir()
     def test_python_models(self) -> None:
         """Test python/models.rst."""
