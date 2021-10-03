@@ -1,4 +1,4 @@
-name: Documentation
+name: type checking
 on:
   push:
   pull_request:
@@ -34,9 +34,3 @@ jobs:
 
       - name: run mypy
         run: mypy ca/django_ca/
-
-      - name: Generate documentation
-        run: make -C docs html
-
-      - name: Spelling
-        run: make -C docs spelling
