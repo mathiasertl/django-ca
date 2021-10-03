@@ -1,0 +1,36 @@
+name: type checking
+on:
+  push:
+  pull_request:
+  pull_request_target:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_CA_SECRET_KEY: dummy
+
+    steps:
+
+      - name: Acquire sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          architecture: x64
+
+      - name: Apply caching of dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements-*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt -r requirements/requirements-mypy.txt
+
+      - name: run mypy
+        run: mypy ca/django_ca/

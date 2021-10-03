@@ -308,6 +308,10 @@ class ParseNameTestCase(TestCase):
     def test_multiple(self) -> None:
         """Test subject with multiple tokens."""
         self.assertSubject("/C=AT/OU=foo/CN=example.com", [("C", "AT"), ("OU", "foo"), ("CN", "example.com")])
+        self.assertSubject(
+            "/C=AT/OU=foo/OU=bar/CN=example.com",
+            [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
+        )
 
     def test_multiple_sorting(self) -> None:
         """Test subject with multiple tokens of the same OID - especially focusing 
@@ -358,6 +362,10 @@ class ParseNameTestCase(TestCase):
         self.assertSubject(
             "/C=AT/O=bla/OU=foo/OU=bar/OU=hugo/CN=example.com/",
             [("C", "AT"), ("O", "bla"), ("OU", "foo"), ("OU", "bar"), ("OU", "hugo"), ("CN", "example.com")],
+        )
+        self.assertSubject(
+            "/C=AT/CN=example.com/OU=foo/OU=bar",
+            [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
         )
 
     def test_multiple_other(self) -> None:

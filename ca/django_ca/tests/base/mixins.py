@@ -234,13 +234,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             extensions.append(idp)  # type: ignore[arg-type] # why is this not recognized?
         extensions.append(
             x509.Extension(
-                value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=x509.ExtensionOID.CRL_NUMBER
+                value=x509.CRLNumber(crl_number=crl_number),
+                critical=False,
+                oid=x509.oid.ExtensionOID.CRL_NUMBER,
             )
         )
         extensions.append(
             x509.Extension(
                 value=signer.get_authority_key_identifier(),
-                oid=x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                oid=x509.oid.ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
                 critical=False,
             )
         )
@@ -633,7 +635,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> "x509.Extension[x509.IssuingDistributionPoint]":
         """Get an IssuingDistributionPoint extension."""
         return x509.Extension(
-            oid=x509.ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+            oid=x509.oid.ExtensionOID.ISSUING_DISTRIBUTION_POINT,
             value=x509.IssuingDistributionPoint(
                 full_name=full_name,
                 indirect_crl=indirect_crl,

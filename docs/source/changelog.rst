@@ -16,8 +16,11 @@ This version is currently under development.
 * Remove the now redundant ``html-check`` target for documentation generation.
 * Only fetch expected number of bytes when validating ACME challenges via HTTP to prevent DOS attacks.
 * Enable ACMEv2 paths in NGINX configuration included in Docker images.
+* Ensure that a certificates ``issuer`` always matches the ``subject`` from the CA that signed it.
 * Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
+* Add support for cryptography 35.0.0.
+* Add support for idna 3.0, 3.1 and 3.2.
 
 Backwards incompatible changes
 ==============================
@@ -26,6 +29,14 @@ Backwards incompatible changes
 * Remove support for configuring absolute paths for manually configured :py:class:`django_ca.views.OCSPView`.
   This functionality was officially supposed to be removed in django-ca 1.14.0.
   
+Deprecation notices
+===================
+
+* This is the last release to support Python 3.6.
+* This is the last release to support Django 3.1.
+* This is the last release to support ``idna<=3.1``.
+* The ``issuer_name`` field in a profile is deprecated and no longer has any effect. The parameter will be
+  removed in django-ca 1.22.
 
 .. _changelog-1.18.0:
 

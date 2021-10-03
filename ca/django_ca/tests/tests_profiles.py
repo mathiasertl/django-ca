@@ -15,12 +15,15 @@
 
 import doctest
 import typing
+import unittest
 from datetime import timedelta
 
+from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA120Warning
+from ..deprecation import RemovedInDjangoCA121Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
@@ -44,6 +47,9 @@ from .base.mixins import TestCaseMixin
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
+@unittest.skipIf(  # https://github.com/pyca/cryptography/issues/6363
+    settings.CRYPTOGRAPHY_VERSION >= (35, 0), "cg>=35.0 has broken subject name strings"
+)
 class DocumentationTestCase(TestCaseMixin, TestCase):
     """Test sphinx docs."""
 
@@ -60,6 +66,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
             "ca_serial": self.ca.serial,
             "csr": certs["root-cert"]["csr"]["parsed"],
         }
+        print(certs["root-cert"]["csr"]["parsed"])
 
     @override_tmpcadir()
     def test_module(self) -> None:
@@ -224,9 +231,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = Subject({"C": "AT", "CN": "example.com"})
-        issuer = Subject("/CN=issuer.example.com")
 
-        prof = Profile("example", subject=Subject(), issuer_name=issuer)
+        prof = Profile("example", subject=Subject())
         msg = r"^Passing a str as algorithm is deprecated and will be removed in django-ca==1\.20\.0\.$"
         with self.mockSignal(pre_issue_cert) as pre, self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
             cert = self.create_cert(
@@ -259,6 +265,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 certs["child-cert"]["subject_key_identifier"],
             ],
         )
+
+    def test_issuer_deprecation(self) -> None:
+        """Test the issuer_name deprecation introduced in django-ca 1.19."""
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA121Warning, "issuer_name profile parameter is deprecated"
+        ):
+            Profile("example", subject=Subject(), issuer_name=Subject())
 
     @override_tmpcadir()
     def test_overrides(self) -> None:
