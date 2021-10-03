@@ -107,7 +107,7 @@ You can also disable adding the CommonName as ``subjectAltName``:
 ... this will only have "example.net" but not example.com as ``subjectAltName``.
 
 Advanced subject alternative names
-=============================
+==================================
 
 `django-ca` supports storing custom OID fields in the Subject alternative name extension – e.g. Microsoft's 
 `User Principal Name` (`UPN`).

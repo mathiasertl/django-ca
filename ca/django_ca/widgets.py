@@ -103,11 +103,11 @@ class SubjectWidget(CustomMultiWidget):
 
     def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None) -> None:
         _widgets = (
-            SubjectTextInput(label=_("Domain Component")),
             SubjectTextInput(label=_("Country"), attrs={"placeholder": "2 character country code"}),
             SubjectTextInput(label=_("State")),
             SubjectTextInput(label=_("Location")),
             SubjectTextInput(label=_("Organization")),
+            SubjectTextInput(label=_("Domain Component")),
             SubjectTextInput(label=_("Organizational Unit")),
             SubjectTextInput(label=_("CommonName"), attrs={"required": True}),
             SubjectTextInput(label=_("E-Mail")),
@@ -131,11 +131,11 @@ class SubjectWidget(CustomMultiWidget):
 
         # Used e.g. for initial form data (e.g. resigning a cert)
         return [
-            domain_component,
             value.get("C", ""),
             value.get("ST", ""),
             value.get("L", ""),
             value.get("O", ""),
+            domain_component,
             org_unit,
             value.get("CN", ""),
             value.get("emailAddress", ""),

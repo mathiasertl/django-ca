@@ -66,11 +66,11 @@ from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = [
-    "DC",
     "C",
     "ST",
     "L",
     "O",
+    "DC",
     "OU",
     "CN",
     "emailAddress",
@@ -106,11 +106,11 @@ SAN_NAME_MAPPINGS = {
 
 #: Map OID objects to IDs used in subject strings
 OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
-    NameOID.DOMAIN_COMPONENT: "DC",
     NameOID.COUNTRY_NAME: "C",
     NameOID.STATE_OR_PROVINCE_NAME: "ST",
     NameOID.LOCALITY_NAME: "L",
     NameOID.ORGANIZATION_NAME: "O",
+    NameOID.DOMAIN_COMPONENT: "DC",
     NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
     NameOID.COMMON_NAME: "CN",
     NameOID.EMAIL_ADDRESS: "emailAddress",
