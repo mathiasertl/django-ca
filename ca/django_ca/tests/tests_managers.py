@@ -40,6 +40,7 @@ from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet
 from ..querysets import CertificateQuerySet
 from ..subject import Subject
+from ..typehints import ParsableExtension
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -194,7 +195,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_special_cases(self) -> None:
         """Test a few special cases not covered otherwise."""
         subject = "/CN=example.com"
-        name_constraints = {"value": {"permitted": ["DNS:.com"]}}
+        name_constraints: ParsableExtension = {"critical": True, "value": {"permitted": ["DNS:.com"]}}
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
         self.assertExtensions(
