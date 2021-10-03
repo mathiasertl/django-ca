@@ -378,7 +378,7 @@ class Profile:
         add_ocsp_url: bool,
         add_issuer_url: bool,
         add_issuer_alternative_name: bool,
-    ):
+    ) -> None:
         """Update data from the given CA.
 
         * Sets the AuthorityKeyIdentifier extension
