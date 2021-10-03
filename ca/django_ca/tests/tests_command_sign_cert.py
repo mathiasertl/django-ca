@@ -21,7 +21,6 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase
 
