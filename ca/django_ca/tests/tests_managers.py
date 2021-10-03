@@ -29,6 +29,7 @@ from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
 from ..extensions import KeyUsage
+from ..extensions import NameConstraints
 from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
@@ -170,9 +171,10 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = "/CN=example.com"
         tlsf = TLSFeature({"value": ["OCSPMustStaple"]})
         ocsp_no_check = OCSPNoCheck()
+        name_constraints = NameConstraints({"value": {"permitted": ["DNS:.com"]}})
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(
-                "with-extra", subject, extra_extensions=[tlsf, ocsp_no_check.as_extension()]
+                "with-extra", subject, extra_extensions=[tlsf, ocsp_no_check.as_extension(), name_constraints]
             )
 
         exts = [e for e in ca.extensions if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
@@ -184,6 +186,23 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 ocsp_no_check,
                 BasicConstraints({"critical": True, "value": {"ca": True}}),
                 KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}),
+                NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}}),
+            ],
+        )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_special_cases(self) -> None:
+        """Test a few special cases not covered otherwise."""
+        subject = "/CN=example.com"
+        name_constraints = {"value": {"permitted": ["DNS:.com"]}}
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
+        self.assertExtensions(
+            ca,
+            [
+                BasicConstraints({"critical": True, "value": {"ca": True}}),
+                KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}),
+                NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}}),
             ],
         )
 

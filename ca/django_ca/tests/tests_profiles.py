@@ -66,7 +66,6 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
             "ca_serial": self.ca.serial,
             "csr": certs["root-cert"]["csr"]["parsed"],
         }
-        print(certs["root-cert"]["csr"]["parsed"])
 
     @override_tmpcadir()
     def test_module(self) -> None:
