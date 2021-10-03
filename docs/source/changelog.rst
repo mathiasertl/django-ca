@@ -35,7 +35,7 @@ Deprecation notices
 * This is the last release to support Python 3.6.
 * This is the last release to support Django 3.1.
 * This is the last release to support ``idna<=3.1``.
-* The ``issuer_name`` field in a profile is deprececated and no longer has any effect. The parameter will be
+* The ``issuer_name`` field in a profile is deprecated and no longer has any effect. The parameter will be
   removed in django-ca 1.22.
 
 .. _changelog-1.18.0:
