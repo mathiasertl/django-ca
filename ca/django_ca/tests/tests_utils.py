@@ -476,6 +476,13 @@ class GeneratePrivateKeyTestCase(TestCase):
 class ParseGeneralNameTest(TestCase):
     """Test :py:func:`django_ca.utils.parse_general_name`."""
 
+    def assertOtherName(self, typ: str, value: str, expected: bytes) -> None:  # pylint: disable=invalid-name
+        """Assert that the otherName of given type and value is parsed to the respective DER encoded value."""
+        self.assertEqual(
+            parse_general_name(f"otherName:2.5.4.3;{typ}:{value}"),
+            x509.OtherName(NameOID.COMMON_NAME, expected),
+        )
+
     def test_ipv4(self) -> None:
         """Test parsing an IPv4 address."""
         self.assertEqual(parse_general_name("1.2.3.4"), x509.IPAddress(ipaddress.ip_address("1.2.3.4")))
@@ -572,15 +579,40 @@ class ParseGeneralNameTest(TestCase):
 
     def test_othername(self) -> None:
         """Test parsing an otherName name."""
-        self.assertEqual(
-            parse_general_name("otherName:2.5.4.3;UTF8:example.com"),
-            x509.OtherName(NameOID.COMMON_NAME, b"\x0c\x0bexample.com"),
-        )
-        # try to trick with delimiters
-        self.assertEqual(
-            parse_general_name("otherName:2.5.4.3;UTF8:example.com;wrong:something"),
-            x509.OtherName(NameOID.COMMON_NAME, b"\x0c\x1bexample.com;wrong:something"),
-        )
+        self.assertOtherName("UTF8", "example", b"\x0c\x07example")
+        # try fooling the parser with too many delimiters
+        self.assertOtherName("UTF8", "example;wrong:val", b"\x0c\x11example;wrong:val")
+
+        for typ in ("UNIV", "UNIVERSALSTRING"):
+            self.assertOtherName(typ, "ex", b"\x1c\x08\x00\x00\x00e\x00\x00\x00x")
+        for typ in ("IA5", "IA5STRING"):
+            self.assertOtherName(typ, "example", b"\x16\x07example")
+        for typ in ("BOOL", "BOOLEAN"):
+            for val in ["TRUE", "true", "y", "Y", "YES", "yes"]:
+                self.assertOtherName(typ, val, b"\x01\x01\xff")
+            for val in ["FALSE", "false", "N", "n", "NO", "no"]:
+                self.assertOtherName(typ, val, b"\x01\x01\x00")
+        for typ in ("INT", "INTEGER"):
+            self.assertOtherName(typ, "0", b"\x02\x01\x00")
+            self.assertOtherName(typ, "1", b"\x02\x01\x01")
+            self.assertOtherName(typ, "-1", b"\x02\x01\xff")
+            self.assertOtherName(typ, "0x123", b"\x02\x02\x01#")
+        for typ in ("UTC", "UTCTIME"):
+            self.assertOtherName(typ, "202110052214Z", b"\x17\r211005220104Z")
+        self.assertOtherName("NULL", "", b"\x05\x00")
+
+    def test_othername_errors(self) -> None:
+        """Test some error conditions."""
+        with self.assertRaises(ValueError):
+            parse_general_name("otherName:2.5.4.3;UTC:123")
+        with self.assertRaisesRegex(
+            ValueError, r"^Unsupported BOOL specification for otherName: WRONG: Must be TRUE or FALSE$"
+        ):
+            parse_general_name("otherName:2.5.4.3;BOOL:WRONG")
+        with self.assertRaisesRegex(
+            ValueError, r"^Invalid NULL specification for otherName: Value must not be present$"
+        ):
+            parse_general_name("otherName:2.5.4.3;NULL:VALUE")
 
     def test_unicode_domains(self) -> None:
         """Test some unicode domains."""

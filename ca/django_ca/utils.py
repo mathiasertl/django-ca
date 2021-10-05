@@ -20,6 +20,7 @@ import typing
 from collections import abc
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 from ipaddress import ip_address
 from ipaddress import ip_network
 from typing import Any
@@ -34,8 +35,7 @@ from urllib.parse import urlparse
 
 import idna
 
-from asn1crypto.core import OctetString
-from asn1crypto.core import UTF8String
+import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -776,7 +776,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     >>> parse_general_name('rid:2.5.4.3')
     <RegisteredID(value=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>)>
     >>> parse_general_name('otherName:2.5.4.3;UTF8:example.com')
-    <OtherName(type_id=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value=b'example.com')>
+    <OtherName(type_id=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value=b'\\x0c\\x0bexample.com')>
 
     If you give a prefixed value, this function is less forgiving of any typos and does not catch any
     exceptions:
@@ -862,9 +862,35 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
 
             # Get DER representation of the value for x509.OtherName()
             if asn_typ in ("UTF8", "UTF8String"):
-                parsed_value = UTF8String(val).dump()
+                parsed_value = asn1crypto.core.UTF8String(val).dump()
+            elif asn_typ in ("UNIV", "UNIVERSALSTRING"):
+                parsed_value = asn1crypto.core.UniversalString(val).dump()
+            elif asn_typ in ("IA5", "IA5STRING"):
+                parsed_value = asn1crypto.core.IA5String(val).dump()
+            elif asn_typ in ("BOOL", "BOOLEAN"):
+                # nconf allows for true, y, yes, false, n and no as valid values
+                if val.lower() in ("true", "y", "yes"):
+                    parsed_value = asn1crypto.core.Boolean(True).dump()
+                elif val.lower() in ("false", "n", "no"):
+                    parsed_value = asn1crypto.core.Boolean(False).dump()
+                else:
+                    raise ValueError(
+                        f"Unsupported {asn_typ} specification for otherName: {val}: Must be TRUE or FALSE"
+                    )
+            elif asn_typ in ("UTC", "UTCTIME"):
+                parsed_datetime = datetime.strptime(val, "%Y%m%d%H%M%SZ").replace(tzinfo=timezone.utc)
+                parsed_value = asn1crypto.core.UTCTime(parsed_datetime).dump()
+            elif asn_typ == "NULL":
+                if val:
+                    raise ValueError("Invalid NULL specification for otherName: Value must not be present")
+                parsed_value = asn1crypto.core.Null().dump()
+            elif asn_typ in ("INT", "INTEGER"):
+                if val.startswith("0x"):
+                    parsed_value = asn1crypto.core.Integer(int(val, 16)).dump()
+                else:
+                    parsed_value = asn1crypto.core.Integer(int(val)).dump()
             elif asn_typ == "OctetString":
-                parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
+                parsed_value = asn1crypto.core.OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
                 raise ValueError(f"Unsupported ASN type in otherName: {asn_typ}")
 
