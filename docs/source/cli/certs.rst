@@ -79,10 +79,10 @@ can update existing profiles and even add new ones.
 Subject and alternative names
 =============================
 
-The Certificate's Subject (that is, it's CommonName) and the names given in the SubjectAlternativeName
+The Certificate's Subject (that is, it's CommonName) and the names given in the ``SubjectAlternativeName``
 extension define where the certificate is valid.
 
-The CommonName is usually added to the ``subjectAltName`` extension as well and vice versa. This means that
+The CommonName is usually added to the ``SubjectAlternativeName`` extension as well and vice versa. This means that
 these two will give the same CommonName and ``subjectAltName``:
 
 .. code-block:: console
@@ -90,7 +90,7 @@ these two will give the same CommonName and ``subjectAltName``:
    $ python manage.py sign_cert --subject /C=AT/.../CN=example.com
    $ python manage.py sign_cert --alt example.com
 
-A given CommonName is only added to the SubjectAlternativeName extension if it is a valid :ref:`name
+A given CommonName is only added to the ``SubjectAlternativeName`` extension if it is a valid :ref:`name
 <names_on_cli>`. If you give multiple names via ``--alt`` but no CommonName, the first one will be used as
 CommonName. Names passed via ``--alt`` are parsed as :ref:`names <names_on_cli>`, so you can also use e.g.:
 
@@ -98,13 +98,25 @@ CommonName. Names passed via ``--alt`` are parsed as :ref:`names <names_on_cli>`
 
    $ python manage.py sign_cert --alt IP:127.0.0.1
 
-You can also disable adding the CommonName as ``subjectAltName``:
+You can also disable adding the CommonName as ``subjectAlternativeName``:
 
 .. code-block:: console
 
    $ python manage.py sign_cert --cn-not-in-san --subject /C=AT/.../CN=example.com --alt=example.net
 
-... this will only have "example.net" but not example.com as ``subjectAltName``.
+... this will only have "example.net" but not example.com as ``subjectAlternativeName``.
+
+Advanced subject alternative names
+----------------------------------
+
+You can add ``OtherName`` values to ``SubjectAlternativeName`` via the same format used by OpenSSL described
+in :manpage:`ASN1_GENERATE_NCONF(3SSL)`:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --subject /CN=example.com --alt="otherName:1.3.6.1.4.1.311.20.2.3;UTF8:dummy@domain.tld"
+
+Note that currently only UTF8 strings are supported.
 
 Using profiles
 ==============

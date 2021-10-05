@@ -19,6 +19,7 @@ This version is currently under development.
 * Ensure that a certificates ``issuer`` always matches the ``subject`` from the CA that signed it.
 * Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
+* Fix parsing of ASN.1 OtherNames from the command line.
 * Add support for cryptography 35.0.0.
 * Add support for idna 3.0, 3.1 and 3.2.
 

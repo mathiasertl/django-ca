@@ -35,6 +35,7 @@ from urllib.parse import urlparse
 import idna
 
 from asn1crypto.core import OctetString
+from asn1crypto.core import UTF8String
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -855,16 +856,20 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     elif typ == "rid":
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == "othername":
-        match = re.match("(.*);(.*):(.*)", name)
+        match = re.match("(.*?);(.*?):(.*)", name)
         if match is not None:
             oid, asn_typ, val = match.groups()
-            if asn_typ == "UTF8":
-                parsed_value = val.encode("utf-8")
+
+            # Get DER representation of the value for x509.OtherName()
+            if asn_typ in ("UTF8", "UTF8String"):
+                parsed_value = UTF8String(val).dump()
             elif asn_typ == "OctetString":
                 parsed_value = OctetString(bytes(bytearray.fromhex(val))).dump()
             else:
                 raise ValueError(f"Unsupported ASN type in otherName: {asn_typ}")
 
+            # NOTE: cryptography docs are not really clear on what kind of bytes x509.OtherName() expects, but
+            #       the test suite explicitly use b"derdata" as value, indicating DER encoded data.
             return x509.OtherName(x509.ObjectIdentifier(oid), parsed_value)
 
         raise ValueError(f"Incorrect otherName format: {name}")

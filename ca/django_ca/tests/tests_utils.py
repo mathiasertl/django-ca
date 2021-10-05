@@ -574,7 +574,12 @@ class ParseGeneralNameTest(TestCase):
         """Test parsing an otherName name."""
         self.assertEqual(
             parse_general_name("otherName:2.5.4.3;UTF8:example.com"),
-            x509.OtherName(NameOID.COMMON_NAME, b"example.com"),
+            x509.OtherName(NameOID.COMMON_NAME, b"\x0c\x0bexample.com"),
+        )
+        # try to trick with delimiters
+        self.assertEqual(
+            parse_general_name("otherName:2.5.4.3;UTF8:example.com;wrong:something"),
+            x509.OtherName(NameOID.COMMON_NAME, b"\x0c\x1bexample.com;wrong:something"),
         )
 
     def test_unicode_domains(self) -> None:
