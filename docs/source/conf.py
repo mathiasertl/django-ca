@@ -91,7 +91,7 @@ if spelling is not None:
 
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
-manpages_url = "https://manpages.debian.org/{path}"
+manpages_url = "https://manpages.debian.org/{page}.{section}"
 
 
 # Add any paths that contain templates here, relative to this directory.
