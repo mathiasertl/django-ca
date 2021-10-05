@@ -878,8 +878,11 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
                         f"Unsupported {asn_typ} specification for otherName: {val}: Must be TRUE or FALSE"
                     )
             elif asn_typ in ("UTC", "UTCTIME"):
-                parsed_datetime = datetime.strptime(val, "%Y%m%d%H%M%SZ").replace(tzinfo=timezone.utc)
+                parsed_datetime = datetime.strptime(val, "%y%m%d%H%M%SZ").replace(tzinfo=timezone.utc)
                 parsed_value = asn1crypto.core.UTCTime(parsed_datetime).dump()
+            elif asn_typ in ("GENTIME", "GENERALIZEDTIME"):
+                parsed_datetime = datetime.strptime(val, "%Y%m%d%H%M%SZ").replace(tzinfo=timezone.utc)
+                parsed_value = asn1crypto.core.GeneralizedTime(parsed_datetime).dump()
             elif asn_typ == "NULL":
                 if val:
                     raise ValueError("Invalid NULL specification for otherName: Value must not be present")

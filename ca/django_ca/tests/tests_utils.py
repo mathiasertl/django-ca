@@ -597,8 +597,10 @@ class ParseGeneralNameTest(TestCase):
             self.assertOtherName(typ, "1", b"\x02\x01\x01")
             self.assertOtherName(typ, "-1", b"\x02\x01\xff")
             self.assertOtherName(typ, "0x123", b"\x02\x02\x01#")
+        for typ in ("GENTIME", "GENERALIZEDTIME"):
+            self.assertOtherName(typ, "202110052214Z", b"\x18\x0f20211005220104Z")
         for typ in ("UTC", "UTCTIME"):
-            self.assertOtherName(typ, "202110052214Z", b"\x17\r211005220104Z")
+            self.assertOtherName(typ, "2110052214Z", b"\x17\r211005220104Z")
         self.assertOtherName("NULL", "", b"\x05\x00")
 
     def test_othername_errors(self) -> None:

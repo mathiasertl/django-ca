@@ -20,8 +20,8 @@ This version is currently under development.
 * Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
 * Fix parsing of ASN.1 OtherNames from the command line.
-* Add support for creating certificates with Boolean, Null, Integer, UniversalString, IA5String and UTCTime
-  values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
+* Add support for creating certificates with Boolean, Null, Integer, UniversalString, IA5String,
+  GeneralizedTime and UTCTime values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
 * Add support for cryptography 35.0.0.
 * Add support for idna 3.0, 3.1 and 3.2.
 
