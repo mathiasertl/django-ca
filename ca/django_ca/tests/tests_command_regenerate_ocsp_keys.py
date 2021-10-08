@@ -114,7 +114,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 {},
             ),
         ):
-            stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
+            stdout, stderr = self.cmd_e2e(["regenerate_ocsp_keys", certs["root"]["serial"]])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
