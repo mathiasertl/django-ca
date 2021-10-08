@@ -17,9 +17,13 @@ This version is currently under development.
 * Only fetch expected number of bytes when validating ACME challenges via HTTP to prevent DOS attacks.
 * Enable ACMEv2 paths in NGINX configuration included in Docker images.
 * Ensure that a certificates ``issuer`` always matches the ``subject`` from the CA that signed it.
+* Support rendering distinguished names with any NameOID known to cryptography.
+* Support creating certificates with a subject containing a ``dnQualifier``, ``PC``, ``DC``, ``title``,
+  ``uid`` and ``serialNumber``.
+* Fix ``manage.py regenerate_ocsp_key`` with celery enabled.
+* Fix parsing of ASN.1 OtherNames from the command line. Previously, ``UTF8`` strings where not DER encoded.
 * Include a healthcheck script for uWSGI in the Docker image. Because the image is also shared for the
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
-* Fix parsing of ASN.1 OtherNames from the command line. Previously, ``UTF8`` strings where not DER encoded.
 * Add support for creating certificates with Boolean, Null, Integer, UniversalString, IA5String,
   GeneralizedTime and UTCTime values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
 * Add support for cryptography 35.0.0.

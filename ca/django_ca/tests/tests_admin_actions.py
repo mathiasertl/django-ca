@@ -412,7 +412,8 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     def test_resign(self) -> None:
         """Try a basic resign request."""
         with self.mockSignals():
-            response = self.client.post(self.get_url(self.cert), data=self.data)
+            url = self.get_url(self.cert)
+            response = self.client.post(url, data=self.data)
         self.assertSuccessfulRequest(response)
         self.assertRedirects(response, self.changelist_url)
 

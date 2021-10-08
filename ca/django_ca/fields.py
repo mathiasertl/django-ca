@@ -25,7 +25,6 @@ from django.utils.translation import gettext_lazy as _
 from .extensions import Extension
 from .profiles import profile
 from .subject import Subject
-from .utils import SUBJECT_FIELDS
 from .widgets import MultiValueExtensionWidget
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
@@ -94,16 +93,11 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
 class SubjectField(forms.MultiValueField):
     """A MultiValue field for a :py:class:`~django_ca.subject.Subject`."""
 
+    supported_oids = ("C", "ST", "L", "O", "OU", "CN", "emailAddress")
+    required_oids = ("CN",)
+
     def __init__(self, **kwargs: typing.Any) -> None:
-        fields = (
-            forms.CharField(required=False),  # C
-            forms.CharField(required=False),  # ST
-            forms.CharField(required=False),  # L
-            forms.CharField(required=False),  # O
-            forms.CharField(required=False),  # OU
-            forms.CharField(),  # CN
-            forms.CharField(required=False),  # E
-        )
+        fields = tuple(forms.CharField(required=v in self.required_oids) for v in self.supported_oids)
 
         # NOTE: do not pass initial here as this is done on webserver invocation
         #       This screws up tests.
@@ -112,7 +106,7 @@ class SubjectField(forms.MultiValueField):
 
     def compress(self, data_list: typing.List[typing.Tuple[str, str]]) -> Subject:
         # list comprehension is to filter empty fields
-        return Subject([(k, v) for k, v in zip(SUBJECT_FIELDS, data_list) if v])
+        return Subject([(k, v) for k, v in zip(self.supported_oids, data_list) if v])
 
 
 class SubjectAltNameField(forms.MultiValueField):

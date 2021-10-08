@@ -41,7 +41,7 @@ from ..models import CertificateAuthority
 from ..models import Watcher
 from ..subject import Subject
 from ..typehints import PrivateKeyTypes
-from ..utils import SUBJECT_FIELDS
+from ..utils import OID_NAME_MAPPINGS
 from ..utils import x509_name
 from .base import certs
 from .base import override_tmpcadir
@@ -288,7 +288,11 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
-        subject = [(f, "AT" if f == "C" else f"test-{f}") for f in SUBJECT_FIELDS]
+        subject = [
+            (f, "AT" if f in ("C", "jurisdictionCountryName") else f"test-{f}")
+            for f in OID_NAME_MAPPINGS.values()
+        ]
+        self.maxDiff = None
         csr = self.create_csr(subject)[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
 
@@ -300,11 +304,32 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 "subject": {
                     "C": "AT",
                     "CN": "test-CN",
+                    "DC": "test-DC",
                     "L": "test-L",
                     "O": "test-O",
                     "OU": "test-OU",
                     "ST": "test-ST",
                     "emailAddress": "test-emailAddress",
+                    "businessCategory": "test-businessCategory",
+                    "dnQualifier": "test-dnQualifier",
+                    "generationQualifier": "test-generationQualifier",
+                    "givenName": "test-givenName",
+                    "inn": "test-inn",
+                    "jurisdictionCountryName": "AT",
+                    "jurisdictionLocalityName": "test-jurisdictionLocalityName",
+                    "jurisdictionStateOrProvinceName": "test-jurisdictionStateOrProvinceName",
+                    "ogrn": "test-ogrn",
+                    "postalAddress": "test-postalAddress",
+                    "postalCode": "test-postalCode",
+                    "pseudonym": "test-pseudonym",
+                    "serialNumber": "test-serialNumber",
+                    "sn": "test-sn",
+                    "snils": "test-snils",
+                    "streetAddress": "test-streetAddress",
+                    "title": "test-title",
+                    "uid": "test-uid",
+                    "unstructuredName": "test-unstructuredName",
+                    "x500UniqueIdentifier": "test-x500UniqueIdentifier",
                 }
             },
         )

@@ -40,6 +40,7 @@ from .. import utils
 from ..utils import ELLIPTIC_CURVE_NAMES
 from ..utils import HASH_ALGORITHM_NAMES
 from ..utils import NAME_RE
+from ..utils import OID_NAME_MAPPINGS
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
@@ -130,6 +131,11 @@ class ConstantsTestCase(TestCase):
         subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, misc]
         self.assertEqual(len(utils.ELLIPTIC_CURVE_NAMES), len(subclasses))
         self.assertEqual(utils.ELLIPTIC_CURVE_NAMES, {e.name: e for e in subclasses})
+
+    def test_nameoid_completeness(self) -> None:
+        """Test that we support all NameOID instances."""
+        known_oids = [v for v in vars(NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
+        self.assertCountEqual(known_oids, list(OID_NAME_MAPPINGS.keys()))
 
 
 class NameMatchTest(TestCase):
@@ -358,6 +364,28 @@ class ParseNameTestCase(TestCase):
         self.assertSubject(
             "/C=AT/CN=example.com/OU=foo/OU=bar",
             [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
+        )
+        self.assertSubject(
+            "/C=AT/CN=example.com/DC=com/DC=example",
+            [("C", "AT"), ("DC", "com"), ("DC", "example"), ("CN", "example.com")],
+        )
+
+    def test_exotic_name_oids(self) -> None:
+        """Test parsing a few of the more exotic names."""
+        self.assertSubject(
+            "/DC=foo/serialNumber=serial/title=phd",
+            [("DC", "foo"), ("title", "phd"), ("serialNumber", "serial")],
+        )
+        self.assertSubject(
+            "/DC=foo/serialNumber=serial/C=AT/CN=example.com/uid=123/title=phd",
+            [
+                ("C", "AT"),
+                ("DC", "foo"),
+                ("title", "phd"),
+                ("CN", "example.com"),
+                ("uid", "123"),
+                ("serialNumber", "serial"),
+            ],
         )
 
     def test_multiple_other(self) -> None:

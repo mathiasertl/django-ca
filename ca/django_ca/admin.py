@@ -837,6 +837,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         except Exception as e:  # pylint: disable=broad-except; docs don't list possible exceptions
             return JsonResponse({"message": str(e)}, status=HTTPStatus.BAD_REQUEST)
 
+        # TODO: support CSRs with multiple OIDs (from django_ca.utils.MULTIPLE_OIDS)
         subject = {OID_NAME_MAPPINGS[s.oid]: s.value for s in csr.subject}
         return JsonResponse({"subject": subject})
 

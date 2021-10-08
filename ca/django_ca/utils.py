@@ -66,13 +66,19 @@ from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = [
+    "dnQualifier",
     "C",
+    "postalCode",
     "ST",
     "L",
+    "DC",
     "O",
     "OU",
+    "title",
     "CN",
+    "uid",
     "emailAddress",
+    "serialNumber",
 ]
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
@@ -104,20 +110,36 @@ SAN_NAME_MAPPINGS = {
 }
 
 #: Map OID objects to IDs used in subject strings
+# Human readable names come from RFC 4519 except where noted
 OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
-    NameOID.COUNTRY_NAME: "C",
-    NameOID.STATE_OR_PROVINCE_NAME: "ST",
-    NameOID.LOCALITY_NAME: "L",
-    NameOID.ORGANIZATION_NAME: "O",
-    NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
-    NameOID.COMMON_NAME: "CN",
-    NameOID.EMAIL_ADDRESS: "emailAddress",
-    NameOID.SERIAL_NUMBER: "serialNumber",
-    NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
-    NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
     NameOID.BUSINESS_CATEGORY: "businessCategory",
+    NameOID.COMMON_NAME: "CN",
+    NameOID.COUNTRY_NAME: "C",
+    NameOID.DN_QUALIFIER: "dnQualifier",
+    NameOID.DOMAIN_COMPONENT: "DC",  # TODO: RFC 4519 also specifies "domainComponent"
+    NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
+    NameOID.GENERATION_QUALIFIER: "generationQualifier",
+    NameOID.GIVEN_NAME: "givenName",
+    NameOID.INN: "inn",  # undocumented
+    NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
+    NameOID.JURISDICTION_LOCALITY_NAME: "jurisdictionLocalityName",
+    NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
+    NameOID.LOCALITY_NAME: "L",
+    NameOID.OGRN: "ogrn",  # undocumented
+    NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
+    NameOID.ORGANIZATION_NAME: "O",
+    NameOID.POSTAL_ADDRESS: "postalAddress",
     NameOID.POSTAL_CODE: "postalCode",
+    NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519
+    NameOID.SERIAL_NUMBER: "serialNumber",
+    NameOID.SNILS: "snils",  # undocumented
+    NameOID.STATE_OR_PROVINCE_NAME: "ST",
     NameOID.STREET_ADDRESS: "streetAddress",
+    NameOID.SURNAME: "sn",
+    NameOID.TITLE: "title",
+    NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
+    NameOID.USER_ID: "uid",  # TODO: RFC 4519 also specifies "userid"
+    NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
 }
 
 # same, but reversed
@@ -125,6 +147,7 @@ NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
 
 # Some OIDs can occur multiple times
 MULTIPLE_OIDS = (
+    NameOID.DOMAIN_COMPONENT,
     NameOID.ORGANIZATIONAL_UNIT_NAME,
     NameOID.STREET_ADDRESS,
 )
