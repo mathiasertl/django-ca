@@ -27,7 +27,6 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA120Warning
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
@@ -511,55 +510,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.cmd("sign_cert", ca=self.ca, subject=Subject([("C", "AT")]))
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
-
-    @override_tmpcadir()
-    def test_pass_format(self) -> None:
-        """Test passing a format, which is deprecated."""
-        common_name = "pass-format.example.com"
-        warning_msg = r"^--csr-format option is deprecated and will be removed in django-ca 1\.20\.0\.$"
-        with self.assertCreateCertSignals() as (pre, post), self.assertWarnsRegex(
-            RemovedInDjangoCA120Warning, warning_msg
-        ):
-            stdout, stderr = self.cmd_e2e(
-                [
-                    "sign_cert",
-                    f"--subject=CN={common_name}",
-                    "--csr-format=PEM",
-                ],
-                stdin=self.csr_pem.encode(),
-            )
-
-        cert = Certificate.objects.get(cn=common_name)
-        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
-        self.assertEqual(stderr, "")
-
-    @override_tmpcadir()
-    def test_unparsable_format(self) -> None:
-        """Test signing with an invalid CSR format."""
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-
-        # with self.assertCreateCertSignals(False, False) as (pre, post),
-        # with self.assertWarnsRegex(
-        #    RemovedInDjangoCA120Warning, warning_msg
-        # ):
-        with self.assertSystemExit(2), self.assertCreateCertSignals(False, False) as (pre, post):
-            self.cmd_e2e(
-                [
-                    "sign_cert",
-                    "--alt=example.com",
-                    "--csr-format=foo",
-                ],
-                stdin=self.csr_pem.encode(),
-                stdout=stdout,
-                stderr=stderr,
-            )
-        self.assertEqual(stdout.getvalue(), "")
-        self.assertTrue(
-            stderr.getvalue()
-            .strip()
-            .endswith("sign_cert: error: argument --csr-format: Unknown encoding: foo")
-        )
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])

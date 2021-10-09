@@ -41,7 +41,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
-from ..deprecation import RemovedInDjangoCA120Warning
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions import Extension
 from ..extensions import PrecertificateSignedCertificateTimestamps
@@ -205,20 +204,6 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
 
         crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[child], crl_number=4, signer=ca)
-
-    @freeze_time(timestamps["everything_valid"])
-    @override_tmpcadir()
-    def test_deprecated_algorithm_as_str(self) -> None:
-        """Test passing a str as algorithm (deprecated in 1.18.0, removed in 1.20.0)."""
-
-        full_name = "http://localhost/algorithm-as-str"
-        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
-        msg = r"^Passing a str as algorithm is deprecated and will be removed in django-ca==1\.20\.0\.$"
-        with self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
-            crl = self.ca.get_crl(
-                full_name=[full_name], algorithm="SHA512"  # type: ignore[arg-type] # what we test
-            ).public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=self.ca)
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()

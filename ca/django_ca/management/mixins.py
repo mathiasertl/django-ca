@@ -96,33 +96,17 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             action=actions.CertificateAuthorityAction,
         )
 
-    def add_format(
-        self,
-        parser: CommandParser,
-        default: typing.Optional[Encoding] = Encoding.PEM,
-        help_text: str = "",
-        opts: typing.Optional[typing.Sequence[str]] = None,
-        dest: str = "encoding",
-    ) -> None:
-        """Add the --format option."""
+    def add_format(self, parser: CommandParser) -> None:
+        """Add the -f/--format option."""
 
-        if opts is None:
-            opts = ["-f", "--format"]
-        if not help_text:
-            help_text = 'The format to use ("ASN1" is an alias for "DER", default: %(default)s).'
-        if default is not None:
-            default_text = default.name
-        else:
-            default_text = "None"
-
-        help_text = help_text % {"default": default_text}
         parser.add_argument(
-            *opts,
+            "-f",
+            "--format",
             metavar="{PEM,ASN1,DER}",
-            default=default,
+            default=Encoding.PEM,
             action=actions.FormatAction,
-            dest=dest,
-            help=help_text,
+            dest="encoding",
+            help=f'The format to use ("ASN1" is an alias for "DER", default: {Encoding.PEM.name}).',
         )
 
     def add_password(self, parser: CommandParser, help_text: str = "") -> None:

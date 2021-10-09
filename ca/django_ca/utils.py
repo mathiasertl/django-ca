@@ -48,7 +48,6 @@ from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
-from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
@@ -428,34 +427,6 @@ def sanitize_serial(value: str) -> str:
     if re.search("[^0-9A-F]", serial):
         raise ValueError(f"{value}: Serial has invalid characters")
     return serial
-
-
-def parse_csr(
-    csr: Union[x509.CertificateSigningRequest, str, bytes], csr_format: Encoding
-) -> x509.CertificateSigningRequest:
-    """Parse a CSR in the given format.
-
-    .. deprecated:: 1.18.0
-
-       This function is no longer useful and will be removed in django-ca 1.20.0.
-
-    Parameters
-    ----------
-
-    csr : str or bytes or :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
-        The CSR to parse.
-    csr_format : :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`
-        The format that the CSR is in.
-    """
-
-    if isinstance(csr, x509.CertificateSigningRequest):  # pragma: no cover # not used since 1.18.0
-        return csr
-    if csr_format == Encoding.PEM:
-        return x509.load_pem_x509_csr(force_bytes(csr), default_backend())
-    if csr_format == Encoding.DER:
-        return x509.load_der_x509_csr(force_bytes(csr), default_backend())
-
-    raise ValueError(f"Unknown CSR format passed: {csr_format}")
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:

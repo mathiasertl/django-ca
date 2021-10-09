@@ -16,7 +16,6 @@
 
 import pathlib
 import typing
-import warnings
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
@@ -43,7 +42,6 @@ from django.urls import reverse
 from django.utils.encoding import force_str
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA120Warning
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
@@ -66,7 +64,6 @@ from .utils import ca_storage
 from .utils import generate_private_key
 from .utils import get_cert_builder
 from .utils import int_to_hex
-from .utils import parse_csr
 from .utils import parse_expires
 from .utils import parse_hash_algorithm
 from .utils import validate_hostname
@@ -596,21 +593,8 @@ class CertificateManager(
         # Get the profile object if none was passed
         if profile is None:
             profile = profiles[None]
-        elif isinstance(profile, str):
-            warnings.warn(
-                "Passing a str as a profile is deprecated and will be removed in django-ca==1.20.0.",
-                category=RemovedInDjangoCA120Warning,
-                stacklevel=2,
-            )
-            profile = profiles[profile]
         elif not isinstance(profile, Profile):
             raise TypeError("profile must be of type django_ca.profiles.Profile.")
-
-        if not isinstance(csr, x509.CertificateSigningRequest):
-            clsname = type(csr).__name__
-            msg = f"Passing {clsname} as csr is deprecated, pass an x509.CertificateSigningRequest instead."
-            warnings.warn(msg, category=RemovedInDjangoCA120Warning, stacklevel=2)
-            csr = parse_csr(csr, csr_format=csr_format)
 
         cert = profile.create_cert(ca, csr, **kwargs)
 

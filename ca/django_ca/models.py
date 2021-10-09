@@ -67,7 +67,6 @@ from .acme.constants import BASE64_URL_ALPHABET
 from .acme.constants import IdentifierType
 from .acme.constants import Status
 from .constants import ReasonFlags
-from .deprecation import RemovedInDjangoCA120Warning
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -1076,13 +1075,6 @@ class CertificateAuthority(X509CertMixin):
         now = now_builder = timezone.now()
         if algorithm is None:
             algorithm = ca_settings.CA_DIGEST_ALGORITHM
-        elif isinstance(algorithm, str):
-            warnings.warn(
-                "Passing a str as algorithm is deprecated and will be removed in django-ca==1.20.0.",
-                category=RemovedInDjangoCA120Warning,
-                stacklevel=2,
-            )
-            algorithm = parse_hash_algorithm(algorithm)
 
         if timezone.is_aware(now_builder):
             now_builder = timezone.make_naive(now, pytz.utc)

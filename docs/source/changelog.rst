@@ -16,6 +16,9 @@ Backwards incompatible changes
 * Drop support for Python 3.6.
 * Drop support for Django 3.1.
 * Drop support for idna 2.8, 3.0 and 3.1.
+* Removed the ``manage.py dump_ocsp_index`` command.
+* Remove the ``--csr-format`` parameter to ``manage.py sign_cert`` (deprecated since 1.18.0).
+* ``django_ca.utils.parse_csr()`` has been removed (deprecated since 1.18.0).
 
 .. _changelog-1.19.0:
 

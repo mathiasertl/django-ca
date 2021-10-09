@@ -18,11 +18,12 @@ import typing
 import unittest
 from datetime import timedelta
 
+from cryptography.hazmat.primitives import hashes
+
 from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA120Warning
 from ..deprecation import RemovedInDjangoCA121Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
@@ -232,14 +233,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         subject = Subject({"C": "AT", "CN": "example.com"})
 
         prof = Profile("example", subject=Subject())
-        msg = r"^Passing a str as algorithm is deprecated and will be removed in django-ca==1\.20\.0\.$"
-        with self.mockSignal(pre_issue_cert) as pre, self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
                 csr,
                 subject="/C=AT",
-                algorithm="SHA256",
+                algorithm=hashes.SHA256(),
                 expires=timedelta(days=30),
                 extensions=[SubjectAlternativeName({"value": ["example.com"]})],
             )

@@ -31,7 +31,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA120Warning
 from .deprecation import RemovedInDjangoCA121Warning
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
@@ -303,13 +302,6 @@ class Profile:
             expires = self.expires
         if algorithm is None:
             algorithm = self.algorithm
-        elif isinstance(algorithm, str):
-            warnings.warn(
-                "Passing a str as algorithm is deprecated and will be removed in django-ca==1.20.0.",
-                category=RemovedInDjangoCA120Warning,
-                stacklevel=2,
-            )
-            algorithm = parse_hash_algorithm(algorithm)
 
         # Make sure that expires is a fixed timestamp
         expires = parse_expires(expires)

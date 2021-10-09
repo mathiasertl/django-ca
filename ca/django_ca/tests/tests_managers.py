@@ -16,14 +16,11 @@
 import typing
 import unittest
 
-from cryptography.hazmat.primitives.serialization import Encoding
-
 from django.test import TestCase
 
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA120Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -327,70 +324,6 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 add_ocsp_url=False,
                 add_issuer_url=False,
             )
-
-    @override_tmpcadir()
-    def test_csr_formats(self) -> None:
-        """Test passing a CSR in various deprecated formats."""
-        common_name = "csr-formats.example.com"
-        msg = r"^Passing str as csr is deprecated, pass an x509.CertificateSigningRequest instead\.$"
-        with self.assertCreateCertSignals(), self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
-            cert = Certificate.objects.create_cert(
-                self.ca,
-                certs["root-cert"]["csr"]["pem"],
-                subject=f"CN={common_name}",
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-            )
-        self.assertEqual(cert.csr.der, certs["root-cert"]["csr"]["der"])
-
-        msg = r"^Passing bytes as csr is deprecated, pass an x509.CertificateSigningRequest instead\.$"
-        with self.assertCreateCertSignals(), self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
-            cert = Certificate.objects.create_cert(
-                self.ca,
-                certs["root-cert"]["csr"]["der"],
-                csr_format=Encoding.DER,
-                subject=f"CN={common_name}",
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-            )
-        self.assertEqual(cert.csr.der, certs["root-cert"]["csr"]["der"])
-
-    def test_csr_bad_value(self) -> None:
-        """Test bassing a bad CSR format that cannot even be parsed."""
-        common_name = "csr-bad-format.example.com"
-        msg = r"^Passing bytes as csr is deprecated, pass an x509.CertificateSigningRequest instead\.$"
-        with self.assertCreateCertSignals(False, False), self.assertWarnsRegex(
-            RemovedInDjangoCA120Warning, msg
-        ), self.assertRaisesRegex(ValueError, r"^Unknown CSR format passed: FOO$"):
-            Certificate.objects.create_cert(
-                self.ca,
-                csr=certs["root-cert"]["csr"]["der"],
-                csr_format="FOO",  # type: ignore[arg-type] # what we're testing
-                subject=f"CN={common_name}",
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-            )
-        self.assertFalse(Certificate.objects.filter(cn=common_name).exists())
-
-    @override_tmpcadir()
-    def test_profile_deprecated_type(self) -> None:
-        """Test passing a profile with a deprecated type."""
-        common_name = "csr-profile-deprecated-type.example.com"
-        msg = r"^Passing a str as a profile is deprecated and will be removed in django-ca==1\.20\.0\.$"
-        with self.assertCreateCertSignals(), self.assertWarnsRegex(RemovedInDjangoCA120Warning, msg):
-            cert = Certificate.objects.create_cert(
-                self.ca,
-                csr=certs["root-cert"]["csr"]["parsed"],
-                profile="ocsp",  # type: ignore[arg-type] # what we're testing
-                subject=f"CN={common_name}",
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-            )
-        self.assertEqual(cert.profile, "ocsp")
 
     @override_tmpcadir()
     def test_profile_unsupported_type(self) -> None:
