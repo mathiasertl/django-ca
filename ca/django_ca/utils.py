@@ -109,8 +109,8 @@ SAN_NAME_MAPPINGS = {
     x509.OtherName: "otherName",
 }
 
-#: Map OID objects to IDs used in subject strings
 # Human readable names come from RFC 4519 except where noted
+#: Map OID objects to IDs used in subject strings
 OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
     NameOID.BUSINESS_CATEGORY: "businessCategory",
     NameOID.COMMON_NAME: "CN",

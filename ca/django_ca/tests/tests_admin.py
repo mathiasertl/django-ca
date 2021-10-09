@@ -292,7 +292,6 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             (f, "AT" if f in ("C", "jurisdictionCountryName") else f"test-{f}")
             for f in OID_NAME_MAPPINGS.values()
         ]
-        self.maxDiff = None
         csr = self.create_csr(subject)[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
 
