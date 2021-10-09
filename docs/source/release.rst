@@ -255,7 +255,7 @@ configured to use the local registry)::
 Release process
 ***************
 
-* Push the last commit and make sure that GitHub actions, Travis and Read The Docs run through.
+* Push the last commit and make sure that GitHub actions and Read The Docs run through.
 * Tag the release: :command:`git tag -s $version -m "release $version"`
 * Push the tag: :command:`git push origin --tags`
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
