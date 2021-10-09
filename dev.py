@@ -127,8 +127,8 @@ def test(suites):
 
     # Set up warnings
     warnings.filterwarnings(action="always")  # print all warnings
-    if django.VERSION[:2] < (4, 0):  # pragma: only django<=4.0
-        # This warning is fixed in Django 4.0:
+    if sys.version_info[:2] >= (3, 10) and django.VERSION[:2] < (4, 0):  # pragma: only django<=4.0
+        # This warning only occurs in Python 3.10 and is fixed in Django 4.0:
         #   https://github.com/django/django/commit/623c8cd8f41a99f22d39b264f7eaf7244417000b
         warnings.filterwarnings(
             action="ignore",
