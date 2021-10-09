@@ -12,4 +12,4 @@ __version__ = "1.19.0.dev1"
 # Path to default Django app configuration
 # pylint: disable=invalid-name
 # The variable name is a Django standard name
-default_app_config = "django_ca.apps.DjangoCAConfig"
+default_app_config = "django_ca.apps.DjangoCAConfig"  # pragma: only django<4.1
