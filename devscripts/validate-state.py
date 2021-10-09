@@ -16,7 +16,6 @@
 """Script to make sure that the source code is in a consistent state."""
 
 import configparser
-import difflib
 import importlib.util
 import os
 import re
@@ -77,32 +76,6 @@ def check(func):
     else:
         print(colored("No errors found.", "green"))
     print()  # to get a delimiter line to next check or summary
-    return errors
-
-
-def check_travis():
-    """Check travis.yml."""
-    errors = 0
-    check_path(".travis.yml")
-    with open(os.path.join(ROOT_DIR, ".travis.yml"), encoding="utf-8") as stream:
-        travis_config = yaml.load(stream, Loader=Loader)
-
-    # check the list of tested python versions
-    # NOTE: Travis needs newest job first (see .travis.yml), so we reverse expected list
-    errors += simple_diff("Python versions", travis_config["python"], list(reversed(CONFIG["python-map"])))
-
-    # check the job matrix
-    expected_matrix = []
-    for djver in sorted(CONFIG["django"]):
-        for cgver in sorted(CONFIG["cryptography"]):
-            expected_matrix.append(f"DJANGO={djver} CRYPTOGRAPHY={cgver}")
-
-    if expected_matrix != travis_config["env"]["jobs"]:
-        errors += 1
-        for line in difflib.Differ().compare(travis_config["env"]["jobs"], expected_matrix):
-            print(line)
-    else:
-        ok(f"Job matrix ({len(expected_matrix)} items)")
     return errors
 
 
@@ -270,8 +243,7 @@ min_djver = CONFIG["django-major"][0]
 min_cgver = CONFIG["cryptography-major"][0]
 exp_version_line = f"Written in Python {min_pyver}+, Django {min_djver}+ and cryptography {min_cgver}+."
 
-total_errors = check(check_travis)
-total_errors += check(check_github_actions_tests)
+total_errors = check(check_github_actions_tests)
 total_errors += check(check_tox)
 total_errors += check(check_setup_cfg)
 total_errors += check(check_test_settings)
