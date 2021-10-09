@@ -98,7 +98,7 @@ docker-compose
 
 * Follow :doc:`quickstart_docker_compose` to set up a CA (but skip the TLS parts - no CA will issue a
   certificate for localhost). Don't forget to add an admin user and set up CAs.
-* For this for your :file:`.env` file:
+* Use this for your :file:`.env` file:
 
   .. code-block:: bash
 
