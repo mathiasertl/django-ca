@@ -26,6 +26,7 @@ This version is currently under development.
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
 * Add support for creating certificates with Boolean, Null, Integer, UniversalString, IA5String,
   GeneralizedTime and UTCTime values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
+* The Docker image is now based on ``python:3.10-alpine3.14``.
 * Add support for Python 3.10.
 * Add support for cryptography 35.0.0.
 * Add support for idna 3.0, 3.1 and 3.2.
@@ -221,7 +222,7 @@ Deprecation notices
 
 * Add support for cryptography 2.9 and 3.0.
 * Add support for Django 3.1.
-* The docker image is now based on Alpine Linux 3.12.
+* The Docker image is now based on Alpine Linux 3.12.
 * Update `redis` to version 6 and NGINX version 18 when using docker-compose
 * Finally update Sphinx since `numpydoc#215 <https://github.com/numpy/numpydoc/issues/215#event-3371204027>`_
   is finally fixed.
@@ -261,7 +262,7 @@ Deprecation notices
 *******************
 
 * Add support for Django 3.0.
-* The docker image is now based on Alpine Linux 3.11.
+* The Docker image is now based on Alpine Linux 3.11.
 * The default project now supports configuring django-ca using YAML configuration files. Configuration using
   ``localsettings.py`` is now deprecated and will be removed in ``django-ca>=1.18.0``.
 * Start supporting Celery tasks to allow running tasks in a distributed, asynchronous task queue. Some tasks
@@ -407,7 +408,7 @@ Deprecation notices
   documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
 * The Fabric file has been removed.
 * Remove the ``CA_PROVIDE_GENERIC_CRL`` setting, the default URL configuration now includes it.
-* The docker image is now based on Alpine Linux 3.10.
+* The Docker image is now based on Alpine Linux 3.10.
 * **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
 * **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
 
