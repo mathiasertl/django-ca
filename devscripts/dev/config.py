@@ -39,6 +39,8 @@ CONFIG["django-map"] = {djver.rsplit(".", 1)[0]: djver for djver in CONFIG["djan
 CONFIG["django-major"] = [djver.rsplit(".", 1)[0] for djver in CONFIG["django"]]
 CONFIG["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in CONFIG["cryptography"]}
 CONFIG["cryptography-major"] = [minor_to_major(cgver) for cgver in CONFIG["cryptography"]]
+CONFIG["acme-map"] = {minor_to_major(acmever): acmever for acmever in CONFIG["acme"]}
+CONFIG["acme-major"] = [minor_to_major(acmever) for acmever in CONFIG["acme"]]
 CONFIG["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in CONFIG["idna"]}
 CONFIG["idna-major"] = [minor_to_major(idnaver) for idnaver in CONFIG["idna"]]
 

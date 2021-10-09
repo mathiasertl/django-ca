@@ -133,10 +133,11 @@ def check_tox():
 
     # Check that there is a testenv listing all versions
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{1.19,1.18,1.17}-idna{%s}" % (
+    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
         ",".join(CONFIG["django-map"]),
         ",".join(CONFIG["cryptography-map"]),
+        ",".join(CONFIG["acme-map"]),
         ",".join(CONFIG["idna-map"]),
     )
     # pylint: enable=consider-using-f-string
