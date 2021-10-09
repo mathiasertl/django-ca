@@ -20,9 +20,5 @@
 
 import os
 
-print("certbot env variables:")
-for key, value in [(k, v) for k, v in os.environ.items() if k.startswith("CERTBOT_")]:
-    print(key, "-->", value)
-
 path = os.path.join(os.environ["DNSMASQ_CONF_DIR"], "acme-validation.conf")
-# os.remove(path)
+os.remove(path)

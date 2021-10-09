@@ -214,6 +214,7 @@ Start the stack again, but this time add a second docker-compose override-file (
 environment variable here)::
 
    $ export COMPOSE_FILE="docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml"
+   $ docker-compose build
    $ docker-compose up -d
    $ docker-compose exec backend manage createsuperuser
    $ docker-compose exec backend manage init_ca \

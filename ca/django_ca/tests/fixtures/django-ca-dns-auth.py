@@ -21,10 +21,6 @@
 import os
 import time
 
-print("certbot env variables:")
-for key, value in [(k, v) for k, v in os.environ.items() if k.startswith("CERTBOT_")]:
-    print(key, "-->", value)
-
 domain = "_acme_challenge.%s" % os.environ["CERTBOT_DOMAIN"]
 validation = os.environ["CERTBOT_VALIDATION"]
 path = os.path.join(os.environ["DNSMASQ_CONF_DIR"], "acme-validation.conf")
