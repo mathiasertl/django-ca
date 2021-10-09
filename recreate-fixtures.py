@@ -60,7 +60,6 @@ from django.conf import settings  # NOQA: E402
 from django.core.management import call_command as manage  # NOQA: E402
 from django.test.utils import override_settings  # NOQA: E402
 from django.urls import reverse  # NOQA: E402
-from django.utils.encoding import force_text  # NOQA: E402
 
 from django_ca import ca_settings  # NOQA: E402
 from django_ca.extensions import OID_TO_EXTENSION  # NOQA: E402
@@ -754,7 +753,7 @@ if not args.only_contrib:
             no_ext_now = datetime.utcnow()
             pwd = data[ca.name]["password"]
             parsed_csr = x509.load_pem_x509_csr(csr.encode("utf-8"), default_backend())
-            subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, force_text(data[name]["cn"]))])
+            subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])])
 
             builder = x509.CertificateBuilder()
             builder = builder.not_valid_before(no_ext_now)
