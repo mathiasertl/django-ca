@@ -33,6 +33,7 @@ services:
             - database
             - public
         volumes:
+            - backend_ca_dir:/var/lib/django-ca/certs/
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
             - shared:/var/lib/django-ca/shared/
@@ -65,6 +66,7 @@ services:
             - frontend
         volumes:
             - static:/usr/share/django-ca/static/
+            - frontend_ca_dir:/var/lib/django-ca/certs/
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
             - shared:/var/lib/django-ca/shared/
@@ -116,6 +118,8 @@ services:
 volumes:
     shared:
     static:
+    backend_ca_dir:
+    frontend_ca_dir:
     shared_ca_dir:
     ocsp_key_dir:
     nginx_config:
