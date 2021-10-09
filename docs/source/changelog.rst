@@ -26,6 +26,7 @@ This version is currently under development.
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
 * Add support for creating certificates with Boolean, Null, Integer, UniversalString, IA5String,
   GeneralizedTime and UTCTime values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
+* Preliminary support for OpenSSH CAs via ``EdDSA`` keys.
 * The Docker image is now based on ``python:3.10-alpine3.14``.
 * Add support for Python 3.10.
 * Add support for cryptography 35.0.0.
