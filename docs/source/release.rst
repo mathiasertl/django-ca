@@ -30,10 +30,12 @@ Test current state
 Test demo
 =========
 
-Make sure that the demo works and test the commands from the output::
+Make sure that the demo works and test the commands from the output (``manage.py runserver`` should obviously
+be run in a separate shell)::
 
-   $ rm -rf ca/db.sqlite3 ca/files/
+   $ ./dev.py clean
    $ ./dev.py init-demo
+   $ python ca/manage.py runserver
    $ openssl verify -CAfile...
 
 Test update
