@@ -59,5 +59,9 @@ DOCKER_CONFIG[
 )
 for pyver in reversed(CONFIG["python-major"]):
     for alpver in reversed(CONFIG["alpine"]):
+        # Skip images that are just no longer built upstream
+        if (pyver, alpver) in [("3.10", "3.12")]:
+            continue
+
         if f"python:{pyver}-alpine{alpver}" not in _alpine_images:
             _alpine_images.append(f"python:{pyver}-alpine{alpver}")
