@@ -76,7 +76,6 @@ dt_parser.add_argument(
     dest="images",
     choices=DOCKER_CONFIG["alpine-images"],
     metavar=DOCKER_CONFIG["metavar"],
-    default=DOCKER_CONFIG["alpine-images"],
     help="Base images to test on, may be given multiple times.",
 )
 dt_parser.add_argument(
@@ -330,7 +329,8 @@ elif args.command == "code-quality":
 elif args.command == "docker-test":
     docker_runs = []
 
-    for image in args.images:
+    images = args.images or DOCKER_CONFIG["alpine-images"]
+    for image in images:
         print("### Testing %s ###" % image)
         tag = "django-ca-test-%s" % image
 
