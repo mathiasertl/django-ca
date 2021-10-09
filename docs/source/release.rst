@@ -114,22 +114,14 @@ After starting the setup, first verify that you're running the correct version::
 You should now be able to log in at http://localhost/admin. You are able to sign a certificate, but *only* for
 the "child" CA.
 
-In order to sign a certificate, we first need a private key and a CSR:
-
-.. code-block:: console
-
-   $ openssl genrsa -out cert.key 4096
-   $ openssl req -new -key cert.key -out cert.csr -utf8 -batch \
-   >     -subj '/CN=hostname/emailAddress=root@hostname'
-
-
 Now, let's create a certificate for the root CA. Because it's only present for Celery, we need to create it
 using the CLI:
 
 .. code-block:: console
 
-   $ docker-compose exec backend manage sign_cert --ca="Root CA" \
-   >     --subject="/CN=signed-in-backend.example.com"
+   $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
+   >     docker-compose exec backend manage sign_cert --ca="Root CA" \
+   >        --subject="/CN=signed-in-backend.example.com"
    Please paste the CSR:
    ...
 
@@ -137,8 +129,9 @@ Check that the same fails in the frontend container (because the root CA is only
 
 .. code-block:: console
 
-   $ docker-compose exec frontend manage sign_cert --ca="Root CA" \
-   >     --subject="/CN=signed-in-backend.example.com"
+   $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
+   >     docker-compose exec frontend manage sign_cert --ca="Root CA" \
+   >        --subject="/CN=signed-in-backend.example.com"
    ...
    manage sign_cert: error: argument --ca: Root: ca/...key: Private key does not exist.
 
@@ -157,6 +150,12 @@ Finally, verify that CRL and OCSP validation works:
    ...
    Response verify OK
    cert.pem: good
+
+Finally, clean up the test setup:
+
+.. code-block:: console
+
+   $ docker-compose down -v
 
 Test update
 ===========
