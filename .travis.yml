@@ -2,6 +2,7 @@ dist: "focal"  # https://docs.travis-ci.com/user/reference/overview/
 language: python
 python:
   # NOTE: Travis uses the first version as a default for non-matrix jobs, e.g. linting
+  - "3.10"
   - "3.9"
   - "3.8"
   - "3.7"

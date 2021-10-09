@@ -117,6 +117,7 @@ args = parser.parse_args()
 def test(suites):
     """Run named test suites (or all of them)."""
     # pylint: disable=import-outside-toplevel; imported here so that script runs without django
+    import django
     from django.core.management import call_command  # pylint: disable=redefined-outer-name
 
     # pylint: enable=import-outside-toplevel
@@ -126,6 +127,15 @@ def test(suites):
 
     # Set up warnings
     warnings.filterwarnings(action="always")  # print all warnings
+    if django.VERSION[:2] < (4, 0):  # pragma: only django<=4.0
+        # This warning is fixed in Django 4.0:
+        #   https://github.com/django/django/commit/623c8cd8f41a99f22d39b264f7eaf7244417000b
+        warnings.filterwarnings(
+            action="ignore",
+            message="There is no current event loop",
+            category=DeprecationWarning,
+            module="django.utils.asyncio",
+        )
     warnings.filterwarnings(action="error", module="django_ca")  # turn our warnings into errors
 
     os.chdir(CADIR)

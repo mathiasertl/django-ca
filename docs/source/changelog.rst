@@ -26,6 +26,7 @@ This version is currently under development.
   Celery worker, it is not enabled by default, but the docker-compose configuration enables it.
 * Add support for creating certificates with Boolean, Null, Integer, UniversalString, IA5String,
   GeneralizedTime and UTCTime values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
+* Add support for Python 3.10.
 * Add support for cryptography 35.0.0.
 * Add support for idna 3.0, 3.1 and 3.2.
 
