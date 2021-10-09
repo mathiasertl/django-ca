@@ -223,22 +223,31 @@ environment variable here)::
    >  --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
 
 You should be able to view the admin interface at http://localhost/admin. But the additional docker-compose
-override file adds a certbot container, that you can use to get certificates::
+override file adds a certbot container, that you can use to get certificates (note that certbot is already
+configured to use the local registry)::
 
    $ docker-compose exec certbot /bin/bash
-   root@...:~# certbot register --server http://ca.example.com/django_ca/acme/directory/ \
-   >  --email user@example.com --agree-tos --non-interactive
+   root@certbot:~# certbot register
    IMPORTANT NOTES:
     - Your account credentials have been saved in your Certbot
    ...
-   root@...:~# certbot certonly --server http://ca.example.com/django_ca/acme/directory/ \
-   >  --standalone --preferred-challenges http -d http-01.example.com
+   root@certbot:~# django-ca-test-validation.sh http http-01.example.com
+   + certbot certonly ...
    ...
    http-01 challenge for http-01.example.com
    ...
 
    IMPORTANT NOTES:
     - Congratulations! Your certificate and chain have been saved at:
+   ...
+   root@certbot:~# django-ca-test-validation.sh dns dns-01.example.com
+   + certbot certonly ...
+   ...
+   dns-01 challenge for dns-01.example.com
+   ...
+   IMPORTANT NOTES:
+    - Congratulations! Your certificate and chain have been saved at:
+   ...
 
 
 ***************
