@@ -28,6 +28,7 @@ This version is currently under development.
   GeneralizedTime and UTCTime values in the format described in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
 * Add support for Python 3.10.
 * Add support for cryptography 35.0.0.
+* Add support for acme 1.19 and 1.20.
 * Add support for idna 3.0, 3.1 and 3.2.
 
 Backwards incompatible changes
@@ -51,6 +52,7 @@ Deprecation notices
 * This is the last release to support Python 3.6.
 * This is the last release to support Django 3.1.
 * This is the last release to support ``idna<=3.1``.
+* This is the last release to support ``acme<=1.18``.
 * The ``issuer_name`` field in a profile is deprecated and no longer has any effect. The parameter will be
   removed in django-ca 1.22.
 
