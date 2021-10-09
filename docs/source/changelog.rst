@@ -12,6 +12,10 @@ ChangeLog
 
 This version is currently under development.
 
+.. WARNING:: 
+
+   **docker-compose users:** See :ref:`the update notes <update_119>` or you might loose private keys!
+
 * Implement DNS-01 validation for ACMEv2. Note that ACMEv2 support is still experimental and disabled by
   default.
 * Support rendering distinguished names with any NameOID known to cryptography.

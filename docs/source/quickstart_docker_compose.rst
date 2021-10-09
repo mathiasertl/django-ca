@@ -74,6 +74,8 @@ to port 80 (HTTP).
    user@host:~$ sudo ls /etc/letsencrypt/live/ca.example.com
    README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 
+.. _docker-compose.yml:
+
 *****************
 Get configuration
 *****************
