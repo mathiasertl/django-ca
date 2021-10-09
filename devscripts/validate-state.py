@@ -209,9 +209,10 @@ def check_setup_cfg():
     if expected_cg_req not in install_requires:
         errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
-    expected_idna_req = f"idna>={CONFIG['idna-major'][0]}"
-    if expected_idna_req not in install_requires:
-        errors += err(f"{expected_idna_req}: Expected idna requirement not found.")
+    # Do not check setup.cfg minimum dependency, as actually any version works fine right now
+    # expected_idna_req = f"idna>={CONFIG['idna-major'][0]}"
+    # if expected_idna_req not in install_requires:
+    #    errors += err(f"{expected_idna_req}: Expected idna requirement not found.")
 
     return errors
 

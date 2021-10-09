@@ -6,7 +6,6 @@ python:
   - "3.9"
   - "3.8"
   - "3.7"
-  - "3.6"
   #- "nightly"
 
 # Enable pip cache: https://docs.travis-ci.com/user/caching/
@@ -18,9 +17,6 @@ env:
     - DJANGO=2.2.24 CRYPTOGRAPHY=3.3.2
     - DJANGO=2.2.24 CRYPTOGRAPHY=3.4.7
     - DJANGO=2.2.24 CRYPTOGRAPHY=35.0.0
-    - DJANGO=3.1.13 CRYPTOGRAPHY=3.3.2
-    - DJANGO=3.1.13 CRYPTOGRAPHY=3.4.7
-    - DJANGO=3.1.13 CRYPTOGRAPHY=35.0.0
     - DJANGO=3.2.8 CRYPTOGRAPHY=3.3.2
     - DJANGO=3.2.8 CRYPTOGRAPHY=3.4.7
     - DJANGO=3.2.8 CRYPTOGRAPHY=35.0.0

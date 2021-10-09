@@ -4,6 +4,19 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.20.0:
+
+************
+1.20.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Python 3.6.
+* Drop support for Django 3.1.
+* Drop support for idna 2.8, 3.0 and 3.1.
+
 .. _changelog-1.19.0:
 
 *******************
