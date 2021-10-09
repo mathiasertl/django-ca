@@ -10,8 +10,6 @@ ChangeLog
 1.19.0 (2021-10-09)
 *******************
 
-This version is currently under development.
-
 .. WARNING:: 
 
    **docker-compose users:** See :ref:`the update notes <update_119>` or you might loose private keys!
