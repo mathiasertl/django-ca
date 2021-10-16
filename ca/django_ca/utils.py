@@ -41,6 +41,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -52,6 +53,7 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
+from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import Literal
 from .typehints import ParsableGeneralName
@@ -60,7 +62,6 @@ from .typehints import ParsableHash
 from .typehints import ParsableKeyCurve
 from .typehints import ParsableKeyType
 from .typehints import ParsableRelativeDistinguishedName
-from .typehints import PrivateKeyTypes
 from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
@@ -697,9 +698,9 @@ def generate_private_key(
 
 def generate_private_key(
     key_size: Optional[int],
-    key_type: Literal["RSA", "DSA", "ECC", "EdDSA"],
+    key_type: ParsableKeyType,
     ecc_curve: Optional[ec.EllipticCurve],
-) -> PrivateKeyTypes:
+) -> PRIVATE_KEY_TYPES:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
@@ -727,6 +728,8 @@ def generate_private_key(
         return ec.generate_private_key(ecc_curve, default_backend())
     if key_type == "EdDSA" and ecc_curve is None and key_size is None:
         return ed25519.Ed25519PrivateKey.generate()
+    if key_type == "Ed448" and ecc_curve is None and key_size is None:
+        return ed448.Ed448PrivateKey.generate()
     if key_type == "RSA" and key_size is not None:
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 

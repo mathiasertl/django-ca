@@ -897,7 +897,7 @@ class CertificateAuthority(X509CertMixin):
         key_size : int, optional
             The key size of the private key, defaults to :ref:`CA_DEFAULT_KEY_SIZE
             <settings-ca-default-key-size>`.
-        key_type : {"RSA", "DSA", "ECC", "EdDSA"}, optional
+        key_type : {"RSA", "DSA", "ECC", "EdDSA", "Ed448"}, optional
             The private key type to use, the default is ``"RSA"``.
         ecc_curve : str, optional
             Passed to :py:func:`~django_ca.utils.parse_key_curve`, defaults to the :ref:`CA_DEFAULT_ECC_CURVE
