@@ -19,8 +19,6 @@
 import typing
 from datetime import timedelta
 
-from cryptography.hazmat.primitives.serialization import Encoding
-
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
@@ -95,7 +93,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         kwargs = {
             "algorithm": options["algorithm"],
-            "csr_format": Encoding.PEM,
             "expires": expires,
             "extensions": [],
             "password": password,
