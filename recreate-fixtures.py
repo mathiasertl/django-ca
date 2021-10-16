@@ -67,6 +67,7 @@ from django_ca.extensions import Extension  # NOQA: E402
 from django_ca.extensions.utils import PolicyInformation  # NOQA: E402
 from django_ca.models import Certificate  # NOQA: E402
 from django_ca.models import CertificateAuthority  # NOQA: E402
+from django_ca.profiles import profiles  # NOQA:  E402
 from django_ca.subject import Subject  # NOQA: E402
 from django_ca.utils import ca_storage  # NOQA: E402
 from django_ca.utils import hex_to_bytes  # NOQA: E402
@@ -172,7 +173,7 @@ def create_csr(key_path, path, subject="/CN=ignored.example.com"):
 
     with open(path) as stream:
         csr = stream.read()
-    return csr
+    return x509.load_pem_x509_csr(csr.encode("utf-8"), default_backend())
 
 
 def update_cert_data(cert, data):
@@ -367,6 +368,7 @@ data = {
             },
         },
         "pathlen": ecc_pathlen,
+        "key_type": "ECC",
         "max_pathlen": 1,
     },
     "dsa": {
@@ -411,6 +413,7 @@ data = {
         "ca": "ecc",
         "delta": timedelta(days=5),
         "csr": True,
+        "key_type": "ECC",
     },
     "pwd-cert": {
         "ca": "pwd",
@@ -702,9 +705,9 @@ if not args.only_contrib:
                 cert = Certificate.objects.create_cert(
                     ca=ca,
                     csr=csr,
-                    profile="server",
+                    profile=profiles["server"],
                     expires=data[name]["expires"],
-                    algorithm=data[name]["algorithm"],
+                    algorithm=getattr(hashes, data[name]["algorithm"])(),
                     password=pwd,
                     subject=subject,
                 )
@@ -729,8 +732,8 @@ if not args.only_contrib:
                 cert = Certificate.objects.create_cert(
                     ca=ca,
                     csr=csr,
-                    profile=profile,
-                    algorithm=data[name]["algorithm"],
+                    profile=profiles[profile],
+                    algorithm=getattr(hashes, data[name]["algorithm"])(),
                     expires=data[name]["expires"],
                     password=pwd,
                     subject=subject,
@@ -752,7 +755,6 @@ if not args.only_contrib:
         with freeze_time(freeze_now):
             no_ext_now = datetime.utcnow()
             pwd = data[ca.name]["password"]
-            parsed_csr = x509.load_pem_x509_csr(csr.encode("utf-8"), default_backend())
             subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])])
 
             builder = x509.CertificateBuilder()
@@ -761,7 +763,7 @@ if not args.only_contrib:
             builder = builder.serial_number(x509.random_serial_number())
             builder = builder.subject_name(subject)
             builder = builder.issuer_name(ca.pub.loaded.subject)
-            builder = builder.public_key(parsed_csr.public_key())
+            builder = builder.public_key(csr.public_key())
 
             x509_cert = builder.sign(
                 private_key=ca.key(pwd), algorithm=hashes.SHA256(), backend=default_backend()
@@ -794,8 +796,8 @@ if not args.only_contrib:
             cert = Certificate.objects.create_cert(
                 ca=ca,
                 csr=csr,
-                profile="webserver",
-                algorithm=data[name]["algorithm"],
+                profile=profiles["webserver"],
+                algorithm=getattr(hashes, data[name]["algorithm"])(),
                 subject=data[name]["subject"],
                 expires=data[name]["expires"],
                 password=pwd,
@@ -818,8 +820,8 @@ if not args.only_contrib:
             cert = Certificate.objects.create_cert(
                 ca=ca,
                 csr=csr,
-                profile="webserver",
-                algorithm=data[name]["algorithm"],
+                profile=profiles["webserver"],
+                algorithm=getattr(hashes, data[name]["algorithm"])(),
                 subject=data[name]["subject"],
                 expires=data[name]["expires"],
                 password=pwd,
