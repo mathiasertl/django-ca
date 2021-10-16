@@ -626,7 +626,7 @@ def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = "RSA",
     ecc_curve: ParsableKeyCurve = None,
-) -> Tuple[Optional[int], Literal["RSA", "DSA", "ECC", "EdDSA"], Optional[ec.EllipticCurve]]:
+) -> Tuple[Optional[int], ParsableKeyType, Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is

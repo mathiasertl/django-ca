@@ -56,9 +56,9 @@ from .signals import pre_create_ca
 from .subject import Subject
 from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
-from .typehints import Literal
 from .typehints import ParsableExtension
 from .typehints import ParsableHash
+from .typehints import ParsableKeyType
 from .typehints import ParsableSubject
 from .utils import ca_storage
 from .utils import generate_private_key
@@ -233,7 +233,7 @@ class CertificateAuthorityManager(
         password: Optional[bytes] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         ecc_curve: Optional[ec.EllipticCurve] = None,
-        key_type: Literal["RSA", "DSA", "ECC", "EdDSA"] = "RSA",
+        key_type: ParsableKeyType = "RSA",
         key_size: Optional[int] = None,
         extra_extensions: Optional[
             typing.Collection[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
