@@ -19,6 +19,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 from pyvirtualdisplay import Display
+from selenium.webdriver import Firefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
@@ -43,10 +46,8 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
             cls.vdisplay = Display(visible=False, size=(1024, 768))
             cls.vdisplay.start()
 
-        cls.selenium = WebDriver(
-            executable_path=settings.GECKODRIVER_PATH, service_log_path=settings.GECKODRIVER_LOG_PATH
-        )
-        cls.selenium.implicitly_wait(10)
+        service = Service(settings.GECKODRIVER_PATH, log_path=settings.GECKODRIVER_LOG_PATH)
+        cls.selenium = Firefox(service=service)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -62,7 +63,12 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
     def find(self, selector: str) -> WebElement:
         """Find an element by CSS selector."""
 
-        return self.selenium.find_element_by_css_selector(selector)
+        return self.selenium.find_element(by=By.CSS_SELECTOR, value=selector)
+
+    def find_by_tag(self, tag: str) -> WebElement:
+        """Find an element by its tag (e.g. "body")."""
+
+        return self.selenium.find_element(by=By.TAG_NAME, value=tag)
 
     def login(self, username: str = "admin", password: str = "admin") -> None:
         """Login the given user."""
@@ -74,7 +80,9 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
 
     def wait_for_page_load(self, wait: int = 2) -> None:
         """Wait for the page to load."""
-        WebDriverWait(self.selenium, wait).until(lambda driver: driver.find_element_by_tag_name("body"))
+        WebDriverWait(self.selenium, wait).until(
+            lambda driver: driver.find_element(by=By.TAG_NAME, value="body")
+        )
 
 
 class AcmeTestCase(TestCaseMixin, TestCase):  # pragma: no cover

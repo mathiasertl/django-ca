@@ -2,6 +2,9 @@ from selenium.webdriver.remote.webelement import WebElement
 
 
 class WebDriver:
+    def find_element(self, by: str, value: str) -> WebElement:
+        ...
+
     def find_element_by_css_selector(self, css_selector: str) -> WebElement:
         ...
 

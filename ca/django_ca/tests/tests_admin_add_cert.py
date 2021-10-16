@@ -24,6 +24,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from freezegun import freeze_time
+from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 
@@ -864,9 +865,9 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         }
 
         for key, elem in subject_fields.items():
-            input_elem = elem.find_element_by_css_selector("input")
-            csr_copy = elem.find_element_by_css_selector(".from-csr-copy")
-            from_csr = elem.find_element_by_css_selector(".from-csr-value")
+            input_elem = elem.find_element(By.CSS_SELECTOR, "input")  # type: ignore[var-annotated]
+            csr_copy = elem.find_element(By.CSS_SELECTOR, ".from-csr-copy")  # type: ignore[var-annotated]
+            from_csr = elem.find_element(By.CSS_SELECTOR, ".from-csr-value")  # type: ignore[var-annotated]
             self.assertEqual(from_csr.text, cert["csr_subject"][key])
 
             # click the 'copy' button
