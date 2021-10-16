@@ -622,6 +622,13 @@ def validate_key_parameters(
     ...
 
 
+@typing.overload
+def validate_key_parameters(
+    key_size: Optional[int], key_type: Literal["Ed448"], ecc_curve: ParsableKeyCurve = None
+) -> Tuple[None, Literal["Ed448"], None]:
+    ...
+
+
 def validate_key_parameters(
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = "RSA",
@@ -656,7 +663,7 @@ def validate_key_parameters(
             raise ValueError(f"{key_size}: Key size must be a power of two")
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
-    elif key_type == "EdDSA":
+    elif key_type in ("EdDSA", "Ed448"):
         key_size = ecc_curve = None
     else:
         raise ValueError(f"{key_type}: Unknown key type")
