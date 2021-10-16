@@ -507,7 +507,7 @@ class GeneratePrivateKeyTestCase(TestCase):
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid key type."""
-        with self.assertRaisesRegex(ValueError, r"^FOO: Invalid key type\.$"):
+        with self.assertRaisesRegex(ValueError, r"^FOO: Unknown key type$"):
             generate_private_key(16, "FOO", None)  # type: ignore[call-overload]
 
 
@@ -821,7 +821,7 @@ class ParseKeyCurveTestCase(TestCase):
 
     def test_basic(self) -> None:
         """Some basic tests."""
-        self.assertIsInstance(parse_key_curve(), type(ca_settings.CA_DEFAULT_ECC_CURVE))
+        self.assertIsInstance(parse_key_curve(), ca_settings.CA_DEFAULT_ECC_CURVE)
         self.assertIsInstance(parse_key_curve("SECT409R1"), ec.SECT409R1)
         self.assertIsInstance(parse_key_curve("SECP521R1"), ec.SECP521R1)
         self.assertIsInstance(parse_key_curve("SECP192R1"), ec.SECP192R1)
@@ -1150,23 +1150,19 @@ class GetCertBuilderTestCase(TestCase):
 class ValidateKeyParametersTest(TestCase):
     """Test :py:func:`django_ca.utils.validate_key_parameters`."""
 
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertEqual(validate_key_parameters(), (ca_settings.CA_DEFAULT_KEY_SIZE, "RSA", None))
-        self.assertEqual(
-            validate_key_parameters(key_type=None), (ca_settings.CA_DEFAULT_KEY_SIZE, "RSA", None)
-        )
-
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
-            validate_key_parameters(4096, "FOOBAR")  # type: ignore[call-overload]
+            validate_key_parameters(4096, "FOOBAR")  # type: ignore[arg-type]
 
         with self.assertRaisesRegex(ValueError, "^4000: Key size must be a power of two$"):
             validate_key_parameters(4000, "RSA")
 
         with self.assertRaisesRegex(ValueError, "^16: Key size must be least 1024 bits$"):
             validate_key_parameters(16, "RSA")
+
+        with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
+            validate_key_parameters(16, "ECC", "secp192r1")  # type: ignore[arg-type]  # what we're testing
 
 
 class GeneralNameListTestCase(TestCase):

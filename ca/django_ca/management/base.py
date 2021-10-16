@@ -133,7 +133,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             "--ecc-curve",
             metavar="CURVE",
             action=actions.KeyCurveAction,
-            default=ca_settings.CA_DEFAULT_ECC_CURVE,
+            default=ca_settings.CA_DEFAULT_ECC_CURVE(),
             help=f"Elliptic Curve used for ECC keys (default: {default}).",
         )
 

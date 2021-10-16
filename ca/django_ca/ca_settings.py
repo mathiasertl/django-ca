@@ -240,8 +240,8 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
 
 _CA_DEFAULT_ECC_CURVE = getattr(settings, "CA_DEFAULT_ECC_CURVE", "SECP256R1").strip()
 try:
-    CA_DEFAULT_ECC_CURVE: ec.EllipticCurve = getattr(ec, _CA_DEFAULT_ECC_CURVE)()
-    if not isinstance(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
+    CA_DEFAULT_ECC_CURVE: typing.Type[ec.EllipticCurve] = getattr(ec, _CA_DEFAULT_ECC_CURVE)
+    if not issubclass(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
         raise ImproperlyConfigured(f"{_CA_DEFAULT_ECC_CURVE}: Not an EllipticCurve.")
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context

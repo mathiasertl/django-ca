@@ -76,14 +76,15 @@ parameters::
 
 There are some more parameters to configure how the CA will be signed::
 
+   >>> from cryptography.hazmat.primitives.asymmetric import ec
    >>> CertificateAuthority.objects.init(
    ...   name='props', subject='/CN=child.example.com',
    ...   algorithm='SHA256',  # sha512 would be the default
    ...   pathlen=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
-   ...   key_size=4096,  # key size for RSA keys - unused in this example
+   ...   key_size=4096,  # key size for DSA/RSA keys - unused in this example
    ...   key_type='ECC',  # create an ECC private key
-   ...   ecc_curve='SECP256R1'
+   ...   ecc_curve=ec.SECP256R1()  # ECC key curve
    ... )
    <CertificateAuthority: props>
 

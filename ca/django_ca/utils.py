@@ -593,112 +593,68 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     return encoded
 
 
-@typing.overload
-def validate_key_parameters(
-    key_size: Optional[int], key_type: Literal["DSA"], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[int, Literal["DSA"], None]:
-    ...
-
-
-@typing.overload
 def validate_key_parameters(
     key_size: Optional[int] = None,
-    key_type: Optional[Literal["RSA"]] = "RSA",
-    ecc_curve: ParsableKeyCurve = None,
-) -> Tuple[int, Literal["RSA"], None]:
-    ...
-
-
-@typing.overload
-def validate_key_parameters(
-    key_size: Optional[int], key_type: Literal["ECC"], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[None, Literal["ECC"], ec.EllipticCurve]:
-    ...
-
-
-@typing.overload
-def validate_key_parameters(
-    key_size: Optional[int], key_type: Literal["EdDSA"], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[None, Literal["EdDSA"], None]:
-    ...
-
-
-@typing.overload
-def validate_key_parameters(
-    key_size: Optional[int], key_type: Literal["Ed448"], ecc_curve: ParsableKeyCurve = None
-) -> Tuple[None, Literal["Ed448"], None]:
-    ...
-
-
-def validate_key_parameters(
-    key_size: Optional[int] = None,
-    key_type: Optional[ParsableKeyType] = "RSA",
-    ecc_curve: ParsableKeyCurve = None,
-) -> Tuple[Optional[int], ParsableKeyType, Optional[ec.EllipticCurve]]:
+    key_type: ParsableKeyType = "RSA",
+    ecc_curve: typing.Optional[ec.EllipticCurve] = None,
+) -> None:
     """Validate parameters for private key generation and return sanitized values.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
     generated.
 
-    >>> validate_key_parameters()  # defaults
-    (1024, 'RSA', None)
-    >>> validate_key_parameters(4096, 'ECC', None)  # doctest: +ELLIPSIS
-    (None, 'ECC', <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
+    >>> validate_key_parameters(4096, "RSA", None)
+    >>> validate_key_parameters(4096, "Ed448", None)  # Ed448 does not care about the key size
     >>> validate_key_parameters(4000, 'RSA', None)
     Traceback (most recent call last):
         ...
     ValueError: 4000: Key size must be a power of two
     """
-    if key_type is None:
-        key_type = "RSA"
 
-    if key_type == "ECC":
-        key_size = None
-        ecc_curve = parse_key_curve(ecc_curve)
-    elif key_type in ["DSA", "RSA"]:
-        ecc_curve = None
-        if key_size is None:
-            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+    if key_type not in ("RSA", "DSA", "ECC", "EdDSA", "Ed448"):
+        raise ValueError(f"{key_type}: Unknown key type")
 
-        if not is_power2(key_size):
+    if key_type in ("RSA", "DSA") and key_size is not None:
+        if is_power2(key_size) is False:
             raise ValueError(f"{key_size}: Key size must be a power of two")
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
-    elif key_type in ("EdDSA", "Ed448"):
-        key_size = ecc_curve = None
-    else:
-        raise ValueError(f"{key_type}: Unknown key type")
 
-    return key_size, key_type, ecc_curve
+    if key_type == "ECC" and ecc_curve is not None and not isinstance(ecc_curve, ec.EllipticCurve):
+        raise ValueError(f"{ecc_curve}: Must be a subclass of ec.EllipticCurve")
 
 
 @typing.overload
-def generate_private_key(key_size: int, key_type: Literal["DSA"], ecc_curve: None) -> dsa.DSAPrivateKey:
-    ...
-
-
-@typing.overload
-def generate_private_key(key_size: int, key_type: Literal["RSA"], ecc_curve: None) -> rsa.RSAPrivateKey:
+def generate_private_key(
+    key_size: typing.Optional[int], key_type: Literal["DSA"], ecc_curve: typing.Optional[ec.EllipticCurve]
+) -> dsa.DSAPrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: None, key_type: Literal["ECC"], ecc_curve: ec.EllipticCurve
+    key_size: typing.Optional[int], key_type: Literal["RSA"], ecc_curve: typing.Optional[ec.EllipticCurve]
+) -> rsa.RSAPrivateKey:
+    ...
+
+
+@typing.overload
+def generate_private_key(
+    key_size: typing.Optional[int], key_type: Literal["ECC"], ecc_curve: typing.Optional[ec.EllipticCurve]
 ) -> ec.EllipticCurvePrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: None, key_type: Literal["EdDSA"], ecc_curve: None
+    key_size: typing.Optional[int], key_type: Literal["EdDSA"], ecc_curve: typing.Optional[ec.EllipticCurve]
 ) -> ed25519.Ed25519PrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: None, key_type: Literal["Ed448"], ecc_curve: None
+    key_size: typing.Optional[int], key_type: Literal["Ed448"], ecc_curve: typing.Optional[ec.EllipticCurve]
 ) -> ed448.Ed448PrivateKey:
     ...
 
@@ -717,7 +673,7 @@ def generate_private_key(
     ----------
 
     key_size : int
-        The size of the private key (not used for ECC keys).
+        The size of the private key. The value is  ignored if ``key_type`` is not ``"DSA"`` or ``"RSA"``.
     key_type : {'RSA', 'DSA', 'ECC', 'EdDSA', 'Ed448'}
         The type of the private key.
     ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
@@ -730,18 +686,32 @@ def generate_private_key(
     key
         A private key of the appropriate type.
     """
-    if key_type == "DSA" and key_size is not None:
+    # Make sure that parameters are valid
+    validate_key_parameters(key_size, key_type, ecc_curve)
+
+    if key_type == "DSA":
+        if key_size is None:
+            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+
         return dsa.generate_private_key(key_size=key_size, backend=default_backend())
-    if key_type == "ECC" and ecc_curve is not None:
+    if key_type == "ECC":
+        if ecc_curve is None:
+            ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
+
         return ec.generate_private_key(ecc_curve, default_backend())
-    if key_type == "EdDSA" and key_size is None:
+    if key_type == "EdDSA":
         return ed25519.Ed25519PrivateKey.generate()
-    if key_type == "Ed448" and key_size is None:
+    if key_type == "Ed448":
         return ed448.Ed448PrivateKey.generate()
-    if key_type == "RSA" and key_size is not None:
+    if key_type == "RSA":
+        if key_size is None:
+            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
-    raise ValueError(f"{key_type}: Invalid key type.")
+    # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and validate_key_parameters
+    #                 would raise for any other key types.
+    raise ValueError(f"{key_type}: Invalid key type.")  # pragma: no cover
 
 
 def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
@@ -1086,7 +1056,7 @@ def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
     if isinstance(value, ec.EllipticCurve):
         return value  # name was already parsed
     if value is None:
-        return ca_settings.CA_DEFAULT_ECC_CURVE
+        return ca_settings.CA_DEFAULT_ECC_CURVE()
 
     if value in ELLIPTIC_CURVE_NAMES:
         return ELLIPTIC_CURVE_NAMES[value]()
