@@ -339,7 +339,7 @@ class CertificateAuthorityManager(
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly.
-        generate_key_args = validate_key_parameters(key_size, key_type, ecc_curve)
+        priv_key_params = validate_key_parameters(key_size, key_type, ecc_curve)
         if not openssh_ca:
             algorithm = parse_hash_algorithm(algorithm)
         else:
@@ -438,7 +438,7 @@ class CertificateAuthorityManager(
         # NOTE: Since priv_key_params is a union of tuples, mypy is unable to determine that all overloaded
         # variants for generate_private_key() potentially match, and thus matches the first variant. See:
         #   https://mypy.readthedocs.io/en/latest/more_types.html#type-checking-calls-to-overloads
-        private_key = cast(PRIVATE_KEY_TYPES, generate_private_key(*generate_key_args))
+        private_key = cast(PRIVATE_KEY_TYPES, generate_private_key(*priv_key_params))
         public_key = private_key.public_key()
 
         builder = get_cert_builder(expires, serial=serial)

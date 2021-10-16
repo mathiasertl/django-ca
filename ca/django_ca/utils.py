@@ -683,7 +683,7 @@ def generate_private_key(
 
 @typing.overload
 def generate_private_key(
-    key_size: int, key_type: Literal["EdDSA"], ecc_curve: None
+    key_size: None, key_type: Literal["EdDSA"], ecc_curve: None
 ) -> ed25519.Ed25519PrivateKey:
     ...
 
