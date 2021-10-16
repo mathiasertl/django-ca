@@ -3,17 +3,17 @@
 -rrequirements/requirements-test.txt
 -rrequirements/requirements-lint.txt
 -rrequirements/requirements-mypy.txt
-ipython
-docker-compose
-pip>=19.3
+ipython>=7.28.0
+docker-compose==1.29.2
+pip>=21.3
 
 # >=24.2.0: python_requires argument to setuptools.setup()
 #           https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires
 # >= 30.3.0: configuring setup.py using setup.cfg
 setuptools>=30.3.0
-tox>=3.23
+tox>=3.24.4
 
-flake8-isort==4.0.0
+flake8-isort==4.1.1
 tabulate==0.8.9
 termcolor==1.1.0
-toml>=0.10
+toml>=0.10.2
