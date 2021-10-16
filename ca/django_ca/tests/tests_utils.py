@@ -25,6 +25,7 @@ from datetime import timedelta
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -494,6 +495,15 @@ class ValidateHostnameTestCase(TestCase):
 
 class GeneratePrivateKeyTestCase(TestCase):
     """Test :py:func:`django_ca.utils.generate_private_key`."""
+
+    def test_key_types(self) -> None:
+        """Test generating various private key types."""
+        ecc_key = generate_private_key(None, "ECC", ec.BrainpoolP256R1())
+        self.assertIsInstance(ecc_key, ec.EllipticCurvePrivateKey)
+        self.assertIsInstance(ecc_key.curve, ec.BrainpoolP256R1)
+
+        ed448_key = generate_private_key(None, "Ed448", None)
+        self.assertIsInstance(ed448_key, ed448.Ed448PrivateKey)
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid key type."""

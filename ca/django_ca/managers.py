@@ -300,9 +300,9 @@ class CertificateAuthorityManager(
             Password to encrypt the private key with.
         parent_password : bytes, optional
             Password that the private key of the parent CA is encrypted with.
-        ecc_curve : str or EllipticCurve, optional
-            The elliptic curve to use for ECC type keys, passed verbatim to
-            :py:func:`~django_ca.utils.parse_key_curve`.
+        ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
+            An elliptic curve to use for ECC keys. This parameter is ignored if ``key_type`` is not ``"ECC"``.
+            Defaults to the :ref:`CA_DEFAULT_ECC_CURVE <settings-ca-default-ecc-curve>`.
         key_type: str, optional
             The type of private key to generate, must be one of ``"RSA"``, ``"DSA"``, ``"ECC"``, or
             ``"EdDSA"`` , with ``"RSA"`` being the default.

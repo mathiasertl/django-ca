@@ -696,6 +696,13 @@ def generate_private_key(
     ...
 
 
+@typing.overload
+def generate_private_key(
+    key_size: None, key_type: Literal["Ed448"], ecc_curve: None
+) -> ed448.Ed448PrivateKey:
+    ...
+
+
 def generate_private_key(
     key_size: Optional[int],
     key_type: ParsableKeyType,
@@ -711,10 +718,11 @@ def generate_private_key(
 
     key_size : int
         The size of the private key (not used for ECC keys).
-    key_type : {'RSA', 'DSA', 'ECC'}
+    key_type : {'RSA', 'DSA', 'ECC', 'EdDSA', 'Ed448'}
         The type of the private key.
     ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
-        The ECC curve to use for an ECC key.
+        An elliptic curve to use for ECC keys. This parameter is ignored if ``key_type`` is not ``"ECC"``.
+        Defaults to the :ref:`CA_DEFAULT_ECC_CURVE <settings-ca-default-ecc-curve>`.
 
     Returns
     -------
@@ -726,9 +734,9 @@ def generate_private_key(
         return dsa.generate_private_key(key_size=key_size, backend=default_backend())
     if key_type == "ECC" and ecc_curve is not None:
         return ec.generate_private_key(ecc_curve, default_backend())
-    if key_type == "EdDSA" and ecc_curve is None and key_size is None:
+    if key_type == "EdDSA" and key_size is None:
         return ed25519.Ed25519PrivateKey.generate()
-    if key_type == "Ed448" and ecc_curve is None and key_size is None:
+    if key_type == "Ed448" and key_size is None:
         return ed448.Ed448PrivateKey.generate()
     if key_type == "RSA" and key_size is not None:
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
