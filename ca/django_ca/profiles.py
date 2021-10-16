@@ -184,13 +184,6 @@ class Profile:
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
-        .. deprecated:: 1.18.0
-
-           Since ``django-ca==1.18.0``, passing unparsed values is deprecated and will be removed in
-           ``django-ca==1.20.0``. This affects the following parameters:
-
-           * Passing a ``str`` as `algorithm`.
-
         This function is the core function used to create x509 certificates. In it's simplest form, you only
         need to pass a ca, a CSR and a subject to get a valid certificate::
 

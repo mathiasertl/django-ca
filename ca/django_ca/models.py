@@ -1031,14 +1031,6 @@ class CertificateAuthority(X509CertMixin):
         The former defaults to the ``crl_url`` field, pass ``None`` to not include the value. At most one of
         the two may be set.
 
-        .. deprecated:: 1.18.0
-
-           Since ``django-ca==1.18.0``, passing unparsed values is deprecated and will be removed in
-           ``django-ca==1.20.0``. This affects the following parameters:
-
-           * Passing a ``str`` as `algorithm` (pass a
-             :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instead).
-
         Parameters
         ----------
 
