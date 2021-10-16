@@ -32,6 +32,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
@@ -69,6 +70,19 @@ PrivateKeyTypes = Union[
     ec.EllipticCurvePrivateKey,
     ed25519.Ed25519PrivateKey,
 ]
+
+try:
+    from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES as PRIVATE_KEY_TYPES
+except ImportError:  # pragma: only cryptography<35.0
+    # MYPY NOTE: Cannot re-assign type alias from above. We ignore the error here as mypy requires
+    #            cryptography>=35.0 anyway
+    PRIVATE_KEY_TYPES = Union[  # type: ignore[misc]
+        rsa.RSAPrivateKey,
+        dsa.DSAPrivateKey,
+        ec.EllipticCurvePrivateKey,
+        ed25519.Ed25519PrivateKey,
+        ed448.Ed448PrivateKey,
+    ]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]

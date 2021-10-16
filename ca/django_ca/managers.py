@@ -54,12 +54,12 @@ from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
 from .subject import Subject
+from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import Literal
 from .typehints import ParsableExtension
 from .typehints import ParsableHash
 from .typehints import ParsableSubject
-from .typehints import PrivateKeyTypes
 from .utils import ca_storage
 from .utils import generate_private_key
 from .utils import get_cert_builder
@@ -438,7 +438,7 @@ class CertificateAuthorityManager(
         # NOTE: Since priv_key_params is a union of tuples, mypy is unable to determine that all overloaded
         # variants for generate_private_key() potentially match, and thus matches the first variant. See:
         #   https://mypy.readthedocs.io/en/latest/more_types.html#type-checking-calls-to-overloads
-        private_key = cast(PrivateKeyTypes, generate_private_key(*generate_key_args))
+        private_key = cast(PRIVATE_KEY_TYPES, generate_private_key(*generate_key_args))
         public_key = private_key.public_key()
 
         builder = get_cert_builder(expires, serial=serial)
