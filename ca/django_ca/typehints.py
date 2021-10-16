@@ -72,11 +72,16 @@ PrivateKeyTypes = Union[
 ]
 
 try:
+    # pylint: disable=ungrouped-imports; pylint wants us to group it with global imports
+    # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
     from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES as PRIVATE_KEY_TYPES
+
+    # pylint: enable=useless-import-alias,ungrouped-imports
 except ImportError:  # pragma: only cryptography<35.0
     # MYPY NOTE: Cannot re-assign type alias from above. We ignore the error here as mypy requires
     #            cryptography>=35.0 anyway
-    PRIVATE_KEY_TYPES = Union[  # type: ignore[misc]
+    # PYLINT NOTE: Name is given by import above
+    PRIVATE_KEY_TYPES = Union[  # type: ignore[misc]  # pylint: disable=invalid-name
         rsa.RSAPrivateKey,
         dsa.DSAPrivateKey,
         ec.EllipticCurvePrivateKey,
