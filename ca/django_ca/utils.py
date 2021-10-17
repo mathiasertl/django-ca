@@ -1132,12 +1132,30 @@ def shlex_split(val: str, sep: str) -> List[str]:
         ['foo', 'bar']
         >>> shlex_split('foo\\\\,bar1', ',')  # escape a separator
         ['foo,bar1']
-        >>> shlex_split('"foo,bar", bla', ', ')
-        ['foo,bar', 'bla']
-        >>> shlex_split('foo,"bar,bla"', ',')
+        >>> shlex_split('foo,"bar,bla"', ',')  # do not split on quoted separator
         ['foo', 'bar,bla']
+
+    Note that `sep` gives one or more separator characters, not a single separator string::
+
+        >>> shlex_split("foo,bar bla", ", ")
+        ['foo', 'bar', 'bla']
+
+    Unlike ``str.split()``, separators at the start/end of a string are simply ignored, as are multiple
+    subsequent separators::
+
+        >>> shlex_split("/C=AT//ST=Vienna///OU=something//CN=example.com/", "/")
+        ['C=AT', 'ST=Vienna', 'OU=something', 'CN=example.com']
+
+    Parameters
+    ----------
+
+    val : str
+        The string to split.
+    sep: str
+        String of characters that are considered separators.
     """
     lex = shlex.shlex(val, posix=True)
+    lex.commenters = ""
     lex.whitespace = sep
     lex.whitespace_split = True
     return list(lex)

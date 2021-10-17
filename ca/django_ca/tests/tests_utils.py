@@ -57,6 +57,7 @@ from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import parse_name
 from ..utils import read_file
+from ..utils import shlex_split
 from ..utils import validate_email
 from ..utils import validate_hostname
 from ..utils import validate_key_parameters
@@ -1163,6 +1164,137 @@ class ValidateKeyParametersTest(TestCase):
 
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
             validate_key_parameters(16, "ECC", "secp192r1")  # type: ignore[arg-type]  # what we're testing
+
+
+class SplitTestCase(TestCase):
+    """Test shlex_split()."""
+
+    def test_basic(self) -> None:
+        """Some basic shlex_split() test cases."""
+        self.assertEqual(shlex_split("foo", "/"), ["foo"])
+        self.assertEqual(shlex_split("foo bar", "/"), ["foo bar"])
+        self.assertEqual(shlex_split("foo/bar", "/"), ["foo", "bar"])
+        self.assertEqual(shlex_split("foo'/'bar", "/"), ["foo/bar"])
+        self.assertEqual(shlex_split('foo"/"bar', "/"), ["foo/bar"])
+        self.assertEqual(shlex_split("'foo/bar'", "/"), ["foo/bar"])
+        self.assertEqual(shlex_split('"foo/bar"', "/"), ["foo/bar"])
+        self.assertEqual(shlex_split('"foo/bar"/bla', "/"), ["foo/bar", "bla"])
+
+    def test_start_end_delimiters(self) -> None:
+        """Test what happens when the delimiter is at the start/end of the string."""
+
+        self.assertEqual(shlex_split("foo/", "/"), ["foo"])
+        self.assertEqual(shlex_split("/foo", "/"), ["foo"])
+        self.assertEqual(shlex_split("/foo/", "/"), ["foo"])
+
+        self.assertEqual(shlex_split("foo/bar/", "/"), ["foo", "bar"])
+        self.assertEqual(shlex_split("/foo/bar", "/"), ["foo", "bar"])
+        self.assertEqual(shlex_split("/foo/bar/", "/"), ["foo", "bar"])
+        self.assertEqual(shlex_split("/C=AT/CN=example.com/", "/"), ["C=AT", "CN=example.com"])
+
+    def test_quotes(self) -> None:
+        """Test quoting a little bit."""
+        self.assertEqual(shlex_split(r"foo/bar", "/"), ["foo", "bar"])
+        self.assertEqual(shlex_split(r"foo'/'bar", "/"), ["foo/bar"])
+        self.assertEqual(shlex_split(r'foo"/"bar', "/"), ["foo/bar"])
+        self.assertEqual(shlex_split(r'fo"o/b"ar', "/"), ["foo/bar"])
+
+        # escape quotes inside quotes
+        self.assertEqual(shlex_split(r'"foo\"bar"', "/"), ['foo"bar'])
+
+        # backslash is not interpreted as escape inside single quotes, b/c of shlex.escapedquotes.
+        # --> The middle "'" is not special and so the quotation is not closed
+        with self.assertRaises(ValueError):
+            shlex_split(r"'foo\'bar'", "/")
+
+    def test_escape(self) -> None:
+        """Test the escape char."""
+
+        self.assertEqual(shlex_split(r"foo\/bar", "/"), ["foo/bar"])
+        self.assertEqual(shlex_split(r"foo\\/bar", "/"), ["foo\\", "bar"])
+
+        # Escape the double quote - so it has no special meaning
+        self.assertEqual(shlex_split(r"foo\"bar", "/"), [r'foo"bar'])
+        self.assertEqual(shlex_split(r"foo\"/\"bar", "/"), [r'foo"', '"bar'])
+
+        # both tokens quoted in single quotes:
+        self.assertEqual(shlex_split(r"'foo\\'/'bar'", "/"), [r"foo\\", "bar"])
+
+    def test_escaping_non_special_characters(self) -> None:
+        """Test how a backslash in front of a non-special character behaves."""
+
+        # Backslash in front of normal character in unquoted string- the backslash is ignored
+        self.assertEqual(shlex_split(r"foo\xbar", "/"), ["fooxbar"])
+
+        # Inside a quoted or double-quoted string, single backslash is preserved
+        self.assertEqual(shlex_split(r'"foo\xbar"', "/"), [r"foo\xbar"])
+        self.assertEqual(shlex_split(r"'foo\xbar'", "/"), [r"foo\xbar"])
+
+        # In a double-quoted string, backslash is interpreted as escape -> single backslash in result
+        self.assertEqual(shlex_split(r'"foo\\xbar"', "/"), [r"foo\xbar"])
+
+        # ... but in single quote it's not an escape -> double backslash in result
+        self.assertEqual(shlex_split(r"'foo\\xbar'", "/"), [r"foo\\xbar"])
+
+    def test_escaped_delimiters(self) -> None:
+        """Test escaping delimiters."""
+
+        # No quotes, single backslash preceeding "/" --> "/" is escaped
+        self.assertEqual(shlex_split(r"foo\/bar", "/"), ["foo/bar"])
+
+        # No quotes, but *double* backslash preceeding "/" --> backslash itself is escaped, slash is delimiter
+        self.assertEqual(shlex_split(r"foo\\/bar", "/"), ["foo\\", "bar"])
+
+        # With quotes/double quotes, no backslashes -> slash is inside quoted string -> it's not a delimiter
+        self.assertEqual(shlex_split('"foo/bar"/bla', "/"), ["foo/bar", "bla"])
+        self.assertEqual(shlex_split("'foo/bar'/bla", "/"), ["foo/bar", "bla"])
+
+        # With quotes/double quotes, with one backslash
+        self.assertEqual(shlex_split(r'"foo\/bar"/bla', "/"), [r"foo\/bar", "bla"])
+        self.assertEqual(shlex_split(r"'foo\/bar'/bla", "/"), [r"foo\/bar", "bla"])
+
+        # With double quotes and a double backslash -> backslash is escape char -> single backslash in result
+        self.assertEqual(shlex_split(r'"foo\\/bar"/bla', "/"), [r"foo\/bar", "bla"])
+
+        # With single quotes and a double backslash -> backslash is *not* escape char -> double backslash
+        self.assertEqual(shlex_split(r"'foo\\/bar'/bla", "/"), [r"foo\\/bar", "bla"])
+
+    def test_quote_errors(self) -> None:
+        """Try messing with some quotation errors."""
+
+        with self.assertRaises(ValueError):
+            shlex_split(r"foo'bar", "/")
+        with self.assertRaises(ValueError):
+            shlex_split(r'foo"bar', "/")
+        with self.assertRaises(ValueError):
+            shlex_split(r"foo'bar/bla", "/")
+        with self.assertRaises(ValueError):
+            shlex_split(r'foo"bar/bla', "/")
+
+    def test_commenters(self) -> None:
+        """Test that default comment characters play no special role."""
+
+        self.assertEqual(shlex_split("foo#bar", "/"), ["foo#bar"])
+        self.assertEqual(shlex_split("foo/#bar", "/"), ["foo", "#bar"])
+        self.assertEqual(shlex_split("foo#/bar", "/"), ["foo#", "bar"])
+        self.assertEqual(shlex_split("foo'#'bar", "/"), ["foo#bar"])
+        self.assertEqual(shlex_split("'foo#bar'/bla#baz", "/"), ["foo#bar", "bla#baz"])
+
+    def test_wordchars(self) -> None:
+        """Test that non-wordchars also work properly."""
+
+        # From the docs: If whitespace_split is set to True, this will have no effect.
+        self.assertEqual(shlex_split("foo=bar/what=ever", "/"), ["foo=bar", "what=ever"])
+
+    def test_punctuation_chars(self) -> None:
+        """Test that punctuation chars do not affect the parsing.
+
+        We test this here because documentation is not exactly clear about this parameter. But if we pass
+        `punctuation_chars=False` to shlex, this test fails, so we test for that too.
+        """
+        self.assertEqual(shlex_split("foo|bar", "/"), ["foo|bar"])
+        self.assertEqual(shlex_split("(foo|bar)/bla/baz(bla", "/"), ["(foo|bar)", "bla", "baz(bla"])
+        self.assertEqual(shlex_split("(foo|{b,}ar)/bla/baz(bla", "/"), ["(foo|{b,}ar)", "bla", "baz(bla"])
 
 
 class GeneralNameListTestCase(TestCase):
