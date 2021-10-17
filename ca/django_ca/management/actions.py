@@ -35,7 +35,7 @@ from ..utils import is_power2
 from ..utils import parse_encoding
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
-from ..utils import shlex_split
+from ..utils import split_str
 
 ActionType = typing.TypeVar("ActionType")
 
@@ -396,7 +396,7 @@ class OrderedSetExtensionAction(ExtensionAction):
     ) -> None:
         ext = self.extension()
 
-        ext_values = shlex_split(values, ", ")
+        ext_values = list(split_str(values, ", "))
         if ext_values[0] == "critical":
             ext_values = ext_values[1:]
             ext.critical = True

@@ -51,7 +51,7 @@ from .utils import get_cert_builder
 from .utils import parse_expires
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
-from .utils import shlex_split
+from .utils import split_str
 
 if TYPE_CHECKING:
     from .models import CertificateAuthority
@@ -405,7 +405,7 @@ class Profile:
                     f"extensions[{IssuerAlternativeName.key}] is not of type IssuerAlternativeName"
                 )
 
-            ian.extend(shlex_split(ca.issuer_alt_name, ","))
+            ian.extend(split_str(ca.issuer_alt_name, ","))
             extensions[IssuerAlternativeName.key] = ian
 
     def _update_san_from_cn(

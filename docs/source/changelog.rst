@@ -10,6 +10,9 @@ ChangeLog
 1.20.0 (TBR)
 ************
 
+* ``django_ca.utils.shlex_split()`` was renamed to :py:func:`~django_ca.utils.split_str`. The old name will be
+  removed in ``django_ca==1.22``.
+
 Backwards incompatible changes
 ==============================
 

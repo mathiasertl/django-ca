@@ -17,6 +17,7 @@ import binascii
 import re
 import shlex
 import typing
+import warnings
 from collections import abc
 from datetime import datetime
 from datetime import timedelta
@@ -53,6 +54,7 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA122Warning
 from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import Literal
@@ -1123,27 +1125,27 @@ def read_file(path: str) -> bytes:
 #        fh.write(data)
 
 
-def shlex_split(val: str, sep: str) -> List[str]:
+def split_str(val: str, sep: str) -> typing.Iterator[str]:
     """Split a character on the given set of characters.
 
     Example::
 
-        >>> shlex_split('foo,bar', ', ')
+        >>> list(split_str('foo,bar', ', '))
         ['foo', 'bar']
-        >>> shlex_split('foo\\\\,bar1', ',')  # escape a separator
+        >>> list(split_str('foo\\\\,bar1', ','))  # escape a separator
         ['foo,bar1']
-        >>> shlex_split('foo,"bar,bla"', ',')  # do not split on quoted separator
+        >>> list(split_str('foo,"bar,bla"', ','))  # do not split on quoted separator
         ['foo', 'bar,bla']
 
     Note that `sep` gives one or more separator characters, not a single separator string::
 
-        >>> shlex_split("foo,bar bla", ", ")
+        >>> list(split_str("foo,bar bla", ", "))
         ['foo', 'bar', 'bla']
 
     Unlike ``str.split()``, separators at the start/end of a string are simply ignored, as are multiple
     subsequent separators::
 
-        >>> shlex_split("/C=AT//ST=Vienna///OU=something//CN=example.com/", "/")
+        >>> list(split_str("/C=AT//ST=Vienna///OU=something//CN=example.com/", "/"))
         ['C=AT', 'ST=Vienna', 'OU=something', 'CN=example.com']
 
     Parameters
@@ -1158,7 +1160,23 @@ def shlex_split(val: str, sep: str) -> List[str]:
     lex.commenters = ""
     lex.whitespace = sep
     lex.whitespace_split = True
-    return list(lex)
+    yield from lex
+
+
+def shlex_split(val: str, sep: str) -> List[str]:
+    """Split a character on the given set of characters.
+
+    .. deprecated:: 1.20.0
+
+       This function has been renamed to :py:func:`~django_ca.utils.split_str`. The old name will be removed
+       in ``django_ca==1.22``.
+    """
+    warnings.warn(
+        "shlex_split() has been deprecated, use split_str() instead",
+        category=RemovedInDjangoCA122Warning,
+        stacklevel=2,
+    )
+    return list(split_str(val=val, sep=sep))
 
 
 class GeneralNameList(List[x509.GeneralName]):
