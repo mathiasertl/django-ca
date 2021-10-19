@@ -324,7 +324,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "serialNumber": "test-serialNumber",
                     "sn": "test-sn",
                     "snils": "test-snils",
-                    "streetAddress": "test-streetAddress",
+                    "street": "test-street",
                     "title": "test-title",
                     "uid": "test-uid",
                     "unstructuredName": "test-unstructuredName",

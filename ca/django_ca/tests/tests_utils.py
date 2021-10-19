@@ -41,7 +41,6 @@ from .. import utils
 from ..deprecation import RemovedInDjangoCA122Warning
 from ..utils import ELLIPTIC_CURVE_NAMES
 from ..utils import HASH_ALGORITHM_NAMES
-from ..utils import NAME_RE
 from ..utils import OID_NAME_MAPPINGS
 from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
@@ -140,111 +139,6 @@ class ConstantsTestCase(TestCase):
         """Test that we support all NameOID instances."""
         known_oids = [v for v in vars(NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
         self.assertCountEqual(known_oids, list(OID_NAME_MAPPINGS.keys()))
-
-
-class NameMatchTest(TestCase):
-    """Test parsing of names."""
-
-    def match(self, value: str, expected: typing.List[typing.Tuple[str, str]]) -> None:
-        """Helper function to use NAME_RE."""
-        parsed_value = [(t[0], t[2]) for t in NAME_RE.findall(value)]
-        self.assertEqual(parsed_value, expected)
-
-    def test_empty(self) -> None:
-        """Test parsing an empty subject."""
-        self.match("", [])
-        self.match(" ", [])
-        self.match("  ", [])
-
-    def test_single(self) -> None:
-        """Test parsing a single token."""
-        self.match("C=AT", [("C", "AT")])
-        self.match('C="AT"', [("C", "AT")])
-        self.match('C=" AT "', [("C", "AT")])
-
-        # test quotes
-        self.match('C=" AT \' DE"', [("C", "AT ' DE")])
-        self.match("C=' AT \" DE'", [("C", 'AT " DE')])
-
-        self.match("C=AT/DE", [("C", "AT")])  # slash is delimiter when unquoted
-        self.match('C="AT/DE"', [("C", "AT/DE")])
-        self.match("C='AT/DE/US'", [("C", "AT/DE/US")])
-        self.match("C='AT/DE'", [("C", "AT/DE")])
-        self.match("C='AT/DE/US'", [("C", "AT/DE/US")])
-
-        self.match("C='AT \\' DE'", [("C", "AT \\' DE")])
-
-    def test_two(self) -> None:
-        """Test parsing two tokens."""
-        self.match("C=AT/OU=example", [("C", "AT"), ("OU", "example")])
-        self.match('C="AT"/OU=example', [("C", "AT"), ("OU", "example")])
-        self.match('C=" AT "/OU=example', [("C", "AT"), ("OU", "example")])
-
-        # test quotes
-        self.match('C=" AT \' DE"/OU=example', [("C", "AT ' DE"), ("OU", "example")])
-        self.match("C=' AT \" DE'/OU=example", [("C", 'AT " DE'), ("OU", "example")])
-
-        self.match('C="AT/DE"/OU=example', [("C", "AT/DE"), ("OU", "example")])
-        self.match("C='AT/DE/US'/OU=example", [("C", "AT/DE/US"), ("OU", "example")])
-        self.match("C='AT/DE'/OU=example", [("C", "AT/DE"), ("OU", "example")])
-        self.match("C='AT/DE/US'/OU=example", [("C", "AT/DE/US"), ("OU", "example")])
-
-        self.match("C='AT \\' DE'/OU=example", [("C", "AT \\' DE"), ("OU", "example")])
-
-        # now both are quoted
-        self.match('C="AT"/OU="ex ample"', [("C", "AT"), ("OU", "ex ample")])
-        self.match('C=" AT "/OU="ex ample"', [("C", "AT"), ("OU", "ex ample")])
-        self.match('C=" AT \' DE"/OU="ex ample"', [("C", "AT ' DE"), ("OU", "ex ample")])
-        self.match('C=\' AT " DE\'/OU="ex ample"', [("C", 'AT " DE'), ("OU", "ex ample")])
-        self.match('C="AT/DE"/OU="ex ample"', [("C", "AT/DE"), ("OU", "ex ample")])
-        self.match("C='AT/DE/US'/OU='ex ample'", [("C", "AT/DE/US"), ("OU", "ex ample")])
-        self.match("C='AT/DE'/OU='ex ample'", [("C", "AT/DE"), ("OU", "ex ample")])
-        self.match("C='AT/DE/US'/OU='ex ample'", [("C", "AT/DE/US"), ("OU", "ex ample")])
-
-        self.match("C='AT \\' DE'/OU='ex ample'", [("C", "AT \\' DE"), ("OU", "ex ample")])
-
-        # Now include a slash in OU
-        self.match('C="AT"/OU="ex / ample"', [("C", "AT"), ("OU", "ex / ample")])
-        self.match('C=" AT "/OU="ex / ample"', [("C", "AT"), ("OU", "ex / ample")])
-        self.match('C=" AT \' DE"/OU="ex / ample"', [("C", "AT ' DE"), ("OU", "ex / ample")])
-        self.match('C=\' AT " DE\'/OU="ex / ample"', [("C", 'AT " DE'), ("OU", "ex / ample")])
-        self.match('C="AT/DE"/OU="ex / ample"', [("C", "AT/DE"), ("OU", "ex / ample")])
-        self.match("C='AT/DE/US'/OU='ex / ample'", [("C", "AT/DE/US"), ("OU", "ex / ample")])
-        self.match("C='AT/DE'/OU='ex / ample'", [("C", "AT/DE"), ("OU", "ex / ample")])
-        self.match("C='AT/DE/US'/OU='ex / ample'", [("C", "AT/DE/US"), ("OU", "ex / ample")])
-        self.match("C='AT \\' DE'/OU='ex / ample'", [("C", "AT \\' DE"), ("OU", "ex / ample")])
-
-        # Append a slash in the end (It's a delimiter - doesn't influence the output)
-        self.match('C="AT"/OU="ex / ample"/', [("C", "AT"), ("OU", "ex / ample")])
-        self.match('C=" AT "/OU="ex / ample"/', [("C", "AT"), ("OU", "ex / ample")])
-        self.match('C=" AT \' DE"/OU="ex / ample"/', [("C", "AT ' DE"), ("OU", "ex / ample")])
-        self.match('C=\' AT " DE\'/OU="ex / ample"/', [("C", 'AT " DE'), ("OU", "ex / ample")])
-        self.match('C="AT/DE"/OU="ex / ample"/', [("C", "AT/DE"), ("OU", "ex / ample")])
-        self.match("C='AT/DE/US'/OU='ex / ample'/", [("C", "AT/DE/US"), ("OU", "ex / ample")])
-        self.match("C='AT/DE'/OU='ex / ample'/", [("C", "AT/DE"), ("OU", "ex / ample")])
-        self.match("C='AT/DE/US'/OU='ex / ample'/", [("C", "AT/DE/US"), ("OU", "ex / ample")])
-        self.match("C='AT \\' DE'/OU='ex / ample'/", [("C", "AT \\' DE"), ("OU", "ex / ample")])
-
-    def test_unquoted_slashes(self) -> None:
-        """Test using unquoted slashes."""
-        self.match("C=AT/DE/OU=example", [("C", "AT"), ("DE/OU", "example")])
-        self.match('C=AT/DE/OU="ex ample"', [("C", "AT"), ("DE/OU", "ex ample")])
-        self.match('C=AT/DE/OU="ex / ample"', [("C", "AT"), ("DE/OU", "ex / ample")])
-        self.match('C=AT/DE/OU="ex / ample"/', [("C", "AT"), ("DE/OU", "ex / ample")])
-
-    def test_full_examples(self) -> None:
-        """Test some real examples."""
-        expected = [
-            ("C", "AT"),
-            ("ST", "Vienna"),
-            ("L", "Loc Fünf"),
-            ("O", "Org Name"),
-            ("OU", "Org Unit"),
-            ("CN", "example.com"),
-        ]
-
-        self.match("/C=AT/ST=Vienna/L=Loc Fünf/O=Org Name/OU=Org Unit/CN=example.com", expected)
-        self.match("/C=AT/ST=Vienna/L=\"Loc Fünf\"/O='Org Name'/OU=Org Unit/CN=example.com", expected)
 
 
 class ReadFileTestCase(TestCase):
@@ -389,6 +283,18 @@ class ParseNameTestCase(TestCase):
                 ("CN", "example.com"),
                 ("uid", "123"),
                 ("serialNumber", "serial"),
+            ],
+        )
+
+    def test_aliases(self) -> None:
+        """Test aliases (commonName vs. CN etc)."""
+
+        self.assertSubject(
+            "commonName=example.com/surname=Ertl/userid=0",
+            [
+                ("CN", "example.com"),
+                ("sn", "Ertl"),
+                ("uid", "0"),
             ],
         )
 

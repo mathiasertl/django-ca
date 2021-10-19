@@ -10,6 +10,8 @@ ChangeLog
 1.20.0 (TBR)
 ************
 
+* Use :py:func:`~django_ca.utils.split_str` in :py:func:`~django_ca.utils.parse_name` to make it more reliable
+  when using quoted strings.
 * ``django_ca.utils.shlex_split()`` was renamed to :py:func:`~django_ca.utils.split_str`. The old name will be
   removed in ``django_ca==1.22``.
 

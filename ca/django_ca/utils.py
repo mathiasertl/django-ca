@@ -87,14 +87,6 @@ SUBJECT_FIELDS = [
 EXTENDED_KEY_USAGE_DESC = _("Purposes for which the certificate public key can be used for.")
 KEY_USAGE_DESC = _("Permitted key usages.")
 
-#: Regular expression to match RDNs out of a full x509 name.
-NAME_RE = re.compile(
-    r"(?:/+|\A)\s*(?P<field>[^\s]*?)\s*"
-    r'=(?P<quote>[\'"])?\s*(?P<content>(?(quote).*?|[^/]*))\s*'
-    r"(?(quote)(?<!\\)(?P=quote))",
-    re.I,
-)
-
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
 
@@ -118,7 +110,7 @@ OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
     NameOID.COMMON_NAME: "CN",
     NameOID.COUNTRY_NAME: "C",
     NameOID.DN_QUALIFIER: "dnQualifier",
-    NameOID.DOMAIN_COMPONENT: "DC",  # TODO: RFC 4519 also specifies "domainComponent"
+    NameOID.DOMAIN_COMPONENT: "DC",
     NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
     NameOID.GENERATION_QUALIFIER: "generationQualifier",
     NameOID.GIVEN_NAME: "givenName",
@@ -136,16 +128,30 @@ OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
     NameOID.SERIAL_NUMBER: "serialNumber",
     NameOID.SNILS: "snils",  # undocumented
     NameOID.STATE_OR_PROVINCE_NAME: "ST",
-    NameOID.STREET_ADDRESS: "streetAddress",
+    NameOID.STREET_ADDRESS: "street",
     NameOID.SURNAME: "sn",
     NameOID.TITLE: "title",
     NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
-    NameOID.USER_ID: "uid",  # TODO: RFC 4519 also specifies "userid"
+    NameOID.USER_ID: "uid",
     NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
 }
 
-# same, but reversed
+# same, but reversed, used for parsing
 NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
+
+# RFC 4519 adds some aliases so we add them here
+NAME_OID_MAPPINGS.update(
+    {
+        "commonName": NameOID.COMMON_NAME,
+        "domainComponent": NameOID.DOMAIN_COMPONENT,
+        "localityName": NameOID.LOCALITY_NAME,
+        "organizationName": NameOID.ORGANIZATION_NAME,
+        "organizationalUnitName": NameOID.ORGANIZATIONAL_UNIT_NAME,
+        "streetAddress": NameOID.STREET_ADDRESS,  # not specified in RFC 4519, but consistent with others
+        "surname": NameOID.SURNAME,
+        "userid": NameOID.USER_ID,
+    }
+)
 
 # Some OIDs can occur multiple times
 MULTIPLE_OIDS = (
@@ -155,7 +161,7 @@ MULTIPLE_OIDS = (
 )
 
 # uppercase values as keys for normalizing case
-NAME_CASE_MAPPINGS = {v.upper(): v for v in OID_NAME_MAPPINGS.values()}
+NAME_CASE_MAPPINGS = {k.upper(): v for k, v in NAME_OID_MAPPINGS.items()}
 
 
 #: Mapping of canonical hash algorithm names to the implementing classes
@@ -236,7 +242,10 @@ except ImportError:  # pragma: no cover
 
 def sort_name(subject: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
     """Returns the subject in the correct order for a x509 subject."""
-    return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
+    try:
+        return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
+    except ValueError:
+        return subject
 
 
 def encode_url(url: str) -> str:
@@ -442,8 +451,8 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
 
     >>> parse_name('/CN=example.com')
     [('CN', 'example.com')]
-    >>> parse_name('c=AT/l= Vienna/o="ex org"/CN=example.com')
-    [('C', 'AT'), ('L', 'Vienna'), ('O', 'ex org'), ('CN', 'example.com')]
+    >>> parse_name('c=AT/l= Vienna/o="quoting/works"/CN=example.com')
+    [('C', 'AT'), ('L', 'Vienna'), ('O', 'quoting/works'), ('CN', 'example.com')]
 
     Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
     based on x509 name specifications regardless of the given order:
@@ -453,18 +462,8 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     >>> parse_name('/C=AT/CN=example.com') == parse_name('/CN=example.com/C=AT')
     True
 
-    Due to the magic of :py:const:`NAME_RE`, the function even supports quoting strings and including slashes,
-    so strings like ``/OU="Org / Org Unit"/CN=example.com`` will work as expected.
-
     >>> parse_name('L="Vienna / District"/CN=example.com')
     [('L', 'Vienna / District'), ('CN', 'example.com')]
-
-    But note that it's still easy to trick this function, if you really want to. The following example is
-    *not* a valid subject, the location is just bogus, and whatever you were expecting as output, it's
-    certainly different:
-
-    >>> parse_name('L="Vienna " District"/CN=example.com')
-    [('L', 'Vienna'), ('CN', 'example.com')]
 
     Examples of where this string is used are:
 
@@ -474,14 +473,16 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
         # openssl x509 -in cert.pem -noout -subject -nameopt compat
         /C=AT/L=Vienna/CN=example.com
     """
-    name = name.strip()
-    if not name:  # empty subjects are ok
-        return []
+
+    attrs = [t.split("=", 1) for t in split_str(name.strip(), "/")]
 
     try:
-        items = [(NAME_CASE_MAPPINGS[t[0].upper()], force_str(t[2])) for t in NAME_RE.findall(name)]
+        items = [(NAME_CASE_MAPPINGS[t[0].strip().upper()], t[1].strip()) for t in attrs]
     except KeyError as e:
         raise ValueError(f"Unknown x509 name field: {e.args[0]}") from e
+
+    # Parse OIDs back to their cannonical string representation
+    items = [(OID_NAME_MAPPINGS[k], v) for k, v in items]
 
     # Check that no OIDs not in MULTIPLE_OIDS occur more then once
     for key, oid in NAME_OID_MAPPINGS.items():
