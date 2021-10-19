@@ -49,7 +49,6 @@ from django.urls import path
 from django.urls import reverse
 from django.urls.resolvers import URLPattern
 from django.utils import timezone
-from django.utils.encoding import force_bytes
 from django.utils.html import escape
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -833,7 +832,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             raise PermissionDenied
 
         try:
-            csr = x509.load_pem_x509_csr(force_bytes(request.POST["csr"]), default_backend())
+            csr = x509.load_pem_x509_csr(request.POST["csr"].encode("ascii"), default_backend())
         except Exception as e:  # pylint: disable=broad-except; docs don't list possible exceptions
             return JsonResponse({"message": str(e)}, status=HTTPStatus.BAD_REQUEST)
 

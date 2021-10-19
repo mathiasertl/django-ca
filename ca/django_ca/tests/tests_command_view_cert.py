@@ -19,7 +19,6 @@ from io import BytesIO
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.test import TestCase
-from django.utils.encoding import force_bytes
 
 from freezegun import freeze_time
 
@@ -689,7 +688,7 @@ HPKP pin: {hpkp}
 """.format(
             **self.get_cert_context("child-cert")
         )
-        expected = force_bytes(expected) + certs["child-cert"]["pub"]["der"] + b"\n"
+        expected = expected.encode("utf-8") + certs["child-cert"]["pub"]["der"] + b"\n"
 
         self.assertEqual(stdout, expected)
         self.assertEqual(stderr, b"")

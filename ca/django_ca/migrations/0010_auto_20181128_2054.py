@@ -5,15 +5,14 @@ from cryptography.hazmat.backends import default_backend
 
 from django.conf import settings
 from django.db import migrations
-from django.utils.encoding import force_bytes
 from django.utils import timezone
 
 
 def add_valid_from(apps, schema_editor):
-    Certificate = apps.get_model('django_ca', 'Certificate')
+    Certificate = apps.get_model("django_ca", "Certificate")
     for cert in Certificate.objects.all():
         backend = default_backend()
-        pem = x509.load_pem_x509_certificate(force_bytes(cert.pub), backend)
+        pem = x509.load_pem_x509_certificate(cert.pub.encode("ascii"), backend)
         valid_from = pem.not_valid_before
 
         if settings.USE_TZ:
@@ -22,10 +21,10 @@ def add_valid_from(apps, schema_editor):
         cert.valid_from = valid_from
         cert.save()
 
-    CertificateAuthority = apps.get_model('django_ca', 'CertificateAuthority')
+    CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for cert in CertificateAuthority.objects.all():
         backend = default_backend()
-        pem = x509.load_pem_x509_certificate(force_bytes(cert.pub), backend)
+        pem = x509.load_pem_x509_certificate(cert.pub.encode("ascii"), backend)
         valid_from = pem.not_valid_before
 
         if settings.USE_TZ:
@@ -38,7 +37,7 @@ def add_valid_from(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_ca', '0009_auto_20181128_2050'),
+        ("django_ca", "0009_auto_20181128_2050"),
     ]
 
     operations = [
