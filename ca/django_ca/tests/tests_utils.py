@@ -250,6 +250,10 @@ class ParseNameTestCase(TestCase):
 
     def test_multiple_ous(self) -> None:
         """Test multiple OUs."""
+        self.assertSubject(
+            "/C=AT/CN=example.com/OU=foo/OU=bar",
+            [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
+        )
         self.assertSubject("/OU=foo/OU=bar", [("OU", "foo"), ("OU", "bar")])
         self.assertSubject(
             "/C=AT/O=bla/OU=foo/OU=bar/CN=example.com/",
@@ -258,10 +262,6 @@ class ParseNameTestCase(TestCase):
         self.assertSubject(
             "/C=AT/O=bla/OU=foo/OU=bar/OU=hugo/CN=example.com/",
             [("C", "AT"), ("O", "bla"), ("OU", "foo"), ("OU", "bar"), ("OU", "hugo"), ("CN", "example.com")],
-        )
-        self.assertSubject(
-            "/C=AT/CN=example.com/OU=foo/OU=bar",
-            [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
         )
         self.assertSubject(
             "/C=AT/CN=example.com/DC=com/DC=example",

@@ -34,7 +34,7 @@ from .utils import MULTIPLE_OIDS
 from .utils import NAME_OID_MAPPINGS
 from .utils import OID_NAME_MAPPINGS
 from .utils import SUBJECT_FIELDS
-from .utils import parse_name
+from .utils import parse_name_x509
 from .utils import sort_name
 
 
@@ -81,7 +81,7 @@ class Subject:
         if subject is None:
             iterable = []
         elif isinstance(subject, str):
-            iterable = parse_name(subject)
+            iterable = parse_name_x509(subject)
         elif isinstance(subject, abc.Mapping):
             iterable = subject.items()
         elif isinstance(subject, x509.Name):
@@ -164,14 +164,14 @@ class Subject:
         data = []
         for oid, values in self._data.items():
             for val in values:
-                data.append((OID_NAME_MAPPINGS[oid], val))
+                data.append((oid, val))
 
-        joined_data = "/".join([f"{k}={v}" for k, v in sort_name(data)])
+        joined_data = "/".join([f"{OID_NAME_MAPPINGS[k]}={v}" for k, v in sort_name(data)])
         return f"/{joined_data}"
 
     @property
     def _iter(self) -> List[Tuple[x509.ObjectIdentifier, List[str]]]:
-        return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(OID_NAME_MAPPINGS[t[0]]))
+        return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(t[0]))
 
     def clear(self) -> None:
         """Clear the subject."""
@@ -236,7 +236,7 @@ class Subject:
 
         # Convert str and x509.Name to plain iterables first
         if isinstance(e, str):
-            e = parse_name(e)
+            e = parse_name_x509(e)
         elif isinstance(e, x509.Name):
             e = [(n.oid, n.value) for n in e]
 

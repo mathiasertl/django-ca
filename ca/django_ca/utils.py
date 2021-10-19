@@ -47,6 +47,7 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
@@ -67,19 +68,19 @@ from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = [
-    "dnQualifier",
-    "C",
-    "postalCode",
-    "ST",
-    "L",
-    "DC",
-    "O",
-    "OU",
-    "title",
-    "CN",
-    "uid",
-    "emailAddress",
-    "serialNumber",
+    NameOID.DN_QUALIFIER,
+    NameOID.COUNTRY_NAME,
+    NameOID.POSTAL_CODE,
+    NameOID.STATE_OR_PROVINCE_NAME,
+    NameOID.LOCALITY_NAME,
+    NameOID.DOMAIN_COMPONENT,
+    NameOID.ORGANIZATION_NAME,
+    NameOID.ORGANIZATIONAL_UNIT_NAME,
+    NameOID.TITLE,
+    NameOID.COMMON_NAME,
+    NameOID.USER_ID,
+    NameOID.EMAIL_ADDRESS,
+    NameOID.SERIAL_NUMBER,
 ]
 
 # Description strings for various X509 extensions, taken from "man x509v3_config".
@@ -239,7 +240,7 @@ except ImportError:  # pragma: no cover
             return self
 
 
-def sort_name(subject: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
+def sort_name(subject: List[Tuple[ObjectIdentifier, str]]) -> List[Tuple[ObjectIdentifier, str]]:
     """Returns the subject in the correct order for a x509 subject."""
     try:
         return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
@@ -440,7 +441,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_name(name: str) -> List[Tuple[str, str]]:
+def parse_name_x509(name: str) -> List[Tuple[ObjectIdentifier, str]]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
@@ -448,21 +449,26 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``,
     whitespace at the start and end is stripped and the subject does not have to start with a slash (``/``).
 
-    >>> parse_name('/CN=example.com')
-    [('CN', 'example.com')]
-    >>> parse_name('c=AT/l= Vienna/o="quoting/works"/CN=example.com')
-    [('C', 'AT'), ('L', 'Vienna'), ('O', 'quoting/works'), ('CN', 'example.com')]
+    >>> parse_name_x509('/CN=example.com')
+    [(<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
+    >>> parse_name_x509('c=AT/l= Vienna/o="quoting/works"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    [(<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, 'AT'),
+     (<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, 'Vienna'),
+     (<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, 'quoting/works'),
+     (<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
 
     Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
     based on x509 name specifications regardless of the given order:
 
-    >>> parse_name('L="Vienna / District"/EMAILaddress=user@example.com')
-    [('L', 'Vienna / District'), ('emailAddress', 'user@example.com')]
-    >>> parse_name('/C=AT/CN=example.com') == parse_name('/CN=example.com/C=AT')
+    >>> parse_name_x509('L="Vienna / Dist"/EMAILaddress=user@example.com')  # doctest: +NORMALIZE_WHITESPACE
+    [(<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, 'Vienna / Dist'),
+     (<ObjectIdentifier(oid=1.2.840.113549.1.9.1, name=emailAddress)>, 'user@example.com')]
+    >>> parse_name_x509('/C=AT/CN=example.com') == parse_name_x509('/CN=example.com/C=AT')
     True
 
-    >>> parse_name('L="Vienna / District"/CN=example.com')
-    [('L', 'Vienna / District'), ('CN', 'example.com')]
+    >>> parse_name_x509('L="Vienna / District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
+    [(<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, 'Vienna / District'),
+     (<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
 
     Examples of where this string is used are:
 
@@ -472,7 +478,6 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
         # openssl x509 -in cert.pem -noout -subject -nameopt compat
         /C=AT/L=Vienna/CN=example.com
     """
-
     attrs = [t.split("=", 1) for t in split_str(name.strip(), "/")]
 
     try:
@@ -480,15 +485,22 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     except KeyError as e:
         raise ValueError(f"Unknown x509 name field: {e.args[0]}") from e
 
-    # Parse OIDs back to their cannonical string representation
-    items = [(OID_NAME_MAPPINGS[k], v) for k, v in items]
-
-    # Check that no OIDs not in MULTIPLE_OIDS occur more then once
-    for key, oid in NAME_OID_MAPPINGS.items():
-        if sum(1 for t in items if t[0] == key) > 1 and oid not in MULTIPLE_OIDS:
-            raise ValueError(f'Subject contains multiple "{key}" fields')
+    oids = tuple(t[0] for t in items)
+    for oid in set(oids):
+        if oids.count(oid) > 1 and oid not in MULTIPLE_OIDS:
+            name = OID_NAME_MAPPINGS[oid]
+            raise ValueError(f'Subject contains multiple "{name}" fields')
 
     return sort_name(items)
+
+
+def parse_name(name: str) -> List[Tuple[str, str]]:
+    """Parses a subject string as used in OpenSSLs command line utilities."""
+
+    items = parse_name_x509(name)
+
+    # Parse OIDs back to their cannonical string representation
+    return [(OID_NAME_MAPPINGS[k], v) for k, v in items]
 
 
 def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
@@ -502,7 +514,7 @@ def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     <Name(C=AT,CN=example.com)>
     """
     if isinstance(name, str):
-        name = parse_name(name)
+        return x509.Name([x509.NameAttribute(typ, value) for typ, value in parse_name_x509(name)])
 
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
@@ -515,10 +527,12 @@ def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.Relative
     >>> x509_relative_name([('CN', 'example.com')])
     <RelativeDistinguishedName(CN=example.com)>
     """
+    if isinstance(name, str):
+        return x509.RelativeDistinguishedName(
+            [x509.NameAttribute(typ, value) for typ, value in parse_name_x509(name)]
+        )
     if isinstance(name, x509.RelativeDistinguishedName):
         return name
-    if isinstance(name, str):
-        name = parse_name(name)
 
     return x509.RelativeDistinguishedName(
         [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name]
