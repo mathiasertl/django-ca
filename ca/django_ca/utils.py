@@ -50,7 +50,6 @@ from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
-from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
@@ -505,7 +504,7 @@ def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     if isinstance(name, str):
         name = parse_name(name)
 
-    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name])
+    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
 
 def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.RelativeDistinguishedName:
@@ -522,7 +521,7 @@ def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.Relative
         name = parse_name(name)
 
     return x509.RelativeDistinguishedName(
-        [x509.NameAttribute(NAME_OID_MAPPINGS[typ], force_str(value)) for typ, value in name]
+        [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name]
     )
 
 

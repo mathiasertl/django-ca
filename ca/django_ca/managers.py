@@ -38,7 +38,6 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
-from django.utils.encoding import force_str
 
 from . import ca_settings
 from .extensions import Extension
@@ -144,7 +143,7 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
 
         extensions: List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]] = []
         if crl_url:
-            urls = [x509.UniformResourceIdentifier(force_str(c)) for c in crl_url]
+            urls = [x509.UniformResourceIdentifier(c) for c in crl_url]
             dps = [
                 x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
                 for c in urls
@@ -152,12 +151,12 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
             extensions.append((False, x509.CRLDistributionPoints(dps)))
         auth_info_access = []
         if ocsp_url:
-            uri = x509.UniformResourceIdentifier(force_str(ocsp_url))
+            uri = x509.UniformResourceIdentifier(ocsp_url)
             auth_info_access.append(
                 x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=uri)
             )
         if issuer_url:
-            uri = x509.UniformResourceIdentifier(force_str(issuer_url))
+            uri = x509.UniformResourceIdentifier(issuer_url)
             auth_info_access.append(
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri

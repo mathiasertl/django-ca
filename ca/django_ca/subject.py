@@ -27,7 +27,6 @@ from typing import cast
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import force_str
 
 from . import ca_settings
 from .typehints import ParsableSubject
@@ -272,7 +271,7 @@ class Subject:
         """
         for oid, values in self._iter:
             for val in values:
-                yield oid, force_str(val)
+                yield oid, val
 
     @property
     def name(self) -> x509.Name:
