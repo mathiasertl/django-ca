@@ -351,7 +351,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertFalse(post.called)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
-            response.context["adminform"].form.errors, {"password": ["Bad decrypt. Incorrect password?"]}
+            response.context["adminform"].form.errors,
+            {"password": ["Could not decrypt private key - bad password?"]},
         )
 
         # post with correct password!

@@ -107,7 +107,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     certs: typing.Dict[str, Certificate] = {}
 
     # Note: cryptography sometimes adds another sentence at the end
-    re_false_password = r"^(Bad decrypt\. Incorrect password\?|Could not deserialize key data\..*)$"
+    re_false_password = r"^Could not decrypt private key - bad password\?$"
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()

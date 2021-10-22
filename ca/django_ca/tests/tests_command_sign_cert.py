@@ -442,14 +442,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         os.chmod(key_path, stat.S_IRUSR)
 
         # Giving no password raises a CommandError
-        # NOTE: cryptography>=35.0 returns a tuple with OpenSSL internals as second element. We thus match
-        #       without '^' and '$' as this would not match otherwise.
-        msg = r"Could not deserialize key data\. The data may be in an incorrect format or it may be encrypted with an unsupported algorithm\."  # NOQA: E501
-
         stdin = io.StringIO(self.csr_pem)
-        with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
-            post_issue_cert
-        ) as post:
+        with self.assertCommandError(self.re_false_password), self.mockSignal(
+            pre_issue_cert
+        ) as pre, self.mockSignal(post_issue_cert) as post:
             self.cmd("sign_cert", ca=self.ca, alt=["example.com"], stdin=stdin)
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)

@@ -789,7 +789,7 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    def key(self, password: Optional[Union[str, bytes]]) -> PRIVATE_KEY_TYPES:
+    def key(self, password: Optional[Union[str, bytes]] = None) -> PRIVATE_KEY_TYPES:
         """The CAs private key as private key.
 
         .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
@@ -800,7 +800,11 @@ class CertificateAuthority(X509CertMixin):
         if self._key is None:
             key_data = read_file(self.private_key_path)
 
-            self._key = load_pem_private_key(key_data, password, default_backend())
+            try:
+                self._key = load_pem_private_key(key_data, password, default_backend())
+            except ValueError as ex:
+                # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
+                raise ValueError("Could not decrypt private key - bad password?") from ex
         if isinstance(self._key, ed448.Ed448PrivateKey):  # pragma: nocover
             raise ValueError("Ed448 private keys are not supported.")
 
