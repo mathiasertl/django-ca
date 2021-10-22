@@ -56,6 +56,7 @@ from ..utils import parse_general_name
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import parse_name
+from ..utils import parse_name_x509
 from ..utils import read_file
 from ..utils import shlex_split
 from ..utils import split_str
@@ -190,38 +191,55 @@ class ReadFileTestCase(TestCase):
             os.chmod(path, 0o600)  # make sure we can delete CA_DIR
 
 
-class ParseNameTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.parse_name`."""
+class ParseNameX509TestCase(TestCase):
+    """Test :py:func:`django_ca.utils.parse_name_x509`."""
 
     def assertSubject(  # pylint: disable=invalid-name
         self, actual: str, expected: typing.List[typing.Tuple[str, str]]
     ) -> None:
         """Test that the given subject matches."""
-        self.assertEqual(parse_name(actual), expected)
+        self.assertEqual(parse_name_x509(actual), expected)
 
     def test_basic(self) -> None:
         """Some basic tests."""
-        self.assertSubject("/CN=example.com", [("CN", "example.com")])
+        self.assertSubject("/CN=example.com", [(NameOID.COMMON_NAME, "example.com")])
 
         # leading or trailing spaces are always ok.
-        self.assertSubject(" /CN = example.com ", [("CN", "example.com")])
+        self.assertSubject(" /CN = example.com ", [(NameOID.COMMON_NAME, "example.com")])
 
         # emailAddress is special because of the case
-        self.assertSubject("/emailAddress=user@example.com", [("emailAddress", "user@example.com")])
+        self.assertSubject("/emailAddress=user@example.com", [(NameOID.EMAIL_ADDRESS, "user@example.com")])
 
     def test_multiple(self) -> None:
         """Test subject with multiple tokens."""
-        self.assertSubject("/C=AT/OU=foo/CN=example.com", [("C", "AT"), ("OU", "foo"), ("CN", "example.com")])
+        self.assertSubject(
+            "/C=AT/OU=foo/CN=example.com",
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+                (NameOID.COMMON_NAME, "example.com"),
+            ],
+        )
         self.assertSubject(
             "/C=AT/OU=foo/OU=bar/CN=example.com",
-            [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
+                (NameOID.COMMON_NAME, "example.com"),
+            ],
         )
 
     def test_case(self) -> None:
         """Test that case doesn't matter."""
         self.assertSubject(
             "/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com",
-            [("C", "AT"), ("OU", "foo"), ("CN", "example.com"), ("emailAddress", "user@example.com")],
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+                (NameOID.COMMON_NAME, "example.com"),
+                (NameOID.EMAIL_ADDRESS, "user@example.com"),
+            ],
         )
 
     def test_emtpy(self) -> None:
@@ -231,58 +249,121 @@ class ParseNameTestCase(TestCase):
 
     def test_multiple_slashes(self) -> None:
         """Test that we ignore multiple slashes."""
-        self.assertSubject("/C=AT/O=GNU", [("C", "AT"), ("O", "GNU")])
-        self.assertSubject("//C=AT/O=GNU", [("C", "AT"), ("O", "GNU")])
-        self.assertSubject("/C=AT//O=GNU", [("C", "AT"), ("O", "GNU")])
-        self.assertSubject("/C=AT///O=GNU", [("C", "AT"), ("O", "GNU")])
+        self.assertSubject("/C=AT/O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")])
+        self.assertSubject("//C=AT/O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")])
+        self.assertSubject("/C=AT//O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")])
+        self.assertSubject(
+            "/C=AT///O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")]
+        )
 
     def test_empty_field(self) -> None:
         """Test empty fields."""
-        self.assertSubject("/C=AT/O=GNU/OU=foo", [("C", "AT"), ("O", "GNU"), ("OU", "foo")])
-        self.assertSubject("/C=/O=GNU/OU=foo", [("C", ""), ("O", "GNU"), ("OU", "foo")])
-        self.assertSubject("/C=AT/O=/OU=foo", [("C", "AT"), ("O", ""), ("OU", "foo")])
-        self.assertSubject("/C=AT/O=GNU/OU=", [("C", "AT"), ("O", "GNU"), ("OU", "")])
-        self.assertSubject("/C=/O=/OU=", [("C", ""), ("O", ""), ("OU", "")])
+        self.assertSubject(
+            "/C=AT/O=GNU/OU=foo",
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATION_NAME, "GNU"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+            ],
+        )
+        self.assertSubject(
+            "/C=/O=GNU/OU=foo",
+            [
+                (NameOID.COUNTRY_NAME, ""),
+                (NameOID.ORGANIZATION_NAME, "GNU"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+            ],
+        )
+        self.assertSubject(
+            "/C=AT/O=/OU=foo",
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATION_NAME, ""),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+            ],
+        )
+        self.assertSubject(
+            "/C=AT/O=GNU/OU=",
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATION_NAME, "GNU"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, ""),
+            ],
+        )
+        self.assertSubject(
+            "/C=/O=/OU=",
+            [
+                (NameOID.COUNTRY_NAME, ""),
+                (NameOID.ORGANIZATION_NAME, ""),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, ""),
+            ],
+        )
 
     def test_no_slash_at_start(self) -> None:
         """Test that no slash at start is okay."""
-        self.assertSubject("CN=example.com", [("CN", "example.com")])
+        self.assertSubject("CN=example.com", [(NameOID.COMMON_NAME, "example.com")])
 
     def test_multiple_ous(self) -> None:
         """Test multiple OUs."""
         self.assertSubject(
             "/C=AT/CN=example.com/OU=foo/OU=bar",
-            [("C", "AT"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
+                (NameOID.COMMON_NAME, "example.com"),
+            ],
         )
-        self.assertSubject("/OU=foo/OU=bar", [("OU", "foo"), ("OU", "bar")])
+        self.assertSubject(
+            "/OU=foo/OU=bar",
+            [(NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"), (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar")],
+        )
         self.assertSubject(
             "/C=AT/O=bla/OU=foo/OU=bar/CN=example.com/",
-            [("C", "AT"), ("O", "bla"), ("OU", "foo"), ("OU", "bar"), ("CN", "example.com")],
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATION_NAME, "bla"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
+                (NameOID.COMMON_NAME, "example.com"),
+            ],
         )
         self.assertSubject(
             "/C=AT/O=bla/OU=foo/OU=bar/OU=hugo/CN=example.com/",
-            [("C", "AT"), ("O", "bla"), ("OU", "foo"), ("OU", "bar"), ("OU", "hugo"), ("CN", "example.com")],
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.ORGANIZATION_NAME, "bla"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
+                (NameOID.ORGANIZATIONAL_UNIT_NAME, "hugo"),
+                (NameOID.COMMON_NAME, "example.com"),
+            ],
         )
         self.assertSubject(
             "/C=AT/CN=example.com/DC=com/DC=example",
-            [("C", "AT"), ("DC", "com"), ("DC", "example"), ("CN", "example.com")],
+            [
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.DOMAIN_COMPONENT, "com"),
+                (NameOID.DOMAIN_COMPONENT, "example"),
+                (NameOID.COMMON_NAME, "example.com"),
+            ],
         )
 
     def test_exotic_name_oids(self) -> None:
         """Test parsing a few of the more exotic names."""
         self.assertSubject(
             "/DC=foo/serialNumber=serial/title=phd",
-            [("DC", "foo"), ("title", "phd"), ("serialNumber", "serial")],
+            [(NameOID.DOMAIN_COMPONENT, "foo"), (NameOID.TITLE, "phd"), (NameOID.SERIAL_NUMBER, "serial")],
         )
         self.assertSubject(
             "/DC=foo/serialNumber=serial/C=AT/CN=example.com/uid=123/title=phd",
             [
-                ("C", "AT"),
-                ("DC", "foo"),
-                ("title", "phd"),
-                ("CN", "example.com"),
-                ("uid", "123"),
-                ("serialNumber", "serial"),
+                (NameOID.COUNTRY_NAME, "AT"),
+                (NameOID.DOMAIN_COMPONENT, "foo"),
+                (NameOID.TITLE, "phd"),
+                (NameOID.COMMON_NAME, "example.com"),
+                (NameOID.USER_ID, "123"),
+                (NameOID.SERIAL_NUMBER, "serial"),
             ],
         )
 
@@ -292,25 +373,34 @@ class ParseNameTestCase(TestCase):
         self.assertSubject(
             "commonName=example.com/surname=Ertl/userid=0",
             [
-                ("CN", "example.com"),
-                ("sn", "Ertl"),
-                ("uid", "0"),
+                (NameOID.COMMON_NAME, "example.com"),
+                (NameOID.SURNAME, "Ertl"),
+                (NameOID.USER_ID, "0"),
             ],
         )
 
     def test_multiple_other(self) -> None:
         """Test multiple other tokens (only OUs work)."""
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "C" fields$'):
-            parse_name("/C=AT/C=FOO")
+            parse_name_x509("/C=AT/C=FOO")
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
-            parse_name("/CN=AT/CN=FOO")
+            parse_name_x509("/CN=AT/CN=FOO")
 
     def test_unknown(self) -> None:
         """Test unknown field."""
         field = "ABC"
         with self.assertRaisesRegex(ValueError, "^Unknown x509 name field: ABC$") as e:
-            parse_name(f"/{field}=example.com")
+            parse_name_x509(f"/{field}=example.com")
         self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
+
+    def test_deprecation(self) -> None:
+        """Test old parse_name() function."""
+
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning,
+            r"^parse_name\(\) has been deprecated, use parse_name_x509\(\) instead$",
+        ):
+            self.assertEqual(parse_name("/CN=example.com"), [("CN", "example.com")])
 
 
 class RelativeNameTestCase(TestCase):

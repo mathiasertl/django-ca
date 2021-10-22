@@ -495,8 +495,19 @@ def parse_name_x509(name: str) -> List[Tuple[ObjectIdentifier, str]]:
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:
-    """Parses a subject string as used in OpenSSLs command line utilities."""
+    """Parses a subject string as used in OpenSSLs command line utilities.
 
+    .. deprecated:: 1.20.0
+
+       This function has been renamed to :py:func:`~django_ca.utils.parse_name_x509`. The old name will be
+       removed in ``django_ca==1.22``.
+    """
+
+    warnings.warn(
+        "parse_name() has been deprecated, use parse_name_x509() instead",
+        category=RemovedInDjangoCA122Warning,
+        stacklevel=2,
+    )
     items = parse_name_x509(name)
 
     # Parse OIDs back to their cannonical string representation
@@ -506,7 +517,7 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
 def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     """Parses a subject into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
-    If ``name`` is a string, :py:func:`parse_name` is used to parse it.
+    If ``name`` is a string, :py:func:`parse_name_x509` is used to parse it.
 
     >>> x509_name('/C=AT/CN=example.com')
     <Name(C=AT,CN=example.com)>
