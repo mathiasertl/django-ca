@@ -28,6 +28,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ObjectIdentifier
 
 import django
 from django.conf import settings
@@ -195,7 +196,7 @@ class ParseNameX509TestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_name_x509`."""
 
     def assertSubject(  # pylint: disable=invalid-name
-        self, actual: str, expected: typing.List[typing.Tuple[str, str]]
+        self, actual: str, expected: typing.List[typing.Tuple[ObjectIdentifier, str]]
     ) -> None:
         """Test that the given subject matches."""
         self.assertEqual(parse_name_x509(actual), expected)
