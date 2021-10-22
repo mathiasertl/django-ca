@@ -43,7 +43,7 @@ class TestSubject(TestCase):
         self.assertEqual(
             str(Subject("/C=AT/L=Vienna/O=example/CN=example.com")), "/C=AT/L=Vienna/O=example/CN=example.com"
         )
-        self.assertEqual(str(Subject("/C=/CN=example.com")), "/CN=example.com")
+        self.assertEqual(str(Subject("/O=/CN=example.com")), "/CN=example.com")
 
     def test_init_dict(self) -> None:
         """Test creation with a dict."""

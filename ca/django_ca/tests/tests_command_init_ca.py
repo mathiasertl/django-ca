@@ -321,7 +321,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_empty_subject_fields"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd(
-                "init_ca", name, "/C=/ST=/L=/O=/OU=/CN=test", key_size=ca_settings.CA_MIN_KEY_SIZE
+                "init_ca", name, "/ST=/L=/O=/OU=/CN=test", key_size=ca_settings.CA_MIN_KEY_SIZE
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
@@ -339,7 +339,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test creating a CA with no CommonName."""
 
         name = "test_no_cn"
-        subject = "/C=/ST=/L=/O=/OU=smth"
+        subject = "/ST=/L=/O=/OU=smth"
         out, err = self.cmd("init_ca", name, subject, key_size=ca_settings.CA_MIN_KEY_SIZE)
         self.assertEqual(out, "")
         self.assertEqual(err, "")

@@ -199,7 +199,7 @@ class ParseNameX509TestCase(TestCase):
         self, actual: str, expected: typing.List[typing.Tuple[ObjectIdentifier, str]]
     ) -> None:
         """Test that the given subject matches."""
-        self.assertEqual(parse_name_x509(actual), expected)
+        self.assertEqual(parse_name_x509(actual), [x509.NameAttribute(oid, value) for oid, value in expected])
 
     def test_basic(self) -> None:
         """Some basic tests."""
@@ -268,14 +268,6 @@ class ParseNameX509TestCase(TestCase):
             ],
         )
         self.assertSubject(
-            "/C=/O=GNU/OU=foo",
-            [
-                (NameOID.COUNTRY_NAME, ""),
-                (NameOID.ORGANIZATION_NAME, "GNU"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-            ],
-        )
-        self.assertSubject(
             "/C=AT/O=/OU=foo",
             [
                 (NameOID.COUNTRY_NAME, "AT"),
@@ -292,9 +284,8 @@ class ParseNameX509TestCase(TestCase):
             ],
         )
         self.assertSubject(
-            "/C=/O=/OU=",
+            "/O=/OU=",
             [
-                (NameOID.COUNTRY_NAME, ""),
                 (NameOID.ORGANIZATION_NAME, ""),
                 (NameOID.ORGANIZATIONAL_UNIT_NAME, ""),
             ],

@@ -441,7 +441,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_name_x509(name: str) -> List[Tuple[ObjectIdentifier, str]]:
+def parse_name_x509(name: str) -> List[x509.NameAttribute]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
@@ -450,25 +450,26 @@ def parse_name_x509(name: str) -> List[Tuple[ObjectIdentifier, str]]:
     whitespace at the start and end is stripped and the subject does not have to start with a slash (``/``).
 
     >>> parse_name_x509('/CN=example.com')
-    [(<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
     >>> parse_name_x509('c=AT/l= Vienna/o="quoting/works"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    [(<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, 'AT'),
-     (<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, 'Vienna'),
-     (<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, 'quoting/works'),
-     (<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, value='quoting/works')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
 
     Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
     based on x509 name specifications regardless of the given order:
 
     >>> parse_name_x509('L="Vienna / Dist"/EMAILaddress=user@example.com')  # doctest: +NORMALIZE_WHITESPACE
-    [(<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, 'Vienna / Dist'),
-     (<ObjectIdentifier(oid=1.2.840.113549.1.9.1, name=emailAddress)>, 'user@example.com')]
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / Dist')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=1.2.840.113549.1.9.1, name=emailAddress)>,
+                    value='user@example.com')>]
     >>> parse_name_x509('/C=AT/CN=example.com') == parse_name_x509('/CN=example.com/C=AT')
     True
 
     >>> parse_name_x509('L="Vienna / District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    [(<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, 'Vienna / District'),
-     (<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, 'example.com')]
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / District')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
 
     Examples of where this string is used are:
 
@@ -491,7 +492,7 @@ def parse_name_x509(name: str) -> List[Tuple[ObjectIdentifier, str]]:
             name = OID_NAME_MAPPINGS[oid]
             raise ValueError(f'Subject contains multiple "{name}" fields')
 
-    return sort_name(items)
+    return [x509.NameAttribute(oid, value) for oid, value in sort_name(items)]
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:
@@ -508,10 +509,10 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
         category=RemovedInDjangoCA122Warning,
         stacklevel=2,
     )
-    items = parse_name_x509(name)
+    attrs = parse_name_x509(name)
 
     # Parse OIDs back to their cannonical string representation
-    return [(OID_NAME_MAPPINGS[k], v) for k, v in items]
+    return [(OID_NAME_MAPPINGS[attr.oid], attr.value) for attr in attrs]
 
 
 def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
@@ -525,7 +526,7 @@ def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
     <Name(C=AT,CN=example.com)>
     """
     if isinstance(name, str):
-        return x509.Name([x509.NameAttribute(typ, value) for typ, value in parse_name_x509(name)])
+        return x509.Name(parse_name_x509(name))
 
     return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
@@ -539,9 +540,7 @@ def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.Relative
     <RelativeDistinguishedName(CN=example.com)>
     """
     if isinstance(name, str):
-        return x509.RelativeDistinguishedName(
-            [x509.NameAttribute(typ, value) for typ, value in parse_name_x509(name)]
-        )
+        return x509.RelativeDistinguishedName(parse_name_x509(name))
     if isinstance(name, x509.RelativeDistinguishedName):
         return name
 

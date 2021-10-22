@@ -81,7 +81,7 @@ class Subject:
         if subject is None:
             iterable = []
         elif isinstance(subject, str):
-            iterable = parse_name_x509(subject)
+            iterable = [(n.oid, n.value) for n in parse_name_x509(subject)]
         elif isinstance(subject, abc.Mapping):
             iterable = subject.items()
         elif isinstance(subject, x509.Name):
@@ -236,7 +236,7 @@ class Subject:
 
         # Convert str and x509.Name to plain iterables first
         if isinstance(e, str):
-            e = parse_name_x509(e)
+            e = [(n.oid, n.value) for n in parse_name_x509(e)]
         elif isinstance(e, x509.Name):
             e = [(n.oid, n.value) for n in e]
 
