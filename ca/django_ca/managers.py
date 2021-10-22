@@ -16,6 +16,7 @@
 
 import pathlib
 import typing
+import warnings
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
@@ -40,6 +41,7 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA122Warning
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
@@ -56,7 +58,6 @@ from .typehints import Expires
 from .typehints import ParsableExtension
 from .typehints import ParsableHash
 from .typehints import ParsableKeyType
-from .typehints import ParsableSubject
 from .utils import ca_storage
 from .utils import generate_private_key
 from .utils import get_cert_builder
@@ -213,7 +214,7 @@ class CertificateAuthorityManager(
     def init(
         self,
         name: str,
-        subject: Union[ParsableSubject, Subject],
+        subject: x509.Name,
         expires: Expires = None,
         algorithm: ParsableHash = None,
         parent: Optional["CertificateAuthority"] = None,
@@ -245,15 +246,21 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
+        .. deprecated:: 1.20.0
+
+           Passing unparsed values is deprecated and will be removed in ``django_ca==1.22``. This affects the
+           following parameters:
+
+           * Passing a ``str`` or :py:class:`~django-ca.subject.Subject` for ``subject``.
+
+
         Parameters
         ----------
 
         name : str
             The name of the CA. This is a human-readable string and is used for administrative purposes only.
-        subject : dict or str or :py:class:`~django_ca.subject.Subject`
-            Subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``. The value is
-            actually passed to :py:class:`~django_ca.subject.Subject` if it is not already an instance of that
-            class.
+        subject : :py:class:`cg:cryptography.x509.Name`
+           The desired subject for the certificate.
         expires : int or datetime or timedelta, optional
             When this certificate authority will expire, defaults to :ref:`CA_DEFAULT_EXPIRES
             <settings-ca-default-expires>`.
@@ -360,9 +367,24 @@ class CertificateAuthorityManager(
             # TYPE NOTE: This seems to be a false positive
             extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])  # type: ignore[list-item]
 
+        # Handle old types for subject
+        _subject_warning = f"Passing a {subject.__class__.__name__} as subject is deprecated"
+        if isinstance(subject, Subject):
+            warnings.warn(
+                _subject_warning,
+                category=RemovedInDjangoCA122Warning,
+                stacklevel=1,
+            )
+            subject = subject.name
+        elif not isinstance(subject, x509.Name):
+            warnings.warn(
+                _subject_warning,
+                category=RemovedInDjangoCA122Warning,
+                stacklevel=1,
+            )
+            subject = Subject(subject).name
+
         # Normalize extensions to django_ca.extensions.Extension subclasses
-        if not isinstance(subject, Subject):
-            subject = Subject(subject)
         if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
             issuer_alt_name = IssuerAlternativeName({"value": [issuer_alt_name]})
         if crl_url is None:
@@ -438,8 +460,6 @@ class CertificateAuthorityManager(
 
         builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)
-        subject = subject.name
-
         builder = builder.subject_name(subject)
         builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
         builder = builder.add_extension(

@@ -42,9 +42,10 @@ To create a new CA, you have to :py:meth:`~django_ca.managers.CertificateAuthori
 creates a minimal CA::
 
    >>> from django_ca.models import CertificateAuthority
+   >>> from django_ca.utils import x509_name
    >>> from datetime import datetime
    >>> CertificateAuthority.objects.init(
-   ...     name='ca-two', subject='/CN=ca.example.com')
+   ...     name='ca-two', subject=x509_name('/CN=ca.example.com'))
    <CertificateAuthority: ca-two>
 
 Please see :ref:`models-certificate-authority` for a more detailed description on how to handle CAs.
@@ -63,7 +64,8 @@ Django model::
 Much like with certificate authorities, creating a new certificate requires a manager method,
 :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`::
 
-   >>> Certificate.objects.create_cert(ca, csr, subject='/CN=example.com')
+   >>> from django_ca.utils import x509_name
+   >>> Certificate.objects.create_cert(ca, csr, subject=x509_name('/CN=example.com'))
    <Certificate: example.com>
 
 ***********************

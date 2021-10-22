@@ -37,6 +37,7 @@ from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
+from ..utils import x509_name
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
@@ -85,7 +86,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             expires=self.expires(720),
             parent=None,
             pathlen=0,
-            subject=Subject([("CN", "ca.example.com")]),
+            subject=Subject([("CN", "ca.example.com")]).name,
         )
 
         self.assertEqual(ca.name, "Root CA")
@@ -122,7 +123,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             algorithm=hashes.SHA256(),
             expires=self.expires(720),
             parent=None,
-            subject=Subject([("CN", "ca.example.com")]),
+            subject=x509_name("CN=ca.example.com"),
         )
 
         ca = CertificateAuthority.objects.init(name="1", **kwargs)
@@ -148,7 +149,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             key_type="RSA",
             algorithm=hashes.SHA256(),
             expires=self.expires(720),
-            subject=Subject([("CN", "ca.example.com")]),
+            subject=x509_name("CN=ca.example.com"),
         )
 
         parent = CertificateAuthority.objects.init(name="Root", parent=None, pathlen=1, **kwargs)
@@ -165,7 +166,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         with self.assertRaisesRegex(ValueError, "EdDSA only supported for OpenSSH"):
             CertificateAuthority.objects.init(
-                name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=False
+                name=ca_name, key_size=None, key_type="EdDSA", subject=subject.name, openssh_ca=False
             )
         self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
@@ -175,14 +176,14 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
                 name=ca_name,
                 key_size=None,
                 key_type="EdDSA",
-                subject=subject,
+                subject=subject.name,
                 parent=self.ca,
                 openssh_ca=True,
             )
         self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
         ca = CertificateAuthority.objects.init(
-            name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=True
+            name=ca_name, key_size=None, key_type="EdDSA", subject=subject.name, openssh_ca=True
         )
 
         self.assertEqual(ca.name, ca_name)

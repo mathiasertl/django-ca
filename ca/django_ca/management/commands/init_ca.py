@@ -245,7 +245,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         try:
             ca = CertificateAuthority.objects.init(
                 name=name,
-                subject=subject,
+                subject=subject.name,
                 expires=expires,
                 algorithm=algorithm,
                 parent=parent,

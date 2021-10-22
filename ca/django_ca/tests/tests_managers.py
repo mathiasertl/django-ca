@@ -21,6 +21,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA122Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
@@ -38,6 +39,7 @@ from ..querysets import CertificateAuthorityQuerySet
 from ..querysets import CertificateQuerySet
 from ..subject import Subject
 from ..typehints import ParsableExtension
+from ..utils import x509_name
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -84,7 +86,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "basic"
         subject = "/CN=example.com"
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, subject)
+            ca = CertificateAuthority.objects.init(name, x509_name(subject))
         self.assertProperties(ca, name, subject)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -95,7 +97,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "root"
         subject = "/CN=root.example.com"
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, subject, pathlen=2)
+            ca = CertificateAuthority.objects.init(name, x509_name(subject), pathlen=2)
         self.assertProperties(ca, name, subject)
         self.assertIsNone(ca.authority_information_access)
         self.assertIsNone(ca.crl_distribution_points)
@@ -103,7 +105,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "child"
         subject = "/CN=child.example.com"
         with self.assertCreateCASignals():
-            child = CertificateAuthority.objects.init(name, subject, parent=ca)
+            child = CertificateAuthority.objects.init(name, x509_name(subject), parent=ca)
         self.assertProperties(child, name, subject, parent=ca)
         self.assertEqual(
             child.authority_information_access,
@@ -126,7 +128,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "grandchild"
         subject = "/CN=grandchild.example.com"
         with self.assertCreateCASignals():
-            grandchild = CertificateAuthority.objects.init(name, subject, parent=child)
+            grandchild = CertificateAuthority.objects.init(name, x509_name(subject), parent=child)
         self.assertProperties(grandchild, name, subject, parent=child)
         self.assertEqual(
             grandchild.authority_information_access,
@@ -156,7 +158,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "ndh"
         subject = "/CN=ndh.example.com"
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
+            ca = CertificateAuthority.objects.init(name, x509_name(subject), default_hostname=False)
         self.assertEqual(ca.crl_url, "")
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertIsNone(ca.issuer_url)
@@ -172,7 +174,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name_constraints = NameConstraints({"value": {"permitted": ["DNS:.com"]}})
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(
-                "with-extra", subject, extra_extensions=[tlsf, ocsp_no_check.as_extension(), name_constraints]
+                "with-extra",
+                x509_name(subject),
+                extra_extensions=[tlsf, ocsp_no_check.as_extension(), name_constraints],
             )
 
         exts = [e for e in ca.extensions if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
@@ -194,7 +198,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = "/CN=example.com"
         name_constraints: ParsableExtension = {"critical": True, "value": {"permitted": ["DNS:.com"]}}
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
+            ca = CertificateAuthority.objects.init(
+                "special", x509_name(subject), name_constraints=name_constraints
+            )
         self.assertExtensions(
             ca,
             [
@@ -207,12 +213,24 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_unknown_extension_type(self) -> None:
         """Test that creating a CA with an unknown extension throws an error."""
         name = "unknown-extension-type"
-        subject = f"/CN={name}.example.com"
+        subject = x509_name(f"/CN={name}.example.com")
         with self.assertRaisesRegex(ValueError, r"^Cannot add extension of type bool$"):
             CertificateAuthority.objects.init(
                 name, subject, extra_extensions=[True]  # type: ignore[list-item]
             )
         self.assertEqual(CertificateAuthority.objects.filter(name=name).count(), 0)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_deprecation(self) -> None:
+        """Test passing deprecated types to init()."""
+
+        with self.assertWarnsRegex(RemovedInDjangoCA122Warning, r"^Passing a str as subject is deprecated$"):
+            CertificateAuthority.objects.init("ca1", "CN=example.com")  # type: ignore[arg-type]
+
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning, r"^Passing a Subject as subject is deprecated$"
+        ):
+            CertificateAuthority.objects.init("ca2", Subject("CN=example.com"))  # type: ignore[arg-type]
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, CA_DEFAULT_CA=certs["child"]["serial"])

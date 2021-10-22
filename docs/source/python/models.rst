@@ -35,8 +35,10 @@ authorities. The method has many options but is designed to provide defaults
 that work in most cases::
 
    >>> from django_ca.models import CertificateAuthority
+   >>> from django_ca.utils import x509_name
    >>> ca = CertificateAuthority.objects.init(
-   ...   name='ca', subject='/CN=ca.example.com',
+   ...   name='ca', 
+   ...   subject=x509_name('/CN=ca.example.com'),
    ...   pathlen=1  # so we can create one level of intermediate CAs
    ... )
    >>> ca
@@ -46,7 +48,8 @@ This CA will contain all properties and X509 extensions to be a fully
 functioning CA. To create an intermediate CA, simply pass the parent::
 
    >>> child = CertificateAuthority.objects.init(
-   ...   name='child', subject='/CN=child.example.com',
+   ...   name='child', 
+   ...   subject=x509_name('/CN=child.example.com'),
    ...   parent=ca)
    >>> child.parent
    <CertificateAuthority: ca>
@@ -57,7 +60,8 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
 parameters::
 
    >>> full = CertificateAuthority.objects.init(
-   ...   name='full', subject='/CN=full.example.com',
+   ...   name='full', 
+   ...   subject=x509_name('/CN=full.example.com'),
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
    ...   # this CA can only sign for *.com domains:
@@ -78,7 +82,8 @@ There are some more parameters to configure how the CA will be signed::
 
    >>> from cryptography.hazmat.primitives.asymmetric import ec
    >>> CertificateAuthority.objects.init(
-   ...   name='props', subject='/CN=child.example.com',
+   ...   name='props', 
+   ...   subject=x509_name('/CN=child.example.com'),
    ...   algorithm='SHA256',  # sha512 would be the default
    ...   pathlen=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
