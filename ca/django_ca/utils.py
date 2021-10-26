@@ -507,7 +507,7 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     warnings.warn(
         "parse_name() has been deprecated, use parse_name_x509() instead",
         category=RemovedInDjangoCA122Warning,
-        stacklevel=2,
+        stacklevel=1,
     )
     attrs = parse_name_x509(name)
 
@@ -515,20 +515,26 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     return [(OID_NAME_MAPPINGS[attr.oid], attr.value) for attr in attrs]
 
 
-def x509_name(name: Union[List[Tuple[str, str]], str]) -> x509.Name:
-    """Parses a subject into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
+def x509_name(name: str) -> x509.Name:
+    """Parses a string into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
-    If ``name`` is a string, :py:func:`parse_name_x509` is used to parse it.
+    .. deprecated:: 1.20.0
+
+       Passing a list of two-tupples is deprecated as of 1.20.0 and the functionality will be removed in
+       ``django_ca==1.22``.
 
     >>> x509_name('/C=AT/CN=example.com')
     <Name(C=AT,CN=example.com)>
-    >>> x509_name([('C', 'AT'), ('CN', 'example.com')])
-    <Name(C=AT,CN=example.com)>
     """
-    if isinstance(name, str):
-        return x509.Name(parse_name_x509(name))
+    if not isinstance(name, str):
+        warnings.warn(
+            "Passing a list to x509_name() is deprecated, pass a str instead",
+            category=RemovedInDjangoCA122Warning,
+            stacklevel=1,
+        )
+        return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
-    return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
+    return x509.Name(parse_name_x509(name))
 
 
 def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.RelativeDistinguishedName:

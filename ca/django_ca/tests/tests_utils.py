@@ -1026,7 +1026,7 @@ class X509NameTestCase(TestCase):
         subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
         self.assertEqual(x509_name(subject), self.name)
 
-    def test_tuple(self) -> None:
+    def test_deprecated_tuple(self) -> None:
         """Test passing a tuple."""
         subject = [
             ("C", "AT"),
@@ -1037,7 +1037,11 @@ class X509NameTestCase(TestCase):
             ("CN", "example.com"),
             ("emailAddress", "user@example.com"),
         ]
-        self.assertEqual(x509_name(subject), self.name)
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning,
+            r"^Passing a list to x509_name\(\) is deprecated, pass a str instead$",
+        ):
+            self.assertEqual(x509_name(subject), self.name)  # type: ignore[arg-type]
 
 
 class MultilineURLValidatorTestCase(TestCase):

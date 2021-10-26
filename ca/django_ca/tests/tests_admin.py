@@ -264,9 +264,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     csr_pem = certs["root-cert"]["csr"]["pem"]
 
     @classmethod
-    def create_csr(
-        cls, subject: typing.Union[typing.List[typing.Tuple[str, str]], str]
-    ) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
+    def create_csr(cls, subject: str) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(
             public_exponent=65537, key_size=1024, backend=default_backend()
@@ -292,7 +290,8 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             (f, "AT" if f in ("C", "jurisdictionCountryName") else f"test-{f}")
             for f in OID_NAME_MAPPINGS.values()
         ]
-        csr = self.create_csr(subject)[1]
+        subject_strs = [f"{k}={v}" for k, v in subject]
+        csr = self.create_csr("/".join(subject_strs))[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
 
         response = self.client.post(self.url, data={"csr": csr_pem})
