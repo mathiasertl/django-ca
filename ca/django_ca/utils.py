@@ -63,7 +63,6 @@ from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
 from .typehints import ParsableKeyCurve
 from .typehints import ParsableKeyType
-from .typehints import ParsableRelativeDistinguishedName
 from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
@@ -537,22 +536,25 @@ def x509_name(name: str) -> x509.Name:
     return x509.Name(parse_name_x509(name))
 
 
-def x509_relative_name(name: ParsableRelativeDistinguishedName) -> x509.RelativeDistinguishedName:
+def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')
     <RelativeDistinguishedName(CN=example.com)>
-    >>> x509_relative_name([('CN', 'example.com')])
-    <RelativeDistinguishedName(CN=example.com)>
     """
-    if isinstance(name, str):
-        return x509.RelativeDistinguishedName(parse_name_x509(name))
-    if isinstance(name, x509.RelativeDistinguishedName):
-        return name
 
-    return x509.RelativeDistinguishedName(
-        [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name]
-    )
+    msg = f"Passing a {name.__class__.__name__} to x509_relative_name() is deprecated, pass a str instead"
+
+    if isinstance(name, x509.RelativeDistinguishedName):
+        warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
+        return name
+    elif isinstance(name, (list, tuple)):
+        warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
+        return x509.RelativeDistinguishedName(
+            [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name]
+        )
+
+    return x509.RelativeDistinguishedName(parse_name_x509(name))
 
 
 def validate_email(addr: str) -> str:

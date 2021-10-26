@@ -14,6 +14,7 @@
 """Various type aliases used in throughout django-ca."""
 
 import sys
+import typing
 from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
@@ -168,7 +169,7 @@ ParsableDistributionPoint = TypedDict(
     "ParsableDistributionPoint",
     {
         "full_name": Optional[ParsableGeneralNameList],
-        "relative_name": ParsableRelativeDistinguishedName,
+        "relative_name": typing.Union[str, x509.RelativeDistinguishedName],
         "crl_issuer": ParsableGeneralNameList,
         "reasons": Iterable[Union[str, x509.ReasonFlags]],
     },

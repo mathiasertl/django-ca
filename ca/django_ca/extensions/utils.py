@@ -92,8 +92,12 @@ class DistributionPoint:
             self.full_name = GeneralNameList(data.get("full_name"))
             self.crl_issuer = GeneralNameList(data.get("crl_issuer"))
 
-            if "relative_name" in data:
-                self.relative_name = x509_relative_name(data["relative_name"])
+            relative_name = data.get("relative_name")
+            if isinstance(relative_name, str):
+                self.relative_name = x509_relative_name(relative_name)
+            else:
+                self.relative_name = relative_name
+
             if "reasons" in data:
                 self.reasons = {self._parse_reason(r) for r in data["reasons"]}
 

@@ -407,9 +407,19 @@ class RelativeNameTestCase(TestCase):
     def test_parse(self) -> None:
         """Test parsing..."""
         expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        self.assertEqual(x509_relative_name(expected), expected)
         self.assertEqual(x509_relative_name("/CN=example.com"), expected)
-        self.assertEqual(x509_relative_name([("CN", "example.com")]), expected)
+
+    def test_deprecated(self) -> None:
+        """Test deprecated input values."""
+
+        expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        msg = r"^Passing a %s to x509_relative_name\(\) is deprecated, pass a str instead$"
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning, msg % x509.RelativeDistinguishedName.__name__
+        ):
+            self.assertEqual(x509_relative_name(expected), expected)  # type: ignore[arg-type]
+        with self.assertWarnsRegex(RemovedInDjangoCA122Warning, msg % "list"):
+            self.assertEqual(x509_relative_name([("CN", "example.com")]), expected)  # type: ignore[arg-type]
 
 
 class ValidateEmailTestCase(TestCase):
