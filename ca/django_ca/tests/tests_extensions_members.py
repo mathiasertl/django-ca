@@ -87,7 +87,7 @@ class DistributionPointTestCase(TestCase):
         self.assertEqual(DistributionPoint().as_text(), "")
         self.assertEqual(DistributionPoint({"full_name": url}).as_text(), f"* Full Name:\n  * URI:{url}")
         self.assertEqual(
-            DistributionPoint({"relative_name": f"/CN='{url}'"}).as_text(), f"* Relative Name: /CN={url}"
+            DistributionPoint({"relative_name": f"/CN='{url}'"}).as_text(), f'* Relative Name: /CN="{url}"'
         )
         self.assertEqual(
             DistributionPoint({"full_name": url, "crl_issuer": url2}).as_text(),

@@ -91,6 +91,8 @@ GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", f
 #: Regular expression matching certificate serials as hex
 SERIAL_RE = re.compile("^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$")
 
+UNSAFE_NAME_CHARS = re.compile(r'[\\/\'"]')
+
 SAN_NAME_MAPPINGS = {
     x509.DNSName: "DNS",
     x509.RFC822Name: "email",
@@ -185,8 +187,7 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # hashes.SM3.name: hashes.SM3,
 }
 if hasattr(hashes, "SM3"):  # pragma: cryptography>=35.0 branch
-    # PYLINT NOTE: Remove pylint override once cryptography>=35.0 is used
-    HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3  # pylint: disable=no-member  # We check above
+    HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3
 
 #: Mapping of canonical elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
@@ -303,6 +304,13 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
         >>> format_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
         '/CN=example.com'
     """
+
+    def _format_value(val: str) -> str:
+        # If val contains no unsafe chars, return it unchanged
+        if UNSAFE_NAME_CHARS.search(val) is None:
+            return val
+        return '"' + val.replace('"', r"\"").replace(r"\\", r"\\\\") + '"'
+
     if isinstance(subject, (x509.Name, x509.RelativeDistinguishedName)):
         items = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
     else:
@@ -313,7 +321,7 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
         )
         items = subject
 
-    values = "/".join([f"{k}={v}" for k, v in items])
+    values = "/".join([f"{k}={_format_value(v)}" for k, v in items])
     return f"/{values}"
 
 
