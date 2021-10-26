@@ -26,7 +26,6 @@ from ipaddress import ip_address
 from ipaddress import ip_network
 from typing import Any
 from typing import Dict
-from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -289,14 +288,14 @@ def encode_dns(name: str) -> str:
     return idna.encode(name).decode("utf-8")
 
 
-def format_name(subject: x509.Name) -> str:
-    """Convert a subject into the canonical form for distinguished names.
+def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
+    """Convert a x509 name or relative name into the canonical form for distinguished names.
 
     This function does not take care of sorting the subject in any meaningful order.
 
     .. deprecated:: 1.20.0
 
-       Passing a list of two-tupples is deprecated as of 1.20.0 and the functionality will be removed in
+       Passing a list of two-tuples is deprecated as of 1.20.0 and the functionality will be removed in
        ``django_ca==1.22``.
 
     Examples::
@@ -304,7 +303,7 @@ def format_name(subject: x509.Name) -> str:
         >>> format_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
         '/CN=example.com'
     """
-    if isinstance(subject, x509.Name):
+    if isinstance(subject, (x509.Name, x509.RelativeDistinguishedName)):
         items = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
     else:
         warnings.warn(
@@ -318,23 +317,20 @@ def format_name(subject: x509.Name) -> str:
     return f"/{values}"
 
 
-def format_relative_name(name: Union[x509.RelativeDistinguishedName, Iterable[Tuple[str, str]]]) -> str:
+def format_relative_name(name: x509.RelativeDistinguishedName) -> str:
     """Convert a relative name (RDN) into a canonical form.
 
-    Examples::
+    .. deprecated:: 1.20.0
 
-        >>> format_relative_name([('C', 'AT'), ('CN', 'example.com')])
-        '/C=AT/CN=example.com'
-        >>> format_relative_name(x509.RelativeDistinguishedName([
-        ...     x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')
-        ... ]))
-        '/CN=example.com'
+       This function is deprecated in favor of ``format_name()``, which provides identical functionality. This
+       function will be removed in ``django_ca==1.22``.
     """
-    if isinstance(name, x509.RelativeDistinguishedName):
-        name = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in name]
-
-    values = "/".join([f"{k}={v}" for k, v in name])
-    return f"/{values}"
+    warnings.warn(
+        "This function is deprecated, use format_name() instead.",
+        category=RemovedInDjangoCA122Warning,
+        stacklevel=1,
+    )
+    return format_name(name)
 
 
 def format_general_name(name: x509.GeneralName) -> str:
@@ -529,7 +525,7 @@ def x509_name(name: str) -> x509.Name:
 
     .. deprecated:: 1.20.0
 
-       Passing a list of two-tupples is deprecated as of 1.20.0 and the functionality will be removed in
+       Passing a list of two-tuples is deprecated as of 1.20.0 and the functionality will be removed in
        ``django_ca==1.22``.
 
     >>> x509_name('/C=AT/CN=example.com')

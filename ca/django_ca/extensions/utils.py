@@ -37,7 +37,7 @@ from ..typehints import SerializedPolicyQualifier
 from ..typehints import SerializedPolicyQualifiers
 from ..typehints import SerializedUserNotice
 from ..utils import GeneralNameList
-from ..utils import format_relative_name
+from ..utils import format_name
 from ..utils import x509_relative_name
 
 
@@ -120,7 +120,7 @@ class DistributionPoint:
         if self.full_name:
             values.append(f"full_name={list(self.full_name.serialize())}")
         if self.relative_name:
-            values.append(f"relative_name='{format_relative_name(self.relative_name)}'")
+            values.append(f"relative_name='{format_name(self.relative_name)}'")
         if self.crl_issuer:
             values.append(f"crl_issuer={list(self.crl_issuer.serialize())}")
         if self.reasons:
@@ -152,7 +152,7 @@ class DistributionPoint:
             names = "\n".join([textwrap.indent(f"* {s}", "  ") for s in self.full_name.serialize()])
             text = f"* Full Name:\n{names}"
         elif self.relative_name is not None:
-            text = f"* Relative Name: {format_relative_name(self.relative_name)}"
+            text = f"* Relative Name: {format_name(self.relative_name)}"
 
         if self.crl_issuer:
             names = "\n".join([textwrap.indent(f"* {s}", "  ") for s in self.crl_issuer.serialize()])
@@ -184,7 +184,7 @@ class DistributionPoint:
         if self.full_name:
             val["full_name"] = list(self.full_name.serialize())
         if self.relative_name is not None:
-            val["relative_name"] = format_relative_name(self.relative_name)
+            val["relative_name"] = format_name(self.relative_name)
         if self.crl_issuer:
             val["crl_issuer"] = list(self.crl_issuer.serialize())
         if self.reasons is not None:

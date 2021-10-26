@@ -9,7 +9,7 @@
     <li>Full Name: {{ entry.full_name|format_general_names|join:", " }}</li>
     {% endif %}
     {% if entry.relative_name %}
-    <li>Relative Name: {{ entry.relative_name|format_relative_name }}</li>
+    <li>Relative Name: {{ entry.relative_name|format_name }}</li>
     {% endif %}
     {% if entry.crl_issuer %}
     <li>CRL Issuer: {{ entry.crl_issuer|format_general_names|join:", " }}</li>

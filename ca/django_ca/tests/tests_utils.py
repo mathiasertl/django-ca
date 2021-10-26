@@ -401,8 +401,12 @@ class RelativeNameTestCase(TestCase):
     def test_format(self) -> None:
         """Test formatting..."""
         rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        self.assertEqual(format_relative_name([("C", "AT"), ("CN", "example.com")]), "/C=AT/CN=example.com")
-        self.assertEqual(format_relative_name(rdn), "/CN=example.com")
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning, r"^This function is deprecated, use format_name\(\) instead\.$"
+        ):
+            self.assertEqual(format_relative_name(rdn), "/CN=example.com")
+
+        self.assertEqual(format_name(rdn), "/CN=example.com")
 
     def test_parse(self) -> None:
         """Test parsing..."""

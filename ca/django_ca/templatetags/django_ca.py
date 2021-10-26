@@ -24,14 +24,12 @@ from ..utils import add_colons
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
 from ..utils import format_name
-from ..utils import format_relative_name
 from ..utils import int_to_hex
 
 register = template.Library()
 
 
 register.filter("format_name", format_name)
-register.filter("format_relative_name", format_relative_name)
 
 
 @register.filter
