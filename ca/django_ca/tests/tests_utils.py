@@ -411,7 +411,7 @@ class RelativeNameTestCase(TestCase):
 
     def test_deprecated(self) -> None:
         """Test deprecated input values."""
-
+        # pylint: disable=consider-using-f-string
         expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         msg = r"^Passing a %s to x509_relative_name\(\) is deprecated, pass a str instead$"
         with self.assertWarnsRegex(
@@ -766,21 +766,6 @@ class ParseHashAlgorithm(TestCase):
 class FormatNameTestCase(TestCase):
     """Test :py:func:`django_ca.utils.format_name`."""
 
-    def test_basic(self) -> None:
-        """Some basic tests."""
-
-        subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
-        subject_dict = [
-            ("C", "AT"),
-            ("ST", "Vienna"),
-            ("L", "Vienna"),
-            ("O", "O"),
-            ("OU", "OU"),
-            ("CN", "example.com"),
-            ("emailAddress", "user@example.com"),
-        ]
-        self.assertEqual(format_name(subject_dict), subject)
-
     def test_x509(self) -> None:
         """Test passing a x509.Name."""
         subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
@@ -796,6 +781,25 @@ class FormatNameTestCase(TestCase):
             ]
         )
         self.assertEqual(format_name(name), subject)
+
+    def test_deprecated(self) -> None:
+        """Test passing a deprecated list."""
+
+        subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
+        subject_dict = [
+            ("C", "AT"),
+            ("ST", "Vienna"),
+            ("L", "Vienna"),
+            ("O", "O"),
+            ("OU", "OU"),
+            ("CN", "example.com"),
+            ("emailAddress", "user@example.com"),
+        ]
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning,
+            r"^Passing a list to format_name\(\) is deprecated, pass a str instead$",
+        ):
+            self.assertEqual(format_name(subject_dict), subject)  # type: ignore[arg-type]
 
 
 class Power2TestCase(TestCase):

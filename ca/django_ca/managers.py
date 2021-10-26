@@ -251,7 +251,7 @@ class CertificateAuthorityManager(
            Passing unparsed values is deprecated and will be removed in ``django_ca==1.22``. This affects the
            following parameters:
 
-           * Passing a ``str`` or :py:class:`~django-ca.subject.Subject` for ``subject``.
+           * Passing a ``str`` or :py:class:`~django_ca.subject.Subject` for ``subject``.
 
 
         Parameters

@@ -289,22 +289,32 @@ def encode_dns(name: str) -> str:
     return idna.encode(name).decode("utf-8")
 
 
-def format_name(subject: Union[x509.Name, Iterable[Tuple[str, str]]]) -> str:
+def format_name(subject: x509.Name) -> str:
     """Convert a subject into the canonical form for distinguished names.
 
     This function does not take care of sorting the subject in any meaningful order.
 
+    .. deprecated:: 1.20.0
+
+       Passing a list of two-tupples is deprecated as of 1.20.0 and the functionality will be removed in
+       ``django_ca==1.22``.
+
     Examples::
 
-        >>> format_name([('CN', 'example.com'), ])
+        >>> format_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
         '/CN=example.com'
-        >>> format_name([('CN', 'example.com'), ('O', "My Organization"), ])
-        '/CN=example.com/O=My Organization'
     """
     if isinstance(subject, x509.Name):
-        subject = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
+        items = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
+    else:
+        warnings.warn(
+            "Passing a list to format_name() is deprecated, pass a str instead",
+            category=RemovedInDjangoCA122Warning,
+            stacklevel=1,
+        )
+        items = subject
 
-    values = "/".join([f"{k}={v}" for k, v in subject])
+    values = "/".join([f"{k}={v}" for k, v in items])
     return f"/{values}"
 
 
@@ -548,7 +558,7 @@ def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
     if isinstance(name, x509.RelativeDistinguishedName):
         warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
         return name
-    elif isinstance(name, (list, tuple)):
+    if isinstance(name, (list, tuple)):
         warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
         return x509.RelativeDistinguishedName(
             [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name]
