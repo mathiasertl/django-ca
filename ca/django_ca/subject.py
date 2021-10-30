@@ -35,7 +35,6 @@ from .utils import NAME_OID_MAPPINGS
 from .utils import OID_NAME_MAPPINGS
 from .utils import SUBJECT_FIELDS
 from .utils import parse_name_x509
-from .utils import sort_name
 
 
 class Subject:
@@ -162,11 +161,11 @@ class Subject:
 
     def __str__(self) -> str:
         data = []
-        for oid, values in self._data.items():
+        for oid, values in self._iter:
             for val in values:
                 data.append((oid, val))
 
-        joined_data = "/".join([f"{OID_NAME_MAPPINGS[k]}={v}" for k, v in sort_name(data)])
+        joined_data = "/".join([f"{OID_NAME_MAPPINGS[k]}={v}" for k, v in data])
         return f"/{joined_data}"
 
     @property
