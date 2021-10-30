@@ -298,7 +298,7 @@ class ParseNameX509TestCase(TestCase):
     def test_multiple_ous(self) -> None:
         """Test multiple OUs."""
         self.assertSubject(
-            "/C=AT/CN=example.com/OU=foo/OU=bar",
+            "/C=AT/OU=foo/OU=bar/CN=example.com",
             [
                 (NameOID.COUNTRY_NAME, "AT"),
                 (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
@@ -332,7 +332,7 @@ class ParseNameX509TestCase(TestCase):
             ],
         )
         self.assertSubject(
-            "/C=AT/CN=example.com/DC=com/DC=example",
+            "/C=AT/DC=com/DC=example/CN=example.com",
             [
                 (NameOID.COUNTRY_NAME, "AT"),
                 (NameOID.DOMAIN_COMPONENT, "com"),
@@ -345,17 +345,17 @@ class ParseNameX509TestCase(TestCase):
         """Test parsing a few of the more exotic names."""
         self.assertSubject(
             "/DC=foo/serialNumber=serial/title=phd",
-            [(NameOID.DOMAIN_COMPONENT, "foo"), (NameOID.TITLE, "phd"), (NameOID.SERIAL_NUMBER, "serial")],
+            [(NameOID.DOMAIN_COMPONENT, "foo"), (NameOID.SERIAL_NUMBER, "serial"), (NameOID.TITLE, "phd")],
         )
         self.assertSubject(
-            "/DC=foo/serialNumber=serial/C=AT/CN=example.com/uid=123/title=phd",
+            "/C=AT/DC=foo/serialNumber=serial/CN=example.com/uid=123/title=phd",
             [
                 (NameOID.COUNTRY_NAME, "AT"),
                 (NameOID.DOMAIN_COMPONENT, "foo"),
-                (NameOID.TITLE, "phd"),
+                (NameOID.SERIAL_NUMBER, "serial"),
                 (NameOID.COMMON_NAME, "example.com"),
                 (NameOID.USER_ID, "123"),
-                (NameOID.SERIAL_NUMBER, "serial"),
+                (NameOID.TITLE, "phd"),
             ],
         )
 

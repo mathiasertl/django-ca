@@ -21,6 +21,9 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase
 
@@ -186,6 +189,38 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         finally:
             if os.path.exists(out_path):
                 os.remove(out_path)
+
+    @override_tmpcadir()
+    def test_subject_sort(self) -> None:
+        """Test that subject is sorted on the command line."""
+
+        cname = "subject-sort.example.com"
+        subject = f"/CN={cname}/C=AT"
+        stdin = self.csr_pem.encode()
+        cmdline = [
+            "sign_cert",
+            f"--subject={subject}",
+            f"--ca={self.ca.serial}",
+        ]
+
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(stderr, "")
+
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(
+            cert.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, cname),
+                ]
+            ),
+        )
 
     @override_tmpcadir()
     def test_no_dns_cn(self) -> None:

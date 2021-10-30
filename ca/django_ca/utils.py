@@ -239,11 +239,15 @@ except ImportError:  # pragma: no cover
             return self
 
 
-def sort_name(subject: List[Tuple[ObjectIdentifier, str]]) -> List[Tuple[ObjectIdentifier, str]]:
+def sort_name(  # pragma: no cover
+    subject: List[Tuple[ObjectIdentifier, str]]
+) -> List[Tuple[ObjectIdentifier, str]]:
     """Returns the subject in the correct order for a x509 subject."""
-    try:
+    # NOTE: function not needed in intermediate state, will be reused again once we skip subject.Subject in
+    # init_ca.
+    try:  # pragma: no cover
         return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
-    except ValueError:
+    except ValueError:  # pragma: no cover
         return subject
 
 
@@ -457,6 +461,10 @@ def sanitize_serial(value: str) -> str:
 def parse_name_x509(name: str) -> List[x509.NameAttribute]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
+    .. versionchanged:: 1.20.0
+
+       This function no longer returns the subject in pseudo-sorted order.
+
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
     ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
     on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``,
@@ -470,15 +478,7 @@ def parse_name_x509(name: str) -> List[x509.NameAttribute]:
      <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, value='quoting/works')>,
      <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
 
-    Dictionary keys are normalized to the values of :py:const:`OID_NAME_MAPPINGS` and keys will be sorted
-    based on x509 name specifications regardless of the given order:
-
-    >>> parse_name_x509('L="Vienna / Dist"/EMAILaddress=user@example.com')  # doctest: +NORMALIZE_WHITESPACE
-    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / Dist')>,
-     <NameAttribute(oid=<ObjectIdentifier(oid=1.2.840.113549.1.9.1, name=emailAddress)>,
-                    value='user@example.com')>]
-    >>> parse_name_x509('/C=AT/CN=example.com') == parse_name_x509('/CN=example.com/C=AT')
-    True
+    The function also handles whitespace, quoting and slashes correctly:
 
     >>> parse_name_x509('L="Vienna / District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
     [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / District')>,
@@ -505,7 +505,7 @@ def parse_name_x509(name: str) -> List[x509.NameAttribute]:
             name = OID_NAME_MAPPINGS[oid]
             raise ValueError(f'Subject contains multiple "{name}" fields')
 
-    return [x509.NameAttribute(oid, value) for oid, value in sort_name(items)]
+    return [x509.NameAttribute(oid, value) for oid, value in items]
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:
