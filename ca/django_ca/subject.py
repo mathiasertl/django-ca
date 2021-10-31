@@ -170,7 +170,11 @@ class Subject:
 
     @property
     def _iter(self) -> List[Tuple[x509.ObjectIdentifier, List[str]]]:
-        return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(t[0]))
+        try:
+            return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(t[0]))
+        except ValueError:
+            # Thrown when subject contains fields that cannot be implicitly sorted
+            return list(self._data.items())  # cast to list for uniform return type value
 
     def clear(self) -> None:
         """Clear the subject."""
