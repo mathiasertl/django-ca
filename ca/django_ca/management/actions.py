@@ -19,6 +19,7 @@ import getpass
 import typing
 from datetime import timedelta
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -36,6 +37,7 @@ from ..utils import parse_encoding
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import split_str
+from ..utils import x509_name
 
 ActionType = typing.TypeVar("ActionType")
 
@@ -321,6 +323,24 @@ class SubjectAction(SingleValueAction[Subject]):
         """Parse the value for this action."""
         try:
             return Subject(value)
+        except ValueError as e:
+            raise argparse.ArgumentError(self, str(e))
+
+
+class NameAction(SingleValueAction[x509.Name]):
+    """Action to parse a string into a :py:class:`cg:~cryptography.x509.Name`.
+
+    Note that this action does *not* take care of sorting the subject in any way.
+
+    >>> parser.add_argument('--name', action=NameAction)  # doctest: +ELLIPSIS
+    NameAction(...)
+    >>> parser.parse_args(["--name", "/CN=example.com"])
+    Namespace(name=<Name(CN=example.com)>)
+    """
+
+    def parse_value(self, value: str) -> x509.Name:
+        try:
+            return x509_name(value)
         except ValueError as e:
             raise argparse.ArgumentError(self, str(e))
 
