@@ -64,8 +64,10 @@ from .utils import get_cert_builder
 from .utils import int_to_hex
 from .utils import parse_expires
 from .utils import parse_hash_algorithm
+from .utils import sort_name
 from .utils import validate_hostname
 from .utils import validate_key_parameters
+from .utils import x509_name
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
 if TYPE_CHECKING:
@@ -382,7 +384,7 @@ class CertificateAuthorityManager(
                 category=RemovedInDjangoCA122Warning,
                 stacklevel=1,
             )
-            subject = Subject(subject).name
+            subject = sort_name(x509_name(subject))
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
