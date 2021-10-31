@@ -48,6 +48,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -336,9 +337,14 @@ class X509CertMixin(DjangoCAModel):
         return self.revoked_date
 
     def update_certificate(self, value: x509.Certificate) -> None:
-        """Update this instance with data from a :py:class:`cg:cryptography.x509.Certificate`."""
+        """Update this instance with data from a :py:class:`cg:cryptography.x509.Certificate`.
+
+        This function will also populate the `cn`, `serial, `expires` and `valid_from` fields.
+        """
         self.pub = LazyCertificate(value)
-        self.cn = cast(str, self.subject.get("CN", ""))  # pylint: disable=invalid-name
+        self.cn = next(  # pylint: disable=invalid-name
+            (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME), ""
+        )
         self.expires = self.not_after
         self.valid_from = self.not_before
         if settings.USE_TZ:

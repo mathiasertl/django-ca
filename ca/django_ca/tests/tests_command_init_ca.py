@@ -134,6 +134,37 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_unsortable_subject(self) -> None:
+        """Test subjects that do not have any standard storting."""
+        cname = "subject-unsortable.example.com"
+        name = "test_subject_unsortable"
+        given_name = "given-name"
+        subject = f"/CN={cname}/C=AT/givenName={given_name}"
+        with self.assertCreateCASignals() as (pre, post):
+            out, err = self.cmd_e2e(["init_ca", name, subject])
+        self.assertTrue(pre.called)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+        self.assertPrivateKey(ca)
+        ca.full_clean()  # assert e.g. max_length in serials
+        self.assertSignature([ca], ca)
+
+        # Assert that common name and that subject is in correct order.
+        self.assertEqual(ca.cn, cname)
+        self.assertEqual(
+            ca.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COMMON_NAME, cname),
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                    x509.NameAttribute(NameOID.GIVEN_NAME, given_name),
+                ]
+            ),
+        )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self) -> None:
         """Test most arguments."""
 
@@ -371,16 +402,13 @@ class InitCATest(TestCaseMixin, TestCase):
 
         name = "test_no_cn"
         subject = "/ST=/L=/O=/OU=smth"
-        out, err = self.cmd("init_ca", name, subject, key_size=ca_settings.CA_MIN_KEY_SIZE)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature([ca], ca)
-        self.assertPrivateKey(ca)
-        self.assertSubject(ca.pub.loaded, [("OU", "smth"), ("CN", name)])
-        self.assertIssuer(ca, ca)
-        self.assertAuthorityKeyIdentifier(ca, ca)
+        error = r"^Subject must contain a common name \(/CN=...\)\.$"
+        with self.assertCreateCASignals(False, False), self.assertCommandError(error):
+            self.cmd("init_ca", name, subject)
+
+        subject = "/ST=/L=/O=/OU=smth/CN="
+        with self.assertCreateCASignals(False, False), self.assertCommandError(error):
+            self.cmd("init_ca", name, subject)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self) -> None:

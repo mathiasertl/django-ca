@@ -13,6 +13,8 @@ ChangeLog
 * Parsing and formatting of names now correctly escapes or quotes special characters.
 * ``django_ca.utils.shlex_split()`` was renamed to :py:func:`~django_ca.utils.split_str`. The old name will be
   removed in ``django_ca==1.22``.
+* Require a CommonName when generating a CA instead of implicitly setting the human-readable name if no
+  CommonName was given.
 
 Backwards incompatible changes
 ==============================

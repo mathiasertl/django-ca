@@ -21,8 +21,10 @@ import pathlib
 import typing
 from datetime import timedelta
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -32,13 +34,14 @@ from ... import ca_settings
 from ...extensions import IssuerAlternativeName
 from ...extensions import NameConstraints
 from ...models import CertificateAuthority
-from ...subject import Subject
 from ...tasks import cache_crl
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
 from ...typehints import ParsableKeyType
+from ...utils import sort_name
 from ..actions import ExpiresAction
 from ..actions import MultipleURLAction
+from ..actions import NameAction
 from ..actions import PasswordAction
 from ..actions import URLAction
 from ..base import BaseCommand
@@ -72,10 +75,11 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             help_text="Make the CA an intermediate CA of the named CA. By default, this is a new root CA.",
         )
         parser.add_argument("name", help="Human-readable name of the CA")
-        self.add_subject(
-            parser,
-            help_text=f"""The subject of the CA in the format "/key1=value1/key2=value2/...",
-                          valid keys are {self.valid_subject_keys}. If "CN" is not set, the name is used.""",
+        parser.add_argument(
+            "subject",
+            action=NameAction,
+            help='The subject of the CA in the format "/key1=value1/key2=value2/...", requires at least a'
+            "CommonName to be present (/CN=...).",
         )
         self.add_password(
             parser,
@@ -176,7 +180,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     def handle(  # type: ignore[override] # pylint: disable=too-many-arguments,too-many-locals
         self,
         name: str,
-        subject: Subject,
+        subject: x509.Name,
         parent: typing.Optional[CertificateAuthority],
         expires: timedelta,
         key_size: int,
@@ -217,14 +221,16 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         if not parent and ca_ocsp_url:
             raise CommandError("OCSP cannot be used to revoke root CAs.")
 
+        # We require a valid common name
+        common_name = next((attr.value for attr in subject if attr.oid == NameOID.COMMON_NAME), False)
+        if not common_name:
+            raise CommandError("Subject must contain a common name (/CN=...).")
+
         # See if we can work with the private key
         if parent:
             self.test_private_key(parent, parent_password)
 
-        # Set CommonName to name if not set in subject
-        if "CN" not in subject:
-            subject["CN"] = name
-
+        subject = sort_name(subject)
         name_constraints = NameConstraints({"value": {"permitted": permit_name, "excluded": exclude_name}})
 
         issuer_alternative_name = options[IssuerAlternativeName.key]
@@ -245,7 +251,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         try:
             ca = CertificateAuthority.objects.init(
                 name=name,
-                subject=subject.name,
+                subject=subject,
                 expires=expires,
                 algorithm=algorithm,
                 parent=parent,

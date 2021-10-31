@@ -46,7 +46,6 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
-from cryptography.x509.oid import ObjectIdentifier
 
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
@@ -239,16 +238,12 @@ except ImportError:  # pragma: no cover
             return self
 
 
-def sort_name(  # pragma: no cover
-    subject: List[Tuple[ObjectIdentifier, str]]
-) -> List[Tuple[ObjectIdentifier, str]]:
+def sort_name(name: x509.Name) -> x509.Name:
     """Returns the subject in the correct order for a x509 subject."""
-    # NOTE: function not needed in intermediate state, will be reused again once we skip subject.Subject in
-    # init_ca.
-    try:  # pragma: no cover
-        return sorted(subject, key=lambda e: SUBJECT_FIELDS.index(e[0]))
-    except ValueError:  # pragma: no cover
-        return subject
+    try:
+        return x509.Name(sorted(name, key=lambda attr: SUBJECT_FIELDS.index(attr.oid)))
+    except ValueError:
+        return name
 
 
 def encode_url(url: str) -> str:
