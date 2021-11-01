@@ -666,7 +666,7 @@ if not args.only_contrib:
                 ca = CertificateAuthority.objects.init(
                     name=data[name]["name"],
                     password=data[name]["password"],
-                    subject=data[name]["subject"],
+                    subject=Subject(data[name]["subject"]).name,
                     expires=datetime.utcnow() + data[name]["expires"],
                     key_type=data[name]["key_type"],
                     key_size=data[name]["key_size"],
