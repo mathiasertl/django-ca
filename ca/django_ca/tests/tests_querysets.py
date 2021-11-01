@@ -16,9 +16,11 @@
 import typing
 from contextlib import contextmanager
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.x509.oid import NameOID
 
 from django.db import models
 from django.test import TestCase
@@ -36,7 +38,6 @@ from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..subject import Subject
 from ..utils import x509_name
 from .base import override_settings
 from .base import override_tmpcadir
@@ -78,6 +79,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Basic test for init()."""
         key_size = ca_settings.CA_MIN_KEY_SIZE
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
         ca = CertificateAuthority.objects.init(
             name="Root CA",
             key_size=key_size,
@@ -86,7 +88,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             expires=self.expires(720),
             parent=None,
             pathlen=0,
-            subject=Subject([("CN", "ca.example.com")]).name,
+            subject=subject,
         )
 
         self.assertEqual(ca.name, "Root CA")
@@ -99,7 +101,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         # verity public key propertiesa
         self.assertBasic(ca.pub.loaded)
-        self.assertEqual(ca.subject, Subject({"CN": "ca.example.com"}))
+        self.assertEqual(ca.subject, subject)
 
         # verify X509 properties
         self.assertEqual(
@@ -162,11 +164,11 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         """Test OpenSSH CA support"""
 
         ca_name = "OpenSSH CA"
-        subject = Subject([("CN", "openssh.example.com")])
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "openssh.example.com")])
 
         with self.assertRaisesRegex(ValueError, "EdDSA only supported for OpenSSH"):
             CertificateAuthority.objects.init(
-                name=ca_name, key_size=None, key_type="EdDSA", subject=subject.name, openssh_ca=False
+                name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=False
             )
         self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
@@ -176,14 +178,14 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
                 name=ca_name,
                 key_size=None,
                 key_type="EdDSA",
-                subject=subject.name,
+                subject=subject,
                 parent=self.ca,
                 openssh_ca=True,
             )
         self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
         ca = CertificateAuthority.objects.init(
-            name=ca_name, key_size=None, key_type="EdDSA", subject=subject.name, openssh_ca=True
+            name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=True
         )
 
         self.assertEqual(ca.name, ca_name)

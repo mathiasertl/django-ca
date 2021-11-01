@@ -113,7 +113,6 @@ from .querysets import CertificateAuthorityQuerySet
 from .querysets import CertificateQuerySet
 from .signals import post_revoke_cert
 from .signals import pre_revoke_cert
-from .subject import Subject
 from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import ExtensionTypeTypeVar
@@ -443,9 +442,14 @@ class X509CertMixin(DjangoCAModel):
         return base64.b64encode(public_key_hash).decode("utf-8")
 
     @property
-    def issuer(self) -> Subject:
-        """The certificate issuer field as :py:class:`~django_ca.subject.Subject`."""
-        return Subject([(s.oid, s.value) for s in self.pub.loaded.issuer])
+    def issuer(self) -> x509.Name:
+        """The certificate issuer field as :py:class:`cg:~cryptography.x509.Name`.
+
+        .. versionchanged:: 1.20.0
+
+           This property was a :py:class:`~django_ca.subject.Subject` before ``django-ca==1.20.0``.
+        """
+        return self.pub.loaded.issuer
 
     @property
     def not_before(self) -> datetime:
@@ -483,9 +487,14 @@ class X509CertMixin(DjangoCAModel):
         post_revoke_cert.send(sender=self.__class__, cert=self)
 
     @property
-    def subject(self) -> Subject:
-        """The certificates subject as :py:class:`~django_ca.subject.Subject`."""
-        return Subject([(s.oid, s.value) for s in self.pub.loaded.subject])
+    def subject(self) -> x509.Name:
+        """The certificate subject field as :py:class:`cg:~cryptography.x509.Name`.
+
+        .. versionchanged:: 1.20.0
+
+           This property was a :py:class:`~django_ca.subject.Subject` before ``django-ca==1.20.0``.
+        """
+        return self.pub.loaded.subject
 
     @property
     def distinguished_name(self) -> str:

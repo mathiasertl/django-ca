@@ -17,6 +17,7 @@ import typing
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.x509 import NameOID
 
 from django import forms
 from django.utils.safestring import mark_safe
@@ -24,7 +25,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .extensions import Extension
 from .profiles import profile
-from .subject import Subject
+from .utils import ADMIN_SUBJECT_OIDS
 from .widgets import MultiValueExtensionWidget
 from .widgets import SubjectAltNameWidget
 from .widgets import SubjectWidget
@@ -93,20 +94,21 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
 class SubjectField(forms.MultiValueField):
     """A MultiValue field for a :py:class:`~django_ca.subject.Subject`."""
 
-    supported_oids = ("C", "ST", "L", "O", "OU", "CN", "emailAddress")
-    required_oids = ("CN",)
+    required_oids = (NameOID.COMMON_NAME,)
 
     def __init__(self, **kwargs: typing.Any) -> None:
-        fields = tuple(forms.CharField(required=v in self.required_oids) for v in self.supported_oids)
+        fields = tuple(forms.CharField(required=v in self.required_oids) for v in ADMIN_SUBJECT_OIDS)
 
         # NOTE: do not pass initial here as this is done on webserver invocation
         #       This screws up tests.
         kwargs.setdefault("widget", SubjectWidget)
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
-    def compress(self, data_list: typing.List[typing.Tuple[str, str]]) -> Subject:
+    def compress(self, data_list: typing.List[str]) -> x509.Name:
         # list comprehension is to filter empty fields
-        return Subject([(k, v) for k, v in zip(self.supported_oids, data_list) if v])
+        return x509.Name(
+            [x509.NameAttribute(oid, value) for oid, value in zip(ADMIN_SUBJECT_OIDS, data_list) if value]
+        )
 
 
 class SubjectAltNameField(forms.MultiValueField):

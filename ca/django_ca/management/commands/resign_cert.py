@@ -69,7 +69,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             watchers = list(cert.watchers.all())
 
         if subject is None:
-            subject = cert.subject
+            subject = Subject(cert.subject)
 
         if not options[KeyUsage.key]:
             key_usage = cert.key_usage

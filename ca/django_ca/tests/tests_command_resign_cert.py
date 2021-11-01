@@ -17,6 +17,9 @@ import os
 import typing
 from unittest.mock import patch
 
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+
 from django.test import TestCase
 
 from freezegun import freeze_time
@@ -120,10 +123,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_overwrite(self) -> None:
         """Test overwriting extensions."""
+        cname = "new.example.com"
         key_usage = "cRLSign"
         ext_key_usage = "critical,emailProtection"
         tls_feature = "critical,MultipleCertStatusRequest"
-        subject = "/CN=new.example.com"
         watcher = "new@example.com"
         alt = "new-alt-name.example.com"
 
@@ -140,7 +143,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     "--tls-feature",
                     tls_feature,
                     "--subject",
-                    subject,
+                    f"/CN={cname}",
                     "--watch",
                     watcher,
                     "--alt",
@@ -155,7 +158,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(self.cert, new)
 
         # assert overwritten extensions
-        self.assertEqual(new.subject, Subject(subject))
+        self.assertEqual(new.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]))
         self.assertEqual(new.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{alt}"]}))
         self.assertEqual(new.key_usage, KeyUsage({"value": [key_usage], "critical": False}))
         self.assertEqual(

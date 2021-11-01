@@ -233,6 +233,52 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    def test_add_no_common_name(self) -> None:
+        """Test posting no common name but some other name components."""
+
+        ca = self.cas["root"]
+        csr = certs["root-cert"]["csr"]["pem"]
+        cert_count = Certificate.objects.all().count()
+
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": csr,
+                    "ca": ca.pk,
+                    "profile": "webserver",
+                    "subject_0": "AT",
+                    "subject_1": "",
+                    "subject_2": "",
+                    "subject_3": "",
+                    "subject_4": "",
+                    "subject_5": "",
+                    "subject_6": "",
+                    "subject_alternative_name_1": True,
+                    "algorithm": "SHA256",
+                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "key_usage_0": [
+                        "digitalSignature",
+                        "keyAgreement",
+                    ],
+                    "key_usage_1": True,
+                    "extended_key_usage_0": [
+                        "clientAuth",
+                        "serverAuth",
+                    ],
+                    "extended_key_usage_1": False,
+                    "tls_feature_0": ["OCSPMustStaple", "MultipleCertStatusRequest"],
+                    "tls_feature_1": False,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+        self.assertFalse(response.context["adminform"].form.is_valid())
+        self.assertEqual(response.context["adminform"].form.errors, {"subject": ["Enter a complete value."]})
+        self.assertEqual(cert_count, Certificate.objects.all().count())
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
     def test_add_no_key_usage(self) -> None:
         """Test adding a cert with no (extended) key usage."""
         ca = self.cas["root"]

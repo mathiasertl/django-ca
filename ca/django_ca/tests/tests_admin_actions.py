@@ -414,8 +414,8 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         with self.mockSignals():
             url = self.get_url(self.cert)
             response = self.client.post(url, data=self.data)
-        self.assertSuccessfulRequest(response)
         self.assertRedirects(response, self.changelist_url)
+        self.assertSuccessfulRequest(response)
 
     @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
     def test_no_csr(self) -> None:

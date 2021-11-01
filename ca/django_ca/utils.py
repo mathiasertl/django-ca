@@ -162,6 +162,16 @@ MULTIPLE_OIDS = (
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {k.upper(): v for k, v in NAME_OID_MAPPINGS.items()}
 
+ADMIN_SUBJECT_OIDS = (
+    NameOID.COUNTRY_NAME,
+    NameOID.STATE_OR_PROVINCE_NAME,
+    NameOID.LOCALITY_NAME,
+    NameOID.ORGANIZATION_NAME,
+    NameOID.ORGANIZATIONAL_UNIT_NAME,
+    NameOID.COMMON_NAME,
+    NameOID.EMAIL_ADDRESS,
+)
+
 
 #: Mapping of canonical hash algorithm names to the implementing classes
 HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {

@@ -18,7 +18,9 @@ import typing
 import unittest
 from datetime import timedelta
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.test import TestCase
@@ -212,7 +214,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 add_issuer_alternative_name=False,
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, subject.name)
         self.assertEqual(
             cert.extensions,
             [
@@ -230,7 +232,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca.issuer_alt_name = "https://example.com"
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"C": "AT", "CN": "example.com"})
+        cname = "example.com"
+        subject = x509.Name(
+            [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, cname)]
+        )
 
         prof = Profile("example", subject=Subject())
         with self.mockSignal(pre_issue_cert) as pre:
@@ -244,6 +249,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions=[SubjectAlternativeName({"value": ["example.com"]})],
             )
         self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.cn, cname)
         self.assertEqual(cert.subject, subject)
         self.assertEqual(
             cert.extensions,
@@ -278,7 +284,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
         cname = "example.com"
-        subject = Subject({"C": "AT", "CN": cname})
+        subject = x509.Name(
+            [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, cname)]
+        )
 
         prof = Profile(
             "example",
@@ -340,7 +348,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
         cname = "example.com"
-        subject = Subject({"C": "AT", "CN": cname})
+        subject = x509.Name(
+            [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, cname)]
+        )
 
         prof = Profile(
             "example",
@@ -448,7 +458,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions=[ski],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, subject.name)
         self.assertEqual(
             cert.extensions,
             [
@@ -481,7 +491,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions={ski.key: ski},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, subject.name)
         self.assertEqual(
             cert.extensions,
             [
@@ -513,7 +523,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions={OCSPNoCheck.key: None},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, subject.name)
         self.assertEqual(
             cert.extensions,
             [
@@ -545,7 +555,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions={OCSPNoCheck.key: OCSPNoCheck().as_extension()},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, subject.name)
         self.assertEqual(
             cert.extensions,
             [

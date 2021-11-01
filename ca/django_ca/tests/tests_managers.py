@@ -16,6 +16,9 @@
 import typing
 import unittest
 
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+
 from django.test import TestCase
 
 from freezegun import freeze_time
@@ -58,7 +61,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self,
         ca: CertificateAuthority,
         name: str,
-        subject: str,
+        subject: x509.Name,
         parent: typing.Optional[CertificateAuthority] = None,
     ) -> None:
         """Assert some basic properties of a CA."""
@@ -70,7 +73,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         base_url = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
         self.assertEqual(ca.name, name)
         self.assertEqual(ca.issuer, issuer)
-        self.assertEqual(ca.subject, Subject(subject))
+        self.assertEqual(ca.subject, subject)
         self.assertTrue(ca.enabled)
         self.assertEqual(ca.parent, parent)
         self.assertEqual(ca.crl_url, f"{base_url}crl/{ca.serial}/")
@@ -84,9 +87,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test creating the most basic possible CA."""
         name = "basic"
-        subject = "/CN=example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, x509_name(subject))
+            ca = CertificateAuthority.objects.init(name, subject)
         self.assertProperties(ca, name, subject)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -95,17 +98,17 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         # test a few properties of intermediate CAs, with multiple levels
         host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
         name = "root"
-        subject = "/CN=root.example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "root.example.com")])
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, x509_name(subject), pathlen=2)
+            ca = CertificateAuthority.objects.init(name, subject, pathlen=2)
         self.assertProperties(ca, name, subject)
         self.assertIsNone(ca.authority_information_access)
         self.assertIsNone(ca.crl_distribution_points)
 
         name = "child"
-        subject = "/CN=child.example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")])
         with self.assertCreateCASignals():
-            child = CertificateAuthority.objects.init(name, x509_name(subject), parent=ca)
+            child = CertificateAuthority.objects.init(name, subject, parent=ca)
         self.assertProperties(child, name, subject, parent=ca)
         self.assertEqual(
             child.authority_information_access,
@@ -126,9 +129,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         )
 
         name = "grandchild"
-        subject = "/CN=grandchild.example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "grandchild.example.com")])
         with self.assertCreateCASignals():
-            grandchild = CertificateAuthority.objects.init(name, x509_name(subject), parent=child)
+            grandchild = CertificateAuthority.objects.init(name, subject, parent=child)
         self.assertProperties(grandchild, name, subject, parent=child)
         self.assertEqual(
             grandchild.authority_information_access,
@@ -156,9 +159,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_no_default_hostname(self) -> None:
         """Test creating a CA with no default hostname."""
         name = "ndh"
-        subject = "/CN=ndh.example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ndh.example.com")])
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, x509_name(subject), default_hostname=False)
+            ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
         self.assertEqual(ca.crl_url, "")
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertIsNone(ca.issuer_url)
@@ -168,19 +171,19 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_extra_extensions(self) -> None:
         """Test creating a CA with extra extensions."""
-        subject = "/CN=example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         tlsf = TLSFeature({"value": ["OCSPMustStaple"]})
         ocsp_no_check = OCSPNoCheck()
         name_constraints = NameConstraints({"value": {"permitted": ["DNS:.com"]}})
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(
                 "with-extra",
-                x509_name(subject),
+                subject,
                 extra_extensions=[tlsf, ocsp_no_check.as_extension(), name_constraints],
             )
 
         exts = [e for e in ca.extensions if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
-        self.assertEqual(ca.subject, Subject(subject))
+        self.assertEqual(ca.subject, subject)
         self.assertCountEqual(
             exts,
             [
@@ -195,12 +198,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_special_cases(self) -> None:
         """Test a few special cases not covered otherwise."""
-        subject = "/CN=example.com"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
         name_constraints: ParsableExtension = {"critical": True, "value": {"permitted": ["DNS:.com"]}}
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(
-                "special", x509_name(subject), name_constraints=name_constraints
-            )
+            ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
+        self.assertEqual(ca.subject, subject)
         self.assertExtensions(
             ca,
             [
@@ -213,7 +215,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_unknown_extension_type(self) -> None:
         """Test that creating a CA with an unknown extension throws an error."""
         name = "unknown-extension-type"
-        subject = x509_name(f"/CN={name}.example.com")
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"{name}.example.com")])
         with self.assertRaisesRegex(ValueError, r"^Cannot add extension of type bool$"):
             CertificateAuthority.objects.init(
                 name, subject, extra_extensions=[True]  # type: ignore[list-item]
@@ -302,7 +304,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
 
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
-        self.assertEqual(cert.subject, Subject(subject))
+        self.assertEqual(cert.subject, x509_name(subject))
         self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
@@ -314,7 +316,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
             cert = Certificate.objects.create_cert(
                 self.ca, self.csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
-        self.assertEqual(cert.subject, Subject(subject))
+        self.assertEqual(cert.subject, x509_name(subject))
         self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
 
     @override_tmpcadir()

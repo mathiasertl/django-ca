@@ -83,6 +83,7 @@ from .models import X509CertMixin
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
+from .subject import Subject
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import add_colons
@@ -768,7 +769,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         """Get initial data based on default profile.
 
         When resigning a certificate, get initial data from the certificate."""
-        data = super().get_changeform_initial_data(request)
+        data: typing.Dict[str, typing.Any] = super().get_changeform_initial_data(request)
 
         if hasattr(request, "_resign_obj"):
             # resign the cert, so we add initial data from the original cert
@@ -798,7 +799,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "watchers": resign_obj.watchers.all(),
             }
         else:
-            data["subject"] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("subject", {})
+            data["subject"] = Subject(
+                ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("subject", {})
+            ).name
 
         return data
 

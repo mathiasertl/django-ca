@@ -15,11 +15,14 @@
 
 import typing
 
+from cryptography import x509
+
 from django.forms import widgets
 from django.utils.translation import gettext as _
 
 from . import ca_settings
 from .extensions import Extension
+from .utils import ADMIN_SUBJECT_OIDS
 
 
 class LabeledCheckboxInput(widgets.CheckboxInput):
@@ -113,27 +116,12 @@ class SubjectWidget(CustomMultiWidget):
         )
         super().__init__(_widgets, attrs)
 
-    def decompress(
-        self, value: typing.Optional[typing.Dict[str, typing.Union[str, typing.List[str]]]]
-    ) -> typing.List[typing.Union[str, typing.List[str]]]:
-        if value is None:  # pragma: no cover
-            return ["", "", "", "", "", ""]
+    def decompress(self, value: typing.Optional[x509.Name]) -> typing.List[str]:
+        if not value:
+            return ["" for attr in ADMIN_SUBJECT_OIDS]
 
-        # Multiple OUs are not supported in webinterface
-        org_unit = value.get("OU", "")
-        if isinstance(org_unit, list) and org_unit:
-            org_unit = org_unit[0]
-
-        # Used e.g. for initial form data (e.g. resigning a cert)
-        return [
-            value.get("C", ""),
-            value.get("ST", ""),
-            value.get("L", ""),
-            value.get("O", ""),
-            org_unit,
-            value.get("CN", ""),
-            value.get("emailAddress", ""),
-        ]
+        attr_mapping = {attr.oid: attr.value for attr in value}
+        return [attr_mapping.get(oid, "") for oid in ADMIN_SUBJECT_OIDS]
 
 
 class SubjectAltNameWidget(CustomMultiWidget):

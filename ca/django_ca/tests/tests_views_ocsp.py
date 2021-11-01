@@ -25,9 +25,11 @@ from unittest import mock
 import asn1crypto
 import asn1crypto.x509
 import ocspbuilder
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.x509 import ocsp
+from cryptography.x509.oid import NameOID
 from oscrypto import asymmetric
 
 from django.conf import settings
@@ -45,7 +47,6 @@ from ..modelfields import LazyCertificate
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
-from ..subject import Subject
 from ..utils import ca_storage
 from ..utils import hex_to_bytes
 from ..utils import int_to_hex
@@ -200,13 +201,13 @@ class OCSPViewTestMixin(TestCaseMixin):
     """Mixin for OCSP view tests."""
 
     _subject_mapping = {
-        "country_name": "C",
-        "state_or_province_name": "ST",
-        "locality_name": "L",
-        "organization_name": "O",
-        "organizational_unit_name": "OU",
-        "common_name": "CN",
-        "email_address": "emailAddress",
+        "country_name": NameOID.COUNTRY_NAME,
+        "state_or_province_name": NameOID.STATE_OR_PROVINCE_NAME,
+        "locality_name": NameOID.LOCALITY_NAME,
+        "organization_name": NameOID.ORGANIZATION_NAME,
+        "organizational_unit_name": NameOID.ORGANIZATIONAL_UNIT_NAME,
+        "common_name": NameOID.COMMON_NAME,
+        "email_address": NameOID.EMAIL_ADDRESS,
     }
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
@@ -247,16 +248,13 @@ class OCSPViewTestMixin(TestCaseMixin):
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo_str)
 
     def assertOCSPSubject(  # pylint: disable=invalid-name
-        self, got: OrderedDictType, expected: Subject
+        self, got: OrderedDictType, expected: x509.Name
     ) -> None:
         """Assert that the OCSP subject matches."""
-        translated = {}
-        for frm, target in self._subject_mapping.items():
-            if frm in got:
-                translated[target] = got.pop(frm)
-
-        self.assertEqual(got, {})
-        self.assertEqual(Subject(translated), expected)
+        actual = x509.Name(
+            [x509.NameAttribute(self._subject_mapping[frm], target) for frm, target in got.items()]
+        )
+        self.assertEqual(actual, expected)
 
     def assertOCSP(
         # pylint: disable=invalid-name

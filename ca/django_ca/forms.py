@@ -18,6 +18,7 @@ from datetime import date
 from datetime import datetime
 
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import NameOID
 
 from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
@@ -194,9 +195,13 @@ class CreateCertificateBaseForm(CertificateModelForm):
         except Exception as e:  # pylint: disable=broad-except; for simplicity
             self.add_error("password", str(e))
 
-        if cn_in_san and subject and subject.get("CN"):
+        if cn_in_san and subject:  # subject is None if user does not enter *anything*
+            # NOTE: subject MUST have a common name at this point: If the user did not enter one, it would
+            # have been rejected by SubjectField already.
+            cname = next(attr for attr in subject if attr.oid == NameOID.COMMON_NAME)  # pragma: no branch
+
             try:
-                parse_general_name(subject["CN"])
+                parse_general_name(cname.value)
             except ValueError:
                 self.add_error(
                     "subject_alternative_name",
