@@ -322,7 +322,7 @@ class Profile:
         public_key = csr.public_key()
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
-        builder = builder.issuer_name(ca.pub.loaded.subject)
+        builder = builder.issuer_name(ca.subject)
         builder = builder.subject_name(cert_subject.name)
 
         for _key, extension in cert_extensions.items():
