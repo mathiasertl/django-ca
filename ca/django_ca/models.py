@@ -443,7 +443,7 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def issuer(self) -> x509.Name:
-        """The certificate issuer field as :py:class:`cg:~cryptography.x509.Name`.
+        """The certificate issuer field as :py:class:`~cg:cryptography.x509.Name`.
 
         .. versionchanged:: 1.20.0
 
@@ -488,7 +488,7 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def subject(self) -> x509.Name:
-        """The certificate subject field as :py:class:`cg:~cryptography.x509.Name`.
+        """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`.
 
         .. versionchanged:: 1.20.0
 

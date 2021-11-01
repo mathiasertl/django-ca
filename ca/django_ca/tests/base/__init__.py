@@ -354,7 +354,7 @@ def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
 def rdn(
     name: typing.Iterable[typing.Tuple[x509.ObjectIdentifier, str]]
 ) -> x509.RelativeDistinguishedName:  # just a shortcut
-    """Shortcut to get a :py:class:`cg:cryptography.x509..RelativeDistinguishedNam`."""
+    """Shortcut to get a :py:class:`cg:cryptography.x509.RelativeDistinguishedName`."""
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
 
 
