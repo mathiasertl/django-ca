@@ -371,13 +371,6 @@ class ParseNameX509TestCase(TestCase):
             ],
         )
 
-    def test_multiple_other(self) -> None:
-        """Test multiple other tokens (only OUs work)."""
-        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "C" fields$'):
-            parse_name_x509("/C=AT/C=FOO")
-        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
-            parse_name_x509("/CN=AT/CN=FOO")
-
     def test_unknown(self) -> None:
         """Test unknown field."""
         field = "ABC"
@@ -1104,6 +1097,13 @@ class X509NameTestCase(TestCase):
             r"^Passing a list to x509_name\(\) is deprecated, pass a str instead$",
         ):
             self.assertEqual(x509_name(subject), self.name)  # type: ignore[arg-type]
+
+    def test_multiple_other(self) -> None:
+        """Test multiple other tokens (only OUs work)."""
+        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "C" fields$'):
+            x509_name("/C=AT/C=DE")
+        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
+            x509_name("/CN=AT/CN=FOO")
 
 
 class MultilineURLValidatorTestCase(TestCase):

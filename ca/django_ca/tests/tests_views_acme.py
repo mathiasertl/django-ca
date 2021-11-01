@@ -1531,6 +1531,43 @@ class AcmeOrderFinalizeViewTestCase(
         )
 
     @override_tmpcadir()
+    def test_csr_subject_no_cn(self) -> None:
+        """Test posting a CSR that has a subject but no common name."""
+
+        csr = (
+            x509.CertificateSigningRequestBuilder()
+            .subject_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                    ]
+                )
+            )
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+        )
+
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
+            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertAcmeResponse(resp)
+
+        order = AcmeOrder.objects.get(pk=self.order.pk)
+        cert = order.acmecertificate
+        self.assertEqual(
+            mockcm.call_args_list, [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
+                "expires": pyrfc3339.generate(order.expires, accept_naive=True),
+                "identifiers": [{"type": "dns", "value": self.hostname}],
+                "status": "processing",
+            },
+        )
+
+    @override_tmpcadir()
     def test_csr_subject_no_domain(self) -> None:
         """Test posting a CSR where the CommonName is not a domain name."""
 

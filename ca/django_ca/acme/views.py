@@ -45,6 +45,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -69,10 +70,10 @@ from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
 from ..models import CertificateAuthority
-from ..subject import Subject
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from ..tasks import run_task
+from ..utils import check_name
 from ..utils import validate_email
 from .errors import AcmeBadCSR
 from .errors import AcmeException
@@ -752,12 +753,15 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             ).extension_type
         )
 
-        # Test if any subject Common Name is in the names for this order
-        # NOTE: certbot does *not* set name in the subject
-        csr_subject = Subject(csr.subject)
-        common_name = csr_subject.get("CN")
-        if isinstance(common_name, str) and x509.DNSName(common_name) not in names_from_order:
-            raise AcmeBadCSR(message="CommonName was not in order.")
+        # Perform sanity checks on the CSRs subject.
+        # NOTE: certbot does *not* set any subject at all
+        if csr.subject:
+            check_name(csr.subject)
+
+            # We allow a client setting a CommonName, but it *must* be part of the order.
+            common_name = next((attr for attr in csr.subject if attr.oid == NameOID.COMMON_NAME), None)
+            if common_name is not None and x509.DNSName(common_name.value) not in names_from_order:
+                raise AcmeBadCSR(message="CommonName was not in order.")
 
         try:
             names_from_csr: Set[x509.Name] = set(

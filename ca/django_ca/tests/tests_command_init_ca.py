@@ -406,6 +406,7 @@ class InitCATest(TestCaseMixin, TestCase):
         with self.assertCreateCASignals(False, False), self.assertCommandError(error):
             self.cmd("init_ca", name, subject)
 
+        error = r"CommonName must not be an empty value"
         subject = "/ST=/L=/O=/OU=smth/CN="
         with self.assertCreateCASignals(False, False), self.assertCommandError(error):
             self.cmd("init_ca", name, subject)

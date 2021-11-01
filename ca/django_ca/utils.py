@@ -152,7 +152,7 @@ NAME_OID_MAPPINGS.update(
     }
 )
 
-# Some OIDs can occur multiple times
+#: List of OIDs that may occur multiple times in a subject.
 MULTIPLE_OIDS = (
     NameOID.DOMAIN_COMPONENT,
     NameOID.ORGANIZATIONAL_UNIT_NAME,
@@ -432,6 +432,30 @@ def hex_to_bytes(value: str) -> bytes:
     return binascii.unhexlify(value.replace(":", ""))
 
 
+def check_name(name: x509.Name) -> x509.Name:
+    """Check if `name` is a valid x509 Name.
+
+    This method raises ``ValueError`` if the CommonName contains an empty value or if any attribute not in
+    :py:attr:`~django_ca.utils.MULTIPLE_OIDS` occurs multiple times.
+
+    The method returns the name unchanged for convenience.
+    """
+    seen = set()
+
+    # for oid in set(oids):
+    for attr in name:
+        oid = attr.oid
+
+        # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
+        if oid in seen and oid not in MULTIPLE_OIDS:
+            raise ValueError(f'Subject contains multiple "{OID_NAME_MAPPINGS[attr.oid]}" fields')
+        seen.add(oid)
+
+        if oid == NameOID.COMMON_NAME and not attr.value:
+            raise ValueError("CommonName must not be an empty value")
+    return name
+
+
 def sanitize_serial(value: str) -> str:
     """Sanitize a serial provided by user/untrusted input.
 
@@ -494,12 +518,6 @@ def parse_name_x509(name: str) -> List[x509.NameAttribute]:
     except KeyError as e:
         raise ValueError(f"Unknown x509 name field: {e.args[0]}") from e
 
-    oids = tuple(t[0] for t in items)
-    for oid in set(oids):
-        if oids.count(oid) > 1 and oid not in MULTIPLE_OIDS:
-            name = OID_NAME_MAPPINGS[oid]
-            raise ValueError(f'Subject contains multiple "{name}" fields')
-
     return [x509.NameAttribute(oid, value) for oid, value in items]
 
 
@@ -542,7 +560,7 @@ def x509_name(name: str) -> x509.Name:
         )
         return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
 
-    return x509.Name(parse_name_x509(name))
+    return check_name(x509.Name(parse_name_x509(name)))
 
 
 def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
