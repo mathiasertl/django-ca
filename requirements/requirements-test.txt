@@ -1,5 +1,5 @@
 PyVirtualDisplay==2.2
-coverage[toml]==6.0.2
+coverage[toml]==6.1.1
 django-webtest==1.9.8
 freezegun==1.1.0
 ocspbuilder==0.10.2
