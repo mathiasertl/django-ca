@@ -85,9 +85,17 @@ CA_DEFAULT_EXPIRES
 CA_DEFAULT_HOSTNAME
    Default: ``None``
 
-   If set, the default hostname will be used to set generic URLs for the OCSP responder, assuming that
-   ``django_ca`` itself is used as OCSP responder. This setting *must not* include the protocol, as OCSP
-   always uses HTTP (not HTTPS) and this setting might be used for other values in the future.
+   If set, the default hostname will be used to automatically generate URLs for CRLs and OCSP services.  This
+   setting *must not* include the protocol, as OCSP always uses HTTP (not HTTPS) and this setting might be
+   used for other values in the future.
+
+   .. WARNING:: 
+
+      If you change this setting, CRLs configured to contain only CA revocation information (that is, to check
+      if an intermediate CA *itself* was revoked) are no longer strictly valid. However, few if any
+      implementations actually implement validation for this.
+
+      If you change this setting, you should configure django-ca to continue using the old URLs.
 
    Example value: ``"ca.example.com"``.
 
