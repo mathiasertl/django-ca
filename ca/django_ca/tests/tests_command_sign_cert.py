@@ -293,7 +293,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsNone(cert.subject_alternative_name)
 
     @override_tmpcadir(
-        CA_DEFAULT_SUBJECT=[
+        CA_DEFAULT_SUBJECT=(
             ("C", "AT"),
             ("ST", "Vienna"),
             ("L", "Vienna"),
@@ -301,7 +301,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             ("OU", "MyOrgUnit"),
             ("CN", "CommonName"),
             ("emailAddress", "user@example.com"),
-        ]
+        )
     )
     def test_profile_subject(self) -> None:
         """Test signing with a subject in the profile."""
