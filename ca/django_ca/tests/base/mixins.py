@@ -844,6 +844,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Shortcut to reverse an URI name."""
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
 
+    def uri(self, uri: str) -> x509.UniformResourceIdentifier:
+        """Minor shortcast to get a x509.UniformResourceIdentifier."""
+        return x509.UniformResourceIdentifier(uri)
+
     @property
     def usable_cas(self) -> typing.Iterator[typing.Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
