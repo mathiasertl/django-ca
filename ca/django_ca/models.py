@@ -117,7 +117,6 @@ from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import ExtensionTypeTypeVar
 from .typehints import Literal
-from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
 from .typehints import ParsableKeyType
 from .typehints import ParsableValue
@@ -132,7 +131,6 @@ from .utils import int_to_hex
 from .utils import multiline_url_validator
 from .utils import parse_encoding
 from .utils import parse_expires
-from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import parse_key_curve
 from .utils import read_file
@@ -1051,7 +1049,7 @@ class CertificateAuthority(X509CertMixin):
         password: Optional[Union[str, bytes]] = None,
         scope: Optional[Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,
-        full_name: Optional[ParsableGeneralNameList] = None,
+        full_name: Optional[typing.Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,
     ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
@@ -1060,6 +1058,11 @@ class CertificateAuthority(X509CertMixin):
         the `Issuing Distribution Point extension <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_.
         The former defaults to the ``crl_url`` field, pass ``None`` to not include the value. At most one of
         the two may be set.
+
+        .. versionchanged:: 1.20.0
+
+           The ``full_name`` parameter must be a list of :py:class:`~cg:cryptography.x509.GeneralName`,
+           ``str`` are no longer allowed.
 
         Parameters
         ----------
@@ -1079,7 +1082,7 @@ class CertificateAuthority(X509CertMixin):
             Override the counter-variable for the CRL Number extension. Passing the same key to multiple
             invocations will yield a different sequence then what would ordinarily be returned. The default is
             to use the scope as the key.
-        full_name : list of str or :py:class:`~cg:cryptography.x509.GeneralName`, optional
+        full_name : list of :py:class:`~cg:cryptography.x509.GeneralName`, optional
             List of general names to use in the Issuing Distribution Point extension. If not passed, use
             ``crl_url`` if set.
         relative_name : :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`, optional
@@ -1110,7 +1113,7 @@ class CertificateAuthority(X509CertMixin):
 
         parsed_full_name = None
         if full_name is not None:
-            parsed_full_name = [parse_general_name(n) for n in full_name]
+            parsed_full_name = full_name
 
         # CRLs for root CAs with scope "ca" (or no scope - this includes CAs) do not sete a full_name in the
         # IssuingDistributionPoint extension by default. For full path validation with CRLs, the CRL is also

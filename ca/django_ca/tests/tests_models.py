@@ -199,7 +199,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
         full_name = "http://localhost/crl"
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
-        crl = ca.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        crl = ca.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         ca.crl_url = full_name
@@ -235,12 +235,12 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
         full_name = "http://localhost/crl"
         idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
 
-        crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        crl = child.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=child)
 
         # Revoke a cert
         cert.revoke()
-        crl = child.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+        crl = child.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=child)
 
     @override_settings(USE_TZ=True)
@@ -364,7 +364,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
         with mock.patch(
             "cryptography.x509.extensions.Extensions.get_extension_for_oid", side_effect=side_effect
         ):
-            crl = self.ca.get_crl(full_name=[full_name]).public_bytes(Encoding.PEM)
+            crl = self.ca.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
         # Note that we still get an AKI because the value comes from the public key in this case
         self.assertCRL(crl, idp=idp, signer=self.ca)
 
