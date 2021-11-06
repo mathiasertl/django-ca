@@ -40,7 +40,6 @@ from ...typehints import CRLExtensionTypeTypeVar
 from ...typehints import ParsableDistributionPoint
 from ...typehints import ParsableExtension
 from ...typehints import TypedDict
-from ...utils import GeneralNameList
 from . import dns
 from . import rdn
 from . import uri
@@ -1254,16 +1253,6 @@ class CRLDistributionPointsTestCaseBase(
         self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[]))
 
         ext.append(DistributionPoint({"full_name": None}))
-        self.assertEqual(
-            ext.extension_type,
-            self.ext_class_type(
-                distribution_points=[
-                    x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
-                ]
-            ),
-        )
-
-        ext.value[0].full_name = GeneralNameList()
         self.assertEqual(
             ext.extension_type,
             self.ext_class_type(

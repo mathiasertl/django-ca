@@ -36,8 +36,9 @@ from ..typehints import SerializedPolicyInformation
 from ..typehints import SerializedPolicyQualifier
 from ..typehints import SerializedPolicyQualifiers
 from ..typehints import SerializedUserNotice
-from ..utils import GeneralNameList
+from ..utils import format_general_name
 from ..utils import format_name
+from ..utils import parse_general_name
 from ..utils import x509_relative_name
 
 
@@ -47,7 +48,7 @@ class DistributionPoint:
     This class is used internally by extensions that have a list of Distribution Points, e.g. the :
     :py:class:`~django_ca.extensions.CRLDistributionPoints` extension. The class accepts either a
     :py:class:`cg:cryptography.x509.DistributionPoint` or a ``dict``. Note that in the latter case, you can
-    also pass a ``str`` as ``full_name`` or ``crl_issuer`` if there is only one value::
+    also pass a list of ``str`` as ``full_name`` or ``crl_issuer``::
 
         >>> DistributionPoint(x509.DistributionPoint(
         ...     full_name=[x509.UniformResourceIdentifier('http://ca.example.com/crl')],
@@ -56,11 +57,11 @@ class DistributionPoint:
         <DistributionPoint: full_name=['URI:http://ca.example.com/crl']>
         >>> DistributionPoint({'full_name': ['http://example.com']})
         <DistributionPoint: full_name=['URI:http://example.com']>
-        >>> DistributionPoint({'full_name': 'http://example.com'})
+        >>> DistributionPoint({'full_name': ['http://example.com']})
         <DistributionPoint: full_name=['URI:http://example.com']>
         >>> DistributionPoint({
         ...     'relative_name': '/CN=example.com',
-        ...     'crl_issuer': 'http://example.com',
+        ...     'crl_issuer': ['http://example.com'],
         ...     'reasons': ['key_compromise', 'ca_compromise'],
         ... })  # doctest: +NORMALIZE_WHITESPACE
         <DistributionPoint: relative_name='/CN=example.com', crl_issuer=['URI:http://example.com'],
@@ -71,9 +72,9 @@ class DistributionPoint:
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
 
-    full_name: GeneralNameList
+    full_name: Optional[typing.List[x509.GeneralName]] = None
     relative_name: Optional[x509.RelativeDistinguishedName] = None
-    crl_issuer: GeneralNameList
+    crl_issuer: Optional[typing.List[x509.GeneralName]] = None
     reasons: Optional[Set[x509.ReasonFlags]] = None
 
     def __init__(
@@ -83,14 +84,21 @@ class DistributionPoint:
             data = {}
 
         if isinstance(data, x509.DistributionPoint):
-            self.full_name = GeneralNameList(data.full_name)
+            if data.full_name is not None:
+                self.full_name = data.full_name
             self.relative_name = data.relative_name
-            self.crl_issuer = GeneralNameList(data.crl_issuer)
+            if data.crl_issuer is not None:
+                self.crl_issuer = data.crl_issuer
             if data.reasons is not None:
                 self.reasons = set(data.reasons)
         elif isinstance(data, dict):
-            self.full_name = GeneralNameList(data.get("full_name"))
-            self.crl_issuer = GeneralNameList(data.get("crl_issuer"))
+            full_name = data.get("full_name")
+            if full_name is not None:
+                self.full_name = [parse_general_name(name) for name in full_name]
+
+            crl_issuer = data.get("crl_issuer")
+            if crl_issuer is not None:
+                self.crl_issuer = [parse_general_name(name) for name in crl_issuer]
 
             relative_name = data.get("relative_name")
             if isinstance(relative_name, str):
@@ -118,11 +126,13 @@ class DistributionPoint:
     def __get_values(self) -> List[str]:
         values: List[str] = []
         if self.full_name:
-            values.append(f"full_name={list(self.full_name.serialize())}")
+            names = [format_general_name(name) for name in self.full_name]
+            values.append(f"full_name={names}")
         if self.relative_name:
             values.append(f"relative_name='{format_name(self.relative_name)}'")
         if self.crl_issuer:
-            values.append(f"crl_issuer={list(self.crl_issuer.serialize())}")
+            names = [format_general_name(name) for name in self.crl_issuer]
+            values.append(f"crl_issuer={names}")
         if self.reasons:
             values.append(f"reasons={sorted([r.name for r in self.reasons])}")
         return values
@@ -149,13 +159,13 @@ class DistributionPoint:
         """Show as text."""
         text = ""
         if self.full_name:
-            names = "\n".join([textwrap.indent(f"* {s}", "  ") for s in self.full_name.serialize()])
+            names = "\n".join([textwrap.indent(f"* {format_general_name(s)}", "  ") for s in self.full_name])
             text = f"* Full Name:\n{names}"
         elif self.relative_name is not None:
             text = f"* Relative Name: {format_name(self.relative_name)}"
 
         if self.crl_issuer:
-            names = "\n".join([textwrap.indent(f"* {s}", "  ") for s in self.crl_issuer.serialize()])
+            names = "\n".join([textwrap.indent(f"* {format_general_name(s)}", "  ") for s in self.crl_issuer])
             text += f"\n* CRL Issuer:\n{names}"
         if self.reasons:
             reasons = ", ".join(sorted([r.name for r in self.reasons]))
@@ -165,16 +175,12 @@ class DistributionPoint:
     @property
     def for_extension_type(self) -> x509.DistributionPoint:
         """Convert instance to a suitable cryptography class."""
-        full_name: typing.Optional[GeneralNameList] = self.full_name
-        crl_issuer: typing.Optional[GeneralNameList] = self.crl_issuer
-        if not full_name:
-            full_name = None
-        if not crl_issuer:
-            crl_issuer = None
-
         reasons: Optional[FrozenSet[x509.ReasonFlags]] = frozenset(self.reasons) if self.reasons else None
         return x509.DistributionPoint(
-            full_name=full_name, relative_name=self.relative_name, crl_issuer=crl_issuer, reasons=reasons
+            full_name=self.full_name,
+            relative_name=self.relative_name,
+            crl_issuer=self.crl_issuer,
+            reasons=reasons,
         )
 
     def serialize(self) -> SerializedDistributionPoint:
@@ -182,11 +188,11 @@ class DistributionPoint:
         val: SerializedDistributionPoint = {}
 
         if self.full_name:
-            val["full_name"] = list(self.full_name.serialize())
+            val["full_name"] = [format_general_name(name) for name in self.full_name]
         if self.relative_name is not None:
             val["relative_name"] = format_name(self.relative_name)
         if self.crl_issuer:
-            val["crl_issuer"] = list(self.crl_issuer.serialize())
+            val["crl_issuer"] = [format_general_name(name) for name in self.crl_issuer]
         if self.reasons is not None:
             val["reasons"] = list(sorted([r.name for r in self.reasons]))
         return val

@@ -34,9 +34,9 @@ class DistributionPointTestCase(TestCase):
     def test_init_basic(self) -> None:
         """Test basic initialization."""
         dpoint = DistributionPoint()
-        self.assertEqual(len(dpoint.full_name), 0)
+        self.assertIsNone(dpoint.full_name)
         self.assertIsNone(dpoint.relative_name)
-        self.assertEqual(len(dpoint.crl_issuer), 0)
+        self.assertIsNone(dpoint.crl_issuer)
         self.assertIsNone(dpoint.reasons)
 
         dpoint = DistributionPoint(
@@ -52,8 +52,8 @@ class DistributionPointTestCase(TestCase):
 
         dpoint = DistributionPoint(
             {
-                "full_name": "http://example.com",
-                "crl_issuer": "http://example.net",
+                "full_name": ["http://example.com"],
+                "crl_issuer": ["http://example.net"],
             }
         )
         self.assertEqual(dpoint.full_name, [uri("http://example.com")])
@@ -76,7 +76,7 @@ class DistributionPointTestCase(TestCase):
 
     def test_str(self) -> None:
         """Test str()."""
-        dpoint = DistributionPoint({"full_name": "http://example.com"})
+        dpoint = DistributionPoint({"full_name": ["http://example.com"]})
         self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
 
     def test_as_text(self) -> None:
@@ -85,16 +85,16 @@ class DistributionPointTestCase(TestCase):
         url = "http://example.com"
         url2 = "http://example.net"
         self.assertEqual(DistributionPoint().as_text(), "")
-        self.assertEqual(DistributionPoint({"full_name": url}).as_text(), f"* Full Name:\n  * URI:{url}")
+        self.assertEqual(DistributionPoint({"full_name": [url]}).as_text(), f"* Full Name:\n  * URI:{url}")
         self.assertEqual(
             DistributionPoint({"relative_name": f"/CN='{url}'"}).as_text(), f'* Relative Name: /CN="{url}"'
         )
         self.assertEqual(
-            DistributionPoint({"full_name": url, "crl_issuer": url2}).as_text(),
+            DistributionPoint({"full_name": [url], "crl_issuer": [url2]}).as_text(),
             f"* Full Name:\n  * URI:{url}\n* CRL Issuer:\n  * URI:{url2}",
         )
         self.assertEqual(
-            DistributionPoint({"full_name": url, "reasons": ["ca_compromise"]}).as_text(),
+            DistributionPoint({"full_name": [url], "reasons": ["ca_compromise"]}).as_text(),
             f"* Full Name:\n  * URI:{url}\n* Reasons: ca_compromise",
         )
 
@@ -103,8 +103,8 @@ class DistributionPointTestCase(TestCase):
 
         dpoint = DistributionPoint(
             {
-                "full_name": "http://example.com",
-                "crl_issuer": "http://example.net",
+                "full_name": ["http://example.com"],
+                "crl_issuer": ["http://example.net"],
                 "reasons": ["unspecified"],
             }
         )
@@ -117,8 +117,8 @@ class DistributionPointTestCase(TestCase):
 
         dpoint = DistributionPoint(
             {
-                "full_name": "http://example.com",
-                "crl_issuer": "http://example.net",
+                "full_name": ["http://example.com"],
+                "crl_issuer": ["http://example.net"],
                 "reasons": [x509.ReasonFlags.unspecified],
             }
         )
