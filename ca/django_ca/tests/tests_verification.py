@@ -39,6 +39,14 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         super().setUp()
         self.csr_pem = certs["root-cert"]["csr"]["pem"]  # just some CSR
 
+    def assertFullName(
+        self, crl: x509.CertificateRevocationList, expected: typing.Optional[typing.List[x509.Name]] = None
+    ) -> None:
+        """Assert that the full name of the CRL matches `expected`."""
+
+        idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
+        self.assertEqual(idp.full_name, expected)
+
     def assertNoIssuingDistributionPoint(self, crl: x509.CertificateRevocationList) -> None:
         """Assert that the given CRL has *no* IssuingDistributionPoint extension."""
         try:
@@ -153,7 +161,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         ):
             self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_DEFAULT_HOSTNAME="")
     def test_root_ca_cert(self) -> None:
         """Try validating a cert issued by the root CA."""
         name = "Root"
@@ -178,6 +186,25 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             with self.crl(ca, scope=None) as (crl_global_path, crl_global):
                 self.assertNoIssuingDistributionPoint(crl_global)
                 self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_global_path], cert=cert)
+
+    @override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
+    def test_ca_default_hostname(self) -> None:
+        """Test that a changing CA_DEFAULT_HOSTNAME does not lead to problems."""
+
+        name = "Root"
+        ca = self.init_ca(name)
+        self.assertIsNone(ca.crl_distribution_points)  # Root CAs have no CRLDistributionPoints
+
+        with self.dumped(ca) as paths, self.sign_cert(ca) as cert:
+            with self.crl(ca) as (crl_path, crl):  # test global CRL
+                self.assertNoIssuingDistributionPoint(crl)
+                self.verify("-CAfile {0} -crl_check {cert}", *paths, crl=[crl_path], cert=cert)
+                self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_path], cert=cert)
+
+            with self.crl(ca, scope="user") as (crl_path, crl):  # test user-only CRL
+                self.assertScope(crl, user=True)
+                self.verify("-CAfile {0} -crl_check {cert}", *paths, crl=[crl_path], cert=cert)
+                # crl_check_all does not work,  b/c the scope  is only "user"
 
     @override_tmpcadir()
     def test_intermediate_ca(self) -> None:
