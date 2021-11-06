@@ -39,24 +39,20 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         super().setUp()
         self.csr_pem = certs["root-cert"]["csr"]["pem"]  # just some CSR
 
-    def assertNoIssuingDistributionPoint(self, path: str):
+    def assertNoIssuingDistributionPoint(self, crl: x509.CertificateRevocationList) -> None:
         """Assert that the given CRL has *no* IssuingDistributionPoint extension."""
-        with open(path, "rb") as stream:
-            crl = x509.load_pem_x509_crl(stream.read())
-
         try:
             idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint)
             self.fail(f"CRL contains an IssuingDistributionPoint extension: {idp}")
         except x509.ExtensionNotFound:
             pass
 
-    def assertScope(self, path: str, ca=False, user=False, attribute=False) -> None:
+    def assertScope(self, crl: x509.CertificateRevocationList, ca=False, user=False, attribute=False) -> None:
         """Assert that the scope at `path` is `expected`."""
-        with open(path, "rb") as stream:
-            crl = x509.load_pem_x509_crl(stream.read())
-        print(crl)
-        idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint)
-        print(idp)
+        idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
+        self.assertIs(idp.only_contains_ca_certs, ca, idp)
+        self.assertIs(idp.only_contains_user_certs, user)
+        self.assertIs(idp.only_contains_attribute_certs, attribute)
 
     def init_ca(self, name: str, **kwargs: typing.Any) -> CertificateAuthority:
         """Create a CA."""
@@ -64,13 +60,19 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         return CertificateAuthority.objects.get(name=name)
 
     @contextmanager
-    def crl(self, ca: CertificateAuthority, **kwargs: typing.Any) -> typing.Iterator[str]:
+    def crl(
+        self, ca: CertificateAuthority, **kwargs: typing.Any
+    ) -> typing.Iterator[typing.Tuple[str, x509.CertificateRevocationList]]:
         """Dump CRL to a tmpdir, yield path to it."""
         kwargs["ca"] = ca
         with tempfile.TemporaryDirectory() as tempdir:
             path = os.path.join(tempdir, f"{ca.name}.{kwargs.get('scope')}.crl")
             self.cmd("dump_crl", path, **kwargs)
-            yield path
+
+            with open(path, "rb") as stream:
+                crl = x509.load_pem_x509_crl(stream.read())
+
+            yield (path, crl)
 
     @contextmanager
     def dumped(self, *certificates: X509CertMixin) -> typing.Iterator[typing.List[str]]:
@@ -138,16 +140,18 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             self.verify("-CAfile {0} {0}", *paths)
 
         # Create a CRL too and include it
-        with self.dumped(ca) as paths, self.crl(ca, scope="ca") as crl:
-            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl])
+        with self.dumped(ca) as paths, self.crl(ca, scope="ca") as (crl_path, crl):
+            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
 
         # Try again with no scope
-        with self.dumped(ca) as paths, self.crl(ca) as crl:
-            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl])
+        with self.dumped(ca) as paths, self.crl(ca) as (crl_path, crl):
+            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
 
         # Try with cert scope (fails because of wrong scope
-        with self.dumped(ca) as paths, self.crl(ca, scope="user") as crl, self.assertRaises(AssertionError):
-            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl])
+        with self.dumped(ca) as paths, self.crl(ca, scope="user") as (crl_path, crl), self.assertRaises(
+            AssertionError
+        ):
+            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
 
     @override_tmpcadir()
     def test_root_ca_cert(self) -> None:
@@ -159,17 +163,21 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             self.verify("-CAfile {0} {cert}", *paths, cert=cert)
 
             # Create a CRL too and include it
-            with self.crl(ca, scope="user") as crl:
-                self.verify("-CAfile {0} -crl_check {cert}", *paths, crl=[crl], cert=cert)
+            with self.crl(ca, scope="user") as (crl_path, crl):
+                self.assertScope(crl, user=True)
+                self.verify("-CAfile {0} -crl_check {cert}", *paths, crl=[crl_path], cert=cert)
 
                 # for crl_check_all, we also need the root CRL
-                with self.crl(ca, scope="ca") as crl2:
-                    self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl, crl2], cert=cert)
+                with self.crl(ca, scope="ca") as (crl2_path, crl2):
+                    self.assertScope(crl2, ca=True)
+                    self.verify(
+                        "-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_path, crl2_path], cert=cert
+                    )
 
             # Try a single CRL with a global scope
-            with self.crl(ca, scope=None) as crl_global:
+            with self.crl(ca, scope=None) as (crl_global_path, crl_global):
                 self.assertNoIssuingDistributionPoint(crl_global)
-                self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_global], cert=cert)
+                self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_global_path], cert=cert)
 
     @override_tmpcadir()
     def test_intermediate_ca(self) -> None:
@@ -185,22 +193,30 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             self.verify("-CAfile {0} -untrusted {1} {2}", *paths)
 
             # Try validation with CRLs
-            with self.crl(root, scope="ca") as crl1, self.crl(child, scope="ca") as crl2:
-                self.verify("-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl=[crl1, crl2])
+            with self.crl(root, scope="ca") as (crl1_path, crl1), self.crl(child, scope="ca") as (
+                crl2_path,
+                crl2,
+            ):
+                self.verify(
+                    "-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl=[crl1_path, crl2_path]
+                )
 
-                with self.sign_cert(child) as cert, self.crl(child, scope="user") as crl3:
+                with self.sign_cert(child) as cert, self.crl(child, scope="user") as (crl3_path, crl3):
                     self.verify("-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert)
-                    self.verify("-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl=[crl1, crl3])
+                    self.verify(
+                        "-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl=[crl1_path, crl3_path]
+                    )
 
-                with self.sign_cert(grandchild) as cert, self.crl(child, scope="ca") as crl4, self.crl(
-                    grandchild, scope="user"
-                ) as crl6:
+                with self.sign_cert(grandchild) as cert, self.crl(child, scope="ca") as (
+                    crl4_path,
+                    crl4,
+                ), self.crl(grandchild, scope="user") as (crl6_path, crl6):
 
                     self.verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
                     self.verify(
                         "-CAfile {0} -crl_check_all {cert}",
                         *paths,
                         untrusted=untrusted,
-                        crl=[crl1, crl4, crl6],
+                        crl=[crl1_path, crl4_path, crl6_path],
                         cert=cert,
                     )
