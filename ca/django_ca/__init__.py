@@ -1,13 +1,14 @@
 """Default Django App configuration."""
 
-# WARNING: This module MUST NOT include any external dependencies, as it is read by setup.py
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version
 
 try:
-    # created by setuptools_scm
-    from ._version import version as __version__
-    from ._version import version_tuple as VERSION
-except ImportError:
-    __version__ = VERSION = ""
+    __version__ = version("django-ca")
+    __release__ = ".".join(__version__.split(".")[:2])
+except PackageNotFoundError:
+    # Not installed
+    __version__ = __release__ = ""
 
 # Path to default Django app configuration
 # pylint: disable=invalid-name
