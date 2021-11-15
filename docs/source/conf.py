@@ -25,6 +25,12 @@ try:
 except ImportError:
     spelling = None
 
+try:
+    from importlib.metadata import version
+except ImportError:
+    from importlib_metadata import version
+
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -118,16 +124,11 @@ project = "django-ca"
 copyright = "2016 - 2020, Mathias Ertl"
 author = "Mathias Ertl"
 
-import django_ca  # NOQA: E402
-
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-
-# The short X.Y version.
-version = django_ca.__release__
-# The full version, including alpha/beta/rc tags.
-release = django_ca.__version__
+release = version("django-ca")
+version = ".".join(release.split(".")[:3])
 
 print("### version:", version)
 print("### release:", release)
