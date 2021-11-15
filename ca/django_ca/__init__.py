@@ -10,11 +10,11 @@ else:  # pragma: only py<3.8
     from importlib_metadata import version
 
 
-try:
+try:  # pragma: no cover
     __version__ = version("django-ca")
     __release__ = ".".join(__version__.split(".")[:3])
-except PackageNotFoundError:
-    # Not installed
+except PackageNotFoundError:  # pragma: no cover
+    # django-ca is not installed (e.g. running from a git clone)
     __version__ = __release__ = ""
 
 # Path to default Django app configuration
