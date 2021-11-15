@@ -1,2 +1,4 @@
 -r ../requirements.txt
 -r requirements-docs.txt
+# read-the-docs currently runs with Python 3.7
+importlib-metadata; python_version < '3.8'
