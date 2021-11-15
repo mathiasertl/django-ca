@@ -1,6 +1,6 @@
 [build-system]
 # Minimum requirements for the build system to execute (PEP-518)
-requires = ["setuptools>=30.3.0", "wheel"]  # PEP 508 specifications.
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 
 [django-ca.release]
 # https://devguide.python.org/#status-of-python-branches
@@ -165,3 +165,6 @@ ignore-imports = "yes"
 
 # Minimum lines number of a similarity.
 min-similarity-lines = 16
+
+[tool.setuptools_scm]
+write_to = "ca/django_ca/_version.py"

@@ -35,9 +35,6 @@ package_root = os.path.join(package_path, "django_ca")
 if os.path.exists(package_path):
     sys.path.insert(0, package_path)
 
-# https://packaging.python.org/guides/single-sourcing-package-version/
-import django_ca  # NOQA: E402, pylint: disable=wrong-import-position
-
 
 def find_package_data(path):
     """Find static package data for given path."""
@@ -53,7 +50,6 @@ package_data = find_package_data("static") + find_package_data("templates")
 
 setup(
     name="django-ca",
-    version=django_ca.__version__,
     description="A Django app providing a SSL/TLS certificate authority.",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/x-rst",

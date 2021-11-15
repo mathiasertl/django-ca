@@ -428,16 +428,6 @@ qualname_overrides = {
     "Union": "python:typing.Union",
     "typing.S": "django_ca.extensions.base.S",
     "django.http.request.HttpRequest": "django:django.http.HttpRequest",
-    "CertificateAuthority": "django_ca.models.CertificateAuthority",
-    # Literal types also sometimes want to be resolved
-    "DSA": "str",
-    "RSA": "str",
-    "ECC": "str",
-    "ca": "str",
-    "user": "str",
-    "attribute": "str",
-    # Only required in Python 3.6 (and maybe 3.7?)
-    'typing.Optional[typing_extensions.Literal["ca", "user", "attribute"]]': "str",
     "Optional[typing_extensions.Literal['ca', 'user', 'attribute']]": "str",
     "typing.ExtensionTypeTypeVar": "cg:cryptography.x509.ExtensionType",
     "typing.ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
@@ -452,6 +442,11 @@ text_overrides = {
     "cryptography.x509.extensions.UserNotice": "cryptography.x509.UserNotice",
     "cryptography.hazmat._oid.ObjectIdentifier": "cryptography.x509.ObjectIdentifier",
 }
+
+
+nitpick_ignore = [
+    ("py:class", "python:typing.Optional"),
+]
 
 
 def resolve_internal_aliases(app, doctree):

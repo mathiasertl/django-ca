@@ -75,3 +75,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+This document describes django-ca |version|.
