@@ -167,4 +167,3 @@ ignore-imports = "yes"
 min-similarity-lines = 16
 
 [tool.setuptools_scm]
-write_to = "ca/django_ca/_version.py"
