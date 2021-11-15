@@ -88,16 +88,11 @@ extensions = [
 autodoc_typehints = "none"
 
 if spelling is not None:
-    from django_ca_sphinx.spelling import (  # isort:skip
-        URIFilter,
-        MagicWordsFilter,
-        TypeHintsFilter,
-        VersionFilter,
-    )
+    from django_ca_sphinx.spelling import URIFilter, MagicWordsFilter, TypeHintsFilter  # isort:skip
 
     extensions.append("sphinxcontrib.spelling")
     spelling_exclude_patterns = ["**/generated/*.rst"]
-    spelling_filters = [URIFilter, MagicWordsFilter, TypeHintsFilter, VersionFilter]
+    spelling_filters = [URIFilter, MagicWordsFilter, TypeHintsFilter]
     # spelling_show_suggestions = True
 
 numpydoc_show_class_members = False

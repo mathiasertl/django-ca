@@ -22,7 +22,6 @@ import typing
 from enchant.tokenize import Filter
 from enchant.tokenize import URLFilter
 
-import django_ca
 from django_ca import typehints
 from django_ca.extensions import KEY_TO_EXTENSION
 from django_ca.extensions import ExtendedKeyUsage
