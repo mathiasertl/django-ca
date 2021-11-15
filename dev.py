@@ -637,6 +637,7 @@ elif args.command == "clean":
     rm("build")
     rm(".coverage")
     rm(".docker")
+    rm(".mypy_cache")
 
     for root, dirs, files in os.walk(base, topdown=False):
         for name in files:
