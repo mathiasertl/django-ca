@@ -120,7 +120,7 @@ import django_ca  # NOQA: E402
 # built documents.
 
 # The short X.Y version.
-version = ".".join([str(e) for e in django_ca.VERSION[:2]])
+version = django_ca.__release__
 # The full version, including alpha/beta/rc tags.
 release = django_ca.__version__
 

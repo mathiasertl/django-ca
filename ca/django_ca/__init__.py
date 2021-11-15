@@ -5,7 +5,7 @@ from importlib.metadata import version
 
 try:
     __version__ = version("django-ca")
-    __release__ = ".".join(__version__.split(".")[:2])
+    __release__ = ".".join(__version__.split(".")[:3])
 except PackageNotFoundError:
     # Not installed
     __version__ = __release__ = ""
