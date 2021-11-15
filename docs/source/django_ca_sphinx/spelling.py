@@ -95,8 +95,3 @@ class TypeHintsFilter(Filter):
 
     def _skip(self, word):
         return word in self.typehints
-
-
-class VersionFilter(Filter):
-    def _skip(self, word):
-        return word in (django_ca.__version__, django_ca.__release__)

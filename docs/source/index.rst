@@ -74,5 +74,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-This document was built for django-ca |version| (|release|).
