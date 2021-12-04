@@ -610,6 +610,13 @@ class AcmeWithAccountViewTestCaseMixin(
         )
 
     @override_tmpcadir()
+    def test_deactivated_account(self) -> None:
+        """Test request with a deactivated account."""
+        self.account.status = AcmeAccount.STATUS_DEACTIVATED
+        self.account.save()
+        self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), "Account not usable.")
+
+    @override_tmpcadir()
     def test_unknown_account(self) -> None:
         """Test doing requeist with an unknown kid."""
         self.assertUnauthorized(self.acme(self.url, self.message, kid="unknown"), "Account not found.")
@@ -919,6 +926,52 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
                 ),
             )
             self.assertMalformed(resp, msg)
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeDeactivateAccountViewTestCase(
+    AcmeWithAccountViewTestCaseMixin[acme.messages.Registration], TestCase
+):
+    message_cls = acme.messages.Registration
+    view_name = "acme-account"
+
+    @property
+    def url(self) -> str:
+        """Get URL for the standard auth object."""
+        return self.get_url(serial=self.ca.serial, slug=self.account_slug)
+
+    def test_basic(self) -> None:
+        # Add an order and authorization to the account
+        order = AcmeOrder.objects.create(account=self.account)
+        order.add_authorizations(
+            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value="example.com")]
+        )
+        authorizations = order.authorizations.all()
+
+        # send actual message
+        message = self.get_message(status="deactivated")
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [],
+                "orders": self.absolute_uri(
+                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
+                ),
+                "status": AcmeAccount.STATUS_DEACTIVATED,
+            },
+        )
+        self.account.refresh_from_db()
+        order.refresh_from_db()
+
+        self.assertFalse(self.account.usable)
+        self.assertEqual(self.account.status, AcmeAccount.STATUS_DEACTIVATED)
+        self.assertEqual(order.status, AcmeOrder.STATUS_INVALID)
+
+        for authz in authorizations:
+            authz.refresh_from_db()
+            self.assertEqual(authz.status, AcmeAuthorization.STATUS_DEACTIVATED)
 
 
 @freeze_time(timestamps["everything_valid"])

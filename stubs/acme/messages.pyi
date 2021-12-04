@@ -46,6 +46,7 @@ class ResourceBody(jose.JSONObjectWithFields):
 
 class Registration(ResourceBody):
     contact: Tuple[str, ...]
+    status: str
     only_return_existing: bool
     terms_of_service_agreed: bool
 

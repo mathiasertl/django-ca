@@ -316,6 +316,11 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message="Account not found.")
             if account.usable is False:
+                # RFC 855, 7.3.6:
+                #
+                #   If a server receives a POST or POST-as-GET from a deactivated account, it MUST return an
+                #   error response with status code 401 (Unauthorized) and type
+                #   "urn:ietf:params:acme:error:unauthorized".
                 return AcmeResponseUnauthorized(message="Account not usable.")
             # self.prepared['thumbprint'] = account.thumbprint
             # self.prepared['pem'] = account.pem
@@ -580,16 +585,41 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeBaseView):  # pylint: disable=abstract-method
+class AcmeAccountView(AcmeMessageBaseView[messages.Registration]):  # pylint: disable=abstract-method
     """View showing account details."""
 
-    # TODO: implement this view
+    message_cls = messages.Registration
+
+    @transaction.atomic
+    def acme_request(  # pylint: disable=unused-argument
+        self, message: messages.Registration, slug: Optional[str] = None
+    ) -> AcmeResponseAccount:
+        account = AcmeAccount.objects.get(slug=slug)
+
+        if message.status == AcmeAccount.STATUS_DEACTIVATED:
+            # RFC 8555, section 7.3.6 - Account Deactivation
+            log.info("Deactivating account %s", account.slug)
+            account.status = AcmeAccount.STATUS_DEACTIVATED
+            account.save()
+
+            # Cancel all pending operations
+            account.orders.filter(status=AcmeOrder.STATUS_PENDING).update(status=AcmeOrder.STATUS_INVALID)
+            AcmeAuthorization.objects.filter(
+                order__account=account, status=AcmeAuthorization.STATUS_PENDING
+            ).update(status=AcmeAuthorization.STATUS_DEACTIVATED)
+        else:  # pragma: no cover
+            # TODO: implement account update
+            raise AcmeMalformed("Account update is not supported.")
+
+        return AcmeResponseAccount(self.request, account)
 
 
 class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method
     """View showing orders for an account (not yet implemented)"""
 
     # TODO: implement this view
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:  # pragma: no cover
+        raise AcmeException(message="Not Implemented.")
 
 
 class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
