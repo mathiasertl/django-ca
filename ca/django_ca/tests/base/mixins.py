@@ -256,8 +256,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         else:
             parsed_crl = x509.load_der_x509_crl(crl, default_backend())
 
-        public_key = signer.pub.loaded.public_key()  # pragma: no cover
-        if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):
+        public_key = signer.pub.loaded.public_key()
+        if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
             raise TypeError()  # just to make mypy happy
 
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
