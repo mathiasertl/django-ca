@@ -1,5 +1,4 @@
-# Sphinx==4.1.2 is incomaptible: https://github.com/sphinx-doc/sphinx/issues/9521
-Sphinx==4.3.0
+Sphinx==4.3.1
 doc8==0.10.1
 numpydoc==1.1.0
 setuptools-scm
