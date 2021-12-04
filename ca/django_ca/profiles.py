@@ -127,23 +127,23 @@ class Profile:
         # set some sane extension defaults
         self.extensions.setdefault(BasicConstraints.key, BasicConstraints())
 
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, (Profile, DefaultProfileProxy)):
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, (Profile, DefaultProfileProxy)):
             return False
-        algo = isinstance(o.algorithm, type(self.algorithm))
+        algo = isinstance(value.algorithm, type(self.algorithm))
 
         return (
-            self.name == o.name
-            and self.subject == o.subject
+            self.name == value.name
+            and self.subject == value.subject
             and algo
-            and self.extensions == o.extensions
-            and self.cn_in_san == o.cn_in_san
-            and self.expires == o.expires
-            and self.add_crl_url == o.add_crl_url
-            and self.add_issuer_url == o.add_issuer_url
-            and self.add_ocsp_url == o.add_ocsp_url
-            and self.add_issuer_alternative_name == o.add_issuer_alternative_name
-            and self.description == o.description
+            and self.extensions == value.extensions
+            and self.cn_in_san == value.cn_in_san
+            and self.expires == value.expires
+            and self.add_crl_url == value.add_crl_url
+            and self.add_issuer_url == value.add_issuer_url
+            and self.add_ocsp_url == value.add_ocsp_url
+            and self.add_issuer_alternative_name == value.add_issuer_alternative_name
+            and self.description == value.description
         )
 
     def _parse_extension_value(
