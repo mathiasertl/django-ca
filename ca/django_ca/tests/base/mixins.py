@@ -35,6 +35,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import x448
+from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
@@ -254,8 +256,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         else:
             parsed_crl = x509.load_der_x509_crl(crl, default_backend())
 
+        public_key = signer.pub.loaded.public_key()  # pragma: no cover
+        if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):
+            raise TypeError()  # just to make mypy happy
+
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(parsed_crl.is_signature_valid(signer.pub.loaded.public_key()))
+        self.assertTrue(parsed_crl.is_signature_valid(public_key))
         self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
         self.assertEqual(parsed_crl.last_update, datetime.utcnow())
         self.assertEqual(parsed_crl.next_update, expires_timestamp)
