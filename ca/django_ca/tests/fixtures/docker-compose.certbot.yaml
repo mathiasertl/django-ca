@@ -9,6 +9,7 @@ services:
             DJANGO_CA_ALLOWED_HOSTS: ca.example.com localhost
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
+            DJANGO_CA_LOG_LEVEL: DEBUG
             POSTGRES_PASSWORD: mysecretpassword
             CELERY_LOG_LEVEL: debug
         networks:
@@ -24,6 +25,7 @@ services:
             DJANGO_CA_ALLOWED_HOSTS: ca.example.com webserver localhost
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
+            DJANGO_CA_LOG_LEVEL: DEBUG
             POSTGRES_PASSWORD: mysecretpassword
         depends_on:
             - db

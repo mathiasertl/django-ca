@@ -156,29 +156,10 @@ TEMPLATES = [
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {
-        "require_debug_false": {
-            "()": "django.utils.log.RequireDebugFalse",
-        }
-    },
-    "handlers": {
-        "mail_admins": {
-            "level": "ERROR",
-            "filters": ["require_debug_false"],
-            "class": "django.utils.log.AdminEmailHandler",
-        }
-    },
-    "loggers": {
-        "django.request": {
-            "handlers": ["mail_admins"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-    },
-}
+LOGGING = None
+LOG_FORMAT = "[%(levelname)-8s %(asctime).19s] %(message)s"
+LOG_LEVEL = "WARNING"
+LIBRARY_LOG_LEVEL = "WARNING"
 
 SECRET_KEY_FILE = ""
 
@@ -284,3 +265,46 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
     _set_db_setting("PASSWORD", "MYSQL_PASSWORD")
     _set_db_setting("USER", "MYSQL_USER")
     _set_db_setting("NAME", "MYSQL_DATABASE")
+
+if LOGGING is None:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "filters": {
+            "require_debug_false": {
+                "()": "django.utils.log.RequireDebugFalse",
+            }
+        },
+        "formatters": {
+            "main": {
+                "format": LOG_FORMAT,
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "main",
+            },
+            "mail_admins": {
+                "level": "ERROR",
+                "filters": ["require_debug_false"],
+                "class": "django.utils.log.AdminEmailHandler",
+            },
+        },
+        "loggers": {
+            "django_ca": {
+                "handlers": ["console"],
+                "level": LOG_LEVEL,
+                "propagate": False,
+            },
+            "django.request": {
+                "handlers": ["mail_admins"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": LIBRARY_LOG_LEVEL,
+        },
+    }

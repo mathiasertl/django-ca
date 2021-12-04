@@ -16,6 +16,8 @@ ChangeLog
 * Require a CommonName when generating a CA instead of implicitly setting the human-readable name if no
   CommonName was given.
 * Add support for cryptography 36.0.0.
+* Make log level and message format more easily configurable with :ref:`LOG_LEVEL <settings-log-level>`,
+  :ref:`LIBRARY_LOG_LEVEL <settings-library-log-level>` and :ref:`LOG_FORMAT <settings-log-format>`.
 
 Backwards incompatible changes
 ==============================

@@ -244,3 +244,33 @@ ACME_ORDER_VALIDITY
    Default: ``1``
 
    Default time a request for a new certificate ("order") remains valid.
+
+Project settings
+----------------
+
+The following additional settings are available if you use the full **django-ca** project (including if you
+use the Docker container). These settings are _not_ prefixed with ``CA_``, because they configure how Django
+itself works.
+
+.. _settings-log-format:
+
+LOG_FORMAT
+   Default: ``"[%(levelname)-8s %(asctime).19s] %(message)s""``
+
+   The default log format of log messages.  This setting has no effect if you define the ``LOGGING`` setting.
+
+.. _settings-log-level:
+
+LOG_LEVEL
+   Default: ``"WARNING"``
+
+   The log level for all messages from **django-ca**. This setting has no effect if you define the ``LOGGING``
+   setting.
+
+.. _settings-library-log-level:
+
+LIBRARY_LOG_LEVEL
+   Default: ``"WARNING"``
+
+   The log level for all messages _except_ from **django-ca**.  This setting has no effect if you define the
+   ``LOGGING`` setting.
