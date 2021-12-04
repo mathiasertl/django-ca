@@ -39,14 +39,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          echo "cryptography==${{ matrix.cryptography-version }}" > constraints.txt
+          echo "django==${{ matrix.django-version }}" >> constraints.txt
           pip install -U pip setuptools
-          pip install -r requirements.txt
-          pip install -r requirements/requirements-test.txt
-
-      - name: Install designated Django and cryptography versions
-        run: |
-          pip install Django~=${{ matrix.django-version }}
-          pip install cryptography~=${{ matrix.cryptography-version }}
+          pip install -c constraints.txt -r requirements.txt -r requirements/requirements-test.txt
 
       - name: Install program
         run: python setup.py develop
