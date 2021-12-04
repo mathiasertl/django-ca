@@ -15,6 +15,7 @@ ChangeLog
   removed in ``django_ca==1.22``.
 * Require a CommonName when generating a CA instead of implicitly setting the human-readable name if no
   CommonName was given.
+* Add support for cryptography 36.0.0.
 
 Backwards incompatible changes
 ==============================
@@ -25,6 +26,12 @@ Backwards incompatible changes
 * Removed the ``manage.py dump_ocsp_index`` command.
 * Remove the ``--csr-format`` parameter to ``manage.py sign_cert`` (deprecated since 1.18.0).
 * ``django_ca.utils.parse_csr()`` has been removed (deprecated since 1.18.0).
+
+
+Deprecation notices
+===================
+
+* This is the last release to support cryptography 3.3.
 
 .. _changelog-1.19.0:
 
