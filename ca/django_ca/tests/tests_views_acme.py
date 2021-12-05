@@ -932,6 +932,8 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
 class AcmeDeactivateAccountViewTestCase(
     AcmeWithAccountViewTestCaseMixin[acme.messages.Registration], TestCase
 ):
+    """Test account deactivation."""
+
     message_cls = acme.messages.Registration
     view_name = "acme-account"
 
@@ -941,7 +943,7 @@ class AcmeDeactivateAccountViewTestCase(
         return self.get_url(serial=self.ca.serial, slug=self.account_slug)
 
     def test_basic(self) -> None:
-        # Add an order and authorization to the account
+        """Test basic account deactivation."""
         order = AcmeOrder.objects.create(account=self.account)
         order.add_authorizations(
             [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value="example.com")]
