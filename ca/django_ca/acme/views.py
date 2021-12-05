@@ -107,6 +107,50 @@ if typing.TYPE_CHECKING:
     from django.http.response import HttpResponseBase
 
 
+class ContactValidationMixin:
+    """Mixin for validating contact information."""
+
+    def validate_contacts(self, message: messages.Registration) -> None:
+        """Validate the contact information for this message."""
+
+        for contact in message.contact:
+            if contact.startswith(messages.Registration.email_prefix):
+                addr = contact[len(messages.Registration.email_prefix) :]
+
+                # RFC 8555, section 7.3
+                #
+                #   Clients MUST NOT provide a "mailto" URL in the "contact" field that contains "hfields"
+                #   [RFC6068] or more than one "addr-spec" in the "to" component.
+
+                # We rule out quoted local address fields, otherwise it's extremely hard to validate
+                # email addresses.
+                if addr.startswith('"'):
+                    raise AcmeMalformed("invalidContact", "Quoted local part in email is not allowed.")
+
+                # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
+                # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
+                if "," in addr:
+                    raise AcmeMalformed("invalidContact", "More than one addr-spec is not allowed.")
+
+                # Validate that there are no hfields in the address.
+                # NOTE: ',' appears to be valid in the local part according to RFC 5322
+                _local, domain = addr.split("@", 1)
+                if "?" in domain:
+                    raise AcmeMalformed("invalidContact", f"{domain}: hfields are not allowed.")
+
+                # Finally, verify that we're getting at least a valid domain.
+                try:
+                    validate_email(addr)
+                except ValueError as ex:
+                    raise AcmeMalformed("invalidContact", f"{domain}: Not a valid email address.") from ex
+            else:
+                # RFC 8555, section 7.3
+                #
+                #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
+                #   error of type "unsupportedContact", ...
+                raise AcmeMalformed("unsupportedContact", f"{contact}: Unsupported address scheme.")
+
+
 class AcmeDirectory(View):
     """
     `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory>`__
@@ -451,7 +495,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
         return HttpResponse(status=HTTPStatus.NO_CONTENT)  # 204, unlike HEAD, which has 200
 
 
-class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
+class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Registration]):
     """Implements endpoint for creating a new account, that is ``/acme/new-account``.
 
     This view is called when the ACME client tries to register a new account.
@@ -461,46 +505,6 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
 
     message_cls = messages.Registration
     requires_key = True
-
-    def validate_contacts(self, message: messages.Registration) -> None:
-        """Validate the contact information for this message."""
-
-        for contact in message.contact:
-            if contact.startswith(messages.Registration.email_prefix):
-                addr = contact[len(messages.Registration.email_prefix) :]
-
-                # RFC 8555, section 7.3
-                #
-                #   Clients MUST NOT provide a "mailto" URL in the "contact" field that contains "hfields"
-                #   [RFC6068] or more than one "addr-spec" in the "to" component.
-
-                # We rule out quoted local address fields, otherwise it's extremely hard to validate
-                # email addresses.
-                if addr.startswith('"'):
-                    raise AcmeMalformed("invalidContact", "Quoted local part in email is not allowed.")
-
-                # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
-                # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
-                if "," in addr:
-                    raise AcmeMalformed("invalidContact", "More than one addr-spec is not allowed.")
-
-                # Validate that there are no hfields in the address.
-                # NOTE: ',' appears to be valid in the local part according to RFC 5322
-                _local, domain = addr.split("@", 1)
-                if "?" in domain:
-                    raise AcmeMalformed("invalidContact", f"{domain}: hfields are not allowed.")
-
-                # Finally, verify that we're getting at least a valid domain.
-                try:
-                    validate_email(addr)
-                except ValueError as ex:
-                    raise AcmeMalformed("invalidContact", f"{domain}: Not a valid email address.") from ex
-            else:
-                # RFC 8555, section 7.3
-                #
-                #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
-                #   error of type "unsupportedContact", ...
-                raise AcmeMalformed("unsupportedContact", f"{contact}: Unsupported address scheme.")
 
     # TODO: possible to make slug non-optional?
     def acme_request(  # pylint: disable=unused-argument
@@ -585,7 +589,9 @@ class AcmeNewAccountView(AcmeMessageBaseView[messages.Registration]):
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(AcmeMessageBaseView[messages.Registration]):  # pylint: disable=abstract-method
+class AcmeAccountView(
+    ContactValidationMixin, AcmeMessageBaseView[messages.Registration]
+):  # pylint: disable=abstract-method
     """View showing account details."""
 
     message_cls = messages.Registration
@@ -607,9 +613,12 @@ class AcmeAccountView(AcmeMessageBaseView[messages.Registration]):  # pylint: di
             AcmeAuthorization.objects.filter(
                 order__account=account, status=AcmeAuthorization.STATUS_PENDING
             ).update(status=AcmeAuthorization.STATUS_DEACTIVATED)
-        else:  # pragma: no cover
-            # TODO: implement account update
-            raise AcmeMalformed("Account update is not supported.")
+        elif message.contact:
+            self.validate_contacts(message)
+            account.contact = "\n".join(message.contact)
+            account.save()
+        else:
+            raise AcmeMalformed(message="Only contact information can be updated.")
 
         return AcmeResponseAccount(self.request, account)
 

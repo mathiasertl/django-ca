@@ -18,6 +18,11 @@ ChangeLog
 * Add support for cryptography 36.0.0.
 * Make log level and message format more easily configurable with :ref:`LOG_LEVEL <settings-log-level>`,
   :ref:`LIBRARY_LOG_LEVEL <settings-library-log-level>` and :ref:`LOG_FORMAT <settings-log-format>`.
+
+ACMEv2 support
+==============
+
+* Add support for updating an accounts email address.
 * Add support for deactivating ACME accounts.
 
 Backwards incompatible changes
