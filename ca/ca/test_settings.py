@@ -228,7 +228,7 @@ CA_ENABLE_ACME = True
 # NOTE: These values are validated by various release scripts
 NEWEST_PYTHON_VERSION = (3, 10)
 NEWEST_CRYPTOGRAPHY_VERSION = (36, 0)
-NEWEST_DJANGO_VERSION = (3, 2)
+NEWEST_DJANGO_VERSION = (4, 0)
 
 # Determine if we're running on the respective newest versions
 _parsed_cg_version = packaging.version.parse(cryptography.__version__).release

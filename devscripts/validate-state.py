@@ -107,16 +107,18 @@ def check_tox():
 
     # Check that there is a testenv listing all versions
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
-        ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
-        ",".join(CONFIG["django-map"]),
-        ",".join(CONFIG["cryptography-map"]),
-        ",".join(CONFIG["acme-map"]),
-        ",".join(CONFIG["idna-map"]),
-    )
+    # expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
+    #    ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
+    #    ",".join(CONFIG["django-map"]),
+    #    ",".join(CONFIG["cryptography-map"]),
+    #    ",".join(CONFIG["acme-map"]),
+    #    ",".join(CONFIG["idna-map"]),
+    # )
+
     # pylint: enable=consider-using-f-string
-    if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
-        errors += err(f"Expected envlist item not found: {expected_envlist}")
+    # CHeck disabled as long as different Django versions support different Python versions
+    # if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
+    #    errors += err(f"Expected envlist item not found: {expected_envlist}")
 
     # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "acme", "idna"]:
@@ -129,7 +131,12 @@ def check_tox():
 
         for major, minor in CONFIG[f"{component}-map"].items():
             name = f"{component}{major}"
-            actual = tox_env_reqs[name]
+            try:
+                actual = tox_env_reqs[name]
+            except KeyError:
+                errors += err(f"{name}: Conditional dependency not found.")
+                continue
+
             expected = f"{CANONICAL_PYPI_NAMES[component]}=={minor}"
             if name not in tox_env_reqs:
                 continue  # handled in simple-diff above
