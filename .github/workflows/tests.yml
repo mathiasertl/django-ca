@@ -11,13 +11,15 @@ jobs:
 
     strategy:
       matrix:
-        os: [ ubuntu-latest ] # , macos-latest, windows-latest ]
+        os: [ ubuntu-latest ]
         python-version: [ "3.7", "3.8", "3.9", "3.10" ]
         django-version: [ "2.2.25", "3.2.10", "4.0" ]
         cryptography-version: [ "3.3.2", "3.4.7", "35.0.0", "36.0.0" ]
         exclude:
             - python-version: [ "3.7" ]
               django-version: [ "4.0" ]
+              os: [ ubuntu-latest ]
+              cryptography-version: [ "3.3.2", "3.4.7", "35.0.0", "36.0.0" ]
 
     env:
       DJANGO_CA_SECRET_KEY: dummy
