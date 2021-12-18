@@ -38,8 +38,6 @@ DATABASES = {
         "NAME": db_file,
     }
 }
-DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
