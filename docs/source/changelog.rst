@@ -4,6 +4,15 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.19.1:
+
+*******************
+1.19.1 (2021-12-19)
+*******************
+
+* Fix "missing" migration in when using django-ca as a standalone app (fixes `issue 79
+  <https://github.com/mathiasertl/django-ca/issues/79>`_).
+
 .. _changelog-1.19.0:
 
 *******************
