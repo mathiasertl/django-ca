@@ -12,6 +12,7 @@ ChangeLog
 
 * Fix "missing" migration in when using django-ca as a standalone app (fixes `issue 79
   <https://github.com/mathiasertl/django-ca/issues/79>`_).
+* Add support for cryptography 36.0 and Django 4.0.
 
 .. _changelog-1.19.0:
 

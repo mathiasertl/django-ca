@@ -454,6 +454,11 @@ text_overrides = {
 }
 
 
+nitpick_ignore = [
+    ("py:class", "python:typing.Optional"),
+]
+
+
 def resolve_internal_aliases(app, doctree):
     """
     .. seealso::
