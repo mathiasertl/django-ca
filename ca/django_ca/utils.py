@@ -16,6 +16,7 @@
 import binascii
 import re
 import shlex
+import sys
 import typing
 import warnings
 from collections import abc
@@ -1132,9 +1133,14 @@ def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
     if value in ELLIPTIC_CURVE_NAMES:
         return ELLIPTIC_CURVE_NAMES[value]()
 
-    curve: Type[ec.EllipticCurve] = getattr(ec, value.strip(), type)
+    error_msg = f"{value}: Not a known Eliptic Curve"
+
+    try:
+        curve: Type[ec.EllipticCurve] = getattr(ec, value.strip())
+    except AttributeError as ex:
+        raise ValueError(error_msg) from ex
     if not issubclass(curve, ec.EllipticCurve):
-        raise ValueError(f"{value}: Not a known Eliptic Curve")
+        raise ValueError(error_msg)
     return curve()
 
 
@@ -1349,11 +1355,13 @@ class GeneralNameList(List[x509.GeneralName]):
         """Equivalent to list.extend()."""
         list.extend(self, (parse_general_name(i) for i in iterable))
 
-    def index(self, value: ParsableGeneralName, *args: int) -> int:
+    def index(
+        self, value: ParsableGeneralName, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize
+    ) -> int:
         """Equivalent to list.index()."""
-        return list.index(self, parse_general_name(value), *args)
+        return list.index(self, parse_general_name(value), start, stop)
 
-    def insert(self, index: int, value: ParsableGeneralName) -> None:
+    def insert(self, index: SupportsIndex, value: ParsableGeneralName) -> None:
         """Equivalent to list.insert()."""
         list.insert(self, index, parse_general_name(value))
 
@@ -1375,4 +1383,4 @@ def get_crl_cache_key(
 # NOTE: get_storage_class is typed to Storage (but really returns the subclass FileSystemStorage).
 #       The default kwargs trigger a type error because the default works for the subclass.
 ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)
-ca_storage = ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)  # type: ignore
+ca_storage = ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)

@@ -118,25 +118,22 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_pathlen(self) -> None:
         """Test pathlen parameter in manager."""
-        key_size = ca_settings.CA_MIN_KEY_SIZE
-        kwargs = dict(
-            key_size=key_size,
-            key_type="RSA",
-            algorithm=hashes.SHA256(),
-            expires=self.expires(720),
-            parent=None,
-            subject=x509_name("CN=ca.example.com"),
-        )
 
-        ca = CertificateAuthority.objects.init(name="1", **kwargs)
+        ca = CertificateAuthority.objects.init(
+            name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
+        )
         self.assertEqual(ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True}}))
 
-        ca = CertificateAuthority.objects.init(pathlen=0, name="2", **kwargs)
+        ca = CertificateAuthority.objects.init(
+            pathlen=0, name="2", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
+        )
         self.assertEqual(
             ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True, "pathlen": 0}})
         )
 
-        ca = CertificateAuthority.objects.init(pathlen=2, name="3", **kwargs)
+        ca = CertificateAuthority.objects.init(
+            pathlen=2, name="3", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
+        )
         self.assertEqual(
             ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True, "pathlen": 2}})
         )
@@ -146,16 +143,20 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         """Test parent parameter in manager."""
         key_size = ca_settings.CA_MIN_KEY_SIZE
 
-        kwargs = dict(
+        parent = CertificateAuthority.objects.init(
+            name="Root",
+            parent=None,
+            pathlen=1,
             key_size=key_size,
-            key_type="RSA",
-            algorithm=hashes.SHA256(),
-            expires=self.expires(720),
             subject=x509_name("CN=ca.example.com"),
         )
-
-        parent = CertificateAuthority.objects.init(name="Root", parent=None, pathlen=1, **kwargs)
-        child = CertificateAuthority.objects.init(name="Child", parent=parent, pathlen=0, **kwargs)
+        child = CertificateAuthority.objects.init(
+            name="Child",
+            parent=parent,
+            pathlen=0,
+            key_size=key_size,
+            subject=x509_name("CN=child.ca.example.com"),
+        )
 
         self.assertAuthorityKeyIdentifier(parent, child)
 
