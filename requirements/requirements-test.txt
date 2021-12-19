@@ -7,6 +7,6 @@ oscrypto==1.2.1
 pyOpenSSL>=19
 pyrfc3339==1.1
 requests-mock==1.9.3
-selenium==4.0.0
+selenium==4.1.0
 termcolor==1.1.0
 toml==0.10.2
