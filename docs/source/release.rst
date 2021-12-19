@@ -52,6 +52,7 @@ Then checkout the current master, run migrations and validate the test data::
 
    $ git checkout master
    $ python ca/manage.py migrate
+   $ python ca/manage.py makemigrations --check
    $ devscripts/validate-testdata.py
 
 Test admin interface
