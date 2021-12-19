@@ -52,6 +52,7 @@ Then checkout the current master, run migrations and validate the test data::
 
    $ git checkout master
    $ python ca/manage.py migrate
+   $ python ca/manage.py makemigrations --check
    $ devscripts/validate-testdata.py
 
 Test admin interface
@@ -120,7 +121,7 @@ using the CLI:
 .. code-block:: console
 
    $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec backend manage sign_cert --ca="Root CA" \
+   >     docker-compose exec -T backend manage sign_cert --ca="Root CA" \
    >        --subject="/CN=signed-in-backend.example.com"
    Please paste the CSR:
    ...

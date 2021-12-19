@@ -41,6 +41,16 @@ Deprecation notices
 
 * This is the last release to support cryptography 3.3.
 
+.. _changelog-1.19.1:
+
+*******************
+1.19.1 (2021-12-19)
+*******************
+
+* Fix "missing" migration in when using django-ca as a standalone app (fixes `issue 79
+  <https://github.com/mathiasertl/django-ca/issues/79>`_).
+* Add support for cryptography 36.0 and Django 4.0.
+
 .. _changelog-1.19.0:
 
 *******************
