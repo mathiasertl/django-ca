@@ -134,13 +134,13 @@ def check_tox():
 
     # Check that there is a testenv listing all versions
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
-        ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
-        ",".join(CONFIG["django-map"]),
-        ",".join(CONFIG["cryptography-map"]),
-        ",".join(CONFIG["acme-map"]),
-        ",".join(CONFIG["idna-map"]),
-    )
+    # expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
+    #    ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
+    #    ",".join(CONFIG["django-map"]),
+    #    ",".join(CONFIG["cryptography-map"]),
+    #    ",".join(CONFIG["acme-map"]),
+    #    ",".join(CONFIG["idna-map"]),
+    # )
     # pylint: enable=consider-using-f-string
     # if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
     #    errors += err(f"Expected envlist item not found: {expected_envlist}")
