@@ -977,11 +977,11 @@ class CertificateAuthority(X509CertMixin):
 
         try:
             ski = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
-        except x509.ExtensionNotFound:
+        except x509.ExtensionNotFound as ex:
             public_key = self.pub.loaded.public_key()
             if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
                 # COVERAGE NOTE: This does not happen in reality, we never generate keys of this type
-                raise TypeError("Cannot get AuthorityKeyIdentifier for X25519 or X448 keys.")
+                raise TypeError("Cannot get AuthorityKeyIdentifier for X25519 or X448 keys.") from ex
             return x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)

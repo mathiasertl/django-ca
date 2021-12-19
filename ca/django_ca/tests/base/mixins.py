@@ -56,6 +56,7 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
+from freezegun.api import StepTickTimeFactory
 
 from ... import ca_settings
 from ...constants import ReasonFlags
@@ -254,8 +255,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         else:
             parsed_crl = x509.load_der_x509_crl(crl, default_backend())
 
-        public_key = signer.pub.loaded.public_key()  # pragma: no cover
-        if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):
+        public_key = signer.pub.loaded.public_key()
+        if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
             raise TypeError()  # just to make mypy happy
 
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
@@ -668,7 +669,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return now + timedelta(days + 1)
 
     @contextmanager
-    def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
+    def freeze_time(
+        self, timestamp: typing.Union[str, datetime]
+    ) -> typing.Iterator[typing.Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
@@ -953,7 +956,9 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return User.objects.create_superuser(username=username, password=password, email=email)
 
     @contextmanager
-    def freeze_time(self, timestamp: typing.Union[str, datetime]) -> typing.Iterator[FrozenDateTimeFactory]:
+    def freeze_time(
+        self, timestamp: typing.Union[str, datetime]
+    ) -> typing.Iterator[typing.Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Overridden to force a client login, otherwise the user session is expired."""
 
         with super().freeze_time(timestamp) as frozen:
