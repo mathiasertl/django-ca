@@ -121,7 +121,7 @@ using the CLI:
 .. code-block:: console
 
    $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec backend manage sign_cert --ca="Root CA" \
+   >     docker-compose exec -T backend manage sign_cert --ca="Root CA" \
    >        --subject="/CN=signed-in-backend.example.com"
    Please paste the CSR:
    ...
