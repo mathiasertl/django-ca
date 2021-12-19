@@ -326,6 +326,17 @@ elif args.command == "code-quality":
         )
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
+
+    print("+ python -Wd manage.py makemigrations --check")
+    try:
+        subprocess.run(
+            ["python", "-Wd", "manage.py", "makemigrations", "--check"],
+            cwd=CADIR,
+            check=True,
+            env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"),
+        )
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
 elif args.command == "docker-test":
     docker_runs = []
 

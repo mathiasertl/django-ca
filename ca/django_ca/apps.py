@@ -21,5 +21,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 class DjangoCAConfig(AppConfig):  # pylint: disable=missing-class-docstring
+    default_auto_field = "django.db.models.BigAutoField"
     name = "django_ca"
     verbose_name = _("Certificate Authority")
