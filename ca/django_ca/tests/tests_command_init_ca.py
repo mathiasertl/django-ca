@@ -602,7 +602,9 @@ class InitCATest(TestCaseMixin, TestCase):
             parent.key(None)
 
         # Wrong password doesn't work either
-        with self.assertRaisesRegex(ValueError, self.re_false_password):
+        with self.assertRaises(ValueError):
+            # NOTE: cryptography is notoriously unstable when it comes to the error message here, so we only
+            # check the exception class.
             parent.key(b"wrong")
 
         # test the private key
