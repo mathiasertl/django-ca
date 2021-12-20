@@ -32,3 +32,5 @@ geckodriver.log
 /py2/
 /venv/
 /Makefile
+.idea/
+Pipfile*
