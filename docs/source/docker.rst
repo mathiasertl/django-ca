@@ -204,23 +204,19 @@ You thus need to start two containers with slightly different configuration:
 
    user@host:~$ docker run \
    >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
-   >     -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
    >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
    >     -v static:/usr/share/django-ca/static/ \
    >     -v frontend_ca_dir:/var/lib/django-ca/certs/ \
    >     -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
    >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-   >     -v shared:/var/lib/django-ca/shared/ \
    >     -v nginx_config:/usr/src/django-ca/nginx/ \
    >     --name=frontend --network=django-ca mathiasertl/django-ca
    user@host:~$ docker run \
    >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
-   >     -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
    >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
    >     -v backend_ca_dir:/var/lib/django-ca/certs/ \
    >     -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
    >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-   >     -v shared:/var/lib/django-ca/shared/ \
    >     --name=backend --network=django-ca mathiasertl/django-ca ./celery.sh
 
 Start nginx

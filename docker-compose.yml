@@ -36,10 +36,8 @@ services:
             - backend_ca_dir:/var/lib/django-ca/certs/
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-            - shared:/var/lib/django-ca/shared/
         environment:
             DJANGO_CA_ALLOWED_HOSTS:
-            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
             DJANGO_CA_CA_DEFAULT_CA:
             DJANGO_CA_CA_DEFAULT_HOSTNAME:
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
@@ -69,7 +67,6 @@ services:
             - frontend_ca_dir:/var/lib/django-ca/certs/
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-            - shared:/var/lib/django-ca/shared/
             - nginx_config:/usr/src/django-ca/nginx/
         environment:
             DJANGO_CA_ALLOWED_HOSTS:
@@ -77,8 +74,6 @@ services:
             DJANGO_CA_CA_DEFAULT_HOSTNAME:
             DJANGO_CA_CA_ENABLE_ACME:
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
-            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/shared/secret-key}
-            DJANGO_CA_UWSGI_INI: /usr/src/django-ca/uwsgi/uwsgi.ini
             POSTGRES_DB:
             POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:

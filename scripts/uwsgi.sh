@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-DJANGO_CA_UWSGI_INI=${DJANGO_CA_UWSGI_INI:-/usr/src/django-ca/uwsgi/standalone.ini}
+DJANGO_CA_UWSGI_INI=${DJANGO_CA_UWSGI_INI:-/usr/src/django-ca/uwsgi/uwsgi.ini}
 DJANGO_CA_UWSGI_PARAMS=${DJANGO_CA_UWSGI_PARAMS:-}
 DJANGO_CA_LIB_DIR=${DJANGO_CA_LIB_DIR:-/var/lib/django-ca}
 
@@ -10,7 +10,7 @@ if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
 fi
 
 DJANGO_CA_SECRET_KEY=${DJANGO_CA_SECRET_KEY:-}
-DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/secret_key}
+DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
     KEY_DIR=`dirname $DJANGO_CA_SECRET_KEY_FILE`
