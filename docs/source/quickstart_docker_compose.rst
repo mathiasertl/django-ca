@@ -110,8 +110,8 @@ Version                                                Redis PostgreSQL  NGINX
 Add ``docker-compose.override.yml``
 ===================================
 
-The default :file:`docker-compose.yml` does not offer HTTPS, because to many details (cert location, etc.) are
-different from system to system. We need to add a `docker-compose override file
+The default :file:`docker-compose.yml` does not offer HTTPS, because too many details (cert location, etc.)
+are different from system to system. We need to add a `docker-compose override file
 <https://docs.docker.com/compose/extends/>`_ to open the port and map the directories with the certificates
 into the container.  Simply add a file called :file:`docker-compose.override.yml` next to your main
 configuration file:
@@ -171,6 +171,94 @@ generate it with:
 .. code-block:: console
 
    user@host:~/ca/$ openssl dhparam -dsaparam -out dhparam.pem 4096
+
+Customization
+=============
+
+**django-ca** and Django itself support a wide range of settings. Django has its settings documented under
+`Settings <https://docs.djangoproject.com/en/4.0/ref/settings/>`_, django-ca settings are documented under
+:doc:`custom settings <settings>`.
+
+Just like when using the plain Docker container, you can configure django-ca using either environment
+variables (set in e.g. ``docker-compose.override.yml``) or using an extra yaml configuration file. For more
+details on how to configure the Docker container, refer to :ref:`docker-configuration`.
+
+.. NOTE::
+
+   In our docker-compose setup, django-ca is used in both the ``backend`` and ``frontend`` containers. Make
+   sure you configure both of them.
+
+
+Configuration using a YAML configuration file
+---------------------------------------------
+
+Using an extra configuration file is the most flexible way to configure django-ca, as it allows you to update
+even complex settings. It has the added advantage that docker-compose will not recreate the containers if you
+update the configuration.
+
+As with the normal docker container, django-ca will read configuration files in ``/usr/src/django-ca/ca/conf/``
+in alphabetical order, but it will also read files in the subfolder ``/usr/src/django-ca/conf/ca/compose/``, which
+provides configuration specific to our docker-compose setup.
+
+To add a configuration file, first add a volume mapping in your ``docker-compose.override.yml``:
+
+.. code-block:: yaml
+   :caption: docker-compose.override.yml
+
+   version: "3.6"
+   services:
+       backend:
+           volumes:
+               - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
+       frontend:
+           volumes:
+               - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
+       webserver:
+           # same as before...
+
+... and then simply add a file called ``localsettings.yaml`` in your current directory, for example:
+
+.. code-block:: yaml
+   :caption: localsettings.yaml
+
+   # Set a custom cache.
+   #
+   # NOTE: docker-compose uses a Redis cache, this here just serves as an example.
+   #
+   # See also:
+   #     https://docs.djangoproject.com/en/4.0/ref/settings/#std:setting-CACHES
+   CACHES:
+      default:
+         BACKEND: django.core.cache.backends.locmem.LocMemCache
+
+
+Configuration using environment variables
+-----------------------------------------
+
+If you want to use environment variables for configuration, we recommend you first add them to your
+``docker-compose.override.yml``, for example to `configure a different SMTP server
+<https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
+
+.. code-block:: yaml
+   :caption: docker-compose.override.yml
+
+   version: "3.6"
+   services:
+       backend:
+           environment:
+               DJANGO_CA_EMAIL_HOST:
+       frontend:
+           environment:
+               DJANGO_CA_EMAIL_HOST:
+       webserver:
+           # same as before...
+
+and in your ``.env`` file, set the variable:
+
+.. code-block:: bash
+
+   DJANGO_CA_EMAIL_HOST=smtp.example.com
+
 
 Recap
 =====
