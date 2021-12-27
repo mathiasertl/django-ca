@@ -169,10 +169,8 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
 
 _settings_files = []
-print("### DJANGO_CA_SETTINGS", os.environ.get("DJANGO_CA_SETTINGS"))
 if os.environ.get("DJANGO_CA_SETTINGS"):
     _settings_paths = [os.path.join(BASE_DIR, p) for p in os.environ["DJANGO_CA_SETTINGS"].split(":")]
-    print("#### paths", _settings_paths)
 
     for _path in _settings_paths:
         if not os.path.exists(_path):
@@ -187,7 +185,6 @@ if os.environ.get("DJANGO_CA_SETTINGS"):
             ]
         else:
             _settings_files.append((os.path.basename(_path), os.path.dirname(_path)))
-print("### files:", _settings_files)
 
 _settings_files = sorted(_settings_files)
 if os.path.exists(SETTINGS_YAML):
