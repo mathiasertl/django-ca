@@ -2,9 +2,11 @@
 Quickstart with docker-compose
 ##############################
 
-This guide is supposed to give you a quick start for running your own CA using docker-compose. It does not
-give to many details about how to configure more stuff, please read the other documentation in more detail to
-get more information.
+.. _docker-compose:
+
+This guide provides instructions for running your own certificate authority using docker-compose. This is the
+quickest and easiest way to run django-ca, especially if you do not care to much about custom configuration or
+extending django-ca.
 
 This tutorial assumes you have moderate knowledge of running servers, installing software, docker,
 docker-compose and how TLS certificates work.
@@ -12,7 +14,7 @@ docker-compose and how TLS certificates work.
 This tutorial will give you a CA with
 
 * A root and intermediate CA.
-* An browsable admin interface, protected by TLS (using Let's Encrypt certificates).
+* A browsable admin interface, protected by TLS (using Let's Encrypt certificates).
 * Certificate revocation using CRLs and OCSP.
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
@@ -20,8 +22,8 @@ This tutorial will give you a CA with
 Requirements
 ************
 
-We assume you have a dedicated server that can run your CA, and a suitable DNS name that points to that
-server. The server needs to run Docker with docker-compose.
+We assume you have a dedicated server for your CA, and a suitable DNS name that points to that server. The
+server needs to run Docker with docker-compose.
 
 The default setup binds to the privileged ports 80 and 443, so it is assumed that no other web server runs on
 your server (or anything else listening on that port).
@@ -175,9 +177,10 @@ generate it with:
 Customization
 =============
 
-**django-ca** and Django itself support a wide range of settings. Django has its settings documented under
-`Settings <https://docs.djangoproject.com/en/4.0/ref/settings/>`_, django-ca settings are documented under
-:doc:`custom settings <settings>`.
+Although the defaults are fine for most scenarios, **django-ca** and Django itself support a wide range of
+settings to customize your installation. Django has its settings documented under `Settings
+<https://docs.djangoproject.com/en/4.0/ref/settings/>`_, django-ca settings are documented under :doc:`custom
+settings <settings>`.
 
 Just like when using the plain Docker container, you can configure django-ca using either environment
 variables (set in e.g. ``docker-compose.override.yml``) or using an extra yaml configuration file. For more
@@ -322,6 +325,8 @@ There are a few things to break down in the above commands:
 * The ``--path=ca/shared/`` parameter for the intermediate CA means that you can use the admin interface to
   issue certificates. Without it, the web server has no access to the private key for your CA.
 * The ``--pathlen=1`` parameter for the root CA means that there is at most one level of intermediate CAs.
+
+.. _docker-compose-use-ca:
 
 ***********
 Use your CA

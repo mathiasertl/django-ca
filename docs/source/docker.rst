@@ -1,394 +1,263 @@
-######
-Docker
-######
+######################
+Quickstart with Docker
+######################
 
-There is a Docker container available for **django-ca**. A docker-compose file is available to deploy the full
-stack including all dependencies.
+This guide provides instructions for running your own certificate authority using a plain Docker container.
+Using this setup allows you to run django-ca in an isolated environment that can be easily updated, but use
+external resources for a webserver, database and cache.
 
-.. NOTE::
+Another use case for this guide is to integrate the image into a Docker Swarm or Kubernetes setup and use the
+instructions here as a template.
 
-   If you just want to get a CA up and running quickly, why not try :doc:`quickstart_docker_compose`.
-
-.. _docker-compose:
-
-******************
-Use docker-compose
-******************
-
-.. versionadded:: 1.15.0
-
-   The :file:`docker-compose.yml` file was added in django-ca 1.15.0.
-
-If you just want to run **django-ca** in a quick and efficient way, using `docker-compose
-<https://docs.docker.com/compose/>`__ is the fastest and most efficient option. The stack uses NGINX for
-serving static files, uWSGI as WSGI application server, PostgreSQL as a database and Redis as cache and
-message broker.
-
-You can fetch tagged versions or the current development version of :file:`docker-compose.yml` `from GitHub
-<https://github.com/mathiasertl/django-ca/>`_.
-
-The only environment variable you need to pass is ``DJANGO_CA_CA_DEFAULT_HOSTNAME`` (note the double "CA"
-here!), configuring the domain where your CA should be available::
-
-   DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com docker-compose up -d
-
-... and visit http://ca.example.com/admin/ (assuming you set up your DNS correctly). If you want SSL for the
-admin interface (you probably should) you have to :ref:`configure NGINX <docker-compose-nginx>`.
-
-Initial setup
-=============
-
-All you need now is to create a user for the web interface as well as CAs to create certificates. You have to
-create the CAs in the *backend* service to be able to automatically generate CRLs and OCSP keys. You can pass
-``--path=ca/shared/`` when to make its private key available to the *frontend* (= the web server) to be able
-to create keys for the intermediate CA using the web interface:
-
-.. code-block:: console
-
-   $ docker-compose exec backend ./manage.py createsuperuser
-   $ docker-compose exec backend ./manage.py init_ca --pathlen=1 root /CN=example.com
-   $ docker-compose exec backend ./manage.py init_ca \
-   >   --path=ca/shared/ --parent=example.com child /CN=child.example.com
-
-Configuration
-=============
-
-You can configure django-ca using all the mechanisms described in :ref:`docker-configuration`. For more
-complex configuration changes, you might want to consider `extending docker-compose.yml
-<https://docs.docker.com/compose/extends/>`_. For example, to add additional YAML configuration to django-ca
-itself, create an override file:
-
-.. code-block:: yaml
-   :caption: docker-compose.override.yml
-
-   version: "3.7"
-   services:
-       backend:
-           volumes:
-               # settings.yaml is your additional configuration file
-               - ${PWD}/settings.yaml:/usr/src/django-ca/ca/conf/30-settings.yaml
-       frontend:
-           volumes:
-               - ${PWD}/settings.yaml:/usr/src/django-ca/ca/conf/30-settings.yaml
-
-
-The stack uses a PostgreSQL database and the ``POSTGRES_{DB,PASSWORD,USER}`` environment variables (as well as
-the variant using the ``_FILE`` suffix) are passed through, so you can configure access credentials to the
-database out of the box::
-
-   POSTGRES_PASSWORD=password123 ... docker-compose up
-
-.. _docker-compose-nginx:
-
-Configure NGINX
-===============
-
-By default, NGINX will only listen on HTTP, but a configuration for TLS is included for your convenience.
-
-All you need to do is enable port 443, tell NGINX about public and private key, and finally set the
-``NGINX_TEMPLATE=tls`` environment variable. For this example, we retrieve TLS certificates from Let's Encrypt
-**before** we run docker-compose (so that port 443 is still open):
-
-.. code-block:: console
-
-   certbot certonly --standalone -d ca.example.com
-
-The below example assumes you retrieved TLS certificates from Let's Encrypt to secure the admin interface:
-
-.. code-block:: yaml
-   :caption: docker-compose.override.yml
-
-   version: "3.7"
-   services:
-       environment:
-           NGINX_PRIVATE_KEY: /etc/certs/privkey.pem
-           NGINX_PUBLIC_KEY: /etc/certs/fullchain.pem
-           NGINX_TEMPLATE: tls
-       volumes:
-           - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
-           - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/
-           - /tmp/ca.example.com/acme/:/usr/share/django-ca/acme/
-       ports:
-           - 443:443
-
-Now, you can run docker-compose up as usual:
-
-.. code-block:: console
-
-   $ DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com docker-compose up
-
-The last step is to reconfigure certbot, so that automatic update works (assuming ``/home/user/`` is where you
-have your docker-compose file:
-
-.. code-block:: console
-
-   $ certbot certonly --webroot -w /tmp/ca.example.com/acme/ -d ca.example.com --force-renewal \
-   >     --deploy-hook "docker-compose --project-directory /home/user exec -T webserver ngin -s reload"
-
-Custom NGINX configuration
-==========================
-
-If the defaults above are not good enough, you can override ``/etc/nginx/conf.d/default.template`` as a custom
-volume.
+This guide assumes you have moderate knowledge of running servers, installing software, docker, docker-compose
+and how TLS certificates work.
 
 .. NOTE::
 
-   Please note that various services (like OCSP and CRL lists) typically *have to* be available via HTTP and
-   not HTTPS. You cannot completely disable HTTP via port 80 unless you do not need any certificate revocation
-   services.
+   If you just want to get a CA up and running quickly, why not try :doc:`quickstart_docker_compose`?
+
+This tutorial will give you a CA with
+
+* A root and intermediate CA.
+* A browsable admin interface (using plain http)
+* Certificate revocation using CRLs and OCSP.
+* (Optional) ACMEv2 support (= get certificates using certbot).
+
+TLS support for the admin interface is just a standard TLS setup for nginx, so this setup is left as an
+excercise to the reader.
+
+************
+Requirements
+************
+
+.. The docker-compose page has a very similar chapter, please keep in sync
+
+We assume you have a dedicated server for your CA, and a suitable DNS name that points to that server.
+
+The default setup binds to the privileged port 80, so it is assumed that no other web server runs on
+your server (or anything else listening on that port).
+
+*********
+Setup DNS
+*********
+
+.. The docker-compose page has a very similar chapter, please keep in sync
+
+First, decide on the hostname you want to use. Since this information is encoded in CA certificates, the
+hostname cannot be easily changed later.
+
+For the purposes of this tutorial, we are going to assume that ``ca.example.com`` is a DNS entry that points
+to the server where you want to set up your certificate authority.
+
+*************************
+Install required software
+*************************
+
+.. The docker-compose page has a very similar chapter, please keep in sync
+
+To run **django-ca**, you need Docker. You will also need at least a `supported database
+<https://docs.djangoproject.com/en/4.0/ref/databases/>`_ and a webserver (like NGINX or Apache) to serve
+static files.
+
+In our guide, we are going to run PostgreSQL as a database, Redis as a cache and NGINX as a front-facing
+webserver each in a separate Docker container. Please refer to your operating system installation instructions
+for how to install the software on your own.
+
+.. NOTE:: 
+
+   Starting dependencies as Docker containers serves us well for this guide, but makes the guide technically
+   almost identical to just using :doc:`docker-compose <quickstart_docker_compose>`. If you do not already
+   have all the software already set up or want to integrate django-ca into an unsupported orchestration setup
+   like Docker Swarm or Kubernetes, you probably really want to just use docker-compose!
+
+On Debian/Ubuntu, simply do:
+
+.. code-block:: console
+
+   user@host:~$ sudo apt update
+   user@host:~$ sudo apt install docker.io
+
+If you want to run Docker as a regular user, you need to add your user to the ``docker`` group and log in
+again:
+
+.. code-block:: console
+
+   user@host:~$ sudo adduser `id -un` docker
+
+.. _docker-configuration:
+
+*********************
+Initial configuration
+*********************
+
+django-ca requires some initial configuration (like where to find the PostgreSQL server) to run. You should
+also tell it about the DNS name you have set up above right away: The DNS name is used in the public key for
+certificate authorities you create, so changing it requires creating new certificate authorities.
+
+To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
+and add at least these settings (and adjust to your configuration):
 
 .. code-block:: yaml
-   :caption: docker-compose.override.yml
+   :caption: localsettings.yaml
 
-   version: "3.7"
-   services:
-       ports:
-           - 443:443
-       webserver:
-           volumes: ${PWD}/default.template:/etc/nginx/conf.d/default.template
+   # Configuration for django-ca. You can add/update settings here and then restart your container.
 
-... where ``${PWD}/default.template`` would be the custom site configuration configuration. Note that via
-``envsubst``, this file can use environment variables for configuration as described in the `Docker image
-documentation <https://hub.docker.com/_/nginx>`_:
+   # Where to find your database
+   DATABASES:
+       default:
+           ENGINE: django.db.backends.postgresql_psycopg2
+           HOST: postgres
+           PORT: 5432
+           PASSWORD: password
+
+   CACHES:
+       default:
+           BACKEND: redis_cache.RedisCache
+           LOCATION: redis://redis:6379
+           OPTIONS:
+               DB: 1
+               PARSER_CLASS: redis.connection.HiredisParser
+
+   # django-ca will use Celery as an asynchronous task worker
+   CELERY_BROKER_URL: redis://redis:6379/0
+
+   # Default hostname to use when generating CRLs and OCSP responses
+   CA_DEFAULT_HOSTNAME: ca.example.com
+
+   # Optional: Enable ACMEv2 support
+   CA_ENABLE_ACME: true
+
+Note that you can pass simple configuration variables also via environment variables prefixed with
+``DJANGO_CA_``. For example, you could also configure the broker URL with:
+
+.. code-block:: console
+
+   user@host:~$ docker run -e DJANGO_CA_CELERY_BROKER_URL=... ...
+
+
+NGINX configuration
+===================
+
+NGINX requires a configuration file, so you first need to create it. A minimal example would be:
 
 .. code-block:: nginx
-   :caption: default.template
+   :caption: nginx.conf
 
    upstream django_ca_frontend {
       server frontend:8000;
    }
 
    server {
-      listen       ${NGINX_PORT} default_server;
-      server_name  ${NGINX_HOST};
+      listen       80;
+      server_name  ca.example.com;
 
-      # other directives...
+      location / {
+         uwsgi_pass django_ca_frontend;
+         include /etc/nginx/uwsgi_params;
+      }
+      location /static/ {
+         root   /usr/share/nginx/html/;
+      }
    }
 
-   server {
-      listen       443 default_server;
-      server_name  ${NGINX_HOST};
-
-      # TLS configuration:
-      ssl_certificate ...;
-      ssl_certificate_key ...;
-
-      # other directives...
-   }
-
-
-.. _docker-use:
-
-**********
-Use Docker
-**********
-
-You may want to use the Docker image verbatim for a sleeker setup that uses SQLite3 as a database and no
-cache, no message broker and no other fancy stuff.
-
-Assuming you have Docker installed, simply start the docker container with:
-
-.. code-block:: console
-
-   $ docker run --name=django-ca -p 8000:8000 \
-   >     -e DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost \
-   >     -e DJANGO_CA_CA_USE_CELERY=0 \
-   >     mathiasertl/django-ca
-
-We disable celery in this example, as some commands would hang if they cannot connect to a broker.
-
-You still need the shell to create one or more root CAs. For the admin
-interface, we also create a superuser:
-
-.. code-block:: console
-
-   $ docker exec -it django-ca ./manage.py createsuperuser
-   $ docker exec -it django-ca ./manage.py init_ca \
-   >     example /C=AT/ST=Vienna/L=Vienna/O=Org/CN=ca.example.com
-
-... and visit http://localhost:8000/admin/.
-
-.. _docker-configuration:
-
-*************
-Configuration
-*************
-
-You can configure django-ca using either environment variables or additional configuration files. The included
-uWSGI server can also be configured by using different ``.ini`` configuration files.  You can reuse the
-environment variables used by the PostgreSQL and MySQL/MariaDB Docker containers to set up database access.
-You can also use Docker Secrets to configure Djangos "Secret Key".
-
-If you use a plain Docker container, you can pass configuration as described below. If you :ref:`use
-docker-compose <docker-compose>`, you probably need to extend the default configuration as described above.
-
-Use environment variables
-=========================
-
-Every environment variable passed to the container that starts with ``DJANGO_CA_`` is loaded as a normal
-setting (excluding the prefix). For example, if you start the container like this::
-
-   docker run -e DJANGO_CA_CA_DIGEST_ALGORITHM=sha256 ...
-
-... the :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting will be set accordingly. This also
-works for any standard Django setting as long as Django expects a ``str`` as value.
-
-Use configuration files
-=======================
-
-The Docker image is able to load additional YAML configuration files for more complex local configuration.
-For example, if you create a file ``settings.yaml``:
-
-.. code-block:: YAML
-   :caption: settings.yaml
-
-   # Certificates expire after ten years, default profile is "server":
-   CA_DEFAULT_EXPIRES: 3650
-   CA_DEFAULT_PROFILE: server
-
-   # The standard Django DATABASES setting, see Django docs:
-   DATABASES:
-      default:
-         ENGINE: ...
-
-
-For django-ca to use the configuration file, simple pass it as a volume to ``/usr/src/django-ca/ca/conf/``.
-Files are parsed in alphabetical order overwriting previous files. The ``00-`` and ``10-`` are used by
-internal files, so it is best to map the file e.g. like this::
-
-   docker run -v `pwd`/settings.yaml:/usr/src/django-ca/ca/conf/30-settings.yaml ...
-
-uWSGI
+Recap
 =====
 
-The container starts a `uWSGI instance <https://uwsgi-docs.readthedocs.io/>`_ to let you use the admin
-interface. To replace the simple default configuration for something else, you can pass
-``DJANGO_CA_UWSGI_INI`` as environment variable to set a different location::
+By now, there should be two configuration files in your local directory: ``localsettings.yaml`` configures
+django-ca, and ``nginx.conf`` configures NGINX itself:
 
-   docker run -v /etc/django-ca/:/etc/django-ca \
-      -e DJANGO_CA_UWSGI_INI=/etc/django-ca/uwsgi.ini ...
+.. code-block:: bash
 
-The docker container comes with different .ini files, each located in ``/usr/src/django-ca/uwsgi/``:
+   user@host:~$ ls
+   nginx.conf localsettings.yaml
 
-====================== =======================================================================================
-configuration file     Description
-====================== =======================================================================================
-:file:`standalone.ini` **Default**. Serves plain HTTP on port 8000, including static files.  Suitable for
-                       basic setups.
-:file:`uwsgi.ini`      Serves the uWSGI protocol supported by NGINX and Apache. Does not serve static files,
-                       has three worker processes.
-====================== =======================================================================================
+***************
+Start django-ca
+***************
 
-You can also always pass additional parameters to uWSGI using the ``DJANGO_CA_UWSGI_PARAMS`` environment
-variable. For example, to start six worker processes, simply use::
+After configuration, start service dependencies, django-ca itself and finally nginx, then create an admin user
+and some initial certificate authorities.
 
-   docker run -v /etc/django-ca/:/etc/django-ca \
-      -e DJANGO_CA_UWSGI_PARAMS="--processes=6" ...
-
-Use NGINX or Apache
--------------------
-
-In more professional setups, uWSGI will not serve HTTP directly, but a web server like Apache or NGINX will
-be a proxy to uWSGI communicating via a dedicated protocol. Usually, the web server serves static files
-directly and not via uWSGI.
-
-.. NOTE:: uWSGI supports a variety of web servers: https://uwsgi-docs.readthedocs.io/en/latest/WebServers.html
-
-First, you need to create a directory that you can use as a `Docker volume
-<https://docs.docker.com/storage/volumes/>`_ that will contain the static files that are served by the
-web server.  Note that the process in the container runs with UID/GID of 9000 by default::
-
-   sudo mkdir /usr/share/django-ca
-   sudo chown 9000:9000 /usr/share/django-ca
-
-Now configure your web server appropriately, e.g. for NGINX:
-
-.. code-block:: nginx
-
-   server {
-       # ... everything else
-
-       location / {
-           uwsgi_pass 127.0.0.1:8000;
-           include uwsgi_params;
-       }
-
-       location /static/ {
-           alias /home/mati/git/mati/django-ca/static/static/;
-       }
-   }
-
-
-Now all that's left is to start the container with that volume and set ``DJANGO_CA_UWSGI_INI`` to a different
-.ini file (note that this file is included in the container, see above)::
-
-   docker run \
-      -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
-      -p 8000:8000 --name=django-ca \
-      -v /usr/share/django-ca:/usr/share/django-ca \
-      django-ca
-
-Note that ``/usr/share/django-ca`` on the host will now contain the static files served by your web server. If
-you configured NGINX on port 80, you can now visit e.g. http://localhost/admin/ for the admin interface.
-
-Database configuration
-======================
-
-You can use the environment variables used by the `PostgreSQL <https://hub.docker.com/_/postgres>`_ and `MySQL
-<https://hub.docker.com/_/mysql>`_/`MariaDB <https://hub.docker.com/_/mariadb>`_ images to set up database
-access. This also works for the variables using the ``_FILE`` suffix (e.g. for Docker Secrets)::
-
-   docker run -e POSTGRES_PASSWORD=password123 ...
-
-Note that as described above, the default :file:`docker-compose.yml` also supports these variables::
-
-   POSTGRES_PASSWORD=password123 ... docker-compose up
-
-Djangos SECRET_KEY
+Start dependencies
 ==================
 
-Django uses a `SECRET_KEY <https://docs.djangoproject.com/en/dev/ref/settings/#secret-key>`__ used in some
-signing operations. Note that this key is *never* used by **django-ca** itself.
+As mentioned before, we will start services that django-ca depends upon (like PostgreSQL) as Docker containers
+in this guide. In practice, you do not need the custom network setup below, unless you intend to run some of
+the services this way.
 
-By default, a random key will be generated on startup, so you do not have to do anything if you're happy with
-that. If you want to pass a custom key, you can use the ``DJANGO_CA_SECRET_KEY`` environment variable (as
-described above).
+Create a Docker network and start PostgreSQL and Redis:
 
-You can also use `Docker Secrets <https://docs.docker.com/engine/swarm/secrets/>`_ and pass the
-``DJANGO_CA_SECRET_KEY_FILE`` to read the secret from the file.
+.. code-block:: console
 
-Run as different user
-=====================
+   user@host:~$ docker network create django-ca
+   user@host:~$ docker run --name postgres --network=django-ca -e POSTGRES_PASSWORD=password \
+   >     -v pgdata:/var/lib/postgresql -d postgres
+   user@host:~$ docker run --name redis --network=django-ca -d redis
 
-It is possible to run the uWSGI instance inside the container as a different user, *but* you have to make sure
-that ``/var/lib/django-ca/`` is writable by that user.
+Start django-ca
+===============
 
-.. WARNING::
+django-ca (usually) consists of two containers (using the same image): A uWSGI server and a Celery task queue.
+You thus need to start two containers with slightly different configuration:
 
-   ``/var/lib/django-ca/`` contains all sensitive data including CA private keys and login credentials to the
-   admin interface. Make sure you protect this directory!
+.. code-block:: console
 
-Assuming you want to use UID 3000 and GID 3001, set up appropriate folders on the host::
+   user@host:~$ docker run \
+   >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
+   >     -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
+   >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
+   >     -v static:/usr/share/django-ca/static/ \
+   >     -v frontend_ca_dir:/var/lib/django-ca/certs/ \
+   >     -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+   >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+   >     -v shared:/var/lib/django-ca/shared/ \
+   >     -v nginx_config:/usr/src/django-ca/nginx/ \
+   >     --name=frontend --network=django-ca mathiasertl/django-ca
+   user@host:~$ docker run \
+   >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
+   >     -e DJANGO_CA_UWSGI_INI=/usr/src/django-ca/uwsgi/uwsgi.ini \
+   >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
+   >     -v backend_ca_dir:/var/lib/django-ca/certs/ \
+   >     -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+   >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+   >     -v shared:/var/lib/django-ca/shared/ \
+   >     --name=backend --network=django-ca mathiasertl/django-ca ./celery.sh
 
-   mkdir /var/lib/django-ca/
-   chown 3000:3001 /var/lib/django-ca/
-   chmod go-rwx /var/lib/django-ca/
+Start nginx
+===========
 
-If you want to keep any existing data, you now must copy the data for ``/var/lib/django-ca/`` in the container
-to the one on the host.
+NGINX unfortunately will crash if you haven't started django-ca first (due to the name of the frontend
+container not resolving yet). So you have to start nginx *after* the frontend container:
 
-Now you can run the container with the different UID/GID::
+.. code-block:: console
 
-   docker run \
-      -p 8000:8000 --name=django-ca \
-      -v /var/lib/django-ca:/var/lib/django-ca \
-      --user 3000:3001 \
-      django-ca
+   user@host:~$ docker run --name nginx -p 80:80 --network=django-ca \
+   >     -v static:/usr/share/nginx/html/static/ \
+   >     -v `pwd`/nginx.conf:/etc/nginx/conf.d/default.conf -d nginx
+
+Create admin user and set up CAs
+================================
+
+It's finally time to create a user for the admin interface and some certificate authorities.
+
+.. code-block:: console
+
+   user@host:~$ docker exec -it backend manage createsuperuser
+   user@host:~$ docker exec -it backend manage init_ca --pathlen=1 Root "/CN=Root CA"
+   user@host:~$ docker exec -it backend manage init_ca \
+   >     --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
+
+***********
+Use your CA
+***********
+
+Please see :ref:`docker-compose-use-ca` for further usage information.
 
 ************************
 Build your own container
 ************************
 
-If you want to build the container by yourself, simply clone the repository and execute::
+If you want to build the container by yourself, simply clone `the repository from GitHub
+<https://github.com/mathiasertl/django-ca/>`_ and execute::
 
    DOCKER_BUILDKIT=1 docker build -t django-ca .

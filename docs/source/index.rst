@@ -13,7 +13,6 @@ Welcome to django-ca's documentation!
    :caption: Installation
 
    install
-   docker
    update
    changelog
    settings
@@ -22,6 +21,7 @@ Welcome to django-ca's documentation!
    :maxdepth: 1
    :caption: Quickstart
 
+   ... with docker <docker>
    ... with docker-compose <quickstart_docker_compose>
 
 .. toctree::

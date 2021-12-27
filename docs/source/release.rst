@@ -79,6 +79,9 @@ Create the docker image::
    $ export DOCKER_BUILDKIT=1
    $ docker build --progress=plain -t mathiasertl/django-ca .
 
+Testing
+=======
+
 Do some basic sanity checking of the Docker image::
 
    $ docker run -e DJANGO_CA_SECRET_KEY=dummy --rm \
@@ -91,7 +94,10 @@ Do some basic sanity checking of the Docker image::
    >     -w /usr/src/django-ca/ \
    >     mathiasertl/django-ca devscripts/test-imports.py --all-extras
 
-... and follow instructions at :ref:`docker-use` to test the Docker image.
+Finally follow :doc:`docker` and make sure that everything works:
+
+* Use ``localhost`` instead of ``ca.example.com`` as a hostname.
+* You cannot test ACMEv2 this way, as challenge validation would not work.
 
 **************
 docker-compose
