@@ -3,7 +3,7 @@ Quickstart: as Django app
 #########################
 
 This guide provides instructions for running your own certificate authority as a Django app in your existing
-Django project. This setup allows you to integrate django-ca into aan existing Django deployment.
+Django project. This setup allows you to integrate django-ca into an existing Django deployment.
 
 In this guide we do not cover creating your own Django project, deployment strategies or regular Python or
 Django development.
