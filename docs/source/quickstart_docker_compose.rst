@@ -8,9 +8,6 @@ This guide provides instructions for running your own certificate authority usin
 quickest and easiest way to run django-ca, especially if you do not care to much about custom configuration or
 extending django-ca.
 
-This tutorial assumes you have moderate knowledge of running servers, installing software, docker,
-docker-compose and how TLS certificates work.
-
 This tutorial will give you a CA with
 
 * A root and intermediate CA.
@@ -18,29 +15,10 @@ This tutorial will give you a CA with
 * Certificate revocation using CRLs and OCSP.
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
-************
-Requirements
-************
+.. include:: include/guide_requirements.rst
 
-We assume you have a dedicated server for your CA, and a suitable DNS name that points to that server. The
-server needs to run Docker with docker-compose.
-
-The default setup binds to the privileged ports 80 and 443, so it is assumed that no other web server runs on
-your server (or anything else listening on that port).
-
-*********
-Setup DNS
-*********
-
-First, decide on the hostname you want to use. Since this information is encoded in CA certificates, the
-hostname cannot be easily changed later.
-
-For the purposes of this tutorial, we are going to assume that ``ca.example.com`` is a DNS entry that points
-to the server where you want to set up your certificate authority.
-
-*************************
-Install required software
-*************************
+Required software
+=================
 
 To run **django-ca**, you need Docker and Docker Compose. You also need certbot to acquire Let's Encrypt
 certificates for the admin interface. OpenSSL is used to generate the DH parameter file. On Debian/Ubuntu,
@@ -55,12 +33,7 @@ For a different OS, please read `Install Docker <https://docs.docker.com/engine/
 docker-compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 <https://certbot.eff.org/docs/install.html>`_.
 
-If you want to run docker(-compose) as a regular user, you need to add your user to the ``docker`` group and
-log in again:
-
-.. code-block:: console
-
-   user@host:~$ sudo adduser `id -un` docker
+.. include:: include/docker-regular-user.rst
 
 ************************
 Get initial certificates
@@ -353,3 +326,21 @@ certbot command:
 
    $ sudo certbot register --server https://ca.example.com/django_ca/acme/directory/
    $ sudo certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
+
+******
+Update
+******
+
+.. include:: include/update_intro.rst
+
+.. WARNING:: 
+
+   **Updating from django-ca 1.18.0 or earlier?** Please see :ref:`update_119`.
+
+In general, updating django-ca is done by getting the :ref:`latest version of docker-compose.yml 
+<docker-compose.yml>` and then simply recreating the containers:
+
+.. code-block:: console
+
+   user@host:~/ca/$ curl -O https://.../docker-compose.yml
+   user@host:~/ca/$ docker-compose up -d

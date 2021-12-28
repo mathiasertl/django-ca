@@ -9,9 +9,6 @@ external resources for a webserver, database and cache.
 Another use case for this guide is to integrate the image into a Docker Swarm or Kubernetes setup and use the
 instructions here as a template.
 
-This guide assumes you have moderate knowledge of running servers, installing software, docker, docker-compose
-and how TLS certificates work.
-
 .. NOTE::
 
    If you just want to get a CA up and running quickly, why not try :doc:`quickstart_docker_compose`?
@@ -26,32 +23,10 @@ This tutorial will give you a CA with
 TLS support for the admin interface is just a standard TLS setup for nginx, so this setup is left as an
 excercise to the reader.
 
-************
-Requirements
-************
+.. include:: include/guide_requirements.rst
 
-.. The docker-compose page has a very similar chapter, please keep in sync
-
-We assume you have a dedicated server for your CA, and a suitable DNS name that points to that server.
-
-The default setup binds to the privileged port 80, so it is assumed that no other web server runs on
-your server (or anything else listening on that port).
-
-*********
-Setup DNS
-*********
-
-.. The docker-compose page has a very similar chapter, please keep in sync
-
-First, decide on the hostname you want to use. Since this information is encoded in CA certificates, the
-hostname cannot be easily changed later.
-
-For the purposes of this tutorial, we are going to assume that ``ca.example.com`` is a DNS entry that points
-to the server where you want to set up your certificate authority.
-
-*************************
-Install required software
-*************************
+Required software
+=================
 
 .. The docker-compose page has a very similar chapter, please keep in sync
 
@@ -77,12 +52,7 @@ On Debian/Ubuntu, simply do:
    user@host:~$ sudo apt update
    user@host:~$ sudo apt install docker.io
 
-If you want to run Docker as a regular user, you need to add your user to the ``docker`` group and log in
-again:
-
-.. code-block:: console
-
-   user@host:~$ sudo adduser `id -un` docker
+.. include:: include/docker-regular-user.rst
 
 .. _docker-configuration:
 
@@ -90,9 +60,8 @@ again:
 Initial configuration
 *********************
 
-django-ca requires some initial configuration (like where to find the PostgreSQL server) to run. You should
-also tell it about the DNS name you have set up above right away: The DNS name is used in the public key for
-certificate authorities you create, so changing it requires creating new certificate authorities.
+django-ca requires some initial configuration (like where to find the PostgreSQL server) to run and the domain
+name you have set up above.
 
 To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
 and add at least these settings (and adjust to your configuration):
@@ -100,7 +69,8 @@ and add at least these settings (and adjust to your configuration):
 .. code-block:: yaml
    :caption: localsettings.yaml
 
-   # Configuration for django-ca. You can add/update settings here and then restart your container.
+   # Configuration for django-ca. You can add/update settings here and then
+   # restart your containers.
 
    # Where to find your database
    DATABASES:
@@ -257,3 +227,25 @@ If you want to build the container by yourself, simply clone `the repository fro
 <https://github.com/mathiasertl/django-ca/>`_ and execute::
 
    DOCKER_BUILDKIT=1 docker build -t django-ca .
+
+******
+Update
+******
+
+.. include:: include/update_intro.rst
+
+Docker does not support updating containers very well on its own. Upgrading them means stopping and removing
+the old container and starting a new one with the same options:
+
+.. code-block:: console
+
+   user@host:~$ docker ps
+   CONTAINER ID   IMAGE                          ...	NAMES
+   ...            mathiasertl/django-ca:1.19.0   ...	frontend
+   ...            mathiasertl/django-ca:1.19.0   ...	backend
+   user@host:~$ docker kill frontend backend
+   user@host:~$ docker rm frontend backend
+   user@host:~$ docker run ... mathiasertl/django-ca:1.20.0 frontend
+   user@host:~$ docker run ... mathiasertl/django-ca:1.20.0 backend
+
+The ``docker run`` command must use at least the same volume options as the previous command.
