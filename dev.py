@@ -333,7 +333,7 @@ elif args.command == "code-quality":
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
 
-    cmd = py + ["makemigrations", "--check"]
+    cmd = py + ["manage.py", "makemigrations", "--check"]
     print(f"+ {' '.join(cmd)}")  # pragma: only py<3.8; use shlex.join() instead
     try:
         subprocess.run(cmd, cwd=CADIR, check=True, env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"))

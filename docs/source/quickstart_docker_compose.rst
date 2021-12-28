@@ -156,7 +156,7 @@ settings to customize your installation. Django has its settings documented unde
 settings <settings>`.
 
 Just like when using the plain Docker container, you can configure django-ca using either environment
-variables (set in e.g. ``docker-compose.override.yml``) or using an extra yaml configuration file. For more
+variables (set in e.g. ``docker-compose.override.yml``) or using an extra YAML configuration file. For more
 details on how to configure the Docker container, refer to :ref:`docker-configuration`.
 
 .. NOTE::
