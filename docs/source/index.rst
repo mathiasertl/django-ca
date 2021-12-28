@@ -21,6 +21,7 @@ Welcome to django-ca's documentation!
    :maxdepth: 1
    :caption: Quickstart
 
+   ... as Django app <quickstart_as_app>
    ... with docker <docker>
    ... with docker-compose <quickstart_docker_compose>
 

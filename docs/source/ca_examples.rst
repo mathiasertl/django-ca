@@ -39,6 +39,7 @@ In signed certificates
 
 .. include:: generated/cert_issuer.rst
 
+.. _ca-example-AuthorityInfoAccess:
 
 *******************
 AuthorityInfoAccess

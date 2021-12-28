@@ -1,0 +1,20 @@
+Custom management commands are documented in :doc:`/cli/intro`. You need to create a user (that can log into
+the admin interface) and create a root and intermediate CA:
+
+.. code-block:: console
+
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} createsuperuser{% endfilter %}
+   ...
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} init_ca --pathlen=1 Root "/CN=Root"{% endfilter %}
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} init_ca --path=ca/shared/ --parent="Root" Intermediate "/CN=Intermediate"{% endfilter %}
+
+There are a few things to break down in the above commands:
+
+* The subject (``/CN=...``) in the CA is only used by browsers to display the name of a CA. It can be any
+  human readable value and does not have to be a domain name.
+* The first positional argument to ``init_ca``, ("Root", "Intermediate") is just a human readable name used to
+  identify the CA within the command-line interface and web interface. Unlike the CommonName, it must be
+  unique.
+{% if shared %}* The ``--path=ca/shared/`` parameter for the intermediate CA means that you can use the admin interface to
+  issue certificates. Without it, the web server has no access to the private key for your CA.{% endif %}
+* The ``--pathlen=1`` parameter for the root CA means that there is at most one level of intermediate CAs.

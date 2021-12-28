@@ -274,30 +274,10 @@ Simply go to https://ca.example.com/admin/.
 Create admin user and set up CAs
 ================================
 
-Inside the backend container, ``manage`` is an alias for the `Djangos manage.py script
-<https://docs.djangoproject.com/en/dev/ref/django-admin/>`_. We provide many custom management commands, see
-:doc:`/cli/intro`. We need to create a user (that can log into the admin interface) and create a root and
-intermediate CA:
+Inside the backend container, ``manage`` is an alias for ``manage.py``.
 
-.. code-block:: console
-
-   user@host:~/ca/$ docker-compose exec backend manage createsuperuser
-   ...
-   user@host:~/ca/$ docker-compose exec backend manage init_ca \
-   >     --pathlen=1 Root "/CN=Root CA"
-   user@host:~/ca/$ docker-compose exec backend manage init_ca \
-   >     --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
-
-There are a few things to break down in the above commands:
-
-* The subject (``/CN=...``) in the CA is only used by browsers to display the name of a CA. It can be any
-  human readable value and does not have to be a domain name.
-* The first positional argument to ``init_ca``, ("Root", "Intermediate") is just a human readable name used to
-  identify the CA within the command-line interface and web interface. Unlike the CommonName, it must be
-  unique.
-* The ``--path=ca/shared/`` parameter for the intermediate CA means that you can use the admin interface to
-  issue certificates. Without it, the web server has no access to the private key for your CA.
-* The ``--pathlen=1`` parameter for the root CA means that there is at most one level of intermediate CAs.
+.. jinja:: manage-in-docker-compose
+   :file: /source/include/create-user.rst.jinja
 
 .. _docker-compose-use-ca:
 

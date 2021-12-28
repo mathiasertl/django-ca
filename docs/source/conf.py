@@ -83,6 +83,7 @@ extensions = [
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     "celery.contrib.sphinx",
     "numpydoc",
+    "sphinxcontrib.jinja",
 ]
 
 autodoc_typehints = "none"
@@ -373,6 +374,17 @@ intersphinx_mapping = {
 
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+# Jinja template contexts
+jinja_contexts = {
+    "manage-as-py": {
+        "manage": "python manage.py",
+    },
+    "manage-in-docker-compose": {
+        "manage": "docker-compose exec backend manage",
+        "shared": True,
+    },
+}
 
 # Make typehints to third-party libraries work in Shpinx:
 #   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805
