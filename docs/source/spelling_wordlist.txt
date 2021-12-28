@@ -48,6 +48,7 @@ stderr
 stdout
 subcommands
 subdirectory
+subfolder
 submodule
 subtree
 subtrees

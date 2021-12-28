@@ -4,7 +4,7 @@ Quickstart with Docker
 
 This guide provides instructions for running your own certificate authority using a plain Docker container.
 Using this setup allows you to run django-ca in an isolated environment that can be easily updated, but use
-external resources for a webserver, database and cache.
+external resources for a web server, database and cache.
 
 Another use case for this guide is to integrate the image into a Docker Swarm or Kubernetes setup and use the
 instructions here as a template.
@@ -20,8 +20,8 @@ This tutorial will give you a CA with
 * Certificate revocation using CRLs and OCSP.
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
-TLS support for the admin interface is just a standard TLS setup for nginx, so this setup is left as an
-excercise to the reader.
+TLS support for the admin interface is just a standard TLS setup for NGINX, so this setup is left as an
+exercise to the reader.
 
 .. include:: include/guide_requirements.rst
 
@@ -31,11 +31,11 @@ Required software
 .. The docker-compose page has a very similar chapter, please keep in sync
 
 To run **django-ca**, you need Docker. You will also need at least a `supported database
-<https://docs.djangoproject.com/en/4.0/ref/databases/>`_ and a webserver (like NGINX or Apache) to serve
+<https://docs.djangoproject.com/en/4.0/ref/databases/>`_ and a web server (like NGINX or Apache) to serve
 static files.
 
-In our guide, we are going to run PostgreSQL as a database, Redis as a cache and NGINX as a front-facing
-webserver each in a separate Docker container. Please refer to your operating system installation instructions
+In our guide, we are going to run PostgreSQL as a database, Redis as a cache and NGINX as a front-facing web
+server each in a separate Docker container. Please refer to your operating system installation instructions
 for how to install the software on your own.
 
 .. NOTE:: 
@@ -145,7 +145,7 @@ django-ca, and ``nginx.conf`` configures NGINX itself:
 Start django-ca
 ***************
 
-After configuration, start service dependencies, django-ca itself and finally nginx, then create an admin user
+After configuration, start service dependencies, django-ca itself and finally NGINX, then create an admin user
 and some initial certificate authorities.
 
 Start dependencies
@@ -189,11 +189,11 @@ You thus need to start two containers with slightly different configuration:
    >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
    >     --name=backend --network=django-ca mathiasertl/django-ca ./celery.sh
 
-Start nginx
+Start NGINX
 ===========
 
 NGINX unfortunately will crash if you haven't started django-ca first (due to the name of the frontend
-container not resolving yet). So you have to start nginx *after* the frontend container:
+container not resolving yet). So you have to start NGINX *after* the frontend container:
 
 .. code-block:: console
 

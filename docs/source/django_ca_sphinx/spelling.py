@@ -60,6 +60,7 @@ class MagicWordsFilter(Filter):
         "IPv6",
         "django-ca",
         "uWSGI",
+        "Kubernetes",
         "NGINX",  # homepage consistently uses all caps
         ".ini",
         "base64url",
