@@ -643,6 +643,7 @@ class ExtendedKeyUsage(
         "ipsecEndSystem": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.5"),
         "ipsecTunnel": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6"),
         "ipsecUser": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7"),
+        "mdlDS": x509.ObjectIdentifier("1.0.18013.5.1.2"),
     }
     _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
 
@@ -662,6 +663,7 @@ class ExtendedKeyUsage(
         ("ipsecEndSystem", "IPSec EndSystem"),
         ("ipsecTunnel", "IPSec Tunnel"),
         ("ipsecUser", "IPSec User"),
+        ("mdlDS", "mdlDS"),
         ("anyExtendedKeyUsage", "Any Extended Key Usage"),
     )
 
