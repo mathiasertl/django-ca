@@ -316,25 +316,27 @@ elif args.command == "code-quality":
         sys.exit(e.returncode)
     print("")
 
-    print("+ python -Wd manage.py check")
+    py = ["python", "-Wd"]
+
+    # Django 4.0 changes the default to True. Remove USE_L10N setting once support for Django<4.0 is dropped.
+    #   https://docs.djangoproject.com/en/4.0/releases/4.0/#miscellaneous
+    py += ["-W", "ignore:The USE_L10N setting is deprecated."]  # pragma: only django<4.0
+
+    # Django 3.2 adds AppConfig discovery. Remove default_app_config once support for Django<3.2 is dropped.
+    #   https://docs.djangoproject.com/en/dev/releases/3.2/#automatic-appconfig-discovery
+    py += ["-W", "ignore:'django_ca' defines default_app_config"]  # pragma: only django<3.2
+
+    cmd = py + ["manage.py", "check"]
+    print(f"+ {' '.join(cmd)}")  # pragma: only py<3.8; use shlex.join() instead
     try:
-        subprocess.run(
-            ["python", "-Wd", "manage.py", "check"],
-            cwd=CADIR,
-            check=True,
-            env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"),
-        )
+        subprocess.run(cmd, cwd=CADIR, check=True, env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"))
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
 
-    print("+ python -Wd manage.py makemigrations --check")
+    cmd = py + ["makemigrations", "--check"]
+    print(f"+ {' '.join(cmd)}")  # pragma: only py<3.8; use shlex.join() instead
     try:
-        subprocess.run(
-            ["python", "-Wd", "manage.py", "makemigrations", "--check"],
-            cwd=CADIR,
-            check=True,
-            env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"),
-        )
+        subprocess.run(cmd, cwd=CADIR, check=True, env=dict(os.environ, DJANGO_CA_SECRET_KEY="dummy"))
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
 elif args.command == "docker-test":
