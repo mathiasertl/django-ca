@@ -384,6 +384,9 @@ jinja_contexts = {
         "manage": "docker-compose exec backend manage",
         "shared": True,
     },
+    "requirements-as-py": {},
+    "requirements-in-docker": {},
+    "requirements-in-docker-compose": {},
 }
 
 # Make typehints to third-party libraries work in Shpinx:

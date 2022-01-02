@@ -23,7 +23,9 @@ This tutorial will give you a CA with
 TLS support for the admin interface is just a standard TLS setup for NGINX, so this setup is left as an
 exercise to the reader.
 
-.. include:: include/guide_requirements.rst
+.. jinja:: requirements-in-docker
+   :file: include/guide-requirements.rst.jinja
+   :header_update_levels:
 
 Required software
 =================
