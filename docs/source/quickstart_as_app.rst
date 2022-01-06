@@ -84,22 +84,6 @@ Finally, invoke the regular :command:`manage.py` commands when you add new apps:
 After that, **django-ca** should show up in your admin interface (see :doc:`web_interface`) and provide
 various :command:`manage.py` commands (see :doc:`/cli/intro`).
 
-HTTP availability?!
-===================
-
-It might seem a bit ironic and confusing, but certificate revocation status protocols like OCSP or CRLs
-usually works via HTTP, **not** HTTPS. Responses from the CA are always signed, so hosting them via HTTP is not a
-security vulnerability. Further, you cannot verify the the certificate used when querying the CA, since you
-would need a certificate revocation status for that.
-
-Just in case you doubt the above: check how publicly trusted and widely used certificate authorities set the
-:ref:`ca-example-crlDistributionPoints` and :ref:`ca-example-AuthorityInfoAccess` extensions.
-
-However, only CRL, OCSP and issuer information needs to be available via HTTP. If you use ``/ca`` as path in
-your URL configuration (like in the example above), you only need ``/ca/issuer/``, ``/ca/ocsp/`` and
-``/ca/crl/`` available via HTTP.
-
-
 Create admin user and set up CAs
 ================================
 
@@ -107,4 +91,18 @@ All functionality is available as custom `Djangos manage.py
 commands <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_.
 
 .. jinja:: manage-as-py
-   :file: /source/include/create-user.rst.jinja
+   :file: include/create-user.rst.jinja
+
+******
+Update
+******
+
+.. include:: include/update_intro.rst
+
+You can update django-ca like any other Django app:
+
+.. code-block:: console
+
+   user@host:~$ pip install -U django-ca
+   user@host:~$ python manage.py migrate
+   user@host:~$ python manage.py collectstatic

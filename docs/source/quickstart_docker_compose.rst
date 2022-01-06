@@ -279,7 +279,7 @@ Create admin user and set up CAs
 Inside the backend container, ``manage`` is an alias for ``manage.py``.
 
 .. jinja:: manage-in-docker-compose
-   :file: /source/include/create-user.rst.jinja
+   :file: include/create-user.rst.jinja
 
 .. _docker-compose-use-ca:
 
