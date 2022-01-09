@@ -168,23 +168,23 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
 
+# CONFIGURATION_DIRECTORY is set by the SystemD ConfigurationDirectory= directive.
 _settings_files = []
-if os.environ.get("DJANGO_CA_SETTINGS"):
-    _settings_paths = [os.path.join(BASE_DIR, p) for p in os.environ["DJANGO_CA_SETTINGS"].split(":")]
+SETTINGS_DIRS = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATION_DIRECTORY", ""))
 
-    for _path in _settings_paths:
-        if not os.path.exists(_path):
-            raise ImproperlyConfigured("%s: No such file or directory." % _path)
+for _path in [os.path.join(BASE_DIR, p) for p in SETTINGS_DIRS.split(":")]:
+    if not os.path.exists(_path):
+        raise ImproperlyConfigured("%s: No such file or directory." % _path)
 
-        if os.path.isdir(_path):
-            # exclude files that don't end with '.yaml' and any directories
-            _settings_files += [
-                (_f, _path)
-                for _f in os.listdir(_path)
-                if _f.endswith(".yaml") and not os.path.isdir(os.path.join(_path, _f))
-            ]
-        else:
-            _settings_files.append((os.path.basename(_path), os.path.dirname(_path)))
+    if os.path.isdir(_path):
+        # exclude files that don't end with '.yaml' and any directories
+        _settings_files += [
+            (_f, _path)
+            for _f in os.listdir(_path)
+            if _f.endswith(".yaml") and not os.path.isdir(os.path.join(_path, _f))
+        ]
+    else:
+        _settings_files.append((os.path.basename(_path), os.path.dirname(_path)))
 
 _settings_files = sorted(_settings_files)
 if os.path.exists(SETTINGS_YAML):
