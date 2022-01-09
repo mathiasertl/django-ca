@@ -1,0 +1,18 @@
+[Unit]
+Description=django-ca application server
+After=syslog.target network.target
+
+[Service]
+Environment=DJANGO_CA_BASE_DIR=/opt/django-ca
+WorkingDirectory=/opt/django-ca/src/django-ca
+ExecStart=/usr/bin/uwsgi \
+        --ini ${DJANGO_CA_BASE_DIR}/src/django-ca/uwsgi/source.ini \
+        --socket ${RUNTIME_DIRECTORY}/uwsgi.socket
+User=django-ca
+Group=django-ca
+RuntimeDirectory=django-ca
+Restart=on-failure
+KillSignal=SIGQUIT
+Type=notify
+#StandardError=syslog
+NotifyAccess=all

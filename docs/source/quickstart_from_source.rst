@@ -7,7 +7,7 @@ source. This method requires a lot of manual configuration and a lot of expert k
 if you use an exotic system or other options do not work for you for some reason. If you're looking for a
 faster and easier option, you might consider using :doc:`docker-compose <quickstart_docker_compose>`.
 
-.. NOTE:: 
+.. NOTE::
 
    All commands below assume that you have a shell with superuser privileges.
 
@@ -34,10 +34,9 @@ On Debian/Ubuntu, simply do:
 .. code-block:: console
 
    user@host:~# apt update
-   user@host:~# apt install python3 python3-venv 
-   user@host:~# apt install python3-dev gcc libpq-dev
-   user@host:~# apt install postgresql postgresql-client
-   user@host:~# apt install redis-server nginx
+   user@host:~# apt install python3 python3-venv python3-dev \
+   >  gcc libpq-dev postgresql postgresql-client \
+   >  redis-server nginx uwsgi uwsgi-plugin-python3
 
 ************
 Installation
@@ -48,7 +47,7 @@ Get the source
 
 You can clone django-ca from git or download an archive `from GitHub
 <https://github.com/mathiasertl/django-ca/releases>`_. In the example below, we extract the source to
-``/usr/local/src/`` and create an unversioned symlink so that you can roll back to old versions during an
+``/opt/django-ca/src/`` and create an unversioned symlink so that you can roll back to old versions during an
 update:
 
 .. jinja::
@@ -61,18 +60,17 @@ In our setup, we create a `virtualenv <https://docs.python.org/3/tutorial/venv.h
 environment. Several tools building on virtualenv exist (e.g. `pyenv <https://github.com/pyenv/pyenv>`_ or
 `virtualenvwrapper <https://virtualenvwrapper.readthedocs.io/en/latest/>`_) that you might want to try out.
 
-.. WARNING:: 
+.. WARNING::
 
    Do not run pip as root and outside of a virtualenv. This will update system dependencies and potentially
    breaks your system!
 
 .. code-block:: console
 
-   user@host:~# python3 -m venv /usr/local/src/django-ca-venv
-   user@host:~# source /usr/local/src/django-ca-venv/bin/activate
-   (django-ca-venv) user@host:~# pip install -U pip setuptools
-   (django-ca-venv) user@host:~# cd /usr/local/src/django-ca
-   (django-ca-venv) user@host:/usr/local/src/django-ca# pip install -e .[postgres,acme,celery,redis]
+   user@host:~# python3 -m venv /opt/django-ca/venv/
+   user@host:~# source /opt/django-ca/venv/bin/activate
+   (venv) user@host:~# pip install -U pip setuptools
+   (venv) user@host:~# pip install -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
 
 Add user
 ========
@@ -81,10 +79,7 @@ Add a system user to run uWSGI (the application server) and Celery (the task wor
 
 .. code-block:: console
 
-   user@host:~# adduser --system --group --disabled-login --home=/var/lib/django-ca/ django-ca
-
-Add SystemD services
-====================
+   user@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
 
 PostgreSQL and nginx
 ====================
@@ -102,6 +97,25 @@ configuration:
    postgres=# GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
    GRANT
 
+TODO: nginx config
+
+Add SystemD services
+====================
+
+SystemD services are included with **django-ca**. You need to add two services, one for the uWSGI application
+server and one for the Celery task worker. To enable them, just create symlinks in ``/etc/systemd/system/``:
+
+.. code-block:: console
+
+   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/django-ca.service /etc/systemd/system/
+   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/django-ca-celery.service /etc/systemd/system/
+   user@host:~# systemctl daemon-reload
+
+Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`. If
+you use a root directory different from ``/opt/django-ca/``, add a SystemD override for the
+``WorkingDirectory=`` directive and the ``DJANGO_CA_BASE_DIR`` environment variable.
+
+.. _from-source-configuration:
 
 *************
 Configuration
