@@ -1,0 +1,18 @@
+# django-ca local settings file. For more information:
+#   https://django-ca.readthedocs.io/en/latest/settings.html for more information.
+
+# Default hostname to use when generating CRLs and OCSP responses
+CA_DEFAULT_HOSTNAME: ca.example.com
+
+# Secret key used by this installation. Generate e.g. with "openssl rand -base64 32".
+SECRET_KEY: ""
+
+# Database configuration
+DATABASES:
+    default:
+        ENGINE: django.db.backends.postgresql_psycopg2
+        HOST: localhost
+        PORT: 5432
+        NAME: django_ca
+        USER: django_ca
+        PASSWORD: random-password

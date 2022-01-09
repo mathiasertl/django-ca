@@ -52,6 +52,7 @@ subfolder
 submodule
 subtree
 subtrees
+symlink
 themself
 tox
 unencrypted

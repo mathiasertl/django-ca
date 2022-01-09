@@ -35,20 +35,29 @@ On Debian/Ubuntu, simply do:
 
    user@host:~# apt update
    user@host:~# apt install python3 python3-venv python3-dev \
-   >  gcc libpq-dev postgresql postgresql-client \
-   >  redis-server nginx uwsgi uwsgi-plugin-python3
+   >     gcc libpq-dev postgresql postgresql-client \
+   >     redis-server nginx uwsgi uwsgi-plugin-python3
 
 ************
 Installation
 ************
+
+With this guide, you will install **django-ca** to ``/opt/django-ca/``, with your local configuration residing
+in ``/etc/django-ca/``. You also need to create a system user to run the uWSGI application server and Celery
+task worker: 
+
+.. code-block:: console
+
+   user@host:~# mkdir -p /opt/django-ca/src/ /etc/django-ca/
+   user@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
 
 Get the source
 ==============
 
 You can clone django-ca from git or download an archive `from GitHub
 <https://github.com/mathiasertl/django-ca/releases>`_. In the example below, we extract the source to
-``/opt/django-ca/src/`` and create an unversioned symlink so that you can roll back to old versions during an
-update:
+``/opt/django-ca/src/`` and create a symlink without a version so that you can roll back to old versions
+during an update:
 
 .. jinja::
    :file: include/guide-get-source.rst.jinja
@@ -62,33 +71,26 @@ environment. Several tools building on virtualenv exist (e.g. `pyenv <https://gi
 
 .. WARNING::
 
-   Do not run pip as root and outside of a virtualenv. This will update system dependencies and potentially
-   breaks your system!
+   Always run pip in a virtualenv or it will update system dependencies and break your system!
 
 .. code-block:: console
 
    user@host:~# python3 -m venv /opt/django-ca/venv/
    user@host:~# source /opt/django-ca/venv/bin/activate
    (venv) user@host:~# pip install -U pip setuptools
-   (venv) user@host:~# pip install -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
+   (venv) user@host:~# pip install -U PyYAML
+   (venv) user@host:~# pip install -U -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
 
-Add user
-========
-
-Add a system user to run uWSGI (the application server) and Celery (the task worker):
-
-.. code-block:: console
-
-   user@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
-
-PostgreSQL and nginx
-====================
+PostgreSQL database
+===================
 
 Create a PostgreSQL database and make sure to use a randomly generated password and keep it for later
 configuration:
 
 .. code-block:: console
 
+   user@host:~# openssl rand -base64 32
+   ...
    user@host:~# sudo -u postgres psql
    postgres=# CREATE DATABASE django_ca;
    CREATE DATABASE
@@ -97,29 +99,85 @@ configuration:
    postgres=# GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
    GRANT
 
-TODO: nginx config
+.. _from-source-add-systemd-services:
 
 Add SystemD services
 ====================
 
 SystemD services are included with **django-ca**. You need to add two services, one for the uWSGI application
-server and one for the Celery task worker. To enable them, just create symlinks in ``/etc/systemd/system/``:
+server and one for the Celery task worker:
 
 .. code-block:: console
 
-   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/django-ca.service /etc/systemd/system/
-   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/django-ca-celery.service /etc/systemd/system/
+   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/systemd.conf /etc/django-ca/
+   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/*.service /etc/systemd/system/
    user@host:~# systemctl daemon-reload
+   user@host:~# systemctl enable django-ca django-ca-celery
 
-Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`. If
-you use a root directory different from ``/opt/django-ca/``, add a SystemD override for the
-``WorkingDirectory=`` directive and the ``DJANGO_CA_BASE_DIR`` environment variable.
+Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`.
+
+If you use an installation directory other then ``/opt/django-ca``, you'll need to set
+``DJANGO_CA_INSTALL_BASE`` in :file:`systemd.conf` *and* add a SystemD override for ``WorkingDirectory=``.
 
 .. _from-source-configuration:
 
 *************
 Configuration
 *************
+
+**django-ca** will load configuration from all ``*.yaml`` files in ``/etc/django-ca/`` in alphabetical order.
+These files can contain any `Django setting <https://docs.djangoproject.com/en/4.0/ref/settings/>`_, `Celery
+setting <https://docs.celeryproject.org/en/stable/userguide/configuration.html>`_ or :doc:`django-ca setting
+<settings>`.
+
+If you (mostly) followed the above examples, you can symlink :file:`conf/source/00-settings.yaml` to
+``/etc/django-ca`` and just override a few settings in :file:`/etc/django-ca/10-localsettings.yaml`. To create
+the symlink:
+
+.. code-block:: console
+
+   user@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/00-settings.yaml /etc/django-ca/
+
+And then simply create a minimal :file:`/etc/django-ca/10-localsettings.yaml` - but you can override any other
+setting here as well:
+
+.. literalinclude:: /_files/from-source/localsettings.yaml
+   :language: yaml
+   :caption: /etc/django-ca/10-localsettings.yaml
+   :name: /etc/django-ca/10-localsettings.yaml
+
+
+SystemD configuration
+=====================
+
+When you :ref:`added SystemD services <from-source-add-systemd-services>` you also created a symlink for
+:file:`/etc/django-ca/systemd.conf`. If any of the settings there do not suit you, you can override them in
+:file:`/etc/django-ca/systemd-local.conf`.
+
+.. _from-source-add-manage-py-shortcut:
+
+Add manage.py shortcut
+======================
+
+As optional convenience, you can create a symlink to a small wrapper script that allows you to easily run
+``manage.py`` commands. In the examples below the guide assumes you created this symlink at
+:file:`/usr/local/bin/django-ca`, but of course name the symlink anything you like:
+
+.. code-block:: console
+
+   user@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/manage /usr/local/bin/django-ca
+   user@host:~# django-ca check
+   System check identified no issues (0 silenced).
+
+Setup
+=====
+
+Finally, you can populate the database and setup the static files directory:
+
+.. code-block:: console
+
+   user@host:~# django-ca migrate
+   user@host:~# django-ca collectstatic
 
 *****
 Start
@@ -128,9 +186,45 @@ Start
 Create admin user and set up CAs
 ================================
 
+Because we :ref:`created a shortcut above <from-source-add-manage-py-shortcut>` above, we can use
+``django-ca`` to use **django-ca** from the command line.
+
+.. jinja:: manage-from-source
+   :file: include/create-user.rst.jinja
+
+Setup NGINX
+===========
+
+Finally, it's time to setup NGINX. A webserver is required for the admin interface, certificate revocation
+status via OCSP or CRLs and of course also ACMEv2 (the protocol used by Let's Encrypt/certbot integration).
+
 Where to go from here
 =====================
 
 ******
 Update
 ******
+
+*********
+Uninstall
+*********
+
+To completely uninstall **django-ca**, stop related services and remove files that where created:
+
+.. code-block:: console
+
+   user@host:~# systemctl stop django-ca django-ca-uwsgi
+   user@host:~# rm -f /etc/systemd/system/django-ca.service
+   user@host:~# rm -f /etc/systemd/system/django-ca-celery.service
+   user@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
+   user@host:~# rm -rf /etc/django-ca/ /opt/django-ca/
+
+Finally, you can also want to drop the database:
+
+.. code-block:: console
+
+   user@host:~# sudo -u postgres psql
+   postgres=# DROP DATABASE django_ca;
+   DROP DATABASE
+   postgres=# DROP USER django_ca;
+   DROP ROLE

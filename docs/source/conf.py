@@ -382,17 +382,16 @@ jinja_contexts = {
         "base": "Docker",
         "how:": "each in a separate Docker container",
     },
-    "manage-as-py": {
-        "manage": "python manage.py",
-    },
+    "manage-as-py": {"manage": "python manage.py"},
     "manage-in-docker-compose": {
         "manage": "docker-compose exec backend manage",
         "shared": True,
     },
-    "requirements-from-source": {},
+    "manage-from-source": {"manage": "django-ca"},
     "requirements-as-py": {},
     "requirements-in-docker": {},
     "requirements-in-docker-compose": {},
+    "requirements-from-source": {},
 }
 jinja_globals = {
     "version": version,

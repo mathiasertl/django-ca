@@ -68,6 +68,7 @@ class MagicWordsFilter(Filter):
         "OpenSSL",
         "pyOpenSSL",
         "libffi",
+        "SystemD",
     }
 
     def __init__(self, *args, **kwargs):
