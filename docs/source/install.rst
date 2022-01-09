@@ -7,6 +7,23 @@ Django project running, you can run it as a `standalone project <#as-standalone-
 
 Another easy way of running **django-ca** is as a :doc:`Docker container </docker>`.
 
+.. _http-explanation:
+
+Why plain HTTP?!
+================
+
+OCSP and CRL access (protocols used to obtain the revocation status of certificates) usually work via HTTP,
+**not** HTTPS. Clients would need to obtain the revocation status of the certificate used for the HTTPS
+connection using that same HTTPS connection. Responses are signed, so using HTTP is not considered a security
+vulnerability.  
+
+Just in case you doubt the above: check how publicly trusted and widely used certificate authorities set the
+:ref:`ca-example-crlDistributionPoints` and :ref:`ca-example-AuthorityInfoAccess` extensions.
+
+However, only CRL, OCSP and issuer information needs to be available via HTTP.  If you use ``/ca`` as path in
+your URL configuration (like in the example above), you only need ``/ca/issuer/``, ``/ca/ocsp/`` and
+``/ca/crl/`` available via HTTP.
+
 ************
 Requirements
 ************

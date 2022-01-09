@@ -1,0 +1,6 @@
+.. code-block:: console
+
+   user@host:~# mkdir -p /usr/local/src/
+   user@host:~# wget https://github.com/mathiasertl/django-ca/archive/refs/tags/{{ version }}.tar.gz
+   user@host:~# tar xf {{ version }}.tar.gz -C /usr/local/src/
+   user@host:~# ln -s /usr/local/src/django-ca-{{ version }}  /usr/local/src/django-ca

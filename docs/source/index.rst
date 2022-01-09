@@ -22,6 +22,7 @@ Welcome to django-ca's documentation!
    :caption: Quickstart
 
    ... as Django app <quickstart_as_app>
+   ... from source <quickstart_from_source>
    ... with docker <docker>
    ... with docker-compose <quickstart_docker_compose>
 

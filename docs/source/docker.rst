@@ -30,8 +30,6 @@ exercise to the reader.
 Required software
 =================
 
-.. The docker-compose page has a very similar chapter, please keep in sync
-
 To run **django-ca**, you need Docker. You will also need at least a `supported database
 <https://docs.djangoproject.com/en/4.0/ref/databases/>`_ and a web server (like NGINX or Apache) to serve
 static files.
