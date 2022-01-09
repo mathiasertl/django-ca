@@ -1,0 +1,37 @@
+######################
+# django-ca settings #
+######################
+# django-ca has many custom settings, but defaults are usually fine. The only django-ca specific setting you
+# have to configure is CA_DEFAULT_HOSTNAME. For more documentaiton on settings, see:
+#   https://django-ca.readthedocs.io/en/latest/settings.html
+
+# Enable optional ACMEv2 support
+CA_ENABLE_ACME: true
+
+###################
+# Django settings #
+###################
+# Django has many settings that you might want to change. Full reference:
+#   https://docs.djangoproject.com/en/4.0/topics/settings/
+
+# Where to store static files (HTML, JS, ...) and user-generated files:
+STATIC_ROOT: /opt/django-ca/html/static
+MEDIA_ROOT: /opt/django-ca/html/media
+
+# Cache configuration
+CACHES:
+    default:
+        BACKEND: redis_cache.RedisCache
+        LOCATION: redis://redis:6379
+        OPTIONS:
+            DB: 1
+            PARSER_CLASS: redis.connection.HiredisParser
+
+###################
+# Celery settings #
+###################
+# Celery has more settings, see:
+#   https://docs.celeryproject.org/en/stable/userguide/configuration.html
+
+# django-ca will use Celery as an asynchronous task worker
+CELERY_BROKER_URL: redis://redis:6379/0
