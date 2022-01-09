@@ -4,6 +4,7 @@
 
 # Location of config files. The variable name matches what SystemD sets via ConfigurationDirectory=.
 CONFIGURATION_DIRECTORY=${CONFIGURATION_DIRECTORY:-/etc/django-ca}
+DJANGO_CA_USER=${DJANGO_CA_USER:-django-ca}
 
 # Source service configuration
 . ${CONFIGURATION_DIRECTORY}/systemd.conf
@@ -12,8 +13,15 @@ if [ -e "${CONFIGURATION_DIRECTORY}/systemd-local.conf" ]; then
     . ${CONFIGURATION_DIRECTORY}/systemd-local.conf
 fi
 
+USER=${USER:-$DJANGO_CA_USER}
+
 # Export CONFIGURATION_DIRECTORY, as settings.py will load this variable to look for YAML config files.
 export CONFIGURATION_DIRECTORY
 
 # Finally, call manage.py
-${DJANGO_CA_INSTALL_BASE}/venv/bin/python ${DJANGO_CA_INSTALL_BASE}/src/django-ca/ca/manage.py "$@"
+if [ -z "$USER" ]; then
+    ${DJANGO_CA_INSTALL_BASE}/venv/bin/python ${DJANGO_CA_INSTALL_BASE}/src/django-ca/ca/manage.py $@
+else
+    # NOTE: This su abomination is the only way I could figure out how to pass "$@" to manage.py.
+    su $USER -s /bin/sh -c 'exec "$0" "$@"' -- ${DJANGO_CA_INSTALL_BASE}/venv/bin/python ${DJANGO_CA_INSTALL_BASE}/src/django-ca/ca/manage.py $@
+fi

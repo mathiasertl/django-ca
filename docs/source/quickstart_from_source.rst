@@ -177,11 +177,20 @@ Finally, you can populate the database and setup the static files directory:
 .. code-block:: console
 
    user@host:~# django-ca migrate
-   user@host:~# django-ca collectstatic
+   user@host:~# USER=root django-ca collectstatic
+
+The ``collectstatic`` command needs to run as root.
 
 *****
 Start
 *****
+
+You can now finally start the uWSGI application server and the Celery worker (omit ``django-ca`` service if
+you do not intend to run a webserver):
+
+.. code-block:: console
+
+   user@host:~# systemctl start django-ca django-ca-celery
 
 Create admin user and set up CAs
 ================================
@@ -198,6 +207,15 @@ Setup NGINX
 Finally, it's time to setup NGINX. A webserver is required for the admin interface, certificate revocation
 status via OCSP or CRLs and of course also ACMEv2 (the protocol used by Let's Encrypt/certbot integration).
 
+.. WARNING::
+
+   You might be tempted to setup NGINX using certificates retrieved via a local CAs ACMEv2 interface. This is
+   theoretically possible, but creates a chicken-and-egg situation where a misconfiguration will make it
+   impossible to retrieve a certificate.
+
+In this setup, we'll create certificates using the CA we created above. If you want to use Let's Encrypt
+certificates instead, you can have a look at our :doc:`quickstart_docker_compose`.
+
 Where to go from here
 =====================
 
@@ -213,11 +231,23 @@ To completely uninstall **django-ca**, stop related services and remove files th
 
 .. code-block:: console
 
-   user@host:~# systemctl stop django-ca django-ca-uwsgi
-   user@host:~# rm -f /etc/systemd/system/django-ca.service
-   user@host:~# rm -f /etc/systemd/system/django-ca-celery.service
+   user@host:~# systemctl stop django-ca django-ca-celery
+   user@host:~# rm -f /etc/systemd/system/django-ca*.service
    user@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
+   user@host:~# rm -f /usr/local/bin/django-ca
    user@host:~# rm -rf /etc/django-ca/ /opt/django-ca/
+
+Restart NGINX so that it no longer knows about the configurations:
+
+.. code-block:: console
+
+   user@host:~# systemctl restart nginx
+
+You should also remove the system user:
+
+.. code-block:: console
+
+   user@host:~# deluser django-ca
 
 Finally, you can also want to drop the database:
 

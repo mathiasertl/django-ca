@@ -5,6 +5,9 @@
 # have to configure is CA_DEFAULT_HOSTNAME. For more documentaiton on settings, see:
 #   https://django-ca.readthedocs.io/en/latest/settings.html
 
+# Where django-ca will store private keys
+CA_DIR: /opt/django-ca/home/files/
+
 # Enable optional ACMEv2 support
 CA_ENABLE_ACME: true
 
@@ -22,7 +25,7 @@ MEDIA_ROOT: /opt/django-ca/html/media
 CACHES:
     default:
         BACKEND: redis_cache.RedisCache
-        LOCATION: redis://redis:6379
+        LOCATION: redis://localhost:6379
         OPTIONS:
             DB: 1
             PARSER_CLASS: redis.connection.HiredisParser
@@ -34,4 +37,4 @@ CACHES:
 #   https://docs.celeryproject.org/en/stable/userguide/configuration.html
 
 # django-ca will use Celery as an asynchronous task worker
-CELERY_BROKER_URL: redis://redis:6379/0
+CELERY_BROKER_URL: redis://localhost:6379/0
