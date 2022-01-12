@@ -33,6 +33,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
@@ -51,6 +52,7 @@ from ..models import AcmeOrder
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
 from .base import certs
+from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import AcmeValuesMixin
@@ -325,6 +327,10 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertValid()
 
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self) -> None:
+        self.test_basic()
+
     def test_multiple_auths(self) -> None:
         """If other authentications exist that are not in the valid state, order does not become valid."""
 
@@ -544,6 +550,10 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
+
+    @override_settings(USE_TZ=True)
+    def test_basic_with_use_tz(self) -> None:
+        self.test_basic()
 
     @override_tmpcadir()
     def test_two_hostnames(self) -> None:

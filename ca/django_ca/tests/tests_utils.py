@@ -1200,7 +1200,7 @@ class GetCertBuilderTestCase(TestCase):
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid type."""
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             get_cert_builder("a string")  # type: ignore[arg-type]
 
 

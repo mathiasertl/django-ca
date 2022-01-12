@@ -50,6 +50,7 @@ from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
+from django.utils import timezone as tz
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
@@ -247,6 +248,13 @@ except ImportError:  # pragma: no cover
         def getter(self, method):  # type: ignore
             self.fget = method
             return self
+
+
+def make_naive(timestamp: datetime) -> datetime:
+    """Like :py:func:`~django.utils.timezone.make_naive`, but does not return an error if already naive."""
+    if tz.is_naive(timestamp) is False:
+        return tz.make_naive(timestamp)
+    return timestamp
 
 
 def sort_name(name: x509.Name) -> x509.Name:
@@ -1162,6 +1170,7 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
     if serial is None:
         serial = x509.random_serial_number()
 
+    expires = make_naive(expires)
     if expires <= now:
         raise ValueError("expires must be in the future")
 
