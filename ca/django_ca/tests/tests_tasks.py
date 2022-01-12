@@ -33,7 +33,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.conf import settings
 from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
@@ -329,6 +328,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self) -> None:
+        """Same as test_basic but with USE_TZ=True."""
         self.test_basic()
 
     def test_multiple_auths(self) -> None:
@@ -553,6 +553,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self) -> None:
+        """Same as test_basic but with USE_TZ=True."""
         self.test_basic()
 
     @override_tmpcadir()

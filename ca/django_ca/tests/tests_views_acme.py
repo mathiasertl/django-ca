@@ -17,6 +17,7 @@ import json
 import typing
 from contextlib import contextmanager
 from datetime import timedelta
+from datetime import timezone as tz
 from http import HTTPStatus
 from unittest import mock
 
@@ -24,7 +25,6 @@ import acme
 import acme.jws
 import josepy as jose
 import pyrfc3339
-import pytz
 from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
@@ -1118,9 +1118,9 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
         not_after = timezone.now() + timedelta(days=3)
 
         if timezone.is_naive(not_before):
-            not_before = timezone.make_aware(not_before, timezone=pytz.utc)
+            not_before = timezone.make_aware(not_before, timezone=tz.utc)
         if timezone.is_naive(not_after):
-            not_after = timezone.make_aware(not_after, timezone=pytz.utc)
+            not_after = timezone.make_aware(not_after, timezone=tz.utc)
 
         msg = self.get_message(not_before=not_before, not_after=not_after)
 

@@ -18,6 +18,9 @@ ChangeLog
 * Add support for cryptography 36.0.0.
 * Make log level and message format more easily configurable with :ref:`LOG_LEVEL <settings-log-level>`,
   :ref:`LIBRARY_LOG_LEVEL <settings-library-log-level>` and :ref:`LOG_FORMAT <settings-log-format>`.
+* Fix issuing certificates via ACMEv2 if ``settings.USE_TZ=True`` (fixes `issue 82
+  <https://github.com/mathiasertl/django-ca/issues/82>`_).
+* Drop ``pytz`` as dependency (and use :py:class:`python:datetime.timezone` directly).
 * Add mdlDS and mdlJWS X509 extensions for support
   `mobile Driver Licence <https://en.wikipedia.org/wiki/Mobile_driver%27s_license>`_.
 

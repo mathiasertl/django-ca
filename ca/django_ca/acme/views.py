@@ -24,6 +24,7 @@ import logging
 import secrets
 import typing
 from datetime import datetime
+from datetime import timezone as tz
 from http import HTTPStatus
 from typing import Dict
 from typing import Generic
@@ -38,7 +39,6 @@ from typing import cast
 
 import acme.jws
 import josepy as jose
-import pytz
 from acme import messages
 
 from cryptography import x509
@@ -57,7 +57,6 @@ from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -74,6 +73,7 @@ from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from ..tasks import run_task
 from ..utils import check_name
+from ..utils import make_naive
 from ..utils import validate_email
 from .errors import AcmeBadCSR
 from .errors import AcmeException
@@ -652,9 +652,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         self, message: NewOrder, slug: Optional[str] = None
     ) -> AcmeResponseOrderCreated:
         """Process ACME request."""
-        now = timezone.now()
-        if timezone.is_naive(now):
-            now = timezone.make_aware(now, timezone=pytz.utc)
+        now = datetime.now(tz.utc)
 
         # josepy message classes define field names as class variables, but instance attributes are of the
         # same type (similar to Django). So we cast fields detected as RFC3339Field to datetime.
@@ -671,10 +669,11 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
             # NOTE: Catches sending an empty tuple, which is not caught in message deserialization
             raise AcmeMalformed(message="The following fields are required: identifiers")
 
-        if not settings.USE_TZ and not_before:
-            not_before = timezone.make_naive(not_before)
-        if not settings.USE_TZ and not_after:
-            not_after = timezone.make_naive(not_after)
+        if settings.USE_TZ is False:
+            if not_before is not None:
+                not_before = make_naive(not_before)
+            if not_after is not None:
+                not_after = make_naive(not_after)
 
         # TODO: test if identifiers are acceptable
         order = AcmeOrder.objects.create(account=self.account, not_before=not_before, not_after=not_after)
@@ -685,8 +684,8 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         ]
 
         expires = order.expires
-        if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
-            expires = timezone.make_aware(expires, timezone=pytz.utc)
+        if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
+            expires = expires.replace(tzinfo=tz.utc)
 
         response = AcmeResponseOrderCreated(
             authorizations=authorizations,
@@ -723,8 +722,8 @@ class AcmeOrderView(AcmePostAsGetView):
         # self.prepared['order'] = order.slug
 
         expires = order.expires
-        if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
-            expires = timezone.make_aware(expires, timezone=pytz.utc)
+        if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
+            expires = expires.replace(tzinfo=tz.utc)
 
         authorizations = order.authorizations.all()
         if order.status in [AcmeOrder.STATUS_VALID, AcmeOrder.STATUS_INVALID]:
@@ -843,8 +842,8 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
 
         expires = order.expires
-        if timezone.is_naive(expires):  # acme.messages.Order requires a timezone-aware object
-            expires = timezone.make_aware(expires, timezone=pytz.utc)
+        if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
+            expires = expires.replace(tzinfo=tz.utc)
 
         authorizations = order.authorizations.all()
         for auth in authorizations:
@@ -934,8 +933,8 @@ class AcmeAuthorizationView(AcmePostAsGetView):
         challenges = auth.get_challenges()
 
         expires = auth.expires
-        if not settings.USE_TZ:  # acme.Order requires a timezone-aware object
-            expires = timezone.make_aware(expires, timezone=pytz.utc)
+        if expires.tzinfo is None:  # acme.Order requires a timezone-aware object
+            expires = expires.replace(tzinfo=tz.utc)
 
         # RFC8555, section 7.5.1:
         #

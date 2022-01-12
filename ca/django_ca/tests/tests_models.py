@@ -19,9 +19,9 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone as tz
 from unittest import mock
 
-import pytz
 from acme import challenges
 from acme import messages
 
@@ -1324,7 +1324,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertIsNone(self.chall.acme_validated)  # still None (no validated timestamp)
 
         self.chall.validated = timezone.now()
-        self.assertEqual(self.chall.acme_validated, timezone.make_aware(timezone.now(), timezone=pytz.UTC))
+        self.assertEqual(self.chall.acme_validated, timezone.make_aware(timezone.now(), timezone=tz.utc))
 
         with self.settings(USE_TZ=True):
             self.chall.validated = timezone.now()

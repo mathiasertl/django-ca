@@ -27,6 +27,7 @@ import typing
 import warnings
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone as tz
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -34,8 +35,6 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 from typing import cast
-
-import pytz
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -317,7 +316,7 @@ class X509CertMixin(DjangoCAModel):
 
         if timezone.is_aware(self.compromised):
             # convert datetime object to UTC and make it naive
-            return timezone.make_naive(self.compromised, pytz.utc)
+            return timezone.make_naive(self.compromised, tz.utc)
 
         return self.compromised
 
@@ -331,7 +330,7 @@ class X509CertMixin(DjangoCAModel):
 
         if timezone.is_aware(self.revoked_date):
             # convert datetime object to UTC and make it naive
-            return timezone.make_naive(self.revoked_date, pytz.utc)
+            return timezone.make_naive(self.revoked_date, tz.utc)
 
         return self.revoked_date
 
@@ -347,8 +346,8 @@ class X509CertMixin(DjangoCAModel):
         self.expires = self.not_after
         self.valid_from = self.not_before
         if settings.USE_TZ:
-            self.expires = timezone.make_aware(self.expires, timezone=pytz.utc)
-            self.valid_from = timezone.make_aware(self.valid_from, timezone=pytz.utc)
+            self.expires = timezone.make_aware(self.expires, timezone=tz.utc)
+            self.valid_from = timezone.make_aware(self.valid_from, timezone=tz.utc)
 
         self.serial = int_to_hex(value.serial_number)
 
@@ -1108,7 +1107,7 @@ class CertificateAuthority(X509CertMixin):
             algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
         if timezone.is_aware(now_builder):
-            now_builder = timezone.make_naive(now, pytz.utc)
+            now_builder = timezone.make_naive(now, tz.utc)
         else:
             now_builder = datetime.utcnow()
 
@@ -1717,7 +1716,7 @@ class AcmeChallenge(DjangoCAModel):
             return None
 
         if timezone.is_naive(self.validated):
-            return timezone.make_aware(self.validated, timezone=pytz.UTC)
+            return timezone.make_aware(self.validated, timezone=tz.utc)
         return self.validated
 
     @property
