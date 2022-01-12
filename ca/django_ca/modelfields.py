@@ -68,7 +68,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
     _bytes: bytes
     _loaded: typing.Optional[LoadedTypeVar] = None
     _pem_token: typing.ClassVar[bytes]
-    _type: typing.ClassVar[typing.Type[LoadedTypeVar]]
+    _type: typing.Type[LoadedTypeVar]
 
     def __init__(self, value: DecodableTypeVar) -> None:
         """Constructor must accept a decodable type var."""

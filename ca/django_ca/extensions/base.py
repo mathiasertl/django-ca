@@ -318,7 +318,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
         <OCSPNoCheck: critical=True>
     """
 
-    ext_class: ClassVar[Type[ExtensionTypeTypeVar]]
+    ext_class: Type[ExtensionTypeTypeVar]
     name: ClassVar[str]
     value: ClassVar = None
 
