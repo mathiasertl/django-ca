@@ -186,7 +186,7 @@ Start
 *****
 
 You can now finally start the uWSGI application server and the Celery worker (omit ``django-ca`` service if
-you do not intend to run a webserver):
+you do not intend to run a web server):
 
 .. code-block:: console
 
@@ -204,7 +204,7 @@ Because we :ref:`created a shortcut above <from-source-add-manage-py-shortcut>` 
 Setup NGINX
 ===========
 
-Finally, it's time to setup NGINX. A webserver is required for the admin interface, certificate revocation
+Finally, it's time to setup NGINX. A web server is required for the admin interface, certificate revocation
 status via OCSP or CRLs and of course also ACMEv2 (the protocol used by Let's Encrypt/certbot integration).
 
 .. WARNING::

@@ -22,6 +22,7 @@ iterable
 linters
 localhost
 middlewares
+misconfiguration
 mixin
 monospace
 mypy
