@@ -50,6 +50,7 @@ task worker:
 
    user@host:~# mkdir -p /opt/django-ca/src/ /etc/django-ca/
    user@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
+   user@host:~# adduser django-ca www-data
 
 Get the source
 ==============
@@ -243,13 +244,13 @@ Restart NGINX so that it no longer knows about the configurations:
 
    user@host:~# systemctl restart nginx
 
-You should also remove the system user:
+Remove the system user:
 
 .. code-block:: console
 
    user@host:~# deluser django-ca
 
-Finally, you can also want to drop the database:
+Drop the PostgreSQL database:
 
 .. code-block:: console
 
