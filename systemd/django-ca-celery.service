@@ -19,7 +19,7 @@ User=django-ca
 Group=django-ca
 ConfigurationDirectory=django-ca
 LogsDirectory=django-ca
-RuntimeDirectory=django-ca
+RuntimeDirectory=%N
 Restart=on-failure
 Type=forking
 
