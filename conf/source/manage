@@ -20,8 +20,8 @@ export CONFIGURATION_DIRECTORY
 
 # Finally, call manage.py
 if [ -z "$USER" ]; then
-    ${DJANGO_CA_INSTALL_BASE}/venv/bin/python ${DJANGO_CA_INSTALL_BASE}/src/django-ca/ca/manage.py $@
+    ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py $@
 else
     # NOTE: This su abomination is the only way I could figure out how to pass "$@" to manage.py.
-    su $USER -s /bin/sh -c 'exec "$0" "$@"' -- ${DJANGO_CA_INSTALL_BASE}/venv/bin/python ${DJANGO_CA_INSTALL_BASE}/src/django-ca/ca/manage.py $@
+    su $USER -s /bin/sh -c 'exec "$0" "$@"' -- ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py $@
 fi
