@@ -232,7 +232,7 @@ To completely uninstall **django-ca**, stop related services and remove files th
 .. code-block:: console
 
    user@host:~# systemctl stop django-ca django-ca-celery
-   user@host:~# rm -f /etc/systemd/system/django-ca*.service
+   user@host:~# systemctl disable django-ca django-ca-celery
    user@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
    user@host:~# rm -f /usr/local/bin/django-ca
    user@host:~# rm -rf /etc/django-ca/ /opt/django-ca/
