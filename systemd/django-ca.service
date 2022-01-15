@@ -3,16 +3,16 @@ Description=django-ca application server
 After=syslog.target network.target
 
 [Service]
-EnvironmentFile=/etc/django-ca/systemd.conf
-EnvironmentFile=-/etc/django-ca/systemd-local.conf
+EnvironmentFile=/etc/%N/systemd.conf
+EnvironmentFile=-/etc/%N/systemd-local.conf
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
 ExecStart=/usr/bin/uwsgi \
         --ini ${DJANGO_CA_INSTALL_BASE}/src/django-ca/uwsgi/source.ini \
         --socket ${RUNTIME_DIRECTORY}/uwsgi.socket $UWSGI_OPTS
-User=django-ca
-Group=django-ca
-ConfigurationDirectory=django-ca
-RuntimeDirectory=django-ca
+User=%N
+Group=%N
+ConfigurationDirectory=%N
+RuntimeDirectory=%N
 Restart=on-failure
 KillSignal=SIGQUIT
 Type=notify
