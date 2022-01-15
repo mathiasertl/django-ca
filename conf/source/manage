@@ -13,15 +13,15 @@ if [ -e "${CONFIGURATION_DIRECTORY}/systemd-local.conf" ]; then
     . ${CONFIGURATION_DIRECTORY}/systemd-local.conf
 fi
 
-USER=${USER:-$SYSTEM_USER}
+FORCE_USER=${FORCE_USER:-$SYSTEM_USER}
 
 # Export CONFIGURATION_DIRECTORY, as settings.py will load this variable to look for YAML config files.
 export CONFIGURATION_DIRECTORY
 
 # Finally, call manage.py
-if [ -z "$USER" ]; then
+if [ -z "$FORCE_USER" ]; then
     ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py $@
 else
     # NOTE: This su abomination is the only way I could figure out how to pass "$@" to manage.py.
-    su $USER -s /bin/sh -c 'exec "$0" "$@"' -- ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py $@
+    su $FORCE_USER -s /bin/sh -c 'exec "$0" "$@"' -- ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py $@
 fi

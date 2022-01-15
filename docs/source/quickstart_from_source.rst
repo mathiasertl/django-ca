@@ -180,7 +180,7 @@ Finally, you can populate the database and setup the static files directory:
 .. code-block:: console
 
    root@host:~# django-ca migrate
-   root@host:~# USER=root django-ca collectstatic
+   root@host:~# FORCE_USER=root django-ca collectstatic
 
 The ``collectstatic`` command needs to run as root.
 
@@ -278,8 +278,10 @@ To completely uninstall **django-ca**, stop related services and remove files th
    root@host:~# systemctl stop django-ca django-ca-celery
    root@host:~# systemctl disable django-ca django-ca-celery
    root@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
+   root@host:~# rm -f /var/log/nginx/ca.example.com*.log
    root@host:~# rm -f /usr/local/bin/django-ca
    root@host:~# rm -rf /etc/django-ca/ /opt/django-ca/ /var/log/django-ca
+   root@host:~# rm -f /etc/ssl/ca.example.com.{key,pem}
 
 Restart NGINX so that it no longer knows about the configurations:
 
