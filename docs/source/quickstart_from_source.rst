@@ -38,13 +38,24 @@ On Debian/Ubuntu, simply do:
    >     gcc libpq-dev postgresql postgresql-client \
    >     redis-server nginx uwsgi uwsgi-plugin-python3
 
+Environment
+===========
+
+To make the guide less error-prone, we export the domain name for your certificate authority to
+``${HOSTNAME}``. In all commands below assume that you have set the environment variable like this:
+
+.. code-block:: console
+
+   root@host:~# export HOSTNAME=ca.example.com
+
+
 ************
 Installation
 ************
 
 With this guide, you will install **django-ca** to ``/opt/django-ca/``, with your local configuration residing
 in ``/etc/django-ca/``. You also need to create a system user to run the uWSGI application server and Celery
-task worker: 
+task worker:
 
 .. code-block:: console
 
@@ -77,10 +88,9 @@ environment. Several tools building on virtualenv exist (e.g. `pyenv <https://gi
 .. code-block:: console
 
    root@host:~# python3 -m venv /opt/django-ca/venv/
-   root@host:~# source /opt/django-ca/venv/bin/activate
-   (venv) root@host:~# pip install -U pip setuptools
-   (venv) root@host:~# pip install -U PyYAML
-   (venv) root@host:~# pip install -U -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
+   root@host:~# /opt/django-ca/venv/bin/pip install -U pip setuptools
+   root@host:~# /opt/django-ca/venv/bin/pip install -U PyYAML
+   root@host:~# /opt/django-ca/venv/bin/pip install -U -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
 
 PostgreSQL database
 ===================
@@ -223,10 +233,11 @@ Create a private/public key pair for NGINX to use:
 
 .. code-block:: console
 
-   root@host:~# openssl genrsa -out /etc/ssl/ca.example.com.key 4096
-   root@host:~# openssl req -new -key /etc/ssl/ca.example.com.key -out ca.csr -utf8 -batch
-   root@host:~# django-ca sign_cert --ca=Intermediate --csr=ca.csr --webserver --subject /CN=ca.example.com
-   root@host:~# django-ca dump_cert -b ca.example.com /etc/ssl/ca.example.com.pem
+   root@host:~# openssl genrsa -out /etc/ssl/${HOSTNAME}.key 4096
+   root@host:~# openssl req -new -key /etc/ssl/${HOSTNAME}.key -out ca.csr -utf8 -batch
+   root@host:~# cat ca.csr | \
+   >     django-ca sign_cert --ca=Intermediate --csr=- --webserver --subject /CN=${HOSTNAME}
+   root@host:~# FORCE_USER=root django-ca dump_cert -b ${HOSTNAME} /etc/ssl/${HOSTNAME}.pem
 
 Create DH parameters:
 
@@ -241,7 +252,7 @@ environment variables.
 
 .. code-block:: console
 
-   root@host:~# NGINX_HOST=ca.example.com envsubst \
+   root@host:~# NGINX_HOST=${HOSTNAME} envsubst \
    >     < /opt/django-ca/src/django-ca/nginx/source.template \
    >     > /etc/nginx/sites-available/django-ca.conf
    root@host:~# ln -fs /etc/nginx/sites-available/django-ca.conf /etc/nginx/sites-enabled/
@@ -251,17 +262,38 @@ environment variables.
 Where to go from here
 =====================
 
+TODO
+
 ******
 Update
 ******
 
-TODO
+TODO: how to update source code
+
+Update instructions again assume that you have ``${HOSTNAME}`` set:
+
+.. code-block:: console
+
+   root@host:~# export HOSTNAME=ca.example.coma
+
+Update the database schema and static files:
+
+.. code-block:: console
+
+   root@host:~# django-ca migrate
+   root@host:~# FORCE_USER=root django-ca collectstatic
+
+Restart services:
+
+.. code-block:: console
+
+   root@host:~# systemctl restart django-ca django-ca-celery
 
 Update the NGINX configuration:
 
 .. code-block:: console
 
-   root@host:~# NGINX_HOST=ca.example.com envsubst \
+   root@host:~# NGINX_HOST=${HOSTNAME} envsubst \
    >     < /opt/django-ca/src/django-ca/nginx/source.template \
    >     > /etc/nginx/sites-available/django-ca.conf
    root@host:~# nginx -t
@@ -278,10 +310,10 @@ To completely uninstall **django-ca**, stop related services and remove files th
    root@host:~# systemctl stop django-ca django-ca-celery
    root@host:~# systemctl disable django-ca django-ca-celery
    root@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
-   root@host:~# rm -f /var/log/nginx/ca.example.com*.log
+   root@host:~# rm -f /var/log/nginx/${HOSTNAME}*.log
    root@host:~# rm -f /usr/local/bin/django-ca
    root@host:~# rm -rf /etc/django-ca/ /opt/django-ca/ /var/log/django-ca
-   root@host:~# rm -f /etc/ssl/ca.example.com.{key,pem}
+   root@host:~# rm -f /etc/ssl/${HOSTNAME}.{key,pem}
 
 Restart NGINX so that it no longer knows about the configurations:
 
