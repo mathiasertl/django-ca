@@ -154,7 +154,7 @@ SystemD configuration
 =====================
 
 When you :ref:`added SystemD services <from-source-add-systemd-services>` you also created a symlink for
-:file:`/etc/django-ca/systemd.conf`. If any of the settings there do not suit you, you can override them in
+:file:`/etc/django-ca/systemd.conf`. If settings there do not suit you, you can override them in
 :file:`/etc/django-ca/systemd-local.conf`.
 
 .. _from-source-add-manage-py-shortcut:
