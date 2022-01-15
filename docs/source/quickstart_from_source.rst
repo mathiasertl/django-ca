@@ -274,7 +274,7 @@ Update instructions again assume that you have ``${HOSTNAME}`` set:
 
 .. code-block:: console
 
-   root@host:~# export HOSTNAME=ca.example.coma
+   root@host:~# export HOSTNAME=ca.example.com
 
 Update the database schema and static files:
 
