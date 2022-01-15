@@ -14,7 +14,7 @@ faster and easier option, you might consider using :doc:`docker-compose <quickst
 This tutorial will give you a CA with
 
 * A root and intermediate CA.
-* A browsable admin interface, protected by TLS (using Let's Encrypt certificates).
+* A browsable admin interface, protected by TLS (using certificates signed by your CA).
 * Certificate revocation using CRLs and OCSP.
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
@@ -42,7 +42,7 @@ Environment
 ===========
 
 To make the guide less error-prone, we export the domain name for your certificate authority to
-``${HOSTNAME}``. In all commands below assume that you have set the environment variable like this:
+``$HOSTNAME``. In all commands below assume that you have set the environment variable like this:
 
 .. code-block:: console
 
@@ -182,10 +182,10 @@ As optional convenience, you can create a symlink to a small wrapper script that
    root@host:~# django-ca check
    System check identified no issues (0 silenced).
 
-Setup
-=====
+Setup Database and static files
+===============================
 
-Finally, you can populate the database and setup the static files directory:
+Populate the database and setup the static files directory:
 
 .. code-block:: console
 
@@ -233,11 +233,11 @@ Create a private/public key pair for NGINX to use:
 
 .. code-block:: console
 
-   root@host:~# openssl genrsa -out /etc/ssl/${HOSTNAME}.key 4096
-   root@host:~# openssl req -new -key /etc/ssl/${HOSTNAME}.key -out ca.csr -utf8 -batch
+   root@host:~# openssl genrsa -out /etc/ssl/$HOSTNAME.key 4096
+   root@host:~# openssl req -new -key /etc/ssl/$HOSTNAME.key -out ca.csr -utf8 -batch
    root@host:~# cat ca.csr | \
-   >     django-ca sign_cert --ca=Intermediate --csr=- --webserver --subject /CN=${HOSTNAME}
-   root@host:~# FORCE_USER=root django-ca dump_cert -b ${HOSTNAME} /etc/ssl/${HOSTNAME}.pem
+   >     django-ca sign_cert --ca=Intermediate --csr=- --webserver --subject /CN=$HOSTNAME
+   root@host:~# FORCE_USER=root django-ca dump_cert -b $HOSTNAME /etc/ssl/$HOSTNAME.pem
 
 Create DH parameters:
 
@@ -246,14 +246,12 @@ Create DH parameters:
    root@host:~# mkdir -p /etc/nginx/dhparams/
    root@host:~# openssl dhparam -dsaparam -out /etc/nginx/dhparams/dhparam.pem 4096
 
-**django-ca** includes a template for :manpage:`envsubst(1)` that you can use. You need to set the hostname
-of your server as well as the installation base directory (**WARNING:** Include a trailing slash!) as
-environment variables.
+**django-ca** includes a template for :manpage:`envsubst(1)` that you can use. The template assumes that you
+have set ``$HOSTNAME``:
 
 .. code-block:: console
 
-   root@host:~# NGINX_HOST=${HOSTNAME} envsubst \
-   >     < /opt/django-ca/src/django-ca/nginx/source.template \
+   root@host:~# envsubst < /opt/django-ca/src/django-ca/nginx/source.template \
    >     > /etc/nginx/sites-available/django-ca.conf
    root@host:~# ln -fs /etc/nginx/sites-available/django-ca.conf /etc/nginx/sites-enabled/
    root@host:~# nginx -t
@@ -270,7 +268,7 @@ Update
 
 TODO: how to update source code
 
-Update instructions again assume that you have ``${HOSTNAME}`` set:
+Update instructions again assume that you have ``$HOSTNAME`` set:
 
 .. code-block:: console
 
@@ -293,7 +291,7 @@ Update the NGINX configuration:
 
 .. code-block:: console
 
-   root@host:~# NGINX_HOST=${HOSTNAME} envsubst \
+   root@host:~# envsubst < /opt/django-ca/src/django-ca/nginx/source.template \
    >     < /opt/django-ca/src/django-ca/nginx/source.template \
    >     > /etc/nginx/sites-available/django-ca.conf
    root@host:~# nginx -t
@@ -310,10 +308,10 @@ To completely uninstall **django-ca**, stop related services and remove files th
    root@host:~# systemctl stop django-ca django-ca-celery
    root@host:~# systemctl disable django-ca django-ca-celery
    root@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
-   root@host:~# rm -f /var/log/nginx/${HOSTNAME}*.log
+   root@host:~# rm -f /var/log/nginx/$HOSTNAME*.log
    root@host:~# rm -f /usr/local/bin/django-ca
    root@host:~# rm -rf /etc/django-ca/ /opt/django-ca/ /var/log/django-ca
-   root@host:~# rm -f /etc/ssl/${HOSTNAME}.{key,pem}
+   root@host:~# rm -f /etc/ssl/$HOSTNAME.{key,pem}
 
 Restart NGINX so that it no longer knows about the configurations:
 
