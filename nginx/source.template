@@ -1,0 +1,53 @@
+upstream django_ca_frontend {
+    server unix:///run/django-ca/uwsgi.socket;
+}
+
+server {
+    listen       80;
+    server_name  ${NGINX_HOST};
+
+    include /opt/django-ca/src/django-ca/nginx/include.d/ca.conf;
+
+    # Ability to fulfill ACME challenges
+    location /.well-known/acme-challenge/ {
+        alias /opt/django-ca/html/.well-known/acme-challenge/;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        alias   /opt/django-ca/src/django-ca/conf/source/500.html;
+    }
+
+    access_log /var/log/nginx/${NGINX_HOST}.log;
+    error_log /var/log/nginx/${NGINX_HOST}-error.log;
+}
+
+server {
+    listen       443 ssl http2;
+    server_name  ${NGINX_HOST};
+
+    ssl_certificate_key /etc/ssl/${NGINX_HOST}.key;
+    ssl_certificate     /etc/ssl/${NGINX_HOST}.pem;
+    include /opt/django-ca/src/django-ca/nginx/include.d/ssl.conf;
+    include /opt/django-ca/src/django-ca/nginx/include.d/headers.conf;
+
+    include /opt/django-ca/src/django-ca/nginx/include.d/acme.conf;
+    include /opt/django-ca/src/django-ca/nginx/include.d/ca.conf;
+
+    location /admin/ {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /static/ {
+        root   /opt/django-ca/html/;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        alias   /opt/django-ca/src/django-ca/conf/source/500.html;
+    }
+
+    access_log /var/log/nginx/${NGINX_HOST}.log;
+    error_log /var/log/nginx/${NGINX_HOST}-error.log;
+}
+

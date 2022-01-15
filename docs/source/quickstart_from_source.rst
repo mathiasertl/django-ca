@@ -33,8 +33,8 @@ On Debian/Ubuntu, simply do:
 
 .. code-block:: console
 
-   user@host:~# apt update
-   user@host:~# apt install python3 python3-venv python3-dev \
+   root@host:~# apt update
+   root@host:~# apt install python3 python3-venv python3-dev \
    >     gcc libpq-dev postgresql postgresql-client \
    >     redis-server nginx uwsgi uwsgi-plugin-python3
 
@@ -48,9 +48,9 @@ task worker:
 
 .. code-block:: console
 
-   user@host:~# mkdir -p /opt/django-ca/src/ /etc/django-ca/
-   user@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
-   user@host:~# adduser django-ca www-data
+   root@host:~# mkdir -p /opt/django-ca/src/ /etc/django-ca/
+   root@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
+   root@host:~# adduser django-ca www-data
 
 Get the source
 ==============
@@ -76,11 +76,11 @@ environment. Several tools building on virtualenv exist (e.g. `pyenv <https://gi
 
 .. code-block:: console
 
-   user@host:~# python3 -m venv /opt/django-ca/venv/
-   user@host:~# source /opt/django-ca/venv/bin/activate
-   (venv) user@host:~# pip install -U pip setuptools
-   (venv) user@host:~# pip install -U PyYAML
-   (venv) user@host:~# pip install -U -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
+   root@host:~# python3 -m venv /opt/django-ca/venv/
+   root@host:~# source /opt/django-ca/venv/bin/activate
+   (venv) root@host:~# pip install -U pip setuptools
+   (venv) root@host:~# pip install -U PyYAML
+   (venv) root@host:~# pip install -U -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis]
 
 PostgreSQL database
 ===================
@@ -90,9 +90,9 @@ configuration:
 
 .. code-block:: console
 
-   user@host:~# openssl rand -base64 32
+   root@host:~# openssl rand -base64 32
    ...
-   user@host:~# sudo -u postgres psql
+   root@host:~# sudo -u postgres psql
    postgres=# CREATE DATABASE django_ca;
    CREATE DATABASE
    postgres=# CREATE USER django_ca WITH ENCRYPTED PASSWORD 'random-password';
@@ -110,10 +110,10 @@ server and one for the Celery task worker:
 
 .. code-block:: console
 
-   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/systemd.conf /etc/django-ca/
-   user@host:~# ln -s /opt/django-ca/src/django-ca/systemd/*.service /etc/systemd/system/
-   user@host:~# systemctl daemon-reload
-   user@host:~# systemctl enable django-ca django-ca-celery
+   root@host:~# ln -s /opt/django-ca/src/django-ca/systemd/systemd.conf /etc/django-ca/
+   root@host:~# ln -s /opt/django-ca/src/django-ca/systemd/*.service /etc/systemd/system/
+   root@host:~# systemctl daemon-reload
+   root@host:~# systemctl enable django-ca django-ca-celery
 
 Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`.
 
@@ -138,7 +138,7 @@ the symlink:
 
 .. code-block:: console
 
-   user@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/00-settings.yaml /etc/django-ca/
+   root@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/00-settings.yaml /etc/django-ca/
 
 And then simply create a minimal :file:`/etc/django-ca/10-localsettings.yaml` - but you can override any other
 setting here as well:
@@ -168,8 +168,8 @@ As optional convenience, you can create a symlink to a small wrapper script that
 
 .. code-block:: console
 
-   user@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/manage /usr/local/bin/django-ca
-   user@host:~# django-ca check
+   root@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/manage /usr/local/bin/django-ca
+   root@host:~# django-ca check
    System check identified no issues (0 silenced).
 
 Setup
@@ -179,8 +179,8 @@ Finally, you can populate the database and setup the static files directory:
 
 .. code-block:: console
 
-   user@host:~# django-ca migrate
-   user@host:~# USER=root django-ca collectstatic
+   root@host:~# django-ca migrate
+   root@host:~# USER=root django-ca collectstatic
 
 The ``collectstatic`` command needs to run as root.
 
@@ -193,7 +193,7 @@ you do not intend to run a web server):
 
 .. code-block:: console
 
-   user@host:~# systemctl start django-ca django-ca-celery
+   root@host:~# systemctl start django-ca django-ca-celery
 
 Create admin user and set up CAs
 ================================
@@ -207,8 +207,8 @@ Because we :ref:`created a shortcut above <from-source-add-manage-py-shortcut>` 
 Setup NGINX
 ===========
 
-Finally, it's time to setup NGINX. A web server is required for the admin interface, certificate revocation
-status via OCSP or CRLs and of course also ACMEv2 (the protocol used by Let's Encrypt/certbot integration).
+A web server is required for the admin interface, certificate revocation status via OCSP or CRLs and ACMEv2
+(the protocol used by Let's Encrypt/certbot integration).
 
 .. WARNING::
 
@@ -217,7 +217,36 @@ status via OCSP or CRLs and of course also ACMEv2 (the protocol used by Let's En
    impossible to retrieve a certificate.
 
 In this setup, we'll create certificates using the CA we created above. If you want to use Let's Encrypt
-certificates instead, you can have a look at our :doc:`quickstart_docker_compose`.
+certificates instead, you can have a look at our :doc:`quickstart_docker_compose` for an example.
+
+Create a private/public key pair for NGINX to use:
+
+.. code-block:: console
+
+   root@host:~# openssl genrsa -out /etc/ssl/ca.example.com.key 4096
+   root@host:~# openssl req -new -key /etc/ssl/ca.example.com.key -out ca.csr -utf8 -batch
+   root@host:~# django-ca sign_cert --ca=Intermediate --csr=ca.csr --webserver --subject /CN=ca.example.com
+   root@host:~# django-ca dump_cert -b ca.example.com /etc/ssl/ca.example.com.pem
+
+Create DH parameters:
+
+.. code-block:: console
+
+   root@host:~# mkdir -p /etc/nginx/dhparams/
+   root@host:~# openssl dhparam -dsaparam -out /etc/nginx/dhparams/dhparam.pem 4096
+
+**django-ca** includes a template for :manpage:`envsubst(1)` that you can use. You need to set the hostname
+of your server as well as the installation base directory (**WARNING:** Include a trailing slash!) as
+environment variables.
+
+.. code-block:: console
+
+   root@host:~# NGINX_HOST=ca.example.com envsubst \
+   >     < /opt/django-ca/src/django-ca/nginx/source.template \
+   >     > /etc/nginx/sites-available/django-ca.conf
+   root@host:~# ln -fs /etc/nginx/sites-available/django-ca.conf /etc/nginx/sites-enabled/
+   root@host:~# nginx -t
+   root@host:~# systemctl restart nginx
 
 Where to go from here
 =====================
@@ -225,6 +254,18 @@ Where to go from here
 ******
 Update
 ******
+
+TODO
+
+Update the NGINX configuration:
+
+.. code-block:: console
+
+   root@host:~# NGINX_HOST=ca.example.com envsubst \
+   >     < /opt/django-ca/src/django-ca/nginx/source.template \
+   >     > /etc/nginx/sites-available/django-ca.conf
+   root@host:~# nginx -t
+   root@host:~# systemctl restart nginx
 
 *********
 Uninstall
@@ -234,29 +275,29 @@ To completely uninstall **django-ca**, stop related services and remove files th
 
 .. code-block:: console
 
-   user@host:~# systemctl stop django-ca django-ca-celery
-   user@host:~# systemctl disable django-ca django-ca-celery
-   user@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
-   user@host:~# rm -f /usr/local/bin/django-ca
-   user@host:~# rm -rf /etc/django-ca/ /opt/django-ca/
+   root@host:~# systemctl stop django-ca django-ca-celery
+   root@host:~# systemctl disable django-ca django-ca-celery
+   root@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
+   root@host:~# rm -f /usr/local/bin/django-ca
+   root@host:~# rm -rf /etc/django-ca/ /opt/django-ca/ /var/log/django-ca
 
 Restart NGINX so that it no longer knows about the configurations:
 
 .. code-block:: console
 
-   user@host:~# systemctl restart nginx
+   root@host:~# systemctl restart nginx
 
 Remove the system user:
 
 .. code-block:: console
 
-   user@host:~# deluser django-ca
+   root@host:~# deluser django-ca
 
 Drop the PostgreSQL database:
 
 .. code-block:: console
 
-   user@host:~# sudo -u postgres psql
+   root@host:~# sudo -u postgres psql
    postgres=# DROP DATABASE django_ca;
    DROP DATABASE
    postgres=# DROP USER django_ca;
