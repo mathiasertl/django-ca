@@ -1,8 +1,9 @@
 [Unit]
-Description=django-ca application server
+Description=django-ca task worker
 After=syslog.target network.target
 
 [Service]
+Type=forking
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
 EnvironmentFile=/etc/django-ca/systemd.conf
 EnvironmentFile=-/etc/django-ca/systemd-local.conf
@@ -21,7 +22,6 @@ ConfigurationDirectory=django-ca
 LogsDirectory=django-ca
 RuntimeDirectory=%N
 Restart=on-failure
-Type=forking
 
 [Install]
 WantedBy=multi-user.target

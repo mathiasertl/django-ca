@@ -168,6 +168,26 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
 
+# Celery configuration
+CELERY_BEAT_SCHEDULE = {
+    "cache-crls": {
+        "task": "django_ca.tasks.cache_crls",
+        "schedule": 86100,
+    },
+    "generate-ocsp-keys": {
+        # schedule is three days minus five minutes, since keys expire after
+        # three days by default.
+        "task": "django_ca.tasks.generate_ocsp_keys",
+        "schedule": 258900,
+    },
+    "acme-cleanup": {
+        # ACME cleanup runs once a day
+        "task": "django_ca.tasks.acme_cleanup",
+        "schedule": 86400,
+    },
+}
+
+
 # CONFIGURATION_DIRECTORY is set by the SystemD ConfigurationDirectory= directive.
 _settings_files = []
 SETTINGS_DIRS = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATION_DIRECTORY", ""))

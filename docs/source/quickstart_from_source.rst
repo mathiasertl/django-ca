@@ -115,15 +115,15 @@ configuration:
 Add SystemD services
 ====================
 
-SystemD services are included with **django-ca**. You need to add two services, one for the uWSGI application
-server and one for the Celery task worker:
+SystemD services are included with **django-ca**. You need to add three services, one for the uWSGI application
+server, one for the Celery task worker and one for the Celery task scheduler ("celerybeat"):
 
 .. code-block:: console
 
    root@host:~# ln -s /opt/django-ca/src/django-ca/systemd/systemd.conf /etc/django-ca/
    root@host:~# ln -s /opt/django-ca/src/django-ca/systemd/*.service /etc/systemd/system/
    root@host:~# systemctl daemon-reload
-   root@host:~# systemctl enable django-ca django-ca-celery
+   root@host:~# systemctl enable django-ca django-ca-celery django-ca-celerybeat
 
 Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`.
 
@@ -203,7 +203,7 @@ you do not intend to run a web server):
 
 .. code-block:: console
 
-   root@host:~# systemctl start django-ca django-ca-celery
+   root@host:~# systemctl start django-ca django-ca-celery django-ca-celerybeat
 
 Create admin user and set up CAs
 ================================
@@ -285,7 +285,7 @@ Restart services:
 
 .. code-block:: console
 
-   root@host:~# systemctl restart django-ca django-ca-celery
+   root@host:~# systemctl restart django-ca django-ca-celery django-ca-celerybeat
 
 Update the NGINX configuration:
 
@@ -305,8 +305,8 @@ To completely uninstall **django-ca**, stop related services and remove files th
 
 .. code-block:: console
 
-   root@host:~# systemctl stop django-ca django-ca-celery
-   root@host:~# systemctl disable django-ca django-ca-celery
+   root@host:~# systemctl stop django-ca django-ca-celery django-ca-celerybeat
+   root@host:~# systemctl disable django-ca django-ca-celery django-ca-celerybeat
    root@host:~# rm -f /etc/nginx/sites-*/django-ca.conf
    root@host:~# rm -f /var/log/nginx/$HOSTNAME*.log
    root@host:~# rm -f /usr/local/bin/django-ca
