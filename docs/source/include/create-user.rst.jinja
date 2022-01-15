@@ -6,7 +6,7 @@ the admin interface) and create a root and intermediate CA:
    {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} createsuperuser{% endfilter %}
    ...
    {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} init_ca --pathlen=1 Root "/CN=Root"{% endfilter %}
-   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} init_ca {% if shared %}--path=ca/shared/ {% endif %}--parent="Root" Intermediate "/CN=Intermediate"{% endfilter %}
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}user@host:{{ path|default('~') }}$ {{ manage }} init_ca {% if shared %}--path=ca/shared/ {% endif %} --acme-enable --parent="Root" Intermediate "/CN=Intermediate"{% endfilter %}
 
 There are a few things to break down in the above commands:
 
