@@ -117,8 +117,9 @@ server and one for the Celery task worker:
 
 Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`.
 
-If you use an installation directory other then ``/opt/django-ca``, you'll need to set
-``DJANGO_CA_INSTALL_BASE`` in :file:`systemd.conf` *and* add a SystemD override for ``WorkingDirectory=``.
+If you use an installation directory other then ``/opt/django-ca``, set ``INSTALL_BASE`` in
+:file:`/etc/systemd/systemd-local.conf` (see :ref:`systemd-configuration`) *and* add a SystemD override for
+``WorkingDirectory=``.
 
 .. _from-source-configuration:
 
@@ -147,6 +148,7 @@ setting here as well:
    :caption: /etc/django-ca/10-localsettings.yaml
    :name: /etc/django-ca/10-localsettings.yaml
 
+.. _systemd-configuration:
 
 SystemD configuration
 =====================

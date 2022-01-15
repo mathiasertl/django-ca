@@ -6,13 +6,13 @@ After=syslog.target network.target
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
 EnvironmentFile=/etc/django-ca/systemd.conf
 EnvironmentFile=-/etc/django-ca/systemd-local.conf
-ExecStart=/bin/sh -c '${DJANGO_CA_INSTALL_BASE}/venv/bin/celery -A ca multi start $CELERYD_NODES \
+ExecStart=/bin/sh -c '${INSTALL_BASE}/venv/bin/celery -A ca multi start $CELERYD_NODES \
     --pidfile=${RUNTIME_DIRECTORY}/celery.pid --logfile=${LOGS_DIRECTORY}/celery.log \
     --loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS'
-ExecStop=/bin/sh -c '${DJANGO_CA_INSTALL_BASE}/venv/bin/celery multi stopwait $CELERYD_NODES \
+ExecStop=/bin/sh -c '${INSTALL_BASE}/venv/bin/celery multi stopwait $CELERYD_NODES \
     --pidfile=${RUNTIME_DIRECTORY}/celery.pid --logfile=${LOGS_DIRECTORY}/celery.log \
     --loglevel="${CELERYD_LOG_LEVEL}"'
-ExecReload=/bin/sh -c '${DJANGO_CA_INSTALL_BASE}/venv/bin/celery -A ca multi restart $CELERYD_NODES \
+ExecReload=/bin/sh -c '${INSTALL_BASE}/venv/bin/celery -A ca multi restart $CELERYD_NODES \
     --pidfile=${RUNTIME_DIRECTORY}/celery.pid --logfile=${LOGS_DIRECTORY}/celery.log \
     --loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS'
 User=django-ca

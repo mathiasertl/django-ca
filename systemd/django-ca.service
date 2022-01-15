@@ -7,7 +7,7 @@ EnvironmentFile=/etc/%N/systemd.conf
 EnvironmentFile=-/etc/%N/systemd-local.conf
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
 ExecStart=/usr/bin/uwsgi \
-        --ini ${DJANGO_CA_INSTALL_BASE}/src/django-ca/uwsgi/source.ini \
+        --ini ${INSTALL_BASE}/src/django-ca/uwsgi/source.ini \
         --socket ${RUNTIME_DIRECTORY}/uwsgi.socket $UWSGI_OPTS
 User=%N
 Group=%N

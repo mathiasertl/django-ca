@@ -4,7 +4,7 @@
 
 # Location of config files. The variable name matches what SystemD sets via ConfigurationDirectory=.
 CONFIGURATION_DIRECTORY=${CONFIGURATION_DIRECTORY:-/etc/django-ca}
-DJANGO_CA_USER=${DJANGO_CA_USER:-django-ca}
+SYSTEM_USER=${SYSTEM_USER:-django-ca}
 
 # Source service configuration
 . ${CONFIGURATION_DIRECTORY}/systemd.conf
@@ -13,7 +13,7 @@ if [ -e "${CONFIGURATION_DIRECTORY}/systemd-local.conf" ]; then
     . ${CONFIGURATION_DIRECTORY}/systemd-local.conf
 fi
 
-USER=${USER:-$DJANGO_CA_USER}
+USER=${USER:-$SYSTEM_USER}
 
 # Export CONFIGURATION_DIRECTORY, as settings.py will load this variable to look for YAML config files.
 export CONFIGURATION_DIRECTORY
