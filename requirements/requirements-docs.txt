@@ -1,4 +1,4 @@
-Sphinx==4.3.2
+Sphinx==4.4.0
 doc8==0.10.1
 numpydoc==1.1.0
 setuptools-scm
