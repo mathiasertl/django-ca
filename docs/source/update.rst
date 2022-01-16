@@ -2,33 +2,9 @@
 Update
 ######
 
-Since 1.0.0, this project updates like any other project. First, update the source code, if you use git:
+Each :doc:`installation guide <install>` includes update instructions matching the installation method used.
 
-.. code-block:: console
-
-   $ git pull origin master
-
-or if you installed **django-ca** via pip:
-
-.. code-block:: console
-
-   $ pip install -U django-ca
-
-then upgrade with these commands:
-
-.. code-block:: console
-
-   $ pip install -U -r requirements.txt
-   $ python ca/manage.py migrate
-
-   $ python ca/manage.py collectstatic  # if you use the webinterface
-
-.. WARNING::
-
-   If you installed **django-ca** in a virtualenv, don't forget to activate it before executing any
-   python or pip commands using::
-
-      source bin/activate
+This document lists special update instructions when you update to a certain version.
 
 .. _update_119:
 
