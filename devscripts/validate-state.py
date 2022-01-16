@@ -21,6 +21,8 @@ import os
 import re
 import sys
 
+import git
+import semantic_version
 import yaml
 from setuptools.config import read_configuration
 from termcolor import colored
@@ -245,6 +247,25 @@ def check_readme():
     return errors
 
 
+def check_pyproject_toml():
+    check_path("pyproject.toml")
+    errors = 0
+    try:
+        last_release = semantic_version.Version(CONFIG["last_release"])
+    except ValueError:
+        errors += err(f"last_release is not a valid semantic version: {CONFIG['last_release']}")
+        return errors
+
+    # Get list of all semantic version tags
+    repo = git.Repo()
+    tags = sorted(semantic_version.Version(t.name) for t in repo.tags if semantic_version.validate(t.name))
+
+    if not last_release == tags[-1]:
+        errors += err(f"last_release does not match last git tag: {last_release} vs. {tags[-1]}")
+
+    return errors
+
+
 min_pyver = CONFIG["python-major"][0]
 min_djver = CONFIG["django-major"][0]
 min_cgver = CONFIG["cryptography-major"][0]
@@ -256,6 +277,7 @@ total_errors += check(check_setup_cfg)
 total_errors += check(check_test_settings)
 total_errors += check(check_intro)
 total_errors += check(check_readme)
+total_errors += check(check_pyproject_toml)
 
 if total_errors != 0:
     print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))

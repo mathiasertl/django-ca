@@ -7,9 +7,7 @@ ipython>=7.28.0
 docker-compose==1.29.2
 pip>=21.3
 
-# >=24.2.0: python_requires argument to setuptools.setup()
-#           https://packaging.python.org/guides/distributing-packages-using-setuptools/#python-requires
-# >= 30.3.0: configuring setup.py using setup.cfg
+# >=45: setuptools_scm requires at least this version
 setuptools>=30.3.0
 tox>=3.24.4
 
