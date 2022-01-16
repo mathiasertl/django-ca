@@ -16,16 +16,16 @@ FROM base as build
 RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
+# Celery==5.2.3 requires setuptools<59.7 and installation fails with newer setuptools
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U "setuptools<59.7" pip wheel
 
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY requirements.txt setup.cfg setup.py ./
 COPY requirements/ requirements/
 COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install --no-warn-script-location --prefix=/install \
-    -r requirements.txt \
     -r requirements/requirements-docker.txt \
-    -e .[redis,mysql,postgres]
+    -e .[celery,acme,redis,mysql,postgres]
 
 # Finally, copy sources
 COPY ca/ ca/
