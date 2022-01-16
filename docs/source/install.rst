@@ -9,7 +9,8 @@ guide:
 * :doc:`quickstart_as_app`: If you want to integrate django-ca into your existing Django project.
 * :doc:`quickstart_from_source`: If you want to install the project from source (or want to use it as a
   template for a totally different platform).
-* :doc:`docker`: If you already have webserver, database etc. set up or as a template for orchestration platforms such as Docker Swarm.
+* :doc:`docker`: If you already have web server, database etc. set up or as a template for orchestration
+  platforms such as Docker Swarm.
 
 .. _http-explanation:
 
