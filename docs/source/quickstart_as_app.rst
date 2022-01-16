@@ -1,6 +1,6 @@
-#########################
-Quickstart: as Django app
-#########################
+########################
+Quickstart as Django app
+########################
 
 This guide provides instructions for running your own certificate authority as a Django app in your existing
 Django project. This setup allows you to integrate django-ca into an existing Django deployment.
@@ -15,11 +15,32 @@ Django development.
 Required software
 =================
 
-You do not need any special software besides a recent version of pip.
+You do not need any special software besides Python |minimum-python| or later and a recent version of pip.
 
 It is strongly recommended that you run a `Celery task queue <https://docs.celeryproject.org/>`_. If you do,
 you need a message transport like RabbitMQ or Redis. Redis is used in the examples below, because it is
 easiest to set up and doubles as a cache.
+
+Python libraries
+----------------
+
+If you're using an older system, the table blow lists what versions of Python, Django and cryptography where
+tested with what release (changes to previous versions in **bold**):
+
+=========== ================= ==================== ================== ============== ============= ===========
+django-ca   Python            Django               cryptography       idna           Celery        acme
+=========== ================= ==================== ================== ============== ============= ===========
+1.20        3.7 - **3.10**    **2.2, 3.2 - 4.0**   **3.4** - **36.0** **3.2, 3.3**   5.0 - **5.2** 1.20
+1.19        3.6 - **3.10**    **2.2, 3.1, 3.2**    **3.3** - **35.0** 2.10 - **3.2** 5.0 - **5.1** 1.20
+1.18        3.6 - 3.9         **2.2, 3.1, 3.2**    **3.0** - **3.4**  **2.10**       **5.0**
+1.17        **3.6** - **3.9** **2.2** - **3.1**    **2.8** - **3.3**  **2.9** - 2.10 **4.3** - 4.4
+1.16        3.5 - 3.8         **2.2** - **3.1**    2.7 - **3.0**      2.8 - **2.10** **4.2** - 4.4
+1.15        **3.5** - 3.8     1.11, 2.1 - **3.0**  **2.7** - 2.8      2.8            4.0 - 4.4
+1.14        2.7/3.5 - **3.8** 1.11, 2.1 - 2.2      **2.5** - **2.8**  **2.8**
+=========== ================= ==================== ================== ============== ============= ===========
+
+Note that we don't deliberately break support for older versions, we merely stop testing it. You can try your
+luck with older versions.
 
 ************
 Installation

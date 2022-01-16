@@ -743,7 +743,7 @@ Docker
   notifications etc.) to those events (fixes `#39 <https://github.com/mathiasertl/django-ca/issues/39>`_).
 * Provide a Docker container for fast deployment of **django-ca**.
 * Add the :ref:`CA_CUSTOM_APPS <settings-ca-custom-apps>` setting to let users that use **django-ca** as a
-  :ref:`standalone project <as-standalone>` add custom apps, e.g. to register signals.
+  :doc:`standalone project <quickstart_from_source>` add custom apps, e.g. to register signals.
 * Make the ``otherName`` extension actually usable and tested (see `PR47
   <https://github.com/mathiasertl/django-ca/pull/47>`_)
 * Add the ``smartcardLogon`` and ``msKDC`` extended key usage types. They are needed for some AD and OpenLDAP

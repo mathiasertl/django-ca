@@ -369,6 +369,10 @@ intersphinx_mapping = {
     "acme": ("https://acme-python.readthedocs.io/en/stable/", None),
 }
 
+rst_epilog = f"""
+.. |minimum-python| replace:: {CONFIG['python-major'][0]}
+"""
+
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 

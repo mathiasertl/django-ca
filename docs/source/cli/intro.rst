@@ -6,6 +6,11 @@ Command-line interface
 subcommands of Djangos :command:`manage.py` script. You can use it for all certificate management operations,
 and :doc:`/cli/cas` is only possible via the command-line interface for security reasons.
 
+.. NOTE::
+
+   How you invoke :command:`manage.py` differs depending on how you installed django-ca. Refer to the
+   installation guide you followed for further instructions.
+
 In general, run :command:`manage.py` without any parameters for available subcommands:
 
 .. code-block:: console
@@ -26,11 +31,6 @@ Creating Certificate Authorities and managing Certificates is documented on indi
 
    CA management </cli/cas>
    Certificate management </cli/certs>
-
-.. NOTE::
-
-   Consider :ref:`creating a bash script <manage_py_shortcut>` to easily access your :command:`manage.py`
-   script.
 
 **************************
 Index of existing commands
