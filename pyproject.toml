@@ -6,7 +6,7 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 # https://devguide.python.org/#status-of-python-branches
 python = ["3.7.12", "3.8.12", "3.9.9", "3.10.1"]
 # https://www.djangoproject.com/download/
-django = ["2.2.25", "3.2.10", "4.0"]
+django = ["2.2.26", "3.2.11", "4.0.1"]
 cryptography = ["3.3.2", "3.4.7", "35.0.0", "36.0.1"]
 acme = ["1.22.0"]
 idna = ["3.2"]
