@@ -2,8 +2,6 @@ version: "3.9"
 services:
     cache:
         image: redis:6-alpine
-        ports:
-            - "6379"
         networks:
             - cache
         restart: unless-stopped
@@ -16,8 +14,6 @@ services:
             POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
-        ports:
-            - 5432:5432
         networks:
             - database
         restart: unless-stopped
@@ -56,8 +52,6 @@ services:
         depends_on:
             - cache
             - db
-        ports:
-            - 8000:8000
         networks:
             - cache
             - database

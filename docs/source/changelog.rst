@@ -23,6 +23,8 @@ ChangeLog
 * Drop ``pytz`` as dependency (and use :py:class:`python:datetime.timezone` directly).
 * Add mdlDS and mdlJWS X509 extensions for support
   `mobile Driver Licence <https://en.wikipedia.org/wiki/Mobile_driver%27s_license>`_.
+* Reworked :doc:`installation instructions <install>` to link to a set of quickstart guides dedicated to each
+  installation option.
 
 ACMEv2 support
 ==============
