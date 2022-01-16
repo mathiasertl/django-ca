@@ -175,7 +175,7 @@ Add manage.py shortcut
 
 As optional convenience, you can create a symlink to a small wrapper script that allows you to easily run
 ``manage.py`` commands. In the examples below the guide assumes you created this symlink at
-:file:`/usr/local/bin/django-ca`, but of course name the symlink anything you like:
+:file:`/usr/local/bin/django-ca`, but of course you can name the symlink anything you like:
 
 .. code-block:: console
 
