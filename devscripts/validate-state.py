@@ -259,6 +259,8 @@ def check_pyproject_toml():
     # Get list of all semantic version tags
     repo = git.Repo()
     tags = sorted(semantic_version.Version(t.name) for t in repo.tags if semantic_version.validate(t.name))
+    if not tags:  # not present in GitHub actions
+        return errors
 
     if not last_release == tags[-1]:
         errors += err(f"last_release does not match last git tag: {last_release} vs. {tags[-1]}")
