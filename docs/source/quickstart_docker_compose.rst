@@ -283,31 +283,9 @@ Inside the backend container, ``manage`` is an alias for ``manage.py``.
 
 .. _docker-compose-use-ca:
 
-***********
-Use your CA
-***********
-
-You now should be able to log into the admin interface you set up at https://ca.example.com/admin/ with the
-credentials you created above. In the admin interface, you can create certificates for the "Intermediate" CA
-but not for the "Root" CA (since you didn't pass ``--path=ca/shared/``). You can also use the admin interface
-to revoke any certificate.
-
-You can always use the :doc:`/cli/intro` for advanced administration operations, including creating
-certificates for any CA and revoking certificates.
-
-CRL and OCSP services are provided by default, there's nothing you need to do to enable them.
-
-Use ACME with certbot
-======================
-
-If you enabled :doc:`ACMEv2 support <acme>`, all you need to do is enable ACMEv2 for the intermediate CA using
-the admin interface (or using ``manage edit_ca``). After that, you can retrieve a certificate using a simple
-certbot command:
-
-.. code-block:: console
-
-   $ sudo certbot register --server https://ca.example.com/django_ca/acme/directory/
-   $ sudo certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
+.. jinja:: guide-docker-compose-where-to-go
+   :file: include/guide-where-to-go.rst.jinja
+   :header_update_levels:
 
 ******
 Update

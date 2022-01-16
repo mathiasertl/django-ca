@@ -1,7 +1,15 @@
 .. code-block:: console
 
    root@host:~# cd /opt/django-ca/src/
+   root@host:/opt/django-ca/src/# ls -l
+   lrwxrwxrwx  ...   django-ca -> /opt/django-ca/src/django-ca-1.19.1
+   drwxrwxr-x  ...   django-ca-1.19.1
    root@host:/opt/django-ca/src/# wget -O django-ca-{{ last_version }}.tar.gz \
    >    https://github.com/mathiasertl/django-ca/archive/refs/tags/{{ last_version }}.tar.gz
    root@host:/opt/django-ca/src/# tar xf django-ca-{{ last_version }}.tar.gz
+   root@host:/opt/django-ca/src/# rm django-ca
    root@host:/opt/django-ca/src/# ln -s /opt/django-ca/src/django-ca-{{ last_version }} django-ca
+   root@host:/opt/django-ca/src/# ls -l
+   lrwxrwxrwx  ...   django-ca -> /opt/django-ca/src/django-ca-1.19.2
+   drwxrwxr-x  ...   django-ca-1.19.1
+   drwxrwxr-x  ...   django-ca-1.19.2

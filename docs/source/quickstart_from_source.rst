@@ -222,9 +222,8 @@ A web server is required for the admin interface, certificate revocation status 
 
 .. WARNING::
 
-   You might be tempted to setup NGINX using certificates retrieved via a local CAs ACMEv2 interface. This is
-   theoretically possible, but creates a chicken-and-egg situation where a misconfiguration will make it
-   impossible to retrieve a certificate.
+   While theoretically possible, do not use a local CAs ACMEv2 interface to get certificates. Any
+   misconfiguration might make it impossible to retrieve a certificate!
 
 In this setup, we'll create certificates using the CA we created above. If you want to use Let's Encrypt
 certificates instead, you can have a look at our :doc:`quickstart_docker_compose` for an example.
@@ -234,9 +233,8 @@ Create a private/public key pair for NGINX to use:
 .. code-block:: console
 
    root@host:~# openssl genrsa -out /etc/ssl/$HOSTNAME.key 4096
-   root@host:~# openssl req -new -key /etc/ssl/$HOSTNAME.key -out ca.csr -utf8 -batch
-   root@host:~# cat ca.csr | \
-   >     django-ca sign_cert --ca=Intermediate --csr=- --webserver --subject /CN=$HOSTNAME
+   root@host:~# openssl req -new -key /etc/ssl/$HOSTNAME.key -out /tmp/ca.csr -utf8 -batch
+   root@host:~# django-ca sign_cert --ca=Intermediate --csr=/tmp/ca.csr --webserver --subject /CN=$HOSTNAME
    root@host:~# FORCE_USER=root django-ca dump_cert -b $HOSTNAME /etc/ssl/$HOSTNAME.pem
 
 Create DH parameters:
@@ -257,22 +255,21 @@ have set ``$HOSTNAME``:
    root@host:~# nginx -t
    root@host:~# systemctl restart nginx
 
-Where to go from here
-=====================
-
-TODO
+.. jinja:: guide-source-where-to-go
+   :file: include/guide-where-to-go.rst.jinja
+   :header_update_levels:
 
 ******
 Update
 ******
 
-TODO: how to update source code
+.. include:: include/update_intro.rst
 
-Update instructions again assume that you have ``$HOSTNAME`` set:
+Downloading the new release works the same as before, but you have to remove the old symlink before creating
+the new one:
 
-.. code-block:: console
-
-   root@host:~# export HOSTNAME=ca.example.com
+.. jinja::
+   :file: include/guide-update-source.rst.jinja
 
 Update the database schema and static files:
 

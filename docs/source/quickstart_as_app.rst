@@ -93,6 +93,10 @@ commands <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_.
 .. jinja:: manage-as-py
    :file: include/create-user.rst.jinja
 
+.. jinja:: guide-as-app-where-to-go
+   :file: include/guide-where-to-go.rst.jinja
+   :header_update_levels:
+
 ******
 Update
 ******

@@ -1,0 +1,38 @@
+************
+Use your CAs
+************
+
+You can now use the admin interface at https://ca.example.com/admin/ with the credentials you created
+above to create new certificates or revoke certificates. {% if shared %}You cannot issue certificates with the
+"Root" CA, since you did not pass ``--path=ca/shared/`` when creating it.{% endif %}
+
+CRL and OCSP services are provided by default, so there is nothing you need to do to enable them.
+
+You can use the :doc:`/cli/intro` for creating new CAs as well as issuing, renewing and revoking
+certificates.{% if guide == "from-source" %} The :command:`manage.py` script is available via the
+:command:`django-ca` symlink you :ref:`created above <from-source-add-manage-py-shortcut>`, for  example:
+
+.. code-block:: console
+
+   root@host:~# {{ manage }} list_cas
+
+{% elif guide == "with-docker-compose" %}
+The :command:`manage.py` script can be invoked via ``{{ manage }}``, for example:
+
+.. code-block:: console
+
+   user@host:~/ca/$ {{ manage }} list_cas
+
+{% endif %}
+
+Use ACME with certbot
+======================
+
+If you enabled :doc:`ACMEv2 support <acme>`, all you need to do is enable ACMEv2 for the intermediate CA using
+the admin interface (or using ``{{ manage|default("manage.py") }} edit_ca``). After that, you can retrieve a
+certificate using a simple certbot command:
+
+.. code-block:: console
+
+   $ sudo certbot register --server https://ca.example.com/django_ca/acme/directory/
+   $ sudo certbot certonly --server https://ca.example.com/django_ca/acme/directory/ ...
