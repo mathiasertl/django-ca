@@ -16,6 +16,7 @@ ChangeLog
 * Require a CommonName when generating a CA instead of implicitly setting the human-readable name if no
   CommonName was given.
 * Add support for cryptography 36.0.0.
+* Add support for Alpine 3.15.
 * Make log level and message format more easily configurable with :ref:`LOG_LEVEL <settings-log-level>`,
   :ref:`LIBRARY_LOG_LEVEL <settings-library-log-level>` and :ref:`LOG_FORMAT <settings-log-format>`.
 * Fix issuing certificates via ACMEv2 if ``settings.USE_TZ=True`` (fixes `issue 82
@@ -23,8 +24,6 @@ ChangeLog
 * Drop ``pytz`` as dependency (and use :py:class:`python:datetime.timezone` directly).
 * Add mdlDS and mdlJWS X509 extensions for support
   `mobile Driver Licence <https://en.wikipedia.org/wiki/Mobile_driver%27s_license>`_.
-* Update to PostgreSQL 14 when using docker-compose.
-* Do not expose ports of internal daemons when using docker-compose.
 * Reworked :doc:`installation instructions <install>` to link to a set of quickstart guides dedicated to each
   installation option.
 
@@ -37,6 +36,13 @@ assume that you want enable ACMEv2 support.
 
 * Add support for updating an accounts email address.
 * Add support for deactivating ACME accounts.
+
+Docker and docker-compose
+=========================
+
+* Update Docker image to be based on Alpine 3.15.
+* Update to PostgreSQL 14 when using docker-compose.
+* Do not expose ports of internal daemons when using docker-compose.
 
 Backwards incompatible changes
 ==============================
@@ -53,7 +59,8 @@ Deprecation notices
 ===================
 
 * This is the last release to support Django 2.2.
-* This is the last release to support cryptography 3.3.
+* This is the last release to support cryptography 3.3 and 3.4.
+* This is the last release to support Alpine 3.12 and 3.13.
 
 .. _changelog-1.19.1:
 

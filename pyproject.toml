@@ -12,7 +12,7 @@ acme = ["1.22.0"]
 idna = ["3.2"]
 
 # https://alpinelinux.org/releases/
-alpine = ["3.12", "3.13", "3.14"]
+alpine = ["3.12", "3.13", "3.14", "3.15"]
 
 # The last django-ca release
 last_release = "1.19.1"
