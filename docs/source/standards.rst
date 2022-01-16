@@ -30,13 +30,11 @@ To test all linters, simply run (:command:`pylint` is separate for now, as it is
 Type hints
 **********
 
-The source code also uses type hints and is checked using `mypy <https://mypy.readthedocs.io/en/stable/>`_.
-At present (2021-05-15), the latest version cryptography (3.4.7) does not have full type hints. Until
-cryptography 35.0 is released, you have to install the latest version from git:
+The source code also uses type hints and is checked using `mypy <https://mypy.readthedocs.io/en/stable/>`_. To
+check typehints, use :command:`mypy`:
 
 .. code-block:: console
 
-   $ pip install -U git+https://github.com/pyca/cryptography.git
    $ mypy ca/django_ca/
 
 *********
