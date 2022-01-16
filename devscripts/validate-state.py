@@ -248,6 +248,7 @@ def check_readme():
 
 
 def check_pyproject_toml():
+    """Check pyproject.toml."""
     check_path("pyproject.toml")
     errors = 0
     try:
