@@ -30,7 +30,7 @@ tested with what release (changes to previous versions in **bold**):
 =========== ================= ==================== ================== ============== ============= ===========
 django-ca   Python            Django               cryptography       idna           Celery        acme
 =========== ================= ==================== ================== ============== ============= ===========
-1.20        3.7 - **3.10**    **2.2, 3.2 - 4.0**   **3.4** - **36.0** **3.2, 3.3**   5.0 - **5.2** 1.20
+1.20        3.7 - **3.10**    **2.2, 3.2 - 4.0**   **3.4** - **36.0** **3.2, 3.3**   5.0 - **5.2** **1.22**
 1.19        3.6 - **3.10**    **2.2, 3.1, 3.2**    **3.3** - **35.0** 2.10 - **3.2** 5.0 - **5.1** 1.20
 1.18        3.6 - 3.9         **2.2, 3.1, 3.2**    **3.0** - **3.4**  **2.10**       **5.0**
 1.17        **3.6** - **3.9** **2.2** - **3.1**    **2.8** - **3.3**  **2.9** - 2.10 **4.3** - 4.4
@@ -83,8 +83,8 @@ Simply add ``django_ca`` to your ``INSTALLED_APPS`` (and if you don't use it alr
    # RECOMMENDED: Use Celery as an asynchronous task worker if configured
    CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 
-   # If you want to enable *experimental* ACMEv2 support:
-   #DJANGO_CA_CA_ENABLE_ACME = True
+   # Enable ACMEv2 support
+   DJANGO_CA_CA_ENABLE_ACME = True
 
 Please check out :doc:`/settings` for settings specific to django-ca.
 

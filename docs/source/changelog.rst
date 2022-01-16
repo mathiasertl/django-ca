@@ -27,6 +27,10 @@ ChangeLog
 ACMEv2 support
 ==============
 
+ACMEv2 support will be included and enabled by default starting with ``django-ca==1.22``. You will still have
+to enable the ACMEv2 interface for each CA that should provide one. The documentation has been updated to
+assume that you want enable ACMEv2 support.
+
 * Add support for updating an accounts email address.
 * Add support for deactivating ACME accounts.
 
