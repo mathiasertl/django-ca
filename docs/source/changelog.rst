@@ -23,6 +23,8 @@ ChangeLog
 * Drop ``pytz`` as dependency (and use :py:class:`python:datetime.timezone` directly).
 * Add mdlDS and mdlJWS X509 extensions for support
   `mobile Driver Licence <https://en.wikipedia.org/wiki/Mobile_driver%27s_license>`_.
+* Update to PostgreSQL 14 when using docker-compose.
+* Do not expose ports of internal daemons when using docker-compose.
 * Reworked :doc:`installation instructions <install>` to link to a set of quickstart guides dedicated to each
   installation option.
 
