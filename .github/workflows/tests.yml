@@ -17,7 +17,7 @@ jobs:
         cryptography-version: [ "3.3.2", "3.4.7", "35.0.0", "36.0.1" ]
         exclude:
             - python-version: "3.7"
-              django-version: "4.0"
+              django-version: "4.0.1"
 
     env:
       DJANGO_CA_SECRET_KEY: dummy
