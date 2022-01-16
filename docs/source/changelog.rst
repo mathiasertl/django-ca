@@ -50,6 +50,7 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
+* This is the last release to support Django 2.2.
 * This is the last release to support cryptography 3.3.
 
 .. _changelog-1.19.1:
