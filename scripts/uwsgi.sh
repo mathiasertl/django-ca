@@ -30,6 +30,9 @@ with open('${DJANGO_CA_SECRET_KEY_FILE}', 'w') as stream:
 EOF
     fi
     chmod go-rwx ${DJANGO_CA_SECRET_KEY_FILE}
+
+    # Export DJANGO_CA_SECRET_KEY_FILE so that django-ca itself will pick it up.
+    export DJANGO_CA_SECRET_KEY_FILE
 fi
 
 if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
