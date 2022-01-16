@@ -2,9 +2,10 @@
 Use your CAs
 ************
 
-You can now use the admin interface at https://ca.example.com/admin/ with the credentials you created
-above to create new certificates or revoke certificates. {% if shared %}You cannot issue certificates with the
-"Root" CA, since you did not pass ``--path=ca/shared/`` when creating it.{% endif %}
+After :ref:`adding your Root CA to your system <{{ guide }}-add-ca>`, you can use the admin interface at
+https://ca.example.com/admin/ with the credentials you created above to create new certificates or revoke
+certificates. {% if shared %}You cannot issue certificates with the "Root" CA, since you did not pass
+``--path=ca/shared/`` when creating it.{% endif %}
 
 CRL and OCSP services are provided by default, so there is nothing you need to do to enable them.
 
@@ -25,8 +26,24 @@ The :command:`manage.py` script can be invoked via ``{{ manage }}``, for example
 
 {% endif %}
 
+.. _{{ guide }}-add-ca:
+
+Add CA to your system
+=====================
+
+To get the certificate for your Root CA, you can use the admin interface or the ``dump_ca`` command:
+
+.. code-block:: console
+
+   {{ user|default("user") }}@host:{{ path|default("~") }}{% if user == "root" %}#{% else %}${% endif %} {{ manage }} dump_ca Root > root.pem
+   
+You can add this file directly to the list of known CAs in your browser.
+
+Distributions usually provide instructions for how to add a CA to the whole system, see for example `these
+instructions for Debian/Ubuntu <https://ubuntu.com/server/docs/security-trust-store>`_.
+
 Use ACME with certbot
-======================
+=====================
 
 If you enabled :doc:`ACMEv2 support <acme>`, all you need to do is enable ACMEv2 for the intermediate CA using
 the admin interface (or using ``{{ manage|default("manage.py") }} edit_ca``). After that, you can retrieve a

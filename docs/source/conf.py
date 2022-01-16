@@ -396,12 +396,18 @@ jinja_contexts = {
     "requirements-in-docker": {},
     "requirements-in-docker-compose": {},
     "requirements-from-source": {},
-    "guide-source-where-to-go": {"shared": False, "guide": "from-source", "manage": "django-ca"},
+    "guide-source-where-to-go": {
+        "shared": False,
+        "guide": "from-source",
+        "manage": "django-ca",
+        "user": "root",
+    },
     "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
     "guide-docker-compose-where-to-go": {
         "shared": True,
         "guide": "with-docker-compose",
         "manage": "docker-compose exec backend manage",
+        "path": "~/ca/",
     },
 }
 jinja_globals = {"version": version, "last_version": CONFIG["last_release"]}
