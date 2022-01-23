@@ -6,7 +6,7 @@ WORKDIR /usr/src/django-ca
 
 RUN --mount=type=cache,target=/etc/apk/cache apk upgrade
 RUN --mount=type=cache,target=/etc/apk/cache apk add --update \
-        pcre openssl binutils busybox libpq postgresql-client mariadb-connector-c mariadb-client
+        pcre openssl tzdata binutils busybox libpq postgresql-client mariadb-connector-c mariadb-client
 
 # Add user (some tests check if it's impossible to write a file)
 RUN addgroup -g 9000 -S django-ca && \
