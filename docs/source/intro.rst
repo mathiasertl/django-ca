@@ -12,3 +12,5 @@ Features:
 #. Written in Python 3.7+, Django 2.2+ and cryptography 3.3+.
 #. Management via command line and/or via Djangos admin interface.
 #. Get email notifications about certificates about to expire.
+
+Please see https://django-ca.readthedocs.org for the most recent documentation.

@@ -24,11 +24,6 @@ from setuptools import setup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # directory of this file
 DOCS_DIR = os.path.join(BASE_DIR, "docs", "source")
 
-with open(os.path.join(DOCS_DIR, "intro.rst")) as stream:
-    LONG_DESCRIPTION = stream.read().strip()
-
-LONG_DESCRIPTION += "\n\nPlease see https://django-ca.readthedocs.org for more extensive documentation."
-
 package_path = os.path.join(BASE_DIR, "ca")
 package_root = os.path.join(package_path, "django_ca")
 
@@ -49,15 +44,7 @@ def find_package_data(path):
 package_data = find_package_data("static") + find_package_data("templates")
 
 setup(
-    name="django-ca",
-    description="A Django app providing a SSL/TLS certificate authority.",
-    long_description=LONG_DESCRIPTION,
-    long_description_content_type="text/x-rst",
-    author="Mathias Ertl",
-    author_email="mati@er.tl",
-    url="https://github.com/mathiasertl/django-ca",
     packages=find_packages("ca", exclude=("ca", "django_ca.tests", "django_ca.tests.base")),
     package_dir={"": "ca"},
     package_data={"": package_data},
-    zip_safe=False,  # because of the static files
 )
