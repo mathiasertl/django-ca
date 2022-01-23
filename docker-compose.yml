@@ -36,6 +36,7 @@ services:
             DJANGO_CA_ALLOWED_HOSTS:
             DJANGO_CA_CA_DEFAULT_CA:
             DJANGO_CA_CA_DEFAULT_HOSTNAME:
+            DJANGO_CA_CA_ENABLE_ACME:
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
             POSTGRES_DB:
             POSTGRES_DB_FILE:
