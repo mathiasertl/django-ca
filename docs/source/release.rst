@@ -62,13 +62,6 @@ Test admin interface
 * Check if the profile selection when creating a certificate works.
 * Check if pasting a CSR shows values from the CSR next to the "Subject" field.
 
-**************
-Update version
-**************
-
-* Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py`
-  (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_) to the version number you want to release.
-
 ******
 Docker
 ******
@@ -285,8 +278,6 @@ Release process
 After a release
 ***************
 
-* Update ``VERSION`` and ``__version__`` in :file:`ca/django_ca/__init__.py` to the next
-  development release (see `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_).
 * Update :file:`django_ca/deprecation.py`.
 * Drop support for older software versions in the ``[django-ca.release]`` section of in
   :file:`pyproject.toml`.
