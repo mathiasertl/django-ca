@@ -35,8 +35,10 @@ COPY ca/ ca/
 ###############################
 # Build artifacts are tested individually in later stages
 FROM build as dist-base
-COPY setup.py setup.cfg MANIFEST.in ./
+COPY requirements/requirements-dist.txt setup.py setup.cfg MANIFEST.in ./
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install -r requirements-dist.txt
 RUN python -m build
+RUN twine check --strict dist/*
 RUN rm -rf ca/ setup.py setup.cfg MANIFEST.in
 COPY devscripts/test-imports.py ./
 
@@ -122,10 +124,6 @@ RUN python dev.py coverage --format=text --fail-under=$FAIL_UNDER
 #COPY .mypy.ini ./
 #COPY stubs/ stubs/
 #RUN mypy ca/django_ca/
-
-# Use twine to check source distribution and wheel
-COPY --from=dist-base /usr/src/django-ca/dist/ dist/
-RUN twine check --strict dist/*
 
 ###############
 # Build stage #
