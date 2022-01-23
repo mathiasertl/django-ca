@@ -1,3 +1,4 @@
+**/*.backup
 **/*.log
 **/*.py[co]
 **/*.sqlite3

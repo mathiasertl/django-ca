@@ -1,3 +1,4 @@
+*.backup
 *.py[co]
 *.sw[po]
 *.sqlite3
