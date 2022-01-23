@@ -94,9 +94,7 @@ ENV SQLITE_NAME=:memory:
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-dist.txt \
-    -r requirements/requirements-test.txt \
-    -r requirements/requirements-mypy.txt \
-    -r requirements/requirements-lint.txt
+    -r requirements/requirements-test.txt
 
 # copy this late so that changes do not trigger a cache miss during build
 COPY tox.ini pyproject.toml ./
@@ -116,14 +114,8 @@ COPY docs/source/ docs/source/
 
 # Run linters and unit tests
 COPY devscripts/ devscripts/
-RUN python dev.py code-quality
 ARG FAIL_UNDER=100
 RUN python dev.py coverage --format=text --fail-under=$FAIL_UNDER
-
-# Run mypy (not yet - we need cryptography 3.5 for that)
-#COPY .mypy.ini ./
-#COPY stubs/ stubs/
-#RUN mypy ca/django_ca/
 
 ###############
 # Build stage #
