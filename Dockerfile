@@ -36,7 +36,7 @@ COPY ca/ ca/
 # Build artifacts are tested individually in later stages
 FROM build as dist-base
 COPY setup.py setup.cfg MANIFEST.in ./
-RUN python setup.py sdist bdist_wheel
+RUN python -m build
 RUN rm -rf ca/ setup.py setup.cfg MANIFEST.in
 COPY devscripts/test-imports.py ./
 

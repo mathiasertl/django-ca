@@ -269,7 +269,7 @@ Release process
 * Create package for PyPi::
 
       $ ./dev.py clean
-      $ python setup.py sdist bdist_wheel
+      $ python -m build
       $ twine check --strict dist/*
 
 * Upload package to PyPi: :command:`twine upload dist/*`
