@@ -57,6 +57,7 @@ subtrees
 symlink
 themself
 tox
+typehints
 unencrypted
 unparsed
 untrusted
