@@ -91,7 +91,6 @@ ENV SQLITE_NAME=:memory:
 
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
-    -r requirements/requirements-docs.txt \
     -r requirements/requirements-dist.txt \
     -r requirements/requirements-test.txt \
     -r requirements/requirements-mypy.txt \
@@ -100,7 +99,6 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
 # copy this late so that changes do not trigger a cache miss during build
 COPY tox.ini pyproject.toml ./
 COPY setup.py dev.py common.py recreate-fixtures.py ./
-COPY --chown=django-ca:django-ca docs/ docs/
 COPY --chown=django-ca:django-ca ca/ ca/
 
 # Create some files/directories that we need later on
@@ -110,6 +108,9 @@ RUN chown django-ca:django-ca .coverage /var/lib/django-ca/ /usr/src/django-ca/c
 
 # From here on, we run as normal user
 USER django-ca:django-ca
+
+# doctests are run by test suite, CA files are also loaded
+COPY docs/source/ docs/source/
 
 # Run linters and unit tests
 COPY devscripts/ devscripts/
@@ -125,13 +126,6 @@ RUN python dev.py coverage --format=text --fail-under=$FAIL_UNDER
 # Use twine to check source distribution and wheel
 COPY --from=dist-base /usr/src/django-ca/dist/ dist/
 RUN twine check --strict dist/*
-
-# Generate documentation
-ADD docker-compose.yml ./
-RUN make -C docs html
-
-# create demo
-RUN python dev.py init-demo
 
 ###############
 # Build stage #
