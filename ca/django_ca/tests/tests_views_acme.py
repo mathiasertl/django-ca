@@ -60,6 +60,7 @@ from ..models import acme_slug
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from ..typehints import PrivateKeyTypes
+from .base import CERT_PEM_REGEX
 from .base import certs
 from .base import override_tmpcadir
 from .base import timestamps
@@ -1969,6 +1970,10 @@ class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObje
         """Basic test case."""
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+
+        # Make sure that certbot parses the expected list of PEMs
+        certbot_split = CERT_PEM_REGEX.findall(resp.content)
+        self.assertEqual([c.pub.pem.encode() for c in self.cert.bundle], certbot_split)
 
     @override_tmpcadir()
     def test_not_found(self) -> None:

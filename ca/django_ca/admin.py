@@ -199,7 +199,7 @@ class CertificateMixin(
 
         if filetype == "PEM":
             if bundle is True:
-                data = "\n".join([cert.pub.pem.strip() for cert in obj.bundle]) + "\n"
+                data = obj.bundle_as_pem
             else:
                 data = obj.pub.pem
         elif filetype == "DER":

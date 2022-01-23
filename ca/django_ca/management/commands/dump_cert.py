@@ -51,8 +51,6 @@ class Command(CertCommandMixin, BinaryCommand):
             raise CommandError("Cannot dump bundle when using DER format.")
 
         if bundle:
-            certs = cert.bundle
+            self.dump(path, cert.bundle_as_pem.encode())
         else:
-            certs = [cert]
-
-        self.dump(path, b"".join([c.pub.encode(encoding) for c in certs]))
+            self.dump(path, cert.pub.encode(encoding))

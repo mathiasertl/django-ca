@@ -299,6 +299,13 @@ class X509CertMixin(DjangoCAModel):
     class Meta:
         abstract = True
 
+    @property
+    def bundle_as_pem(self) -> str:
+        """Get the bundle as PEM."""
+        # TYPE NOTE: bundle is defined in base class but returns a list (considered invariant by mypy). This
+        #            means that an abstract "bundle" property here could not be correctly typed.
+        return "".join(c.pub.pem for c in self.bundle)  # type:  ignore[attr-defined]
+
     def get_revocation_reason(self) -> Optional[x509.ReasonFlags]:
         """Get the revocation reason of this certificate."""
         if self.revoked is False:

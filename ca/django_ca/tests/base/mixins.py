@@ -900,7 +900,10 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     ) -> None:
         """Assert that the bundle for the given certificate matches the expected chain and filename."""
         url = self.get_url(cert)
+
+        # Do not use bundle_as_pem to make sure that chain really has expected number of newlines everywhere
         expected_content = "\n".join([e.pub.pem.strip() for e in expected]) + "\n"
+
         response = self.client.get(url, {"format": "PEM"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")

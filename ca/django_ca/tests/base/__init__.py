@@ -16,6 +16,7 @@
 import inspect
 import json
 import os
+import re
 import shutil
 import tempfile
 import typing
@@ -43,6 +44,17 @@ FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.An
 KeyDict = TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
 CsrDict = TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest, "der": bytes})
 _PubDict = TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
+
+
+# Regex used by certbot to split PEM-encodied certificate chains/bundles as of 2022-01-23. See also:
+# 	https://github.com/certbot/certbot/blob/master/certbot/certbot/crypto_util.py
+CERT_PEM_REGEX = re.compile(
+    b"""-----BEGIN CERTIFICATE-----\r?
+.+?\r?
+-----END CERTIFICATE-----\r?
+""",
+    re.DOTALL,  # DOTALL (/s) because the base64text may include newlines
+)
 
 
 class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring

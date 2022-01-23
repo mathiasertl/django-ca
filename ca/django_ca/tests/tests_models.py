@@ -65,12 +65,14 @@ from ..subject import Subject
 from ..typehints import PRIVATE_KEY_TYPES
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
+from .base import CERT_PEM_REGEX
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import AcmeValuesMixin
 from .base.mixins import TestCaseMixin
+from .base.mixins import TestCaseProtocol
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
 
@@ -130,7 +132,30 @@ class TestWatcher(TestCase):
         self.assertEqual(str(watcher), f"{name} <{mail}>")
 
 
-class CertificateAuthorityTests(TestCaseMixin, TestCase):
+class X509CertMixinTestCaseMixin(TestCaseProtocol):
+    """Mixin collection  assection methods for CertificateAuthority and Certificate."""
+
+    def assertBundle(  # pylint: disable=invalid-name
+        self, chain: typing.List[X509CertMixin], cert: X509CertMixin
+    ) -> None:
+        """Assert that a bundle contains the expected certificates."""
+        encoded_chain = [c.pub.pem.encode() for c in chain]
+
+        # Make sure that all PEMs end with a newline. RFC 7468 does not mandate a newline at the end, but it
+        # seems in practice we always get one. We want to detect if that ever changes
+        for member in encoded_chain:
+            self.assertTrue(member.endswith(b"\n"))
+
+        bundle = cert.bundle_as_pem
+        self.assertIsInstance(bundle, str)
+        self.assertTrue(bundle.endswith("\n"))
+
+        # Test the regex used by certbot to make sure certbot finds the expected certificates
+        found = CERT_PEM_REGEX.findall(bundle.encode())
+        self.assertEqual(encoded_chain, found)
+
+
+class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.CertificateAuthority`."""
 
     load_cas = "__all__"
@@ -170,6 +195,13 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
             # Check again - here we have an already loaded key (also: no logging here anymore)
             # NOTE: assertLogs() fails if there are *no* log messages, so we cannot test that
             self.assertTrue(ca.key_exists)
+
+    @override_tmpcadir()
+    def test_bundle_as_pem(self) -> None:
+        """Test bundles of various CAs."""
+        self.assertBundle([self.cas["root"]], self.cas["root"])
+        self.assertBundle([self.cas["child"], self.cas["root"]], self.cas["child"])
+        self.assertBundle([self.cas["ecc"]], self.cas["ecc"])
 
     @override_tmpcadir()
     def test_key_str_password(self) -> None:
@@ -521,7 +553,7 @@ class CertificateAuthorityTests(TestCaseMixin, TestCase):
                 self.assertIsInstance(key.curve, ec.BrainpoolP256R1)
 
 
-class CertificateTests(TestCaseMixin, TestCase):
+class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.Certificate`."""
 
     load_cas = "__all__"
@@ -554,6 +586,15 @@ class CertificateTests(TestCaseMixin, TestCase):
         else:
             self.assertIsInstance(ext, cls)
             self.assertEqual(ext, certs[name].get(key))
+
+    @override_tmpcadir()
+    def test_bundle_as_pem(self) -> None:
+        """Test bundles of various CAs."""
+        self.assertBundle([self.certs["root-cert"], self.cas["root"]], self.certs["root-cert"])
+        self.assertBundle(
+            [self.certs["child-cert"], self.cas["child"], self.cas["root"]], self.certs["child-cert"]
+        )
+        self.assertBundle([self.certs["ecc-cert"], self.cas["ecc"]], self.certs["ecc-cert"])
 
     def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
