@@ -6,7 +6,6 @@
 **/__pycache__
 **/geckodriver.log
 **/pip-selfcheck.json
-/.git/
 /.coverage
 /.docker/
 /.certbot/
