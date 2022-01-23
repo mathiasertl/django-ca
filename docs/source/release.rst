@@ -120,7 +120,7 @@ using the CLI:
 .. code-block:: console
 
    $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec -T backend manage sign_cert --ca="Root CA" \
+   >     docker-compose exec -T backend manage sign_cert --ca=Root \
    >        --subject="/CN=signed-in-backend.example.com"
    Please paste the CSR:
    ...
@@ -130,7 +130,7 @@ Check that the same fails in the frontend container (because the root CA is only
 .. code-block:: console
 
    $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec frontend manage sign_cert --ca="Root CA" \
+   >     docker-compose exec -T frontend manage sign_cert --ca=Root \
    >        --subject="/CN=signed-in-backend.example.com"
    ...
    manage sign_cert: error: argument --ca: Root: ca/...key: Private key does not exist.
@@ -139,7 +139,7 @@ Finally, verify that CRL and OCSP validation works:
 
 .. code-block:: console
 
-   $ docker-compose exec backend manage dump_ca "Root CA" > root.pem
+   $ docker-compose exec backend manage dump_ca Root > root.pem
    $ docker-compose exec backend manage dump_cert signed-in-backend.example.com > cert.pem
    $ openssl verify -CAfile root.pem -crl_download -crl_check cert.pem
    cert.pem: OK
@@ -217,11 +217,10 @@ environment variable here)::
    $ docker-compose build
    $ docker-compose up -d
    $ docker-compose exec backend manage createsuperuser
-   $ docker-compose exec backend manage init_ca \
-   >  --pathlen=1 Root "/CN=Root CA"
+   $ docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root"
    $ docker-compose exec backend manage init_ca \
    >  --acme-enable \
-   >  --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
+   >  --path=ca/shared/ --parent=Root Intermediate /CN=Intermediate
 
 You should be able to view the admin interface at http://localhost/admin. But the additional docker-compose
 override file adds a certbot container, that you can use to get certificates (note that certbot is already
