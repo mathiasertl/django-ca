@@ -88,6 +88,17 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
     @override_tmpcadir()
+    def test_with_bundle(self) -> None:
+        """Test outputting the whole certificate bundle."""
+
+        stdin = self.csr_pem.encode()
+        subject = Subject([("CN", "example.com")])
+        stdout, stderr = self.cmd("sign_cert", bundle=True, ca=self.ca, subject=subject, stdin=stdin)
+        cert = Certificate.objects.get()
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.bundle_as_pem}")
+        self.assertEqual(stderr, "")
+
+    @override_tmpcadir()
     def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
 

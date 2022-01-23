@@ -235,8 +235,8 @@ Create a private/public key pair for NGINX to use:
 
    root@host:~# openssl genrsa -out /etc/ssl/$HOSTNAME.key 4096
    root@host:~# openssl req -new -key /etc/ssl/$HOSTNAME.key -out /tmp/ca.csr -utf8 -batch
-   root@host:~# django-ca sign_cert --ca=Intermediate --csr=/tmp/ca.csr --webserver --subject /CN=$HOSTNAME
-   root@host:~# FORCE_USER=root django-ca dump_cert -b $HOSTNAME /etc/ssl/$HOSTNAME.pem
+   root@host:~# django-ca sign_cert --ca=Intermediate --csr=/tmp/ca.csr --bundle --webserver --subject /CN=$HOSTNAME \
+   >     > /etc/ssl/$HOSTNAME.pem
 
 Create DH parameters:
 

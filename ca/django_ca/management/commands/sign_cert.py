@@ -92,6 +92,9 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             metavar="FILE",
             help="The path to the certificate to sign, if ommitted, you will be be prompted.",
         )
+        parser.add_argument(
+            "-b", "--bundle", default=False, action="store_true", help="Output the whole certificate bundle."
+        )
 
         self.add_profile(
             parser,
@@ -108,6 +111,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         password: typing.Optional[bytes],
         cn_in_san: bool,
         csr_path: str,
+        bundle: bool,
         profile: typing.Optional[str],
         out: typing.Optional[str],
         **options: typing.Any,
@@ -167,8 +171,13 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         cert.watchers.add(*watchers)
 
+        if bundle is True:
+            output = cert.bundle_as_pem
+        else:
+            output = cert.pub.pem
+
         if out:
             with open(out, "w", encoding="ascii") as stream:
-                stream.write(cert.pub.pem)
+                stream.write(output)
         else:
-            self.stdout.write(cert.pub.pem)
+            self.stdout.write(output)

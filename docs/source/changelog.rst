@@ -24,6 +24,7 @@ ChangeLog
   `mobile Driver Licence <https://en.wikipedia.org/wiki/Mobile_driver%27s_license>`_.
 * Reworked :doc:`installation instructions <install>` to link to a set of quickstart guides dedicated to each
   installation option.
+* Add ``--bundle`` option to ``manage.py sign_cert`` to allow writing the whole certificate bundle.
 
 ACMEv2 support
 ==============
