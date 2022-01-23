@@ -546,6 +546,13 @@ Please create %(localsettings)s from %(example)s and try again."""
                 password = password.encode("utf-8")
             c.generate_ocsp_key(password=password)
 
+    # Set parent relationships of CAs
+    for cert_name, cert_data in certs.items():
+        if cert_data["type"] == "ca" and cert_data.get("parent"):
+            ca = CertificateAuthority.objects.get(name=cert_name)
+            ca.parent = CertificateAuthority.objects.get(name=cert_data["parent"])
+            ca.save()
+
     # create admin user for login
     User.objects.create_superuser("user", "user@example.com", "nopass")
 
