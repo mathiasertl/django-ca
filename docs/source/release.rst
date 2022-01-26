@@ -217,7 +217,7 @@ environment variable here)::
    $ docker-compose build
    $ docker-compose up -d
    $ docker-compose exec backend manage createsuperuser
-   $ docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root"
+   $ docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root
    $ docker-compose exec backend manage init_ca \
    >  --acme-enable \
    >  --path=ca/shared/ --parent=Root Intermediate /CN=Intermediate
