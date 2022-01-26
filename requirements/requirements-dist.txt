@@ -2,5 +2,5 @@ build==0.7.0
 twine==3.7.1
 wheel==0.37.1
 # >=45: setuptools_scm requires at least this version
-setuptools>=4
+setuptools>=45
 setuptools-scm==6.4.2
