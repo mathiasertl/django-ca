@@ -4,6 +4,21 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.21.0:
+
+************
+1.21.0 (TBR)
+************
+
+* Add support for ``idna==3.3``.
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Django 2.2.
+* Drop support for cryptography 3.3 and 3.4.
+* Drop support for Alpine 3.12 and 3.13.
+
 .. _changelog-1.20.0:
 
 *******************

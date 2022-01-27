@@ -31,7 +31,6 @@ from cryptography.x509.oid import NameOID
 from cryptography.x509.oid import ObjectIdentifier
 
 import django
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
