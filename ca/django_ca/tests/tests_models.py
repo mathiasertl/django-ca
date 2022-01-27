@@ -29,6 +29,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
@@ -62,7 +63,6 @@ from ..models import CertificateAuthority
 from ..models import Watcher
 from ..models import X509CertMixin
 from ..subject import Subject
-from ..typehints import PRIVATE_KEY_TYPES
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
 from .base import CERT_PEM_REGEX

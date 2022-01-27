@@ -33,7 +33,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
@@ -71,24 +70,6 @@ PrivateKeyTypes = Union[
     ec.EllipticCurvePrivateKey,
     ed25519.Ed25519PrivateKey,
 ]
-
-try:
-    # pylint: disable=ungrouped-imports; pylint wants us to group it with global imports
-    # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
-    from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES as PRIVATE_KEY_TYPES
-
-    # pylint: enable=useless-import-alias,ungrouped-imports
-except ImportError:  # pragma: only cryptography<35.0
-    # MYPY NOTE: Cannot re-assign type alias from above. We ignore the error here as mypy requires
-    #            cryptography>=35.0 anyway
-    # PYLINT NOTE: Name is given by import above
-    PRIVATE_KEY_TYPES = Union[  # type: ignore[misc]  # pylint: disable=invalid-name
-        rsa.RSAPrivateKey,
-        dsa.DSAPrivateKey,
-        ec.EllipticCurvePrivateKey,
-        ed25519.Ed25519PrivateKey,
-        ed448.Ed448PrivateKey,
-    ]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]

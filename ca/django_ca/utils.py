@@ -45,6 +45,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -55,7 +56,6 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .deprecation import RemovedInDjangoCA122Warning
-from .typehints import PRIVATE_KEY_TYPES
 from .typehints import Expires
 from .typehints import Literal
 from .typehints import ParsableGeneralName
@@ -194,11 +194,8 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     hashes.MD5.name: hashes.MD5,
     # hashes.BLAKE2b.name: hashes.BLAKE2b,
     # hashes.BLAKE2s.name: hashes.BLAKE2s,
-    # NOTE: SM3 is added in cryptography 35.0
-    # hashes.SM3.name: hashes.SM3,
+    hashes.SM3.name: hashes.SM3,
 }
-if hasattr(hashes, "SM3"):  # pragma: cryptography>=35.0 branch
-    HASH_ALGORITHM_NAMES[hashes.SM3.name] = hashes.SM3
 
 #: Mapping of canonical elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {

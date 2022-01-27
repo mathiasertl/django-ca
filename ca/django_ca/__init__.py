@@ -16,8 +16,3 @@ try:  # pragma: no cover
 except PackageNotFoundError:  # pragma: no cover
     # django-ca is not installed (e.g. running from a git clone)
     __version__ = __release__ = ""
-
-# Path to default Django app configuration
-# pylint: disable=invalid-name
-# The variable name is a Django standard name
-default_app_config = "django_ca.apps.DjangoCAConfig"  # pragma: only django<4.1

@@ -322,10 +322,6 @@ elif args.command == "code-quality":
     #   https://docs.djangoproject.com/en/4.0/releases/4.0/#miscellaneous
     py += ["-W", "ignore:The USE_L10N setting is deprecated."]  # pragma: only django<4.0
 
-    # Django 3.2 adds AppConfig discovery. Remove default_app_config once support for Django<3.2 is dropped.
-    #   https://docs.djangoproject.com/en/dev/releases/3.2/#automatic-appconfig-discovery
-    py += ["-W", "ignore:'django_ca' defines default_app_config"]  # pragma: only django<3.2
-
     cmd = py + ["manage.py", "check"]
     print(f"+ {' '.join(cmd)}")  # pragma: only py<3.8; use shlex.join() instead
     try:

@@ -96,9 +96,6 @@ class ConstantsTestCase(TestCase):
             [s for c in cls.__subclasses__() for s in self.get_subclasses(c)]
         )
 
-    @unittest.skipIf(
-        settings.CRYPTOGRAPHY_VERSION < (3, 4), "cg<3.4 does not define hashes as subclasses"
-    )  # pragma: cryptography<3.4  # remove skipIf when cg<3.4 is deprecated
     def test_hash_algorithms(self) -> None:
         """Test that ``utils.HASH_ALGORITHM_NAMES`` covers all known hash algorithms.
 
@@ -121,9 +118,6 @@ class ConstantsTestCase(TestCase):
         self.assertEqual(len(utils.HASH_ALGORITHM_NAMES), len(subclasses))
         self.assertEqual(utils.HASH_ALGORITHM_NAMES, {e.name: e for e in subclasses})
 
-    @unittest.skipIf(
-        settings.CRYPTOGRAPHY_VERSION < (3, 4), "cg<3.4 does not define hashes as subclasses"
-    )  # pragma: cryptography<3.4  # remove skipIf when cg<3.4 is deprecated
     def test_elliptic_curves(self) -> None:
         """Test that ``utils.HASH_ALGORITHM_NAMES`` covers all known elliptic curves.
 
