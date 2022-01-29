@@ -15,36 +15,6 @@
 
 """setuptools based setup.py file for django-ca."""
 
-import os
-import sys
-
-from setuptools import find_packages
 from setuptools import setup
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # directory of this file
-DOCS_DIR = os.path.join(BASE_DIR, "docs", "source")
-
-package_path = os.path.join(BASE_DIR, "ca")
-package_root = os.path.join(package_path, "django_ca")
-
-if os.path.exists(package_path):
-    sys.path.insert(0, package_path)
-
-
-def find_package_data(path):
-    """Find static package data for given path."""
-    data = []
-    prefix = len(package_root) + 1
-    for root, _dirs, files in os.walk(os.path.join(package_root, path)):
-        for file in files:
-            data.append(os.path.join(root, file)[prefix:])
-    return data
-
-
-package_data = find_package_data("static") + find_package_data("templates")
-
-setup(
-    packages=find_packages("ca", exclude=("ca", "django_ca.tests", "django_ca.tests.base")),
-    package_dir={"": "ca"},
-    package_data={"": package_data},
-)
+setup()

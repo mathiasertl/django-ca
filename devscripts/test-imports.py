@@ -149,6 +149,11 @@ except ImportError:
     pass
 
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
+if args.extra:
+    print("Checking extras:", ", ".join(sorted(args.extra)))
+else:
+    print("No extras checked.")
+
 if "acme" in args.extra:
     from django_ca.acme import messages
     from django_ca.acme import utils

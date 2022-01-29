@@ -1,18 +1,12 @@
-"""Default Django App configuration."""
+# WARNING: This module MUST NOT include any dependencies, as it is read by setup.py
 
-import sys
+# https://www.python.org/dev/peps/pep-0440/
+# https://www.python.org/dev/peps/pep-0396/
+# https://www.python.org/dev/peps/pep-0386/
+VERSION = (1, 20, 0, "dev", 1)
+VERSION = (1, 20, 0)
 
-if sys.version_info >= (3, 8):  # pragma: only py>=3.8
-    from importlib.metadata import PackageNotFoundError
-    from importlib.metadata import version
-else:  # pragma: only py<3.8
-    from importlib_metadata import PackageNotFoundError
-    from importlib_metadata import version
-
-
-try:  # pragma: no cover
-    __version__ = version("django-ca")
-    __release__ = ".".join(__version__.split(".")[:3])
-except PackageNotFoundError:  # pragma: no cover
-    # django-ca is not installed (e.g. running from a git clone)
-    __version__ = __release__ = ""
+# __version__ specified in PEP 0396, but we use the PEP 0440 format instead
+__version__ = ".".join([str(e) for e in VERSION[:3]])
+if len(VERSION) > 3:
+    __version__ += f".{''.join(str(e) for e in  VERSION[3:])}"

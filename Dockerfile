@@ -36,57 +36,6 @@ RUN --mount=type=cache,target=/root/.cache/pip/http \
 # Finally, copy sources
 COPY ca/ ca/
 
-###############################
-# Build sdist and wheel #
-###############################
-# Build artifacts are tested individually in later stages
-FROM build as dist-base
-RUN --mount=source=.git,target=.git,type=bind python -m build
-RUN twine check --strict dist/*
-RUN rm -rf ca/ setup.py setup.cfg MANIFEST.in
-COPY devscripts/test-imports.py ./
-
-##############
-# Test sdist #
-##############
-FROM dist-base as sdist-test
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django-ca*.tar.gz
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py
-
-############################
-# Test wheels (and extras) #
-############################
-FROM dist-base as wheel-test
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install dist/django_ca*.whl
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py
-
-FROM dist-base as wheel-test-acme
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[acme]
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py --extra=acme
-
-FROM dist-base as wheel-test-redis
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[redis]
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py --extra=redis
-
-FROM dist-base as wheel-test-celery
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[celery]
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py --extra=celery
-
-FROM dist-base as wheel-test-mysql
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[mysql]
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py --extra=mysql
-
-FROM dist-base as wheel-test-postgres
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install $(ls dist/django_ca*.whl)[postgres]
-ADD setup.cfg ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py --extra=postgres
-
 ##############
 # Test stage #
 ##############
@@ -146,13 +95,6 @@ RUN rm dev.py
 
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
 COPY --from=test /usr/src/django-ca/.coverage /tmp
-COPY --from=sdist-test /usr/src/django-ca/test-imports.py /tmp
-COPY --from=wheel-test /usr/src/django-ca/test-imports.py /tmp
-COPY --from=wheel-test-acme /usr/src/django-ca/test-imports.py /tmp
-COPY --from=wheel-test-redis /usr/src/django-ca/test-imports.py /tmp
-COPY --from=wheel-test-celery /usr/src/django-ca/test-imports.py /tmp
-COPY --from=wheel-test-mysql /usr/src/django-ca/test-imports.py /tmp
-COPY --from=wheel-test-postgres /usr/src/django-ca/test-imports.py /tmp
 
 ###############
 # final stage #
