@@ -4,6 +4,24 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.20.1:
+
+*******************
+1.20.1 (2022-01-29)
+*******************
+
+.. WARNING::
+
+   **docker-compose users:** Update from 1.18 or earlier? See :ref:`the update notes <update_119>` or you
+   might loose private keys!
+
+This is a pseudo-release to add the docker-compose file for the 1.20.0 release, which was missing in said
+release. There are no code changes otherwise. Thus no release artifacts (wheels, docker images etc) where
+produced for this release.
+
+* Add docker-compose file missing from the 1.20.0 release.
+* Switch the default branch on GitHub to ``main``.
+
 .. _changelog-1.20.0:
 
 *******************
