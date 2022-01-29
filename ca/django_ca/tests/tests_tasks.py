@@ -207,7 +207,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
             auth=self.auth, type=self.type, status=AcmeChallenge.STATUS_PROCESSING
         )
 
-        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        encoded = jose.json_util.encode_b64jose(self.chall.token.encode("utf-8"))
         thumbprint = self.account.thumbprint
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
@@ -352,7 +352,7 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
 
     def setUp(self) -> None:
         super().setUp()
-        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        encoded = jose.json_util.encode_b64jose(self.chall.token.encode("utf-8"))
         thumbprint = self.account.thumbprint
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
@@ -411,7 +411,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
 
     def setUp(self) -> None:
         super().setUp()
-        encoded = jose.encode_b64jose(self.chall.token.encode("utf-8"))
+        encoded = jose.json_util.encode_b64jose(self.chall.token.encode("utf-8"))
         thumbprint = self.account.thumbprint
         self.expected = f"{encoded}.{thumbprint}"
         self.url = f"http://{self.auth.value}/.well-known/acme-challenge/{encoded}"
@@ -427,15 +427,21 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
 
-        dns.resolver.reset_default_resolver()
+        # TYPE NOTE: Fixed in https://github.com/rthalley/dnspython/pull/773, dnspython>2.3.0
+        dns.resolver.reset_default_resolver()  # type: ignore[attr-defined]
         challenge = challenge or self.chall
         domain = self.auth.value
         if content is None:
             content = challenge.expected
 
-        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_cm:
+        # TYPE NOTE: Fixed in https://github.com/rthalley/dnspython/pull/773, dnspython>2.3.0
+        with mock.patch.object(
+            dns.resolver.default_resolver, "resolve", autospec=True  # type: ignore[attr-defined]
+        ) as resolve_cm:
             resolve_cm.return_value = [
-                TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content])
+                TXTBase(  # type: ignore[no-untyped-call,call-arg]
+                    dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content]
+                )
             ]
             yield resolve_cm
 

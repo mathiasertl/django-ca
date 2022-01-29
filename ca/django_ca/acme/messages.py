@@ -13,19 +13,9 @@
 
 """Specialized variants of ACME message classes."""
 
-from typing import TYPE_CHECKING
-from typing import List
-
 import josepy as jose
 from acme import fields
 from acme import messages
-
-# https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
-if TYPE_CHECKING:
-    IdentifiersType = jose.Field[List[str]]
-else:
-    IdentifiersType = jose.Field
-
 
 identifiers_decoder = messages.Order._fields["identifiers"].fdec  # pylint: disable=no-member; false positive
 
@@ -52,7 +42,7 @@ class NewOrder(messages.ResourceBody):
 
     resource_type = messages.NewOrder.resource_type
 
-    identifiers: IdentifiersType = jose.Field("identifiers", omitempty=False, decoder=identifiers_decoder)
+    identifiers = jose.json_util.Field("identifiers", omitempty=False, decoder=identifiers_decoder)
     not_before = fields.RFC3339Field("notBefore", omitempty=True)
     not_after = fields.RFC3339Field("notAfter", omitempty=True)
 
@@ -67,4 +57,4 @@ class CertificateRequest(messages.ResourceBody):
     """
 
     resource_type = messages.CertificateRequest.resource_type
-    csr = jose.Field("csr", decoder=jose.decode_csr, encoder=jose.encode_csr)
+    csr = jose.json_util.Field("csr", decoder=jose.json_util.decode_csr, encoder=jose.json_util.encode_csr)

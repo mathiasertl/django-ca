@@ -30,5 +30,5 @@ def parse_acme_csr(value: str) -> x509.CertificateSigningRequest:
     :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
         The CSR as used by cryptography.
     """
-    decoded = jose.decode_b64jose(value)
+    decoded = jose.json_util.decode_b64jose(value)
     return x509.load_der_x509_csr(decoded, default_backend())

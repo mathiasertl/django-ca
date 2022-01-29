@@ -66,7 +66,7 @@ from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import TestCaseMixin
 
-MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
+MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 
 
 class DirectoryTestCase(TestCaseMixin, TestCase):
@@ -349,7 +349,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)
         self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
-        return jose.decode_b64jose(response["replay-nonce"])
+        return jose.json_util.decode_b64jose(response["replay-nonce"])
 
     @contextmanager
     def mock_slug(self) -> typing.Iterator[str]:
@@ -428,7 +428,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     def acme(
         self,
         uri: str,
-        msg: typing.Union[jose.JSONObjectWithFields, bytes],
+        msg: typing.Union[jose.json_util.JSONObjectWithFields, bytes],
         cert: typing.Optional[PrivateKeyTypes] = None,
         kid: typing.Optional[str] = None,
         nonce: typing.Optional[bytes] = None,
@@ -450,10 +450,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         if post_kwargs is None:
             post_kwargs = {}
 
-        comparable = jose.ComparableRSAKey(cert)  # type: ignore[arg-type] # could also be DSA/EC key
-        key = jose.JWKRSA(key=comparable)
+        comparable = jose.util.ComparableRSAKey(cert)  # type: ignore[arg-type] # could also be DSA/EC key
+        key = jose.jwk.JWKRSA(key=comparable)
 
-        if isinstance(msg, jose.JSONObjectWithFields):
+        if isinstance(msg, jose.json_util.JSONObjectWithFields):
             payload = msg.to_json()
             if payload_cb is not None:
                 payload = payload_cb(payload)
@@ -461,7 +461,9 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         else:
             payload = msg
 
-        jws = acme.jws.JWS.sign(payload, key, jose.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid)
+        jws = acme.jws.JWS.sign(
+            payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
+        )
         return self.post(uri, jws.to_json(), **post_kwargs)
 
     def get_message(self, **kwargs: typing.Any) -> typing.Union[bytes, MessageTypeVar]:
@@ -1210,7 +1212,9 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
+class AcmeAuthorizationViewTestCase(
+    AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase
+):
     """Test creating a new order."""
 
     # NOTE: type parameter not required post-as-get requests
@@ -1252,13 +1256,13 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
                 {
                     "type": challenges[0].type,
                     "status": "pending",
-                    "token": jose.encode_b64jose(challenges[0].token.encode("utf-8")),
+                    "token": jose.json_util.encode_b64jose(challenges[0].token.encode("utf-8")),
                     "url": f"http://{self.SERVER_NAME}/django_ca/acme/{self.ca.serial}/chall/{slug0}/",
                 },
                 {
                     "type": challenges[1].type,
                     "status": "pending",
-                    "token": jose.encode_b64jose(challenges[1].token.encode("utf-8")),
+                    "token": jose.json_util.encode_b64jose(challenges[1].token.encode("utf-8")),
                     "url": f"http://{self.SERVER_NAME}/django_ca/acme/{self.ca.serial}/chall/{slug1}/",
                 },
             ],
@@ -1310,7 +1314,7 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
                     "type": challenges[0].type,
                     "status": "valid",
                     "validated": pyrfc3339.generate(timezone.now()),  # time is frozen anyway
-                    "token": jose.encode_b64jose(challenges[0].token.encode("utf-8")),
+                    "token": jose.json_util.encode_b64jose(challenges[0].token.encode("utf-8")),
                     "url": f"http://{self.SERVER_NAME}/django_ca/acme/{self.ca.serial}/chall/{slug}/",
                 },
             ],
@@ -1369,7 +1373,7 @@ class AcmeAuthorizationViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONOb
 
 @freeze_time(timestamps["everything_valid"])
 class AcmeChallengeViewTestCase(
-    AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TransactionTestCase
+    AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TransactionTestCase
 ):
     """Test retrieving a challenge."""
 
@@ -1413,7 +1417,7 @@ class AcmeChallengeViewTestCase(
             {
                 "status": "processing",
                 "type": self.challenge.type,
-                "token": jose.encode_b64jose(self.challenge.token.encode()),
+                "token": jose.json_util.encode_b64jose(self.challenge.token.encode()),
                 "url": f"http://{self.SERVER_NAME}{self.challenge.acme_url}",
             },
         )
@@ -1445,7 +1449,7 @@ class AcmeChallengeViewTestCase(
             {
                 "status": "valid",
                 "type": self.challenge.type,
-                "token": jose.encode_b64jose(self.challenge.token.encode()),
+                "token": jose.json_util.encode_b64jose(self.challenge.token.encode()),
                 "url": f"http://{self.SERVER_NAME}{self.challenge.acme_url}",
             },
         )
@@ -1507,7 +1511,7 @@ class AcmeOrderFinalizeViewTestCase(
     ) -> CertificateRequest:
         """Get a message for the given cryptography CSR object."""
         req = X509Req.from_cryptography(csr)
-        return CertificateRequest(csr=jose.ComparableX509(req))
+        return CertificateRequest(csr=jose.util.ComparableX509(req))
 
     @property
     def message(self) -> CertificateRequest:
@@ -1782,7 +1786,7 @@ class AcmeOrderFinalizeViewTestCase(
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
+class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase):
     """Test retrieving an order."""
 
     # NOTE: type parameter not required post-as-get requests
@@ -1946,7 +1950,9 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWith
 
 
 @freeze_time(timestamps["everything_valid"])
-class AcmeCertificateViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.JSONObjectWithFields], TestCase):
+class AcmeCertificateViewTestCase(
+    AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase
+):
     """Test retrieving a certificate."""
 
     # NOTE: This is the request that does *not* return a JSON object (but the full cert), so the generic

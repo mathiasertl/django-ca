@@ -2,25 +2,27 @@ import typing
 import josepy as jose
 
 
-class Header(jose.Header):
-    ...
+class Header(jose.jws.Header):
+    nonce: typing.Optional[bytes]
+    url: typing.Optional[str]
 
 
-class Signature(jose.Signature):
+class Signature(jose.jws.Signature):
     combined: Header
 
 
-class JWS(jose.JWS):
+class JWS(jose.jws.JWS):
+    # TYPE NOTE: ACME.jws REALLY overrides with a different signature
     @classmethod
-    def sign(
+    def sign(  # type: ignore[override]
         cls,
         payload: bytes,
-        key: jose.JWK,
-        alg: jose.JWASignature,
+        key: jose.jwk.JWK,
+        alg: jose.jwa.JWASignature,
         nonce: bytes,
         url: typing.Optional[str] = None,
         kid: typing.Optional[str] = None,
-    ) -> jose.JWS:
+    ) -> jose.jws.JWS:
         ...
 
     @property

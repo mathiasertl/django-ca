@@ -1,8 +1,7 @@
 # pylint: skip-file
-from datetime import datetime
 
-from josepy import Field
+from josepy.json_util import Field
 
 
-class RFC3339Field(Field[datetime]):
+class RFC3339Field(Field):
     ...

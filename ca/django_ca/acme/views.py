@@ -99,7 +99,7 @@ from .responses import AcmeResponseUnsupportedMediaType
 from .utils import parse_acme_csr
 
 log = logging.getLogger(__name__)
-MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.JSONObjectWithFields)
+MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 DirectoryMetaAlias = Dict[str, Union[str, List[str]]]
 
 
@@ -181,7 +181,7 @@ class AcmeDirectory(View):
 
         # Get some random data into the directory view, as explained in the Let's Encrypt directory:
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
-        rnd = jose.encode_b64jose(secrets.token_bytes(16))
+        rnd = jose.json_util.encode_b64jose(secrets.token_bytes(16))
 
         directory: Dict[str, Union[str, DirectoryMetaAlias]] = {
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
@@ -221,7 +221,7 @@ class AcmeGetNonceViewMixin:
         """Get a random Nonce and add it to the cache."""
 
         data = secrets.token_bytes(self.nonce_length)
-        nonce = jose.encode_b64jose(data)
+        nonce = jose.json_util.encode_b64jose(data)
         cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
         cache.set(cache_key, 0)
         return nonce
@@ -247,7 +247,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     """Base class for all ACME views."""
 
     requires_key = False  # True if we require a full key (-> new accounts)
-    jwk: jose.JWK
+    jwk: jose.jwk.JWK
     jws: acme.jws.JWS
 
     @abc.abstractmethod
@@ -329,8 +329,11 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         # self.prepared['body'] = json.loads(request.body.decode('utf-8'))
 
         try:
-            self.jws = acme.jws.JWS.json_loads(request.body)
-        except (jose.DeserializationError, TypeError):
+            # TYPE NOTE: cast and type fixed in https://github.com/certbot/josepy/pull/127
+            self.jws = typing.cast(
+                acme.jws.JWS, acme.jws.JWS.json_loads(request.body)  # type: ignore[arg-type]
+            )
+        except (jose.errors.DeserializationError, TypeError):
             return AcmeResponseMalformed(message="Could not parse JWS token.")
 
         combined = self.jws.signature.combined
@@ -370,7 +373,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # self.prepared['pem'] = account.pem
             # self.prepared['account_pk'] = account.pk
 
-            self.jwk = jose.JWK.load(account.pem.encode("utf-8"))  # load JWK from database
+            self.jwk = jose.jwk.JWK.load(account.pem.encode("utf-8"))  # load JWK from database
             self.account = account
         else:
             # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
@@ -393,7 +396,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             return AcmeResponseMalformed(message="JWS signature invalid.")
 
         # self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
-        if not self.validate_nonce(jose.encode_b64jose(combined.nonce)):
+        if combined.nonce is None or not self.validate_nonce(jose.json_util.encode_b64jose(combined.nonce)):
             # ... "nonce"
             return AcmeResponseBadNonce()
 
@@ -447,9 +450,12 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
 
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         try:
-            message = self.message_cls.json_loads(self.jws.payload)
+            # TYPE NOTE: cast and type fixed in https://github.com/certbot/josepy/pull/127
+            message = typing.cast(
+                MessageTypeVar, self.message_cls.json_loads(self.jws.payload)  # type: ignore[arg-type]
+            )
             log.debug("ACME message: %s", message)
-        except jose.DeserializationError as e:
+        except jose.errors.DeserializationError as e:
             return AcmeResponseMalformedPayload(message=", ".join(e.args))
 
         return self.acme_request(message, slug)
@@ -518,7 +524,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
             .decode("utf-8")
             .strip()
         )
-        thumbprint = jose.encode_b64jose(self.jwk.thumbprint())
+        thumbprint = jose.json_util.encode_b64jose(self.jwk.thumbprint())
 
         # RFC 8555, section 7.3:
         #

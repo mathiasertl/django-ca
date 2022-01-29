@@ -8,11 +8,11 @@ from acme.mixins import ResourceMixin
 from acme.mixins import TypeMixin
 
 
-class Challenge(jose.TypedJSONObjectWithFields):
+class Challenge(jose.json_util.TypedJSONObjectWithFields):
     ...
 
 
-class ChallengeResponse(ResourceMixin, TypeMixin, jose.TypedJSONObjectWithFields):
+class ChallengeResponse(ResourceMixin, TypeMixin, jose.json_util.TypedJSONObjectWithFields):
     ...
 
 

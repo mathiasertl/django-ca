@@ -1,4 +1,5 @@
 # pylint: skip-file
+from abc import ABCMeta
 from collections.abc import Hashable
 from datetime import datetime
 from typing import Any
@@ -13,7 +14,7 @@ from .challenges import Challenge
 from .mixins import ResourceMixin
 
 
-class _Constant(jose.JSONDeSerializable, Hashable):
+class _Constant(jose.interfaces.JSONDeSerializable, Hashable, metaclass=ABCMeta):
     POSSIBLE_NAMES: Dict[str, "_Constant"]
     name: str
 
@@ -24,15 +25,15 @@ class _Constant(jose.JSONDeSerializable, Hashable):
         ...
 
 
-class Status(_Constant):
+class Status(_Constant, metaclass=ABCMeta):
     ...
 
 
-class IdentifierType(_Constant):
+class IdentifierType(_Constant, metaclass=ABCMeta):
     ...
 
 
-class Identifier(jose.JSONObjectWithFields):
+class Identifier(jose.json_util.JSONObjectWithFields):
     typ: IdentifierType
     value: str
 
@@ -40,7 +41,7 @@ class Identifier(jose.JSONObjectWithFields):
         ...
 
 
-class ResourceBody(jose.JSONObjectWithFields):
+class ResourceBody(jose.json_util.JSONObjectWithFields):
     resource_type: str
 
 
@@ -75,7 +76,7 @@ class Authorization(ResourceBody):
     ...
 
 
-class CertificateRequest(ResourceMixin, jose.JSONObjectWithFields):
+class CertificateRequest(ResourceMixin, jose.json_util.JSONObjectWithFields):
     resource_type: str
 
 
