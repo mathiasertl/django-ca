@@ -15,13 +15,10 @@
 
 import logging
 
-from ..models import AcmeChallenge
+import dns.exception
+from dns import resolver
 
-try:
-    import dns.exception
-    from dns import resolver
-except ImportError:  # pragma: no cover
-    resolver = None  # type: ignore[assignment]
+from ..models import AcmeChallenge
 
 log = logging.getLogger(__name__)
 
@@ -36,9 +33,6 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
     timeout: int, optional
         Timeout for DNS queries.
     """
-    if resolver is None:
-        log.error("Cannot validate DNS-01 challenge: dnspython is not installed")
-        return False
     if challenge.type != AcmeChallenge.TYPE_DNS_01:
         raise ValueError("This function can only validate DNS-01 challenges")
 

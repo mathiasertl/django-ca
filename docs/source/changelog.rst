@@ -10,6 +10,7 @@ ChangeLog
 1.21.0 (TBR)
 ************
 
+* Dependencies for ACMEv2 are now non-optional and the ``acme`` extra is now empty.
 * Add support for ``idna==3.3``.
 
 Backwards incompatible changes
@@ -18,6 +19,11 @@ Backwards incompatible changes
 * Drop support for Django 2.2.
 * Drop support for cryptography 3.3 and 3.4.
 * Drop support for Alpine 3.12 and 3.13.
+
+Deprecation notices
+===================
+
+* The ``aacme`` extra will be removed in ``django-ca==1.23.0``.
 
 .. _changelog-1.20.1:
 

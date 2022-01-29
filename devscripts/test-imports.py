@@ -106,6 +106,9 @@ from django_ca import subject
 from django_ca import utils
 from django_ca import views
 from django_ca.acme import constants
+from django_ca.acme import messages
+from django_ca.acme import utils
+from django_ca.acme import views
 from django_ca.extensions import Extension
 
 # Test if (some) templates can be loaded
@@ -154,10 +157,6 @@ if args.extra:
 else:
     print("No extras checked.")
 
-if "acme" in args.extra:
-    from django_ca.acme import messages
-    from django_ca.acme import utils
-    from django_ca.acme import views
 if "celery" in args.extra:
     from django_ca import tasks
 if "redis" in args.extra:

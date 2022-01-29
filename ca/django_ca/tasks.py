@@ -21,6 +21,8 @@ import typing
 from datetime import timedelta
 from http import HTTPStatus
 
+import requests
+
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
@@ -28,6 +30,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import ca_settings
+from .acme.validation import validate_dns_01
 from .extensions import SubjectAlternativeName
 from .models import AcmeAuthorization
 from .models import AcmeCertificate
@@ -56,16 +59,6 @@ except ImportError:
         # func.apply_async = lambda *a, **kw: func(*a, **kw)
         func.delay = func  # type: ignore[attr-defined]
         return typing.cast("Proxy[FuncTypeVar]", func)
-
-
-# requests and josepy are optional dependencies for acme tasks
-try:
-    import josepy as jose
-    import requests
-
-    from .acme.validation import validate_dns_01
-except ImportError:  # pragma: no cover
-    jose = requests = validate_dns_01 = None  # type: ignore[assignment]
 
 
 def run_task(task: "Proxy[FuncTypeVar]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
@@ -142,10 +135,6 @@ def acme_validate_challenge(challenge_pk: int) -> None:
     """Validate an ACME challenge."""
     if not ca_settings.CA_ENABLE_ACME:
         log.error("ACME is not enabled.")
-        return
-
-    if jose is None:  # pragma: no cover
-        log.error("josepy is not installed, cannot do challenge validation.")
         return
 
     try:

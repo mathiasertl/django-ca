@@ -247,13 +247,3 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
             validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_HTTP_01))
         with self.assertRaisesRegex(ValueError, r"^This function can only validate DNS-01 challenges$"):
             validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_TLS_ALPN_01))
-
-    def test_no_dnspython(self) -> None:
-        """Test DNS challenge without dnspython being installed."""
-        with mock.patch("django_ca.acme.validation.resolver", None), self.assertLogs() as logcm:
-            validation.validate_dns_01(self.chall)
-
-        self.assertEqual(
-            logcm.output,
-            ["ERROR:django_ca.acme.validation:Cannot validate DNS-01 challenge: dnspython is not installed"],
-        )

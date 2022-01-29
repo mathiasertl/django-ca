@@ -36,6 +36,10 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
+import josepy as jose
+from acme import challenges
+from acme import messages
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -138,14 +142,6 @@ from .utils import read_file
 from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
-
-try:
-    # Optional ACME imports
-    import josepy as jose
-    from acme import challenges
-    from acme import messages
-except ImportError:  # pragma: nocover
-    jose = challenges = messages = None  # type: ignore[assignment]
 
 
 def acme_slug() -> str:
