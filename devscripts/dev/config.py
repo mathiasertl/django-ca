@@ -41,8 +41,8 @@ CONFIG["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in CONFIG["
 CONFIG["cryptography-major"] = [minor_to_major(cgver) for cgver in CONFIG["cryptography"]]
 CONFIG["acme-map"] = {minor_to_major(acmever): acmever for acmever in CONFIG["acme"]}
 CONFIG["acme-major"] = [minor_to_major(acmever) for acmever in CONFIG["acme"]]
-CONFIG["idna-map"] = {minor_to_major(idnaver): idnaver for idnaver in CONFIG["idna"]}
-CONFIG["idna-major"] = [minor_to_major(idnaver) for idnaver in CONFIG["idna"]]
+CONFIG["josepy-map"] = {minor_to_major(josepyver): josepyver for josepyver in CONFIG["josepy"]}
+CONFIG["josepy-major"] = [minor_to_major(josepyver) for josepyver in CONFIG["josepy"]]
 
 DOCKER_CONFIG = FULL_CONFIG["django-ca"].setdefault("docker", {})
 _alpine_images = DOCKER_CONFIG.setdefault("alpine-images", [])

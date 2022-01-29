@@ -11,7 +11,8 @@ ChangeLog
 ************
 
 * Dependencies for ACMEv2 are now non-optional and the ``acme`` extra is now empty.
-* Add support for ``idna==3.3``.
+* Stop testing individual versions of `idna <https://pypi.org/project/idna/>`_. django-ca uses a minimal
+  subset of basic functions that are unlikely to break.
 
 Backwards incompatible changes
 ==============================
