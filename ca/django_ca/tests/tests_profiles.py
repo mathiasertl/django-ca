@@ -26,7 +26,6 @@ from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA121Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
@@ -270,13 +269,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 certs["child-cert"]["subject_key_identifier"],
             ],
         )
-
-    def test_issuer_deprecation(self) -> None:
-        """Test the issuer_name deprecation introduced in django-ca 1.19."""
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA121Warning, "issuer_name profile parameter is deprecated"
-        ):
-            Profile("example", subject=Subject(), issuer_name=Subject())
 
     @override_tmpcadir()
     def test_overrides(self) -> None:

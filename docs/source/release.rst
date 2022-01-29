@@ -174,7 +174,6 @@ Test update
      DJANGO_CA_CA_ENABLE_ACME=true
      POSTGRES_PASSWORD=mysecretpassword
 
-* If testing ``django_ca<=1.17.3``, update image versions :file:`docker-compose.yml`.
 * Start the old version with::
 
      $ DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d
@@ -277,9 +276,12 @@ Release process
 After a release
 ***************
 
-* Update :file:`django_ca/deprecation.py`.
-* Drop support for older software versions in the ``[django-ca.release]`` section of in
-  :file:`pyproject.toml`.
+* Update :file:`django_ca/deprecation.py` and remove code marked by such warnings.
+* Search for deprecation comments that could be removed:: 
+
+      $ grep -A 3 -r 'deprecated:' docs/source/ ca/
+
+* Drop support for older software versions in the ``[django-ca.release]`` section of :file:`pyproject.toml`.
 * Run :command:`devscripts/validate-state.py` and fix any errors.
 * Update :file:`docker-compose.yml` to use the ``latest`` version of **django-ca**.
 * Start new changelog entry in :file:`docs/source/changelog.rst`.

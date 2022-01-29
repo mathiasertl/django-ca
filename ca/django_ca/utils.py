@@ -311,8 +311,7 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
 
     .. deprecated:: 1.20.0
 
-       Passing a list of two-tuples is deprecated as of 1.20.0 and the functionality will be removed in
-       ``django_ca==1.22``.
+       Passing a list of two-tuples is deprecated. The functionality will be removed in ``django_ca==1.22``.
 
     Examples::
 
@@ -345,8 +344,7 @@ def format_relative_name(name: x509.RelativeDistinguishedName) -> str:
 
     .. deprecated:: 1.20.0
 
-       This function is deprecated in favor of ``format_name()``, which provides identical functionality. This
-       function will be removed in ``django_ca==1.22``.
+       Use ``format_name()`` instead. This function will be removed in ``django_ca==1.22``.
     """
     warnings.warn(
         "This function is deprecated, use format_name() instead.",
@@ -542,8 +540,8 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
 
     .. deprecated:: 1.20.0
 
-       This function has been renamed to :py:func:`~django_ca.utils.parse_name_x509`. The old name will be
-       removed in ``django_ca==1.22``.
+       This function was renamed to :py:func:`~django_ca.utils.parse_name_x509`. The old name will be removed
+       in ``django_ca==1.22``.
     """
 
     warnings.warn(
