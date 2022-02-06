@@ -493,7 +493,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Assert that SystemExit is raised."""
-        with self.assertRaisesRegex(SystemExit, fr"^{code}$") as excm:
+        with self.assertRaisesRegex(SystemExit, rf"^{code}$") as excm:
             yield
         self.assertEqual(excm.exception.args, (code,))
 
