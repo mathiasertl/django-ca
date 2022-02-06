@@ -28,7 +28,6 @@ from unittest.mock import patch
 from six.moves import reload_module
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -173,7 +172,7 @@ def create_csr(key_path, path, subject="/CN=ignored.example.com"):
 
     with open(path) as stream:
         csr = stream.read()
-    return x509.load_pem_x509_csr(csr.encode("utf-8"), default_backend())
+    return x509.load_pem_x509_csr(csr.encode("utf-8"))
 
 
 def update_cert_data(cert, data):
@@ -274,7 +273,7 @@ def copy_cert(cert, data, key_path, csr_path):
 
     with open(key_dest, "rb") as stream:
         priv_key = stream.read()
-    priv_key = load_pem_private_key(priv_key, None, default_backend())
+    priv_key = load_pem_private_key(priv_key, None)
     key_der = priv_key.private_bytes(
         encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
     )
@@ -765,9 +764,7 @@ if not args.only_contrib:
             builder = builder.issuer_name(ca.pub.loaded.subject)
             builder = builder.public_key(csr.public_key())
 
-            x509_cert = builder.sign(
-                private_key=ca.key(pwd), algorithm=hashes.SHA256(), backend=default_backend()
-            )
+            x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256())
             cert = Certificate(ca=ca)
             cert.update_certificate(x509_cert)
             copy_cert(cert, data[name], key_path, csr_path)
@@ -866,7 +863,7 @@ if args.generate_contrib:
         with open(os.path.join(_sphinx_dir, "ca", filename), "rb") as stream:
             pem = stream.read()
 
-        parsed = x509.load_pem_x509_certificate(pem, default_backend())
+        parsed = x509.load_pem_x509_certificate(pem)
         ca = CertificateAuthority(name=name)
         ca.update_certificate(parsed)
 
@@ -886,7 +883,7 @@ if args.generate_contrib:
         with open(os.path.join(_sphinx_dir, "cert", filename), "rb") as stream:
             pem = stream.read()
 
-        parsed = x509.load_pem_x509_certificate(pem, default_backend())
+        parsed = x509.load_pem_x509_certificate(pem)
         cert = Certificate()
         cert.update_certificate(parsed)
         update_contrib(data, cert, name, filename)

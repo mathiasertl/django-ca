@@ -27,7 +27,6 @@ from unittest.mock import patch
 
 import cryptography
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -68,7 +67,7 @@ def _load_key(data: typing.Dict[typing.Any, typing.Any]) -> KeyDict:
     with open(path, "rb") as stream:
         raw = stream.read()
 
-    parsed = serialization.load_pem_private_key(raw, password=data.get("password"), backend=default_backend())
+    parsed = serialization.load_pem_private_key(raw, password=data.get("password"))
     return {
         "pem": raw.decode("utf-8"),
         "parsed": parsed,  # type: ignore[typeddict-item]  # we do not support all key types
@@ -82,7 +81,7 @@ def _load_csr(data: typing.Dict[typing.Any, typing.Any]) -> CsrDict:
     with open(path, "rb") as stream:
         raw = stream.read().strip()
 
-    parsed = x509.load_pem_x509_csr(raw, default_backend())
+    parsed = x509.load_pem_x509_csr(raw)
     return {
         "pem": raw.decode("utf-8"),
         "parsed": parsed,
@@ -99,7 +98,7 @@ def _load_pub(data: typing.Dict[typing.Any, typing.Any]) -> PubDict:
 
     pub_data: PubDict = {
         "pem": pem.decode("utf-8"),
-        "parsed": x509.load_pem_x509_certificate(pem, default_backend()),
+        "parsed": x509.load_pem_x509_certificate(pem),
     }
 
     if data.get("pub_der_filename"):
@@ -108,7 +107,7 @@ def _load_pub(data: typing.Dict[typing.Any, typing.Any]) -> PubDict:
             der = stream.read().replace(b"\r\n", b"\n")
         pub_data["der"] = der
         # Fails for alt-extensions since alternative AKI was added
-        # pub_data['der_parsed'] = x509.load_der_x509_certificate(der, default_backend()),
+        # pub_data['der_parsed'] = x509.load_der_x509_certificate(der),
 
     return pub_data
 

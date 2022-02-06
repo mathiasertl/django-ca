@@ -16,7 +16,6 @@
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import NameOID
 
 from django import forms
@@ -86,7 +85,7 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
             raise forms.ValidationError(mark_safe(self.simple_validation_error))
         try:
-            return x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
+            return x509.load_pem_x509_csr(value.encode("utf-8"))
         except ValueError as ex:
             raise forms.ValidationError(ex) from ex
 

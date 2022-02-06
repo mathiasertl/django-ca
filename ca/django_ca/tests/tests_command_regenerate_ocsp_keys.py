@@ -16,7 +16,6 @@
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
@@ -57,12 +56,12 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
 
         with ca_storage.open(priv_path, "rb") as stream:
             priv = stream.read()
-        priv = load_pem_private_key(priv, password, default_backend())
+        priv = load_pem_private_key(priv, password)
         self.assertIsInstance(priv, key_type)
 
         with ca_storage.open(cert_path, "rb") as stream:
             cert = stream.read()
-        cert = x509.load_pem_x509_certificate(cert, default_backend())
+        cert = x509.load_pem_x509_certificate(cert)
         self.assertIsInstance(cert, x509.Certificate)
 
         cert_qs = Certificate.objects.filter(ca=ca).exclude(pk__in=self.existing_certs)

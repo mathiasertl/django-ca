@@ -14,7 +14,6 @@
 """Test the cache_crls management command."""
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -48,12 +47,12 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+            crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsNotNone(crl)
             self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
 
             key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
-            crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+            crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsNotNone(crl)
 
     @override_tmpcadir()
@@ -65,10 +64,10 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
         key = get_crl_cache_key(self.ca.serial, hashes.SHA512(), Encoding.DER, "ca")
-        crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+        crl = x509.load_der_x509_crl(cache.get(key))
         self.assertIsNotNone(crl)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
 
         key = get_crl_cache_key(self.ca.serial, hashes.SHA512(), Encoding.DER, "user")
-        crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+        crl = x509.load_der_x509_crl(cache.get(key))
         self.assertIsNotNone(crl)

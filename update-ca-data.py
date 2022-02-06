@@ -23,7 +23,6 @@ import os
 from tabulate import tabulate
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
 import common
@@ -308,7 +307,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
             this_cert_values[cert_key] = [""]
 
         with open(os.path.join(dirname, cert_filename), "rb") as cert_stream:
-            cert = x509.load_pem_x509_certificate(cert_stream.read(), backend=default_backend())
+            cert = x509.load_pem_x509_certificate(cert_stream.read())
 
         this_cert_values["subject"] = ["``%s``" % format_name(cert.subject)]
         this_cert_values["issuer"] = ["``%s``" % format_name(cert.issuer)]
@@ -585,7 +584,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
             this_crl_values[crl_key] = [""] * (len(crl_values[crl_key][0]) - 1)
 
         with open(os.path.join(crl_dir, crl_filename), "rb") as crl_stream:
-            crl = x509.load_der_x509_crl(crl_stream.read(), backend=default_backend())
+            crl = x509.load_der_x509_crl(crl_stream.read())
 
         # add info
         this_crl_values["crl_info"] = (

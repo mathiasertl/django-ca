@@ -19,7 +19,6 @@ from datetime import timedelta
 from io import BytesIO
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import CRLEntryExtensionOID
 
@@ -55,7 +54,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
@@ -71,7 +70,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
         with open(path, "rb") as stream:
-            crl = x509.load_pem_x509_crl(stream.read(), default_backend())
+            crl = x509.load_pem_x509_crl(stream.read())
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
@@ -106,7 +105,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         )
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
@@ -122,7 +121,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
@@ -138,7 +137,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
@@ -152,7 +151,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO()
             )
-            crl = x509.load_pem_x509_crl(stdout, default_backend())
+            crl = x509.load_pem_x509_crl(stdout)
             self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
             self.assertEqual(len(list(crl)), 1)
             self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
@@ -172,7 +171,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
@@ -195,7 +194,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
@@ -205,7 +204,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, child.pub.loaded.serial_number)
@@ -223,7 +222,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, ca_crl=True, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"WARNING: --ca-crl is deprecated, use --scope=ca instead.\n")
 
-        crl = x509.load_pem_x509_crl(stdout, default_backend())
+        crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 

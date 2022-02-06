@@ -21,7 +21,6 @@ import os
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
@@ -118,10 +117,10 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         # load public key
         try:
-            pem_loaded = x509.load_pem_x509_certificate(pem_data, default_backend())
+            pem_loaded = x509.load_pem_x509_certificate(pem_data)
         except Exception:  # pylint: disable=broad-except
             try:
-                pem_loaded = x509.load_der_x509_certificate(pem_data, default_backend())
+                pem_loaded = x509.load_der_x509_certificate(pem_data)
             except Exception as ex:
                 raise CommandError("Unable to load public key.") from ex
         ca.update_certificate(pem_loaded)
@@ -130,10 +129,10 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         # load private key
         try:
-            key_loaded = serialization.load_pem_private_key(key_data, import_password, default_backend())
+            key_loaded = serialization.load_pem_private_key(key_data, import_password)
         except Exception:  # pylint: disable=broad-except
             try:
-                key_loaded = serialization.load_der_private_key(key_data, import_password, default_backend())
+                key_loaded = serialization.load_der_private_key(key_data, import_password)
             except Exception as ex:
                 raise CommandError("Unable to load private key.") from ex
 

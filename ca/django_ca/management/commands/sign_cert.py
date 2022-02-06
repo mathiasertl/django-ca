@@ -21,7 +21,6 @@ import typing
 from datetime import timedelta
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -150,9 +149,9 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr_bytes = csr_stream.read()
 
         if csr_bytes.startswith(b"-----BEGIN CERTIFICATE REQUEST-----"):
-            csr = x509.load_pem_x509_csr(csr_bytes, default_backend())
+            csr = x509.load_pem_x509_csr(csr_bytes)
         else:
-            csr = x509.load_der_x509_csr(csr_bytes, default_backend())
+            csr = x509.load_der_x509_csr(csr_bytes)
 
         try:
             cert = Certificate.objects.create_cert(

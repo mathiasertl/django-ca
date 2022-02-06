@@ -27,7 +27,6 @@ from http import HTTPStatus
 from types import MethodType
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
@@ -835,7 +834,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             raise PermissionDenied
 
         try:
-            csr = x509.load_pem_x509_csr(request.POST["csr"].encode("ascii"), default_backend())
+            csr = x509.load_pem_x509_csr(request.POST["csr"].encode("ascii"))
         except Exception as e:  # pylint: disable=broad-except; docs don't list possible exceptions
             return JsonResponse({"message": str(e)}, status=HTTPStatus.BAD_REQUEST)
 

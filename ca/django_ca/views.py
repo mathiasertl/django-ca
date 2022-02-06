@@ -29,7 +29,6 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
@@ -186,7 +185,7 @@ class OCSPView(View):
     def get_responder_key(self) -> PrivateKeyTypes:
         """Get the private key used to sign OCSP responses."""
         key = self.get_responder_key_data()
-        loaded_key = serialization.load_pem_private_key(key, None, default_backend())
+        loaded_key = serialization.load_pem_private_key(key, None)
 
         # Check that the private key is of a supported type
         if not isinstance(loaded_key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey)):
@@ -219,7 +218,7 @@ class OCSPView(View):
                 )
             responder_cert = read_file(self.responder_cert)
 
-        return load_pem_x509_certificate(responder_cert, default_backend())
+        return load_pem_x509_certificate(responder_cert)
 
     def get_ca(self) -> CertificateAuthority:
         """Get the certificate authority for the request."""
@@ -348,7 +347,7 @@ class GenericOCSPView(OCSPView):
     def get_responder_cert(self) -> x509.Certificate:
         serial = self.auto_ca.serial.replace(":", "")
         data = read_file(f"ocsp/{serial}.pem")
-        return load_pem_x509_certificate(data, default_backend())
+        return load_pem_x509_certificate(data)
 
 
 class GenericCAIssuersView(View):

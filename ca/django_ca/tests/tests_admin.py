@@ -19,7 +19,6 @@ from http import HTTPStatus
 from unittest import mock
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -266,14 +265,12 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @classmethod
     def create_csr(cls, subject: str) -> typing.Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
-        private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=1024, backend=default_backend()
-        )
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
         builder = x509.CertificateSigningRequestBuilder()
 
         builder = builder.subject_name(x509_name(subject))
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
-        request = builder.sign(private_key, hashes.SHA256(), default_backend())
+        request = builder.sign(private_key, hashes.SHA256())
 
         return private_key, request
 

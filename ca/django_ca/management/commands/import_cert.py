@@ -20,7 +20,6 @@ import argparse
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -51,10 +50,10 @@ The authority that that signed the certificate must exist in the database."""
 
         # load public key
         try:
-            pub_loaded = x509.load_pem_x509_certificate(pub_data, default_backend())
+            pub_loaded = x509.load_pem_x509_certificate(pub_data)
         except Exception:  # pylint: disable=broad-except
             try:
-                pub_loaded = x509.load_der_x509_certificate(pub_data, default_backend())
+                pub_loaded = x509.load_der_x509_certificate(pub_data)
             except Exception as ex:
                 raise CommandError("Unable to load public key.") from ex
 

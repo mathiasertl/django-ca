@@ -29,7 +29,6 @@ from typing import TypeVar
 from typing import Union
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
@@ -510,9 +509,7 @@ class CertificateAuthorityManager(
         if extra_extensions:
             builder = self._extra_extensions(builder, extra_extensions)
 
-        certificate = builder.sign(
-            private_key=private_sign_key, algorithm=algorithm, backend=default_backend()
-        )
+        certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm)
 
         # Normalize extensions for create()
         crl_url = "\n".join(crl_url)

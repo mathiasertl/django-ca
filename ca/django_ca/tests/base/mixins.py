@@ -30,7 +30,6 @@ from OpenSSL.crypto import X509StoreContext
 from OpenSSL.crypto import load_certificate
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -254,9 +253,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
 
         if encoding == Encoding.PEM:
-            parsed_crl = x509.load_pem_x509_crl(crl, default_backend())
+            parsed_crl = x509.load_pem_x509_crl(crl)
         else:
-            parsed_crl = x509.load_der_x509_crl(crl, default_backend())
+            parsed_crl = x509.load_der_x509_crl(crl)
 
         public_key = signer.pub.loaded.public_key()
         if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover

@@ -16,7 +16,6 @@
 import josepy as jose
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 
 
 def parse_acme_csr(value: str) -> x509.CertificateSigningRequest:
@@ -31,4 +30,4 @@ def parse_acme_csr(value: str) -> x509.CertificateSigningRequest:
         The CSR as used by cryptography.
     """
     decoded = jose.json_util.decode_b64jose(value)
-    return x509.load_der_x509_csr(decoded, default_backend())
+    return x509.load_der_x509_csr(decoded)

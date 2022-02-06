@@ -38,7 +38,6 @@ import idna
 
 import asn1crypto.core
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -768,12 +767,12 @@ def generate_private_key(
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
 
-        return dsa.generate_private_key(key_size=key_size, backend=default_backend())
+        return dsa.generate_private_key(key_size=key_size)
     if key_type == "ECC":
         if ecc_curve is None:
             ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
 
-        return ec.generate_private_key(ecc_curve, default_backend())
+        return ec.generate_private_key(ecc_curve)
     if key_type == "EdDSA":
         return ed25519.Ed25519PrivateKey.generate()
     if key_type == "Ed448":
@@ -782,7 +781,7 @@ def generate_private_key(
         if key_size is None:
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
 
-        return rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
+        return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
 
     # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and validate_key_parameters
     #                 would raise for any other key types.

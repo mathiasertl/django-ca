@@ -26,7 +26,6 @@ import os
 import sys
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
@@ -100,7 +99,7 @@ def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
     """Shortcut to create a certificate."""
     common_name = f"cert.{ca.subject['CN']}"
     # NOTE: We don't care about the type of private key, as the CA only ever receives the CSR
-    cert_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+    cert_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
     # Create the most basic CSR
     csr_builder = x509.CertificateSigningRequestBuilder()

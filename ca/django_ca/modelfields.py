@@ -20,7 +20,6 @@ import abc
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django import forms
@@ -139,13 +138,13 @@ class LazyCertificateSigningRequest(
     _type = x509.CertificateSigningRequest
 
     def load_pem(self, value: bytes) -> x509.CertificateSigningRequest:
-        return x509.load_pem_x509_csr(value, default_backend())
+        return x509.load_pem_x509_csr(value)
 
     @property
     def loaded(self) -> x509.CertificateSigningRequest:
         """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
         if self._loaded is None:
-            self._loaded = x509.load_der_x509_csr(self._bytes, default_backend())
+            self._loaded = x509.load_der_x509_csr(self._bytes)
         return self._loaded
 
 
@@ -156,13 +155,13 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
     _type = x509.Certificate
 
     def load_pem(self, value: bytes) -> x509.Certificate:
-        return x509.load_pem_x509_certificate(value, default_backend())
+        return x509.load_pem_x509_certificate(value)
 
     @property
     def loaded(self) -> x509.Certificate:
         """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
         if self._loaded is None:
-            self._loaded = x509.load_der_x509_certificate(self._bytes, default_backend())
+            self._loaded = x509.load_der_x509_certificate(self._bytes)
         return self._loaded
 
 

@@ -41,7 +41,6 @@ from acme import challenges
 from acme import messages
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
@@ -439,7 +438,7 @@ class X509CertMixin(DjangoCAModel):
             # RFC 5280, 5.3.2 says that this extension MUST be non-critical
             revoked_cert = revoked_cert.add_extension(x509.InvalidityDate(compromised), critical=False)
 
-        return revoked_cert.build(default_backend())
+        return revoked_cert.build()
 
     @property
     def hpkp_pin(self) -> str:
@@ -831,7 +830,7 @@ class CertificateAuthority(X509CertMixin):
             key_data = read_file(self.private_key_path)
 
             try:
-                self._key = load_pem_private_key(key_data, password, default_backend())
+                self._key = load_pem_private_key(key_data, password)
             except ValueError as ex:
                 # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
                 raise ValueError("Could not decrypt private key - bad password?") from ex
@@ -981,7 +980,7 @@ class CertificateAuthority(X509CertMixin):
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(self.pub.loaded.subject)
-            .sign(private_key, hashes.SHA256(), default_backend())
+            .sign(private_key, hashes.SHA256())
         )
 
         # TODO: The subject we pass is just a guess - see what public CAs do!?  pylint: disable=fixme
@@ -1213,7 +1212,7 @@ class CertificateAuthority(X509CertMixin):
         self.crl_number = json.dumps(crl_number_data)
         self.save()
 
-        return builder.sign(private_key=self.key(password), algorithm=algorithm, backend=default_backend())
+        return builder.sign(private_key=self.key(password), algorithm=algorithm)
 
     def get_password(self) -> Optional[str]:
         """Get password for the private key from the ``CA_PASSWORDS`` setting."""
@@ -1810,7 +1809,7 @@ class AcmeCertificate(DjangoCAModel):
         :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The CSR as used by cryptography.
         """
-        return x509.load_pem_x509_csr(self.csr.encode(), default_backend())
+        return x509.load_pem_x509_csr(self.csr.encode())
 
     @property
     def usable(self) -> bool:

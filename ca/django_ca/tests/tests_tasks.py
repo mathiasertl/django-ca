@@ -29,7 +29,6 @@ from dns.rdtypes.txtbase import TXTBase
 from requests.packages.urllib3.response import HTTPResponse
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -105,11 +104,11 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
             tasks.cache_crl(data.serial)
 
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+            crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "user")
-            crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+            crl = x509.load_der_x509_crl(cache.get(key))
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -121,11 +120,11 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
 
         for data in self.cas.values():
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+            crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
             key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "user")
-            crl = x509.load_der_x509_crl(cache.get(key), default_backend())
+            crl = x509.load_der_x509_crl(cache.get(key))
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_expired"])

@@ -30,7 +30,6 @@ import pkg_resources
 
 import cryptography
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 
 import django
 from django.core.exceptions import ImproperlyConfigured
@@ -532,7 +531,7 @@ Please create %(localsettings)s from %(example)s and try again."""
 
         with open(os.path.join(ca_settings.CA_DIR, cert_data["pub_filename"]), "rb") as stream:
             pem = stream.read()
-        c.update_certificate(x509.load_pem_x509_certificate(pem, default_backend()))
+        c.update_certificate(x509.load_pem_x509_certificate(pem))
 
         c.save()
 

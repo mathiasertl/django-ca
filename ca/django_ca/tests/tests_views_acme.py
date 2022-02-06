@@ -29,7 +29,6 @@ from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
@@ -1489,7 +1488,7 @@ class AcmeOrderFinalizeViewTestCase(
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         self.order = AcmeOrder.objects.create(
@@ -1624,7 +1623,7 @@ class AcmeOrderFinalizeViewTestCase(
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.MD5(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1646,7 +1645,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1683,7 +1682,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1720,7 +1719,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1742,7 +1741,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1757,7 +1756,7 @@ class AcmeOrderFinalizeViewTestCase(
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1776,7 +1775,7 @@ class AcmeOrderFinalizeViewTestCase(
                 x509.SubjectAlternativeName([x509.DNSName(self.hostname), x509.DNSName("example.net")]),
                 critical=False,
             )
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256(), default_backend())
+            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
