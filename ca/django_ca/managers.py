@@ -32,6 +32,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -56,7 +57,6 @@ from .signals import pre_create_ca
 from .subject import Subject
 from .typehints import Expires
 from .typehints import ParsableExtension
-from .typehints import ParsableHash
 from .typehints import ParsableKeyType
 from .utils import ca_storage
 from .utils import generate_private_key
@@ -218,7 +218,7 @@ class CertificateAuthorityManager(
         name: str,
         subject: x509.Name,
         expires: Expires = None,
-        algorithm: ParsableHash = None,
+        algorithm: typing.Optional[HashAlgorithm] = None,
         parent: Optional["CertificateAuthority"] = None,
         default_hostname: Optional[Union[bool, str]] = None,
         pathlen: Optional[int] = None,
@@ -266,10 +266,9 @@ class CertificateAuthorityManager(
         expires : int or datetime or timedelta, optional
             When this certificate authority will expire, defaults to :ref:`CA_DEFAULT_EXPIRES
             <settings-ca-default-expires>`.
-        algorithm : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used when signing the certificate, passed to
-            :py:func:`~django_ca.utils.parse_hash_algorithm`. The default is the value of the
-            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>` setting.
+        algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Hash algorithm used when signing the certificate, defaults to
+            :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority. Let unset if this CA will be used for OpenSSH.
@@ -347,10 +346,17 @@ class CertificateAuthorityManager(
         #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
         validate_key_parameters(key_size, key_type, ecc_curve)
 
-        if not openssh_ca:
-            algorithm = parse_hash_algorithm(algorithm)
-        else:
+        if openssh_ca:
             algorithm = None
+        elif algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        elif not isinstance(algorithm, HashAlgorithm):
+            warnings.warn(
+                f"Passing a {algorithm.__class__.__name__} as algorithm is deprecated",
+                category=RemovedInDjangoCA122Warning,
+                stacklevel=1,
+            )
+            algorithm = parse_hash_algorithm(algorithm)
         expires = parse_expires(expires)
 
         if openssh_ca and parent:

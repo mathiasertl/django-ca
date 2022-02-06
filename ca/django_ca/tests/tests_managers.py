@@ -17,6 +17,7 @@ import typing
 import unittest
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
@@ -229,10 +230,21 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertWarnsRegex(RemovedInDjangoCA122Warning, r"^Passing a str as subject is deprecated$"):
             CertificateAuthority.objects.init("ca1", "CN=example.com")  # type: ignore[arg-type]
 
+        cn2 = "subject-as-str.example.com"
         with self.assertWarnsRegex(
             RemovedInDjangoCA122Warning, r"^Passing a Subject as subject is deprecated$"
         ):
-            CertificateAuthority.objects.init("ca2", Subject("CN=example.com"))  # type: ignore[arg-type]
+            CertificateAuthority.objects.init("ca2", Subject(f"CN={cn2}"))  # type: ignore[arg-type]
+        ca2 = CertificateAuthority.objects.get(name="ca2")
+        self.assertEqual(ca2.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn2)]))
+
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "hash-algo.example.com")])
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA122Warning, r"^Passing a str as algorithm is deprecated$"
+        ):
+            CertificateAuthority.objects.init("ca3", subject, algorithm="SHA256")  # type: ignore[arg-type]
+        ca3 = CertificateAuthority.objects.get(name="ca3")
+        self.assertIsInstance(ca3.algorithm, hashes.SHA256)
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, CA_DEFAULT_CA=certs["child"]["serial"])

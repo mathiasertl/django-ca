@@ -81,10 +81,11 @@ parameters::
 There are some more parameters to configure how the CA will be signed::
 
    >>> from cryptography.hazmat.primitives.asymmetric import ec
+   >>> from cryptography.hazmat.primitives import hashes
    >>> CertificateAuthority.objects.init(
    ...   name='props', 
    ...   subject=x509_name('/CN=child.example.com'),
-   ...   algorithm='SHA256',  # sha512 would be the default
+   ...   algorithm=hashes.SHA256(),  # SHA512 would be the default
    ...   pathlen=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
    ...   key_size=4096,  # key size for DSA/RSA keys - unused in this example
