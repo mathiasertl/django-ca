@@ -61,6 +61,8 @@ from freezegun.api import StepTickTimeFactory
 
 from ... import ca_settings
 from ...constants import ReasonFlags
+from ...deprecation import RemovedInDjangoCA122Warning
+from ...deprecation import RemovedInDjangoCA123Warning
 from ...extensions import OID_TO_EXTENSION
 from ...extensions import AuthorityInformationAccess
 from ...extensions import AuthorityKeyIdentifier
@@ -420,6 +422,22 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)
         ):
             self.assertTrue(key.key_size > 0)
+
+    @contextmanager
+    def assertRemovedIn122Warning(  # pylint: disable=invalid-name
+        self, message: str
+    ) -> typing.Iterator[None]:
+        """Assert that a RemovedInDjangoCA122Warning is thrown."""
+        with self.assertWarnsRegex(RemovedInDjangoCA122Warning, message):
+            yield
+
+    @contextmanager
+    def assertRemovedIn123Warning(  # pylint: disable=invalid-name
+        self, message: str
+    ) -> typing.Iterator[None]:  # pragma: no cover # not used
+        """Assert that a RemovedInDjangoCA123Warning is thrown."""
+        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
+            yield
 
     def assertRevoked(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, reason: typing.Optional[str] = None

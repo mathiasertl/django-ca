@@ -16,6 +16,7 @@
 import typing
 from io import BytesIO
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.test import TestCase
@@ -536,10 +537,10 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
             "cn": cert.cn,
             "from": cert.not_before.strftime("%Y-%m-%d %H:%M"),
             "until": cert.not_after.strftime("%Y-%m-%d %H:%M"),
-            "md5": cert.get_digest("MD5"),
-            "sha1": cert.get_digest("SHA1"),
-            "sha256": cert.get_digest("SHA256"),
-            "sha512": cert.get_digest("SHA512"),
+            "md5": cert.get_fingerprint(hashes.MD5()),
+            "sha1": cert.get_fingerprint(hashes.SHA1()),
+            "sha256": cert.get_fingerprint(hashes.SHA256()),
+            "sha512": cert.get_fingerprint(hashes.SHA512()),
             "subjectKeyIdentifier": self._get_ski_text(cert.subject_key_identifier),
             "authorityKeyIdentifier": self._get_ski_text(cert.ca.subject_key_identifier),
             "hpkp": cert.hpkp_pin,

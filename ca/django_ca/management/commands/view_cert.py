@@ -19,12 +19,12 @@
 import typing
 from datetime import datetime
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandParser
 
 from ...models import Certificate
-from ...utils import parse_hash_algorithm
 from ..base import BinaryCommand
 from ..mixins import CertCommandMixin
 
@@ -86,9 +86,8 @@ class Command(CertCommandMixin, BinaryCommand):
             self.stdout.write(f"* {watcher}")
 
         self.stdout.write("Digest:")
-        for algorithm_key in ["MD5", "SHA1", "SHA256", "SHA512"]:
-            algo = parse_hash_algorithm(algorithm_key)
-            self.stdout.write(f"    {algo.name}: {cert.get_digest(algo)}")
+        for algorithm in [hashes.MD5(), hashes.SHA1(), hashes.SHA256(), hashes.SHA512()]:
+            self.stdout.write(f"    {algorithm.name}: {cert.get_fingerprint(algorithm)}")
 
         self.stdout.write(f"HPKP pin: {cert.hpkp_pin}")
 

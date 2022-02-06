@@ -364,9 +364,22 @@ class X509CertMixin(DjangoCAModel):
         return self.pub.loaded.signature_hash_algorithm
 
     def get_digest(self, algo: ParsableHash) -> str:
+        """Get the fingerprint for this certificate.
+
+        .. deprecated:: 1.21.0
+
+           Use :py:func:`~django_ca.models.X509CertMixin.get_fingerprint` instead.
+        """
+        warnings.warn(
+            "get_digest() is deprecated, use get_fingerprint() instead",
+            category=RemovedInDjangoCA122Warning,
+            stacklevel=1,
+        )
+        return self.get_fingerprint(parse_hash_algorithm(algo))
+
+    def get_fingerprint(self, algorithm: hashes.HashAlgorithm) -> str:
         """Get the digest for a certificate as string, including colons."""
-        algo = parse_hash_algorithm(algo)
-        return bytes_to_hex(self.pub.loaded.fingerprint(algo))
+        return bytes_to_hex(self.pub.loaded.fingerprint(algorithm))
 
     def get_filename(self, ext: str, bundle: bool = False) -> str:
         """Get a filename safe for any file system and OS for this certificate based on the common name.

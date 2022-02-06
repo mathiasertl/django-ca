@@ -46,7 +46,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
-from ..deprecation import RemovedInDjangoCA122Warning
 from ..extensions import KEY_TO_EXTENSION
 from ..extensions import Extension
 from ..extensions import PrecertificateSignedCertificateTimestamps
@@ -544,9 +543,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
                 self.assertIsInstance(key.curve, ec.BrainpoolP256R1)
 
-            # pass the name of an ecc curve (deprecated in 1.22):
-            with self.assertWarnsRegex(
-                RemovedInDjangoCA122Warning, r"^Passing a str as ecc_curve is deprecated$"
+            # pass the name of an ecc curve (deprecated in 1.22)
+            with self.assertRemovedIn122Warning(
+                r"^Passing a str as ecc_curve is deprecated$"
             ), self.generate_ocsp_key(ca, key_type="ECC", ecc_curve="BrainpoolP256R1") as (key, cert):
                 key = typing.cast(ec.EllipticCurvePrivateKey, key)
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
@@ -727,19 +726,32 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         ):
             self.cert.full_clean()
 
-    def test_digest(self) -> None:
-        """Test getting the digest value."""
+    def test_get_fingerprint(self) -> None:
+        """Test getting the fingerprint value."""
+        algorithms = {
+            "md5": hashes.MD5(),
+            "sha1": hashes.SHA1(),
+            "sha256": hashes.SHA256(),
+            "sha512": hashes.SHA512(),
+        }
         for name, ca in self.cas.items():
-            self.assertEqual(ca.get_digest("MD5"), certs[name]["md5"])
-            self.assertEqual(ca.get_digest("SHA1"), certs[name]["sha1"])
-            self.assertEqual(ca.get_digest("SHA256"), certs[name]["sha256"])
-            self.assertEqual(ca.get_digest("SHA512"), certs[name]["sha512"])
+            for algo_name, algorithm in algorithms.items():
+                self.assertEqual(ca.get_fingerprint(algorithm), certs[name][algo_name])
 
         for name, cert in self.certs.items():
-            self.assertEqual(cert.get_digest("MD5"), certs[name]["md5"])
-            self.assertEqual(cert.get_digest("SHA1"), certs[name]["sha1"])
-            self.assertEqual(cert.get_digest("SHA256"), certs[name]["sha256"])
-            self.assertEqual(cert.get_digest("SHA512"), certs[name]["sha512"])
+            for algo_name, algorithm in algorithms.items():
+                self.assertEqual(cert.get_fingerprint(algorithm), certs[name][algo_name])
+
+    def test_digest(self) -> None:
+        """Test getting the digest value (deprecated function)."""
+        msg = r"^get_digest\(\) is deprecated, use get_fingerprint\(\) instead$"
+        for name, ca in self.cas.items():
+            with self.assertRemovedIn122Warning(msg):
+                self.assertEqual(ca.get_digest("MD5"), certs[name]["md5"])
+
+        for name, cert in self.certs.items():
+            with self.assertRemovedIn122Warning(msg):
+                self.assertEqual(cert.get_digest("MD5"), certs[name]["md5"])
 
     def test_hpkp_pin(self) -> None:
         """Test getting a HPKP pin for a certificate."""
