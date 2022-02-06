@@ -4,4 +4,4 @@ mypy==0.931
 django-stubs==1.9.0
 types-freezegun==1.1.6
 types-pyRFC3339==1.1.1
-types-requests==2.27.7
+types-requests==2.27.8
