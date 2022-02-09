@@ -194,6 +194,14 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
 class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase):
     """QuerySet for the Certificate model."""
 
+    def currently_valid(self) -> "CertificateQuerySet":
+        """Return certificates currently valid according to their not_before/not_after fields.
+
+        .. WARNING:: This does not exclude revoked certificates.
+        """
+        now = timezone.now()
+        return self.filter(expires__gt=now, valid_from__lt=now)
+
     def not_yet_valid(self) -> "CertificateQuerySet":
         """Return certificates that are not yet valid."""
 
@@ -202,8 +210,7 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
     def valid(self) -> "CertificateQuerySet":
         """Return valid certificates."""
 
-        now = timezone.now()
-        return self.filter(revoked=False, expires__gt=now, valid_from__lt=now)
+        return self.currently_valid().filter(revoked=False)
 
     def expired(self) -> "CertificateQuerySet":
         """Returns expired certificates.

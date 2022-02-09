@@ -9,10 +9,18 @@ FILETYPE_TEXT: int
 
 
 class X509:
-    ...
+    def to_cryptography(self) -> x509.Certificate:
+        ...
+
+    @classmethod
+    def from_cryptography(cls, crypto_cert: x509.Certificate) -> 'X509':
+        ...
 
 
 class X509Req:
+    def to_cryptography(self) -> x509.CertificateSigningRequest:
+        ...
+
     @classmethod
     def from_cryptography(cls, crypto_req: x509.CertificateSigningRequest) -> "X509Req":
         ...

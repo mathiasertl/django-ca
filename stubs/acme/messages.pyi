@@ -88,4 +88,9 @@ class NewOrder(Order):
     ...
 
 
+class Revocation(ResourceMixin, jose.json_util.JSONObjectWithFields):
+    certificate: jose.util.ComparableX509
+    reason: int
+
+
 IDENTIFIER_FQDN: IdentifierType

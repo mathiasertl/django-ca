@@ -466,6 +466,19 @@ class X509CertMixin(DjangoCAModel):
         return self.pub.loaded.issuer
 
     @property
+    def jwk(self) -> typing.Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
+        """Get a JOSE JWK public key for this certificate."""
+
+        pkey = self.pub.loaded.public_key()
+        jwk = jose.jwk.JWK.load(pkey.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
+
+        # JWK.load() may return a private instead, so we rule this out here for type safety. This branch
+        # should normally not happen.
+        if not isinstance(jwk, (jose.jwk.JWKRSA, jose.jwk.JWKEC)):  # pragma: no cover
+            raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
+        return jwk
+
+    @property
     def not_before(self) -> datetime:
         """Date/Time this certificate was created"""
         return self.pub.loaded.not_valid_before
@@ -1360,7 +1373,7 @@ class AcmeAccount(DjangoCAModel):
         (STATUS_REVOKED, _("Revoked")),
     )
 
-    objects = AcmeAccountManager.from_queryset(AcmeAccountQuerySet)()
+    objects: AcmeAccountManager = AcmeAccountManager.from_queryset(AcmeAccountQuerySet)()
 
     # Account meta data
     created = models.DateTimeField(default=timezone.now)

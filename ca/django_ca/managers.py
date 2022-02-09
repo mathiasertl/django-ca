@@ -77,6 +77,7 @@ if TYPE_CHECKING:
     from .models import AcmeOrder
     from .models import Certificate
     from .models import CertificateAuthority
+    from .querysets import AcmeAccountQuerySet
     from .querysets import CertificateAuthorityQuerySet
     from .querysets import CertificateQuerySet
 
@@ -619,6 +620,14 @@ class CertificateManager(
 
 class AcmeAccountManager(AcmeAccountManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeAccount`."""
+
+    if TYPE_CHECKING:
+        # See CertificateManagerMixin for description on this branch
+        #
+        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+
+        def viewable(self) -> "AcmeAccountQuerySet":
+            ...
 
 
 class AcmeOrderManager(AcmeOrderManagerBase):

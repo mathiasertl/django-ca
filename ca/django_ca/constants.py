@@ -13,10 +13,10 @@
 
 """Collection of constants used by django-ca."""
 
-from enum import Enum
+import enum
 
 
-class ReasonFlags(Enum):
+class ReasonFlags(enum.Enum):
     """An enumeration for CRL reasons.
 
     This enumeration is a copy of ``cryptography.x509.ReasonFlags``. We create a copy because any change
@@ -36,3 +36,18 @@ class ReasonFlags(Enum):
     privilege_withdrawn = "privilegeWithdrawn"
     aa_compromise = "aACompromise"
     remove_from_crl = "removeFromCRL"
+
+
+#: Mapping of RFC 5280, section 5.3.1 reason codes too cryptography reason codes
+REASON_CODES = {
+    0: ReasonFlags.unspecified,
+    1: ReasonFlags.key_compromise,
+    2: ReasonFlags.ca_compromise,
+    3: ReasonFlags.affiliation_changed,
+    4: ReasonFlags.superseded,
+    5: ReasonFlags.cessation_of_operation,
+    6: ReasonFlags.certificate_hold,
+    8: ReasonFlags.remove_from_crl,
+    9: ReasonFlags.privilege_withdrawn,
+    10: ReasonFlags.aa_compromise,
+}

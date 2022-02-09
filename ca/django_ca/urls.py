@@ -98,6 +98,11 @@ if ca_settings.CA_ENABLE_ACME:
             acme_views.AcmeCertificateView.as_view(),
             name="acme-cert",
         ),
+        path(
+            "acme/<serial:serial>/revoke/",
+            acme_views.AcmeCertificateRevocationView.as_view(),
+            name="acme-revoke",
+        ),
     ]
 
 

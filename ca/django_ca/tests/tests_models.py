@@ -22,6 +22,7 @@ from datetime import timedelta
 from datetime import timezone as tz
 from unittest import mock
 
+import josepy as jose
 from acme import challenges
 from acme import messages
 
@@ -766,6 +767,17 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, cert in self.certs.items():
             self.assertEqual(cert.hpkp_pin, certs[name]["hpkp"])
             self.assertIsInstance(cert.hpkp_pin, str)
+
+    def test_jwk(self) -> None:
+        """Test JWK property."""
+        for name, ca in self.cas.items():
+            self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA)
+
+        for name, cert in self.certs.items():
+            if name in ("google_g3-cert", "cloudflare_1"):
+                self.assertIsInstance(cert.jwk, jose.jwk.JWKEC, name)
+            else:
+                self.assertIsInstance(cert.jwk, jose.jwk.JWKRSA, name)
 
     def test_get_authority_key_identifier(self) -> None:
         """Test getting the authority key identifier."""

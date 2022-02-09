@@ -49,6 +49,37 @@ preconfigured to use the django-ca registry in the container next to it::
    root@certbot:~# django-ca-test-validation.sh http http-01.example.com
    root@certbot:~# django-ca-test-validation.sh dns dns-01.example.com
 
+Use certbot directly
+====================
+
+You can use certbot with a server started via ``manage.py runserver`` to test issuing certificates for
+localhost::
+
+   # certbot register --agree-tos -m user@localhost \
+   >    --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
+   >    --server http://localhost:8000/django_ca/acme/directory/
+
+   # certbot certonly --standalone \
+   >    --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
+   >    --server http://localhost:8000/django_ca/acme/directory/ \
+   >    -d localhost
+
+You can revoke a certificate::
+
+   # certbot revoke \
+   >     --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
+   >     --server http://localhost:8000/django_ca/acme/directory/ \
+   >     --cert-name localhost
+
+Use a different configuration/work directory if you "lost your account key"::
+
+   # certbot revoke \
+   >     --config-dir=.certbot1/config/ --work-dir=.certbot1/work/ --logs-dir=.certbot1/logs \
+   >     --server http://localhost:8000/django_ca/acme/directory/ \
+   >     --key-path .certbot/config/archive/localhost/privkey1.pem \
+   >     --cert-path .certbot/config/archive/localhost/fullchain1.pem \
+   >     --reason keycompromise
+
 ***************
 Tips and tricks
 ***************
@@ -56,18 +87,6 @@ Tips and tricks
 Query LE::
 
    $ curl -v https://acme-v02.api.letsencrypt.org/directory
-
-Use local server::
-
-   $ certbot register --agree-tos -m user@localhost \
-   >    --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
-   >    --server http://localhost:8000/django_ca/acme/directory/
-
-   $ certbot certonly --standalone \
-   >    --config-dir=.certbot/config/ --work-dir=.certbot/work/ --logs-dir=.certbot/logs \
-   >    --server http://localhost:8000/django_ca/acme/directory/ \
-   >    -d test.example.com
-
 
 base64url encoding
 ==================

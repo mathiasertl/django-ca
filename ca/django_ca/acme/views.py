@@ -62,17 +62,20 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
 from .. import ca_settings
+from ..constants import REASON_CODES
 from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
+from ..models import Certificate
 from ..models import CertificateAuthority
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from ..tasks import run_task
 from ..utils import check_name
+from ..utils import int_to_hex
 from ..utils import make_naive
 from ..utils import validate_email
 from .errors import AcmeBadCSR
@@ -189,7 +192,7 @@ class AcmeDirectory(View):
             "newAccount": self._url(request, "acme-new-account", ca),
             "newNonce": self._url(request, "acme-new-nonce", ca),
             "newOrder": self._url(request, "acme-new-order", ca),
-            "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+            "revokeCert": self._url(request, "acme-revoke", ca),
         }
 
         # Construct a "meta" object if and add it if any fields are defined. Note that the meta object is
@@ -247,6 +250,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     """Base class for all ACME views."""
 
     requires_key = False  # True if we require a full key (-> new accounts)
+    accepts_kid_or_jwk = False  # Set to true to accept both KID or JWK
     jwk: jose.jwk.JWK
     jws: acme.jws.JWS
 
@@ -349,12 +353,12 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             return AcmeResponseNotFound(message="The requested CA cannot be found.")
 
         if combined.jwk:
-            if not self.requires_key:
+            if not self.requires_key and not self.accepts_kid_or_jwk:
                 return AcmeResponseMalformed(message="Request requires a JWK key ID.")
 
             self.jwk = combined.jwk  # set JWK from request
         elif combined.kid:
-            if self.requires_key:
+            if self.requires_key and not self.accepts_kid_or_jwk:
                 return AcmeResponseMalformed(message="Request requires a full JWK key.")
 
             # combined.kid is a full URL pointing to the account.
@@ -362,6 +366,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
                 account = AcmeAccount.objects.viewable().get(ca=self.ca, kid=combined.kid)
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message="Account not found.")
+
             if account.usable is False:
                 # RFC 855, 7.3.6:
                 #
@@ -1023,3 +1028,80 @@ class AcmeChallengeView(AcmePostAsGetView):
             status=challenge.status,
             validated=challenge.validated,
         )
+
+
+class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
+    """View providing ACMEv2 certificate revocation.
+
+    .. seealso::
+
+        `RFC 8555, section 7.6 <https://tools.ietf.org/html/rfc8555#section-7.6>`_
+    """
+
+    accepts_kid_or_jwk = True
+    message_cls = messages.Revocation
+
+    def get_certificate(self, serial: str) -> Certificate:
+        """Get the certificate that is to be revoked by this request.
+
+        This function handles the special authorization requirements for this request (they can be signed by
+        either the account key pair or the certificate key pair).
+        """
+
+        certs = Certificate.objects.filter(ca=self.ca).currently_valid()
+
+        # If the request is signed with the certificate key (and not the account), a JWK is set for this
+        # request and we verify it was signed by the certificate on record.
+        if self.jws.signature.combined.jwk:
+            cert = certs.get(serial=serial)
+            jwk = cert.jwk
+
+            # The JWS signature was already verified using the JWK from the request in the base class. But we
+            # still need to verify that it was signed by the certificate that is to be revoked (and not just
+            # any certificate).
+            #
+            # Theoretically, cert.jwk != self.jwk would be a sufficient check, but we do not trust the
+            # __eq__ implementation given the linked GitHub issues, so we also verify the signature a second
+            # time based on the database key.
+            #   https://josepy.readthedocs.io/en/latest/api/util/
+            if jwk != self.jwk or not self.jws.verify(jwk):
+                raise AcmeUnauthorized(message="No authorization provided for revocation.")
+        else:
+            # Get certificate with matching serial issued to the account that signed the request. Note that
+            # self.account is **only** set if the request has no JWK
+            cert = certs.filter(acmecertificate__order__account=self.account).get(serial=serial)
+
+        return cert
+
+    def acme_request(self, message: messages.Revocation, slug: Optional[str]) -> AcmeResponse:
+        try:
+            reason = REASON_CODES[message.reason]
+        except KeyError as ex:
+            raise AcmeMalformed(
+                typ="badRevocationReason", message=f"{message.reason}: Unsupported revocation reason."
+            ) from ex
+
+        # Get cryptography certificate from ACME message
+        cg_cert = message.certificate.wrapped.to_cryptography()
+        if not isinstance(cg_cert, x509.Certificate):
+            raise AcmeMalformed(message="Request did not contain a certificate.")
+
+        try:
+            cert = self.get_certificate(int_to_hex(cg_cert.serial_number))
+        except Certificate.DoesNotExist as ex:
+            raise AcmeUnauthorized(message="Certificate not found.") from ex
+
+        # Check that the certificate in the payload matches with the one on record
+        if cert.pub.loaded != cg_cert:
+            raise AcmeUnauthorized(message="Certificate does not match records.")
+
+        # RFC 8555, section 7.6
+        #
+        #   if the certificate has already been revoked, the server returns an error response with status code
+        #   400 (Bad Request) and type "urn:ietf:params:acme:error:alreadyRevoked".
+        if cert.revoked:
+            raise AcmeMalformed(typ="alreadyRevoked", message="Certificate was already revoked.")
+
+        # Finally actually revoke the certificate
+        cert.revoke(reason)
+        return AcmeResponse({})  # No response specified in RFC 8555!

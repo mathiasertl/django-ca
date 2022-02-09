@@ -87,12 +87,13 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         req = response.wsgi_request
+        self.maxDiff = None
         self.assertEqual(
             response.json(),
             {
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-                "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+                "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/revoke/"),
                 "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
                 "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
                 "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
@@ -113,7 +114,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             {
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-                "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+                "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/revoke/"),
                 "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
                 "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
                 "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
@@ -139,7 +140,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             {
                 "Zm9vYmFy": self.random_url,
                 "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-                "revokeCert": "http://localhost:8000/django_ca/acme/todo/revoke-cert",
+                "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/revoke/"),
                 "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
                 "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
                 "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
