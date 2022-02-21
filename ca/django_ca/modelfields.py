@@ -49,7 +49,6 @@ if typing.TYPE_CHECKING:
         # pylint: disable=missing-class-docstring
         pass
 
-
 else:
 
     class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar, WrapperTypeVar]):

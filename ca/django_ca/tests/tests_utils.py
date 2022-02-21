@@ -118,7 +118,7 @@ class ConstantsTestCase(TestCase):
         self.assertEqual(utils.HASH_ALGORITHM_NAMES, {e.name: e for e in subclasses})
 
     def test_elliptic_curves(self) -> None:
-        """Test that ``utils.HASH_ALGORITHM_NAMES`` covers all known elliptic curves.
+        """Test that ``utils.ELLIPTIC_CURVE_NAMES`` covers all known elliptic curves.
 
         The point of this test is that it fails if a new cryptography version adds new curves, thus allowing
         us to detect if the constant becomes out of date.

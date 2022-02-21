@@ -128,13 +128,13 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def add_ecc_curve(self, parser: CommandParser) -> None:
         """Add --ecc-curve option."""
-        default = ca_settings.CA_DEFAULT_ECC_CURVE.__class__.__name__
+        default = ca_settings.CA_DEFAULT_ECC_CURVE()
         parser.add_argument(
             "--ecc-curve",
             metavar="CURVE",
             action=actions.KeyCurveAction,
-            default=ca_settings.CA_DEFAULT_ECC_CURVE(),
-            help=f"Elliptic Curve used for ECC keys (default: {default}).",
+            default=default,
+            help=f"Elliptic Curve used for ECC keys (default: {default.name}).",
         )
 
     def add_key_size(self, parser: CommandParser) -> None:
