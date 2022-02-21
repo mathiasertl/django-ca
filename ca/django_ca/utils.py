@@ -60,7 +60,6 @@ from .typehints import Literal
 from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
-from .typehints import ParsableKeyCurve
 from .typehints import ParsableKeyType
 from .typehints import SupportsIndex
 
@@ -196,27 +195,27 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     hashes.SM3.name: hashes.SM3,
 }
 
-#: Mapping of canonical elliptic curve names to the implementing classes
+#: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes
 ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
-    ec.SECT571R1.name: ec.SECT571R1,
-    ec.SECT409R1.name: ec.SECT409R1,
-    ec.SECT283R1.name: ec.SECT283R1,
-    ec.SECT233R1.name: ec.SECT233R1,
-    ec.SECT163R2.name: ec.SECT163R2,
-    ec.SECT571K1.name: ec.SECT571K1,
-    ec.SECT409K1.name: ec.SECT409K1,
-    ec.SECT283K1.name: ec.SECT283K1,
-    ec.SECT233K1.name: ec.SECT233K1,
-    ec.SECT163K1.name: ec.SECT163K1,
-    ec.SECP521R1.name: ec.SECP521R1,
-    ec.SECP384R1.name: ec.SECP384R1,
-    ec.SECP256R1.name: ec.SECP256R1,
-    ec.SECP256K1.name: ec.SECP256K1,
-    ec.SECP224R1.name: ec.SECP224R1,
-    ec.SECP192R1.name: ec.SECP192R1,
-    ec.BrainpoolP256R1.name: ec.BrainpoolP256R1,
-    ec.BrainpoolP384R1.name: ec.BrainpoolP384R1,
-    ec.BrainpoolP512R1.name: ec.BrainpoolP512R1,
+    ec.SECT571R1.name.lower(): ec.SECT571R1,
+    ec.SECT409R1.name.lower(): ec.SECT409R1,
+    ec.SECT283R1.name.lower(): ec.SECT283R1,
+    ec.SECT233R1.name.lower(): ec.SECT233R1,
+    ec.SECT163R2.name.lower(): ec.SECT163R2,
+    ec.SECT571K1.name.lower(): ec.SECT571K1,
+    ec.SECT409K1.name.lower(): ec.SECT409K1,
+    ec.SECT283K1.name.lower(): ec.SECT283K1,
+    ec.SECT233K1.name.lower(): ec.SECT233K1,
+    ec.SECT163K1.name.lower(): ec.SECT163K1,
+    ec.SECP521R1.name.lower(): ec.SECP521R1,
+    ec.SECP384R1.name.lower(): ec.SECP384R1,
+    ec.SECP256R1.name.lower(): ec.SECP256R1,
+    ec.SECP256K1.name.lower(): ec.SECP256K1,
+    ec.SECP224R1.name.lower(): ec.SECP224R1,
+    ec.SECP192R1.name.lower(): ec.SECP192R1,
+    ec.BrainpoolP256R1.name.lower(): ec.BrainpoolP256R1,
+    ec.BrainpoolP384R1.name.lower(): ec.BrainpoolP384R1,
+    ec.BrainpoolP512R1.name.lower(): ec.BrainpoolP512R1,
 }
 
 
@@ -1085,18 +1084,10 @@ def parse_expires(expires: Expires = None) -> datetime:
     return now + ca_settings.CA_DEFAULT_EXPIRES
 
 
-def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
-    """Parse an elliptic curve value.
+def parse_key_curve(value: str) -> ec.EllipticCurve:
+    """Parse a string an :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
 
-    This function uses a value identifying an elliptic curve to return an
-    :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance. The name must match a
-    class name of one of the classes named under "Elliptic Curves" in
-    :any:`cg:hazmat/primitives/asymmetric/ec`.
-
-    For convenience, passing ``None`` will return the value of :ref:`CA_DEFAULT_ECC_CURVE
-    <settings-ca-default-ecc-curve>`, and passing an
-    :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` will return that instance
-    unchanged.
+    This function is intended to parse user input, so it ignores case.
 
     Example usage::
 
@@ -1104,16 +1095,14 @@ def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
         <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
         >>> parse_key_curve('SECP384R1')  # doctest: +ELLIPSIS
         <cryptography.hazmat.primitives.asymmetric.ec.SECP384R1 object at ...>
-        >>> parse_key_curve(ec.SECP256R1())  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
-        >>> parse_key_curve()  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
+        >>> parse_key_curve('secp384r1')  # doctest: +ELLIPSIS
+        <cryptography.hazmat.primitives.asymmetric.ec.SECP384R1 object at ...>
 
     Parameters
     ----------
 
-    value : str, otional
-        The name of the curve or ``None`` to return the default curve.
+    value : str
+        The name of the curve (case insensitive).
 
     Returns
     -------
@@ -1127,23 +1116,10 @@ def parse_key_curve(value: ParsableKeyCurve = None) -> ec.EllipticCurve:
     ValueError
         If the named curve is not supported.
     """
-    if isinstance(value, ec.EllipticCurve):
-        return value  # name was already parsed
-    if value is None:
-        return ca_settings.CA_DEFAULT_ECC_CURVE()
-
-    if value in ELLIPTIC_CURVE_NAMES:
-        return ELLIPTIC_CURVE_NAMES[value]()
-
-    error_msg = f"{value}: Not a known Eliptic Curve"
-
     try:
-        curve: Type[ec.EllipticCurve] = getattr(ec, value.strip())
-    except AttributeError as ex:
-        raise ValueError(error_msg) from ex
-    if not issubclass(curve, ec.EllipticCurve):
-        raise ValueError(error_msg)
-    return curve()
+        return ELLIPTIC_CURVE_NAMES[value.strip().lower()]()
+    except KeyError as ex:
+        raise ValueError(f"{value}: Not a known Eliptic Curve") from ex
 
 
 def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:

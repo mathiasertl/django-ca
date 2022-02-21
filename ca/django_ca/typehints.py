@@ -74,7 +74,6 @@ PrivateKeyTypes = Union[
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
 ParsableKeyType = Literal["RSA", "DSA", "ECC", "EdDSA", "Ed448"]
-ParsableKeyCurve = Optional[Union[ec.EllipticCurve, str]]
 ParsableSubject = Union[
     str,
     # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001

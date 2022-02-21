@@ -128,7 +128,7 @@ class ConstantsTestCase(TestCase):
         #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
         subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, misc]
         self.assertEqual(len(utils.ELLIPTIC_CURVE_NAMES), len(subclasses))
-        self.assertEqual(utils.ELLIPTIC_CURVE_NAMES, {e.name: e for e in subclasses})
+        self.assertEqual(utils.ELLIPTIC_CURVE_NAMES, {e().name.lower(): e for e in subclasses})
 
     def test_nameoid_completeness(self) -> None:
         """Test that we support all NameOID instances."""
@@ -842,7 +842,7 @@ class Power2TestCase(TestCase):
     def test_true(self) -> None:
         """Test some numbers that are power of two."""
         for i in range(0, 20):
-            self.assertTrue(is_power2(2**i))
+            self.assertTrue(is_power2(2 ** i))
 
     def test_false(self) -> None:
         """Test some numbers that are not power of two."""
@@ -851,8 +851,8 @@ class Power2TestCase(TestCase):
         self.assertFalse(is_power2(5))
 
         for i in range(2, 20):
-            self.assertFalse(is_power2((2**i) - 1))
-            self.assertFalse(is_power2((2**i) + 1))
+            self.assertFalse(is_power2((2 ** i) - 1))
+            self.assertFalse(is_power2((2 ** i) + 1))
 
 
 class ParseKeyCurveTestCase(TestCase):
@@ -860,7 +860,6 @@ class ParseKeyCurveTestCase(TestCase):
 
     def test_basic(self) -> None:
         """Some basic tests."""
-        self.assertIsInstance(parse_key_curve(), ca_settings.CA_DEFAULT_ECC_CURVE)
         self.assertIsInstance(parse_key_curve("SECT409R1"), ec.SECT409R1)
         self.assertIsInstance(parse_key_curve("SECP521R1"), ec.SECP521R1)
         self.assertIsInstance(parse_key_curve("SECP192R1"), ec.SECP192R1)
