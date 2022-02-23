@@ -25,6 +25,7 @@ import acme
 import acme.jws
 import josepy as jose
 import pyrfc3339
+from OpenSSL.crypto import X509
 from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
@@ -49,16 +50,19 @@ from ..acme.errors import AcmeUnauthorized
 from ..acme.messages import CertificateRequest
 from ..acme.messages import NewOrder
 from ..acme.responses import AcmeResponseUnauthorized
+from ..constants import ReasonFlags
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
+from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import acme_slug
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from ..typehints import PrivateKeyTypes
+from ..utils import get_cert_builder
 from .base import CERT_PEM_REGEX
 from .base import certs
 from .base import override_tmpcadir
@@ -87,7 +91,6 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         req = response.wsgi_request
-        self.maxDiff = None
         self.assertEqual(
             response.json(),
             {
@@ -257,8 +260,8 @@ lJcJOkTwT0P0U46Wg4o2/p6v45nVzXXC+Egmah2Evl+Pdo2Mhg1F8Vf4/wRcZWnt
 Rt/6X2p4XpW6AvIzYwIDAQAB
 -----END PUBLIC KEY-----"""
 
-    load_cas = ("root",)
-    load_certs = ("root-cert",)
+    load_cas: typing.Tuple[str, ...] = ("root",)
+    load_certs: typing.Tuple[str, ...] = ("root-cert",)
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
@@ -281,6 +284,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         message: str,
         ca: typing.Optional[CertificateAuthority] = None,
         link_relations: typing.Optional[typing.Dict[str, str]] = None,
+        regex: bool = False,
     ) -> None:
         """Assert that a HTTP response confirms to an ACME problem report.
 
@@ -292,7 +296,10 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
         data = response.json()
         self.assertEqual(data["type"], f"urn:ietf:params:acme:error:{typ}")
         self.assertEqual(data["status"], status)
-        self.assertEqual(data["detail"], message)
+        if regex:
+            self.assertRegex(data["detail"], message)
+        else:
+            self.assertEqual(data["detail"], message)
         self.assertIn("Replay-Nonce", response)
 
     def assertAcmeResponse(  # pylint: disable=invalid-name
@@ -344,7 +351,7 @@ Rt/6X2p4XpW6AvIzYwIDAQAB
             The decoded bytes of the nonce.
         """
         if ca is None:
-            ca = self.cas["root"]
+            ca = self.ca
 
         url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
         response = self.client.head(url)
@@ -621,7 +628,7 @@ class AcmeWithAccountViewTestCaseMixin(
 
     @override_tmpcadir()
     def test_unknown_account(self) -> None:
-        """Test doing requeist with an unknown kid."""
+        """Test doing request with an unknown kid."""
         self.assertUnauthorized(self.acme(self.url, self.message, kid="unknown"), "Account not found.")
 
     @override_tmpcadir()
@@ -2011,3 +2018,109 @@ class AcmeCertificateViewTestCase(
         self.acmecert.save()
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertUnauthorized(resp)
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeCertificateRevocationViewTestCase(
+    AcmeWithAccountViewTestCaseMixin[acme.messages.Revocation], TestCase
+):
+    """Test revoking a certificate."""
+
+    message_cls = acme.messages.Revocation
+    view_name = "acme-revoke"
+    load_cas = ("root", "child")
+    load_certs = ("root-cert", "child-cert")
+
+    class csr_class(acme.messages.Revocation):  # pylint: disable=invalid-name
+        """Class that allows us to send a CSR in the certificate field for testing."""
+
+        certificate = jose.json_util.Field(  # type: ignore[assignment]
+            "certificate", decoder=jose.json_util.decode_csr, encoder=jose.json_util.encode_csr
+        )
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
+        self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
+
+    @property
+    def url(self) -> str:
+        """Get URL for the standard auth object."""
+        return self.get_url(serial=self.ca.serial)
+
+    def get_message(self, **kwargs: typing.Any) -> acme.messages.Revocation:
+        kwargs.setdefault(
+            "certificate", jose.util.ComparableX509(X509.from_cryptography(self.cert.pub.loaded))
+        )
+        return self.message_cls(**kwargs)
+
+    @override_tmpcadir()
+    def test_wrong_jwk_or_kid(self) -> None:
+        """This test makes no sense here, as we accept both JWK and JID."""
+
+    def test_basic(self) -> None:
+        """Test a very basic certificate revocation."""
+        resp = self.acme(self.url, self.message, kid=self.kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+
+        self.cert.refresh_from_db()
+        self.assertTrue(self.cert.revoked)
+        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
+        self.assertEqual(self.cert.revoked_reason, ReasonFlags.unspecified.value)
+
+    def test_reason_code(self) -> None:
+        """Test revocation reason."""
+        message = self.get_message(reason=3)
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+
+        self.cert.refresh_from_db()
+        self.assertTrue(self.cert.revoked)
+        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
+        self.assertEqual(self.cert.revoked_reason, ReasonFlags.affiliation_changed.name)
+
+    def test_already_revoked(self) -> None:
+        """Test revoking a certificate that is already revoked."""
+        resp = self.acme(self.url, self.message, kid=self.kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+
+        resp = self.acme(self.url, self.message, kid=self.kid)
+        self.assertMalformed(resp, "Certificate was already revoked.", typ="alreadyRevoked")
+
+    def test_bad_reason_code(self) -> None:
+        """Send a bad revocation reason code to the server."""
+        message = self.get_message(reason=99)
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertMalformed(resp, "99: Unsupported revocation reason.", typ="badRevocationReason")
+
+        self.cert.refresh_from_db()
+        self.assertFalse(self.cert.revoked)
+
+    def test_unknown_certificate(self) -> None:
+        """Try sending an unknown certificate to the server."""
+        Certificate.objects.all().delete()
+        resp = self.acme(self.url, self.message, kid=self.kid)
+        self.assertUnauthorized(resp, "Certificate not found.")
+
+    @override_tmpcadir()
+    def test_wrong_certificate(self) -> None:
+        """Test sending a different certificate with the same serial."""
+
+        # Create a clone of the existing certificate with the same serial number
+        pkey = certs["root-cert"]["csr"]["parsed"].public_key()
+        builder = get_cert_builder(self.cert.expires, serial=self.cert.pub.loaded.serial_number)
+        builder = builder.public_key(pkey)
+        builder = builder.issuer_name(self.ca.subject)
+        builder = builder.subject_name(self.cert.pub.loaded.subject)
+        cert = builder.sign(private_key=self.ca.key(), algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        message = self.message_cls(certificate=jose.util.ComparableX509(X509.from_cryptography(cert)))
+
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertUnauthorized(resp, "Certificate does not match records.")
+
+    def test_pass_csr(self) -> None:
+        """Send a CSR instead of a certificate."""
+        req = X509Req.from_cryptography(certs["root-cert"]["csr"]["parsed"])
+        message = self.csr_class(certificate=jose.util.ComparableX509(req))
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertMalformed(resp, "Could not decode 'certificate'", regex=True)

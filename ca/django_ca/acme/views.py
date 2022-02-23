@@ -1074,8 +1074,12 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         return cert
 
     def acme_request(self, message: messages.Revocation, slug: Optional[str]) -> AcmeResponse:
+        reason_code = message.reason
+        if reason_code is None:
+            reason_code = 0
+
         try:
-            reason = REASON_CODES[message.reason]
+            reason = REASON_CODES[reason_code]
         except KeyError as ex:
             raise AcmeMalformed(
                 typ="badRevocationReason", message=f"{message.reason}: Unsupported revocation reason."
@@ -1083,7 +1087,9 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
 
         # Get cryptography certificate from ACME message
         cg_cert = message.certificate.wrapped.to_cryptography()
-        if not isinstance(cg_cert, x509.Certificate):
+        if not isinstance(cg_cert, x509.Certificate):  # pragma: no cover
+            # COVERAGE NOTE: message deserialization already raises an error when no certificate is passed,
+            # so this check here is just for more safety (and to make mypy happy).
             raise AcmeMalformed(message="Request did not contain a certificate.")
 
         try:

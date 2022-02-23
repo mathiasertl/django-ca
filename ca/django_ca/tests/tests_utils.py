@@ -842,7 +842,7 @@ class Power2TestCase(TestCase):
     def test_true(self) -> None:
         """Test some numbers that are power of two."""
         for i in range(0, 20):
-            self.assertTrue(is_power2(2 ** i))
+            self.assertTrue(is_power2(2**i))
 
     def test_false(self) -> None:
         """Test some numbers that are not power of two."""
@@ -851,8 +851,8 @@ class Power2TestCase(TestCase):
         self.assertFalse(is_power2(5))
 
         for i in range(2, 20):
-            self.assertFalse(is_power2((2 ** i) - 1))
-            self.assertFalse(is_power2((2 ** i) + 1))
+            self.assertFalse(is_power2((2**i) - 1))
+            self.assertFalse(is_power2((2**i) + 1))
 
 
 class ParseKeyCurveTestCase(TestCase):
