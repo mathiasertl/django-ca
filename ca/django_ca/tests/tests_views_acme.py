@@ -2131,13 +2131,13 @@ class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationView
     """Test certificate revocation by signing the request with the compromised certificate."""
 
     def acme(self, *args: typing.Any, **kwargs: typing.Any) -> HttpResponse:
-        kwargs.setdefault('cert', certs[self.default_cert]["key"]["parsed"])
-        kwargs['kid'] = None
+        kwargs.setdefault("cert", certs[self.default_cert]["key"]["parsed"])
+        kwargs["kid"] = None
         return super().acme(*args, **kwargs)
 
     def test_wrong_signer(self) -> None:
         """Sign the request with the wrong certificate."""
-        cert = certs['root-cert']['key']['parsed']
+        cert = certs["root-cert"]["key"]["parsed"]
         resp = self.acme(self.url, self.message, cert=cert)
         self.assertUnauthorized(resp, "No authorization provided for revocation.")
 
