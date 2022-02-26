@@ -1053,7 +1053,16 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         # If the request is signed with the certificate key (and not the account), a JWK is set for this
         # request and we verify it was signed by the certificate on record.
         if self.jws.signature.combined.jwk:
+            # NOTE: RFC 8555, section 7.6 states:
+            #
+            #   The server MUST also consider a revocation request valid if it is signed with the private key
+            #   corresponding to the public key in the certificate.
+            #
+            # This implies that the account used to request the certificate may even be revoked or invalid, as
+            # long as the private key is used to sign the request. So we don't look at the ACME account at all
+            # here.
             cert = certs.get(serial=serial)
+
             jwk = cert.jwk
 
             # The JWS signature was already verified using the JWK from the request in the base class. But we
@@ -1067,8 +1076,9 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             if jwk != self.jwk or not self.jws.verify(jwk):
                 raise AcmeUnauthorized(message="No authorization provided for revocation.")
         else:
-            # Get certificate with matching serial issued to the account that signed the request. Note that
-            # self.account is **only** set if the request has no JWK
+            # Get certificate with matching serial issued to the account that signed the request.
+            # NOTE: self.account is **only** set if the request has no JWK.
+            # NOTE: The base class already makes sure that the account is currently valid.
             cert = certs.filter(acmecertificate__order__account=self.account).get(serial=serial)
 
         return cert

@@ -2124,3 +2124,32 @@ class AcmeCertificateRevocationViewTestCase(
         message = self.csr_class(certificate=jose.util.ComparableX509(req))
         resp = self.acme(self.url, message, kid=self.kid)
         self.assertMalformed(resp, "Could not decode 'certificate'", regex=True)
+
+
+@freeze_time(timestamps["everything_valid"])
+class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationViewTestCase):
+    """Test certificate revocation by signing the request with the compromised certificate."""
+
+    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> HttpResponse:
+        kwargs.setdefault('cert', certs[self.default_cert]["key"]["parsed"])
+        kwargs['kid'] = None
+        return super().acme(*args, **kwargs)
+
+    def test_wrong_signer(self) -> None:
+        """Sign the request with the wrong certificate."""
+        cert = certs['root-cert']['key']['parsed']
+        resp = self.acme(self.url, self.message, cert=cert)
+        self.assertUnauthorized(resp, "No authorization provided for revocation.")
+
+    def test_deactivated_account(self) -> None:
+        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
+
+    def test_unknown_account(self) -> None:
+        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
+
+    def test_unusable_account(self) -> None:
+        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
+
+    def test_jwk_and_kid(self) -> None:
+        """Already tested in the immediate base class and does not make sense here: The test sets KID to a
+        value, but the point of the whole class is to have *no* KID."""
