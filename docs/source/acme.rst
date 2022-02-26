@@ -59,7 +59,6 @@ certificate issuance is working.
 
 The following things are known to not yet work:
 
-* Certificate revocation
 * Pre-Authorization for certificates
 * Account update
 * External account bindings

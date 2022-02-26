@@ -10,7 +10,9 @@ ChangeLog
 1.21.0 (TBR)
 ************
 
-* Dependencies for ACMEv2 are now non-optional and the ``acme`` extra is now empty.
+* Dependencies for ACMEv2 are now non-optional and the ``acme`` extra is now empty (and will be removed in
+  ``django-ca==1.23.0``).
+* Implement certificate revocation via ACMEv2.
 * Stop testing individual versions of `idna <https://pypi.org/project/idna/>`_. django-ca uses a minimal
   subset of basic functions that are unlikely to break.
 
@@ -24,7 +26,7 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
-* The ``aacme`` extra will be removed in ``django-ca==1.23.0``.
+* The ``acme`` extra will be removed in ``django-ca==1.23.0``.
 
 .. _changelog-1.20.1:
 
@@ -76,7 +78,7 @@ ACMEv2 support
 
 ACMEv2 support will be included and enabled by default starting with ``django-ca==1.22``. You will still have
 to enable the ACMEv2 interface for each CA that should provide one. The documentation has been updated to
-assume that you want enable ACMEv2 support.
+assume that you want to enable ACMEv2 support.
 
 * Add support for updating an accounts email address.
 * Add support for deactivating ACME accounts.
