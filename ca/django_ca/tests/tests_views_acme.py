@@ -2139,7 +2139,7 @@ class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationView
         """Sign the request with the wrong certificate."""
         cert = certs["root-cert"]["key"]["parsed"]
         resp = self.acme(self.url, self.message, cert=cert)
-        self.assertUnauthorized(resp, "No authorization provided for revocation.")
+        self.assertUnauthorized(resp, "Request signed by the wrong certificate.")
 
     def test_deactivated_account(self) -> None:
         """Not applicable: Certificate-signed revocation requests do not require a valid account."""

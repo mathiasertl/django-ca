@@ -863,6 +863,8 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
                 # ready once all authorizations are valid.
                 raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
 
+        # TODO: Do we validate that the account holds ALL necessary authorizations?
+
         # Parse and validate the CSR
         csr = self.validate_csr(message, authorizations)
 
@@ -1074,12 +1076,39 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             # time based on the database key.
             #   https://josepy.readthedocs.io/en/latest/api/util/
             if jwk != self.jwk or not self.jws.verify(jwk):
-                raise AcmeUnauthorized(message="No authorization provided for revocation.")
+                raise AcmeUnauthorized(message="Request signed by the wrong certificate.")
         else:
-            # Get certificate with matching serial issued to the account that signed the request.
-            # NOTE: self.account is **only** set if the request has no JWK.
+            # Get the certificate by serial if it *has* an ACME account.
             # NOTE: The base class already makes sure that the account is currently valid.
-            cert = certs.filter(acmecertificate__order__account=self.account).get(serial=serial)
+            cert = certs.filter(acmecertificate__order__account__isnull=False).get(serial=serial)
+
+            # If the request is from the account that issued the certificate, the certificate can be revoked.
+            # NOTE: self.account is **only** set if the request has no JWK.
+            if cert.acmecertificate.order.account == self.account:
+                return cert
+
+            # If the account holds authorizations for all of the identifiers in the certificate, it can also
+            # be revoked, so get a list of all currently valid authorizations that the account holds
+            authz = set(AcmeAuthorization.objects.dns().valid().account(account=self.account).names())
+
+            # Get names from the certificate, first from the CommonName...
+            # NOTE: returns empty list if subject does not have a CommonName.
+            names = [cn.value for cn in cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)]
+
+            # ... then from the SubjectAlternativeName extension
+            try:
+                san = cert.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+
+                # If ANY subjectAlternativeName is NOT a DNS name, we cannot revoke this cert.
+                if filter(lambda v: not isinstance(v, x509.DNSName), san.value):
+                    raise AcmeUnauthorized(message="Certificate contains non-DNS subjectAlternativeNames.")
+                names += [name.value for name in san.value]
+            except x509.ExtensionNotFound:
+                pass
+
+            # Finally test if the account holds all authorizations required for revoking this certificate.
+            if not set(names) <= authz:
+                raise AcmeUnauthorized(message="Account does not hold necessary authorizations.")
 
         return cert
 

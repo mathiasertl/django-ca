@@ -14,6 +14,7 @@
 """QuerySet classes for DjangoCA models."""
 
 import abc
+import typing
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
@@ -268,9 +269,21 @@ class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
         """Filter authorizations belonging to the given account."""
         return self.filter(order__account=account)
 
+    def dns(self) -> "AcmeAuthorizationQuerySet":
+        """Get all authorizations of type DNS."""
+        return self.filter(type=self.model.TYPE_DNS)
+
+    def names(self) -> typing.List[str]:
+        """Get a flat list of names identified by the current queryset."""
+        return list(self.values_list("value", flat=True))
+
     def url(self) -> "AcmeAuthorizationQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
         return self.select_related("order__account__ca")
+
+    def valid(self) -> "AcmeAuthorizationQuerySet":
+        """Filter for currently valid authorizations."""
+        return self.filter(order__expires__gt=timezone.now(), status=self.model.STATUS_VALID)
 
     def viewable(self) -> "AcmeAuthorizationQuerySet":
         """Filter ACME authzs that can be viewed via the ACME API.
