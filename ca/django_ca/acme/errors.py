@@ -13,8 +13,7 @@
 
 """Collection of exception classes for ACMEv2."""
 
-from typing import Any
-from typing import Type
+import typing
 
 from .responses import AcmeResponseBadCSR
 from .responses import AcmeResponseError
@@ -26,9 +25,9 @@ from .responses import AcmeResponseUnauthorized
 class AcmeException(Exception):
     """Base class for all ACME exceptions."""
 
-    response: Type[AcmeResponseError] = AcmeResponseError
+    response: typing.Type[AcmeResponseError] = AcmeResponseError
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args)
         self.kwargs = kwargs
 
@@ -40,7 +39,7 @@ class AcmeException(Exception):
 class AcmeMalformed(AcmeException):
     """Exception when the request was malformed."""
 
-    response: Type[AcmeResponseMalformed] = AcmeResponseMalformed
+    response: typing.Type[AcmeResponseMalformed] = AcmeResponseMalformed
 
 
 class AcmeUnauthorized(AcmeException):
