@@ -771,10 +771,13 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_jwk(self) -> None:
         """Test JWK property."""
         for name, ca in self.cas.items():
-            self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA)
+            if certs[name]["key_type"] == "ECC":
+                self.assertIsInstance(ca.jwk, jose.jwk.JWKEC, name)
+            else:
+                self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA)
 
         for name, cert in self.certs.items():
-            if name in ("google_g3-cert", "cloudflare_1"):
+            if certs[name]["key_type"] == "ECC":
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKEC, name)
             else:
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKRSA, name)

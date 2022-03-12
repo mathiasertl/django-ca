@@ -170,10 +170,44 @@ class AcmeCertificateRevocationWithAuthorizationsViewTestCase(AcmeCertificateRev
     def test_unknown_account(self) -> None:
         pass
 
+    def test_wrong_authorizations(self) -> None:
+        """Test revoking a certificate when the account has some, but the wrong authorizations."""
+        self.acme_auth.value = "wrong.example.com"
+        self.acme_auth.save()
+
+        resp = self.acme(self.url, self.get_message())
+        self.assertUnauthorized(resp, "Account does not hold necessary authorizations.")
+
+    def test_no_extensions(self) -> None:
+        """Test revoking a certificate that has no SubjectAltName extension."""
+        cert = self.load_named_cert("no-extensions")
+
+        # Create AcmeOrder/Certificate (only certs issued via ACME can be revoked via ACME).
+        order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
+        AcmeCertificate.objects.create(order=order, cert=cert)
+
+        message_cert = jose.util.ComparableX509(X509.from_cryptography(cert.pub.loaded))
+        resp = self.acme(self.url, self.get_message(certificate=message_cert))
+        self.assertUnauthorized(resp, "Account does not hold necessary authorizations.")
+
+    def test_non_dns_sans(self) -> None:
+        """Test revoking a certificate that has no SubjectAltName extension."""
+        cert = self.load_named_cert("alt-extensions")
+
+        # Create AcmeOrder/Certificate (only certs issued via ACME can be revoked via ACME).
+        order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
+        AcmeCertificate.objects.create(order=order, cert=cert)
+
+        message_cert = jose.util.ComparableX509(X509.from_cryptography(cert.pub.loaded))
+        resp = self.acme(self.url, self.get_message(certificate=message_cert))
+        self.assertUnauthorized(resp, "Certificate contains non-DNS subjectAlternativeNames.")
+
 
 @freeze_time(timestamps["everything_valid"])
 class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationViewTestCase):
     """Test certificate revocation by signing the request with the compromised certificate."""
+
+    requires_kid = False
 
     def acme(self, *args: typing.Any, **kwargs: typing.Any) -> HttpResponse:
         kwargs.setdefault("cert", certs[self.default_cert]["key"]["parsed"])

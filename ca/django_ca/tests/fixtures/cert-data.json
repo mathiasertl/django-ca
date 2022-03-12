@@ -4461,8 +4461,7 @@
         "nonce": {
             "name": "nonce",
             "filename": "nonce.req",
-            "nonce": "04:0E:6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39",
-            "asn1crypto_nonce": "6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39"
+            "nonce": "6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39"
         },
         "no-nonce": {
             "name": "no-nonce",

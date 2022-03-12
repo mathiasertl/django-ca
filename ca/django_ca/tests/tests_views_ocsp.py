@@ -82,7 +82,6 @@ ocsp_pem_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile["pub_filename"]
 ocsp_pem = ocsp_profile["pub"]["pem"]
 req1 = _load_req(ocsp_data["nonce"]["filename"])
 req1_nonce = hex_to_bytes(ocsp_data["nonce"]["nonce"])
-req1_asn1_nonce = hex_to_bytes(ocsp_data["nonce"]["asn1crypto_nonce"])
 req_no_nonce = _load_req(ocsp_data["no-nonce"]["filename"])
 unknown_req = _load_req("unknown-serial")
 multiple_req = _load_req("multiple-serial")
@@ -380,7 +379,7 @@ class OCSPTestGenericView(OCSPViewTestMixin, TestCase):
         url = reverse("django_ca:ocsp-get-child", kwargs={"data": data})
         response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
     @override_tmpcadir()
     def test_post(self) -> None:
@@ -389,7 +388,7 @@ class OCSPTestGenericView(OCSPViewTestMixin, TestCase):
             reverse("django_ca:ocsp-post-child"), req1, content_type="application/ocsp-request"
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
 
 @override_settings(USE_TZ=True)
@@ -411,7 +410,7 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         data = base64.b64encode(req1).decode("utf-8")
         response = self.client.get(reverse("get", kwargs={"data": data}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
     def test_bad_query(self) -> None:
         """Test sending a bad query."""
@@ -456,15 +455,15 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         """Test the post request."""
         response = self.client.post(reverse("post"), req1, content_type="application/ocsp-request")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce, expires=1200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
         response = self.client.post(reverse("post-serial"), req1, content_type="application/ocsp-request")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce, expires=1300)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1300)
 
         response = self.client.post(reverse("post-full-pem"), req1, content_type="application/ocsp-request")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce, expires=1400)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1400)
 
     @override_tmpcadir()
     def test_loaded_cryptography_cert(self) -> None:
@@ -473,7 +472,7 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
             reverse("post-loaded-cryptography"), req1, content_type="application/ocsp-request"
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce, expires=1500)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1500)
 
     @override_tmpcadir()
     def test_no_nonce(self) -> None:
@@ -506,12 +505,12 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
 
         response = self.client.post(reverse("post"), req1, content_type="application/ocsp-request")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce, expires=1200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
         self.cert.revoke(ReasonFlags.affiliation_changed)
         response = self.client.post(reverse("post"), req1, content_type="application/ocsp-request")
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_asn1_nonce, expires=1200)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, expires=1200)
 
     @override_tmpcadir()
     def test_ca_ocsp(self) -> None:
@@ -529,7 +528,7 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         self.assertOCSP(
             response,
             requested=[ca],
-            nonce=req1_asn1_nonce,
+            nonce=req1_nonce,
             expires=600,
             ca_request=True,
         )
@@ -734,9 +733,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # URL config sets expires to 3600
-        self.assertOCSP(
-            response, requested=[self.cert], nonce=req1_asn1_nonce, ocsp_cert=ocsp_cert, expires=3600
-        )
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=3600)
 
         priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key(key_size=1024)
         self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
@@ -744,9 +741,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # URL config sets expires to 3600
-        self.assertOCSP(
-            response, requested=[self.cert], nonce=req1_asn1_nonce, ocsp_cert=ocsp_cert, expires=3600
-        )
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=3600)
 
     @override_tmpcadir()
     def test_cert_method_not_allowed(self) -> None:

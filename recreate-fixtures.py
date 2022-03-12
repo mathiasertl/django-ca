@@ -29,6 +29,8 @@ from six.moves import reload_module
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import NoEncryption
@@ -68,8 +70,8 @@ from django_ca.models import Certificate  # NOQA: E402
 from django_ca.models import CertificateAuthority  # NOQA: E402
 from django_ca.profiles import profiles  # NOQA:  E402
 from django_ca.subject import Subject  # NOQA: E402
+from django_ca.utils import bytes_to_hex  # NOQA: E402
 from django_ca.utils import ca_storage  # NOQA: E402
-from django_ca.utils import hex_to_bytes  # NOQA: E402
 
 # pylint: enable=wrong-import-position
 
@@ -160,12 +162,20 @@ class override_tmpcadir(override_settings):
         reload_module(ca_settings)
 
 
-def create_key(path):
-    subprocess.check_call(["openssl", "genrsa", "-out", path, str(key_size)], stderr=subprocess.DEVNULL)
+def create_key(path, key_type):
+    if key_type == "RSA":
+        subprocess.check_call(["openssl", "genrsa", "-out", path, str(key_size)], stderr=subprocess.DEVNULL)
+    elif key_type == "ECC":
+        subprocess.check_call(
+            ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", path],
+            stderr=subprocess.DEVNULL,
+        )
+    else:
+        raise ValueError(f"Unknown key type: {key_type}")
 
 
-def create_csr(key_path, path, subject="/CN=ignored.example.com"):
-    create_key(key_path)
+def create_csr(key_path, path, subject="/CN=ignored.example.com", key_type="RSA"):
+    create_key(key_path, key_type)
     subprocess.check_call(
         ["openssl", "req", "-new", "-key", key_path, "-out", path, "-utf8", "-batch", "-subj", subject]
     )
@@ -367,6 +377,7 @@ data = {
             },
         },
         "pathlen": ecc_pathlen,
+        "key_size": 256,  # Value is unused in key generation, but needed for validation
         "key_type": "ECC",
         "max_pathlen": 1,
     },
@@ -583,6 +594,8 @@ data = {
                     "san1.alt-extensions.example.com",
                     "san2.alt-extensions.example.com",
                     "san3.alt-extensions.example.com",
+                    "IP:192.0.2.3",
+                    "URI:http://example.com",
                 },
             },
             "tls_feature": {
@@ -596,8 +609,6 @@ ocsp_data = {
     "nonce": {
         "name": "nonce",
         "filename": "nonce.req",
-        "nonce": "04:0E:6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39",
-        "asn1crypto_nonce": "6C:C4:B6:CC:50:E8:D8:BD:16:78:41:20:0D:39",
     },
     "no-nonce": {
         "name": "no-nonce",
@@ -671,7 +682,7 @@ if not args.only_contrib:
                     key_size=data[name]["key_size"],
                     algorithm=data[name]["algorithm"],
                     pathlen=data[name]["pathlen"],
-                    **kwargs
+                    **kwargs,
                 )
 
             # Same values can only be added here because they require data from the already created CA
@@ -692,7 +703,9 @@ if not args.only_contrib:
             name = "%s-cert" % ca.name
             key_path = os.path.join(ca_settings.CA_DIR, "%s.key" % name)
             csr_path = os.path.join(ca_settings.CA_DIR, "%s.csr" % name)
-            csr = create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
+            csr = create_csr(
+                key_path, csr_path, subject=data[name]["csr_subject_str"], key_type=data[name]["key_type"]
+            )
 
             freeze_now = now
             if args.delay:
@@ -719,7 +732,9 @@ if not args.only_contrib:
 
             key_path = os.path.join(ca_settings.CA_DIR, "%s.key" % name)
             csr_path = os.path.join(ca_settings.CA_DIR, "%s.csr" % name)
-            csr = create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
+            csr = create_csr(
+                key_path, csr_path, subject=data[name]["csr_subject_str"], key_type=data[name]["key_type"]
+            )
 
             freeze_now = now
             if args.delay:
@@ -845,9 +860,9 @@ if not args.only_contrib:
         with open(os.path.join(ocsp_base, ocsp_data["no-nonce"]["filename"]), "wb") as stream:
             stream.write(no_nonce_req)
 
-        ocsp_builder = ocsp_builder.add_extension(
-            x509.OCSPNonce(hex_to_bytes(ocsp_data["nonce"]["nonce"])), critical=False
-        )
+        nonce = os.urandom(16)
+        ocsp_data["nonce"]["nonce"] = bytes_to_hex(nonce)
+        ocsp_builder = ocsp_builder.add_extension(x509.OCSPNonce(nonce), critical=False)
         nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
         with open(os.path.join(ocsp_base, ocsp_data["nonce"]["filename"]), "wb") as stream:
             stream.write(nonce_req)
@@ -871,6 +886,14 @@ if args.generate_contrib:
         data[name]["type"] = "ca"
         data[name]["pathlen"] = ca.pathlen
 
+        public_key = parsed.public_key()
+        if isinstance(public_key, rsa.RSAPublicKey):
+            data[name]["key_type"] = "RSA"
+        elif isinstance(public_key, ec.EllipticCurvePublicKey):
+            data[name]["key_type"] = "ECC"
+        else:
+            raise ValueError(f"Unknown type of Public key encountered: {public_key}")
+
     for filename in os.listdir(os.path.join(_sphinx_dir, "cert")):
         name, _ext = os.path.splitext(filename)
 
@@ -891,6 +914,14 @@ if args.generate_contrib:
 
         if contrib_ca:
             data[name]["ca"] = contrib_ca
+
+        public_key = parsed.public_key()
+        if isinstance(public_key, rsa.RSAPublicKey):
+            data[name]["key_type"] = "RSA"
+        elif isinstance(public_key, ec.EllipticCurvePublicKey):
+            data[name]["key_type"] = "ECC"
+        else:
+            raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
 
 for name, cert_data in data.items():

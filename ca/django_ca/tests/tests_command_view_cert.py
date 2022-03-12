@@ -373,8 +373,6 @@ KeyUsage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
@@ -505,6 +503,8 @@ SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name[1]}
     * {subject_alternative_name[2]}
     * {subject_alternative_name[3]}
+    * {subject_alternative_name[4]}
+    * {subject_alternative_name[5]}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 TLSFeature{tls_feature_critical}:

@@ -306,7 +306,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         self.assertEqual(response["Content-Type"], "application/problem+json")
         self.assertLinkRelations(response, ca=ca, **link_relations)
         data = response.json()
-        self.assertEqual(data["type"], f"urn:ietf:params:acme:error:{typ}")
+        self.assertEqual(data["type"], f"urn:ietf:params:acme:error:{typ}", f"detail={data['detail']}")
         self.assertEqual(data["status"], status)
         if regex:
             self.assertRegex(data["detail"], message)
@@ -484,6 +484,9 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         else:
             payload = msg
 
+        if self.requires_kid and kid is None:
+            kid = self.kid
+
         jws = acme.jws.JWS.sign(
             payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
         )
@@ -508,6 +511,43 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     def message(self) -> typing.Union[bytes, MessageTypeVar]:
         """Property for sending the default message."""
         return self.get_message()
+
+    @override_tmpcadir()
+    def test_internal_server_error(self) -> None:
+        """Test raising an uncaught exception -> Internal server error"""
+        # pylint: disable=no-member; false positives in this test case
+        view = "django.views.generic.base.View.dispatch"
+        msg = f"{self.url} mock-exception"
+        with mock.patch(view, side_effect=Exception(msg)), self.assertLogs() as logcm:
+            resp = self.acme(self.url, self.message, nonce=b"foo")
+
+        self.assertEqual(resp.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
+        self.assertEqual(
+            resp.json(),
+            {
+                "detail": "Internal server error",
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "type": "urn:ietf:params:acme:error:serverInternal",
+            },
+        )
+        self.assertEqual(len(logcm.output), 1)
+        self.assertIn(msg, logcm.output[0])
+
+    @override_tmpcadir()
+    def test_unknown_nonce(self) -> None:
+        """Test sending an unknown nonce."""
+        resp = self.acme(self.url, self.message, nonce=b"foo")
+        # PYLINT NOTE: pylint 2.11.1 falsely thinks that resp is a WSGIRequest (not a HttpResponse)
+        self.assertMalformed(resp, "Bad or invalid nonce.", typ="badNonce")  # pylint: disable=no-member
+
+    @override_tmpcadir()
+    def test_duplicate_nonce(self) -> None:
+        """Test sending an nonce twice."""
+        nonce = self.get_nonce()
+        self.acme(self.url, self.message, nonce=nonce)
+        resp1 = self.acme(self.url, self.message, nonce=nonce)
+        # PYLINT NOTE: pylint 2.11.1 falsely thinks that resp is a WSGIRequest (not a HttpResponse)
+        self.assertMalformed(resp1, "Bad or invalid nonce.", typ="badNonce")  # pylint: disable=no-member
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_disabled_acme(self) -> None:
@@ -560,6 +600,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         kid: typing.Optional[str] = self.kid
         expected = "Request requires a full JWK key."
         if self.requires_kid:
+            self.requires_kid = False
             expected = "Request requires a JWK key ID."
             kid = None
 

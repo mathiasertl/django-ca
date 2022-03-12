@@ -18,6 +18,7 @@ import tempfile
 import typing
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 from django.conf import settings
@@ -49,12 +50,9 @@ class ImportCATest(TestCaseMixin, TestCase):
         }
 
         for name, data in cas.items():
-            if data.get("password"):
-                continue
-
             key_path = os.path.join(settings.FIXTURES_DIR, data["key_filename"])
             pem_path = os.path.join(settings.FIXTURES_DIR, data["pub_filename"])
-            out, err = self.cmd("import_ca", name, key_path, pem_path)
+            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data["password"])
 
             self.assertEqual(out, "")
             self.assertEqual(err, "")
@@ -67,8 +65,16 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            key = typing.cast(RSAPrivateKey, ca.key(data["password"]))
-            self.assertIsInstance(key, RSAPrivateKey)
+            # NOTE: password is always None since we don't encrypt the stored key with --password
+            if data["key_type"] == "ECC":
+                key = typing.cast(EllipticCurvePrivateKey, ca.key())
+                self.assertIsInstance(key, EllipticCurvePrivateKey)
+            elif data["key_type"] == "RSA":
+                key = typing.cast(RSAPrivateKey, ca.key())  # type: ignore[assignment]
+                self.assertIsInstance(key, RSAPrivateKey)
+            else:
+                raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
+
             self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
 
@@ -87,12 +93,9 @@ class ImportCATest(TestCaseMixin, TestCase):
         }
 
         for name, data in cas.items():
-            if data.get("password"):
-                continue
-
             key_path = os.path.join(settings.FIXTURES_DIR, data["key_der_filename"])
             pem_path = os.path.join(settings.FIXTURES_DIR, data["pub_der_filename"])
-            out, err = self.cmd("import_ca", name, key_path, pem_path)
+            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data["password"])
 
             self.assertEqual(out, "")
             self.assertEqual(err, "")
@@ -106,8 +109,15 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            key = typing.cast(RSAPrivateKey, ca.key(None))
-            self.assertIsInstance(key, RSAPrivateKey)
+            if data["key_type"] == "ECC":
+                key = typing.cast(EllipticCurvePrivateKey, ca.key())
+                self.assertIsInstance(key, EllipticCurvePrivateKey)
+            elif data["key_type"] == "RSA":
+                key = typing.cast(RSAPrivateKey, ca.key(None))  # type: ignore[assignment]
+                self.assertIsInstance(key, RSAPrivateKey)
+            else:
+                raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
+
             self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
 

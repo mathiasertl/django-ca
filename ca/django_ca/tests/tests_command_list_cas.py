@@ -58,11 +58,6 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             stdout,
             f"""{certs['letsencrypt_x1']['serial_colons']} - {certs['letsencrypt_x1']['name']}
-{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
-{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
-{certs['pwd']['serial_colons']} - {certs['pwd']['name']}
-{certs['root']['serial_colons']} - {certs['root']['name']}
-{certs['child']['serial_colons']} - {certs['child']['name']}
 {certs['letsencrypt_x3']['serial_colons']} - {certs['letsencrypt_x3']['name']}
 {certs['dst_root_x3']['serial_colons']} - {certs['dst_root_x3']['name']}
 {certs['google_g3']['serial_colons']} - {certs['google_g3']['name']}
@@ -72,6 +67,11 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 {certs['geotrust']['serial_colons']} - {certs['geotrust']['name']}
 {certs['startssl_class2']['serial_colons']} - {certs['startssl_class2']['name']}
 {certs['digicert_sha2']['serial_colons']} - {certs['digicert_sha2']['name']}
+{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
+{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['pwd']['serial_colons']} - {certs['pwd']['name']}
+{certs['root']['serial_colons']} - {certs['root']['name']}
+{certs['child']['serial_colons']} - {certs['child']['name']}
 {certs['globalsign_dv']['serial_colons']} - {certs['globalsign_dv']['name']}
 {certs['comodo_ev']['serial_colons']} - {certs['comodo_ev']['name']}
 {certs['globalsign']['serial_colons']} - {certs['globalsign']['name']}
