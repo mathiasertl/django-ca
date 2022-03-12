@@ -2,7 +2,7 @@ Sphinx==4.4.0
 doc8==0.10.1
 numpydoc==1.2
 setuptools-scm
-sphinx-jinja==1.4.0
+sphinx-jinja==2.0.1
 sphinx_rtd_theme==1.0.0
 sphinxcontrib-spelling==7.3.2
 toml>=0.10

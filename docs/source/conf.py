@@ -78,7 +78,7 @@ extensions = [
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     "celery.contrib.sphinx",
     "numpydoc",
-    "sphinxcontrib.jinja",
+    "sphinx_jinja",
 ]
 
 autodoc_typehints = "none"
