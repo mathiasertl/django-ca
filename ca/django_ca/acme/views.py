@@ -333,10 +333,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         # self.prepared['body'] = json.loads(request.body.decode('utf-8'))
 
         try:
-            # TYPE NOTE: cast and type fixed in https://github.com/certbot/josepy/pull/127
-            self.jws = typing.cast(
-                acme.jws.JWS, acme.jws.JWS.json_loads(request.body)  # type: ignore[arg-type]
-            )
+            self.jws = acme.jws.JWS.json_loads(request.body)
         except (jose.errors.DeserializationError, TypeError):
             return AcmeResponseMalformed(message="Could not parse JWS token.")
 
@@ -455,10 +452,7 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
 
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         try:
-            # TYPE NOTE: cast and type fixed in https://github.com/certbot/josepy/pull/127
-            message = typing.cast(
-                MessageTypeVar, self.message_cls.json_loads(self.jws.payload)  # type: ignore[arg-type]
-            )
+            message = self.message_cls.json_loads(self.jws.payload)
             log.debug("ACME message: %s", message)
         except jose.errors.DeserializationError as e:
             return AcmeResponseMalformedPayload(message=", ".join(e.args))

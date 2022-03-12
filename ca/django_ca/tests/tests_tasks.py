@@ -426,21 +426,15 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
 
-        # TYPE NOTE: Fixed in https://github.com/rthalley/dnspython/pull/773, dnspython>2.3.0
-        dns.resolver.reset_default_resolver()  # type: ignore[attr-defined]
+        dns.resolver.reset_default_resolver()
         challenge = challenge or self.chall
         domain = self.auth.value
         if content is None:
             content = challenge.expected
 
-        # TYPE NOTE: Fixed in https://github.com/rthalley/dnspython/pull/773, dnspython>2.3.0
-        with mock.patch.object(
-            dns.resolver.default_resolver, "resolve", autospec=True  # type: ignore[attr-defined]
-        ) as resolve_cm:
+        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_cm:
             resolve_cm.return_value = [
-                TXTBase(  # type: ignore[no-untyped-call,call-arg]
-                    dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content]
-                )
+                TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, [content])
             ]
             yield resolve_cm
 

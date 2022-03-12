@@ -152,13 +152,10 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
     @contextmanager
     def mock_response(self, domain: str, *responses: typing.Iterable[bytes]) -> typing.Iterator[mock.Mock]:
         """Mock TXT responses for the given domain."""
-        # TYPE NOTE: Fixed in https://github.com/rthalley/dnspython/pull/773, dnspython>2.3.0
-        dns.resolver.reset_default_resolver()  # type: ignore[attr-defined]
+        dns.resolver.reset_default_resolver()
         txt_responses = [self.to_txt_record(resp) for resp in responses]
 
-        with mock.patch.object(
-            dns.resolver.default_resolver, "resolve", autospec=True  # type: ignore[attr-defined]
-        ) as resolve_mock:
+        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_mock:
             resolve_mock.return_value = txt_responses
             yield resolve_mock
 
@@ -179,10 +176,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
     def to_txt_record(self, values: typing.Iterable[bytes]) -> TXTBase:
         """Convert method to TXT record."""
-        # TYPE NOTE: Fixed in https://github.com/rthalley/dnspython/pull/773, dnspython>2.3.0
-        return TXTBase(  # type: ignore[call-arg,no-untyped-call]
-            dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, values
-        )
+        return TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, values)
 
     def test_validation(self) -> None:
         """Test successful DNS-01 validation."""
