@@ -1100,7 +1100,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
                 san = cert.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
 
                 # If ANY subjectAlternativeName is NOT a DNS name, we cannot revoke this cert.
-                if filter(lambda v: not isinstance(v, x509.DNSName), san.value):
+                if list(filter(lambda v: not isinstance(v, x509.DNSName), san.value)):
                     raise AcmeUnauthorized(message="Certificate contains non-DNS subjectAlternativeNames.")
                 names += [name.value for name in san.value]
             except x509.ExtensionNotFound:

@@ -25,12 +25,13 @@ import acme
 import acme.jws
 import josepy as jose
 import pyrfc3339
-from OpenSSL.crypto import X509
 from OpenSSL.crypto import X509Req
 from requests.utils import parse_header_links
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
@@ -50,19 +51,16 @@ from ..acme.errors import AcmeUnauthorized
 from ..acme.messages import CertificateRequest
 from ..acme.messages import NewOrder
 from ..acme.responses import AcmeResponseUnauthorized
-from ..constants import ReasonFlags
 from ..models import AcmeAccount
 from ..models import AcmeAuthorization
 from ..models import AcmeCertificate
 from ..models import AcmeChallenge
 from ..models import AcmeOrder
-from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import acme_slug
 from ..tasks import acme_issue_certificate
 from ..tasks import acme_validate_challenge
 from ..typehints import PrivateKeyTypes
-from ..utils import get_cert_builder
 from .base import CERT_PEM_REGEX
 from .base import certs
 from .base import override_tmpcadir
@@ -253,12 +251,26 @@ class AcmeTestCaseMixin(TestCaseMixin):
 
     hostname = "example.com"  # what we want a certificate for
     SERVER_NAME = "example.com"
-    PEM = """-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDaQORFBn/OXuD0KF4BStAyoARK
-+zIGwjibGrObfH62Y2X6i0MpLPYOAMxBzbuZEodv6kaF9ipW9yCdokIndpelPoZ8
-lJcJOkTwT0P0U46Wg4o2/p6v45nVzXXC+Egmah2Evl+Pdo2Mhg1F8Vf4/wRcZWnt
-Rt/6X2p4XpW6AvIzYwIDAQAB
------END PUBLIC KEY-----"""
+
+    # NOTE: PEM here is the same as AcmeAccount.pem when this cert is used for account registration
+    PEM = (
+        certs["root-cert"]["key"]["parsed"]
+        .public_key()
+        .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+        .decode("utf-8")
+        .strip()
+    )
+    thumbprint = "kqtZjXqX07HbrRg220VoINzqF9QXsfIkQava3PdWM8o"
+    ACCOUNT_ONE_CONTACT = "mailto:one@example.com"
+    CHILD_PEM = (
+        certs["child-cert"]["key"]["parsed"]
+        .public_key()
+        .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+        .decode("utf-8")
+        .strip()
+    )
+    CHILD_THUMBPRINT = "ux-66bpJQiyeDduTWQZHgkB4KJWK0kSdPOabnFiitFM"
+    ACCOUNT_TWO_CONTACT = "mailto:two@example.net"
 
     load_cas: typing.Tuple[str, ...] = ("root",)
     load_certs: typing.Tuple[str, ...] = ("root-cert",)
@@ -425,7 +437,11 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     def setUp(self) -> None:
         super().setUp()
         self.account_slug = acme_slug()
+        self.child_account_slug = acme_slug()
         self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.account_slug)
+        self.child_kid = self.absolute_uri(
+            ":acme-account", serial=self.ca.serial, slug=self.child_account_slug
+        )
 
     @property
     def url(self) -> str:
@@ -611,19 +627,39 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 class AcmeWithAccountViewTestCaseMixin(
     AcmeBaseViewTestCaseMixin[MessageTypeVar], typing.Generic[MessageTypeVar]
 ):
-    """Mixin that also adds an account to the database."""
+    """Mixin that also adds accounts to the database."""
 
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         super().setUp()
         self.account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug=self.account_slug, kid=self.kid, pem=self.PEM
+            ca=self.ca,
+            contact=self.ACCOUNT_ONE_CONTACT,
+            terms_of_service_agreed=True,
+            slug=self.account_slug,
+            kid=self.kid,
+            pem=self.PEM,
+            thumbprint=self.thumbprint,
         )
+        self.account2 = AcmeAccount.objects.create(
+            ca=self.ca,
+            contact=self.ACCOUNT_TWO_CONTACT,
+            terms_of_service_agreed=True,
+            slug=self.child_account_slug,
+            kid=self.child_kid,
+            pem=self.CHILD_PEM,
+            thumbprint=self.CHILD_THUMBPRINT,
+        )
+
+    @property
+    def main_account(self) -> AcmeAccount:
+        """Return the main account to be used for this test case."""
+        return self.account
 
     @override_tmpcadir()
     def test_deactivated_account(self) -> None:
         """Test request with a deactivated account."""
-        self.account.status = AcmeAccount.STATUS_DEACTIVATED
-        self.account.save()
+        self.main_account.status = AcmeAccount.STATUS_DEACTIVATED
+        self.main_account.save()
         self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), "Account not usable.")
 
     @override_tmpcadir()
@@ -634,8 +670,8 @@ class AcmeWithAccountViewTestCaseMixin(
     @override_tmpcadir()
     def test_unusable_account(self) -> None:
         """Test doing a request with an unusable account."""
-        self.account.status = AcmeAccount.STATUS_REVOKED
-        self.account.save()
+        self.main_account.status = AcmeAccount.STATUS_REVOKED
+        self.main_account.save()
         self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), "Account not usable.")
 
 
@@ -965,7 +1001,7 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
         self.assertEqual(
             resp.json(),
             {
-                "contact": [],
+                "contact": [self.ACCOUNT_ONE_CONTACT],
                 "orders": self.absolute_uri(
                     ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
                 ),
@@ -1039,7 +1075,7 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
         self.assertEqual(
             resp.json(),
             {
-                "contact": [],
+                "contact": [self.ACCOUNT_ONE_CONTACT],
                 "orders": self.absolute_uri(
                     ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
                 ),
@@ -1049,7 +1085,7 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
         self.account.refresh_from_db()
 
         self.assertFalse(self.account.usable)
-        self.assertEqual(self.account.contact, "")
+        self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
         self.assertEqual(self.account.status, AcmeAccount.STATUS_DEACTIVATED)
 
     def test_malformed(self) -> None:
@@ -1061,7 +1097,7 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
         self.account.refresh_from_db()
 
         self.assertTrue(self.account.usable)
-        self.assertEqual(self.account.contact, "")
+        self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
         self.assertEqual(self.account.status, AcmeAccount.STATUS_VALID)
 
 
@@ -2018,138 +2054,3 @@ class AcmeCertificateViewTestCase(
         self.acmecert.save()
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertUnauthorized(resp)
-
-
-@freeze_time(timestamps["everything_valid"])
-class AcmeCertificateRevocationViewTestCase(
-    AcmeWithAccountViewTestCaseMixin[acme.messages.Revocation], TestCase
-):
-    """Test revoking a certificate."""
-
-    message_cls = acme.messages.Revocation
-    view_name = "acme-revoke"
-    load_cas = ("root", "child")
-    load_certs = ("root-cert", "child-cert")
-
-    class csr_class(acme.messages.Revocation):  # pylint: disable=invalid-name
-        """Class that allows us to send a CSR in the certificate field for testing."""
-
-        certificate = jose.json_util.Field(  # type: ignore[assignment]
-            "certificate", decoder=jose.json_util.decode_csr, encoder=jose.json_util.encode_csr
-        )
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
-        self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
-
-    @property
-    def url(self) -> str:
-        """Get URL for the standard auth object."""
-        return self.get_url(serial=self.ca.serial)
-
-    def get_message(self, **kwargs: typing.Any) -> acme.messages.Revocation:
-        kwargs.setdefault(
-            "certificate", jose.util.ComparableX509(X509.from_cryptography(self.cert.pub.loaded))
-        )
-        return self.message_cls(**kwargs)
-
-    @override_tmpcadir()
-    def test_wrong_jwk_or_kid(self) -> None:
-        """This test makes no sense here, as we accept both JWK and JID."""
-
-    def test_basic(self) -> None:
-        """Test a very basic certificate revocation."""
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-
-        self.cert.refresh_from_db()
-        self.assertTrue(self.cert.revoked)
-        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
-        self.assertEqual(self.cert.revoked_reason, ReasonFlags.unspecified.value)
-
-    def test_reason_code(self) -> None:
-        """Test revocation reason."""
-        message = self.get_message(reason=3)
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-
-        self.cert.refresh_from_db()
-        self.assertTrue(self.cert.revoked)
-        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
-        self.assertEqual(self.cert.revoked_reason, ReasonFlags.affiliation_changed.name)
-
-    def test_already_revoked(self) -> None:
-        """Test revoking a certificate that is already revoked."""
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertMalformed(resp, "Certificate was already revoked.", typ="alreadyRevoked")
-
-    def test_bad_reason_code(self) -> None:
-        """Send a bad revocation reason code to the server."""
-        message = self.get_message(reason=99)
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertMalformed(resp, "99: Unsupported revocation reason.", typ="badRevocationReason")
-
-        self.cert.refresh_from_db()
-        self.assertFalse(self.cert.revoked)
-
-    def test_unknown_certificate(self) -> None:
-        """Try sending an unknown certificate to the server."""
-        Certificate.objects.all().delete()
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp, "Certificate not found.")
-
-    @override_tmpcadir()
-    def test_wrong_certificate(self) -> None:
-        """Test sending a different certificate with the same serial."""
-
-        # Create a clone of the existing certificate with the same serial number
-        pkey = certs["root-cert"]["csr"]["parsed"].public_key()
-        builder = get_cert_builder(self.cert.expires, serial=self.cert.pub.loaded.serial_number)
-        builder = builder.public_key(pkey)
-        builder = builder.issuer_name(self.ca.subject)
-        builder = builder.subject_name(self.cert.pub.loaded.subject)
-        cert = builder.sign(private_key=self.ca.key(), algorithm=ca_settings.CA_DIGEST_ALGORITHM)
-        message = self.message_cls(certificate=jose.util.ComparableX509(X509.from_cryptography(cert)))
-
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertUnauthorized(resp, "Certificate does not match records.")
-
-    def test_pass_csr(self) -> None:
-        """Send a CSR instead of a certificate."""
-        req = X509Req.from_cryptography(certs["root-cert"]["csr"]["parsed"])
-        message = self.csr_class(certificate=jose.util.ComparableX509(req))
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertMalformed(resp, "Could not decode 'certificate'", regex=True)
-
-
-@freeze_time(timestamps["everything_valid"])
-class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationViewTestCase):
-    """Test certificate revocation by signing the request with the compromised certificate."""
-
-    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> HttpResponse:
-        kwargs.setdefault("cert", certs[self.default_cert]["key"]["parsed"])
-        kwargs["kid"] = None
-        return super().acme(*args, **kwargs)
-
-    def test_wrong_signer(self) -> None:
-        """Sign the request with the wrong certificate."""
-        cert = certs["root-cert"]["key"]["parsed"]
-        resp = self.acme(self.url, self.message, cert=cert)
-        self.assertUnauthorized(resp, "Request signed by the wrong certificate.")
-
-    def test_deactivated_account(self) -> None:
-        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
-
-    def test_unknown_account(self) -> None:
-        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
-
-    def test_unusable_account(self) -> None:
-        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
-
-    def test_jwk_and_kid(self) -> None:
-        """Already tested in the immediate base class and does not make sense here: The test sets KID to a
-        value, but the point of the whole class is to have *no* KID."""
