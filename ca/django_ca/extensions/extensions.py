@@ -11,9 +11,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
-# pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
-
 """Module providing wrapper classes for various x509 extensions.
 
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
@@ -922,6 +919,7 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         return self._excluded
 
     def set_excluded(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+        """Set he ``excluded`` value of this instance."""
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._excluded = value
@@ -943,6 +941,7 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         return self._permitted
 
     def set_permitted(self, value: Union[GeneralNameList, ParsableGeneralNameList]) -> None:
+        """Set  the ``permitted`` value of this instance."""
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
         self._permitted = value

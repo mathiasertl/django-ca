@@ -475,9 +475,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
     ]
     x509_fieldset_index = 3
 
-    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
-    #              https://github.com/PyCQA/pylint/issues/3605
-    def has_add_permission(self, request: HttpRequest) -> bool:  # pylint: disable=missing-function-docstring
+    def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
     # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
@@ -730,9 +728,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     ]
     x509_fieldset_index = 1
 
-    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
-    #              https://github.com/PyCQA/pylint/issues/3605
-    def has_add_permission(self, request: HttpRequest) -> bool:  # pylint: disable=missing-function-docstring
+    def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
             if ca.key_exists:
@@ -804,9 +800,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
         return data
 
-    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
-    #              https://github.com/PyCQA/pylint/issues/3605
-    def add_view(  # pylint: disable=missing-function-docstring
+    def add_view(
         self,
         request: HttpRequest,
         form_url: str = "",
@@ -996,9 +990,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     expires_date.admin_order_field = "expires"  # type: ignore[attr-defined] # django standard
 
     # TYPE NOTE: django-stubs typehints obj as Model, but we can be more specific here
-    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
-    #              https://github.com/PyCQA/pylint/issues/3605
-    def save_model(  # type: ignore[override] # pylint: disable=missing-function-docstring
+    def save_model(  # type: ignore[override]
         self,
         request: HttpRequest,
         obj: Certificate,

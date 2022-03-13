@@ -11,9 +11,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
-# pylint: disable=missing-function-docstring; https://github.com/PyCQA/pylint/issues/3605
-
 """Module providing extensions for x509 authorities supporting OpenSSH."""
 
 import typing
