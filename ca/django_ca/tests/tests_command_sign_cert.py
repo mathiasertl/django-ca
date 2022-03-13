@@ -48,7 +48,7 @@ from .base import timestamps
 from .base.mixins import TestCaseMixin
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 @freeze_time(timestamps["everything_valid"])
 class SignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
@@ -406,7 +406,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             cert.issuer_alternative_name, IssuerAlternativeName({"value": [self.ca.issuer_alt_name]})
         )
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_no_subject(self) -> None:
         """Test signing without a subject (but SANs)."""
         stdin = self.csr_pem.encode()
@@ -427,7 +427,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
         )
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_with_password(self) -> None:
         """Test signing with a CA that is protected with a password."""
         password = b"testpassword"
@@ -473,7 +473,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     @unittest.skipUnless(
         isinstance(ca_storage, FileSystemStorage), "Test only makes sense with local filesystem storage."
     )

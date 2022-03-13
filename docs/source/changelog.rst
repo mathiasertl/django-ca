@@ -13,6 +13,8 @@ ChangeLog
 * Dependencies for ACMEv2 are now non-optional and the ``acme`` extra is now empty (and will be removed in
   ``django-ca==1.23.0``).
 * Implement certificate revocation via ACMEv2.
+* The :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting should now be a tuple, not a
+  dict. Support for using a ``dict`` will be removed in ``django-ca==1.23.0``.
 * Stop testing individual versions of `idna <https://pypi.org/project/idna/>`_. django-ca uses a minimal
   subset of basic functions that are unlikely to break.
 
@@ -27,6 +29,8 @@ Deprecation notices
 ===================
 
 * The ``acme`` extra will be removed in ``django-ca==1.23.0``.
+* Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
+  removed in ``django-ca==1.23.0``.
 
 .. _changelog-1.20.1:
 

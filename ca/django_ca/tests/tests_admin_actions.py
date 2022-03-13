@@ -458,7 +458,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         response = form.submit().follow()
         self.assertSuccessfulRequest(response, obj=cert)
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_webtest_no_ext(self) -> None:
         """Resign certificate with **no** extensions."""
         cert = self.load_named_cert("no-extensions")

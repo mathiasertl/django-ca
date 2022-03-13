@@ -16,6 +16,7 @@
 import os
 import re
 import typing
+import warnings
 from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
@@ -26,6 +27,8 @@ from django.conf import global_settings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
+
+from .deprecation import RemovedInDjangoCA123Warning
 
 if "CA_DIR" in os.environ:  # pragma: no cover
     CA_DIR = os.path.join(os.environ["CA_DIR"], "files")
@@ -169,15 +172,26 @@ if CA_DEFAULT_CA != "0":
 if re.search("[^0-9A-F]", CA_DEFAULT_CA):
     raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
-CA_DEFAULT_SUBJECT = getattr(settings, "CA_DEFAULT_SUBJECT", {})
+_subject_as_dict_msg = "%s as a dict wil be removed in django-ca==1.23. Please use a tuple instead."
+CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
+    settings, "CA_DEFAULT_SUBJECT", tuple()
+)
+if isinstance(CA_DEFAULT_SUBJECT, dict):
+    warnings.warn(_subject_as_dict_msg % "CA_DEFAULT_SUBJECT", category=RemovedInDjangoCA123Warning)
+    CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT.items())
 
 # Add ability just override/add some profiles
 _CA_PROFILE_OVERRIDES = getattr(settings, "CA_PROFILES", {})
 for name, profile in _CA_PROFILE_OVERRIDES.items():
     if profile is None:
         del CA_PROFILES[name]
+        continue
 
-    elif name in CA_PROFILES:
+    if isinstance(profile.get("subject"), dict):
+        warnings.warn(_subject_as_dict_msg % f"{name}: Profile subject", category=RemovedInDjangoCA123Warning)
+        profile["subject"] = tuple(profile["subject"].items())
+
+    if name in CA_PROFILES:
         CA_PROFILES[name].update(profile)
     else:
         CA_PROFILES[name] = profile

@@ -144,7 +144,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test with no default subject."""
         # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
         # subject. But it still seems sensible to support this
-        default_subject = {"CN": "testcase"}
+        default_subject = (("CN", "testcase"),)
 
         with override_settings(CA_DEFAULT_SUBJECT=default_subject):
             prof = Profile("test")

@@ -136,12 +136,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertCSS(response, "django_ca/admin/css/base.css")
         self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
 
-    @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+    @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
     def test_get_dict(self) -> None:
         """Test get with no profiles and no default subject."""
         self.test_get()
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add(self) -> None:
         """Test to actually add a certificate."""
         self.add_cert("test-child-add.example.com", self.ca)
@@ -232,7 +232,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.context["adminform"].form.errors, {"subject": ["This field is required."]})
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add_no_common_name(self) -> None:
         """Test posting no common name but some other name components."""
 
@@ -278,7 +278,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.context["adminform"].form.errors, {"subject": ["Enter a complete value."]})
         self.assertEqual(cert_count, Certificate.objects.all().count())
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add_no_key_usage(self) -> None:
         """Test adding a cert with no (extended) key usage."""
         ca = self.cas["root"]
@@ -327,7 +327,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add_with_password(self) -> None:
         """Test adding with a password."""
         ca = self.cas["pwd"]

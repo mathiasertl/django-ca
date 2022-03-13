@@ -116,19 +116,24 @@ CA_DEFAULT_PROFILE
 .. _settings-ca-default-subject:
 
 CA_DEFAULT_SUBJECT
-   Default: ``{}``
+   Default: ``tuple()`` (empty tuple)
 
-   The default subject to use. The keys of this dictionary are the valid fields
-   in X509 certificate subjects. Example::
+   .. versionchanged:: 1.21.0
 
-      CA_DEFAULT_SUBJECT = {
-         'C': 'AT',
-         'ST': 'Vienna',
-         'L': 'Vienna',
-         'O': 'HTU Wien',
-         'OU': 'Fachschaft Informatik',
-         'emailAddress': 'user@example.com',
-      }
+      This value used to be a ``dict`` until ``django-ca==1.21.0``. Please use a tuple instead. Support for
+      using a ``dict`` will be removed in ``django-ca==1.23.0``.
+
+   The default subject to use. The keys of this dictionary are the valid fields in X509 certificate subjects.
+   Example::
+
+      CA_DEFAULT_SUBJECT = (
+         ("C", "AT"),
+         ("ST", "Vienna"),
+         ("L", "Vienna"),
+         ("O", "Example"),
+         ("OU", "Example Unit"),
+         ("emailAddress", "user@example.com"),
+      )
 
 .. _settings-ca-digest-algorithm:
 

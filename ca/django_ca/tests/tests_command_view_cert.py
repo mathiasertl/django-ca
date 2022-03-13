@@ -520,7 +520,7 @@ HPKP pin: {hpkp}
 }
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={})
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 class ViewCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
@@ -1098,6 +1098,6 @@ HPKP pin: {hpkp}
             self.cmd("view_cert", name, no_pem=True)
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, USE_TZ=True)
+@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), USE_TZ=True)
 class ViewCertWithTZTestCase(ViewCertTestCase):
     """Main tests but with TZ support."""

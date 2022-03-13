@@ -120,7 +120,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(self.cert, new, new_ca=self.cas["child"])
         self.assertEqualExt(self.cert, new, new_ca=self.cas["child"])
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT={})
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_overwrite(self) -> None:
         """Test overwriting extensions."""
         cname = "new.example.com"

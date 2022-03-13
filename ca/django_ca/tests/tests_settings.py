@@ -19,6 +19,7 @@ from unittest import mock
 from django.test import TestCase
 
 from .. import ca_settings
+from ..deprecation import RemovedInDjangoCA123Warning
 from ..subject import get_default_subject
 from .base.mixins import TestCaseMixin
 
@@ -131,7 +132,23 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
                 get_default_subject()
 
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$"):
-            with self.settings(CA_DEFAULT_SUBJECT={"XYZ": "error"}):
+            with self.settings(CA_DEFAULT_SUBJECT=(("XYZ", "error"),)):
+                get_default_subject()
+
+    def test_subject_as_dict(self) -> None:
+        """Test using a dict as subject, which has been deprecated."""
+
+        message = (
+            r"^CA_DEFAULT_SUBJECT as a dict wil be removed in django-ca==1.23. Please use a tuple instead.$"
+        )
+        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
+            with self.settings(CA_DEFAULT_SUBJECT={"CN": "as-dict"}):
+                get_default_subject()
+
+        message = r"^ocsp: Profile subject as a dict wil be removed in django-ca==1.23. Please use a tuple instead.$"  # NOQA[E501]
+        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
+            profiles = {"ocsp": {"subject": {"CN": "as-dict"}}}
+            with self.settings(CA_PROFILES=profiles):
                 get_default_subject()
 
     def test_use_celery(self) -> None:

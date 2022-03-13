@@ -174,13 +174,13 @@ with open(os.path.join(FIXTURES_DIR, "cert-data.json")) as stream:
     _fixture_data = json.load(stream)
 
 # Custom settings
-CA_DEFAULT_SUBJECT = {
-    "C": "AT",
-    "ST": "Vienna",
-    "L": "Vienna",
-    "O": "Django CA",
-    "OU": "Django CA Testsuite",
-}
+CA_DEFAULT_SUBJECT = (
+    ("C", "AT"),
+    ("ST", "Vienna"),
+    ("L", "Vienna"),
+    ("O", "Django CA"),
+    ("OU", "Django CA Testsuite"),
+)
 CA_MIN_KEY_SIZE = 1024
 CA_DEFAULT_KEY_SIZE = 1024
 

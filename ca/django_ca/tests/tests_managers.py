@@ -51,10 +51,7 @@ from .base import timestamps
 from .base.mixins import TestCaseMixin
 
 
-@override_settings(
-    CA_PROFILES={},
-    CA_DEFAULT_SUBJECT={},
-)
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
 
@@ -247,7 +244,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(ca3.algorithm, hashes.SHA256)
 
 
-@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT={}, CA_DEFAULT_CA=certs["child"]["serial"])
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), CA_DEFAULT_CA=certs["child"]["serial"])
 @freeze_time(timestamps["everything_valid"])
 class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
@@ -302,7 +299,7 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
             CertificateAuthority.objects.default()
 
 
-@override_settings(CA_DEFAULT_SUBJECT={})
+@override_settings(CA_DEFAULT_SUBJECT=tuple())
 class CreateCertTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
 
