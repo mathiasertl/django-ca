@@ -189,7 +189,7 @@ class ParseNameX509TestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_name_x509`."""
 
     def assertSubject(  # pylint: disable=invalid-name
-        self, actual: str, expected: typing.List[typing.Tuple[ObjectIdentifier, str]]
+        self, actual: str, expected: typing.Iterable[typing.Tuple[ObjectIdentifier, str]]
     ) -> None:
         """Test that the given subject matches."""
         self.assertEqual(
