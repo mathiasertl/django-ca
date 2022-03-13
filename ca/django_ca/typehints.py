@@ -71,6 +71,8 @@ PrivateKeyTypes = Union[
     ed25519.Ed25519PrivateKey,
 ]
 
+ParsableName = typing.Union[str, typing.Iterable[typing.Tuple[str, str]]]
+
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
 ParsableKeyType = Literal["RSA", "DSA", "ECC", "EdDSA", "Ed448"]

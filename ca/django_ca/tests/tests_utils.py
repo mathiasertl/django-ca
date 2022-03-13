@@ -192,7 +192,9 @@ class ParseNameX509TestCase(TestCase):
         self, actual: str, expected: typing.List[typing.Tuple[ObjectIdentifier, str]]
     ) -> None:
         """Test that the given subject matches."""
-        self.assertEqual(parse_name_x509(actual), [x509.NameAttribute(oid, value) for oid, value in expected])
+        self.assertEqual(
+            parse_name_x509(actual), tuple(x509.NameAttribute(oid, value) for oid, value in expected)
+        )
 
     def test_basic(self) -> None:
         """Some basic tests."""
@@ -357,11 +359,11 @@ class ParseNameX509TestCase(TestCase):
 
         self.assertSubject(
             "commonName=example.com/surname=Ertl/userid=0",
-            [
+            (
                 (NameOID.COMMON_NAME, "example.com"),
                 (NameOID.SURNAME, "Ertl"),
                 (NameOID.USER_ID, "0"),
-            ],
+            ),
         )
 
     def test_unknown(self) -> None:
@@ -408,8 +410,6 @@ class RelativeNameTestCase(TestCase):
             RemovedInDjangoCA122Warning, msg % x509.RelativeDistinguishedName.__name__
         ):
             self.assertEqual(x509_relative_name(expected), expected)  # type: ignore[arg-type]
-        with self.assertWarnsRegex(RemovedInDjangoCA122Warning, msg % "list"):
-            self.assertEqual(x509_relative_name([("CN", "example.com")]), expected)  # type: ignore[arg-type]
 
 
 class ValidateEmailTestCase(TestCase):
@@ -1072,23 +1072,6 @@ class X509NameTestCase(TestCase):
         """Test passing a string."""
         subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
         self.assertEqual(x509_name(subject), self.name)
-
-    def test_deprecated_tuple(self) -> None:
-        """Test passing a tuple."""
-        subject = [
-            ("C", "AT"),
-            ("ST", "Vienna"),
-            ("L", "Vienna"),
-            ("O", "O"),
-            ("OU", "OU"),
-            ("CN", "example.com"),
-            ("emailAddress", "user@example.com"),
-        ]
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning,
-            r"^Passing a list to x509_name\(\) is deprecated, pass a str instead$",
-        ):
-            self.assertEqual(x509_name(subject), self.name)  # type: ignore[arg-type]
 
     def test_multiple_other(self) -> None:
         """Test multiple other tokens (only OUs work)."""

@@ -172,12 +172,13 @@ if CA_DEFAULT_CA != "0":
 if re.search("[^0-9A-F]", CA_DEFAULT_CA):
     raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
-_subject_as_dict_msg = "%s as a dict wil be removed in django-ca==1.23. Please use a tuple instead."
+_SUBJECT_AS_DICT_MAPPING = "%s as a dict wil be removed in django-ca==1.23. Please use a tuple instead."
 CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
     settings, "CA_DEFAULT_SUBJECT", tuple()
 )
 if isinstance(CA_DEFAULT_SUBJECT, dict):
-    warnings.warn(_subject_as_dict_msg % "CA_DEFAULT_SUBJECT", category=RemovedInDjangoCA123Warning)
+    # pylint: disable=consider-using-f-string # don't want to use f-string here
+    warnings.warn(_SUBJECT_AS_DICT_MAPPING % "CA_DEFAULT_SUBJECT", category=RemovedInDjangoCA123Warning)
     CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT.items())
 
 # Add ability just override/add some profiles
@@ -188,7 +189,9 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
         continue
 
     if isinstance(profile.get("subject"), dict):
-        warnings.warn(_subject_as_dict_msg % f"{name}: Profile subject", category=RemovedInDjangoCA123Warning)
+        warnings.warn(
+            _SUBJECT_AS_DICT_MAPPING % f"{name}: Profile subject", category=RemovedInDjangoCA123Warning
+        )
         profile["subject"] = tuple(profile["subject"].items())
 
     if name in CA_PROFILES:

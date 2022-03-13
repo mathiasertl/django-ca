@@ -61,6 +61,7 @@ from .typehints import ParsableGeneralName
 from .typehints import ParsableGeneralNameList
 from .typehints import ParsableHash
 from .typehints import ParsableKeyType
+from .typehints import ParsableName
 from .typehints import SupportsIndex
 
 # List of possible subject fields, in order
@@ -489,7 +490,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_name_x509(name: str) -> List[x509.NameAttribute]:
+def parse_name_x509(name: ParsableName) -> typing.Tuple[x509.NameAttribute, ...]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     .. versionchanged:: 1.20.0
@@ -502,18 +503,18 @@ def parse_name_x509(name: str) -> List[x509.NameAttribute]:
     whitespace at the start and end is stripped and the subject does not have to start with a slash (``/``).
 
     >>> parse_name_x509('/CN=example.com')
-    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
+    (<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>,)
     >>> parse_name_x509('c=AT/l= Vienna/o="quoting/works"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
+    (<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
      <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna')>,
      <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, value='quoting/works')>,
-     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>)
 
     The function also handles whitespace, quoting and slashes correctly:
 
     >>> parse_name_x509('L="Vienna / District"/CN=example.com')  # doctest: +NORMALIZE_WHITESPACE
-    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / District')>,
-     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
+    (<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna / District')>,
+     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>)
 
     Examples of where this string is used are:
 
@@ -523,14 +524,17 @@ def parse_name_x509(name: str) -> List[x509.NameAttribute]:
         # openssl x509 -in cert.pem -noout -subject -nameopt compat
         /C=AT/L=Vienna/CN=example.com
     """
-    attrs = [t.split("=", 1) for t in split_str(name.strip(), "/")]
+
+    if isinstance(name, str):
+        # TYPE NOTE: mypy detects t.split() as Tuple[str, ...] and does not recognize the maxsplit parameter
+        name = tuple(tuple(t.split("=", 1)) for t in split_str(name.strip(), "/"))  # type: ignore[misc]
 
     try:
-        items = [(NAME_CASE_MAPPINGS[t[0].strip().upper()], t[1].strip()) for t in attrs]
+        items = tuple((NAME_CASE_MAPPINGS[t[0].strip().upper()], t[1].strip()) for t in name)
     except KeyError as e:
         raise ValueError(f"Unknown x509 name field: {e.args[0]}") from e
 
-    return [x509.NameAttribute(oid, value) for oid, value in items]
+    return tuple(x509.NameAttribute(oid, value) for oid, value in items)
 
 
 def parse_name(name: str) -> List[Tuple[str, str]]:
@@ -553,29 +557,16 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     return [(OID_NAME_MAPPINGS[attr.oid], attr.value) for attr in attrs]
 
 
-def x509_name(name: str) -> x509.Name:
+def x509_name(name: ParsableName) -> x509.Name:
     """Parses a string into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
-
-    .. deprecated:: 1.20.0
-
-       Passing a list of two-tuples is deprecated as of 1.20.0 and the functionality will be removed in
-       ``django_ca==1.22``.
 
     >>> x509_name('/C=AT/CN=example.com')
     <Name(C=AT,CN=example.com)>
     """
-    if not isinstance(name, str):
-        warnings.warn(
-            "Passing a list to x509_name() is deprecated, pass a str instead",
-            category=RemovedInDjangoCA122Warning,
-            stacklevel=1,
-        )
-        return x509.Name([x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name])
-
     return check_name(x509.Name(parse_name_x509(name)))
 
 
-def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
+def x509_relative_name(name: ParsableName) -> x509.RelativeDistinguishedName:
     """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     >>> x509_relative_name('/CN=example.com')
@@ -587,11 +578,6 @@ def x509_relative_name(name: str) -> x509.RelativeDistinguishedName:
     if isinstance(name, x509.RelativeDistinguishedName):
         warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
         return name
-    if isinstance(name, (list, tuple)):
-        warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
-        return x509.RelativeDistinguishedName(
-            [x509.NameAttribute(NAME_OID_MAPPINGS[typ], value) for typ, value in name]
-        )
 
     return x509.RelativeDistinguishedName(parse_name_x509(name))
 

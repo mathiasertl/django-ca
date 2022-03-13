@@ -82,11 +82,11 @@ from .models import X509CertMixin
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
-from .subject import Subject
 from .utils import OID_NAME_MAPPINGS
 from .utils import SERIAL_RE
 from .utils import add_colons
 from .utils import format_name
+from .utils import x509_name
 
 log = logging.getLogger(__name__)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
@@ -794,9 +794,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "watchers": resign_obj.watchers.all(),
             }
         else:
-            data["subject"] = Subject(
-                ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("subject", {})
-            ).name
+            profile = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]
+            data["subject"] = x509_name(profile.get("subject", tuple()))
 
         return data
 
