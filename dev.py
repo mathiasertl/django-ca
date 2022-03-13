@@ -46,6 +46,9 @@ sys.path.insert(0, os.path.join(ROOTDIR, "devscripts"))
 from dev.config import DOCKER_CONFIG  # NOQA: E402 # requires devscripts in path
 
 test_base = argparse.ArgumentParser(add_help=False)
+test_base.add_argument(
+    "--fail-fast", default=False, action="store_true", help="Stop running after first error."
+)
 test_base.add_argument("-s", "--suites", default=[], nargs="+", help="Modules to test (e.g. tests_modules).")
 selenium_grp = test_base.add_argument_group("Selenium tests")
 selenium_grp.add_argument(
@@ -112,7 +115,7 @@ commands.add_parser("clean", help="Remove generated files.")
 args = parser.parse_args()
 
 
-def test(suites):
+def test(suites, fail_fast):
     """Run named test suites (or all of them)."""
     # pylint: disable=import-outside-toplevel; imported here so that script runs without django
     import django
@@ -147,7 +150,7 @@ def test(suites):
 
     suites = ["django_ca.tests.%s" % s.strip(".") for s in suites]
 
-    call_command("test", *suites, parallel=True)
+    call_command("test", *suites, parallel=True, failfast=fail_fast)
 
 
 def exclude_versions(cov, sw, current_version, pragma_version, version_str):
@@ -227,7 +230,7 @@ if args.command == "test":
         os.environ["SKIP_SELENIUM_TESTS"] = "y"
 
     setup_django()
-    test(args.suites)
+    test(args.suites, args.fail_fast)
 elif args.command == "coverage":
     import coverage
 
@@ -274,7 +277,7 @@ elif args.command == "coverage":
     cov.start()
 
     setup_django()
-    test(args.suites)
+    test(args.suites, args.fail_fast)
 
     cov.stop()
     cov.save()
