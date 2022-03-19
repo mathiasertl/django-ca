@@ -31,6 +31,8 @@ Deprecation notices
 * The ``acme`` extra will be removed in ``django-ca==1.23.0``.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
   removed in ``django-ca==1.23.0``.
+* This is the last release to support Celery 5.0 (5.1+ is of course still supported).
+* This is the last release to support acme 1.23 and 1.24.
 
 .. _changelog-1.20.1:
 
