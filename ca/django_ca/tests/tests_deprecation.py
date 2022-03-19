@@ -19,6 +19,7 @@ import warnings
 
 from django.test import TestCase
 
+from ..deprecation import DeprecationWarningType
 from ..deprecation import RemovedInDjangoCA122Warning
 from ..deprecation import RemovedInDjangoCA123Warning
 from ..deprecation import RemovedInNextVersionWarning
@@ -56,25 +57,28 @@ class TestDjangoCATestCase(TestCase):
 
 
 class DeprecateArgumentTestCase(TestCase):
-    @deprecate_argument("kw", RemovedInNextVersionWarning)
-    def func(self, unused: typing.Any, kw: typing.Any = "default") -> None:
-        return kw
+    """Test the `@deprecate_argument` decorator."""
 
-    @deprecate_argument("kw", DeprecationWarning)
-    def func2(self, unused: typing.Any, kw: typing.Any = "default") -> None:
+    @deprecate_argument("kw", RemovedInNextVersionWarning)
+    def func(self, unused: typing.Any, kw: str = "default") -> str:  # pylint: disable=all
+        """Just  a test function with a deprecated argument (used in tests)."""
         return kw
 
     @contextlib.contextmanager
-    def assertWarning(self, arg, cls=RemovedInNextVersionWarning):
+    def assertWarning(  # pylint: disable=invalid-name
+        self, arg: str, cls: DeprecationWarningType = RemovedInNextVersionWarning
+    ) -> typing.Iterator[None]:
+        """Shortcut for testing the deprecation warning emitted."""
         message = rf"Argument {arg} is deprecated and will be removed"
-        with self.assertWarnsRegex(cls, message) as cm:
+        with self.assertWarnsRegex(cls, message) as warn_cm:
             yield
 
         # make sure that the stacklevel is correct and the warning is issue from this file (= file where
         # function is called)
-        self.assertEqual(cm.filename, __file__)
+        self.assertEqual(warn_cm.filename, __file__)
 
     def test_basic(self) -> None:
+        """Really basic test of the decorator."""
         self.assertEqual(self.func("arg"), "default")  # no kwarg -> no warning
 
         with self.assertWarning("kw"):
@@ -82,12 +86,3 @@ class DeprecateArgumentTestCase(TestCase):
 
         with self.assertWarning("kw"):
             self.assertEqual(self.func("arg", kw="foobar"), "foobar")
-
-    def test_generic(self) -> None:
-        self.assertEqual(self.func2("arg"), "default")  # no kwarg -> no warning
-
-        with self.assertWarning("kw", DeprecationWarning):
-            self.assertEqual(self.func2("arg", "foobar"), "foobar")
-
-        with self.assertWarning("kw", DeprecationWarning):
-            self.assertEqual(self.func2("arg", kw="foobar"), "foobar")

@@ -59,20 +59,14 @@ functioning CA. To create an intermediate CA, simply pass the parent::
 Or to create a CA with all extensions that live CAs have, you can pass many more
 parameters::
 
-   >>> name_constraints = x509.Extension(
-   ...     oid=x509.oid.ExtensionOID.NAME_CONSTRAINTS,
-   ...     critical=True,
-   ...     value=x509.NameConstraints(
-   ...         permitted_subtrees=[x509.DNSName('.com')],
-   ...         excluded_subtrees=None
-   ...     )
-   ... )
    >>> full = CertificateAuthority.objects.init(
    ...   name='full', 
    ...   subject=x509_name('/CN=full.example.com'),
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
+   ...
    ...   # this CA can only sign for *.com domains:
+   ...   permitted_subtrees=[x509.DNSName('.com')],
    ...
    ...   # CRL/OCSP URLs for signed certificates. These can be changed later:
    ...   crl_url=['http://full.example.com/full.crl', ],
@@ -83,7 +77,6 @@ parameters::
    ...   ca_crl_url=['http://parent.example.com/parent.crl', ],
    ...   ca_ocsp_url='http://parent.example.com/ocsp',
    ...   ca_issuer_url='http://parent.example.com/parent.crt',
-   ...   extra_extensions=[name_constraints]
    ... )
 
 There are some more parameters to configure how the CA will be signed::

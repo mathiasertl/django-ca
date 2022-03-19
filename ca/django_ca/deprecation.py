@@ -18,7 +18,7 @@ import typing
 import warnings
 from inspect import signature
 
-F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
+F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])  # pylint: disable=invalid-name
 
 
 class RemovedInDjangoCA122Warning(DeprecationWarning):
@@ -41,9 +41,15 @@ class RemovedInDjangoCA124Warning(PendingDeprecationWarning):
 
 RemovedInNextVersionWarning = RemovedInDjangoCA122Warning
 
+DeprecationWarningType = typing.Union[
+    typing.Type[RemovedInDjangoCA122Warning],
+    typing.Type[RemovedInDjangoCA123Warning],
+    typing.Type[RemovedInDjangoCA124Warning],
+]
+
 
 def deprecate_argument(
-    arg: str, category: typing.Type[DeprecationWarning], stacklevel: int = 2
+    arg: str, category: DeprecationWarningType, stacklevel: int = 2
 ) -> typing.Callable[[F], F]:
     """Decorator to mark an argument as deprecated.
 
@@ -57,13 +63,8 @@ def deprecate_argument(
             sig = signature(func)
             bound = sig.bind(*args, **kwargs)
             if arg in bound.arguments:
-                if hasattr(category, "version"):
-                    when = f"django ca {category.version}"
-                else:
-                    when = "a future version"
-
                 warnings.warn(
-                    f"Argument {arg} is deprecated and will be removed in {when}.",
+                    f"Argument {arg} is deprecated and will be removed in django ca {category.version}.",
                     category=category,
                     stacklevel=stacklevel,
                 )
