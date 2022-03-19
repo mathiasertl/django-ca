@@ -431,11 +431,20 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
 
     @contextmanager
-    def assertRemovedIn123Warning(  # pylint: disable=invalid-name
+    def assertRemovedIn123Warning(
         self, message: str
-    ) -> typing.Iterator[None]:  # pragma: no cover # not used
+    ) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Assert that a RemovedInDjangoCA123Warning is thrown."""
         with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
+            yield
+
+    @contextmanager
+    def assertRemovedArgumentIn123Warning(  # pylint: disable=invalid-name
+        self, argument: str
+    ) -> typing.Iterator[None]:
+        """Assert that a RemovedInDjangoCA123Warning is thrown."""
+        message = rf"^Argument {argument} is deprecated and will be removed in django ca 1\.23\.$"
+        with self.assertRemovedIn123Warning(message):
             yield
 
     def assertRevoked(  # pylint: disable=invalid-name
