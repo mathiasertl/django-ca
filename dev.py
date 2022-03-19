@@ -149,7 +149,12 @@ def test():
     for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
 
-    call_command("test", *args.suites, parallel=True, failfast=args.fail_fast, shuffle=args.shuffle)
+    kwargs = {}
+    if django.VERSION[:2] >= (4, 0):  # pragma: only django<4.0
+        # shuffle flag was added in Django 4.0
+        kwargs["shuffle"] = args.shuffle
+
+    call_command("test", *args.suites, parallel=True, failfast=args.fail_fast, **kwargs)
 
 
 def exclude_versions(cov, sw, current_version, pragma_version, version_str):
