@@ -926,7 +926,9 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
 
     @property
     def extension_type(self) -> x509.NameConstraints:
-        return x509.NameConstraints(permitted_subtrees=self._permitted, excluded_subtrees=self._excluded)
+        permitted = self._permitted or None
+        excluded = self._excluded or None
+        return x509.NameConstraints(permitted_subtrees=permitted, excluded_subtrees=excluded)
 
     def from_extension(self, value: x509.NameConstraints) -> None:
         self.permitted = value.permitted_subtrees
