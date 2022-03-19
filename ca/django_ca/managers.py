@@ -174,12 +174,14 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
     def _extra_extensions(
         self,
         builder: x509.CertificateBuilder,
-        extra_extensions: Iterable[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]],
+        extra_extensions: typing.List[typing.Union[x509.Extension[x509.ExtensionType]]],
     ) -> x509.CertificateBuilder:
+        warn = "Passing a django_ca.extensions.Extension is deprecated and will be removed in django_ca 1.23."
         for ext in extra_extensions:
             if isinstance(ext, x509.Extension):
                 builder = builder.add_extension(ext.value, critical=ext.critical)
             elif isinstance(ext, Extension):
+                warnings.warn(warn, category=RemovedInDjangoCA123Warning, stacklevel=2)
                 builder = builder.add_extension(*ext.for_builder())
             else:
                 raise ValueError(f"Cannot add extension of type {type(ext).__name__}")
@@ -235,14 +237,12 @@ class CertificateAuthorityManager(
         name_constraints: Optional[Union[ParsableExtension, NameConstraints]] = None,
         permitted_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
         excluded_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        password: Optional[bytes] = None,
+        password: Optional[Union[str, bytes]] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         ecc_curve: Optional[ec.EllipticCurve] = None,
         key_type: ParsableKeyType = "RSA",
         key_size: Optional[int] = None,
-        extra_extensions: Optional[
-            typing.Collection[Union["x509.Extension[x509.ExtensionType]", "Extension[Any, Any, Any]"]]
-        ] = None,
+        extra_extensions: Optional[typing.Iterable[x509.Extension[x509.ExtensionType]]] = None,
         path: Union[pathlib.PurePath, str] = "ca",
         caa: str = "",
         website: str = "",
@@ -262,8 +262,11 @@ class CertificateAuthorityManager(
 
         .. deprecated:: 1.21.0
 
-           The `name_constraints` parameter is deprecated and will be removed in ``django_ca==1.23``. Use the
-           `permitted_subtrees` and `excluded_subtrees` parameter instead.
+           * The `name_constraints` parameter is deprecated and will be removed in ``django_ca==1.23``. Use
+             the `permitted_subtrees` and `excluded_subtrees` parameter instead.
+           * Passing  ``django_ca.extensions.Extension`` instance to `extra_extensions` is now deprecated. The
+             feature will be removed in ``django_ca==1.23``. Pass a ``x509.Extension`` instance instead.
+
 
         Parameters
         ----------
@@ -312,9 +315,9 @@ class CertificateAuthorityManager(
             List of general names to add to the permitted names of the NameConstraints extension.
         name_constraints : :py:class:`~django_ca.extensions.NameConstraints`
             Deprecated in favor of `permitted_subtrees` and `excluded_subtrees`.
-        password : bytes, optional
+        password : bytes or str, optional
             Password to encrypt the private key with.
-        parent_password : bytes, optional
+        parent_password : bytes or str, optional
             Password that the private key of the parent CA is encrypted with.
         ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
             An elliptic curve to use for ECC keys. This parameter is ignored if ``key_type`` is not ``"ECC"``.
@@ -326,8 +329,7 @@ class CertificateAuthorityManager(
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
             the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if
             ``key_type="ECC"`` or ``key_type="EdDSA"``.
-        extra_extensions : list of :py:class:`cg:cryptography.x509.Extension` or \
-                :py:class:`django_ca.extensions.base.Extension`, optional
+        extra_extensions : list of :py:class:`cg:cryptography.x509.Extension`
             An optional list of additional extensions to add to the certificate.
         path : str or pathlib.PurePath, optional
             Where to store the CA private key (default ``ca``).
@@ -550,6 +552,8 @@ class CertificateAuthorityManager(
         if password is None:
             encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
         else:
+            if isinstance(password, str):
+                password = password.encode("utf-8")
             encryption = serialization.BestAvailableEncryption(password)
 
         pem = private_key.private_bytes(

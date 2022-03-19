@@ -18,6 +18,7 @@ import unittest
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
@@ -26,16 +27,15 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA122Warning
+from ..deprecation import RemovedInDjangoCA123Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import AuthorityKeyIdentifier
 from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
 from ..extensions import KeyUsage
 from ..extensions import NameConstraints
-from ..extensions import OCSPNoCheck
 from ..extensions import SubjectAlternativeName
 from ..extensions import SubjectKeyIdentifier
-from ..extensions import TLSFeature
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import profiles
@@ -89,6 +89,27 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, subject)
         self.assertProperties(ca, name, subject)
+        ca.key().public_key()  # just access private key to make sure we can load it
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_password_bytes(self) -> None:
+        """Create a CA with bytes as password."""
+        name = "password_bytes"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, subject, password=b"foobar")
+        ca.key("foobar").public_key()
+        ca.key(b"foobar").public_key()
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_password_str(self) -> None:
+        """Create a CA with a str as password."""
+        name = "password_bytes"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, subject, password="foobar")
+        ca.key("foobar").public_key()
+        ca.key(b"foobar").public_key()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate(self) -> None:
@@ -170,28 +191,76 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_extra_extensions(self) -> None:
         """Test creating a CA with extra extensions."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        tlsf = TLSFeature({"value": ["OCSPMustStaple"]})
-        ocsp_no_check = OCSPNoCheck()
-        name_constraints = NameConstraints({"value": {"permitted": ["DNS:.com"]}})
-        with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(
-                "with-extra",
-                subject,
-                extra_extensions=[tlsf, ocsp_no_check.as_extension(), name_constraints],
-            )
+        tls_feature: x509.Extension[x509.ExtensionType] = x509.Extension(
+            oid=ExtensionOID.TLS_FEATURE,
+            value=x509.TLSFeature([x509.TLSFeatureType.status_request]),
+            critical=False,
+        )
+        ocsp_no_check: x509.Extension[x509.ExtensionType] = x509.Extension(
+            oid=ExtensionOID.OCSP_NO_CHECK, value=x509.OCSPNoCheck(), critical=False
+        )
+        name_constraints: x509.Extension[x509.ExtensionType] = x509.Extension(
+            oid=ExtensionOID.NAME_CONSTRAINTS,
+            value=x509.NameConstraints(permitted_subtrees=[x509.DNSName(".com")], excluded_subtrees=None),
+            critical=False,
+        )
+        extensions = [tls_feature, ocsp_no_check, name_constraints]
 
-        exts = [e for e in ca.extensions if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))]
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init("with-extra", subject, extra_extensions=extensions)
+
+        exts = [
+            e.as_extension()  # type: ignore[union-attr]
+            for e in ca.extensions
+            if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))
+        ]
         self.assertEqual(ca.subject, subject)
+
         self.assertCountEqual(
             exts,
             [
-                tlsf,
+                tls_feature,
                 ocsp_no_check,
-                BasicConstraints({"critical": True, "value": {"ca": True}}),
-                KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}),
-                NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}}),
+                x509.Extension(
+                    oid=ExtensionOID.BASIC_CONSTRAINTS,
+                    value=x509.BasicConstraints(ca=True, path_length=None),
+                    critical=True,
+                ),
+                x509.Extension(
+                    oid=ExtensionOID.KEY_USAGE,
+                    value=x509.KeyUsage(
+                        digital_signature=False,
+                        content_commitment=False,
+                        key_encipherment=False,
+                        data_encipherment=False,
+                        key_agreement=False,
+                        key_cert_sign=True,
+                        crl_sign=True,
+                        encipher_only=False,
+                        decipher_only=False,
+                    ),
+                    critical=True,
+                ),
+                name_constraints,
             ],
         )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_deprecated_extension(self) -> None:
+        """Test passing a django_ca.extension.Extension as extra_extensions."""
+        name = "deprecated-extension"
+        name_constraints = NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}})
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
+
+        warning = (
+            r"Passing a django_ca.extensions.Extension is deprecated and will be removed in django_ca 1\.23\."
+        )
+        with self.assertCreateCASignals(), self.assertWarnsRegex(RemovedInDjangoCA123Warning, warning):
+            ca = CertificateAuthority.objects.init(
+                name, subject, extra_extensions=[name_constraints]  # type: ignore[list-item]
+            )
+
+        self.assertEqual(ca.name_constraints, name_constraints)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_special_cases(self) -> None:

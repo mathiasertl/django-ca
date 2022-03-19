@@ -1088,17 +1088,6 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
     d2 = "example.net"
 
     test_values = {
-        "empty": {
-            "values": [
-                {"excluded": [], "permitted": []},
-                {"excluded": None, "permitted": None},
-            ],
-            "expected": x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
-            "expected_repr": "permitted=[], excluded=[]",
-            "expected_serialized": {"excluded": [], "permitted": []},
-            "expected_text": "",
-            "extension_type": x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[]),
-        },
         "permitted": {
             "values": [
                 {"permitted": [d1]},
@@ -1106,11 +1095,11 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
                 {"permitted": [dns(d1)]},
                 {"permitted": [dns(d1)], "excluded": []},
             ],
-            "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
+            "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
             "expected_repr": f"permitted=['DNS:{d1}'], excluded=[]",
             "expected_serialized": {"excluded": [], "permitted": [f"DNS:{d1}"]},
             "expected_text": f"Permitted:\n  * DNS:{d1}",
-            "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[]),
+            "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
         },
         "excluded": {
             "values": [
@@ -1119,11 +1108,11 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
                 {"excluded": [dns(d1)]},
                 {"excluded": [dns(d1)], "permitted": []},
             ],
-            "expected": x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
+            "expected": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
             "expected_repr": f"permitted=[], excluded=['DNS:{d1}']",
             "expected_serialized": {"excluded": [f"DNS:{d1}"], "permitted": []},
             "expected_text": f"Excluded:\n  * DNS:{d1}",
-            "extension_type": x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[dns(d1)]),
+            "extension_type": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
         },
         "both": {
             "values": [
@@ -1170,22 +1159,6 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
         ext.permitted += ["example.com"]
         ext.excluded += ["example.net"]
         self.assertExtensionEqual(ext, expected)
-
-    def test_none_value(self) -> None:
-        """Test that we can use and pass None as values for GeneralNamesList values."""
-        ext = self.ext_class({"value": {}})
-        self.assertEqual(
-            ext.extension_type, x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[])
-        )
-        self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext.permitted, [])
-
-        ext = self.ext_class({"value": {"permitted": None, "excluded": None}})
-        self.assertEqual(
-            ext.extension_type, x509.NameConstraints(permitted_subtrees=[], excluded_subtrees=[])
-        )
-        self.assertEqual(ext.excluded, [])
-        self.assertEqual(ext.permitted, [])
 
     def test_value(self) -> None:
         """Overwritten because extension has no value."""
