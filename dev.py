@@ -49,7 +49,8 @@ test_base = argparse.ArgumentParser(add_help=False)
 test_base.add_argument(
     "--fail-fast", default=False, action="store_true", help="Stop running after first error."
 )
-test_base.add_argument("-s", "--suites", default=[], nargs="+", help="Modules to test (e.g. tests_modules).")
+test_base.add_argument("suites", nargs="*", help="Modules to test (e.g. tests_modules).")
+test_base.add_argument("--shuffle", default=False, action="store_true", help="Shuffle test order.")
 selenium_grp = test_base.add_argument_group("Selenium tests")
 selenium_grp.add_argument(
     "--no-selenium",
@@ -115,7 +116,7 @@ commands.add_parser("clean", help="Remove generated files.")
 args = parser.parse_args()
 
 
-def test(suites, fail_fast):
+def test():
     """Run named test suites (or all of them)."""
     # pylint: disable=import-outside-toplevel; imported here so that script runs without django
     import django
@@ -145,12 +146,10 @@ def test(suites, fail_fast):
     print("Testing with:")
     print("* Python: ", sys.version.replace("\n", ""))
     installed_versions = {p.project_name: p.version for p in pkg_resources.working_set}
-    for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna"]):
+    for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
 
-    suites = ["django_ca.tests.%s" % s.strip(".") for s in suites]
-
-    call_command("test", *suites, parallel=True, failfast=fail_fast)
+    call_command("test", *args.suites, parallel=True, failfast=args.fail_fast, shuffle=args.shuffle)
 
 
 def exclude_versions(cov, sw, current_version, pragma_version, version_str):
@@ -230,7 +229,7 @@ if args.command == "test":
         os.environ["SKIP_SELENIUM_TESTS"] = "y"
 
     setup_django()
-    test(args.suites, args.fail_fast)
+    test()
 elif args.command == "coverage":
     import coverage
 
@@ -277,7 +276,7 @@ elif args.command == "coverage":
     cov.start()
 
     setup_django()
-    test(args.suites, args.fail_fast)
+    test()
 
     cov.stop()
     cov.save()
