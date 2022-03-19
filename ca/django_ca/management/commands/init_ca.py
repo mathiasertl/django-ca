@@ -32,12 +32,12 @@ from django.utils import timezone
 
 from ... import ca_settings
 from ...extensions import IssuerAlternativeName
-from ...extensions import NameConstraints
 from ...models import CertificateAuthority
 from ...tasks import cache_crl
 from ...tasks import generate_ocsp_key
 from ...tasks import run_task
 from ...typehints import ParsableKeyType
+from ...utils import parse_general_name
 from ...utils import sort_name
 from ..actions import ExpiresAction
 from ..actions import MultipleURLAction
@@ -164,15 +164,15 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             "--permit-name",
             metavar="NAME",
             action="append",
-            default=[],
-            help="Add the given name to the permitted-subtree.",
+            type=parse_general_name,
+            help="Add NAME to the permitted-subtree.",
         )
         nc_group.add_argument(
             "--exclude-name",
             metavar="NAME",
             action="append",
-            default=[],
-            help="Add the given name to the excluded-subtree.",
+            type=parse_general_name,
+            help="Add NAME to the excluded-subtree.",
         )
 
         self.add_ca_args(parser)
@@ -196,8 +196,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         ca_crl_url: typing.List[str],
         ca_ocsp_url: typing.Optional[str],
         ca_issuer_url: typing.Optional[str],
-        permit_name: typing.List[str],
-        exclude_name: typing.List[str],
+        permit_name: typing.Optional[typing.Iterable[x509.GeneralName]],
+        exclude_name: typing.Optional[typing.Iterable[x509.GeneralName]],
         caa: str,
         website: str,
         tos: str,
@@ -231,7 +231,6 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             self.test_private_key(parent, parent_password)
 
         subject = sort_name(subject)
-        name_constraints = NameConstraints({"value": {"permitted": permit_name, "excluded": exclude_name}})
 
         issuer_alternative_name = options[IssuerAlternativeName.key]
         if issuer_alternative_name is None:
@@ -263,7 +262,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 ca_issuer_url=ca_issuer_url,
                 ca_crl_url=ca_crl_url,
                 ca_ocsp_url=ca_ocsp_url,
-                name_constraints=name_constraints,
+                permitted_subtrees=permit_name,
+                excluded_subtrees=exclude_name,
                 password=password,
                 parent_password=parent_password,
                 ecc_curve=ecc_curve,

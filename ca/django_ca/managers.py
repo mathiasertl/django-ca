@@ -42,6 +42,8 @@ from django.urls import reverse
 
 from . import ca_settings
 from .deprecation import RemovedInDjangoCA122Warning
+from .deprecation import RemovedInDjangoCA123Warning
+from .deprecation import deprecate_argument
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
@@ -213,6 +215,7 @@ class CertificateAuthorityManager(
         def usable(self) -> "CertificateAuthorityQuerySet":
             ...
 
+    @deprecate_argument("name_constraints", RemovedInDjangoCA123Warning)
     def init(
         self,
         name: str,
@@ -230,6 +233,8 @@ class CertificateAuthorityManager(
         ca_crl_url: Optional[Sequence[str]] = None,
         ca_ocsp_url: Optional[str] = None,
         name_constraints: Optional[Union[ParsableExtension, NameConstraints]] = None,
+        permitted_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        excluded_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
         password: Optional[bytes] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         ecc_curve: Optional[ec.EllipticCurve] = None,
@@ -255,6 +260,10 @@ class CertificateAuthorityManager(
 
            * Passing a ``str`` or :py:class:`~django_ca.subject.Subject` for ``subject``.
 
+        .. deprecated:: 1.21.0
+
+           The `name_constraints` parameter is deprecated and will be removed in ``django_ca==1.23``. Use the
+           `permitted_subtrees` and `excluded_subtrees` parameter instead.
 
         Parameters
         ----------
@@ -297,10 +306,12 @@ class CertificateAuthorityManager(
         ca_ocsp_url : str, optional
             OCSP URL used for this CA. This value is only meaningful for intermediate CAs. The default is
             no value, unless :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
-        name_constraints : list of lists or :py:class:`~django_ca.extensions.NameConstraints`
-            List of names that this CA can sign and/or cannot sign. The value is passed to
-            :py:class:`~django_ca.extensions.NameConstraints` if the value is not already an instance of that
-            class.
+        permitted_subtrees : list of x509.GeneralName, optional
+            List of general names to add to the permitted names of the NameConstraints extension.
+        excluded_subtrees : list of x509.GeneralName, optional
+            List of general names to add to the permitted names of the NameConstraints extension.
+        name_constraints : :py:class:`~django_ca.extensions.NameConstraints`
+            Deprecated in favor of `permitted_subtrees` and `excluded_subtrees`.
         password : bytes, optional
             Password to encrypt the private key with.
         parent_password : bytes, optional
@@ -453,6 +464,8 @@ class CertificateAuthorityManager(
             ca_crl_url=ca_crl_url,
             ca_ocsp_url=ca_ocsp_url,
             name_constraints=name_constraints,
+            permitted_subtrees=permitted_subtrees,
+            excluded_subtrees=excluded_subtrees,
             password=password,
             parent_password=parent_password,
             extra_extensions=extra_extensions,
@@ -501,7 +514,11 @@ class CertificateAuthorityManager(
         for critical, ext in self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
             builder = builder.add_extension(ext, critical=critical)
 
-        if name_constraints:
+        if permitted_subtrees is not None or excluded_subtrees is not None:
+            builder = builder.add_extension(
+                x509.NameConstraints(permitted_subtrees, excluded_subtrees), critical=True
+            )
+        elif name_constraints:
             if not isinstance(name_constraints, NameConstraints):
                 name_constraints = NameConstraints(name_constraints)
 

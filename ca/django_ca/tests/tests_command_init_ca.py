@@ -293,8 +293,6 @@ class InitCATest(TestCaseMixin, TestCase):
                 crl_url=["http://crl.example.com"],
                 ocsp_url="http://ocsp.example.com",
                 ca_issuer_url="http://ca.issuer.ca.example.com",
-                permit_name=["DNS:.com"],
-                exclude_name=["DNS:.net"],
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
@@ -302,17 +300,6 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
-        self.assertEqual(
-            ca.name_constraints,
-            NameConstraints(
-                {
-                    "value": {
-                        "permitted": ["DNS:.com"],
-                        "excluded": ["DNS:.net"],
-                    }
-                }
-            ),
-        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self) -> None:
@@ -320,7 +307,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         name = "test_permitted"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name=name, permit_name=["DNS:.com"])
+            out, err = self.cmd_e2e(["init_ca", "--permit-name", "DNS:.com", name, f"/CN={name}"])
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -338,7 +325,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         name = "test_excluded"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name=name, exclude_name=["DNS:.com"])
+            out, err = self.cmd_e2e(["init_ca", "--exclude-name", "DNS:.com", name, f"/CN={name}"])
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")

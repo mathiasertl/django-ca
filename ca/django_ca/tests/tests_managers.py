@@ -198,8 +198,23 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Test a few special cases not covered otherwise."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
         name_constraints: ParsableExtension = {"critical": True, "value": {"permitted": ["DNS:.com"]}}
-        with self.assertCreateCASignals():
+        with self.assertCreateCASignals(), self.assertRemovedArgumentIn123Warning("name_constraints"):
             ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
+        self.assertEqual(ca.subject, subject)
+        self.assertExtensions(
+            ca,
+            [
+                BasicConstraints({"critical": True, "value": {"ca": True}}),
+                KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}),
+                NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}}),
+            ],
+        )
+
+        # also pass a NameConstraints extension directly
+        with self.assertCreateCASignals(), self.assertRemovedArgumentIn123Warning("name_constraints"):
+            ca = CertificateAuthority.objects.init(
+                "special2", subject, name_constraints=NameConstraints(name_constraints)
+            )
         self.assertEqual(ca.subject, subject)
         self.assertExtensions(
             ca,

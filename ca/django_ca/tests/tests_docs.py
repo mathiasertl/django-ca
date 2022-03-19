@@ -18,6 +18,8 @@ import os
 import typing
 import unittest
 
+from cryptography import x509
+
 from django.conf import settings
 from django.test import TestCase
 
@@ -44,6 +46,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
             "cert": self.cert,
             "cert_serial": self.cert.serial,
             "csr": certs["root-cert"]["csr"]["parsed"],
+            "x509": x509,
         }
 
     @override_tmpcadir()
