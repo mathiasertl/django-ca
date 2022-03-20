@@ -422,6 +422,7 @@ qualname_overrides = {
     "Union": "python:typing.Union",
     "Optional": "python:typing.Optional",
     "cryptography.hazmat._oid.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
+    "cryptography.hazmat._oid.ExtendedKeyUsageOID": "cg:cryptography.x509.oid.ExtendedKeyUsageOID",
     "cryptography.hazmat.primitives.serialization.base.Encoding": "cg:cryptography.hazmat.primitives.serialization.Encoding",  # NOQA: E501 # black does not allow a newline here
     "cryptography.hazmat.primitives._serialization.Encoding": "cg:cryptography.hazmat.primitives.serialization.Encoding",  # NOQA: E501 # black does not allow a newline here
     "cryptography.x509.base.Certificate": "cg:cryptography.x509.Certificate",
