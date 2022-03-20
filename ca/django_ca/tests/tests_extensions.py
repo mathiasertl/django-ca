@@ -747,16 +747,6 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
             "expected_text": "* RequireExplicitPolicy: 1",
             "extension_type": x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
         },
-        "rep_none": {
-            "values": [
-                {"require_explicit_policy": None},
-            ],
-            "expected": {},
-            "expected_repr": "-",
-            "expected_serialized": {},
-            "expected_text": "",
-            "extension_type": None,
-        },
         "iap_zero": {
             "values": [
                 {"inhibit_policy_mapping": 0},
@@ -776,16 +766,6 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
             "expected_serialized": {"inhibit_policy_mapping": 1},
             "expected_text": "* InhibitPolicyMapping: 1",
             "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
-        },
-        "iap_none": {
-            "values": [
-                {"inhibit_policy_mapping": None},
-            ],
-            "expected": {},
-            "expected_repr": "-",
-            "expected_serialized": {},
-            "expected_text": "",
-            "extension_type": None,
         },
         "both": {
             "values": [
@@ -1178,7 +1158,7 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin[OCSPNoCheck], TestCase):
             "expected": None,
             "expected_repr": "",
             "expected_serialized": None,
-            "expected_text": "OCSPNoCheck",
+            "expected_text": "Yes",
             "extension_type": x509.OCSPNoCheck(),
         },
     }
@@ -1197,7 +1177,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
             "expected": None,
             "expected_repr": "",
             "expected_serialized": None,
-            "expected_text": "PrecertPoison",
+            "expected_text": "Yes",
             "extension_type": x509.PrecertPoison(),
         },
     }
@@ -1482,7 +1462,6 @@ class UnknownExtensionTestCase(TestCase):
         ext = UnrecognizedExtension(cgext)
 
         self.assertEqual(ext.name, f"Unsupported extension (OID {oid.dotted_string})")
-        self.assertEqual(ext.as_text(), "Could not parse extension")
         self.assertEqual(ext.as_extension(), cgext)
         self.assertEqual(
             str(ext), f"<Unsupported extension (OID {oid.dotted_string}): <unprintable>, critical=True>"
@@ -1490,12 +1469,6 @@ class UnknownExtensionTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
             ext.serialize_value()
-
-        name = "my name"
-        error = "my error"
-        ext = UnrecognizedExtension(cgext, name=name, error=error)
-        self.assertEqual(ext.name, name)
-        self.assertEqual(ext.as_text(), f"Could not parse extension ({error})")
 
     def test_invalid_extension(self) -> None:
         """Test creating from an actually recognized extension."""

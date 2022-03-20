@@ -18,7 +18,6 @@
 import abc
 import binascii
 import collections.abc
-import textwrap
 from typing import Any
 from typing import ClassVar
 from typing import Collection
@@ -64,6 +63,7 @@ from ..typehints import UnrecognizedExtensionType
 from ..utils import GeneralNameList
 from ..utils import format_general_name
 from .utils import DistributionPoint
+from .utils import extension_as_text
 
 
 class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=abc.ABCMeta):
@@ -175,7 +175,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
 
     def as_text(self) -> str:
         """Human-readable version of the *value*, not including the "critical" flag."""
-        return self.repr_value()
+        return extension_as_text(self.extension_type)
 
     @property
     @abc.abstractmethod
@@ -257,6 +257,7 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
     name: str  # type: ignore[misc]
     oid: x509.ObjectIdentifier  # type: ignore[misc]
 
+    # pylint: disable-next=unused-argument
     def __init__(self, value: UnrecognizedExtensionType, name: str = "", error: str = ""):
         if not isinstance(value, x509.Extension):
             raise TypeError("Value must be a x509.Extension instance")
@@ -267,10 +268,7 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
         self.value = value.value
         self.critical = value.critical
         self.oid = value.oid
-
-        if not name:
-            name = f"Unsupported extension (OID {self.oid.dotted_string})"
-        self.name = name
+        self.name = f"Unsupported extension (OID {self.oid.dotted_string})"
 
     def repr_value(self) -> str:
         return "<unprintable>"
@@ -284,11 +282,6 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
 
     def from_extension(self, value: Any) -> NoReturn:
         raise NotImplementedError
-
-    def as_text(self) -> str:
-        if self._error:
-            return f"Could not parse extension ({self._error})"
-        return "Could not parse extension"
 
     def serialize_value(self) -> NoReturn:
         raise ValueError("Cannot serialize an unrecognized extension")
@@ -333,9 +326,6 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
 
     def repr_value(self) -> str:
         return ""
-
-    def as_text(self) -> str:
-        return self.name
 
     @property
     def extension_type(self) -> ExtensionTypeTypeVar:
@@ -404,9 +394,6 @@ class IterableExtension(
     def repr_value(self) -> str:
         joined = ", ".join([repr(v) for v in self.serialize_value()])
         return f"[{joined}]"
-
-    def as_text(self) -> str:
-        return "\n".join([f"* {v}" for v in self.serialize_value()])
 
     def parse_value(self, value: Union[ParsableItem, IterableItem]) -> IterableItem:
         """Parse a single value (presumably from an iterable)."""
@@ -732,9 +719,6 @@ class CRLDistributionPointsBase(
             )
         )
 
-    def as_text(self) -> str:
-        return "\n".join(f"* DistributionPoint:\n{textwrap.indent(dp.as_text(), '  ')}" for dp in self.value)
-
     def parse_value(self, value: Union[DistributionPoint, ParsableDistributionPoint]) -> DistributionPoint:
         if isinstance(value, DistributionPoint):
             return value
@@ -807,32 +791,6 @@ class SignedCertificateTimestampsBase(
 
     def __setitem__(self, key, value):  # type: ignore
         raise NotImplementedError
-
-    def human_readable_timestamps(self) -> Iterator[SerializedSignedCertificateTimestamp]:
-        """Convert SCTs into a generator of serializable ``dict`` instances."""
-        for sct in self.value:
-            if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
-                entry_type = "Precertificate"
-            elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover  # Unseen in the wild
-                entry_type = "x509 certificate"
-            else:  # pragma: no cover  # We support everything that has been specified so far
-                entry_type = "unknown"
-
-            yield {
-                "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
-                "timestamp": sct.timestamp.isoformat(str(" ")),
-                "type": entry_type,
-                "version": sct.version.name,
-            }
-
-    def as_text(self) -> str:
-        lines = []
-        for val in self.human_readable_timestamps():
-            # pylint: disable=consider-using-f-string
-            line = "* {type} ({version}):\n    Timestamp: {timestamp}\n    Log ID: {log_id}".format(**val)
-            lines.append(line)
-
-        return "\n".join(lines)
 
     def count(self, value: ParsableSignedCertificateTimestamp) -> int:
         if isinstance(value, dict):

@@ -16,7 +16,6 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-import textwrap
 from typing import ClassVar
 from typing import Optional
 from typing import Set
@@ -26,7 +25,6 @@ from typing import Union
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
 from ..typehints import ParsableAuthorityInformationAccess
@@ -54,8 +52,9 @@ from .base import ListExtension
 from .base import NullExtension
 from .base import OrderedSetExtension
 from .base import SignedCertificateTimestampsBase
+from .utils import EXTENDED_KEY_USAGE_NAMES
+from .utils import KEY_USAGE_NAMES
 from .utils import PolicyInformation
-from .utils import name_constraints_as_text
 
 # Placeholder until we fill in something good
 ParsableValueDummy = str
@@ -111,19 +110,6 @@ class AuthorityInformationAccess(
 
     def repr_value(self) -> str:
         return f"issuers={self._issuers.serialize()}, ocsp={self._ocsp.serialize()}"
-
-    def as_text(self) -> str:
-        text = ""
-        if self._issuers:
-            text += "CA Issuers:\n"
-            for name in self._issuers.serialize():
-                text += f"  * {name}\n"
-        if self._ocsp:
-            text += "OCSP:\n"
-            for name in self._ocsp.serialize():
-                text += f"  * {name}\n"
-
-        return text.strip()
 
     def _get_issuers(self) -> GeneralNameList:
         """Issuers named by this extension."""
@@ -239,18 +225,6 @@ class AuthorityKeyIdentifier(
 
         return ", ".join(values)
 
-    def as_text(self) -> str:
-        values = []
-        if self.key_identifier is not None:
-            values.append(f"* KeyID: {bytes_to_hex(self.key_identifier)}")
-        if self.authority_cert_issuer:
-            values.append("* Issuer:")
-            values += [textwrap.indent(v, "  * ") for v in self.authority_cert_issuer.serialize()]
-        if self.authority_cert_serial_number is not None:
-            values.append(f"* Serial: {self.authority_cert_serial_number}")
-
-        return "\n".join(values)
-
     @property
     def extension_type(self) -> x509.AuthorityKeyIdentifier:
         issuer: Optional[GeneralNameList] = self.authority_cert_issuer
@@ -355,16 +329,6 @@ class BasicConstraints(
     def extension_type(self) -> x509.BasicConstraints:
         return x509.BasicConstraints(ca=self.ca, path_length=self.pathlen)
 
-    def as_text(self) -> str:
-        if self.ca is True:
-            val = "CA:TRUE"
-        else:
-            val = "CA:FALSE"
-        if self.pathlen is not None:
-            val += f", pathlen:{self.pathlen}"
-
-        return val
-
     def parse_pathlen(self, value: Optional[Union[int, str]]) -> Optional[int]:
         """Parse `value` as path length (either an int, a str of an int or None)."""
         if value is not None:
@@ -456,9 +420,6 @@ class CertificatePolicies(
             return "1 policy"
         return f"{len(self.value)} policies"
 
-    def as_text(self) -> str:
-        return "\n".join(f"* {textwrap.indent(p.as_text(), '  ').strip()}" for p in self.value)
-
     @property
     def extension_type(self) -> x509.CertificatePolicies:
         return x509.CertificatePolicies(policies=[p.for_extension_type for p in self.value])
@@ -549,18 +510,8 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
 
     name: ClassVar[str] = "KeyUsage"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.KEY_USAGE
-    CRYPTOGRAPHY_MAPPING = {
-        "cRLSign": "crl_sign",
-        "dataEncipherment": "data_encipherment",
-        "decipherOnly": "decipher_only",
-        "digitalSignature": "digital_signature",
-        "encipherOnly": "encipher_only",
-        "keyAgreement": "key_agreement",
-        "keyCertSign": "key_cert_sign",
-        "keyEncipherment": "key_encipherment",
-        "nonRepudiation": "content_commitment",  # http://marc.info/?t=107176106300005&r=1&w=2
-    }
-    _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
+    CRYPTOGRAPHY_MAPPING = {v: k for k, v in KEY_USAGE_NAMES.items()}
+    _CRYPTOGRAPHY_MAPPING_REVERSED = KEY_USAGE_NAMES
     KNOWN_VALUES = set(CRYPTOGRAPHY_MAPPING.values())
 
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
@@ -627,26 +578,10 @@ class ExtendedKeyUsage(
 
     name: ClassVar[str] = "ExtendedKeyUsage"
     oid: ClassVar[x509.ObjectIdentifier] = ExtensionOID.EXTENDED_KEY_USAGE
-    CRYPTOGRAPHY_MAPPING = {
-        "serverAuth": ExtendedKeyUsageOID.SERVER_AUTH,
-        "clientAuth": ExtendedKeyUsageOID.CLIENT_AUTH,
-        "codeSigning": ExtendedKeyUsageOID.CODE_SIGNING,
-        "emailProtection": ExtendedKeyUsageOID.EMAIL_PROTECTION,
-        "timeStamping": ExtendedKeyUsageOID.TIME_STAMPING,
-        "OCSPSigning": ExtendedKeyUsageOID.OCSP_SIGNING,
-        "anyExtendedKeyUsage": ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE,
-        "smartcardLogon": x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2"),
-        "msKDC": x509.ObjectIdentifier("1.3.6.1.5.2.3.5"),
-        # Defined in RFC 3280, occurs in TrustID Server A52 CA
-        "ipsecEndSystem": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.5"),
-        "ipsecTunnel": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6"),
-        "ipsecUser": x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7"),
-        "mdlDS": x509.ObjectIdentifier("1.0.18013.5.1.2"),
-        "mdlJWS": x509.ObjectIdentifier("1.0.18013.5.1.3"),
-    }
-    _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
+    _CRYPTOGRAPHY_MAPPING_REVERSED = EXTENDED_KEY_USAGE_NAMES
+    CRYPTOGRAPHY_MAPPING = {v: k for k, v in EXTENDED_KEY_USAGE_NAMES.items()}
 
-    KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
+    KNOWN_PARAMETERS = sorted(EXTENDED_KEY_USAGE_NAMES.values())
     """Known values that can be passed to this extension."""
 
     # Used by the HTML form select field
@@ -676,10 +611,10 @@ class ExtendedKeyUsage(
         return x509.ExtendedKeyUsage(sorted(self.value, key=self.serialize_item))
 
     def serialize_item(self, value: x509.ObjectIdentifier) -> str:
-        return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
+        return EXTENDED_KEY_USAGE_NAMES[value]
 
     def parse_value(self, value: Union[x509.ObjectIdentifier, str]) -> x509.ObjectIdentifier:
-        if isinstance(value, x509.ObjectIdentifier) and value in self._CRYPTOGRAPHY_MAPPING_REVERSED:
+        if isinstance(value, x509.ObjectIdentifier) and value in EXTENDED_KEY_USAGE_NAMES:
             return value
         if isinstance(value, str) and value in self.CRYPTOGRAPHY_MAPPING:
             return self.CRYPTOGRAPHY_MAPPING[value]
@@ -792,8 +727,6 @@ class PolicyConstraints(
         return self.require_explicit_policy, self.inhibit_policy_mapping
 
     def repr_value(self) -> str:
-        if self.require_explicit_policy is None and self.inhibit_policy_mapping is None:
-            return "-"
         values = []
         if self.inhibit_policy_mapping is not None:
             values.append(f"inhibit_policy_mapping={self.inhibit_policy_mapping}")
@@ -814,15 +747,6 @@ class PolicyConstraints(
                 raise ValueError(f"{ipm}: inhibit_policy_mapping must be int or None")
             if ipm < 0:
                 raise ValueError(f"{ipm}: inhibit_policy_mapping must be a positive int")
-
-    def as_text(self) -> str:
-        lines = []
-        if self.inhibit_policy_mapping is not None:
-            lines.append(f"* InhibitPolicyMapping: {self.inhibit_policy_mapping}")
-        if self.require_explicit_policy is not None:
-            lines.append(f"* RequireExplicitPolicy: {self.require_explicit_policy}")
-
-        return "\n".join(lines)
 
     @property
     def extension_type(self) -> x509.PolicyConstraints:
@@ -901,9 +825,6 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         excluded = list(self._excluded.serialize())
 
         return f"permitted={permitted}, excluded={excluded}"
-
-    def as_text(self) -> str:
-        return name_constraints_as_text(self.extension_type)
 
     def get_excluded(self) -> GeneralNameList:
         """The ``excluded`` value of this instance."""

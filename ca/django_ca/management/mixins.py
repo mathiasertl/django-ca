@@ -26,11 +26,8 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from .. import ca_settings
-from ..extensions import OID_TO_EXTENSION
-from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
 from ..extensions import get_extension_name
-from ..extensions.base import NullExtension
 from ..extensions.utils import extension_as_text
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
@@ -118,59 +115,20 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             help_text = "Password used for accessing the private key of the CA."
         parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
 
-    def indent(self, text: str, prefix: str = "    ") -> str:
-        """Get indented text."""
-        return indent(text, prefix)
-
-    def print_extension(
-        self,
-        ext: typing.Union[
-            Extension[typing.Any, typing.Any, typing.Any], "x509.Extension[x509.ExtensionType]"
-        ],
-    ) -> None:
+    def print_extension(self, ext: x509.Extension[x509.ExtensionType]) -> None:
         """Print extension to stdout."""
 
-        if isinstance(ext, Extension):
-            if isinstance(ext, NullExtension):
-                if ext.critical:
-                    # NOTE: Only PrecertPoison is ever marked as critical
-                    self.stdout.write(f"{ext.name} (critical): Yes")
-                else:
-                    self.stdout.write(f"{ext.name}: Yes")
-            else:
-                if ext.critical:
-                    self.stdout.write(f"{ext.name} (critical):")
-                else:
-                    self.stdout.write(f"{ext.name}:")
-
-                self.stdout.write(self.indent(ext.as_text()))
-        elif isinstance(ext, x509.Extension):
-            oid_name = ext.oid._name  # pylint: disable=protected-access; only way to get name
-            if ext.critical:  # pragma: no cover - all unrecognized extensions that we have are non-critical
-                self.stdout.write(f"{oid_name} (critical): {ext.oid.dotted_string}")
-            else:
-                self.stdout.write(f"{oid_name}: {ext.oid.dotted_string}")
-        else:  # pragma: no cover
-            raise ValueError(f"Received unknown extension type: {type(ext)}")
+        ext_name = get_extension_name(ext)
+        if ext.critical:
+            self.stdout.write(f"{ext_name} (critical):")
+        else:
+            self.stdout.write(f"{ext_name}:")
+        self.stdout.write(indent(extension_as_text(ext.value), "    "))
 
     def print_extensions(self, cert: X509CertMixin) -> None:
         """Print all extensions for the given certificate."""
-        for ext in cert._sorted_extensions:
-            try:
-                as_text = extension_as_text(ext)
-            except TypeError:
-                if ext.oid in OID_TO_EXTENSION:
-                    self.print_extension(getattr(cert, OID_TO_EXTENSION[ext.oid].key))
-                else:
-                    self.print_extension(ext)
-            else:
-                # TODO: output OID as well
-                ext_name = get_extension_name(ext.value)
-                if ext.critical:
-                    self.stdout.write(f"{ext_name} (critical):")
-                else:
-                    self.stdout.write(f"{ext_name}:")
-                self.stdout.write(indent(as_text, "    "))
+        for ext in cert._sorted_extensions:  # pylint: disable=protected-access
+            self.print_extension(ext)
 
     def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
         """Test that we can load the private key of a CA."""

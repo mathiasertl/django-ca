@@ -13,6 +13,7 @@
 
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
+import binascii
 import textwrap
 import typing
 from typing import Any
@@ -25,6 +26,10 @@ from typing import Union
 
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
+from cryptography.x509.certificate_transparency import LogEntryType
+from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
+from cryptography.x509.oid import AuthorityInformationAccessOID
+from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 
 from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsablePolicyIdentifier
@@ -36,6 +41,7 @@ from ..typehints import SerializedPolicyInformation
 from ..typehints import SerializedPolicyQualifier
 from ..typehints import SerializedPolicyQualifiers
 from ..typehints import SerializedUserNotice
+from ..utils import bytes_to_hex
 from ..utils import format_general_name
 from ..utils import format_name
 from ..utils import parse_general_name
@@ -154,23 +160,6 @@ class DistributionPoint:
         if isinstance(reason, str):
             return x509.ReasonFlags[reason]
         return reason
-
-    def as_text(self) -> str:
-        """Show as text."""
-        text = ""
-        if self.full_name:
-            names = "\n".join([textwrap.indent(f"* {format_general_name(s)}", "  ") for s in self.full_name])
-            text = f"* Full Name:\n{names}"
-        elif self.relative_name is not None:
-            text = f"* Relative Name: {format_name(self.relative_name)}"
-
-        if self.crl_issuer:
-            names = "\n".join([textwrap.indent(f"* {format_general_name(s)}", "  ") for s in self.crl_issuer])
-            text += f"\n* CRL Issuer:\n{names}"
-        if self.reasons:
-            reasons = ", ".join(sorted([r.name for r in self.reasons]))
-            text += f"\n* Reasons: {reasons}"
-        return text
 
     @property
     def for_extension_type(self) -> x509.DistributionPoint:
@@ -344,44 +333,6 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
             self.policy_qualifiers = []
         self.policy_qualifiers.append(self._parse_policy_qualifier(value))
 
-    def as_text(self, width: int = 76) -> str:
-        """Show as text."""
-        if self.policy_identifier is None:
-            text = "Policy Identifier: None\n"
-        else:
-            text = f"Policy Identifier: {self.policy_identifier.dotted_string}\n"
-
-        if self.policy_qualifiers:
-            text += "Policy Qualifiers:\n"
-            for qualifier in self.policy_qualifiers:
-                if isinstance(qualifier, str):
-                    lines = "\n".join(
-                        textwrap.wrap(qualifier, initial_indent="* ", subsequent_indent="  ", width=width)
-                    )
-                    text += f"{lines}\n"
-                else:
-                    text += "* UserNotice:\n"
-                    if qualifier.explicit_text:
-                        text += (
-                            "\n".join(
-                                textwrap.wrap(
-                                    f"Explicit text: {qualifier.explicit_text}\n",
-                                    initial_indent="  * ",
-                                    subsequent_indent="    ",
-                                    width=width - 2,
-                                )
-                            )
-                            + "\n"
-                        )
-                    if qualifier.notice_reference:
-                        text += "  * Reference:\n"
-                        text += f"    * Organiziation: {qualifier.notice_reference.organization}\n"
-                        text += f"    * Notice Numbers: {qualifier.notice_reference.notice_numbers}\n"
-        else:
-            text += "No Policy Qualifiers"
-
-        return text.strip()
-
     def clear(self) -> None:
         """Clear all qualifiers from this information."""
         self.policy_qualifiers = None
@@ -532,7 +483,153 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         }
 
 
-def name_constraints_as_text(value: x509.NameConstraints) -> str:
+class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
+    """Extend the OIDs known to cryptography with what users needed over the years."""
+
+    # Defined in RFC 3280, occurs in TrustID Server A52 CA
+    IPSEC_END_SYSTEM = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.5")
+    IPSEC_TUNNEL = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6")
+    IPSEC_USER = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
+
+    # Used by PKINIT logon on Windows (see  github #46)
+    SMARTCARD_LOGON = x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2")
+    KERBEROS_CONSTRAINED_DELEGATION = x509.ObjectIdentifier("1.3.6.1.5.2.3.5")  # or msKCD
+
+    # mobilee Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
+    MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
+    MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
+
+
+EXTENDED_KEY_USAGE_NAMES = {
+    ExtendedKeyUsageOID.SERVER_AUTH: "serverAuth",
+    ExtendedKeyUsageOID.CLIENT_AUTH: "clientAuth",
+    ExtendedKeyUsageOID.CODE_SIGNING: "codeSigning",
+    ExtendedKeyUsageOID.EMAIL_PROTECTION: "emailProtection",
+    ExtendedKeyUsageOID.TIME_STAMPING: "timeStamping",
+    ExtendedKeyUsageOID.OCSP_SIGNING: "OCSPSigning",
+    ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "anyExtendedKeyUsage",
+    ExtendedKeyUsageOID.SMARTCARD_LOGON: "smartcardLogon",
+    ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION: "msKDC",
+    ExtendedKeyUsageOID.IPSEC_END_SYSTEM: "ipsecEndSystem",
+    ExtendedKeyUsageOID.IPSEC_TUNNEL: "ipsecTunnel",
+    ExtendedKeyUsageOID.IPSEC_USER: "ipsecUser",
+    ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
+    ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
+}
+
+KEY_USAGE_NAMES = {
+    "crl_sign": "cRLSign",
+    "data_encipherment": "dataEncipherment",
+    "decipher_only": "decipherOnly",
+    "digital_signature": "digitalSignature",
+    "encipher_only": "encipherOnly",
+    "key_agreement": "keyAgreement",
+    "key_cert_sign": "keyCertSign",
+    "key_encipherment": "keyEncipherment",
+    "content_commitment": "nonRepudiation",  # http://marc.info/?t=107176106300005&r=1&w=2
+}
+
+
+def _authority_information_access_as_text(value: x509.AuthorityInformationAccess) -> str:
+    lines = []
+    issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
+    ocsp = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.OCSP]
+    if issuers:
+        lines.append("CA Issuers:")
+        lines += [f"  * {format_general_name(ad.access_location)}" for ad in issuers]
+    if ocsp:
+        lines.append("OCSP:")
+        lines += [f"  * {format_general_name(ad.access_location)}" for ad in ocsp]
+    return "\n".join(lines)
+
+
+def _authority_key_identifier_as_text(value: x509.AuthorityKeyIdentifier) -> str:
+    lines = []
+    if value.key_identifier:
+        lines.append(f"* KeyID: {bytes_to_hex(value.key_identifier)}")
+    if value.authority_cert_issuer:
+        lines.append("* Issuer:")
+        lines += [f"  * {format_general_name(aci)}" for aci in value.authority_cert_issuer]
+    if value.authority_cert_serial_number is not None:
+        lines.append(f"* Serial: {value.authority_cert_serial_number}")
+    return "\n".join(lines)
+
+
+def _basic_constraints_as_text(value: x509.BasicConstraints) -> str:
+    if value.ca is True:
+        text = "CA:TRUE"
+    else:
+        text = "CA:FALSE"
+    if value.path_length is not None:
+        text += f", pathlen:{value.path_length}"
+
+    return text
+
+
+def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
+    lines = []
+
+    for policy in value:
+        lines.append(f"* Policy Identifier: {policy.policy_identifier.dotted_string}")
+
+        if policy.policy_qualifiers:
+            lines.append("  Policy Qualifiers:")
+            for qualifier in policy.policy_qualifiers:
+                if isinstance(qualifier, str):
+                    lines += textwrap.wrap(qualifier, 76, initial_indent="  * ", subsequent_indent="    ")
+                else:
+                    lines.append("  * UserNotice:")
+                    if qualifier.explicit_text:
+                        lines += textwrap.wrap(
+                            f"Explicit text: {qualifier.explicit_text}\n",
+                            initial_indent="    * ",
+                            subsequent_indent="      ",
+                            width=76,
+                        )
+                    if qualifier.notice_reference:
+                        lines.append("    * Reference:")
+                        lines.append(f"      * Organiziation: {qualifier.notice_reference.organization}")
+                        lines.append(f"      * Notice Numbers: {qualifier.notice_reference.notice_numbers}")
+        else:
+            lines.append("  No Policy Qualifiers")
+    return "\n".join(lines)
+
+
+def _distribution_points_as_text(value: typing.List[x509.DistributionPoint]) -> str:
+    lines = []
+    for dpoint in value:
+        lines.append("* DistributionPoint:")
+
+        if dpoint.full_name:
+            lines.append("  * Full Name:")
+            lines += [f"    * {format_general_name(name)}" for name in dpoint.full_name]
+        elif dpoint.relative_name:
+            lines.append(f"  * Relative Name: {format_name(dpoint.relative_name)}")
+        else:  # pragma: no cover; either full_name or relative_name must be not-None.
+            raise ValueError("Either full_name or relative_name must be not None.")
+
+        if dpoint.crl_issuer:
+            lines.append("  * CRL Issuer:")
+            lines += [f"    * {format_general_name(issuer)}" for issuer in dpoint.crl_issuer]
+        if dpoint.reasons:
+            reasons = ", ".join(sorted([r.name for r in dpoint.reasons]))
+            lines.append(f"  * Reasons: {reasons}")
+    return "\n".join(lines)
+
+
+def _key_usage_as_text(value: x509.KeyUsage) -> str:
+    lines = []
+    for attr, name in KEY_USAGE_NAMES.items():
+        try:
+            if getattr(value, attr):
+                lines.append(f"* {name}")
+        except ValueError:
+            # x509.KeyUsage raises ValueError on some attributes to ensure consistency
+            pass
+    return "\n".join(sorted(lines))
+
+
+def _name_constraints_as_text(value: x509.NameConstraints) -> str:
     lines = []
     if value.permitted_subtrees:
         lines.append("Permitted:")
@@ -543,7 +640,83 @@ def name_constraints_as_text(value: x509.NameConstraints) -> str:
     return "\n".join(lines)
 
 
-def extension_as_text(value: x509.ExtensionType):
+def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
+    lines = []
+    if value.inhibit_policy_mapping is not None:
+        lines.append(f"* InhibitPolicyMapping: {value.inhibit_policy_mapping}")
+    if value.require_explicit_policy is not None:
+        lines.append(f"* RequireExplicitPolicy: {value.require_explicit_policy}")
+
+    return "\n".join(lines)
+
+
+def _signed_certificate_timestamps_as_text(value: typing.List[SignedCertificateTimestamp]) -> str:
+    lines = []
+    for sct in value:
+        if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
+            entry_type = "Precertificate"
+        elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover  # Unseen in the wild
+            entry_type = "x509 certificate"
+        else:  # pragma: no cover  # We support everything that has been specified so far
+            entry_type = "unknown"
+        timestamp = sct.timestamp.isoformat(" ")
+        log_id = binascii.hexlify(sct.log_id).decode("utf-8")
+
+        lines += [
+            f"* {entry_type} ({sct.version.name}):",
+            f"    Timestamp: {timestamp}",
+            f"    Log ID: {log_id}",
+        ]
+
+    return "\n".join(lines)
+
+
+def _tls_feature_as_text(value: x509.TLSFeature) -> str:
+    lines = []
+    for feature in value:
+        if feature == x509.TLSFeatureType.status_request:
+            lines.append("* OCSPMustStaple")
+        elif feature == x509.TLSFeatureType.status_request_v2:
+            lines.append("* MultipleCertStatusRequest")
+        else:  # pragma: no cover
+            # COVERAGE NOTE: we support all types, so this should never be raised. The descriptive error
+            # message is just here in case a new thing ever comes up.
+            raise ValueError(f"Unknown TLSFeatureType encountered: {feature}")
+    return "\n".join(sorted(lines))
+
+
+def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-many-return-statements
+    """Return the given extension value as human-readable text."""
+    if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
+        return "Yes"  # no need for extra function
+    if isinstance(value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
+        return _distribution_points_as_text(list(value))
+    if isinstance(value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
+        return "\n".join(f"* {format_general_name(name)}" for name in value)
+    if isinstance(value, (x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps)):
+        return _signed_certificate_timestamps_as_text(list(value))
+    if isinstance(value, x509.AuthorityInformationAccess):
+        return _authority_information_access_as_text(value)
+    if isinstance(value, x509.AuthorityKeyIdentifier):
+        return _authority_key_identifier_as_text(value)
+    if isinstance(value, x509.BasicConstraints):
+        return _basic_constraints_as_text(value)
+    if isinstance(value, x509.CertificatePolicies):
+        return _certificate_policies_as_text(value)
+    if isinstance(value, x509.ExtendedKeyUsage):
+        return "\n".join(sorted(f"* {EXTENDED_KEY_USAGE_NAMES[usage]}" for usage in value))
+    if isinstance(value, x509.InhibitAnyPolicy):
+        return str(value.skip_certs)
+    if isinstance(value, x509.KeyUsage):
+        return _key_usage_as_text(value)
     if isinstance(value, x509.NameConstraints):
-        return name_constraints_as_text(value)
-    raise TypeError("Unknown extension type.")
+        return _name_constraints_as_text(value)
+    if isinstance(value, x509.PolicyConstraints):
+        return _policy_constraints_as_text(value)
+    if isinstance(value, x509.SubjectKeyIdentifier):
+        return bytes_to_hex(value.key_identifier)
+    if isinstance(value, x509.TLSFeature):
+        return _tls_feature_as_text(value)
+    if isinstance(value, x509.UnrecognizedExtension):
+        return value.oid.dotted_string
+    raise TypeError("Unknown extension type.")  # pragma: no cover

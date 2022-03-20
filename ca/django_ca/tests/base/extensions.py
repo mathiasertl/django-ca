@@ -149,9 +149,9 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
 
     def test_as_text(self) -> None:
         """Test as_text()."""
-        for config in self.test_values.values():
+        for name, config in self.test_values.items():
             ext = self.ext(config["expected"])
-            self.assertEqual(ext.as_text(), config["expected_text"])
+            self.assertEqual(ext.as_text(), config["expected_text"], name)
 
     @abc.abstractmethod
     def test_config(self) -> None:
@@ -330,14 +330,11 @@ class ExtensionTestMixin(typing.Generic[ExtensionTypeVar], AbstractExtensionTest
     def test_as_extension(self) -> None:
         """Test the as_extension property."""
         for config in self.test_values.values():
-            if config["extension_type"] is None:
-                continue  # test case is not a valid extension
-
             ext = self.ext(config["expected"])
             cg_ext = x509.extensions.Extension(
                 oid=self.ext_class.oid,
                 critical=self.ext_class.default_critical,
-                value=config["extension_type"],
+                value=typing.cast(x509.ExtensionType, config["extension_type"]),
             )
             self.assertEqual(ext.as_extension(), cg_ext)
 
@@ -373,18 +370,12 @@ class ExtensionTestMixin(typing.Generic[ExtensionTypeVar], AbstractExtensionTest
     def test_extension_type(self) -> None:
         """Test extension_type property."""
         for config in self.test_values.values():
-            if config["extension_type"] is None:
-                continue  # test case is not a valid extension
-
             ext = self.ext(config["expected"])
             self.assertEqual(ext.extension_type, config["extension_type"])
 
     def test_for_builder(self) -> None:
         """Test the for_builder() method."""
         for config in self.test_values.values():
-            if config["extension_type"] is None:
-                continue  # test case is not a valid extension
-
             ext = self.ext(config["expected"])
             self.assertEqual(ext.for_builder(), (config["extension_type"], self.ext_class.default_critical))
 

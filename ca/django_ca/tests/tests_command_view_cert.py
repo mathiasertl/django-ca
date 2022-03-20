@@ -434,7 +434,8 @@ NameConstraints{name_constraints_critical}:
       * DNS:{name_constraints.permitted[0].value}
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
-OCSPNoCheck{ocsp_no_check_critical}: Yes
+OCSPNoCheck{ocsp_no_check_critical}:
+    Yes
 PolicyConstraints{policy_constraints_critical}:
     * InhibitPolicyMapping: {policy_constraints.inhibit_policy_mapping}
     * RequireExplicitPolicy: {policy_constraints.require_explicit_policy}
@@ -497,7 +498,8 @@ KeyUsage{key_usage_critical}:
 NameConstraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
-OCSPNoCheck{ocsp_no_check_critical}: Yes
+OCSPNoCheck{ocsp_no_check_critical}:
+    Yes
 SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
     * {subject_alternative_name[1]}

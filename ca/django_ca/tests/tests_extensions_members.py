@@ -23,7 +23,6 @@ from django.test import TestCase
 from ..extensions.utils import DistributionPoint
 from ..extensions.utils import PolicyInformation
 from ..typehints import ParsablePolicyInformation
-from .base import certs
 from .base import uri
 from .base.mixins import TestCaseMixin
 
@@ -78,25 +77,6 @@ class DistributionPointTestCase(TestCase):
         """Test str()."""
         dpoint = DistributionPoint({"full_name": ["http://example.com"]})
         self.assertEqual(str(dpoint), "<DistributionPoint: full_name=['URI:http://example.com']>")
-
-    def test_as_text(self) -> None:
-        """Test as_text()."""
-
-        url = "http://example.com"
-        url2 = "http://example.net"
-        self.assertEqual(DistributionPoint().as_text(), "")
-        self.assertEqual(DistributionPoint({"full_name": [url]}).as_text(), f"* Full Name:\n  * URI:{url}")
-        self.assertEqual(
-            DistributionPoint({"relative_name": f"/CN='{url}'"}).as_text(), f'* Relative Name: /CN="{url}"'
-        )
-        self.assertEqual(
-            DistributionPoint({"full_name": [url], "crl_issuer": [url2]}).as_text(),
-            f"* Full Name:\n  * URI:{url}\n* CRL Issuer:\n  * URI:{url2}",
-        )
-        self.assertEqual(
-            DistributionPoint({"full_name": [url], "reasons": ["ca_compromise"]}).as_text(),
-            f"* Full Name:\n  * URI:{url}\n* Reasons: ca_compromise",
-        )
 
     def test_reasons(self) -> None:
         """Test DPs with different reason types."""
@@ -237,50 +217,6 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         self.pi_empty.policy_identifier = self.oid
         self.pi_empty.append(self.q3)
         self.assertEqual(self.pi3, self.pi_empty)
-
-    def test_as_text(self) -> None:
-        """Test as_text()."""
-        self.assertEqual(self.pi1.as_text(), "Policy Identifier: 2.5.29.32.0\n" "Policy Qualifiers:\n* text1")
-        self.assertEqual(
-            self.pi2.as_text(),
-            "Policy Identifier: 2.5.29.32.0\n"
-            "Policy Qualifiers:\n"
-            "* UserNotice:\n"
-            "  * Explicit text: text2",
-        )
-        self.assertEqual(
-            self.pi3.as_text(),
-            "Policy Identifier: 2.5.29.32.0\n"
-            "Policy Qualifiers:\n"
-            "* UserNotice:\n"
-            "  * Reference:\n"
-            "    * Organiziation: text3\n"
-            "    * Notice Numbers: [1]",
-        )
-        self.assertEqual(
-            self.pi4.as_text(),
-            "Policy Identifier: 2.5.29.32.0\n"
-            "Policy Qualifiers:\n"
-            "* text4\n"
-            "* UserNotice:\n"
-            "  * Explicit text: text5\n"
-            "  * Reference:\n"
-            "    * Organiziation: text6\n"
-            "    * Notice Numbers: [1, 2, 3]",
-        )
-        self.assertEqual(self.pi_empty.as_text(), "Policy Identifier: None\nNo Policy Qualifiers")
-
-        self.load_named_cas("__all__")
-        self.load_named_certs("__all__")
-        for name, cert in list(self.cas.items()) + list(self.certs.items()):  # type: ignore[arg-type]
-            try:
-                ext = cert.pub.loaded.extensions.get_extension_for_class(x509.CertificatePolicies).value
-            except x509.ExtensionNotFound:
-                continue
-
-            for index, policy in enumerate(ext):
-                pinfo = PolicyInformation(policy)
-                self.assertEqual(pinfo.as_text(), certs[name]["policy_texts"][index])
 
     def test_certs(self) -> None:
         """Test for all known certs."""

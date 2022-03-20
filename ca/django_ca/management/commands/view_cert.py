@@ -19,6 +19,7 @@
 import typing
 from datetime import datetime
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -77,9 +78,11 @@ class Command(CertCommandMixin, BinaryCommand):
         if options["extensions"]:
             self.print_extensions(cert)
         else:
-            san = cert.subject_alternative_name
-            if san:
-                self.print_extension(san)
+            try:
+                san = cert.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+                self.print_extension(san)  # type: ignore[arg-type]
+            except x509.ExtensionNotFound:
+                pass
 
         self.stdout.write("Watchers:")
         for watcher in cert.watchers.all():
