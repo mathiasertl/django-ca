@@ -26,9 +26,12 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from .. import ca_settings
+from ..extensions import OID_TO_EXTENSION
 from ..extensions import Extension
 from ..extensions import IssuerAlternativeName
+from ..extensions import get_extension_name
 from ..extensions.base import NullExtension
+from ..extensions.utils import extension_as_text
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
 from ..utils import add_colons
@@ -152,8 +155,22 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
     def print_extensions(self, cert: X509CertMixin) -> None:
         """Print all extensions for the given certificate."""
-        for ext in cert.extensions:
-            self.print_extension(ext)
+        for ext in cert._sorted_extensions:
+            try:
+                as_text = extension_as_text(ext)
+            except TypeError:
+                if ext.oid in OID_TO_EXTENSION:
+                    self.print_extension(getattr(cert, OID_TO_EXTENSION[ext.oid].key))
+                else:
+                    self.print_extension(ext)
+            else:
+                # TODO: output OID as well
+                ext_name = get_extension_name(ext.value)
+                if ext.critical:
+                    self.stdout.write(f"{ext_name} (critical):")
+                else:
+                    self.stdout.write(f"{ext_name}:")
+                self.stdout.write(indent(as_text, "    "))
 
     def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
         """Test that we can load the private key of a CA."""

@@ -55,6 +55,7 @@ from .base import NullExtension
 from .base import OrderedSetExtension
 from .base import SignedCertificateTimestampsBase
 from .utils import PolicyInformation
+from .utils import name_constraints_as_text
 
 # Placeholder until we fill in something good
 ParsableValueDummy = str
@@ -902,17 +903,7 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         return f"permitted={permitted}, excluded={excluded}"
 
     def as_text(self) -> str:
-        text = ""
-        if self._permitted:
-            text += "Permitted:\n"
-            for name in self._permitted.serialize():
-                text += f"  * {name}\n"
-        if self._excluded:
-            text += "Excluded:\n"
-            for name in self._excluded.serialize():
-                text += f"  * {name}\n"
-
-        return text.strip()
+        return name_constraints_as_text(self.extension_type)
 
     def get_excluded(self) -> GeneralNameList:
         """The ``excluded`` value of this instance."""

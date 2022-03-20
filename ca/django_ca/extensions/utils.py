@@ -530,3 +530,20 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
             "policy_identifier": self.policy_identifier.dotted_string,
             "policy_qualifiers": self.serialize_policy_qualifiers(),
         }
+
+
+def name_constraints_as_text(value: x509.NameConstraints) -> str:
+    lines = []
+    if value.permitted_subtrees:
+        lines.append("Permitted:")
+        lines += [f"  * {format_general_name(name)}" for name in value.permitted_subtrees]
+    if value.excluded_subtrees:
+        lines.append("Excluded:")
+        lines += [f"  * {format_general_name(name)}" for name in value.excluded_subtrees]
+    return "\n".join(lines)
+
+
+def extension_as_text(value: x509.ExtensionType):
+    if isinstance(value, x509.NameConstraints):
+        return name_constraints_as_text(value)
+    raise TypeError("Unknown extension type.")
