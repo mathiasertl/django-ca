@@ -654,7 +654,7 @@ def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
 
 
 def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> typing.Tuple[str, str, str, str]:
-    """Get stringified values from a SignedCertificateTimestamp."""
+    """Get values from a SignedCertificateTimestamp as a tuple of strings."""
     if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
         entry_type = "Precertificate"
     elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover  # Unseen in the wild
