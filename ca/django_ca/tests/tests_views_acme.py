@@ -446,7 +446,6 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     @property
     def url(self) -> str:
         """Property providing a single URL under test."""
-        ...
 
     def acme(
         self,

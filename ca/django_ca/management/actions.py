@@ -39,7 +39,7 @@ from ..utils import parse_key_curve
 from ..utils import split_str
 from ..utils import x509_name
 
-ActionType = typing.TypeVar("ActionType")
+ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
 
 
 class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=abc.ABCMeta):
