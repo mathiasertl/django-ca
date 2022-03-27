@@ -56,16 +56,11 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import KEY_TO_EXTENSION
+from .extensions import OID_TO_EXTENSION
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
-from .extensions.base import AlternativeNameExtension
-from .extensions.base import CRLDistributionPointsBase
-from .extensions.base import NullExtension
-from .extensions.base import OrderedSetExtension
-from .extensions.base import UnrecognizedExtension
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -134,20 +129,6 @@ else:  # pragma: only py<3.8
 @admin.register(Watcher)
 class WatcherAdmin(WatcherAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
-
-
-if sys.version_info < (3, 7):  # pragma: py<3.7 branch
-    # In Python 3.6, Generic has a special metaclass. So does ModelAdmin in general. This creates a conflict
-    # in metaclass base classes:
-    #   https://github.com/python/typing/issues/449
-    #
-    # PYLINT NOTE: GenericMeta only exists in Python 3.6 and pylint does not get that his import is only for
-    #              that version, throwing an error for newer Python versions.
-    from typing import GenericMeta  # pylint: disable=no-name-in-module,ungrouped-imports
-
-    # PYLINT NOTE: Redefining the class with the same name is just the shortest way here
-    class MediaDefiningClass(GenericMeta, MediaDefiningClass):  # pylint: disable=function-redefined
-        """Metaclass for py3.6."""
 
 
 class CertificateMixin(
@@ -282,25 +263,19 @@ class CertificateMixin(
     # Properties for x509 extensions #
     ##################################
 
-    def output_template(self, obj: X509CertMixinTypeVar, key: str) -> str:
+    def output_template(self, obj: X509CertMixinTypeVar, oid: x509.ObjectIdentifier) -> str:
         """Render extension for the given object."""
 
-        ext = getattr(obj, key)
-        templates = [f"django_ca/admin/extensions/{key}.html"]
+        # PYLINT NOTE: use internal property until we can deprecate extensions
+        cg_ext = obj._x509_extensions.get(oid)  # pylint: disable=protected-access
 
-        if isinstance(ext, NullExtension):
-            templates.append("django_ca/admin/extensions/base/null_extension.html")
-        if isinstance(ext, AlternativeNameExtension):
-            templates.append("django_ca/admin/extensions/base/alternative_name_extension.html")
-        if isinstance(ext, CRLDistributionPointsBase):
-            templates.append("django_ca/admin/extensions/base/crl_distribution_points_base.html")
-        if isinstance(ext, OrderedSetExtension):
-            templates.append("django_ca/admin/extensions/base/ordered_set_extension.html")
-        if isinstance(ext, (UnrecognizedExtension, x509.UnrecognizedExtension)):  # pragma: no cover
-            templates.append("django_ca/admin/extensions/base/unrecognized_extension.html")
-        else:
-            templates.append("django_ca/admin/extensions/base/base.html")
-        return render_to_string(templates, {"obj": obj, "extension": ext})
+        if cg_ext is None:
+            # SubjectAlternativeName is displayed unconditionally in the main section, so a certificate
+            # without this extension will yield a KeyError in this case.
+            return render_to_string(["django_ca/admin/extensions/cg/missing.html"])
+
+        template = f"django_ca/admin/extensions/cg/{oid.dotted_string}.html"
+        return render_to_string([template], context={"extension": cg_ext, "x509": x509})
 
     def unknown_oid(self, oid: x509.ObjectIdentifier, obj: X509CertMixinTypeVar) -> str:
         """Generic display for extensions that we do not know about and cannot display."""
@@ -339,7 +314,7 @@ class CertificateMixin(
                 # admin instance:
                 if isinstance(field, x509.Extension):
                     oid_func = partial(self.unknown_oid, field.oid)
-                    desc = f"Unkown OID ({field.oid.dotted_string})"
+                    desc = f"Unknown OID ({field.oid.dotted_string})"
                     oid_func.short_description = desc  # type: ignore[attr-defined]
 
                     field = self.get_oid_name(field.oid)
@@ -390,16 +365,16 @@ class CertificateMixin(
 # Attach extension properties to admin if they are not already present.
 # This makes ModelAdmin have a property for every extension that we currently support,
 # rendering as a template based on the extension key.
-for ext_key, ext_cls in KEY_TO_EXTENSION.items():
+for _oid, ext_cls in OID_TO_EXTENSION.items():
     # Give Mixin opportunity to override method - not needed right now
     # if hasattr(CertificateMixin, key):
     #    continue
 
-    func = partial(CertificateMixin.output_template, key=ext_key)
+    func = partial(CertificateMixin.output_template, oid=_oid)
     func.short_description = ext_cls.name  # type: ignore[attr-defined]
     bound_func = MethodType(func, CertificateMixin)
 
-    setattr(CertificateMixin, ext_key, bound_func)
+    setattr(CertificateMixin, ext_cls.key, bound_func)
 
 
 @admin.register(CertificateAuthority)

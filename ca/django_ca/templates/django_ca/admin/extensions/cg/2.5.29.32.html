@@ -1,8 +1,9 @@
-{% extends "django_ca/admin/extensions/base/base.html" %}
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
 {% load i18n django_ca %}
+{# CertificatePolicies extension #}
 
-{% block content %}<ul>
-  {% for info in extension.extension_type %}
+{% block content %}
+  {% for info in extension.value %}
   <li>{{ info.policy_identifier|oid_name }} ({{ info.policy_identifier.dotted_string }}){% if info.policy_qualifiers %}:{% endif %}
     <ul>
     {% for qualifier in info.policy_qualifiers %}
@@ -30,4 +31,4 @@
     </ul>
   </li>
   {% endfor %}
-</ul>{% endblock content %}
+{% endblock content %}

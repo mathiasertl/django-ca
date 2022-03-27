@@ -1,0 +1,7 @@
+{% load i18n %}
+<span class="django-ca-extension">
+  <div class="django-ca-extension-value">
+      {# Extension could be None for SubjectAltName, which is always displayed even if not present #}
+      {% trans "&lt;Not present&gt;" %}
+  </div>
+</span>

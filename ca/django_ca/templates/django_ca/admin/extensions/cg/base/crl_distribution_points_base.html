@@ -1,0 +1,26 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{% load django_ca %}
+
+{% block content %}
+{% for dp in extension.value %}
+  DistributionPoint:
+  <ul>
+    {% if dp.full_name %}
+      <li>Full Name: {{ dp.full_name|format_general_names|join:", " }}</li>
+    {% endif %}
+    {% if dp.relative_name %}
+      <li>Relative Name: {{ dp.relative_name|format_name }}</li>
+    {% endif %}
+    {% if dp.crl_issuer %}
+      <li>CRL Issuer: {{ dp.crl_issuer|format_general_names|join:", " }}</li>
+    {% endif %}
+    {% if dp.reasons %}
+      <li>Reasons: 
+				{% for reason in dp.reasons %}
+          {{ reason.name }}{% if not forloop.last %},{% endif %}
+				{% endfor %}
+    {% endif %}
+  </ul>
+
+{% endfor %}
+{% endblock %}

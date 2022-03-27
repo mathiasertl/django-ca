@@ -1,0 +1,7 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{% load django_ca %}
+{# ExtendedKeyUsage extension #}
+
+{% block content %}<ul>
+  {{ extension.value|extended_key_usage_list }}
+</ul>{% endblock content %}

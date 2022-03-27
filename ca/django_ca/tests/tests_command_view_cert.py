@@ -766,16 +766,20 @@ HPKP pin: %(hpkp)s
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self) -> None:
         """Test contrib godaddy cert for derstandard.at."""
-        sct = """PrecertificateSignedCertificateTimestamps:
+
+        id1 = "A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10"  # NOQA: E501
+        id2 = "EE:4B:BD:B7:75:CE:60:BA:E1:42:69:1F:AB:E1:9E:66:A3:0F:7E:5F:B0:72:D8:83:00:C4:7B:89:7A:A8:FD:CB"  # NOQA: E501
+        id3 = "44:94:65:2E:B0:EE:CE:AF:C4:40:07:D8:A8:FE:28:C0:DA:E6:82:BE:D8:CB:31:B5:3F:D3:33:96:B5:B6:81:A8"  # NOQA: E501
+        sct = f"""PrecertificateSignedCertificateTimestamps:
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:54.342000
-        Log ID: a4b90990b418581487bb13a2cc67700a3c359804f91bdfb8e377cd0ec80ddc10
+        Log ID: {id1}
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:55.237000
-        Log ID: ee4bbdb775ce60bae142691fabe19e66a30f7e5fb072d88300c47b897aa8fdcb
+        Log ID: {id2}
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:56.485000
-        Log ID: 4494652eb0eeceafc44007d8a8fe28c0dae682bed8cb31b53fd33396b5b681a8"""
+        Log ID: {id3}"""
 
         self.assertContrib(
             "godaddy_g2_intermediate-cert",
@@ -878,13 +882,19 @@ HPKP pin: {hpkp}
         # pylint: disable=consider-using-f-string
         name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
+        context[
+            "id1"
+        ] = "6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13"  # NOQA: E501
+        context[
+            "id2"
+        ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"  # NOQA: E501
         sct = """PrecertificateSignedCertificateTimestamps{sct_critical}:
     * Precertificate ({sct_values[0][version]}):
         Timestamp: {sct_values[0][timestamp]}
-        Log ID: {sct_values[0][log_id]}
+        Log ID: {id1}
     * Precertificate ({sct_values[1][version]}):
         Timestamp: {sct_values[1][timestamp]}
-        Log ID: {sct_values[1][log_id]}""".format(
+        Log ID: {id2}""".format(
             **context
         )
 

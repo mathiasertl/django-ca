@@ -6,11 +6,6 @@
   </div>
   {% endif %}
   <div class="django-ca-extension-value">
-    {% if extension is not None %}
-      {% block content %}{{ extension.as_text }}{% endblock content %}
-    {% else %}
-      {# Extension could be None for SubjectAltName, which is always displayed even if not present #}
-      {% trans "&lt;Not present&gt;" %}
-    {% endif %}
+    {% block content %}{{ extension }}{% endblock content %}
   </div>
 </span>

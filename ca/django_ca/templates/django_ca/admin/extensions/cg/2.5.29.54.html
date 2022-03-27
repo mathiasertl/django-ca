@@ -1,0 +1,4 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{# InhibitAnyPolicy extension #}
+
+{% block content %}skip certs: {{ extension.value.skip_certs }}{% endblock content %}

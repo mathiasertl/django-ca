@@ -13,7 +13,6 @@
 
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
-import binascii
 import textwrap
 import typing
 from typing import Any
@@ -500,6 +499,7 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
 
 
+# TODO: validate completeness
 EXTENDED_KEY_USAGE_NAMES = {
     ExtendedKeyUsageOID.SERVER_AUTH: "serverAuth",
     ExtendedKeyUsageOID.CLIENT_AUTH: "clientAuth",
@@ -617,16 +617,19 @@ def _distribution_points_as_text(value: typing.List[x509.DistributionPoint]) -> 
     return "\n".join(lines)
 
 
-def _key_usage_as_text(value: x509.KeyUsage) -> str:
-    lines = []
+def key_usage_items(value: x509.KeyUsage) -> typing.Iterator[str]:
+    """Get a list of basic key usages."""
     for attr, name in KEY_USAGE_NAMES.items():
         try:
             if getattr(value, attr):
-                lines.append(f"* {name}")
+                yield name
         except ValueError:
             # x509.KeyUsage raises ValueError on some attributes to ensure consistency
             pass
-    return "\n".join(sorted(lines))
+
+
+def _key_usage_as_text(value: x509.KeyUsage) -> str:
+    return "\n".join(f"* {name}" for name in key_usage_items(value))
 
 
 def _name_constraints_as_text(value: x509.NameConstraints) -> str:
@@ -650,20 +653,24 @@ def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
     return "\n".join(lines)
 
 
+def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> typing.Tuple[str, str, str, str]:
+    """Get string-ified values from a SignedCertificateTimestamp."""
+    if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
+        entry_type = "Precertificate"
+    elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover  # Unseen in the wild
+        entry_type = "x509 certificate"
+    else:  # pragma: no cover  # We support everything that has been specified so far
+        entry_type = "unknown"
+    return entry_type, sct.version.name, bytes_to_hex(sct.log_id), sct.timestamp.isoformat(" ")
+
+
 def _signed_certificate_timestamps_as_text(value: typing.List[SignedCertificateTimestamp]) -> str:
     lines = []
     for sct in value:
-        if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
-            entry_type = "Precertificate"
-        elif sct.entry_type == LogEntryType.X509_CERTIFICATE:  # pragma: no cover  # Unseen in the wild
-            entry_type = "x509 certificate"
-        else:  # pragma: no cover  # We support everything that has been specified so far
-            entry_type = "unknown"
-        timestamp = sct.timestamp.isoformat(" ")
-        log_id = binascii.hexlify(sct.log_id).decode("utf-8")
+        entry_type, version, log_id, timestamp = signed_certificate_timestamp_values(sct)
 
         lines += [
-            f"* {entry_type} ({sct.version.name}):",
+            f"* {entry_type} ({version}):",
             f"    Timestamp: {timestamp}",
             f"    Log ID: {log_id}",
         ]

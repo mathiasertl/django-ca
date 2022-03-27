@@ -1274,10 +1274,10 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
             self.ext1.as_text(),
             """* Precertificate ({v[0][version]}):
     Timestamp: {v[0][timestamp]}
-    Log ID: {v[0][log_id]}
+    Log ID: 6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13
 * Precertificate ({v[1][version]}):
     Timestamp: {v[1][timestamp]}
-    Log ID: {v[1][log_id]}""".format(
+    Log ID: 29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78""".format(  # NOQA: E501
                 v=self.data1["value"]
             ),
         )
@@ -1286,13 +1286,13 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
             self.ext2.as_text(),
             """* Precertificate ({v[0][version]}):
     Timestamp: {v[0][timestamp]}
-    Log ID: {v[0][log_id]}
+    Log ID: A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10
 * Precertificate ({v[1][version]}):
     Timestamp: {v[1][timestamp]}
-    Log ID: {v[1][log_id]}
+    Log ID: 56:14:06:9A:2F:D7:C2:EC:D3:F5:E1:BD:44:B2:3E:C7:46:76:B9:BC:99:11:5C:C0:EF:94:98:55:D6:89:D0:DD
 * Precertificate ({v[2][version]}):
     Timestamp: {v[2][timestamp]}
-    Log ID: {v[2][log_id]}""".format(
+    Log ID: EE:4B:BD:B7:75:CE:60:BA:E1:42:69:1F:AB:E1:9E:66:A3:0F:7E:5F:B0:72:D8:83:00:C4:7B:89:7A:A8:FD:CB""".format(  # NOQA: E501
                 v=self.data2["value"]
             ),
         )

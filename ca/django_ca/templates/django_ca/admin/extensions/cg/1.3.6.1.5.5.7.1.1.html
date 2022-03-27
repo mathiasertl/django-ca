@@ -1,0 +1,16 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{% load django_ca %}
+{# AuthorityInformationAccess extension #}
+
+{% block content %}
+  {% for issuer in extension.value|access_method:x509.AuthorityInformationAccessOID.CA_ISSUERS|format_general_names %}
+    {% if forloop.first %}CA Issuers:<ul>{% endif %}
+      <li>{{ issuer }}</li>
+    {% if forloop.last %}</ul>{% endif %}
+  {% endfor %}
+  {% for ocsp in extension.value|access_method:x509.AuthorityInformationAccessOID.OCSP|format_general_names %}
+    {% if forloop.first %}OCSP:<ul>{% endif %}
+      <li>{{ ocsp }}</li>
+    {% if forloop.last %}</ul>{% endif %}
+  {% endfor %}
+{% endblock content %}

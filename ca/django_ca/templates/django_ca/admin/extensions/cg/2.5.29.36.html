@@ -1,0 +1,11 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{# PolicyConstraints extension #}
+
+{% block content %}<ul>
+  {% if extension.value.inhibit_policy_mapping %}
+    <li>InhibitPolicyMapping: {{extension.value.inhibit_policy_mapping }}</li>
+  {% endif %}
+  {% if extension.value.require_explicit_policy %}
+    <li>RequireExplicitPolicy: {{extension.value.require_explicit_policy }}</li>
+  {% endif %}
+</ul>{% endblock content %}

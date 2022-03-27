@@ -1,0 +1,9 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{% load django_ca %}
+{# KeyUsage extension #}
+
+{% block content %}<ul>
+  {% for value in extension.value|key_usage_items %}
+  <li>{{ value }}</li>
+  {% endfor %}
+</ul>{% endblock content %}

@@ -1,0 +1,6 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{% load django_ca %}
+
+{% block content %}<ul>
+  {% for name in extension.value|format_general_names %}<li>{{ name }}</li>{% endfor %}
+</ul>{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "django_ca/admin/extensions/cg/base/base.html" %}
+{% load i18n django_ca %}
+
+{% block content %}
+<table>
+  <thead>
+    <tr>
+      <th>{% trans "Type" %}</th>
+      <th>{% trans "Timestamp" %}</th>
+      <th>{% trans "Log ID" %}</th>
+      <th>{% trans "Version" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for entry in extension.value %}
+    {% with sct=entry|signed_certificate_timestamp_values %}
+    <tr>
+      <td>{{ sct.0 }}</td>
+      <td>{{ sct.2 }}</td>
+      <td>{{ sct.3 }}</td>
+      <td>{{ sct.1 }}</td>
+    </tr>
+    {% endwith %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

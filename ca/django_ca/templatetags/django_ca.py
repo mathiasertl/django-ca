@@ -19,7 +19,12 @@ from cryptography import x509
 
 from django import template
 from django.contrib.admin.templatetags.admin_modify import submit_row
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
+from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES
+from ..extensions.utils import key_usage_items
+from ..extensions.utils import signed_certificate_timestamp_values
 from ..utils import add_colons
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
@@ -30,6 +35,39 @@ register = template.Library()
 
 
 register.filter("format_name", format_name)
+register.filter("key_usage_items", key_usage_items)
+register.filter("signed_certificate_timestamp_values", signed_certificate_timestamp_values)
+
+
+@register.filter
+def access_method(
+    value: x509.AuthorityInformationAccess, oid: x509.ObjectIdentifier
+) -> typing.List[x509.AccessDescription]:
+    """Get all entries of an `AuthorityInformationAccess` extension with the given access method `oid`."""
+    return [ad.access_location for ad in value if ad.access_method == oid]
+
+
+@register.filter
+def extended_key_usage_list(value: x509.ExtendedKeyUsage) -> str:
+    """Return a HTML-formatted list of extended key usage entries."""
+    lines = []
+    for oid in value:
+        name = EXTENDED_KEY_USAGE_NAMES.get(oid, oid.dotted_string)
+        lines.append(format_html("<li>{}</li>", name))
+
+    return mark_safe("".join(lines))
+
+
+@register.filter
+def enum(mod: typing.Any, cls_name_and_member: str) -> typing.Any:
+    """A filter that makes enum members accessible in Django templates.
+
+    Django will try to call callables, and since enums are callable, an empty string is returned instead in
+    the template.
+    """
+    cls_name, member = cls_name_and_member.split(".", 1)
+    enum_cls = getattr(mod, cls_name)
+    return getattr(enum_cls, member)
 
 
 @register.filter
