@@ -16,7 +16,6 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-import re
 from typing import Any
 from typing import Dict
 from typing import Type

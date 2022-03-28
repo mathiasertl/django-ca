@@ -16,7 +16,6 @@
 import json
 import typing
 from http import HTTPStatus
-from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -33,8 +32,6 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from .. import ca_settings
-from .. import extensions
-from .. import models
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
