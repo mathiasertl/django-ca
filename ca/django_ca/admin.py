@@ -17,14 +17,13 @@
 """
 
 import copy
+import functools
 import logging
 import sys
 import typing
 from datetime import date
 from datetime import datetime
-from functools import partial
 from http import HTTPStatus
-from types import MethodType
 
 from cryptography import x509
 
@@ -48,7 +47,6 @@ from django.urls import path
 from django.urls import reverse
 from django.urls.resolvers import URLPattern
 from django.utils import timezone
-from django.utils.html import escape
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
@@ -56,11 +54,11 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import OID_TO_EXTENSION
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
+from .extensions import get_extension_name
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -275,22 +273,22 @@ class CertificateMixin(
             return render_to_string(["django_ca/admin/extensions/cg/missing.html"])
 
         template = f"django_ca/admin/extensions/cg/{oid.dotted_string}.html"
+        if isinstance(cg_ext.value, x509.UnrecognizedExtension):
+            template = "django_ca/admin/extensions/cg/unrecognized_extension.html"
+
         return render_to_string([template], context={"extension": cg_ext, "x509": x509})
 
-    def unknown_oid(self, oid: x509.ObjectIdentifier, obj: X509CertMixinTypeVar) -> str:
-        """Generic display for extensions that we do not know about and cannot display."""
-        ext = obj.pub.loaded.extensions.get_extension_for_oid(oid)
-        html = ""
-        if ext.critical is True:
-            text = _("Critical")
-            html = f'<img src="/static/admin/img/icon-yes.svg" alt="{text}"> {text}'
-
-        html += f"<p>{escape(ext.value)}<p>"
-        return html
+    def __getattr__(self, name: str) -> typing.Any:
+        if name.startswith("oid_"):
+            oid = x509.ObjectIdentifier(name[4:].replace("_", "."))
+            func = functools.partial(self.output_template, oid=oid)
+            func.short_description = get_extension_name(oid)  # type: ignore[attr-defined]  # django standard
+            return func
+        raise AttributeError
 
     def get_oid_name(self, oid: x509.ObjectIdentifier) -> str:
         """Get a normalized name for the given OID."""
-        return oid.dotted_string.replace(".", "_")
+        return f"oid_{oid.dotted_string.replace('.', '_')}"
 
     # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
     def get_fieldsets(  # type: ignore[override] # pylint: disable=missing-function-docstring
@@ -302,32 +300,9 @@ class CertificateMixin(
             return fieldsets
 
         fieldsets = copy.deepcopy(fieldsets)
-
-        if obj.extension_fields:
-            for field in obj.extension_fields:
-                if field == SubjectAlternativeName.key:  # already displayed in main section
-                    continue
-
-                # If we encounter an object of type x509.Extension, it means that we do not yet support this
-                # extension, hence there are no accessors either. We compute a name for the extension based on
-                # the OID, create a partial function of unknown_oid and attach it under that name to this
-                # admin instance:
-                if isinstance(field, x509.Extension):
-                    oid_func = partial(self.unknown_oid, field.oid)
-                    desc = f"Unknown OID ({field.oid.dotted_string})"
-                    oid_func.short_description = desc  # type: ignore[attr-defined]
-
-                    field = self.get_oid_name(field.oid)
-
-                    # attach function to this instance
-                    setattr(self, field, oid_func)
-
-                fieldsets[self.x509_fieldset_index][1]["fields"].append(field)
-
-        else:
-            # we have no extensions, so remove the whole fieldset
-            fieldsets.pop(self.x509_fieldset_index)
-
+        for ext in obj._sorted_extensions:  # pylint: disable=protected-access
+            field = self.get_oid_name(ext.oid)
+            fieldsets[self.x509_fieldset_index][1]["fields"].append(field)
         return fieldsets
 
     def get_readonly_fields(  # type: ignore[override] # pylint: disable=missing-function-docstring
@@ -347,34 +322,14 @@ class CertificateMixin(
             # We can only change the date when the certificate was compromised if it's actually revoked.
             fields.append("compromised")
 
-        fields = list(fields)
-        for field in obj.extension_fields:
-            if isinstance(field, x509.Extension):
-                field = self.get_oid_name(field.oid)
-
-            fields.append(field)
-
-        return fields
+        # pylint: disable-next=protected-access
+        extension_fields = [self.get_oid_name(oid) for oid in obj._x509_extensions]
+        return list(fields) + extension_fields
 
     class Media:  # pylint: disable=missing-class-docstring
         css = {
             "all": ("django_ca/admin/css/base.css",),
         }
-
-
-# Attach extension properties to admin if they are not already present.
-# This makes ModelAdmin have a property for every extension that we currently support,
-# rendering as a template based on the extension key.
-for _oid, ext_cls in OID_TO_EXTENSION.items():
-    # Give Mixin opportunity to override method - not needed right now
-    # if hasattr(CertificateMixin, key):
-    #    continue
-
-    func = partial(CertificateMixin.output_template, oid=_oid)
-    func.short_description = ext_cls.name  # type: ignore[attr-defined]
-    bound_func = MethodType(func, CertificateMixin)
-
-    setattr(CertificateMixin, ext_cls.key, bound_func)
 
 
 @admin.register(CertificateAuthority)
@@ -589,8 +544,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         "distinguished_name",
         "ca",
         "hpkp_pin",
-        "subject_alternative_name",
         "profile",
+        "oid_2_5_29_17",  # SubjectAlternativeName
     ]
     search_fields = [
         "cn",
@@ -603,7 +558,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             {
                 "fields": [
                     "cn_display",
-                    "subject_alternative_name",
+                    "oid_2_5_29_17",  # SubjectAlternativeName
                     "distinguished_name",
                     "serial_field",
                     "ca",
@@ -927,6 +882,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     ) -> FieldSets:
         """Collapse the "Revocation" section unless the certificate is revoked."""
         fieldsets = super().get_fieldsets(request, obj=obj)
+
+        san_field_name = "oid_2_5_29_17"
+        if san_field_name in fieldsets[self.x509_fieldset_index][1]["fields"]:
+            fieldsets[self.x509_fieldset_index][1]["fields"].remove("oid_2_5_29_17")
 
         if hasattr(request, "_resign_obj"):
             return self.resign_fieldsets

@@ -725,5 +725,5 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-
     if isinstance(value, x509.TLSFeature):
         return _tls_feature_as_text(value)
     if isinstance(value, x509.UnrecognizedExtension):
-        return value.oid.dotted_string
+        return bytes_to_hex(value.value)
     raise TypeError("Unknown extension type.")  # pragma: no cover

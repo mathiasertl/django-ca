@@ -118,7 +118,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     def print_extension(self, ext: x509.Extension[x509.ExtensionType]) -> None:
         """Print extension to stdout."""
 
-        ext_name = get_extension_name(ext)
+        ext_name = get_extension_name(ext.oid)
         if ext.critical:
             self.stdout.write(f"{ext_name} (critical):")
         else:

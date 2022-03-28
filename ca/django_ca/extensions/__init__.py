@@ -22,8 +22,8 @@ from typing import Dict
 from typing import Type
 
 from cryptography import x509
+from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
 
-from ..typehints import ExtensionType
 from .base import Extension
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -71,22 +71,17 @@ OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType,
 }
 
 
-def get_extension_name(ext: ExtensionType) -> str:
-    """Function to get the name of an extension.
+def get_extension_name(oid: x509.ObjectIdentifier) -> str:
+    """Function to get the name of an extension from the extensions OID.
 
-    >>> ext = x509.Extension(value=x509.BasicConstraints(ca=True, path_length=3), critical=True,
-    ...                      oid=ExtensionOID.BASIC_CONSTRAINTS)
-    >>> get_extension_name(ext)
+    >>> get_extension_name(ExtensionOID.BASIC_CONSTRAINTS)
     'BasicConstraints'
     """
 
-    if ext.oid in OID_TO_EXTENSION:
-        return OID_TO_EXTENSION[ext.oid].name
+    if oid in OID_TO_EXTENSION:
+        return OID_TO_EXTENSION[oid].name
 
-    # pylint: disable=protected-access; there is no other way to get a human-readable name
-    oid_name = ext.oid._name
-
-    return re.sub("^([a-z])", lambda x: x.groups()[0].upper(), oid_name)
+    return OID_NAMES.get(oid, f"Unknown extension ({oid.dotted_string})")
 
 
 __all__ = [

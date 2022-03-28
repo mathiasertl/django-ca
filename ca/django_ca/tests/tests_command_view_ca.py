@@ -855,10 +855,10 @@ KeyUsage{key_usage_critical}:
     * {key_usage_1}
 SubjectKeyIdentifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
-Unknown OID:
-    2.16.840.1.113730.1.1
-Unknown OID:
-    2.16.840.1.113730.1.13
+Unknown extension (2.16.840.1.113730.1.1):
+    03:02:00:07
+Unknown extension (2.16.840.1.113730.1.13):
+    16:29:53:74:61:72:74:43:6F:6D:20:46:72:65:65:20:53:53:4C:20:43:65:72:74:69:66:69:63:61:74:69:6F:6E:20:41:75:74:68:6F:72:69:74:79
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None

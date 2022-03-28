@@ -540,26 +540,7 @@ class X509CertMixin(DjangoCAModel):
     def _sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
-        return list(
-            sorted(self._x509_extensions.values(), key=lambda e: (get_extension_name(e), e.oid.dotted_string))
-        )
-
-    @cached_property
-    def extension_fields(self) -> List[Union["x509.Extension[x509.ExtensionType]", str]]:
-        """List of all extensions fields for this certificate."""
-        fields: List[Union["x509.Extension[x509.ExtensionType]", str]] = []
-
-        for ext in self._sorted_extensions:
-            if ext.oid in OID_TO_EXTENSION:
-                fields.append(OID_TO_EXTENSION[ext.oid].key)
-
-            # extension that does not support new extension framework
-            else:
-                log.warning(
-                    "Unknown extension encountered: %s (%s)", get_extension_name(ext), ext.oid.dotted_string
-                )
-                fields.append(ext)
-        return fields
+        return list(sorted(self._x509_extensions.values(), key=lambda e: get_extension_name(e.oid)))
 
     @cached_property
     def extensions(
