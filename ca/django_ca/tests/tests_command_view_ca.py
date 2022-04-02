@@ -848,7 +848,7 @@ CertificatePolicies{certificate_policies_critical}:
           of the StartCom Certification Authority Policy available at
           http://www.startssl.com/policy.pdf
         * Reference:
-          * Organiziation: Start Commercial (StartCom) Ltd.
+          * Organization: Start Commercial (StartCom) Ltd.
           * Notice Numbers: [1]
 KeyUsage{key_usage_critical}:
     * {key_usage_0}
@@ -987,7 +987,7 @@ CertificatePolicies{certificate_policies_critical}:
       Policy Qualifiers:
       * UserNotice:
         * Reference:
-          * Organiziation: https://secure.identrust.com/certificates/policy/ts/index.html
+          * Organization: https://secure.identrust.com/certificates/policy/ts/index.html
           * Notice Numbers: []
       * UserNotice:
         * Explicit text: This TrustID Server Certificate has been issued in
@@ -1107,7 +1107,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial)
             data = self.get_cert_context(name)
-            self.assertMultiLineEqual(stdout, expected[name].format(**data))
+            self.assertMultiLineEqual(stdout, expected[name].format(**data), name)
             self.assertEqual(stderr, "")
 
     @override_tmpcadir()

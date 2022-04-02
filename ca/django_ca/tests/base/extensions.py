@@ -35,6 +35,7 @@ from ...extensions.base import ListExtension
 from ...extensions.base import NullExtension
 from ...extensions.base import OrderedSetExtension
 from ...extensions.utils import DistributionPoint
+from ...extensions.utils import extension_as_text
 from ...models import X509CertMixin
 from ...typehints import CRLExtensionTypeTypeVar
 from ...typehints import ParsableDistributionPoint
@@ -62,8 +63,8 @@ _TestValueDict = TypedDict(
         "expected": typing.Any,
         "expected_repr": str,
         "expected_serialized": typing.Any,
-        "expected_text": str,
-        "extension_type": typing.Optional[x509.ExtensionType],  # None for invalid extensions
+        "extension_type": x509.ExtensionType,
+        "text": "str",
     },
 )
 DistributionPointsBaseTypeVar = typing.TypeVar(
@@ -146,12 +147,6 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         if critical is not None:
             val["critical"] = critical
         return self.ext_class(val)
-
-    def test_as_text(self) -> None:
-        """Test as_text()."""
-        for name, config in self.test_values.items():
-            ext = self.ext(config["expected"])
-            self.assertEqual(ext.as_text(), config["expected_text"], name)
 
     @abc.abstractmethod
     def test_config(self) -> None:
@@ -316,6 +311,11 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
                     expected = self.repr_tmpl.format(name=self.ext_class_name, value=exp, critical=critical)
                     self.assertEqual(str(ext), expected)
 
+    def test_as_text(self) -> None:
+        """Test rendering an extension as text."""
+        for name, config in self.test_values.items():
+            self.assertEqual(extension_as_text(config["extension_type"]), config["text"], name)
+
     def test_value(self) -> None:
         """Test that value property can be used for the constructor."""
         for config in self.test_values.values():
@@ -334,7 +334,7 @@ class ExtensionTestMixin(typing.Generic[ExtensionTypeVar], AbstractExtensionTest
             cg_ext = x509.extensions.Extension(
                 oid=self.ext_class.oid,
                 critical=self.ext_class.default_critical,
-                value=typing.cast(x509.ExtensionType, config["extension_type"]),
+                value=config["extension_type"],
             )
             self.assertEqual(ext.as_extension(), cg_ext)
 
@@ -1197,8 +1197,8 @@ class CRLDistributionPointsTestCaseBase(
                 "expected_djca": [self.dp1],
                 "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri1}']>]",
                 "expected_serialized": [self.s1],
-                "expected_text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}",
                 "extension_type": self.cg_dps1,
+                "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}",
             },
             "two": {
                 "values": [
@@ -1212,9 +1212,8 @@ class CRLDistributionPointsTestCaseBase(
                 "expected_djca": [self.dp2],
                 "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri1}', 'DNS:{self.dns1}']>]",
                 "expected_serialized": [self.s2],
-                "expected_text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}\n    "
-                f"* DNS:{self.dns1}",
                 "extension_type": self.cg_dps2,
+                "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}\n    * DNS:{self.dns1}",
             },
             "rdn": {
                 "values": [[self.s3], [self.dp3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
@@ -1222,8 +1221,8 @@ class CRLDistributionPointsTestCaseBase(
                 "expected_djca": [self.dp3],
                 "expected_repr": f"[<DistributionPoint: relative_name='{self.rdn1}'>]",
                 "expected_serialized": [self.s3],
-                "expected_text": f"* DistributionPoint:\n  * Relative Name: {self.rdn1}",
                 "extension_type": self.cg_dps3,
+                "text": f"* DistributionPoint:\n  * Relative Name: {self.rdn1}",
             },
             "adv": {
                 "values": [[self.s4], [self.dp4], [self.cg_dp4]],
@@ -1232,9 +1231,13 @@ class CRLDistributionPointsTestCaseBase(
                 "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri2}'], "
                 f"crl_issuer=['URI:{self.uri3}'], reasons=['ca_compromise', 'key_compromise']>]",
                 "expected_serialized": [self.s4],
-                "expected_text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri2}\n"
-                f"  * CRL Issuer:\n    * URI:{self.uri3}\n  * Reasons: ca_compromise, key_compromise",
                 "extension_type": self.cg_dps4,
+                "text": f"""* DistributionPoint:
+  * Full Name:
+    * URI:{self.uri2}
+  * CRL Issuer:
+    * URI:{self.uri3}
+  * Reasons: ca_compromise, key_compromise""",
             },
         }
 

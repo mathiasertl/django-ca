@@ -588,7 +588,7 @@ def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
                         )
                     if qualifier.notice_reference:
                         lines.append("    * Reference:")
-                        lines.append(f"      * Organiziation: {qualifier.notice_reference.organization}")
+                        lines.append(f"      * Organization: {qualifier.notice_reference.organization}")
                         lines.append(f"      * Notice Numbers: {qualifier.notice_reference.notice_numbers}")
         else:
             lines.append("  No Policy Qualifiers")

@@ -54,6 +54,7 @@ from ..extensions import SubjectKeyIdentifier
 from ..extensions import TLSFeature
 from ..extensions.base import UnrecognizedExtension
 from ..extensions.utils import PolicyInformation
+from ..extensions.utils import extension_as_text
 from ..models import X509CertMixin
 from ..typehints import ParsablePolicyInformation
 from ..utils import GeneralNameList
@@ -133,8 +134,8 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "expected_bool": False,
             "expected_repr": "issuers=[], ocsp=[]",
             "expected_serialized": {},
-            "expected_text": "",
             "extension_type": x509.AuthorityInformationAccess(descriptions=[]),
+            "text": "",
         },
         "issuer": {
             "values": [
@@ -144,10 +145,10 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "expected": {"issuers": [uri(uri1)], "ocsp": []},
             "expected_repr": f"issuers=['URI:{uri1}'], ocsp=[]",
             "expected_serialized": {"issuers": [f"URI:{uri1}"]},
-            "expected_text": f"CA Issuers:\n  * URI:{uri1}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri1))]
             ),
+            "text": f"CA Issuers:\n  * URI:{uri1}",
         },
         "ocsp": {
             "values": [
@@ -157,10 +158,10 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "expected": {"ocsp": [uri(uri2)], "issuers": []},
             "expected_repr": f"issuers=[], ocsp=['URI:{uri2}']",
             "expected_serialized": {"ocsp": [f"URI:{uri2}"]},
-            "expected_text": f"OCSP:\n  * URI:{uri2}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2))]
             ),
+            "text": f"OCSP:\n  * URI:{uri2}",
         },
         "both": {
             "values": [
@@ -170,13 +171,13 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "expected": {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
             "expected_repr": f"issuers=['URI:{uri2}'], ocsp=['URI:{uri1}']",
             "expected_serialized": {"ocsp": [f"URI:{uri1}"], "issuers": [f"URI:{uri2}"]},
-            "expected_text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
                     x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
                     x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
                 ]
             ),
+            "text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
         },
         "multiple": {
             "values": [
@@ -190,8 +191,6 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
                 "ocsp": [f"URI:{uri1}", f"URI:{uri2}"],
                 "issuers": [f"URI:{uri3}", f"URI:{uri4}"],
             },
-            "expected_text": f"CA Issuers:\n  * URI:{uri3}\n  * URI:{uri4}\n"
-            f"OCSP:\n  * URI:{uri1}\n  * URI:{uri2}",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
                     x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
@@ -200,6 +199,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
                     x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2)),
                 ]
             ),
+            "text": f"CA Issuers:\n  * URI:{uri3}\n  * URI:{uri4}\nOCSP:\n  * URI:{uri1}\n  * URI:{uri2}",
         },
     }
 
@@ -271,8 +271,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             "expected": b1,
             "expected_repr": f"keyid: {hex1}",
             "expected_serialized": {"key_identifier": hex1},
-            "expected_text": f"* KeyID: {hex1}",
             "extension_type": x509.AuthorityKeyIdentifier(b1, None, None),
+            "text": f"* KeyID: {hex1}",
         },
         "two": {
             "values": [
@@ -281,8 +281,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             "expected": b2,
             "expected_repr": f"keyid: {hex2}",
             "expected_serialized": {"key_identifier": hex2},
-            "expected_text": f"* KeyID: {hex2}",
             "extension_type": x509.AuthorityKeyIdentifier(b2, None, None),
+            "text": f"* KeyID: {hex2}",
         },
         "three": {
             "values": [
@@ -291,8 +291,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             "expected": b3,
             "expected_repr": f"keyid: {hex3}",
             "expected_serialized": {"key_identifier": hex3},
-            "expected_text": f"* KeyID: {hex3}",
             "extension_type": x509.AuthorityKeyIdentifier(b3, None, None),
+            "text": f"* KeyID: {hex3}",
         },
         "issuer/serial": {
             "expected": {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
@@ -302,8 +302,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
                 "authority_cert_issuer": [f"DNS:{dns1}"],
                 "authority_cert_serial_number": s1,
             },
-            "expected_text": f"* Issuer:\n  * DNS:{dns1}\n* Serial: {s1}",
             "extension_type": x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
+            "text": f"* Issuer:\n  * DNS:{dns1}\n* Serial: {s1}",
         },
     }
 
@@ -355,10 +355,10 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
                 {"ca": False, "pathlen": None},  # ignored b/c ca=False
             ],
             "expected": {"ca": False, "pathlen": None},
-            "expected_text": "CA:FALSE",
             "expected_repr": "ca=False",
             "expected_serialized": {"ca": False},
             "extension_type": x509.BasicConstraints(ca=False, path_length=None),
+            "text": "CA:FALSE",
         },
         "no_pathlen": {
             "values": [
@@ -366,30 +366,30 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
                 {"ca": True, "pathlen": None},
             ],
             "expected": {"ca": True, "pathlen": None},
-            "expected_text": "CA:TRUE",
             "expected_repr": "ca=True, pathlen=None",
             "expected_serialized": {"ca": True, "pathlen": None},
             "extension_type": x509.BasicConstraints(ca=True, path_length=None),
+            "text": "CA:TRUE",
         },
         "pathlen_zero": {
             "values": [
                 {"ca": True, "pathlen": 0},
             ],
             "expected": {"ca": True, "pathlen": 0},
-            "expected_text": "CA:TRUE, pathlen:0",
             "expected_repr": "ca=True, pathlen=0",
             "expected_serialized": {"ca": True, "pathlen": 0},
             "extension_type": x509.BasicConstraints(ca=True, path_length=0),
+            "text": "CA:TRUE, pathlen:0",
         },
         "pathlen_three": {
             "values": [
                 {"ca": True, "pathlen": 3},
             ],
             "expected": {"ca": True, "pathlen": 3},
-            "expected_text": "CA:TRUE, pathlen:3",
             "expected_repr": "ca=True, pathlen=3",
             "expected_serialized": {"ca": True, "pathlen": 3},
             "extension_type": x509.BasicConstraints(ca=True, path_length=3),
+            "text": "CA:TRUE, pathlen:3",
         },
     }
 
@@ -509,8 +509,8 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p1],
             "expected_repr": "1 policy",
             "expected_serialized": [un1],
-            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text1}",
             "extension_type": xcp1,
+            "text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * text1",
         },
         "two": {
             "values": [[un2], [xpi2]],
@@ -518,9 +518,11 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p2],
             "expected_repr": "1 policy",
             "expected_serialized": [un2],
-            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * UserNotice:\n"
-            f"    * Explicit text: {text2}",
             "extension_type": xcp2,
+            "text": f"""* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * UserNotice:
+    * Explicit text: {text2}""",
         },
         "three": {
             "values": [[un3], [xpi3]],
@@ -528,9 +530,13 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p3],
             "expected_repr": "1 policy",
             "expected_serialized": [un3],
-            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * UserNotice:\n"
-            f"    * Reference:\n      * Organiziation: {text3}\n      * Notice Numbers: [1]",
             "extension_type": xcp3,
+            "text": f"""* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * UserNotice:
+    * Reference:
+      * Organization: {text3}
+      * Notice Numbers: [1]""",
         },
         "four": {
             "values": [[un4], [xpi4]],
@@ -538,10 +544,15 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p4],
             "expected_repr": "1 policy",
             "expected_serialized": [un4],
-            "expected_text": f"""* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text4}
-  * UserNotice:\n    * Explicit text: {text5}\n    * Reference:\n      * Organiziation: {text6}
-      * Notice Numbers: [1, 2, 3]""",
             "extension_type": xcp4,
+            "text": f"""* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * {text4}
+  * UserNotice:
+    * Explicit text: {text5}
+    * Reference:
+      * Organization: {text6}
+      * Notice Numbers: [1, 2, 3]""",
         },
         "five": {
             "values": [[un1, un2, un4], [xpi1, xpi2, xpi4], [un1, xpi2, un4]],
@@ -549,15 +560,133 @@ class CertificatePoliciesTestCase(
             "expected_djca": [p1, p2, p4],
             "expected_repr": "3 policies",
             "expected_serialized": [un1, un2, un4],
-            "expected_text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text1}\n"
-            f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * UserNotice:\n"
-            f"    * Explicit text: {text2}\n"
-            f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * {text4}\n  * UserNotice:\n"
-            f"    * Explicit text: {text5}\n    * Reference:\n      * Organiziation: {text6}\n"
-            "      * Notice Numbers: [1, 2, 3]",
             "extension_type": xcp5,
+            "text": f"""* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * {text1}
+* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * UserNotice:
+    * Explicit text: {text2}
+* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * {text4}
+  * UserNotice:
+    * Explicit text: {text5}
+    * Reference:
+      * Organization: {text6}
+      * Notice Numbers: [1, 2, 3]""",
         },
     }
+
+
+class ExtendedKeyUsageTestCase(
+    OrderedSetExtensionTestMixin[ExtendedKeyUsage], ExtensionTestMixin[ExtendedKeyUsage], TestCase
+):
+    """Test ExtendedKeyUsage extension."""
+
+    ext_class = ExtendedKeyUsage
+    ext_class_key = "extended_key_usage"
+    ext_class_name = "ExtendedKeyUsage"
+
+    test_values = {
+        "one": {
+            "values": [
+                {"serverAuth"},
+                {ExtendedKeyUsageOID.SERVER_AUTH},
+                [ExtendedKeyUsageOID.SERVER_AUTH],
+            ],
+            "extension_type": x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
+            "expected": frozenset([ExtendedKeyUsageOID.SERVER_AUTH]),
+            "expected_repr": "['serverAuth']",
+            "expected_serialized": ["serverAuth"],
+            "text": "* serverAuth",
+        },
+        "two": {
+            "values": [
+                {
+                    "serverAuth",
+                    "clientAuth",
+                },
+                {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH},
+                [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
+                [ExtendedKeyUsageOID.SERVER_AUTH, "clientAuth"],
+            ],
+            "extension_type": x509.ExtendedKeyUsage(
+                [ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]
+            ),
+            "expected": frozenset([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]),
+            "expected_repr": "['clientAuth', 'serverAuth']",
+            "expected_serialized": ["clientAuth", "serverAuth"],
+            "text": "* clientAuth\n* serverAuth",
+        },
+        "three": {
+            "values": [
+                {
+                    "serverAuth",
+                    "clientAuth",
+                    "timeStamping",
+                },
+                {
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ExtendedKeyUsageOID.SERVER_AUTH,
+                    ExtendedKeyUsageOID.TIME_STAMPING,
+                },
+                {
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                    "serverAuth",
+                    ExtendedKeyUsageOID.TIME_STAMPING,
+                },
+                [
+                    ExtendedKeyUsageOID.SERVER_AUTH,
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ExtendedKeyUsageOID.TIME_STAMPING,
+                ],
+                [
+                    ExtendedKeyUsageOID.TIME_STAMPING,
+                    ExtendedKeyUsageOID.SERVER_AUTH,
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                ],
+            ],
+            "extension_type": x509.ExtendedKeyUsage(
+                [
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ExtendedKeyUsageOID.SERVER_AUTH,
+                    ExtendedKeyUsageOID.TIME_STAMPING,
+                ]
+            ),
+            "expected": frozenset(
+                [
+                    ExtendedKeyUsageOID.SERVER_AUTH,
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ExtendedKeyUsageOID.TIME_STAMPING,
+                ]
+            ),
+            "expected_repr": "['clientAuth', 'serverAuth', 'timeStamping']",
+            "expected_serialized": ["clientAuth", "serverAuth", "timeStamping"],
+            "text": "* clientAuth\n* serverAuth\n* timeStamping",
+        },
+    }
+
+    def test_unknown_values(self) -> None:
+        """Test passing unknown values."""
+        with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
+            ExtendedKeyUsage({"value": ["foo"]})
+
+        with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
+            ExtendedKeyUsage({"value": [True]})
+
+    def test_completeness(self) -> None:
+        """Test that we support all ExtendedKeyUsageOIDs."""
+        for attr in [getattr(ExtendedKeyUsageOID, a) for a in dir(ExtendedKeyUsageOID) if a[0] != "_"]:
+            if isinstance(attr, ObjectIdentifier):
+                # pylint: disable=protected-access; ok for a test case
+                self.assertIn(attr, ExtendedKeyUsage._CRYPTOGRAPHY_MAPPING_REVERSED)
+
+        # make sure we haven't forgotton any keys in the form selection
+        self.assertEqual(
+            set(ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()), {e[0] for e in ExtendedKeyUsage.CHOICES}
+        )
 
 
 class FreshestCRLTestCase(CRLDistributionPointsTestCaseBase[FreshestCRL, x509.FreshestCRL], TestCase):
@@ -589,8 +718,8 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
             "expected": 0,
             "expected_repr": "0",
             "expected_serialized": 0,
-            "expected_text": "0",
             "extension_type": x509.InhibitAnyPolicy(0),
+            "text": "0",
         },
         "one": {
             "values": [
@@ -599,8 +728,8 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
             "expected": 1,
             "expected_repr": "1",
             "expected_serialized": 1,
-            "expected_text": "1",
             "extension_type": x509.InhibitAnyPolicy(1),
+            "text": "1",
         },
     }
 
@@ -655,32 +784,32 @@ class IssuerAlternativeNameTestCase(
             "expected": [],
             "expected_repr": "[]",
             "expected_serialized": [],
-            "expected_text": "",
             "extension_type": ext_class_type([]),
+            "text": "",
         },
         "uri": {
             "values": [[uri1], [uri(uri1)]],
             "expected": [uri(uri1)],
             "expected_repr": f"['URI:{uri1}']",
             "expected_serialized": [f"URI:{uri1}"],
-            "expected_text": f"* URI:{uri1}",
             "extension_type": ext_class_type([uri(uri1)]),
+            "text": f"* URI:{uri1}",
         },
         "dns": {
             "values": [[dns1], [dns(dns1)]],
             "expected": [dns(dns1)],
             "expected_repr": f"['DNS:{dns1}']",
             "expected_serialized": [f"DNS:{dns1}"],
-            "expected_text": f"* DNS:{dns1}",
             "extension_type": ext_class_type([dns(dns1)]),
+            "text": f"* DNS:{dns1}",
         },
         "both": {
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             "expected": [uri(uri1), dns(dns1)],
             "expected_repr": f"['URI:{uri1}', 'DNS:{dns1}']",
             "expected_serialized": [f"URI:{uri1}", f"DNS:{dns1}"],
-            "expected_text": f"* URI:{uri1}\n* DNS:{dns1}",
             "extension_type": ext_class_type([uri(uri1), dns(dns1)]),
+            "text": f"* URI:{uri1}\n* DNS:{dns1}",
         },
         "all": {
             "values": [
@@ -692,8 +821,8 @@ class IssuerAlternativeNameTestCase(
             "expected": [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
             "expected_repr": f"['URI:{uri1}', 'URI:{uri2}', 'DNS:{dns1}', 'DNS:{dns2}']",
             "expected_serialized": [f"URI:{uri1}", f"URI:{uri2}", f"DNS:{dns1}", f"DNS:{dns2}"],
-            "expected_text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
             "extension_type": ext_class_type([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
+            "text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
         },
         "order": {  # same as "all" above but other order
             "values": [
@@ -705,8 +834,8 @@ class IssuerAlternativeNameTestCase(
             "expected": [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
             "expected_repr": f"['DNS:{dns2}', 'DNS:{dns1}', 'URI:{uri2}', 'URI:{uri1}']",
             "expected_serialized": [f"DNS:{dns2}", f"DNS:{dns1}", f"URI:{uri2}", f"URI:{uri1}"],
-            "expected_text": f"* DNS:{dns2}\n* DNS:{dns1}\n* URI:{uri2}\n* URI:{uri1}",
             "extension_type": ext_class_type([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
+            "text": f"* DNS:{dns2}\n* DNS:{dns1}\n* URI:{uri2}\n* URI:{uri1}",
         },
     }
 
@@ -717,102 +846,6 @@ class IssuerAlternativeNameTestCase(
         self.assertEqual(empty, self.ext_class({"value": []}))
         empty.insert(0, self.value1)
         self.assertEqual(empty.extension_type, self.et1)
-
-
-class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase):
-    """Test PolicyConstraints extension."""
-
-    ext_class = PolicyConstraints
-    ext_class_key = "policy_constraints"
-    ext_class_name = "PolicyConstraints"
-
-    test_values = {
-        "rep_zero": {
-            "values": [
-                {"require_explicit_policy": 0},
-            ],
-            "expected": {"require_explicit_policy": 0},
-            "expected_repr": "require_explicit_policy=0",
-            "expected_serialized": {"require_explicit_policy": 0},
-            "expected_text": "* RequireExplicitPolicy: 0",
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=0, inhibit_policy_mapping=None),
-        },
-        "rep_one": {
-            "values": [
-                {"require_explicit_policy": 1},
-            ],
-            "expected": {"require_explicit_policy": 1},
-            "expected_repr": "require_explicit_policy=1",
-            "expected_serialized": {"require_explicit_policy": 1},
-            "expected_text": "* RequireExplicitPolicy: 1",
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
-        },
-        "iap_zero": {
-            "values": [
-                {"inhibit_policy_mapping": 0},
-            ],
-            "expected": {"inhibit_policy_mapping": 0},
-            "expected_repr": "inhibit_policy_mapping=0",
-            "expected_serialized": {"inhibit_policy_mapping": 0},
-            "expected_text": "* InhibitPolicyMapping: 0",
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=0),
-        },
-        "iap_one": {
-            "values": [
-                {"inhibit_policy_mapping": 1},
-            ],
-            "expected": {"inhibit_policy_mapping": 1},
-            "expected_repr": "inhibit_policy_mapping=1",
-            "expected_serialized": {"inhibit_policy_mapping": 1},
-            "expected_text": "* InhibitPolicyMapping: 1",
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
-        },
-        "both": {
-            "values": [
-                {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
-            ],
-            "expected": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
-            "expected_repr": "inhibit_policy_mapping=2, require_explicit_policy=3",
-            "expected_serialized": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
-            "expected_text": "* InhibitPolicyMapping: 2\n* RequireExplicitPolicy: 3",
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
-        },
-    }
-
-    def test_init_error(self) -> None:
-        """Test constructor errors."""
-        with self.assertRaisesRegex(ValueError, r"^abc: inhibit_policy_mapping must be int or None$"):
-            PolicyConstraints({"value": {"inhibit_policy_mapping": "abc"}})
-        with self.assertRaisesRegex(ValueError, r"^-1: inhibit_policy_mapping must be a positive int$"):
-            PolicyConstraints({"value": {"inhibit_policy_mapping": -1}})
-        with self.assertRaisesRegex(ValueError, r"^abc: require_explicit_policy must be int or None$"):
-            PolicyConstraints({"value": {"require_explicit_policy": "abc"}})
-        with self.assertRaisesRegex(ValueError, r"^-1: require_explicit_policy must be a positive int$"):
-            PolicyConstraints({"value": {"require_explicit_policy": -1}})
-
-    def test_properties(self) -> None:
-        """Test properties"""
-        pconst = PolicyConstraints()
-        self.assertIsNone(pconst.inhibit_policy_mapping)
-        self.assertIsNone(pconst.require_explicit_policy)
-
-        pconst = PolicyConstraints({"value": {"inhibit_policy_mapping": 1, "require_explicit_policy": 2}})
-        self.assertEqual(pconst.inhibit_policy_mapping, 1)
-        self.assertEqual(pconst.require_explicit_policy, 2)
-
-        pconst.inhibit_policy_mapping = 3
-        pconst.require_explicit_policy = 4
-        self.assertEqual(pconst.inhibit_policy_mapping, 3)
-        self.assertEqual(pconst.require_explicit_policy, 4)
-
-        pconst.inhibit_policy_mapping = None
-        pconst.require_explicit_policy = None
-        self.assertIsNone(pconst.inhibit_policy_mapping)
-        self.assertIsNone(pconst.require_explicit_policy)
-
-    def test_value(self) -> None:
-        """Overwritten because extension has no value."""
-        return
 
 
 class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixin[KeyUsage], TestCase):
@@ -834,7 +867,6 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
             ],
             "expected": frozenset(["key_agreement"]),
             "expected_repr": "['keyAgreement']",
-            "expected_text": "* keyAgreement",
             "expected_serialized": ["keyAgreement"],
             "extension_type": x509.KeyUsage(
                 digital_signature=False,
@@ -847,6 +879,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
                 encipher_only=False,
                 decipher_only=False,
             ),
+            "text": "* keyAgreement",
         },
         "two": {
             "values": [
@@ -860,7 +893,6 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
             ],
             "expected": frozenset(["key_agreement", "key_encipherment"]),
             "expected_repr": "['keyAgreement', 'keyEncipherment']",
-            "expected_text": "* keyAgreement\n* keyEncipherment",
             "expected_serialized": ["keyAgreement", "keyEncipherment"],
             "extension_type": x509.KeyUsage(
                 digital_signature=False,
@@ -873,6 +905,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
                 encipher_only=False,
                 decipher_only=False,
             ),
+            "text": "* keyAgreement\n* keyEncipherment",
         },
         "three": {
             "values": [
@@ -910,7 +943,6 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
                 ]
             ),
             "expected_repr": "['keyAgreement', 'keyEncipherment', 'nonRepudiation']",
-            "expected_text": "* keyAgreement\n* keyEncipherment\n* nonRepudiation",
             "expected_serialized": ["keyAgreement", "keyEncipherment", "nonRepudiation"],
             "extension_type": x509.KeyUsage(
                 digital_signature=False,
@@ -923,6 +955,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
                 encipher_only=False,
                 decipher_only=False,
             ),
+            "text": "* keyAgreement\n* keyEncipherment\n* nonRepudiation",
         },
     }
 
@@ -948,115 +981,6 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
             KeyUsage({"value": [True]})
 
 
-class ExtendedKeyUsageTestCase(
-    OrderedSetExtensionTestMixin[ExtendedKeyUsage], ExtensionTestMixin[ExtendedKeyUsage], TestCase
-):
-    """Test ExtendedKeyUsage extension."""
-
-    ext_class = ExtendedKeyUsage
-    ext_class_key = "extended_key_usage"
-    ext_class_name = "ExtendedKeyUsage"
-
-    test_values = {
-        "one": {
-            "values": [
-                {"serverAuth"},
-                {ExtendedKeyUsageOID.SERVER_AUTH},
-                [ExtendedKeyUsageOID.SERVER_AUTH],
-            ],
-            "extension_type": x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
-            "expected": frozenset([ExtendedKeyUsageOID.SERVER_AUTH]),
-            "expected_repr": "['serverAuth']",
-            "expected_serialized": ["serverAuth"],
-            "expected_text": "* serverAuth",
-        },
-        "two": {
-            "values": [
-                {
-                    "serverAuth",
-                    "clientAuth",
-                },
-                {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH},
-                [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
-                [ExtendedKeyUsageOID.SERVER_AUTH, "clientAuth"],
-            ],
-            "extension_type": x509.ExtendedKeyUsage(
-                [ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]
-            ),
-            "expected": frozenset([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]),
-            "expected_repr": "['clientAuth', 'serverAuth']",
-            "expected_serialized": ["clientAuth", "serverAuth"],
-            "expected_text": "* clientAuth\n* serverAuth",
-        },
-        "three": {
-            "values": [
-                {
-                    "serverAuth",
-                    "clientAuth",
-                    "timeStamping",
-                },
-                {
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                },
-                {
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    "serverAuth",
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                },
-                [
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                ],
-                [
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                ],
-            ],
-            "extension_type": x509.ExtendedKeyUsage(
-                [
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                ]
-            ),
-            "expected": frozenset(
-                [
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                ]
-            ),
-            "expected_repr": "['clientAuth', 'serverAuth', 'timeStamping']",
-            "expected_serialized": ["clientAuth", "serverAuth", "timeStamping"],
-            "expected_text": "* clientAuth\n* serverAuth\n* timeStamping",
-        },
-    }
-
-    def test_unknown_values(self) -> None:
-        """Test passing unknown values."""
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
-            ExtendedKeyUsage({"value": ["foo"]})
-
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
-            ExtendedKeyUsage({"value": [True]})
-
-    def test_completeness(self) -> None:
-        """Test that we support all ExtendedKeyUsageOIDs."""
-        for attr in [getattr(ExtendedKeyUsageOID, a) for a in dir(ExtendedKeyUsageOID) if a[0] != "_"]:
-            if isinstance(attr, ObjectIdentifier):
-                # pylint: disable=protected-access; ok for a test case
-                self.assertIn(attr, ExtendedKeyUsage._CRYPTOGRAPHY_MAPPING_REVERSED)
-
-        # make sure we haven't forgotton any keys in the form selection
-        self.assertEqual(
-            set(ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()), {e[0] for e in ExtendedKeyUsage.CHOICES}
-        )
-
-
 class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
     """Test NameConstraints extension."""
 
@@ -1078,8 +1002,8 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
             "expected_repr": f"permitted=['DNS:{d1}'], excluded=[]",
             "expected_serialized": {"excluded": [], "permitted": [f"DNS:{d1}"]},
-            "expected_text": f"Permitted:\n  * DNS:{d1}",
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
+            "text": f"Permitted:\n  * DNS:{d1}",
         },
         "excluded": {
             "values": [
@@ -1091,8 +1015,8 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             "expected": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
             "expected_repr": f"permitted=[], excluded=['DNS:{d1}']",
             "expected_serialized": {"excluded": [f"DNS:{d1}"], "permitted": []},
-            "expected_text": f"Excluded:\n  * DNS:{d1}",
             "extension_type": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
+            "text": f"Excluded:\n  * DNS:{d1}",
         },
         "both": {
             "values": [
@@ -1104,8 +1028,8 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
             "expected_repr": f"permitted=['DNS:{d1}'], excluded=['DNS:{d2}']",
             "expected_serialized": {"excluded": [f"DNS:{d2}"], "permitted": [f"DNS:{d1}"]},
-            "expected_text": f"Permitted:\n  * DNS:{d1}\nExcluded:\n  * DNS:{d2}",
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
+            "text": f"Permitted:\n  * DNS:{d1}\nExcluded:\n  * DNS:{d2}",
         },
     }
 
@@ -1158,10 +1082,106 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin[OCSPNoCheck], TestCase):
             "expected": None,
             "expected_repr": "",
             "expected_serialized": None,
-            "expected_text": "Yes",
             "extension_type": x509.OCSPNoCheck(),
+            "text": "Yes",
         },
     }
+
+
+class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase):
+    """Test PolicyConstraints extension."""
+
+    ext_class = PolicyConstraints
+    ext_class_key = "policy_constraints"
+    ext_class_name = "PolicyConstraints"
+
+    test_values = {
+        "rep_zero": {
+            "values": [
+                {"require_explicit_policy": 0},
+            ],
+            "expected": {"require_explicit_policy": 0},
+            "expected_repr": "require_explicit_policy=0",
+            "expected_serialized": {"require_explicit_policy": 0},
+            "extension_type": x509.PolicyConstraints(require_explicit_policy=0, inhibit_policy_mapping=None),
+            "text": "* RequireExplicitPolicy: 0",
+        },
+        "rep_one": {
+            "values": [
+                {"require_explicit_policy": 1},
+            ],
+            "expected": {"require_explicit_policy": 1},
+            "expected_repr": "require_explicit_policy=1",
+            "expected_serialized": {"require_explicit_policy": 1},
+            "extension_type": x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
+            "text": "* RequireExplicitPolicy: 1",
+        },
+        "iap_zero": {
+            "values": [
+                {"inhibit_policy_mapping": 0},
+            ],
+            "expected": {"inhibit_policy_mapping": 0},
+            "expected_repr": "inhibit_policy_mapping=0",
+            "expected_serialized": {"inhibit_policy_mapping": 0},
+            "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=0),
+            "text": "* InhibitPolicyMapping: 0",
+        },
+        "iap_one": {
+            "values": [
+                {"inhibit_policy_mapping": 1},
+            ],
+            "expected": {"inhibit_policy_mapping": 1},
+            "expected_repr": "inhibit_policy_mapping=1",
+            "expected_serialized": {"inhibit_policy_mapping": 1},
+            "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
+            "text": "* InhibitPolicyMapping: 1",
+        },
+        "both": {
+            "values": [
+                {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
+            ],
+            "expected": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
+            "expected_repr": "inhibit_policy_mapping=2, require_explicit_policy=3",
+            "expected_serialized": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
+            "extension_type": x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
+            "text": "* InhibitPolicyMapping: 2\n* RequireExplicitPolicy: 3",
+        },
+    }
+
+    def test_init_error(self) -> None:
+        """Test constructor errors."""
+        with self.assertRaisesRegex(ValueError, r"^abc: inhibit_policy_mapping must be int or None$"):
+            PolicyConstraints({"value": {"inhibit_policy_mapping": "abc"}})
+        with self.assertRaisesRegex(ValueError, r"^-1: inhibit_policy_mapping must be a positive int$"):
+            PolicyConstraints({"value": {"inhibit_policy_mapping": -1}})
+        with self.assertRaisesRegex(ValueError, r"^abc: require_explicit_policy must be int or None$"):
+            PolicyConstraints({"value": {"require_explicit_policy": "abc"}})
+        with self.assertRaisesRegex(ValueError, r"^-1: require_explicit_policy must be a positive int$"):
+            PolicyConstraints({"value": {"require_explicit_policy": -1}})
+
+    def test_properties(self) -> None:
+        """Test properties"""
+        pconst = PolicyConstraints()
+        self.assertIsNone(pconst.inhibit_policy_mapping)
+        self.assertIsNone(pconst.require_explicit_policy)
+
+        pconst = PolicyConstraints({"value": {"inhibit_policy_mapping": 1, "require_explicit_policy": 2}})
+        self.assertEqual(pconst.inhibit_policy_mapping, 1)
+        self.assertEqual(pconst.require_explicit_policy, 2)
+
+        pconst.inhibit_policy_mapping = 3
+        pconst.require_explicit_policy = 4
+        self.assertEqual(pconst.inhibit_policy_mapping, 3)
+        self.assertEqual(pconst.require_explicit_policy, 4)
+
+        pconst.inhibit_policy_mapping = None
+        pconst.require_explicit_policy = None
+        self.assertIsNone(pconst.inhibit_policy_mapping)
+        self.assertIsNone(pconst.require_explicit_policy)
+
+    def test_value(self) -> None:
+        """Overwritten because extension has no value."""
+        return
 
 
 class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
@@ -1177,8 +1197,8 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
             "expected": None,
             "expected_repr": "",
             "expected_serialized": None,
-            "expected_text": "Yes",
             "extension_type": x509.PrecertPoison(),
+            "text": "Yes",
         },
     }
 
@@ -1453,6 +1473,9 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
 class UnknownExtensionTestCase(TestCase):
     """Test UnrecognizedExtension extension."""
 
+    oid = x509.ObjectIdentifier("1.2.1")
+    value = x509.UnrecognizedExtension(oid=oid, value=b"unrecognized")
+
     def test_basic(self) -> None:
         """Only test basic functionality."""
         oid = x509.ObjectIdentifier("1.2.1")
@@ -1469,6 +1492,10 @@ class UnknownExtensionTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
             ext.serialize_value()
+
+    def test_as_text(self) -> None:
+        """Test rendering an unrecognized extension as text."""
+        self.assertEqual(extension_as_text(self.value), "75:6E:72:65:63:6F:67:6E:69:7A:65:64")
 
     def test_invalid_extension(self) -> None:
         """Test creating from an actually recognized extension."""
@@ -1520,32 +1547,32 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected": [],
             "expected_repr": "[]",
             "expected_serialized": [],
-            "expected_text": "",
             "extension_type": x509.SubjectAlternativeName([]),
+            "text": "",
         },
         "uri": {
             "values": [[uri1], [uri(uri1)]],
             "expected": [uri(uri1)],
             "expected_repr": f"['URI:{uri1}']",
             "expected_serialized": [f"URI:{uri1}"],
-            "expected_text": f"* URI:{uri1}",
             "extension_type": x509.SubjectAlternativeName([uri(uri1)]),
+            "text": f"* URI:{uri1}",
         },
         "dns": {
             "values": [[dns1], [dns(dns1)]],
             "expected": [dns(dns1)],
             "expected_repr": f"['DNS:{dns1}']",
             "expected_serialized": [f"DNS:{dns1}"],
-            "expected_text": f"* DNS:{dns1}",
             "extension_type": x509.SubjectAlternativeName([dns(dns1)]),
+            "text": f"* DNS:{dns1}",
         },
         "both": {
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             "expected": [uri(uri1), dns(dns1)],
             "expected_repr": f"['URI:{uri1}', 'DNS:{dns1}']",
             "expected_serialized": [f"URI:{uri1}", f"DNS:{dns1}"],
-            "expected_text": f"* URI:{uri1}\n* DNS:{dns1}",
             "extension_type": x509.SubjectAlternativeName([uri(uri1), dns(dns1)]),
+            "text": f"* URI:{uri1}\n* DNS:{dns1}",
         },
         "all": {
             "values": [
@@ -1557,8 +1584,8 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected": [uri(uri1), uri(uri2), dns(dns1), dns(dns2)],
             "expected_repr": f"['URI:{uri1}', 'URI:{uri2}', 'DNS:{dns1}', 'DNS:{dns2}']",
             "expected_serialized": [f"URI:{uri1}", f"URI:{uri2}", f"DNS:{dns1}", f"DNS:{dns2}"],
-            "expected_text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
             "extension_type": x509.SubjectAlternativeName([uri(uri1), uri(uri2), dns(dns1), dns(dns2)]),
+            "text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
         },
         "order": {  # same as "all" above but other order
             "values": [
@@ -1570,8 +1597,8 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "expected": [dns(dns2), dns(dns1), uri(uri2), uri(uri1)],
             "expected_repr": f"['DNS:{dns2}', 'DNS:{dns1}', 'URI:{uri2}', 'URI:{uri1}']",
             "expected_serialized": [f"DNS:{dns2}", f"DNS:{dns1}", f"URI:{uri2}", f"URI:{uri1}"],
-            "expected_text": f"* DNS:{dns2}\n* DNS:{dns1}\n* URI:{uri2}\n* URI:{uri1}",
             "extension_type": x509.SubjectAlternativeName([dns(dns2), dns(dns1), uri(uri2), uri(uri1)]),
+            "text": f"* DNS:{dns2}\n* DNS:{dns1}\n* URI:{uri2}\n* URI:{uri1}",
         },
     }
 
@@ -1616,8 +1643,8 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "expected": b1,
             "expected_repr": hex1,
             "expected_serialized": hex1,
-            "expected_text": hex1,
             "extension_type": x509.SubjectKeyIdentifier(b1),
+            "text": hex1,
         },
         "two": {
             "values": [
@@ -1627,8 +1654,8 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "expected": b2,
             "expected_repr": hex2,
             "expected_serialized": hex2,
-            "expected_text": hex2,
             "extension_type": x509.SubjectKeyIdentifier(b2),
+            "text": hex2,
         },
         "three": {
             "values": [
@@ -1638,8 +1665,8 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "expected": b3,
             "expected_repr": hex3,
             "expected_serialized": hex3,
-            "expected_text": hex3,
             "extension_type": x509.SubjectKeyIdentifier(b3),
+            "text": hex3,
         },
     }
 
@@ -1695,7 +1722,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "expected": frozenset([TLSFeatureType.status_request]),
             "expected_repr": "['OCSPMustStaple']",
             "expected_serialized": ["OCSPMustStaple"],
-            "expected_text": "* OCSPMustStaple",
+            "text": "* OCSPMustStaple",
         },
         "two": {
             "values": [
@@ -1715,7 +1742,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "expected": frozenset([TLSFeatureType.status_request, TLSFeatureType.status_request_v2]),
             "expected_repr": "['MultipleCertStatusRequest', 'OCSPMustStaple']",
             "expected_serialized": ["MultipleCertStatusRequest", "OCSPMustStaple"],
-            "expected_text": "* MultipleCertStatusRequest\n* OCSPMustStaple",
+            "text": "* MultipleCertStatusRequest\n* OCSPMustStaple",
         },
         "three": {
             "values": [
@@ -1726,7 +1753,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "expected": frozenset([TLSFeatureType.status_request_v2]),
             "expected_repr": "['MultipleCertStatusRequest']",
             "expected_serialized": ["MultipleCertStatusRequest"],
-            "expected_text": "* MultipleCertStatusRequest",
+            "text": "* MultipleCertStatusRequest",
         },
     }
 

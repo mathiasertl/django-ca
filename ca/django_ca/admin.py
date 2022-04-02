@@ -270,11 +270,11 @@ class CertificateMixin(
         if cg_ext is None:
             # SubjectAlternativeName is displayed unconditionally in the main section, so a certificate
             # without this extension will yield a KeyError in this case.
-            return render_to_string(["django_ca/admin/extensions/cg/missing.html"])
+            return render_to_string(["django_ca/admin/extensions/missing.html"])
 
-        template = f"django_ca/admin/extensions/cg/{oid.dotted_string}.html"
+        template = f"django_ca/admin/extensions/{oid.dotted_string}.html"
         if isinstance(cg_ext.value, x509.UnrecognizedExtension):
-            template = "django_ca/admin/extensions/cg/unrecognized_extension.html"
+            template = "django_ca/admin/extensions/unrecognized_extension.html"
 
         return render_to_string([template], context={"extension": cg_ext, "x509": x509})
 
