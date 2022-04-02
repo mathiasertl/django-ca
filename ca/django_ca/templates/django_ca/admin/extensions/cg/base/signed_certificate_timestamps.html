@@ -12,7 +12,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for entry in extension.value %}
+    {% for entry in value %}
     {% with sct=entry|signed_certificate_timestamp_values %}
     <tr>
       <td>{{ sct.0 }}</td>

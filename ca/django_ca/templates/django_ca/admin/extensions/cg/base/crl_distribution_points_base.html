@@ -2,7 +2,7 @@
 {% load django_ca %}
 
 {% block content %}
-{% for dp in extension.value %}
+{% for dp in value %}
   DistributionPoint:
   <ul>
     {% if dp.full_name %}

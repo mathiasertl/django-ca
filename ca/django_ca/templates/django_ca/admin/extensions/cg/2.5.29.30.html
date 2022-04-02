@@ -3,15 +3,15 @@
 {# NameConstraints extension #}
 
 {% block content %}
-{% if extension.value.permitted_subtrees %}
+{% if value.permitted_subtrees %}
   {% trans "Permitted:" %}
-  <ul>{% for name in extension.value.permitted_subtrees|format_general_names %}
+  <ul>{% for name in value.permitted_subtrees|format_general_names %}
     <li>{{ name }}</li>
   {% endfor %}</ul>
 {% endif %}
-{% if extension.value.excluded_subtrees %}
+{% if value.excluded_subtrees %}
   {% trans "Excluded:" %}
-  <ul>{% for name in extension.value.excluded_subtrees|format_general_names %}
+  <ul>{% for name in value.excluded_subtrees|format_general_names %}
     <li>{{ name }}</li>
   {% endfor %}</ul>
 {% endif %}

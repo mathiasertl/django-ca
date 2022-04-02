@@ -2,10 +2,10 @@
 {# PolicyConstraints extension #}
 
 {% block content %}<ul>
-  {% if extension.value.inhibit_policy_mapping %}
-    <li>InhibitPolicyMapping: {{extension.value.inhibit_policy_mapping }}</li>
+  {% if value.inhibit_policy_mapping %}
+    <li>InhibitPolicyMapping: {{ value.inhibit_policy_mapping }}</li>
   {% endif %}
-  {% if extension.value.require_explicit_policy %}
-    <li>RequireExplicitPolicy: {{extension.value.require_explicit_policy }}</li>
+  {% if value.require_explicit_policy %}
+    <li>RequireExplicitPolicy: {{ value.require_explicit_policy }}</li>
   {% endif %}
 </ul>{% endblock content %}

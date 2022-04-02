@@ -3,7 +3,7 @@
 {# KeyUsage extension #}
 
 {% block content %}<ul>
-  {% for value in extension.value|key_usage_items %}
-  <li>{{ value }}</li>
+  {% for ku in value|key_usage_items %}
+  <li>{{ ku }}</li>
   {% endfor %}
 </ul>{% endblock content %}

@@ -3,7 +3,7 @@
 {# CertificatePolicies extension #}
 
 {% block content %}
-  {% for info in extension.value %}
+  {% for info in value %}
   <li>{{ info.policy_identifier|oid_name }} ({{ info.policy_identifier.dotted_string }}){% if info.policy_qualifiers %}:{% endif %}
     <ul>
     {% for qualifier in info.policy_qualifiers %}

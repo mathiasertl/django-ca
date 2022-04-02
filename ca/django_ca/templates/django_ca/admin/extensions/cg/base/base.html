@@ -6,6 +6,6 @@
   </div>
   {% endif %}
   <div class="django-ca-extension-value">
-    {% block content %}{{ extension }}{% endblock content %}
+    {% with value=extension.value %}{% block content %}{{ value }}{% endblock content %}{% endwith %}
   </div>
 </span>
