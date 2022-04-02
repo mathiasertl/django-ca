@@ -365,7 +365,9 @@ class Profile:
         * Adds an IssuerAlternativeName if add_issuer_alternative_name is True
 
         """
-        extensions.setdefault(AuthorityKeyIdentifier.key, ca.get_authority_key_identifier_extension())
+        extensions.setdefault(
+            AuthorityKeyIdentifier.key, AuthorityKeyIdentifier(ca.get_authority_key_identifier_extension())
+        )
 
         if add_crl_url is not False and ca.crl_url:
             crldp = extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints())

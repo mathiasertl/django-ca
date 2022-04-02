@@ -20,6 +20,8 @@ from datetime import datetime
 from datetime import timedelta
 from http import HTTPStatus
 
+from cryptography import x509
+
 from django.conf import settings
 from django.test import TestCase
 
@@ -35,6 +37,7 @@ from ..extensions import Extension
 from ..extensions import KeyUsage
 from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
+from ..extensions.utils import ExtendedKeyUsageOID
 from ..fields import CertificateSigningRequestField
 from ..models import Certificate
 from ..models import CertificateAuthority
@@ -107,10 +110,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ExtendedKeyUsage({"value": ["clientAuth", "serverAuth"]}),
-                KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement"]}),
-                SubjectAlternativeName({"value": [f"DNS:{cname}"]}),
-                TLSFeature({"value": ["OCSPMustStaple", "MultipleCertStatusRequest"]}),
+                self.extended_key_usage(
+                    ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH
+                ),  # type: ignore[list-item]
+                self.key_usage(digital_signature=True, key_agreement=True),  # type: ignore[list-item]
+                self.subject_alternative_name(x509.DNSName(cname)),  # type: ignore[list-item]
+                self.tls_feature(
+                    x509.TLSFeatureType.status_request_v2, x509.TLSFeatureType.status_request
+                ),  # type: ignore[list-item]
             ],
         )
 
@@ -319,7 +326,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                SubjectAlternativeName({"value": [f"DNS:{san}", f"DNS:{cname}"]}),
+                self.subject_alternative_name(
+                    x509.DNSName(san), x509.DNSName(cname)
+                ),  # type: ignore[list-item]
             ],
         )
 

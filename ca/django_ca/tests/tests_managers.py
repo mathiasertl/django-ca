@@ -18,7 +18,6 @@ import unittest
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
@@ -29,13 +28,9 @@ from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA122Warning
 from ..deprecation import RemovedInDjangoCA123Warning
 from ..extensions import AuthorityInformationAccess
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
 from ..extensions import CRLDistributionPoints
-from ..extensions import KeyUsage
 from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
-from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..profiles import profiles
@@ -191,59 +186,25 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_extra_extensions(self) -> None:
         """Test creating a CA with extra extensions."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        tls_feature: x509.Extension[x509.ExtensionType] = x509.Extension(
-            oid=ExtensionOID.TLS_FEATURE,
-            value=x509.TLSFeature([x509.TLSFeatureType.status_request]),
-            critical=False,
-        )
-        ocsp_no_check: x509.Extension[x509.ExtensionType] = x509.Extension(
-            oid=ExtensionOID.OCSP_NO_CHECK, value=x509.OCSPNoCheck(), critical=False
-        )
-        name_constraints: x509.Extension[x509.ExtensionType] = x509.Extension(
-            oid=ExtensionOID.NAME_CONSTRAINTS,
-            value=x509.NameConstraints(permitted_subtrees=[x509.DNSName(".com")], excluded_subtrees=None),
-            critical=False,
-        )
-        extensions = [tls_feature, ocsp_no_check, name_constraints]
+        tls_feature = self.tls_feature(x509.TLSFeatureType.status_request)
+        name_constraints = self.name_constraints(permitted=[x509.DNSName(".com")])
+        extensions: typing.List[x509.Extension[x509.ExtensionType]] = [
+            tls_feature,  # type: ignore[list-item]
+            self.ocsp_no_check(),  # type: ignore[list-item]
+            name_constraints,  # type: ignore[list-item]
+            self.precert_poison(),  # type: ignore[list-item]
+        ]
 
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init("with-extra", subject, extra_extensions=extensions)
 
-        exts = [
-            e.as_extension()  # type: ignore[union-attr]
-            for e in ca.extensions
-            if not isinstance(e, (SubjectKeyIdentifier, AuthorityKeyIdentifier))
-        ]
         self.assertEqual(ca.subject, subject)
 
-        self.assertCountEqual(
-            exts,
-            [
-                tls_feature,
-                ocsp_no_check,
-                x509.Extension(
-                    oid=ExtensionOID.BASIC_CONSTRAINTS,
-                    value=x509.BasicConstraints(ca=True, path_length=None),
-                    critical=True,
-                ),
-                x509.Extension(
-                    oid=ExtensionOID.KEY_USAGE,
-                    value=x509.KeyUsage(
-                        digital_signature=False,
-                        content_commitment=False,
-                        key_encipherment=False,
-                        data_encipherment=False,
-                        key_agreement=False,
-                        key_cert_sign=True,
-                        crl_sign=True,
-                        encipher_only=False,
-                        decipher_only=False,
-                    ),
-                    critical=True,
-                ),
-                name_constraints,
-            ],
-        )
+        expected = extensions + [
+            self.basic_constraints(ca=True),  # type: ignore[list-item]
+            self.key_usage(crl_sign=True, key_cert_sign=True),  # type: ignore[list-item]
+        ]
+        self.assertExtensions(ca, expected)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_deprecated_extension(self) -> None:
@@ -273,9 +234,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             ca,
             [
-                BasicConstraints({"critical": True, "value": {"ca": True}}),
-                KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}),
-                NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}}),
+                self.basic_constraints(ca=True),  # type: ignore[list-item]
+                self.key_usage(crl_sign=True, key_cert_sign=True),  # type: ignore[list-item]
+                self.name_constraints(
+                    permitted=[x509.DNSName(".com")], critical=True  # type: ignore[list-item]
+                ),
             ],
         )
 
@@ -288,9 +251,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             ca,
             [
-                BasicConstraints({"critical": True, "value": {"ca": True}}),
-                KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}),
-                NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}}),
+                self.basic_constraints(ca=True),  # type: ignore[list-item]
+                self.key_usage(crl_sign=True, key_cert_sign=True),  # type: ignore[list-item]
+                self.name_constraints(
+                    permitted=[x509.DNSName(".com")], critical=True
+                ),  # type: ignore[list-item]
             ],
         )
 
@@ -398,7 +363,9 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
         self.assertEqual(cert.subject, x509_name(subject))
-        self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
+        self.assertExtensions(
+            cert, [self.subject_alternative_name(x509.DNSName("example.com"))]  # type: ignore[list-item]
+        )
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_explicit_profile(self) -> None:
@@ -410,7 +377,9 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca, self.csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
         self.assertEqual(cert.subject, x509_name(subject))
-        self.assertExtensions(cert, [SubjectAlternativeName({"value": ["DNS:example.com"]})])
+        self.assertExtensions(
+            cert, [self.subject_alternative_name(x509.DNSName("example.com"))]  # type: ignore[list-item]
+        )
 
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:

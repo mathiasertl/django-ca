@@ -33,6 +33,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509.oid import AuthorityInformationAccessOID
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -782,6 +784,42 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             else:
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKRSA, name)
 
+    def test_get_authority_information_access_extension(self) -> None:
+        """Test getting the AuthorityInformationAccess extension for a CA."""
+        self.assertIsNone(CertificateAuthority().get_authority_information_access_extension())
+
+        ca = CertificateAuthority(issuer_url="https://example.com")
+        actual = ca.get_authority_information_access_extension()
+        expected = x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=False,
+            value=x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                        access_location=x509.UniformResourceIdentifier("https://example.com"),
+                    )
+                ]
+            ),
+        )
+        self.assertEqual(actual, expected)
+
+        ca = CertificateAuthority(ocsp_url="https://example.com")
+        actual = ca.get_authority_information_access_extension()
+        expected = x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=False,
+            value=x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.OCSP,
+                        access_location=x509.UniformResourceIdentifier("https://example.com"),
+                    )
+                ]
+            ),
+        )
+        self.assertEqual(actual, expected)
+
     def test_get_authority_key_identifier(self) -> None:
         """Test getting the authority key identifier."""
         for name, ca in self.cas.items():
@@ -806,10 +844,8 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_get_authority_key_identifier_extension(self) -> None:
         """Test getting the authority key id extension for CAs."""
         for name, ca in self.cas.items():
-            self.assertEqual(
-                ca.get_authority_key_identifier_extension().key_identifier,
-                certs[name]["subject_key_identifier"].value,
-            )
+            ext = ca.get_authority_key_identifier_extension()
+            self.assertEqual(ext.value.key_identifier, certs[name]["subject_key_identifier"].value)
 
     ###############################################
     # Test extensions for all loaded certificates #

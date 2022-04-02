@@ -37,6 +37,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric import x448
 from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
@@ -62,13 +63,7 @@ from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA122Warning
 from ...deprecation import RemovedInDjangoCA123Warning
-from ...extensions import OID_TO_EXTENSION
-from ...extensions import AuthorityInformationAccess
-from ...extensions import AuthorityKeyIdentifier
-from ...extensions import BasicConstraints
-from ...extensions import CRLDistributionPoints
 from ...extensions import Extension
-from ...extensions import SubjectKeyIdentifier
 from ...extensions.base import CRLDistributionPointsBase
 from ...extensions.base import IterableExtension
 from ...extensions.base import ListExtension
@@ -84,6 +79,7 @@ from ...signals import pre_issue_cert
 from ...subject import Subject
 from ...typehints import ParsableSubject
 from ...utils import ca_storage
+from ...utils import parse_general_name
 from . import certs
 from . import timestamps
 from .typehints import DjangoCAModelTypeVar
@@ -239,18 +235,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             extensions.append(idp)  # type: ignore[arg-type] # why is this not recognized?
         extensions.append(
             x509.Extension(
-                value=x509.CRLNumber(crl_number=crl_number),
-                critical=False,
-                oid=x509.oid.ExtensionOID.CRL_NUMBER,
+                value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=ExtensionOID.CRL_NUMBER
             )
         )
-        extensions.append(
-            x509.Extension(
-                value=signer.get_authority_key_identifier(),
-                oid=x509.oid.ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
-                critical=False,
-            )
-        )
+        extensions.append(signer.get_authority_key_identifier_extension())  # type: ignore[arg-type]
 
         if encoding == Encoding.PEM:
             parsed_crl = x509.load_pem_x509_crl(crl)
@@ -314,22 +302,24 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def assertExtensions(  # pylint: disable=invalid-name
         self,
         cert: typing.Union[X509CertMixin, x509.Certificate],
-        extensions: typing.Iterable[Extension[typing.Any, typing.Any, typing.Any]],
+        extensions: typing.Iterable[x509.Extension[x509.ExtensionType]],
         signer: typing.Optional[CertificateAuthority] = None,
         expect_defaults: bool = True,
     ) -> None:
         """Assert that `cert` has the given extensions."""
-        mapped_extensions = {e.key: e for e in extensions}
+        # temporary fast check
+        for ext in extensions:
+            self.assertIsInstance(ext, x509.Extension, ext)
+
+        expected = {e.oid: e for e in extensions}
 
         if isinstance(cert, Certificate):
             pubkey = cert.pub.loaded.public_key()
-            # TYPE NOTE: only used for CAs with known extensions, so this is never a x509.Extension
-            actual = {e.key: e for e in cert.extensions}  # type: ignore[union-attr]
+            actual = cert._x509_extensions  # pylint: disable=protected-access
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
             pubkey = cert.pub.loaded.public_key()
-            # TYPE NOTE: only used for CAs with known extensions, so this is never a x509.Extension
-            actual = {e.key: e for e in cert.extensions}  # type: ignore[union-attr]
+            actual = cert._x509_extensions  # pylint: disable=protected-access
 
             if cert.parent is None:  # root CA
                 signer = cert
@@ -337,40 +327,43 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 signer = cert.parent
         elif isinstance(cert, x509.Certificate):  # cg cert
             pubkey = cert.public_key()
-            actual = {
-                e.key: e
-                for e in [
-                    OID_TO_EXTENSION[e.oid](e) if e.oid in OID_TO_EXTENSION else e for e in cert.extensions
-                ]
-            }
+            actual = {e.oid: e for e in cert.extensions}
         else:  # pragma: no cover
             raise ValueError("cert must be Certificate(Authority) or x509.Certificate)")
 
         if expect_defaults is True:
             if isinstance(cert, Certificate):
-                mapped_extensions.setdefault(BasicConstraints.key, BasicConstraints())
-            if signer is not None:
-                mapped_extensions.setdefault(
-                    AuthorityKeyIdentifier.key, signer.get_authority_key_identifier_extension()
+                expected.setdefault(
+                    ExtensionOID.BASIC_CONSTRAINTS, self.basic_constraints(ca=False)  # type: ignore[arg-type]
+                )
+            if signer is not None:  # pragma: no branch
+                expected.setdefault(
+                    ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                    signer.get_authority_key_identifier_extension(),  # type: ignore[arg-type]
                 )
 
                 if isinstance(cert, Certificate) and signer.crl_url:
-                    urls = signer.crl_url.split()
-                    ext = CRLDistributionPoints({"value": [{"full_name": urls}]})
-                    mapped_extensions.setdefault(CRLDistributionPoints.key, ext)
+                    full_name = [parse_general_name(name) for name in signer.crl_url.split()]
+                    expected.setdefault(
+                        ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                        self.crl_distribution_points(full_name=full_name),  # type: ignore[arg-type]
+                    )
 
-                aia = AuthorityInformationAccess()
-                if isinstance(cert, Certificate) and signer.ocsp_url:
-                    aia.ocsp = [signer.ocsp_url]
-                if isinstance(cert, Certificate) and signer.issuer_url:
-                    aia.issuers = [signer.issuer_url]
-                if aia.ocsp or aia.issuers:
-                    mapped_extensions.setdefault(AuthorityInformationAccess.key, aia)
+                if isinstance(cert, Certificate):
+                    aia = signer.get_authority_information_access_extension()
+                    if aia:  # pragma: no branch
+                        expected.setdefault(aia.oid, aia)  # type: ignore[arg-type]
 
             ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
-            mapped_extensions.setdefault(SubjectKeyIdentifier.key, SubjectKeyIdentifier(ski))
+            expected.setdefault(
+                ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+            )
 
-        self.assertEqual(actual, mapped_extensions)
+        # Diff output is really bad for dicts, so we sort this based on dotted string to get better output
+        actual_tuple = sorted(actual.items(), key=lambda t: t[0].dotted_string)
+        expected_tuple = sorted(expected.items(), key=lambda t: t[0].dotted_string)
+        self.assertEqual(actual_tuple, expected_tuple)
 
     @contextmanager
     def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
@@ -512,6 +505,16 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
 
+    def basic_constraints(
+        self, ca: bool = False, path_length: typing.Optional[int] = None
+    ) -> x509.Extension[x509.BasicConstraints]:
+        """Shortcut for getting a BasicConstraints extension."""
+        return x509.Extension(
+            oid=ExtensionOID.BASIC_CONSTRAINTS,
+            critical=True,
+            value=x509.BasicConstraints(ca=ca, path_length=path_length),
+        )
+
     @property
     def ca_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
         """Yield loaded certificates for each certificate authority."""
@@ -643,6 +646,23 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cert.full_clean()
         return cert
 
+    def crl_distribution_points(
+        self,
+        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
+        reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        crl_issuer: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+    ) -> x509.Extension[x509.CRLDistributionPoints]:
+        """Shortcut for getting a CRLDistributionPoints extension."""
+        dpoint = x509.DistributionPoint(
+            full_name=full_name, relative_name=relative_name, reasons=reasons, crl_issuer=crl_issuer
+        )
+        return x509.Extension(
+            oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            critical=False,
+            value=x509.CRLDistributionPoints([dpoint]),
+        )
+
     @property
     def crl_profiles(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
         """Return a list of CRL profiles."""
@@ -656,6 +676,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     config["OVERRIDES"][data["serial"]]["password"] = data["password"]
 
         return profiles
+
+    def extended_key_usage(self, *usages: x509.ObjectIdentifier) -> x509.Extension[x509.ExtendedKeyUsage]:
+        """Shortcut for getting an ExtendedKeyUsage extension."""
+        return x509.Extension(
+            oid=ExtensionOID.EXTENDED_KEY_USAGE, critical=False, value=x509.ExtendedKeyUsage(usages)
+        )
 
     def get_idp(
         self,
@@ -688,6 +714,67 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Get the IDP full name for `ca`."""
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
+
+    def issuer_alternative_name(self, *names: x509.GeneralName) -> x509.Extension[x509.IssuerAlternativeName]:
+        """Shortcut for getting a IssuerAlternativeName extension."""
+        return x509.Extension(
+            oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+            critical=False,
+            value=x509.IssuerAlternativeName(names),
+        )
+
+    def key_usage(self, **usages: bool) -> x509.Extension[x509.KeyUsage]:
+        """Shortcut for getting a KeyUsage extension."""
+        usages.setdefault("content_commitment", False)
+        usages.setdefault("crl_sign", False)
+        usages.setdefault("data_encipherment", False)
+        usages.setdefault("decipher_only", False)
+        usages.setdefault("digital_signature", False)
+        usages.setdefault("encipher_only", False)
+        usages.setdefault("key_agreement", False)
+        usages.setdefault("key_cert_sign", False)
+        usages.setdefault("key_encipherment", False)
+        return x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=True, value=x509.KeyUsage(**usages))
+
+    def name_constraints(
+        self,
+        permitted: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        excluded: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        critical: bool = False,
+    ) -> x509.Extension[x509.NameConstraints]:
+        """Shortcut for getting a NameConstraints extension."""
+        return x509.Extension(
+            oid=ExtensionOID.NAME_CONSTRAINTS,
+            value=x509.NameConstraints(permitted_subtrees=permitted, excluded_subtrees=excluded),
+            critical=critical,
+        )
+
+    def ocsp_no_check(self) -> x509.Extension[x509.OCSPNoCheck]:
+        """Shortcut for getting a OCSPNoCheck extension."""
+        return x509.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=x509.OCSPNoCheck())
+
+    def precert_poison(self) -> x509.Extension[x509.PrecertPoison]:
+        """Shortcut for getting a PrecertPoison extension."""
+        return x509.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison())
+
+    def subject_alternative_name(
+        self, *names: x509.GeneralName
+    ) -> x509.Extension[x509.SubjectAlternativeName]:
+        """Shortcut for getting a SubjectAlternativeName extension."""
+        return x509.Extension(
+            oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+            critical=False,
+            value=x509.SubjectAlternativeName(names),
+        )
+
+    def subject_key_identifier(self, cert: X509CertMixin) -> x509.Extension[x509.SubjectKeyIdentifier]:
+        """Shortcut for getting a SubjectKeyIdentifier extension."""
+        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+        return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
+
+    def tls_feature(self, *features: x509.TLSFeatureType) -> x509.Extension[x509.TLSFeature]:
+        """Shortcut for getting a TLSFeature extension."""
+        return x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=False, value=x509.TLSFeature(features))
 
     @classmethod
     def expires(cls, days: int) -> datetime:

@@ -17,26 +17,12 @@ import io
 import tempfile
 import typing
 
+from cryptography.x509.oid import ExtensionOID
+
 from django.test import TestCase
 
 from .. import ca_settings
-from ..extensions import AuthorityInformationAccess
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
-from ..extensions import CRLDistributionPoints
-from ..extensions import ExtendedKeyUsage
-from ..extensions import FreshestCRL
-from ..extensions import InhibitAnyPolicy
-from ..extensions import IssuerAlternativeName
-from ..extensions import KeyUsage
-from ..extensions import NameConstraints
-from ..extensions import OCSPNoCheck
-from ..extensions import PolicyConstraints
-from ..extensions import PrecertPoison
-from ..extensions import SubjectAlternativeName
-from ..extensions import TLSFeature
 from ..utils import add_colons
-from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import pragmas  # NOQA: F401  # import module to enable pragma checks
@@ -55,6 +41,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_assert_extensions(self) -> None:
         """Test some basic extension properties."""
+        # pylint: disable=protected-access  # until we can move the property to public
         self.load_named_cas("__usable__")
         self.load_named_certs("__usable__")
 
@@ -63,57 +50,29 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
 
         cert_key = "all-extensions"
         cert = self.certs[cert_key]
-        data = certs[cert_key]
-        all_extensions = [
-            OCSPNoCheck(),
-            PrecertPoison(),
-            data[ExtendedKeyUsage.key],
-            data[FreshestCRL.key],
-            data[InhibitAnyPolicy.key],
-            data[IssuerAlternativeName.key],
-            data[KeyUsage.key],
-            data[NameConstraints.key],
-            data[PolicyConstraints.key],
-            data[SubjectAlternativeName.key],
-            data[TLSFeature.key],
-        ]
-
-        self.assertExtensions(cert, all_extensions)
+        self.assertExtensions(cert, cert.pub.loaded.extensions)
 
         # when we pass an x509 with a signer, we still have a default AuthorityKeyIdentifier extension
-        all_extensions += [
-            BasicConstraints(),
-            data[CRLDistributionPoints.key],
-            data[AuthorityInformationAccess.key],
-        ]
-        self.assertExtensions(cert.pub.loaded, all_extensions, signer=cert.ca)
-
-        # Now, we need even the AuthorityKeyIdentifier extension
-        all_extensions += [
-            data[AuthorityKeyIdentifier.key],
-        ]
-        self.assertExtensions(cert.pub.loaded, all_extensions)
+        self.assertExtensions(cert, cert.pub.loaded.extensions, signer=cert.ca)
 
         # now test root and child ca
         cert_key = "root"
         ca = self.cas[cert_key]
-        data = certs[cert_key]
 
         root_extensions = [
-            data[BasicConstraints.key],
-            data[KeyUsage.key],
+            ca._x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
+            ca._x509_extensions[ExtensionOID.KEY_USAGE],
         ]
         self.assertExtensions(ca, root_extensions)
 
         cert_key = "child"
         ca = self.cas[cert_key]
-        data = certs[cert_key]
 
         root_extensions = [
-            data[AuthorityInformationAccess.key],
-            data[BasicConstraints.key],
-            data[CRLDistributionPoints.key],
-            data[KeyUsage.key],
+            ca._x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            ca._x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
+            ca._x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            ca._x509_extensions[ExtensionOID.KEY_USAGE],
         ]
         self.assertExtensions(ca, root_extensions)
 

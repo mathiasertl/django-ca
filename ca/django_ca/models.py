@@ -53,6 +53,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509.oid import AuthorityInformationAccessOID
+from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
@@ -135,6 +137,7 @@ from .utils import int_to_hex
 from .utils import multiline_url_validator
 from .utils import parse_encoding
 from .utils import parse_expires
+from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import parse_key_curve
 from .utils import read_file
@@ -1000,16 +1003,34 @@ class CertificateAuthority(X509CertMixin):
                 ca_storage.save(path, ContentFile(contents))
         return private_path, cert_path, cert
 
+    def get_authority_information_access_extension(
+        self,
+    ) -> typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]:
+        """Get the AuthorityInformationAccess extension to use in certificates signed by this CA."""
+        if not self.issuer_url and not self.ocsp_url:
+            return None
+
+        descriptions = []
+        if self.issuer_url:
+            descriptions.append(
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                    access_location=parse_general_name(self.issuer_url),
+                )
+            )
+        if self.ocsp_url:
+            descriptions.append(
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.OCSP,
+                    access_location=parse_general_name(self.ocsp_url),
+                )
+            )
+
+        value = x509.AuthorityInformationAccess(descriptions=descriptions)
+        return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=False, value=value)
+
     def get_authority_key_identifier(self) -> x509.AuthorityKeyIdentifier:
-        """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA.
-
-        Returns
-        -------
-
-        :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier`
-            The value to use for this extension.
-        """
-
+        """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""
         try:
             ski = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
         except x509.ExtensionNotFound as ex:
@@ -1021,22 +1042,13 @@ class CertificateAuthority(X509CertMixin):
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
-    def get_authority_key_identifier_extension(self) -> AuthorityKeyIdentifier:
-        """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA.
+    def get_authority_key_identifier_extension(self) -> x509.Extension[x509.AuthorityKeyIdentifier]:
+        """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA."""
 
-        Returns
-        -------
-
-        :py:class:`~django_ca.extensions.AuthorityKeyIdentifier`
-            The extension to use.
-        """
-
-        return AuthorityKeyIdentifier(
-            x509.Extension(
-                critical=AuthorityKeyIdentifier.default_critical,
-                oid=AuthorityKeyIdentifier.oid,
-                value=self.get_authority_key_identifier(),
-            )
+        return x509.Extension(
+            critical=False,
+            oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+            value=self.get_authority_key_identifier(),
         )
 
     def get_crl_certs(
