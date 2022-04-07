@@ -16,9 +16,10 @@
     {% endif %}
     {% if dp.reasons %}
       <li>Reasons: 
-				{% for reason in dp.reasons %}
-          {{ reason.name }}{% if not forloop.last %},{% endif %}
+				{% for reason in dp.reasons|sort_reasons %}
+          {{ reason }}{% if not forloop.last %},{% endif %}
 				{% endfor %}
+      </li>
     {% endif %}
   </ul>
 

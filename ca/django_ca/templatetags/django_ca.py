@@ -48,6 +48,12 @@ def access_method(
 
 
 @register.filter
+def sort_reasons(reasons: x509.ReasonFlags) -> typing.List[str]:
+    """Return a sorted list of reasons."""
+    return sorted(r.name for r in reasons)
+
+
+@register.filter
 def extended_key_usage_list(value: x509.ExtendedKeyUsage) -> str:
     """Return a HTML-formatted list of extended key usage entries."""
     lines = []
