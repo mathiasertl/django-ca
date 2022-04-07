@@ -2,10 +2,10 @@
 {# PolicyConstraints extension #}
 
 {% block content %}<ul>
-  {% if value.inhibit_policy_mapping %}
+  {% if value.inhibit_policy_mapping is not None %}
     <li>InhibitPolicyMapping: {{ value.inhibit_policy_mapping }}</li>
   {% endif %}
-  {% if value.require_explicit_policy %}
+  {% if value.require_explicit_policy is not None %}
     <li>RequireExplicitPolicy: {{ value.require_explicit_policy }}</li>
   {% endif %}
 </ul>{% endblock content %}
