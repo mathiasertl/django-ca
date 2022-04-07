@@ -3,6 +3,7 @@
 {# CertificatePolicies extension #}
 
 {% block content %}
+<ul>
   {% for info in value %}
   <li>{{ info.policy_identifier|oid_name }} ({{ info.policy_identifier.dotted_string }}){% if info.policy_qualifiers %}:{% endif %}
     <ul>
@@ -17,8 +18,12 @@
             {% if qualifier.notice_reference %}
             <li>{% trans "Notice Reference:" %}
               <ul>
-                <li>{{ qualifier.notice_reference.organiziation }}</li>
-                <li>{{ qualifier.notice_reference.notice_numbers }}</li>
+                {% if qualifier.notice_reference.organiziation %}
+                  <li>{{ qualifier.notice_reference.organiziation }}</li>
+                {% endif %}
+                {% if qualifier.notice_reference.notice_numbers %}
+                  <li>{{ qualifier.notice_reference.notice_numbers }}</li>
+                {% endif %}
               </ul>
             </li>
             {% endif %}
@@ -31,4 +36,5 @@
     </ul>
   </li>
   {% endfor %}
+</ul>
 {% endblock content %}
