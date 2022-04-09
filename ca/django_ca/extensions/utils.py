@@ -30,6 +30,8 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 
+from django.template.loader import render_to_string
+
 from ..typehints import ParsableDistributionPoint
 from ..typehints import ParsablePolicyIdentifier
 from ..typehints import ParsablePolicyInformation
@@ -727,3 +729,11 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-
     if isinstance(value, x509.UnrecognizedExtension):
         return bytes_to_hex(value.value)
     raise TypeError("Unknown extension type.")  # pragma: no cover
+
+
+def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]):
+    template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
+    if isinstance(extension.value, x509.UnrecognizedExtension):
+        template = "django_ca/admin/extensions/unrecognized_extension.html"
+
+    return render_to_string([template], context={"extension": extension, "x509": x509})

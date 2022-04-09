@@ -129,6 +129,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
 
     test_values = {
         "empty": {
+            "admin_html": "<div class='django-ca-extension-value'></div>",
             "values": [{}],
             "expected": {"issuers": [], "ocsp": []},
             "expected_bool": False,
@@ -138,6 +139,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "text": "",
         },
         "issuer": {
+            "admin_html": f"CA Issuers:<ul><li>URI:{uri1}</li></ul>",
             "values": [
                 {"issuers": [uri1]},
                 {"issuers": [uri(uri1)]},
@@ -151,6 +153,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "text": f"CA Issuers:\n  * URI:{uri1}",
         },
         "ocsp": {
+            "admin_html": f"OCSP:<ul><li>URI:{uri2}</li></ul>",
             "values": [
                 {"ocsp": [uri2]},
                 {"ocsp": [uri(uri2)]},
@@ -164,6 +167,7 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "text": f"OCSP:\n  * URI:{uri2}",
         },
         "both": {
+            "admin_html": f"CA Issuers:<ul><li>URI:{uri2}</li></ul> OCSP:<ul><li>URI:{uri1}</li></ul>",
             "values": [
                 {"ocsp": [uri1], "issuers": [uri2]},
                 {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
@@ -180,6 +184,16 @@ class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformation
             "text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
         },
         "multiple": {
+            "admin_html": f"""CA Issuers:
+<ul>
+  <li>URI:{uri3}</li>
+  <li>URI:{uri4}</li>
+</ul>
+OCSP:
+<ul>
+  <li>URI:{uri1}</li>
+  <li>URI:{uri2}</li>
+</ul>""",
             "values": [
                 {"ocsp": [uri1, uri2], "issuers": [uri3, uri4]},
                 {"ocsp": [uri1, uri(uri2)], "issuers": [uri3, uri(uri4)]},
@@ -265,6 +279,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
 
     test_values = {
         "one": {
+            "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex1}</span></li></ul>",
             "values": [
                 hex1,
             ],
@@ -275,6 +290,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             "text": f"* KeyID: {hex1}",
         },
         "two": {
+            "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex2}</span></li></ul>",
             "values": [
                 hex2,
             ],
@@ -285,6 +301,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             "text": f"* KeyID: {hex2}",
         },
         "three": {
+            "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex3}</span></li></ul>",
             "values": [
                 hex3,
             ],
@@ -295,6 +312,11 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             "text": f"* KeyID: {hex3}",
         },
         "issuer/serial": {
+            "admin_html": f"""<ul>
+    <li>Authority certificate issuer:
+        <ul><li>DNS:{dns1}</li></ul>
+    </li>
+</ul>""",
             "expected": {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
             "values": [{"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1}],
             "expected_repr": f"issuer: ['DNS:{dns1}'], serial: {s1}",
@@ -349,6 +371,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
 
     test_values = {
         "no_ca": {
+            "admin_html": "CA: False",
             "values": [
                 {"ca": False},
                 {"ca": False, "pathlen": 3},  # ignored b/c ca=False
@@ -361,6 +384,8 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
             "text": "CA:FALSE",
         },
         "no_pathlen": {
+            # include div to make sure that there's no pathlen
+            "admin_html": "<div class='django-ca-extension-value'>CA: True</div>",
             "values": [
                 {"ca": True},
                 {"ca": True, "pathlen": None},
@@ -372,6 +397,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
             "text": "CA:TRUE",
         },
         "pathlen_zero": {
+            "admin_html": "CA: True, path length: 0",
             "values": [
                 {"ca": True, "pathlen": 0},
             ],
@@ -382,6 +408,7 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
             "text": "CA:TRUE, pathlen:0",
         },
         "pathlen_three": {
+            "admin_html": "CA: True, path length: 3",
             "values": [
                 {"ca": True, "pathlen": 3},
             ],
@@ -504,6 +531,7 @@ class CertificatePoliciesTestCase(
 
     test_values = {
         "one": {
+            "admin_html": "<ul><li>text1</li></ul>",
             "values": [[un1], [xpi1]],
             "expected": [p1],
             "expected_djca": [p1],
@@ -513,6 +541,7 @@ class CertificatePoliciesTestCase(
             "text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * text1",
         },
         "two": {
+            "admin_html": f"<ul><li>User Notice:<ul><li>Explicit Text: {text2}</li></ul></li></ul>",
             "values": [[un2], [xpi2]],
             "expected": [p2],
             "expected_djca": [p2],
@@ -525,6 +554,12 @@ class CertificatePoliciesTestCase(
     * Explicit text: {text2}""",
         },
         "three": {
+            "admin_html": """<ul>
+    <li>User Notice:<ul>
+        <li>Notice Reference:<ul>
+            <li>[1]</li>
+    </ul></li>
+</ul></li></ul>""",
             "values": [[un3], [xpi3]],
             "expected": [p3],
             "expected_djca": [p3],
@@ -539,6 +574,20 @@ class CertificatePoliciesTestCase(
       * Notice Numbers: [1]""",
         },
         "four": {
+            "admin_html": f"""
+    <ul>
+        <li>{text4}</li>
+        <li>User Notice:
+            <ul>
+                <li>Explicit Text: text5</li>
+                <li>Notice Reference:
+                    <ul>
+                        <li>[1, 2, 3]</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>""",
             "values": [[un4], [xpi4]],
             "expected": [p4],
             "expected_djca": [p4],
@@ -555,6 +604,37 @@ class CertificatePoliciesTestCase(
       * Notice Numbers: [1, 2, 3]""",
         },
         "five": {
+            "admin_html": f"""<ul>
+  <li>Unknown OID ({oid}):
+    <ul>
+      <li>{text1}</li>
+    </ul>
+  </li>
+  <li>Unknown OID ({oid}):
+    <ul>
+      <li>
+          User Notice:
+          <ul><li>Explicit Text: {text2}</li></ul>
+      </li>
+    </ul>
+  </li>
+  <li>Unknown OID ({oid}):
+    <ul>
+      <li>{text4}</li>
+      <li>
+          User Notice:
+          <ul>
+            <li>Explicit Text: {text5}</li>
+            <li>Notice Reference:
+              <ul>
+                  <li>[1, 2, 3]</li>
+              </ul>
+            </li>
+          </ul>
+      </li>
+    </ul>
+  </li>
+</ul>""",
             "values": [[un1, un2, un4], [xpi1, xpi2, xpi4], [un1, xpi2, un4]],
             "expected": [p1, p2, p4],
             "expected_djca": [p1, p2, p4],
@@ -591,6 +671,7 @@ class ExtendedKeyUsageTestCase(
 
     test_values = {
         "one": {
+            "admin_html": "<ul><li>serverAuth</li></ul>",
             "values": [
                 {"serverAuth"},
                 {ExtendedKeyUsageOID.SERVER_AUTH},
@@ -603,6 +684,7 @@ class ExtendedKeyUsageTestCase(
             "text": "* serverAuth",
         },
         "two": {
+            "admin_html": "<ul><li>clientAuth</li><li>serverAuth</li></ul>",
             "values": [
                 {
                     "serverAuth",
@@ -621,6 +703,7 @@ class ExtendedKeyUsageTestCase(
             "text": "* clientAuth\n* serverAuth",
         },
         "three": {
+            "admin_html": "<ul><li>clientAuth</li><li>serverAuth</li><li>timeStamping</li></ul>",
             "values": [
                 {
                     "serverAuth",
@@ -712,6 +795,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
 
     test_values = {
         "zero": {
+            "admin_html": "skip certs: 0",
             "values": [
                 0,
             ],
@@ -722,6 +806,7 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
             "text": "0",
         },
         "one": {
+            "admin_html": "skip certs: 1",
             "values": [
                 1,
             ],
@@ -780,6 +865,7 @@ class IssuerAlternativeNameTestCase(
     invalid_values = ["DNS:https://example.com", True, None]
     test_values = {
         "empty": {
+            "admin_html": "<ul></ul>",
             "values": [[]],
             "expected": [],
             "expected_repr": "[]",
@@ -788,6 +874,7 @@ class IssuerAlternativeNameTestCase(
             "text": "",
         },
         "uri": {
+            "admin_html": f"<ul><li>URI:{uri1}</li></ul>",
             "values": [[uri1], [uri(uri1)]],
             "expected": [uri(uri1)],
             "expected_repr": f"['URI:{uri1}']",
@@ -796,6 +883,7 @@ class IssuerAlternativeNameTestCase(
             "text": f"* URI:{uri1}",
         },
         "dns": {
+            "admin_html": f"<ul><li>DNS:{dns1}</li></ul>",
             "values": [[dns1], [dns(dns1)]],
             "expected": [dns(dns1)],
             "expected_repr": f"['DNS:{dns1}']",
@@ -804,6 +892,7 @@ class IssuerAlternativeNameTestCase(
             "text": f"* DNS:{dns1}",
         },
         "both": {
+            "admin_html": f"<ul><li>URI:{uri1}</li><li>DNS:{dns1}</li></ul>",
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             "expected": [uri(uri1), dns(dns1)],
             "expected_repr": f"['URI:{uri1}', 'DNS:{dns1}']",
@@ -812,6 +901,9 @@ class IssuerAlternativeNameTestCase(
             "text": f"* URI:{uri1}\n* DNS:{dns1}",
         },
         "all": {
+            "admin_html": f"""<ul>
+                <li>URI:{uri1}</li><li>URI:{uri2}</li><li>DNS:{dns1}</li><li>DNS:{dns2}</li>
+            </ul>""",
             "values": [
                 [uri1, uri2, dns1, dns2],
                 [uri(uri1), uri(uri2), dns1, dns2],
@@ -825,6 +917,9 @@ class IssuerAlternativeNameTestCase(
             "text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
         },
         "order": {  # same as "all" above but other order
+            "admin_html": f"""<ul>
+                  <li>DNS:{dns2}</li><li>DNS:{dns1}</li><li>URI:{uri2}</li><li>URI:{uri1}</li>
+            </ul>""",
             "values": [
                 [dns2, dns1, uri2, uri1],
                 [dns(dns2), dns(dns1), uri2, uri1],
@@ -857,14 +952,8 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
 
     test_values = {
         "one": {
-            "values": [
-                {
-                    "key_agreement",
-                },
-                [
-                    "keyAgreement",
-                ],
-            ],
+            "admin_html": "<ul><li>keyAgreement</li></ul>",
+            "values": [{"key_agreement"}, ["keyAgreement"]],
             "expected": frozenset(["key_agreement"]),
             "expected_repr": "['keyAgreement']",
             "expected_serialized": ["keyAgreement"],
@@ -882,6 +971,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
             "text": "* keyAgreement",
         },
         "two": {
+            "admin_html": "<ul><li>keyAgreement</li><li>keyEncipherment</li></ul>",
             "values": [
                 {
                     "key_agreement",
@@ -908,6 +998,7 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
             "text": "* keyAgreement\n* keyEncipherment",
         },
         "three": {
+            "admin_html": "<ul><li>keyAgreement</li><li>keyEncipherment</li><li>nonRepudiation</li></ul>",
             "values": [
                 {
                     "key_agreement",
@@ -993,6 +1084,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
 
     test_values = {
         "permitted": {
+            "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul>",
             "values": [
                 {"permitted": [d1]},
                 {"permitted": [f"DNS:{d1}"]},
@@ -1006,6 +1098,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             "text": f"Permitted:\n  * DNS:{d1}",
         },
         "excluded": {
+            "admin_html": f"Excluded:<ul><li>DNS:{d1}</li></ul>",
             "values": [
                 {"excluded": [d1]},
                 {"excluded": [f"DNS:{d1}"]},
@@ -1019,6 +1112,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             "text": f"Excluded:\n  * DNS:{d1}",
         },
         "both": {
+            "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul> Excluded:<ul><li>DNS:{d2}</li></ul>",
             "values": [
                 {"permitted": [d1], "excluded": [d2]},
                 {"permitted": [f"DNS:{d1}"], "excluded": [f"DNS:{d2}"]},
@@ -1078,6 +1172,7 @@ class OCSPNoCheckTestCase(NullExtensionTestMixin[OCSPNoCheck], TestCase):
 
     test_values: TestValues = {
         "empty": {
+            "admin_html": "Yes",
             "values": [{}, None],
             "expected": None,
             "expected_repr": "",
@@ -1097,6 +1192,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
 
     test_values = {
         "rep_zero": {
+            "admin_html": "<ul><li>RequireExplicitPolicy: 0</li></ul>",
             "values": [
                 {"require_explicit_policy": 0},
             ],
@@ -1107,6 +1203,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
             "text": "* RequireExplicitPolicy: 0",
         },
         "rep_one": {
+            "admin_html": "<ul><li>RequireExplicitPolicy: 1</li></ul>",
             "values": [
                 {"require_explicit_policy": 1},
             ],
@@ -1117,6 +1214,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
             "text": "* RequireExplicitPolicy: 1",
         },
         "iap_zero": {
+            "admin_html": "<ul><li>InhibitPolicyMapping: 0</li></ul>",
             "values": [
                 {"inhibit_policy_mapping": 0},
             ],
@@ -1127,6 +1225,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
             "text": "* InhibitPolicyMapping: 0",
         },
         "iap_one": {
+            "admin_html": "<ul><li>InhibitPolicyMapping: 1</li></ul>",
             "values": [
                 {"inhibit_policy_mapping": 1},
             ],
@@ -1137,6 +1236,7 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
             "text": "* InhibitPolicyMapping: 1",
         },
         "both": {
+            "admin_html": "<ul><li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 3</li></ul>",
             "values": [
                 {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
             ],
@@ -1193,6 +1293,7 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
     force_critical = True
     test_values: TestValues = {
         "empty": {
+            "admin_html": "Yes",
             "values": [{}, None],
             "expected": None,
             "expected_repr": "",
@@ -1543,6 +1644,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
 
     test_values = {
         "empty": {
+            "admin_html": "<ul></ul>",
             "values": [[]],
             "expected": [],
             "expected_repr": "[]",
@@ -1551,6 +1653,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "text": "",
         },
         "uri": {
+            "admin_html": f"<ul><li>URI:{uri1}</li></ul>",
             "values": [[uri1], [uri(uri1)]],
             "expected": [uri(uri1)],
             "expected_repr": f"['URI:{uri1}']",
@@ -1559,6 +1662,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "text": f"* URI:{uri1}",
         },
         "dns": {
+            "admin_html": f"<ul><li>DNS:{dns1}</li></ul>",
             "values": [[dns1], [dns(dns1)]],
             "expected": [dns(dns1)],
             "expected_repr": f"['DNS:{dns1}']",
@@ -1567,6 +1671,7 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "text": f"* DNS:{dns1}",
         },
         "both": {
+            "admin_html": f"<ul><li>URI:{uri1}</li><li>DNS:{dns1}</li></ul>",
             "values": [[uri1, dns1], [uri(uri1), dns(dns1)], [uri1, dns(dns1)], [uri(uri1), dns1]],
             "expected": [uri(uri1), dns(dns1)],
             "expected_repr": f"['URI:{uri1}', 'DNS:{dns1}']",
@@ -1575,6 +1680,12 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "text": f"* URI:{uri1}\n* DNS:{dns1}",
         },
         "all": {
+            "admin_html": f"""<ul>
+    <li>URI:{uri1}</li>
+    <li>URI:{uri2}</li>
+    <li>DNS:{dns1}</li>
+    <li>DNS:{dns2}</li>
+</ul>""",
             "values": [
                 [uri1, uri2, dns1, dns2],
                 [uri(uri1), uri(uri2), dns1, dns2],
@@ -1588,6 +1699,12 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
             "text": f"* URI:{uri1}\n* URI:{uri2}\n* DNS:{dns1}\n* DNS:{dns2}",
         },
         "order": {  # same as "all" above but other order
+            "admin_html": f"""<ul>
+    <li>DNS:{dns2}</li>
+    <li>DNS:{dns1}</li>
+    <li>URI:{uri2}</li>
+    <li>URI:{uri1}</li>
+</ul>""",
             "values": [
                 [dns2, dns1, uri2, uri1],
                 [dns(dns2), dns(dns1), uri2, uri1],
@@ -1636,6 +1753,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
 
     test_values = {
         "one": {
+            "admin_html": hex1,
             "values": [
                 x509.SubjectKeyIdentifier(b1),
                 hex1,
@@ -1647,6 +1765,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "text": hex1,
         },
         "two": {
+            "admin_html": hex2,
             "values": [
                 x509.SubjectKeyIdentifier(b2),
                 hex2,
@@ -1658,6 +1777,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "text": hex2,
         },
         "three": {
+            "admin_html": hex3,
             "values": [
                 x509.SubjectKeyIdentifier(b3),
                 hex3,
@@ -1710,6 +1830,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
 
     test_values = {
         "one": {
+            "admin_html": "<ul><li>OCSPMustStaple</li></ul>",
             "values": [
                 {
                     TLSFeatureType.status_request,
@@ -1725,6 +1846,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "text": "* OCSPMustStaple",
         },
         "two": {
+            "admin_html": "<ul><li>MultipleCertStatusRequest</li><li>OCSPMustStaple</li></ul>",
             "values": [
                 {TLSFeatureType.status_request, TLSFeatureType.status_request_v2},
                 {"OCSPMustStaple", "MultipleCertStatusRequest"},
@@ -1745,6 +1867,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "text": "* MultipleCertStatusRequest\n* OCSPMustStaple",
         },
         "three": {
+            "admin_html": "<ul><li>MultipleCertStatusRequest</li></ul>",
             "values": [
                 {TLSFeatureType.status_request_v2},
                 {"MultipleCertStatusRequest"},

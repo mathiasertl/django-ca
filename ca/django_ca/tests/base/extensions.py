@@ -35,6 +35,7 @@ from ...extensions.base import ListExtension
 from ...extensions.base import NullExtension
 from ...extensions.base import OrderedSetExtension
 from ...extensions.utils import DistributionPoint
+from ...extensions.utils import extension_as_admin_html
 from ...extensions.utils import extension_as_text
 from ...models import X509CertMixin
 from ...typehints import CRLExtensionTypeTypeVar
@@ -315,6 +316,14 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         """Test rendering an extension as text."""
         for name, config in self.test_values.items():
             self.assertEqual(extension_as_text(config["extension_type"]), config["text"], name)
+
+    def test_as_admin_html(self) -> None:
+        """Test rendering an extension as text."""
+        for name, config in self.test_values.items():
+            ext_value = config["extension_type"]
+            ext = x509.Extension(oid=ext_value.oid, critical=True, value=ext_value)
+            html = extension_as_admin_html(ext)
+            self.assertInHTML(config["admin_html"], html, msg_prefix=html)
 
     def test_value(self) -> None:
         """Test that value property can be used for the constructor."""
@@ -1186,6 +1195,10 @@ class CRLDistributionPointsTestCaseBase(
     def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
         self.test_values = {
             "one": {
+                "admin_html": f"""DistributionPoint:
+  <ul>
+      <li>Full Name: URI:{self.uri1}</li>
+  </ul>""",
                 "values": [
                     [self.s1],
                     [self.dp1],
@@ -1201,6 +1214,10 @@ class CRLDistributionPointsTestCaseBase(
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}",
             },
             "two": {
+                "admin_html": f"""DistributionPoint:
+  <ul>
+      <li>Full Name: URI:{self.uri1}, DNS:{self.dns1}</li>
+  </ul>""",
                 "values": [
                     [self.s2],
                     [self.dp2],
@@ -1216,6 +1233,10 @@ class CRLDistributionPointsTestCaseBase(
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}\n    * DNS:{self.dns1}",
             },
             "rdn": {
+                "admin_html": f"""DistributionPoint:
+  <ul>
+      <li>Relative Name: {self.rdn1}</li>
+  </ul>""",
                 "values": [[self.s3], [self.dp3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
                 "expected": [self.s3],
                 "expected_djca": [self.dp3],
@@ -1225,6 +1246,12 @@ class CRLDistributionPointsTestCaseBase(
                 "text": f"* DistributionPoint:\n  * Relative Name: {self.rdn1}",
             },
             "adv": {
+                "admin_html": f"""DistributionPoint:
+  <ul>
+      <li>Full Name: URI:{self.uri2}</li>
+      <li>CRL Issuer: URI:{self.uri3}</li>
+      <li>Reasons: ca_compromise, key_compromise</li>
+  </ul>""",
                 "values": [[self.s4], [self.dp4], [self.cg_dp4]],
                 "expected": [self.s4],
                 "expected_djca": [self.dp4],

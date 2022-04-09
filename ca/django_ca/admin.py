@@ -59,6 +59,7 @@ from .extensions import KeyUsage
 from .extensions import SubjectAlternativeName
 from .extensions import TLSFeature
 from .extensions import get_extension_name
+from .extensions.utils import extension_as_admin_html
 from .forms import CreateCertificateForm
 from .forms import ResignCertificateForm
 from .forms import RevokeCertificateForm
@@ -265,18 +266,14 @@ class CertificateMixin(
         """Render extension for the given object."""
 
         # PYLINT NOTE: use internal property until we can deprecate extensions
-        cg_ext = obj._x509_extensions.get(oid)  # pylint: disable=protected-access
+        ext = obj._x509_extensions.get(oid)  # pylint: disable=protected-access
 
-        if cg_ext is None:
+        if ext is None:
             # SubjectAlternativeName is displayed unconditionally in the main section, so a certificate
             # without this extension will yield a KeyError in this case.
             return render_to_string(["django_ca/admin/extensions/missing.html"])
 
-        template = f"django_ca/admin/extensions/{oid.dotted_string}.html"
-        if isinstance(cg_ext.value, x509.UnrecognizedExtension):
-            template = "django_ca/admin/extensions/unrecognized_extension.html"
-
-        return render_to_string([template], context={"extension": cg_ext, "x509": x509})
+        return extension_as_admin_html(ext)
 
     def __getattr__(self, name: str) -> typing.Any:
         if name.startswith("oid_"):
