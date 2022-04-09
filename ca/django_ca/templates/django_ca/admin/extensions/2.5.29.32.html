@@ -18,11 +18,11 @@
             {% if qualifier.notice_reference %}
             <li>{% trans "Notice Reference:" %}
               <ul>
-                {% if qualifier.notice_reference.organiziation %}
-                  <li>{{ qualifier.notice_reference.organiziation }}</li>
+                {% if qualifier.notice_reference.organization %}
+                  <li>Organization: {{ qualifier.notice_reference.organization }}</li>
                 {% endif %}
                 {% if qualifier.notice_reference.notice_numbers %}
-                  <li>{{ qualifier.notice_reference.notice_numbers }}</li>
+                  <li>Notice Numbers: {{ qualifier.notice_reference.notice_numbers }}</li>
                 {% endif %}
               </ul>
             </li>

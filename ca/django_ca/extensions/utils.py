@@ -580,18 +580,22 @@ def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
                 if isinstance(qualifier, str):
                     lines += textwrap.wrap(qualifier, 76, initial_indent="  * ", subsequent_indent="    ")
                 else:
-                    lines.append("  * UserNotice:")
+                    lines.append("  * User Notice:")
                     if qualifier.explicit_text:
                         lines += textwrap.wrap(
-                            f"Explicit text: {qualifier.explicit_text}\n",
+                            f"Explicit Text: {qualifier.explicit_text}\n",
                             initial_indent="    * ",
-                            subsequent_indent="      ",
+                            subsequent_indent="        ",
                             width=76,
                         )
                     if qualifier.notice_reference:
-                        lines.append("    * Reference:")
-                        lines.append(f"      * Organization: {qualifier.notice_reference.organization}")
-                        lines.append(f"      * Notice Numbers: {qualifier.notice_reference.notice_numbers}")
+                        lines.append("    * Notice Reference:")
+                        if qualifier.notice_reference.organization:
+                            lines.append(f"      * Organization: {qualifier.notice_reference.organization}")
+                        if qualifier.notice_reference.notice_numbers:
+                            lines.append(
+                                f"      * Notice Numbers: {qualifier.notice_reference.notice_numbers}"
+                            )
         else:
             lines.append("  No Policy Qualifiers")
     return "\n".join(lines)
