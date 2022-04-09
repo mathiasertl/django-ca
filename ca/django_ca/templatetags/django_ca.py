@@ -50,7 +50,8 @@ def access_method(
 @register.filter
 def sort_reasons(reasons: x509.ReasonFlags) -> typing.List[str]:
     """Return a sorted list of reasons."""
-    return sorted(r.name for r in reasons)
+    # TYPE NOTE: mypy does not detect enum x509.ReasonsFlags as iterable
+    return sorted(r.name for r in reasons)  # type: ignore[attr-defined]
 
 
 @register.filter

@@ -32,6 +32,8 @@
           {{ qualifier }}
         {% endif %}
       </li>
+    {% empty %}
+    <li>{% trans "No Policy Qualifiers" %}</li>
     {% endfor %}
     </ul>
   </li>

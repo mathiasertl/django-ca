@@ -24,6 +24,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.x509.oid import ObjectIdentifier
 
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 
 from ...extensions import KEY_TO_EXTENSION
 from ...extensions import OID_TO_EXTENSION
@@ -60,6 +61,7 @@ OrderedSetExtensionTypeVar = typing.TypeVar(
 _TestValueDict = TypedDict(
     "_TestValueDict",
     {
+        "admin_html": str,
         "values": typing.List[typing.Any],
         "expected": typing.Any,
         "expected_repr": str,
@@ -323,7 +325,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
             ext_value = config["extension_type"]
             ext = x509.Extension(oid=ext_value.oid, critical=True, value=ext_value)
             html = extension_as_admin_html(ext)
-            self.assertInHTML(config["admin_html"], html, msg_prefix=html)
+            self.assertInHTML(config["admin_html"], mark_safe(html), msg_prefix=html)
 
     def test_value(self) -> None:
         """Test that value property can be used for the constructor."""

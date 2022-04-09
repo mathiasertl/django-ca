@@ -571,6 +571,7 @@ def _basic_constraints_as_text(value: x509.BasicConstraints) -> str:
 def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
     lines = []
 
+    # pylint: disable-next=too-many-nested-blocks
     for policy in value:
         lines.append(f"* Policy Identifier: {policy.policy_identifier.dotted_string}")
 
@@ -590,7 +591,7 @@ def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
                         )
                     if qualifier.notice_reference:
                         lines.append("    * Notice Reference:")
-                        if qualifier.notice_reference.organization:
+                        if qualifier.notice_reference.organization:  # pragma: no branch
                             lines.append(f"      * Organization: {qualifier.notice_reference.organization}")
                         if qualifier.notice_reference.notice_numbers:
                             lines.append(
@@ -735,7 +736,8 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-
     raise TypeError("Unknown extension type.")  # pragma: no cover
 
 
-def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]):
+def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
+    """Convert an extension to HTML code suitable for the admin interface."""
     template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
     if isinstance(extension.value, x509.UnrecognizedExtension):
         template = "django_ca/admin/extensions/unrecognized_extension.html"

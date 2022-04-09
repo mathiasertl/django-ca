@@ -843,11 +843,11 @@ CertificatePolicies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://www.startssl.com/policy.pdf
       * http://www.startssl.com/intermediate.pdf
-      * UserNotice:
-        * Explicit text: Limited Liability, read the section *Legal Limitations*
-          of the StartCom Certification Authority Policy available at
-          http://www.startssl.com/policy.pdf
-        * Reference:
+      * User Notice:
+        * Explicit Text: Limited Liability, read the section *Legal Limitations*
+            of the StartCom Certification Authority Policy available at
+            http://www.startssl.com/policy.pdf
+        * Notice Reference:
           * Organization: Start Commercial (StartCom) Ltd.
           * Notice Numbers: [1]
 KeyUsage{key_usage_critical}:
@@ -985,14 +985,13 @@ CRLDistributionPoints{crl_distribution_points_critical}:
 CertificatePolicies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
-      * UserNotice:
-        * Reference:
+      * User Notice:
+        * Notice Reference:
           * Organization: https://secure.identrust.com/certificates/policy/ts/index.html
-          * Notice Numbers: []
-      * UserNotice:
-        * Explicit text: This TrustID Server Certificate has been issued in
-          accordance with IdenTrust's TrustID Certificate Policy found at
-          https://secure.identrust.com/certificates/policy/ts/index.html
+      * User Notice:
+        * Explicit Text: This TrustID Server Certificate has been issued in
+            accordance with IdenTrust's TrustID Certificate Policy found at
+            https://secure.identrust.com/certificates/policy/ts/index.html
 ExtendedKeyUsage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
@@ -1104,6 +1103,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
+        self.maxDiff = None
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial)
             data = self.get_cert_context(name)
