@@ -485,7 +485,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Assert the subject of `cert` matches `expected`."""
         if not isinstance(expected, Subject):
             expected = Subject(expected)
-        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)
+
+        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)  # type: ignore[misc]
 
     @contextmanager
     def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name
