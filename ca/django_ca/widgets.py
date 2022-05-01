@@ -121,7 +121,7 @@ class SubjectWidget(CustomMultiWidget):
             return ["" for attr in ADMIN_SUBJECT_OIDS]
 
         attr_mapping = {attr.oid: attr.value for attr in value}
-        return [attr_mapping.get(oid, "") for oid in ADMIN_SUBJECT_OIDS]
+        return [attr_mapping.get(oid, "") for oid in ADMIN_SUBJECT_OIDS]  # type: ignore[misc]
 
 
 class SubjectAltNameWidget(CustomMultiWidget):

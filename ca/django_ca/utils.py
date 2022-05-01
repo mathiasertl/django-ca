@@ -334,7 +334,7 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
         )
         items = subject
 
-    values = "/".join([f"{k}={_format_value(v)}" for k, v in items])
+    values = "/".join([f"{k}={_format_value(v)}" for k, v in items])  # type: ignore[arg-type]
     return f"/{values}"
 
 
@@ -554,7 +554,7 @@ def parse_name(name: str) -> List[Tuple[str, str]]:
     attrs = parse_name_x509(name)
 
     # Parse OIDs back to their cannonical string representation
-    return [(OID_NAME_MAPPINGS[attr.oid], attr.value) for attr in attrs]
+    return [(OID_NAME_MAPPINGS[attr.oid], attr.value) for attr in attrs]  # type: ignore[misc]
 
 
 def x509_name(name: ParsableName) -> x509.Name:

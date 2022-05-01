@@ -80,7 +80,7 @@ class Command(CertCommandMixin, BinaryCommand):
         else:
             try:
                 san = cert.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-                self.print_extension(san)  # type: ignore[arg-type]
+                self.print_extension(san)
             except x509.ExtensionNotFound:
                 pass
 

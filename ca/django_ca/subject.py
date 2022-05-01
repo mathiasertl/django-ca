@@ -80,11 +80,11 @@ class Subject:
         if subject is None:
             iterable = []
         elif isinstance(subject, str):
-            iterable = [(n.oid, n.value) for n in parse_name_x509(subject)]
+            iterable = [(n.oid, n.value) for n in parse_name_x509(subject)]  # type: ignore[misc]
         elif isinstance(subject, abc.Mapping):
             iterable = subject.items()
         elif isinstance(subject, x509.Name):
-            iterable = [(n.oid, n.value) for n in subject]
+            iterable = [(n.oid, n.value) for n in subject]  # type: ignore[misc]
         elif isinstance(subject, abc.Iterable):
             # TODO: cast should not be necessary, but mypy infers the top-level Union here
             iterable = cast(
@@ -239,9 +239,9 @@ class Subject:
 
         # Convert str and x509.Name to plain iterables first
         if isinstance(e, str):
-            e = [(n.oid, n.value) for n in parse_name_x509(e)]
+            e = [(n.oid, n.value) for n in parse_name_x509(e)]  # type: ignore[misc]
         elif isinstance(e, x509.Name):
-            e = [(n.oid, n.value) for n in e]
+            e = [(n.oid, n.value) for n in e]  # type: ignore[misc]
 
         if isinstance(e, Subject):
             self._data.update(e._data)  # pylint: disable=protected-access

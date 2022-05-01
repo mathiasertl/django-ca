@@ -65,8 +65,8 @@ class SupportsLessThan(Protocol):
 CRLExtensionTypeTypeVar = TypeVar("CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL)
 
 PrivateKeyTypes = Union[
-    rsa.RSAPrivateKey,
     dsa.DSAPrivateKey,
+    rsa.RSAPrivateKey,
     ec.EllipticCurvePrivateKey,
     ed25519.Ed25519PrivateKey,
 ]

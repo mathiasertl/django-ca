@@ -43,12 +43,12 @@ from acme import messages
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import ed448
 from cryptography.hazmat.primitives.asymmetric import x448
 from cryptography.hazmat.primitives.asymmetric import x25519
-from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.hazmat.primitives.serialization import PrivateFormat
 from cryptography.hazmat.primitives.serialization import PublicFormat
@@ -126,6 +126,7 @@ from .typehints import Literal
 from .typehints import ParsableHash
 from .typehints import ParsableKeyType
 from .typehints import ParsableValue
+from .typehints import PrivateKeyTypes
 from .typehints import SerializedValue
 from .utils import bytes_to_hex
 from .utils import ca_storage
@@ -144,6 +145,13 @@ from .utils import read_file
 from .utils import validate_key_parameters
 
 log = logging.getLogger(__name__)
+
+_UNSUPPORTED_PRIVATE_KEY_TYPES = (
+    dh.DHPrivateKey,
+    ed448.Ed448PrivateKey,
+    x25519.X25519PrivateKey,
+    x448.X448PrivateKey,
+)
 
 
 def acme_slug() -> str:
@@ -346,7 +354,7 @@ class X509CertMixin(DjangoCAModel):
         """
         self.pub = LazyCertificate(value)
         self.cn = next(  # pylint: disable=invalid-name
-            (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME), ""
+            (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME), ""  # type: ignore
         )
         self.expires = self.not_after
         self.valid_from = self.not_before
@@ -815,7 +823,7 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    def key(self, password: Optional[Union[str, bytes]] = None) -> PRIVATE_KEY_TYPES:
+    def key(self, password: Optional[Union[str, bytes]] = None) -> PrivateKeyTypes:
         """The CAs private key as private key.
 
         .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
@@ -831,8 +839,8 @@ class CertificateAuthority(X509CertMixin):
             except ValueError as ex:
                 # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
                 raise ValueError("Could not decrypt private key - bad password?") from ex
-        if isinstance(self._key, ed448.Ed448PrivateKey):  # pragma: nocover
-            raise ValueError("Ed448 private keys are not supported.")
+        if isinstance(self._key, _UNSUPPORTED_PRIVATE_KEY_TYPES):  # pragma: no cover
+            raise ValueError("Private key of this type is not supported.")
 
         return self._key
 
@@ -1035,10 +1043,11 @@ class CertificateAuthority(X509CertMixin):
             ski = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
         except x509.ExtensionNotFound as ex:
             public_key = self.pub.loaded.public_key()
-            if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
+            if isinstance(public_key, _UNSUPPORTED_PRIVATE_KEY_TYPES):  # pragma: no cover
                 # COVERAGE NOTE: This does not happen in reality, we never generate keys of this type
-                raise TypeError("Cannot get AuthorityKeyIdentifier for X25519 or X448 keys.") from ex
-            return x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
+                raise TypeError("Cannot get AuthorityKeyIdentifier from this private key type.") from ex
+            # TYPE NOTE: mypy does not currently recognize isinstance() check above
+            return x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)  # type: ignore[arg-type]
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 

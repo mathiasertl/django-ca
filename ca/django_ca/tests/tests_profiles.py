@@ -216,8 +216,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 
@@ -250,11 +250,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.issuer_alternative_name(
-                    x509.UniformResourceIdentifier(ca.issuer_alt_name)
-                ),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.issuer_alternative_name(x509.UniformResourceIdentifier(ca.issuer_alt_name)),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 
@@ -285,10 +283,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                self.subject_key_identifier(cert),  # type: ignore[list-item]
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.basic_constraints(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                self.subject_key_identifier(cert),
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
             expect_defaults=False,
         )
@@ -310,9 +308,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.basic_constraints(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 
@@ -336,10 +334,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
-        self.assertExtensions(
-            cert,
-            [ca.get_authority_key_identifier_extension()],  # type: ignore[list-item]
-        )
+        self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
 
         # Create the same cert, but pass cn_in_san=True to create_cert
         with self.mockSignal(pre_issue_cert) as pre:
@@ -349,8 +344,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 
@@ -362,17 +357,15 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 csr,
                 subject=Subject({"CN": cname}),
                 cn_in_san=True,
-                extensions=[
-                    SubjectAlternativeName({"value": ["DNS:example.com"]}),
-                ],
+                extensions=[SubjectAlternativeName({"value": ["DNS:example.com"]})],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 
@@ -390,8 +383,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 
@@ -425,10 +418,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.basic_constraints(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
-                ski,  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
+                ski,
             ],
             expect_defaults=False,
         )
@@ -463,10 +456,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.basic_constraints(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
-                ski,  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
+                ski,
             ],
             expect_defaults=False,
         )
@@ -496,10 +489,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                self.subject_key_identifier(cert),  # type: ignore[list-item]
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.basic_constraints(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                self.subject_key_identifier(cert),
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
             expect_defaults=False,
         )
@@ -526,10 +519,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                ca.get_authority_key_identifier_extension(),  # type: ignore[list-item]
-                self.basic_constraints(),  # type: ignore[list-item]
-                self.ocsp_no_check(),  # type: ignore[list-item]
-                self.subject_alternative_name(x509.DNSName("example.com")),  # type: ignore[list-item]
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.ocsp_no_check(),
+                self.subject_alternative_name(x509.DNSName("example.com")),
             ],
         )
 

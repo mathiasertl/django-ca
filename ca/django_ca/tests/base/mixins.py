@@ -232,13 +232,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
 
         if idp is not None:  # pragma: no branch
-            extensions.append(idp)  # type: ignore[arg-type] # why is this not recognized?
+            extensions.append(idp)
         extensions.append(
             x509.Extension(
                 value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=ExtensionOID.CRL_NUMBER
             )
         )
-        extensions.append(signer.get_authority_key_identifier_extension())  # type: ignore[arg-type]
+        extensions.append(signer.get_authority_key_identifier_extension())
 
         if encoding == Encoding.PEM:
             parsed_crl = x509.load_pem_x509_crl(crl)
@@ -333,26 +333,24 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         if expect_defaults is True:
             if isinstance(cert, Certificate):
-                expected.setdefault(
-                    ExtensionOID.BASIC_CONSTRAINTS, self.basic_constraints(ca=False)  # type: ignore[arg-type]
-                )
+                expected.setdefault(ExtensionOID.BASIC_CONSTRAINTS, self.basic_constraints(ca=False))
             if signer is not None:  # pragma: no branch
                 expected.setdefault(
                     ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
-                    signer.get_authority_key_identifier_extension(),  # type: ignore[arg-type]
+                    signer.get_authority_key_identifier_extension(),
                 )
 
                 if isinstance(cert, Certificate) and signer.crl_url:
                     full_name = [parse_general_name(name) for name in signer.crl_url.split()]
                     expected.setdefault(
                         ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                        self.crl_distribution_points(full_name=full_name),  # type: ignore[arg-type]
+                        self.crl_distribution_points(full_name=full_name),
                     )
 
                 if isinstance(cert, Certificate):
                     aia = signer.get_authority_information_access_extension()
                     if aia:  # pragma: no branch
-                        expected.setdefault(aia.oid, aia)  # type: ignore[arg-type]
+                        expected.setdefault(aia.oid, aia)
 
             ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
             expected.setdefault(

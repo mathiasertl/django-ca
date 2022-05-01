@@ -189,10 +189,10 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         tls_feature = self.tls_feature(x509.TLSFeatureType.status_request)
         name_constraints = self.name_constraints(permitted=[x509.DNSName(".com")])
         extensions: typing.List[x509.Extension[x509.ExtensionType]] = [
-            tls_feature,  # type: ignore[list-item]
-            self.ocsp_no_check(),  # type: ignore[list-item]
-            name_constraints,  # type: ignore[list-item]
-            self.precert_poison(),  # type: ignore[list-item]
+            tls_feature,
+            self.ocsp_no_check(),
+            name_constraints,
+            self.precert_poison(),
         ]
 
         with self.assertCreateCASignals():
@@ -201,8 +201,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.subject, subject)
 
         expected = extensions + [
-            self.basic_constraints(ca=True),  # type: ignore[list-item]
-            self.key_usage(crl_sign=True, key_cert_sign=True),  # type: ignore[list-item]
+            self.basic_constraints(ca=True),
+            self.key_usage(crl_sign=True, key_cert_sign=True),
         ]
         self.assertExtensions(ca, expected)
 
@@ -234,11 +234,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             ca,
             [
-                self.basic_constraints(ca=True),  # type: ignore[list-item]
-                self.key_usage(crl_sign=True, key_cert_sign=True),  # type: ignore[list-item]
-                self.name_constraints(
-                    permitted=[x509.DNSName(".com")], critical=True  # type: ignore[list-item]
-                ),
+                self.basic_constraints(ca=True),
+                self.key_usage(crl_sign=True, key_cert_sign=True),
+                self.name_constraints(permitted=[x509.DNSName(".com")], critical=True),
             ],
         )
 
@@ -251,11 +249,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             ca,
             [
-                self.basic_constraints(ca=True),  # type: ignore[list-item]
-                self.key_usage(crl_sign=True, key_cert_sign=True),  # type: ignore[list-item]
-                self.name_constraints(
-                    permitted=[x509.DNSName(".com")], critical=True
-                ),  # type: ignore[list-item]
+                self.basic_constraints(ca=True),
+                self.key_usage(crl_sign=True, key_cert_sign=True),
+                self.name_constraints(permitted=[x509.DNSName(".com")], critical=True),
             ],
         )
 
@@ -363,9 +359,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
         self.assertEqual(cert.subject, x509_name(subject))
-        self.assertExtensions(
-            cert, [self.subject_alternative_name(x509.DNSName("example.com"))]  # type: ignore[list-item]
-        )
+        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName("example.com"))])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_explicit_profile(self) -> None:
@@ -377,9 +371,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca, self.csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
         self.assertEqual(cert.subject, x509_name(subject))
-        self.assertExtensions(
-            cert, [self.subject_alternative_name(x509.DNSName("example.com"))]  # type: ignore[list-item]
-        )
+        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName("example.com"))])
 
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:

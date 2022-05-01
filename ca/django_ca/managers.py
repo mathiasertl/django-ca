@@ -385,24 +385,15 @@ class CertificateAuthorityManager(
 
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
-            # TYPE NOTE: This seems to be a false positive
-            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])  # type: ignore[list-item]
+            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
 
         # Handle old types for subject
         _subject_warning = f"Passing a {subject.__class__.__name__} as subject is deprecated"
         if isinstance(subject, Subject):
-            warnings.warn(
-                _subject_warning,
-                category=RemovedInDjangoCA122Warning,
-                stacklevel=1,
-            )
+            warnings.warn(_subject_warning, category=RemovedInDjangoCA122Warning, stacklevel=1)
             subject = subject.name
         elif not isinstance(subject, x509.Name):
-            warnings.warn(
-                _subject_warning,
-                category=RemovedInDjangoCA122Warning,
-                stacklevel=1,
-            )
+            warnings.warn(_subject_warning, category=RemovedInDjangoCA122Warning, stacklevel=1)
             subject = sort_name(x509_name(subject))
 
         # Normalize extensions to django_ca.extensions.Extension subclasses

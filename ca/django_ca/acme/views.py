@@ -804,8 +804,11 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
 
             # We allow a client setting a CommonName, but it *must* be part of the order.
             common_name = next((attr for attr in csr.subject if attr.oid == NameOID.COMMON_NAME), None)
-            if common_name is not None and x509.DNSName(common_name.value) not in names_from_order:
-                raise AcmeBadCSR(message="CommonName was not in order.")
+            if common_name is not None:
+                if isinstance(common_name.value, bytes):  # pragma: no cover
+                    raise AcmeBadCSR(message="CommonName was not in order.")
+                if x509.DNSName(common_name.value) not in names_from_order:
+                    raise AcmeBadCSR(message="CommonName was not in order.")
 
         try:
             names_from_csr: Set[x509.Name] = set(
