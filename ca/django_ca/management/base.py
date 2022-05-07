@@ -20,6 +20,8 @@ import sys
 import typing
 from datetime import timedelta
 
+from cryptography import x509
+
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -29,7 +31,6 @@ from django.utils import timezone
 from .. import ca_settings
 from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
-from ..extensions import SubjectAlternativeName
 from ..extensions import TLSFeature
 from ..models import CertificateAuthority
 from ..utils import SUBJECT_FIELDS
@@ -173,21 +174,12 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: typing.Set[
-        typing.Type[
-            typing.Union[
-                TLSFeature,
-                SubjectAlternativeName,
-                KeyUsage,
-                ExtendedKeyUsage,
-            ]
-        ]
-    ] = {
-        SubjectAlternativeName,
+    sign_extensions: typing.Set[typing.Type[typing.Union[TLSFeature, KeyUsage, ExtendedKeyUsage]]] = {
         KeyUsage,
         ExtendedKeyUsage,
         TLSFeature,
     }
+    cg_sign_extensions: typing.Tuple[typing.Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName,)
     subject_help = ""  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> None:
@@ -208,7 +200,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             "--alt",
             metavar="DOMAIN",
             action=actions.AlternativeNameAction,
-            extension=SubjectAlternativeName,
+            extension_type=x509.SubjectAlternativeName,
             help="Add a subjectAltName to the certificate (may be given multiple times)",
         )
         parser.add_argument(

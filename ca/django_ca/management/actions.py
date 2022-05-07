@@ -29,17 +29,20 @@ from django.core.validators import URLValidator
 
 from .. import ca_settings
 from ..constants import ReasonFlags
+from ..extensions import OID_TO_KEY
 from ..models import Certificate
 from ..models import CertificateAuthority
 from ..subject import Subject
 from ..utils import is_power2
 from ..utils import parse_encoding
+from ..utils import parse_general_name
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
 from ..utils import split_str
 from ..utils import x509_name
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
+ExtensionType = typing.TypeVar("ExtensionType", bound=x509.ExtensionType)  # pylint: disable=invalid-name
 
 
 class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=abc.ABCMeta):
@@ -431,7 +434,18 @@ class OrderedSetExtensionAction(ExtensionAction):
         setattr(namespace, self.dest, ext)
 
 
-class AlternativeNameAction(ExtensionAction):
+class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType], metaclass=abc.ABCMeta):
+    """Base class for actions that return a cryptography ExtensionType instance."""
+
+    def __init__(self, extension_type: typing.Type[ExtensionType], **kwargs: typing.Any) -> None:
+        self.extension_type = extension_type
+        kwargs["dest"] = OID_TO_KEY[extension_type.oid]
+        super().__init__(**kwargs)
+
+
+class AlternativeNameAction(
+    CryptographyExtensionAction[typing.Union[x509.SubjectAlternativeName, x509.IssuerAlternativeName]]
+):
     """Action for AlternativeName extensions.
 
     Arguments using this action expect an extra ``extension`` kwarg with a subclass of
@@ -439,10 +453,11 @@ class AlternativeNameAction(ExtensionAction):
 
     >>> from django_ca.extensions import SubjectAlternativeName
     >>> parser.add_argument('--san', action=AlternativeNameAction,
-    ...                     extension=SubjectAlternativeName)  # doctest: +ELLIPSIS
+    ...                     extension_type=x509.SubjectAlternativeName)  # doctest: +ELLIPSIS
     AlternativeNameAction(...)
-    >>> parser.parse_args(['--san', 'https://example.com'])
-    Namespace(subject_alternative_name=<SubjectAlternativeName: ['URI:https://example.com'], critical=False>)
+    >>> args = parser.parse_args(['--san', 'https://example.com'])
+    >>> args.subject_alternative_name
+    <SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>
     """
 
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
@@ -452,4 +467,12 @@ class AlternativeNameAction(ExtensionAction):
         values: str,
         option_string: typing.Optional[str] = None,
     ) -> None:
-        setattr(namespace, self.dest, self.extension({"value": [values]}))
+        ext_type = getattr(namespace, self.dest)
+        if ext_type is None:
+            names = []
+        else:
+            names = list(ext_type)
+
+        names.append(parse_general_name(values))
+        value = self.extension_type(general_names=names)
+        setattr(namespace, self.dest, value)

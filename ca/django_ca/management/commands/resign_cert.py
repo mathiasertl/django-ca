@@ -19,10 +19,14 @@
 import typing
 from datetime import timedelta
 
+from cryptography import x509
+
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from ... import ca_settings
+from ...extensions import OID_DEFAULT_CRITICAL
+from ...extensions import OID_TO_KEY
 from ...extensions import ExtendedKeyUsage
 from ...extensions import KeyUsage
 from ...extensions import SubjectAlternativeName
@@ -86,23 +90,28 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         else:
             tls_feature = options[TLSFeature.key]
 
-        if not options[SubjectAlternativeName.key]:
-            san = cert.subject_alternative_name
-        else:
-            san = options[SubjectAlternativeName.key]
-
         kwargs = {
             "algorithm": options["algorithm"],
             "expires": expires,
-            "extensions": [],
+            "extensions": {},
             "password": password,
             "subject": subject,
             "cn_in_san": False,  # we already copy the SAN/CN from the original cert
         }
 
-        for ext in [key_usage, ext_key_usage, tls_feature, san]:
+        for ext in [key_usage, ext_key_usage, tls_feature]:
             if ext is not None:
-                kwargs["extensions"].append(ext)
+                kwargs["extensions"][ext.key] = ext
+
+        if not options[OID_TO_KEY[SubjectAlternativeName.oid]]:
+            san = cert._x509_extensions.get(SubjectAlternativeName.oid)  # pylint: disable=protected-access
+        else:
+            san = x509.Extension(
+                oid=SubjectAlternativeName.oid,
+                critical=OID_DEFAULT_CRITICAL[SubjectAlternativeName.oid],
+                value=options[OID_TO_KEY[SubjectAlternativeName.oid]],
+            )
+        kwargs["extensions"][OID_TO_KEY[SubjectAlternativeName.oid]] = san
 
         if "CN" not in kwargs["subject"] and not san:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")

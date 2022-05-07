@@ -30,6 +30,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
+from ..extensions import OID_DEFAULT_CRITICAL
 from ..extensions import ExtendedKeyUsage
 from ..extensions import IssuerAlternativeName
 from ..extensions import KeyUsage
@@ -398,12 +399,58 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.key_usage, KeyUsage({"critical": True, "value": ["keyCertSign"]}))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
         self.assertEqual(
-            cert.subject_alternative_name,
-            SubjectAlternativeName({"value": ["URI:https://example.net", "DNS:example.com"]}),
+            cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
+            x509.Extension(
+                oid=x509.SubjectAlternativeName.oid,
+                critical=OID_DEFAULT_CRITICAL[x509.SubjectAlternativeName.oid],
+                value=x509.SubjectAlternativeName(
+                    [
+                        x509.UniformResourceIdentifier("https://example.net"),
+                        x509.DNSName("example.com"),
+                    ]
+                ),
+            ),
         )
         self.assertEqual(cert.tls_feature, TLSFeature({"value": ["OCSPMustStaple"]}))
         self.assertEqual(
             cert.issuer_alternative_name, IssuerAlternativeName({"value": [self.ca.issuer_alt_name]})
+        )
+
+    @override_tmpcadir()
+    def test_multiple_sans(self) -> None:
+        """Test passing multiple SubjectAlternativeName instances."""
+
+        stdin = self.csr_pem.encode()
+        cmdline = [
+            "sign_cert",
+            f"--subject={Subject([('CN', 'example.com')])}",
+            f"--ca={self.ca.serial}",
+            "--alt=URI:https://example.net",
+            "--alt=DNS:example.org",
+        ]
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(stderr, "")
+
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
+        self.assertSubject(cert.pub.loaded, [("CN", "example.com")])
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
+        self.assertEqual(
+            cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
+            x509.Extension(
+                oid=x509.SubjectAlternativeName.oid,
+                critical=OID_DEFAULT_CRITICAL[x509.SubjectAlternativeName.oid],
+                value=x509.SubjectAlternativeName(
+                    [
+                        x509.UniformResourceIdentifier("https://example.net"),
+                        x509.DNSName("example.org"),
+                        x509.DNSName("example.com"),
+                    ]
+                ),
+            ),
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())

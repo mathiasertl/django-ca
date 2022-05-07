@@ -10,6 +10,9 @@ ChangeLog
 1.21.0 (TBR)
 ************
 
+* Add support for cryptography 37.0.
+* Fix issuing certificates with multiple SubjectAlternativeNames (fixes `issue 86
+  <https://github.com/mathiasertl/django-ca/issues/86>`_).
 * Dependencies for ACMEv2 are now non-optional and the ``acme`` extra is now empty (and will be removed in
   ``django-ca==1.23.0``).
 * Implement certificate revocation via ACMEv2.

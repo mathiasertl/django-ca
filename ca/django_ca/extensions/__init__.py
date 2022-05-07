@@ -16,12 +16,14 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
+import typing
 from typing import Any
 from typing import Dict
 from typing import Type
 
 from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
+from cryptography.x509.oid import ExtensionOID
 
 from .base import Extension
 from .extensions import AuthorityInformationAccess
@@ -67,6 +69,18 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {
 
 OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType, Any, Any]]] = {
     e.oid: e for e in KEY_TO_EXTENSION.values()
+}
+
+
+# TODO: Validate completeness of these
+OID_DEFAULT_CRITICAL: typing.Dict[x509.ObjectIdentifier, bool] = {
+    ExtensionOID.ISSUER_ALTERNATIVE_NAME: False,
+    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: False,
+}
+
+OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
+    ExtensionOID.ISSUER_ALTERNATIVE_NAME: "issuer_alternative_name",
+    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
 }
 
 

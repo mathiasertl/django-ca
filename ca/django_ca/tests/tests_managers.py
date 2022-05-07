@@ -29,6 +29,7 @@ from ..deprecation import RemovedInDjangoCA122Warning
 from ..deprecation import RemovedInDjangoCA123Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import CRLDistributionPoints
+from ..extensions import IssuerAlternativeName
 from ..extensions import NameConstraints
 from ..extensions import SubjectAlternativeName
 from ..models import Certificate
@@ -287,6 +288,25 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             CertificateAuthority.objects.init("ca3", subject, algorithm="SHA256")  # type: ignore[arg-type]
         ca3 = CertificateAuthority.objects.get(name="ca3")
         self.assertIsInstance(ca3.algorithm, hashes.SHA256)
+
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA123Warning,
+            r"^Passing str for issuer_alt_name is deprecated and will be removed in django ca 1\.23\.$",
+        ):
+            CertificateAuthority.objects.init(
+                "ca4", subject, issuer_alt_name="https://example.com"  # type: ignore[arg-type]
+            )
+        ca3 = CertificateAuthority.objects.get(name="ca4")
+        self.assertEqual(ca3.issuer_alt_name, "URI:https://example.com")
+
+        ian = IssuerAlternativeName({"value": ["https://example.net"]})
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA123Warning,
+            r"^Passing IssuerAlternativeName for issuer_alt_name is deprecated and will be removed in django ca 1\.23\.$",  # NOQA: E501
+        ):
+            CertificateAuthority.objects.init("ca5", subject, issuer_alt_name=ian)  # type: ignore[arg-type]
+        ca3 = CertificateAuthority.objects.get(name="ca5")
+        self.assertEqual(ca3.issuer_alt_name, "URI:https://example.net")
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), CA_DEFAULT_CA=certs["child"]["serial"])

@@ -18,11 +18,14 @@
 
 import typing
 
+from cryptography import x509
+
 from django.core.management.base import CommandParser
 
 from ... import ca_settings
-from ...extensions import IssuerAlternativeName
+from ...extensions import OID_TO_KEY
 from ...models import CertificateAuthority
+from ...utils import format_general_name
 from ..base import BaseCommand
 from ..mixins import CertificateAuthorityDetailMixin
 
@@ -53,8 +56,9 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     def handle(self, ca: CertificateAuthority, **options: typing.Any) -> None:  # type: ignore[override]
         if options["issuer_url"] is not None:
             ca.issuer_url = options["issuer_url"]
-        if options[IssuerAlternativeName.key]:
-            ca.issuer_alt_name = ",".join(options[IssuerAlternativeName.key])
+        if options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]:
+            ian = options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]
+            ca.issuer_alt_name = ",".join([format_general_name(name) for name in ian])
         if options["ocsp_url"] is not None:
             ca.ocsp_url = options["ocsp_url"]
         if options["crl_url"] is not None:

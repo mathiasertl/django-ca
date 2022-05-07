@@ -44,6 +44,8 @@ from . import ca_settings
 from .deprecation import RemovedInDjangoCA122Warning
 from .deprecation import RemovedInDjangoCA123Warning
 from .deprecation import deprecate_argument
+from .deprecation import deprecate_type
+from .extensions import OID_DEFAULT_CRITICAL
 from .extensions import Extension
 from .extensions import IssuerAlternativeName
 from .extensions import NameConstraints
@@ -60,10 +62,12 @@ from .typehints import Expires
 from .typehints import ParsableExtension
 from .typehints import ParsableKeyType
 from .utils import ca_storage
+from .utils import format_general_name
 from .utils import generate_private_key
 from .utils import get_cert_builder
 from .utils import int_to_hex
 from .utils import parse_expires
+from .utils import parse_general_name
 from .utils import parse_hash_algorithm
 from .utils import sort_name
 from .utils import validate_hostname
@@ -218,6 +222,7 @@ class CertificateAuthorityManager(
             ...
 
     @deprecate_argument("name_constraints", RemovedInDjangoCA123Warning)
+    @deprecate_type("issuer_alt_name", (str, IssuerAlternativeName), RemovedInDjangoCA123Warning)
     def init(
         self,
         name: str,
@@ -228,7 +233,7 @@ class CertificateAuthorityManager(
         default_hostname: Optional[Union[bool, str]] = None,
         pathlen: Optional[int] = None,
         issuer_url: Optional[str] = None,
-        issuer_alt_name: Union[str, IssuerAlternativeName] = "",
+        issuer_alt_name: typing.Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         crl_url: Optional[Iterable[str]] = None,
         ocsp_url: Optional[str] = None,
         ca_issuer_url: Optional[str] = None,
@@ -266,7 +271,11 @@ class CertificateAuthorityManager(
              the `permitted_subtrees` and `excluded_subtrees` parameter instead.
            * Passing  ``django_ca.extensions.Extension`` instance to `extra_extensions` is now deprecated. The
              feature will be removed in ``django_ca==1.23``. Pass a ``x509.Extension`` instance instead.
-
+           * The `issuer_alt_name` now accepts a
+             :py:class:`~cg:cryptography.x509.Extension` with a
+             :py:class:`~cg:cryptography.x509.IssuerAlternativeName` value, passing a `str` or
+             ``django_ca.extensions.IssuerAlternativeName`` is deprecated and will be removed in
+             ``django_ca==1.23``.
 
         Parameters
         ----------
@@ -292,10 +301,9 @@ class CertificateAuthorityManager(
             extension.
         issuer_url : str
             URL for the DER/ASN1 formatted certificate that is signing certificates.
-        issuer_alt_name : :py:class:`~django_ca.extensions.IssuerAlternativeName` or str, optional
-            IssuerAlternativeName used when signing certificates. If the value is not an instance of
-            :py:class:`~django_ca.extensions.IssuerAlternativeName`, it will be passed as argument to
-            the constructor of the class.
+        issuer_alt_name : :py:class:`~cg:cryptography.x509.Extension`, optional
+            IssuerAlternativeName used when signing certificates.  The value of the extension must be an
+            :py:class:`~cg:cryptography.x509.IssuerAlternativeName` instance.
         crl_url : list of str, optional
             CRL URLs used for certificates signed by this CA.
         ocsp_url : str, optional
@@ -397,8 +405,15 @@ class CertificateAuthorityManager(
             subject = sort_name(x509_name(subject))
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
-        if issuer_alt_name and not isinstance(issuer_alt_name, IssuerAlternativeName):
-            issuer_alt_name = IssuerAlternativeName({"value": [issuer_alt_name]})
+        if isinstance(issuer_alt_name, str):
+            issuer_alt_name = x509.Extension(
+                oid=x509.IssuerAlternativeName.oid,
+                critical=OID_DEFAULT_CRITICAL[x509.IssuerAlternativeName.oid],
+                value=x509.IssuerAlternativeName(general_names=[parse_general_name(issuer_alt_name)]),
+            )
+        elif isinstance(issuer_alt_name, IssuerAlternativeName):
+            issuer_alt_name = issuer_alt_name.as_extension()
+
         if crl_url is None:
             crl_url = []
 
@@ -525,10 +540,15 @@ class CertificateAuthorityManager(
         # Normalize extensions for create()
         crl_url = "\n".join(crl_url)
 
+        # Convert arguments for database storage
+        serialized_ian = ""
+        if issuer_alt_name is not None:
+            serialized_ian = ",".join(format_general_name(name) for name in issuer_alt_name.value)
+
         ca = self.model(
             name=name,
             issuer_url=issuer_url,
-            issuer_alt_name=",".join(issuer_alt_name),
+            issuer_alt_name=serialized_ian,
             ocsp_url=ocsp_url,
             crl_url=crl_url,
             parent=parent,

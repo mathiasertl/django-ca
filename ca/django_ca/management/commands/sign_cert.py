@@ -27,8 +27,9 @@ from django.core.management.base import CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
+from ...extensions import OID_DEFAULT_CRITICAL
+from ...extensions import OID_TO_KEY
 from ...extensions import Extension
-from ...extensions import SubjectAlternativeName
 from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import CertificateAuthority
@@ -126,13 +127,25 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # get extensions based on profiles
-        extensions: typing.List[Extension[x509.ExtensionType, typing.Any, typing.Any]] = []
+        extensions: typing.Dict[
+            str,
+            typing.Union[
+                Extension[x509.ExtensionType, typing.Any, typing.Any], x509.Extension[x509.ExtensionType]
+            ],
+        ] = {}
 
         for ext in self.sign_extensions:
             if options[ext.key]:
-                extensions.append(options[ext.key])
+                extensions[ext.key] = options[ext.key]
+        for cg_ext in self.cg_sign_extensions:
+            ext_key = OID_TO_KEY[cg_ext.oid]
+            if options[ext_key]:
+                ext_type = options[ext_key]
+                extensions[ext_key] = x509.Extension(
+                    critical=OID_DEFAULT_CRITICAL[cg_ext.oid], value=ext_type, oid=cg_ext.oid
+                )
 
-        if "CN" not in subject and not options[SubjectAlternativeName.key]:
+        if "CN" not in subject and not options[OID_TO_KEY[x509.SubjectAlternativeName.oid]]:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Read the CSR

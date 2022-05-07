@@ -26,7 +26,6 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from .. import ca_settings
-from ..extensions import IssuerAlternativeName
 from ..extensions import get_extension_name
 from ..extensions.utils import extension_as_text
 from ..models import CertificateAuthority
@@ -240,7 +239,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--issuer-alt-name",
             metavar="URL",
             action=actions.AlternativeNameAction,
-            extension=IssuerAlternativeName,
+            extension_type=x509.IssuerAlternativeName,
             help="URL to the homepage of your CA.",
         )
         group.add_argument(

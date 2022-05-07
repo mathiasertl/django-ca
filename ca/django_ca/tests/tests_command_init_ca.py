@@ -246,6 +246,31 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertTrue(ca.acme_requires_contact)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_multiple_ians(self) -> None:
+        """Test that we can set multiple IssuerAlternativeName values."""
+        name = "test_multiple_ians"
+        with self.assertCreateCASignals() as (pre, post):
+            out, err = self.cmd_e2e(
+                [
+                    "init_ca",
+                    "--issuer-alt-name=example.com",
+                    "--issuer-alt-name=https://example.com",
+                    name,
+                    f"/CN={name}",
+                ]
+            )
+        self.assertTrue(pre.called)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+        ca.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(ca)
+        self.assertSignature([ca], ca)
+        self.assertEqual(ca.issuer_alt_name, "DNS:example.com,URI:https://example.com")
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
 
@@ -280,6 +305,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test creating an ECC CA."""
 
         name = "test_ecc"
+        ian = x509.IssuerAlternativeName([x509.UniformResourceIdentifier("http://ian.ca.example.com")])
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name=name,
@@ -289,7 +315,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 expires=self.expires(720),
                 pathlen=3,
                 issuer_url="http://issuer.ca.example.com",
-                issuer_alt_name={"value": ["http://ian.ca.example.com"]},
+                issuer_alt_name=ian,
                 crl_url=["http://crl.example.com"],
                 ocsp_url="http://ocsp.example.com",
                 ca_issuer_url="http://ca.issuer.ca.example.com",

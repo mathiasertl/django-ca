@@ -74,3 +74,31 @@ def deprecate_argument(
         return typing.cast(F, wrapper)
 
     return decorator_deprecate
+
+
+def deprecate_type(
+    arg: str,
+    types: typing.Union[typing.Type[typing.Any], typing.Tuple[typing.Type[typing.Any], ...]],
+    category: DeprecationWarningType,
+    stacklevel: int = 2,
+) -> typing.Callable[[F], F]:
+    """Decorator to mark a type for an argument as deprecated."""
+
+    def decorator_deprecate(func: F) -> F:
+        @functools.wraps(func)
+        def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            sig = signature(func)
+            bound = sig.bind(*args, **kwargs)
+            if arg in bound.arguments and isinstance(bound.arguments.get(arg), types):
+                name = type(bound.arguments.get(arg)).__name__
+                warnings.warn(
+                    f"Passing {name} for {arg} is deprecated and will be removed in django ca {category.version}.",  # NOQA: E501
+                    category=category,
+                    stacklevel=stacklevel,
+                )
+
+            return func(*args, **kwargs)
+
+        return typing.cast(F, wrapper)
+
+    return decorator_deprecate

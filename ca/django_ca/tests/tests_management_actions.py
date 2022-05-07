@@ -33,6 +33,7 @@ from cryptography.x509.oid import NameOID
 from django.test import TestCase
 
 from ..constants import ReasonFlags
+from ..extensions import OID_TO_KEY
 from ..extensions import TLSFeature
 from ..management import actions
 from ..models import Certificate
@@ -77,6 +78,44 @@ class ParserTestCaseMixin(TestCaseMixin):
         output = buf.getvalue()
         self.assertEqual(output, expected)
         return output
+
+
+class AlternativeNameAction(ParserTestCaseMixin, TestCase):
+    """Test AlternativeNameAction."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument(
+            "--alt", action=actions.AlternativeNameAction, extension_type=x509.SubjectAlternativeName
+        )
+
+    def assertValue(  # pylint: disable=invalid-name
+        self, namespace: argparse.Namespace, value: typing.Any
+    ) -> None:
+        """Assert a given extension value."""
+
+        self.assertEqual(getattr(namespace, OID_TO_KEY[x509.SubjectAlternativeName.oid]), value)
+
+    def test_basic(self) -> None:
+        """Test basic functionality."""
+
+        namespace = self.parser.parse_args([])
+        self.assertValue(namespace, None)
+
+        namespace = self.parser.parse_args(["--alt", "example.com"])
+        self.assertValue(namespace, x509.SubjectAlternativeName([x509.DNSName("example.com")]))
+
+        namespace = self.parser.parse_args(["--alt", "example.com", "--alt", "https://example.net"])
+        self.assertValue(
+            namespace,
+            x509.SubjectAlternativeName(
+                [
+                    x509.DNSName("example.com"),
+                    x509.UniformResourceIdentifier("https://example.net"),
+                ]
+            ),
+        )
 
 
 class SubjectActionTestCase(ParserTestCaseMixin, TestCase):
