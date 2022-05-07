@@ -6,9 +6,9 @@ requires = ["setuptools>=45", "wheel"]
 # https://devguide.python.org/#status-of-python-branches
 python = ["3.7.13", "3.8.13", "3.9.11", "3.10.3"]
 # https://www.djangoproject.com/download/
-django = ["3.2.12", "4.0.3"]
-cryptography = ["35.0.0", "36.0.2"]
-acme = ["1.23.0","1.24.0", "1.25.0"]
+django = ["3.2.13", "4.0.4"]
+cryptography = ["35.0.0", "36.0.2", "37.0.1"]
+acme = ["1.23.0","1.24.0", "1.25.0", "1.26.0"]
 idna = ["3.2", "3.3"]
 josepy = ["1.12.0", "1.13.0"]
 

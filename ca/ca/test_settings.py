@@ -225,7 +225,7 @@ CA_ENABLE_ACME = True
 # Newest versions of software components.
 # NOTE: These values are validated by various release scripts
 NEWEST_PYTHON_VERSION = (3, 10)
-NEWEST_CRYPTOGRAPHY_VERSION = (36, 0)
+NEWEST_CRYPTOGRAPHY_VERSION = (37, 0)
 NEWEST_DJANGO_VERSION = (4, 0)
 
 # Determine if we're running on the respective newest versions
