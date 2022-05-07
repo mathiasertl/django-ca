@@ -65,7 +65,6 @@ from django.urls import reverse  # NOQA: E402
 from django_ca import ca_settings  # NOQA: E402
 from django_ca.extensions import OID_TO_EXTENSION  # NOQA: E402
 from django_ca.extensions import Extension  # NOQA: E402
-from django_ca.extensions.utils import PolicyInformation  # NOQA: E402
 from django_ca.models import Certificate  # NOQA: E402
 from django_ca.models import CertificateAuthority  # NOQA: E402
 from django_ca.profiles import profiles  # NOQA:  E402
