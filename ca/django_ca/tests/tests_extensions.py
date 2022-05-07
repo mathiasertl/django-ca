@@ -769,7 +769,7 @@ class ExtendedKeyUsageTestCase(
         for attr in [getattr(ExtendedKeyUsageOID, a) for a in dir(ExtendedKeyUsageOID) if a[0] != "_"]:
             if isinstance(attr, ObjectIdentifier):
                 # pylint: disable=protected-access; ok for a test case
-                self.assertIn(attr, ExtendedKeyUsage._CRYPTOGRAPHY_MAPPING_REVERSED)
+                self.assertIn(attr, ExtendedKeyUsage._CRYPTOGRAPHY_MAPPING_REVERSED, attr)
 
         # make sure we haven't forgotton any keys in the form selection
         self.assertEqual(

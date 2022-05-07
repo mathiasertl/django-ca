@@ -595,6 +595,7 @@ class ExtendedKeyUsage(
         ("smartcardLogon", "Smart card logon"),
         ("msKDC", "Kerberos Domain Controller"),
         ("ipsecEndSystem", "IPSec EndSystem"),
+        ("ipsecIKE", "IPSec Internet Key Exchange"),
         ("ipsecTunnel", "IPSec Tunnel"),
         ("ipsecUser", "IPSec User"),
         ("mdlDS", "mdlDS"),

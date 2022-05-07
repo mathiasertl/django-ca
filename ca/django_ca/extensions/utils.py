@@ -501,7 +501,13 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
 
 
-# TODO: validate completeness
+# ExtendedKeyUsageOID.IPSEC_IKE should be statically integrated into EXTENDED_KEY_USAGE_NAMES once support for
+# cryptography<37.0 is dropped.
+if hasattr(ExtendedKeyUsageOID, "IPSEC_IKE"):  # pragma: only cryptography>=37.0
+    _ipsec_ike_oid = ExtendedKeyUsageOID.IPSEC_IKE
+else:  # pragma: only cryptography<37.0
+    _ipsec_ike_oid = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.17")
+
 EXTENDED_KEY_USAGE_NAMES = {
     ExtendedKeyUsageOID.SERVER_AUTH: "serverAuth",
     ExtendedKeyUsageOID.CLIENT_AUTH: "clientAuth",
@@ -517,7 +523,9 @@ EXTENDED_KEY_USAGE_NAMES = {
     ExtendedKeyUsageOID.IPSEC_USER: "ipsecUser",
     ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
     ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
+    _ipsec_ike_oid: "ipsecIKE",
 }
+
 
 KEY_USAGE_NAMES = {
     "crl_sign": "cRLSign",
