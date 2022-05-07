@@ -283,13 +283,6 @@ certs["cloudflare_1"] = {
         "critical": False,
         "value": "05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2",
     },
-    "policy_texts": [
-        """Policy Identifier: 1.3.6.1.4.1.6449.1.2.2.7
-Policy Qualifiers:
-* https://secure.comodo.com/CPS""",
-        """Policy Identifier: 2.23.140.1.2.1
-No Policy Qualifiers""",
-    ],
     "certificate_policies": {
         "value": [
             {

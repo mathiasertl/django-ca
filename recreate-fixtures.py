@@ -333,7 +333,6 @@ def update_contrib(data, cert, name, filename):
 
     try:
         ext = cert.pub.loaded.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
-        cert_data["policy_texts"] = [PolicyInformation(p).as_text() for p in ext]
     except x509.ExtensionNotFound:
         pass
 
