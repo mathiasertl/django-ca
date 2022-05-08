@@ -18,6 +18,7 @@ import argparse
 import io
 import sys
 import typing
+from datetime import datetime
 from datetime import timedelta
 
 from cryptography import x509
@@ -33,6 +34,7 @@ from ..extensions import ExtendedKeyUsage
 from ..extensions import KeyUsage
 from ..extensions import TLSFeature
 from ..models import CertificateAuthority
+from ..profiles import Profile
 from ..utils import SUBJECT_FIELDS
 from . import actions
 from . import mixins
@@ -192,9 +194,8 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
 
         parser.add_argument(
             "--expires",
-            default=ca_settings.CA_DEFAULT_EXPIRES,
             action=actions.ExpiresAction,
-            help="Sign the certificate for DAYS days (default: %(default)s)",
+            help=f"Sign the certificate for DAYS days (default: {ca_settings.CA_DEFAULT_EXPIRES})",
         )
         parser.add_argument(
             "--alt",
@@ -256,13 +257,16 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     def test_options(  # pylint: disable=unused-argument
         self,
         ca: CertificateAuthority,
-        expires: timedelta,
+        expires: typing.Optional[typing.Union[datetime, timedelta]],
         password: typing.Optional[bytes],
+        profile: Profile,
         **options: typing.Any,
     ) -> None:
         """Additional tests for validity of some options."""
 
-        if ca.expires < timezone.now() + expires:
+        expires = profile.get_expires(expires)
+
+        if ca.expires < expires:
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
                 f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."

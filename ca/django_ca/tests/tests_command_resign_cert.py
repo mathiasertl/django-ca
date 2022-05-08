@@ -15,12 +15,14 @@
 
 import os
 import typing
+from datetime import timedelta
 from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
+from django.utils import timezone
 
 from freezegun import freeze_time
 
@@ -168,6 +170,45 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(new.tls_feature, TLSFeature({"critical": True, "value": tls_feature.split(",")[1:]}))
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
+    @override_tmpcadir(
+        CA_PROFILES={"server": {"expires": 200}, "webserver": {}},
+        CA_DEFAULT_EXPIRES=31,
+    )
+    def test_set_profile(self) -> None:
+        """Test getting the certificate from the profile."""
+
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial, "--server"])
+        self.assertEqual(stderr, "")
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
+        self.assertResigned(self.cert, new)
+        self.assertEqualExt(self.cert, new)
+
+    @override_tmpcadir(
+        CA_PROFILES={"server": {"expires": 200}, "webserver": {}},
+        CA_DEFAULT_EXPIRES=31,
+    )
+    def test_cert_profile(self) -> None:
+        """Test passing a profile."""
+
+        self.cert.profile = "server"
+        self.cert.save()
+
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial])
+        self.assertEqual(stderr, "")
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
+        self.assertResigned(self.cert, new)
+        self.assertEqualExt(self.cert, new)
+
     @override_tmpcadir()
     def test_to_file(self) -> None:
         """Test writing output to file."""
@@ -217,3 +258,17 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         # signals not called
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
+
+    @override_tmpcadir(
+        CA_PROFILES={"server": {"expires": 200}, "webserver": {}},
+        CA_DEFAULT_EXPIRES=31,
+    )
+    def test_missing_cert_profile(self) -> None:
+        """Test resigning a certificate with a profile that doesnt' exist.."""
+
+        self.cert.profile = "profile-gone"
+        self.cert.save()
+
+        msg_re = rf'^Profile "{self.cert.profile}" for original certificate is no longer defined, please set one via the command line\.$'  # NOQA: E501
+        with self.assertCommandError(msg_re):
+            self.cmd("resign_cert", self.cert.serial)

@@ -34,6 +34,7 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from ...extensions import KEY_TO_EXTENSION
+from ...profiles import profiles
 from ...typehints import PrivateKeyTypes
 from ...typehints import TypedDict
 from ...utils import add_colons
@@ -400,6 +401,10 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
         self.mock_ = patch.object(ca_storage, "_location", self.options["CA_DIR"])
         # pylint: enable=attribute-defined-outside-init
+
+        # Reset profiles, so that they are loaded again on first access
+        profiles._reset()  # pylint: disable=protected-access
+
         self.mock.start()
         self.mock_.start()
 

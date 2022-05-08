@@ -15,6 +15,7 @@
 
 import typing
 from copy import deepcopy
+from datetime import datetime
 from datetime import timedelta
 from threading import local
 from typing import TYPE_CHECKING
@@ -284,13 +285,11 @@ class Profile:
             subject = Subject(subject)  # NOTE: also accepts None
         cert_subject.update(subject)
 
-        if expires is None:
-            expires = self.expires
         if algorithm is None:
             algorithm = self.algorithm
 
         # Make sure that expires is a fixed timestamp
-        expires = parse_expires(expires)
+        expires = self.get_expires(expires)
 
         # Finally, update SAN with the current CN, if set and requested
         self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
@@ -332,6 +331,12 @@ class Profile:
     def copy(self) -> "Profile":
         """Create a deep copy of a profile."""
         return deepcopy(self)
+
+    def get_expires(self, expires: Expires) -> datetime:
+        """Get expiry for the given expiry timestamp."""
+        if expires is None:
+            expires = self.expires
+        return parse_expires(expires)
 
     def serialize(self) -> SerializedProfile:
         """Function to serialize a profile.

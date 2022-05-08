@@ -106,7 +106,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         self,
         ca: CertificateAuthority,
         subject: typing.Optional[Subject],
-        expires: timedelta,
+        expires: typing.Optional[timedelta],
         watch: typing.List[str],
         password: typing.Optional[bytes],
         cn_in_san: bool,
@@ -120,7 +120,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             raise CommandError("Certificate Authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
-        self.test_options(ca=ca, expires=expires, password=password, **options)
+        profile_obj = profiles[profile]
+        self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)
         subject = subject or Subject()
 
         # get list of watchers
@@ -170,9 +171,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             cert = Certificate.objects.create_cert(
                 ca,
                 csr,
-                profile=profiles[profile],
+                profile=profile_obj,
                 cn_in_san=cn_in_san,
-                # TODO: since expires option has a default, it currently overrides profile values
                 expires=expires,
                 extensions=extensions,
                 password=password,

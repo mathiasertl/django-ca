@@ -36,6 +36,8 @@ from ...management.base import BaseSignCommand
 from ...models import Certificate
 from ...models import CertificateAuthority
 from ...models import Watcher
+from ...profiles import Profile
+from ...profiles import profiles
 from ...subject import Subject
 
 
@@ -43,28 +45,47 @@ class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
     help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
 default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
-    add_extensions_help = "TODO"
-    subject_help = "TODO"
+    add_extensions_help = "Override certificate extensions."
+    subject_help = "Override subject for new certificate."
 
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_base_args(parser, no_default_ca=True)
+        self.add_profile(parser, """Use given profile to determine certificate expiry.""")
         parser.add_argument(
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
+
+    def get_profile(self, profile: typing.Optional[str], cert: Certificate) -> Profile:
+        """Get requested profile based on command line and given certificate."""
+        if profile is not None:
+            return profiles[profile]
+        if cert.profile == "":
+            return profiles[None]
+
+        try:
+            return profiles[cert.profile]
+        except KeyError:
+            # Occurs if the certificate specifies a profile which has since been removed from settings
+            raise CommandError(  # pylint: disable=raise-missing-from
+                f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
+            )
 
     def handle(  # type: ignore[override]
         self,
         cert: Certificate,
         ca: typing.Optional[CertificateAuthority],
         subject: typing.Optional[Subject],
-        expires: timedelta,
+        expires: typing.Optional[timedelta],
         watch: typing.List[str],
         password: typing.Optional[bytes],
+        profile: typing.Optional[str],
         **options: typing.Any,
     ) -> None:
         if not ca:
             ca = cert.ca
-        self.test_options(ca=ca, password=password, expires=expires, **options)
+
+        profile_obj = self.get_profile(profile, cert)
+        self.test_options(ca=ca, password=password, expires=expires, profile=profile_obj, **options)
 
         # get list of watchers
         if watch:
@@ -92,7 +113,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         kwargs = {
             "algorithm": options["algorithm"],
-            "expires": expires,
             "extensions": {},
             "password": password,
             "subject": subject,
@@ -117,7 +137,9 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
-            cert = Certificate.objects.create_cert(ca=ca, csr=cert.csr.loaded, **kwargs)
+            cert = Certificate.objects.create_cert(
+                ca=ca, csr=cert.csr.loaded, expires=expires, profile=profile_obj, **kwargs
+            )
         except Exception as ex:
             raise CommandError(ex) from ex
 

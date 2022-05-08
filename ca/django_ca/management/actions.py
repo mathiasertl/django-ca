@@ -154,10 +154,6 @@ class ExpiresAction(SingleValueAction[timedelta]):
     3
     """
 
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        kwargs.setdefault("default", ca_settings.CA_DEFAULT_EXPIRES)
-        super().__init__(*args, **kwargs)
-
     def parse_value(self, value: str) -> timedelta:
         """Parse the value for this action."""
         # NOTE: Making this a member of ExpiresAction causes an infinite loop for some reason
