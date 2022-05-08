@@ -35,7 +35,7 @@ from ..extensions import KeyUsage
 from ..extensions import TLSFeature
 from ..models import CertificateAuthority
 from ..profiles import Profile
-from ..utils import SUBJECT_FIELDS
+from ..utils import NAME_OID_MAPPINGS
 from . import actions
 from . import mixins
 
@@ -116,7 +116,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     @property
     def valid_subject_keys(self) -> str:
         """Return human-readable enumeration of valid subject keys (CN/...)."""
-        fields = [f'"{f}"' for f in SUBJECT_FIELDS]
+        fields = [f'"{f}"' for f in NAME_OID_MAPPINGS]
         return f"{', '.join(fields[:-1])} and {fields[-1]}"
 
     def add_subject(
