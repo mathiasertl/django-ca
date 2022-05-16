@@ -97,7 +97,7 @@ def test_initial_state(env):
 
 def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
     """Shortcut to create a certificate."""
-    common_name = f"cert.{ca.subject['CN']}"
+    common_name = f"cert.{ca.cn}"
     # NOTE: We don't care about the type of private key, as the CA only ever receives the CSR
     cert_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 

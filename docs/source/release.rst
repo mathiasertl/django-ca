@@ -48,11 +48,18 @@ Checkout the previous version and create a test data::
    $ python ca/manage.py migrate
    $ devscripts/create-testdata.py
 
-Then checkout the current master, run migrations and validate the test data::
+Then checkout the current main branch, run migrations and validate the test data::
 
-   $ git checkout master
+   $ git checkout main
    $ python ca/manage.py migrate
    $ python ca/manage.py makemigrations --check
+   $ devscripts/validate-testdata.py
+
+Finally, also make sure that ``devscripts/create-testdata.py`` also works for the current version::
+
+   $ rm -rf ca/db.sqlite3 ca/files
+   $ python ca/manage.py migrate
+   $ devscripts/create-testdata.py
    $ devscripts/validate-testdata.py
 
 Test admin interface
@@ -98,6 +105,8 @@ docker-compose
 
 * Follow :doc:`quickstart_docker_compose` to set up a CA (but skip the TLS parts - no CA will issue a
   certificate for localhost). Don't forget to add an admin user and set up CAs.
+* Add an updated :file:`docker-compose.yml` in `docs/source/_files/{version}/`` and add it to the table in
+  :file:`docs/source/quickstart_docker_compose.rst`.
 * Use this for your :file:`.env` file:
 
   .. code-block:: bash
@@ -151,6 +160,17 @@ Finally, verify that CRL and OCSP validation works:
    Response verify OK
    cert.pem: good
 
+Test that a restart works:
+
+.. code-block:: console
+
+   $ docker-compose down
+   $ docker-compose up
+   $ docker-compose exec backend manage list_cas
+   $ docker-compose exec backend manage list_certs
+
+... and validate that the admin interface still sees the intermediate CA.
+
 Finally, clean up the test setup:
 
 .. code-block:: console
@@ -190,7 +210,7 @@ Test update
 * Log into the admin interface and create some certificates.
 * Update to the newest version::
 
-     $ git checkout master
+     $ git checkout main
      $ DJANGO_CA_VERSION=latest docker-compose up -d
 
 * Finally, validate that data was correctly migrated::
@@ -277,7 +297,7 @@ After a release
 ***************
 
 * Update :file:`django_ca/deprecation.py` and remove code marked by such warnings.
-* Search for deprecation comments that could be removed:: 
+* Search for deprecation comments that could be removed::
 
       $ grep -A 3 -r 'deprecated:' docs/source/ ca/
 

@@ -79,6 +79,7 @@ bundled third-party Docker images.
 ====================================================== ===== =========== =====
 Version                                                Redis PostgreSQL  NGINX
 ====================================================== ===== =========== =====
+:download:`1.21.0 </_files/1.21.0/docker-compose.yml>` 6     12          1.20
 :download:`1.20.0 </_files/1.20.0/docker-compose.yml>` 6     12          1.20
 :download:`1.19.0 </_files/1.19.0/docker-compose.yml>` 6     12          1.20
 :download:`1.18.0 </_files/1.18.0/docker-compose.yml>` 6     12          1.18
@@ -294,11 +295,11 @@ Update
 
 .. include:: include/update_intro.rst
 
-.. WARNING:: 
+.. WARNING::
 
    **Updating from django-ca 1.18.0 or earlier?** Please see :ref:`update_119`.
 
-In general, updating django-ca is done by getting the :ref:`latest version of docker-compose.yml 
+In general, updating django-ca is done by getting the :ref:`latest version of docker-compose.yml
 <docker-compose.yml>` and then simply recreating the containers:
 
 .. code-block:: console
