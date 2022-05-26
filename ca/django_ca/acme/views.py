@@ -220,20 +220,22 @@ class AcmeGetNonceViewMixin:
     nonce_length = 32
     """Length of generated Nonces."""
 
+    def get_cache_key(self, nonce: str) -> str:
+        """Get the cache key for the given request and nonce."""
+        return f"acme-nonce-{self.kwargs['serial']}-{nonce}"
+
     def get_nonce(self) -> str:
         """Get a random Nonce and add it to the cache."""
 
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.json_util.encode_b64jose(data)
-        cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
-        cache.set(cache_key, 0)
+        cache.set(self.get_cache_key(nonce), 0)
         return nonce
 
     def validate_nonce(self, nonce: str) -> bool:
         """Validate that the given nonce was issued and was not used before."""
-        cache_key = f"acme-nonce-{self.kwargs['serial']}-{nonce}"
         try:
-            count = cache.incr(cache_key)
+            count = cache.incr(self.get_cache_key(nonce))
         except ValueError:
             # raised if cache_key is not set
             return False
