@@ -14,7 +14,7 @@ RUN addgroup -g 9000 -S django-ca && \
 
 FROM base as build
 RUN --mount=type=cache,target=/etc/apk/cache apk add \
-        build-base linux-headers libffi libffi-dev openssl-dev git \
+        build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 
 # Celery==5.2.3 requires setuptools<59.7 and installation fails with newer setuptools
@@ -25,13 +25,10 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install -r requirements/
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY setup.cfg setup.py pyproject.toml ./
 COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
-RUN --mount=type=cache,target=/root/.cache/pip/http SETUPTOOLS_SCM_PRETEND_VERSION=1 \
+RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
         -e .[celery,acme,redis,mysql,postgres]
-RUN --mount=type=cache,target=/root/.cache/pip/http \
-    --mount=source=.git,target=.git,type=bind \
-    pip install --no-warn-script-location --no-deps --prefix=/install -e .
 
 # Finally, copy sources
 COPY ca/ ca/
@@ -88,7 +85,7 @@ COPY dev.py common.py ./
 RUN cp -a /install/* /usr/local/
 ENV DJANGO_CA_SECRET_KEY=dummy
 COPY devscripts/test-imports.py ./
-RUN --mount=source=.git,target=.git,type=bind ./test-imports.py
+RUN ./test-imports.py
 
 # Remove files from working directory
 RUN rm dev.py
@@ -100,7 +97,7 @@ COPY --from=test /usr/src/django-ca/.coverage /tmp
 # final stage #
 ###############
 FROM base
-COPY --from=prepare /install /usr/local
+COPY --from=build /install /usr/local
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \
