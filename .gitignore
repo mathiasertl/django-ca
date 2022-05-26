@@ -4,6 +4,7 @@
 *.sqlite3
 *.sw[po]
 .idea/
+/*.crl
 /*.csr
 /*.key
 /*.pem
