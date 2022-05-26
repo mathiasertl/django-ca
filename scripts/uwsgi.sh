@@ -46,6 +46,7 @@ if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
 fi
 
 set -x
+python manage.py check --deploy
 python manage.py migrate --noinput
 python manage.py collectstatic --no-input &
 python manage.py cache_crls &

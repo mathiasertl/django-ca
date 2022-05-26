@@ -161,6 +161,14 @@ LIBRARY_LOG_LEVEL = "WARNING"
 
 SECRET_KEY_FILE = ""
 
+# Silence some HTTPS related Django checks by default as certificate authorities need to serve some URLs
+# (OCSP, CRL) via unencrypted HTTP. HSTS headers and SSL redirects should be handled by the HTTP server (e.g.
+# nginx) in front of the Django application server (e.g. uWSGI).
+SILENCED_SYSTEM_CHECKS = [
+    "security.W004",  # no SECURE_HSTS_SECONDS setting
+    "security.W008",  # no SECURE_SSL_REDIRECT setting
+]
+
 _skip_local_config = os.environ.get("DJANGO_CA_SKIP_LOCAL_CONFIG") == "1"
 
 # Secure CSRF cookie

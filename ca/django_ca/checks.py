@@ -26,6 +26,7 @@ from django.core.checks import Tags
 from django.core.checks import Warning  # pylint: disable=redefined-builtin
 from django.core.checks import register
 
+# List of cache backends that do not share the data between multiple worker processes
 _UNSUPPORTED_BACKENDS = (
     "django.core.cache.backends.filebased.FileBasedCache",
     "django.core.cache.backends.locmem.LocMemCache",
