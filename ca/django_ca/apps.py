@@ -24,3 +24,6 @@ class DjangoCAConfig(AppConfig):  # pylint: disable=missing-class-docstring
     default_auto_field = "django.db.models.BigAutoField"
     name = "django_ca"
     verbose_name = _("Certificate Authority")
+
+    def ready(self):
+        from . import checks  # NOQA: F401  # import already registers the checks
