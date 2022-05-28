@@ -10,6 +10,14 @@ ChangeLog
 1.21.0 (TBR)
 ************
 
+.. WARNING::
+
+   **docker-compose users:** 
+
+   * Update from 1.18 or earlier? See :ref:`the update notes <update_119>` or you might loose private keys!
+   * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
+     volumes.
+
 * Add support for cryptography 37.0.
 * Fix issuing certificates with multiple SubjectAlternativeNames (fixes `issue 86
   <https://github.com/mathiasertl/django-ca/issues/86>`_).
@@ -24,6 +32,7 @@ ChangeLog
   shared cache subsystem (see also: `issue 85 <https://github.com/mathiasertl/django-ca/issues/85>`_).
 * Fix generation of the SECRET_KEY setting when using docker and docker-compose.
 * Document supported environment variables and improve general settings configuration in :doc:`settings`.
+* Switch to named volumes in the docker-compose setup. Please see :ref:`update_121` for update instructions.
 * Stop testing individual versions of `idna <https://pypi.org/project/idna/>`_. django-ca uses a minimal
   subset of basic functions that are unlikely to break.
 

@@ -12,21 +12,80 @@ This document lists special update instructions when you update to a certain ver
 Update to 1.21.0 or later
 *************************
 
-Find out the name of the database container using :cmd:`docker-compose ps`. If your :file:`docker-compose.yml`
-is in a folder called ``django-ca``, it is usually called ``django-ca_db_1``:
+.. _update_121-docker-compose:
+
+docker-compose
+==============
+
+In the configuration of 1.20.0 and earlier, the PostgreSQL container does not store data on a named volume.
+This means that the database would be lost if the container is removed. This does **not** happen during the
+reboot of a server or during the normal upgrade procedure. None the less, it is still safer to use named
+volumes to store data, so the docker-compose setup starting with 1.21.0 uses named volumes for PostgreSQL (and
+also Redis).
+
+If you perform the normal update procedure, no data is lost, but you will receive a warning about the services
+using data from the previous container:
 
 .. code-block:: console
 
-   $ docker-compose ps
-   Name                       Command                  State                    Ports
-   --------------------------------------------------------------------------------------------------------
-   django-ca_backend_1     ./celery.sh -l debug             Up             8000/tcp
-   django-ca_cache_1       docker-entrypoint.sh redis ...   Up
-   django-ca_db_1          docker-entrypoint.sh postgres    Up
-   django-ca_frontend_1    /bin/sh -c ./uwsgi.sh            Up (healthy)
-   django-ca_webserver_1   /docker-entrypoint.sh /bin ...   Up             0.0.0.0:80->80/tcp,:::80->80/tcp
+   $ (django-ca) mertl@pcn97:~/git/mati/django-ca$ docker-compose up -d
+   Recreating django-ca_db_1 ...
+   Recreating django-ca_cache_1 ...
+   WARNING: Service "db" is using volume "/var/lib/postgresql/data" from the previous container. Host mapping
+   "django-ca_pgdata" has no effect. Remove the existing containers (with `docker-compo
+   se rm db`) to use the host volume mapping.
+   ...
+
+To switch to named volumes, create a database backup, remove and recreate the `db` container with the new
+configuration and import the backup again. While possible, these instructions do not backup Redis data, since
+it is only a cache.
+
+First, stop containers that might access the database:
+
+.. code-block:: console
+
+   $ docker-compose stop frontend
+   $ docker-compose stop backend
+
+Second, create a dump of the database (Note: if you use a different database name or username, adapt
+accordingly):
+
+.. code-block:: console
+
+   $ docker-compose exec db pg_dump -U postgres postgres > db.sql
+
+Third, you might want to check if :file:`db.sql` contains a valid database dump.
+
+Fourth, remove the containers:
+
+.. code-block:: console2yy
+
+   $ docker-compose rm -sf cache db
+
+Fifth, if you haven't already, update your :file:`docker-compose.yml`. To verify you have the named volumes,
+check that both the ``db`` and ``cache`` services have a ``volume`` with them. It does not matter if you have
+updated the file before performing the above steps.
+
+Sixth, start the ``db`` container again (it will be recreated) and import the dump.
+
+.. code-block:: console2
+
+   $ docker-compose up -d db
+   $ docker-compose exec -T db psql -U postgres postgres < db.sql
 
 
+Seventh, start all other containers:
+
+.. code-block:: console2
+
+   $ docker-compose up -d
+
+And finally, verify success - you should see your CAs:
+
+.. code-block:: console
+
+   $ docker-compose exec backend manage list_cas
+   ...
 
 .. _update_119:
 

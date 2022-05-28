@@ -5,6 +5,8 @@ services:
         networks:
             - cache
         restart: unless-stopped
+        volumes:
+           - redis:/data
     db:
         image: postgres:12-alpine
         environment:
@@ -17,6 +19,8 @@ services:
         networks:
             - database
         restart: unless-stopped
+        volumes:
+            - pgdata:/var/lib/postgresql/data
 
     backend:
         image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.20.0}
@@ -113,6 +117,8 @@ volumes:
     shared_ca_dir:
     ocsp_key_dir:
     nginx_config:
+    pgdata:
+    redis:
 
 networks:
     public:
