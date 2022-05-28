@@ -20,6 +20,8 @@ ChangeLog
 * Implement certificate revocation via ACMEv2.
 * The :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting should now be a tuple, not a
   dict. Support for using a ``dict`` will be removed in ``django-ca==1.23.0``.
+* Add deployment checks (and document them in the quickstart guides) for configurations that don't use a
+  shared cache subsystem (see also: `issue 85 <https://github.com/mathiasertl/django-ca/issues/85>`_).
 * Fix generation of the SECRET_KEY setting when using docker and docker-compose.
 * Document supported environment variables and improve general settings configuration in :doc:`settings`.
 * Stop testing individual versions of `idna <https://pypi.org/project/idna/>`_. django-ca uses a minimal
