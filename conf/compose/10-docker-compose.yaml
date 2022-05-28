@@ -14,6 +14,13 @@ DATABASES:
 
 CELERY_BROKER_URL: redis://cache:6379/0
 
+# Add security.W002 and security.W006 to the main setting, as nginx adds those headers
+SILENCED_SYSTEM_CHECKS:
+    - security.W002  # no XFrameOptionsMiddleware (header is set by nginx)
+    - security.W004  # no SECURE_HSTS_SECONDS setting
+    - security.W006  # no SECURE_CONTENT_TYPE_NOSNIFF setting (header is set by nginx)
+    - security.W008  # no SECURE_SSL_REDIRECT setting
+
 # Disable some security headers, because they are already added by NGINX
 # Disable X-Content-Type-Options
 SECURE_CONTENT_TYPE_NOSNIFF: false

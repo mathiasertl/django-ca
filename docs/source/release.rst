@@ -120,6 +120,18 @@ After starting the setup, first verify that you're running the correct version::
    $ docker-compose exec backend manage shell -c "import django_ca; print(django_ca.__version__)"
    $ docker-compose exec frontend manage shell -c "import django_ca; print(django_ca.__version__)"
 
+Do some basic sanity checking of the setup::
+
+   $ docker-compose exec backend manage check --deploy
+   $ docker-compose exec backend manage makemigrations --check
+   $ docker-compose exec frontend manage check --deploy
+   $ docker-compose exec frontend manage makemigrations --check
+
+Verify that the two secret keys match (also serves as checking if settings work properly)::
+
+   $ docker-compose exec backend manage shell -c "from django.conf import settings; print(settings.SECRET_KEY)"
+   $ docker-compose exec frontend manage shell -c "from django.conf import settings; print(settings.SECRET_KEY)"
+
 You should now be able to log in at http://localhost/admin. You are able to sign a certificate, but *only* for
 the "child" CA.
 

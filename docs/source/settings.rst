@@ -253,9 +253,12 @@ ACME_ORDER_VALIDITY
 Project settings
 ----------------
 
-The following additional settings are available if you use the full **django-ca** project (including if you
-use the Docker container). These settings are _not_ prefixed with ``CA_``, because they configure how Django
-itself works.
+Project settings are available if you use the full **django-ca** project (including if you use the Docker
+container or via docker-compose). The settings are _not_ prefixed with ``CA_``, because they configure how
+Django itself works.
+
+As any other setting, they can be set by using environment variables prefixed with ``DJANGO_CA_`` (Example: To
+set ``LOG_LEVEL``, set the ``DJANGO_CA_LOG_LEVEL`` environment variable).
 
 .. _settings-log-format:
 
@@ -279,3 +282,17 @@ LIBRARY_LOG_LEVEL
 
    The log level for all messages _except_ from **django-ca**.  This setting has no effect if you define the
    ``LOGGING`` setting.
+
+.. _settings-secret-key-file:
+
+SECRET_KEY_FILE
+   Default: ``"/var/lib/django-ca/secret_key"``
+
+   A path to a file that stores Djangos `SECRET_KEY
+   <https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY>`_. The setting is only used if
+   no ``SECRET_KEY`` is defined.
+
+   If you use Docker/docker-compose, the file is automatically generated with a random value on first startup.
+   You only have to use this setting if you want to specify a custom value for some reason. If you use
+   docker-compose, you should make sure that ``frontend`` and ``backend`` container have access to the same
+   file.

@@ -275,6 +275,16 @@ docker-compose (and verify that everything is running):
 By now, you should be able to see the admin interface (but not log in yet - you haven't created a user yet).
 Simply go to https://ca.example.com/admin/.
 
+Verify setup
+============
+
+You can run the deployment checks for your setup, which should not return any issues:
+
+.. code-block:: console
+
+   user@host:~/ca/$ docker-compose exec backend manage check --deploy
+   user@host:~/ca/$ docker-compose exec frontend manage check --deploy
+
 Create admin user and set up CAs
 ================================
 

@@ -10,7 +10,7 @@ if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
 fi
 
 DJANGO_CA_SECRET_KEY=${DJANGO_CA_SECRET_KEY:-}
-DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
+DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/secret_key}
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
     KEY_DIR=`dirname $DJANGO_CA_SECRET_KEY_FILE`
@@ -24,7 +24,7 @@ if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
         python <<EOF
 import random, string
 
-key = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(32))
+key = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(64))
 with open('${DJANGO_CA_SECRET_KEY_FILE}', 'w') as stream:
     stream.write(key)
 EOF
@@ -33,6 +33,8 @@ EOF
 
     # Export DJANGO_CA_SECRET_KEY_FILE so that django-ca itself will pick it up.
     export DJANGO_CA_SECRET_KEY_FILE
+else
+    export DJANGO_CA_SECRET_KEY
 fi
 
 if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then

@@ -100,7 +100,9 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = ""
+SECRET_KEY = os.environ.get("DJANGO_CA_SECRET_KEY", "")
+SECRET_KEY_FILE = ""
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -159,11 +161,10 @@ LOG_FORMAT = "[%(levelname)-8s %(asctime).19s] %(message)s"
 LOG_LEVEL = "WARNING"
 LIBRARY_LOG_LEVEL = "WARNING"
 
-SECRET_KEY_FILE = ""
-
 # Silence some HTTPS related Django checks by default as certificate authorities need to serve some URLs
 # (OCSP, CRL) via unencrypted HTTP. HSTS headers and SSL redirects should be handled by the HTTP server (e.g.
 # nginx) in front of the Django application server (e.g. uWSGI).
+# NOTE: Also update conf/compose/10-docker-compose.yaml if you update this setting.
 SILENCED_SYSTEM_CHECKS = [
     "security.W004",  # no SECURE_HSTS_SECONDS setting
     "security.W008",  # no SECURE_SSL_REDIRECT setting
@@ -271,7 +272,7 @@ if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:
 if not SECRET_KEY:
     # We generate SECRET_KEY on first invocation
     if not SECRET_KEY_FILE:
-        SECRET_KEY_FILE = os.environ.get("SECRET_KEY_FILE", "/var/lib/django-ca/secret_key")
+        SECRET_KEY_FILE = os.environ.get("DJANGO_CA_SECRET_KEY_FILE", "/var/lib/django-ca/secret_key")
 
     if SECRET_KEY_FILE and os.path.exists(SECRET_KEY_FILE):
         with open(SECRET_KEY_FILE) as stream:
