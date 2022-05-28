@@ -435,7 +435,8 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
 
         self.cert.profile = ""
         self.cert.save()
-        form = self.app.get(self.get_url(self.cert), user=self.user.username).form
+        response = self.app.get(self.get_url(self.cert), user=self.user.username)
+        form = response.forms["certificate_form"]
         form.submit().follow()
 
         resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).get()
@@ -444,7 +445,8 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     @override_tmpcadir()
     def test_webtest_basic(self) -> None:
         """Resign basic certificate."""
-        form = self.app.get(self.get_url(self.cert), user=self.user.username).form
+        response = self.app.get(self.get_url(self.cert), user=self.user.username)
+        form = response.forms["certificate_form"]
         response = form.submit().follow()
         self.assertSuccessfulRequest(response)
 
@@ -454,7 +456,8 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         cert = self.load_named_cert("all-extensions")
         cert.profile = "webserver"
         cert.save()
-        form = self.app.get(self.get_url(cert), user=self.user.username).form
+        response = self.app.get(self.get_url(cert), user=self.user.username)
+        form = response.forms["certificate_form"]
         response = form.submit().follow()
         self.assertSuccessfulRequest(response, obj=cert)
 
@@ -464,6 +467,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         cert = self.load_named_cert("no-extensions")
         cert.profile = "webserver"
         cert.save()
-        form = self.app.get(self.get_url(cert), user=self.user.username).form
+        response = self.app.get(self.get_url(cert), user=self.user.username)
+        form = response.forms["certificate_form"]
         response = form.submit().follow()
         self.assertSuccessfulRequest(response, obj=cert)

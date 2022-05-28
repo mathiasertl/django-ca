@@ -227,7 +227,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response["Content-Type"], "text/html")  # --> coming from Django
+        self.assertTrue(response["Content-Type"].startswith("text/html"))  # --> coming from Django
 
     def test_unknown_serial(self) -> None:
         """Test explicitly naming an unknown serial."""
@@ -402,7 +402,7 @@ class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
         """Test that CA_ENABLE_ACME=False means HTTP 404."""
         response = self.client.head(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response["Content-Type"], "text/html")  # --> coming from Django
+        self.assertTrue(response["Content-Type"].startswith("text/html"))  # --> coming from Django
 
     def test_get_nonce(self) -> None:
         """Test that getting multiple nonces returns unique nonces."""

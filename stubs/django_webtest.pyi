@@ -1,7 +1,5 @@
 import typing
 
-from django.http import HttpResponse
-
 
 class Form:
     def submit(self) -> "DjangoWebtestResponse":
@@ -14,6 +12,10 @@ class DjangoWebtestResponse:
 
     @property
     def form(self) -> Form:
+        ...
+
+    @property
+    def forms(self) -> typing.Dict[typing.Union[int, str], Form]:
         ...
 
 

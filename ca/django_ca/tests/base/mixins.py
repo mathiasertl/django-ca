@@ -39,6 +39,7 @@ from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
+import django
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
@@ -1022,7 +1023,11 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
 
     def assertCSS(self, response: HttpResponse, path: str) -> None:  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
-        css = f'<link href="{static(path)}" type="text/css" media="all" rel="stylesheet" />'
+
+        if django.VERSION[:2] <= (4, 0):  # pragma: only django<4.1
+            css = f'<link href="{static(path)}" type="text/css" media="all" rel="stylesheet" />'
+        else:  # pragma: only django>=4.1
+            css = f'<link href="{static(path)}" media="all" rel="stylesheet" />'
         self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
     def assertChangeResponse(  # pylint: disable=invalid-name,unused-argument # obj is unused

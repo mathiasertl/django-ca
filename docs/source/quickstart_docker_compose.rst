@@ -200,17 +200,16 @@ To add a configuration file, first add a volume mapping in your ``docker-compose
 ... and then simply add a file called ``localsettings.yaml`` in your current directory, for example:
 
 .. code-block:: yaml
-   :caption: localsettings.yaml
+   :caption: localsettings.yaml (example)
 
-   # Set a custom cache.
-   #
-   # NOTE: docker-compose uses a Redis cache, this here just serves as an example.
+   # (Example) Configure a custom SMTP server
    #
    # See also:
-   #     https://docs.djangoproject.com/en/4.0/ref/settings/#std:setting-CACHES
-   CACHES:
-      default:
-         BACKEND: django.core.cache.backends.locmem.LocMemCache
+   #		https://docs.djangoproject.com/en/4.0/topics/email/
+   SMTP_HOST: smtp.example.coma
+
+   # Set a custom default key size for new certificate authorities
+   CA_DEFAULT_KEY_SIZE: 2048
 
 
 Configuration using environment variables
