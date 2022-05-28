@@ -1,18 +1,53 @@
+###############
 Custom settings
-===============
+###############
 
-You can use any of the settings understood by `Django
-<https://docs.djangoproject.com/en/dev/ref/settings/>`_ and **django-ca**
-provides some of its own settings.
+You can use any of the settings understood by `Django <https://docs.djangoproject.com/en/dev/ref/settings/>`_
+and **django-ca** provides some of its own settings.
 
-From Djangos settings, you especially need to configure ``DATABASES``,
-``SECRET_KEY``, ``ALLOWED_HOSTS`` and ``STATIC_ROOT``.
+****************
+How to configure
+****************
 
-All settings used by **django-ca** start with the ``CA_`` prefix. Settings are
-also documented at :file:`ca/ca/localsettings.py.example`
-(`view on git
-<https://github.com/mathiasertl/django-ca/blob/master/ca/ca/localsettings.py.example>`_).
+If you use django-ca :doc:`as a Django app </quickstart_as_app>`, set settings normally using your
+:file:`settings.py` file (or whatever custom mechanism you have devised).
 
+If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart_from_source>`, or
+use :doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`), do *not* update the
+:file:`settings.py` file included with django-ca. Instead, use YAML files that django-ca loads (in
+alphabetical order) from a preconfigured directory. Please see the respective installation instructions for
+how to override settings.
+
+The django-ca project also lets you override simple string-like settings via environment variables. The
+environment variable name is the same as the setting but prefixed with ``DJANGO_CA_``. For example to set the 
+``CA_DIR`` setting, pass a ``DJANGO_CA_CA_DIR`` environment variable. Environment variables take precedence
+over the YAML configuration files above.
+
+The django-ca project also recognizes some environment variables to better integrate with other systems. See
+:ref:`settings-global-environment-variables` for more information.
+
+************************
+Required Django settings
+************************
+
+If you use django-ca :doc:`as a Django app </quickstart_as_app>` the only required settings are the settings
+any Django project requires anyway, most importantly ``DATABASES``, ``SECRET_KEY``, ``ALLOWED_HOSTS`` and
+``STATIC_ROOT``.
+
+If you :doc:`install from source </quickstart_from_source>`, you only have to set the ``DATABASES`` and
+``SECRET_KEY`` settings. The ``CA_DEFAULT_HOSTNAME`` also configures the ``ALLOWED_HOSTS`` setting if not set
+otherwise. Please see the `section on configuration <from-source-configuration>`_ for more information.
+
+If you use :doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`, there isn't really
+any standard Django setting you need to configure, as safe defaults are used. A safe value for ``SECRETS_KEY``
+is generated automatically, ``ALLOWED_HOSTS`` is set via ``CA_DEFAULT_HOSTNAME`` and the ``DATABASES`` setting
+is automatically populated with environment variables also used by the PostgreSQL/MySQL containers.
+
+******************
+django-ca settings
+******************
+
+All settings used by **django-ca** start with the ``CA_`` prefix.
 
 .. _settings-ca-crl-profiles:
 
@@ -35,17 +70,6 @@ CA_CRL_PROFILES
       }
 
    A set of CRLs to create using automated tasks.
-
-.. _settings-ca-custom-apps:
-
-CA_CUSTOM_APPS
-   Default: ``[]``
-
-   This setting is only used when you use **django-ca** as a standalone project to let you add custom apps to
-   the project, e.g. to add :doc:`signals`.
-
-   The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
-   override that setting instead.
 
 .. _settings-ca-default-ca:
 
@@ -152,18 +176,6 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory
    in the same location as your ``manage.py`` file.
 
-
-CA_ENABLE_CLICKJACKING_PROTECTION
-   Default: ``True``
-
-   This setting is only used if you use django-ca as a standalone project, e.g. when using it as a Docker
-   container.
-
-   Set to ``False`` to disable `Clickjacking protection
-   <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
-   ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
-   already set by the web server.
-
 .. _settings-ca-file-storage:
 
 CA_FILE_STORAGE
@@ -221,7 +233,7 @@ CA_USE_CELERY
 
 
 ACME settings
--------------
+=============
 
 .. WARNING::
 
@@ -250,8 +262,9 @@ ACME_ORDER_VALIDITY
 
    Default time a request for a new certificate ("order") remains valid.
 
+****************
 Project settings
-----------------
+****************
 
 Project settings are available if you use the full **django-ca** project (including if you use the Docker
 container or via docker-compose). The settings are _not_ prefixed with ``CA_``, because they configure how
@@ -259,6 +272,22 @@ Django itself works.
 
 As any other setting, they can be set by using environment variables prefixed with ``DJANGO_CA_`` (Example: To
 set ``LOG_LEVEL``, set the ``DJANGO_CA_LOG_LEVEL`` environment variable).
+
+.. _settings-ca-custom-apps:
+
+CA_CUSTOM_APPS
+   Default: ``[]``
+
+   The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
+   override that setting instead.
+
+CA_ENABLE_CLICKJACKING_PROTECTION
+   Default: ``True``
+
+   Set to ``False`` to disable `Clickjacking protection
+   <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
+   ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
+   already set by the web server.
 
 .. _settings-log-format:
 
@@ -296,3 +325,82 @@ SECRET_KEY_FILE
    You only have to use this setting if you want to specify a custom value for some reason. If you use
    docker-compose, you should make sure that ``frontend`` and ``backend`` container have access to the same
    file.
+
+.. _settings-global-environment-variables:
+
+****************************
+Global environment variables
+****************************
+
+If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart_from_source>` or use
+:doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`), you can also make use of some
+environment variables set by other systems.
+
+Configuration directory
+=======================
+
+The django-ca project reads custom settings from YAML files in a directory.
+
+All installation options already include a good default for this environment variable and examples in the
+quickstart guides assume it is not modified. It is documented here for completeness.
+
+DJANGO_CA_SETTINGS
+   The directory where to load YAML settings files. All files in the directory that have a ``.yaml`` suffix
+   will be read in alphabetical order.
+
+   Multiple directories can be separated by a colon (``":"``). In this case, django-ca will first read all
+   directories from the first directory, then from the second one, and so on.
+
+   The setting can also point to a single file, assumed to be a YAML file.
+
+   If not set, the value of the ``CONFIGURATION_DIRECTIVE`` environment variable (see
+   :ref:`settings-global-environment-variables-systemd`) is used as a fallback.
+
+
+Databases
+=========
+
+Both the `PostgreSQL <https://hub.docker.com/_/postgres>`_ and `MySQL <https://hub.docker.com/_/mysql>`_
+Docker containers get their database name and access credentials from environment variables and **django-ca**
+also recognizes these variables. 
+
+This is especially powerful when using docker-compose, where it is sufficient to set the ``POSTGRES_PASSWORD``
+environment variable to configure the database, all other options use default values that just work.
+
+But any other setup can also make use of this feature. For example, with plain Docker, you could just
+configure PostgreSQL:
+
+.. code-block:: yaml
+   :caption: localsettings.yaml
+
+   DATABASES:
+      default:
+         ENGINE: django.db.backends.postgresql_psycopg2
+
+... and then start your docker containers with (not a full example here):
+
+.. code-block:: console
+
+   $ docker run -e POSTGRES_PASSWORD=... postgres
+   $ docker run -e POSTGRES_PASSWORD=... mathiasertl/django-ca
+
+POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+   Access details to a PostgreSQL database.
+
+MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+   Access details to a MySQL database.
+
+.. _settings-global-environment-variables-systemd:
+
+SystemD
+=======
+
+The django-ca project also recognizes some environment variables set by SystemD.
+
+The SystemD services included in our :doc:`quickstart guide <quickstart_from_source>` already set this
+variable and further examples assume that you did not modify it. It is documented here for completeness.
+
+CONFIGURATION_DIRECTORY
+   If set, django-ca will load YAML configuration files from this directory. The variable is set by the
+   `ConfigurationDirectory=
+   <https://www.freedesktop.org/software/systemd/man/systemd.exec.html#RuntimeDirectory=>`_ directive.
