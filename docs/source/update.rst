@@ -6,6 +6,28 @@ Each :doc:`installation guide <install>` includes update instructions matching t
 
 This document lists special update instructions when you update to a certain version.
 
+.. _update_121:
+
+*************************
+Update to 1.21.0 or later
+*************************
+
+Find out the name of the database container using :cmd:`docker-compose ps`. If your :file:`docker-compose.yml`
+is in a folder called ``django-ca``, it is usually called ``django-ca_db_1``:
+
+.. code-block:: console
+
+   $ docker-compose ps
+   Name                       Command                  State                    Ports
+   --------------------------------------------------------------------------------------------------------
+   django-ca_backend_1     ./celery.sh -l debug             Up             8000/tcp
+   django-ca_cache_1       docker-entrypoint.sh redis ...   Up
+   django-ca_db_1          docker-entrypoint.sh postgres    Up
+   django-ca_frontend_1    /bin/sh -c ./uwsgi.sh            Up (healthy)
+   django-ca_webserver_1   /docker-entrypoint.sh /bin ...   Up             0.0.0.0:80->80/tcp,:::80->80/tcp
+
+
+
 .. _update_119:
 
 *************************
