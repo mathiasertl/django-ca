@@ -231,14 +231,16 @@ CA_USE_CELERY
    Set to ``True`` to force django-ca to use `Celery <https://docs.celeryproject.org>`_ or to ``False`` to
    force not using it. The default is to use Celery if it is installed.
 
+.. _settings-acme:
 
-ACME settings
-=============
+ACMEv2 settings
+===============
 
 .. WARNING::
 
-   ACME functionality is still in development and far from ready for any production environment. It is
-   disabled by default, and you have to set ``CA_ENABLE_ACME=True`` to enable the feature.
+   ACMEv2 functionality is still in development and is disabled by default. You have to set
+   ``CA_ENABLE_ACME=True`` to enable the feature. ACMEv2 will be enabled by default starting with
+   ``django-ca==1.22.0``.
 
 .. _settings-acme-enable-acme:
 
@@ -248,19 +250,35 @@ CA_ENABLE_ACME
    Set to ``True`` to enable ACME functionality. If set to ``False`` (the default), all ACME functionality is
    disabled.
 
+   Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
+   either via the admin interface or via :doc:`the command-line interface </cli/cas>`.
+
+CA_ACME_ACCOUNT_REQUIRES_CONTACT
+   Default: ``True``
+
+   Set to false to allow creating ACMEv2 accounts without an email address.
+
+CA_ACME_DEFAULT_CERT_VALIDITY
+   Default: ``timedelta(days=90)``
+
+   A ``timedelta`` representing the default validity time any certificate issued via ACME is valid.
+
 .. _settings-acme-max-cert-validity:
 
 CA_ACME_MAX_CERT_VALIDITY
    Default: ``timedelta(days=90)``
 
-   A ``timedelta`` representing the maximum validity time any certificate issued via ACME is valid.
+   A ``timedelta`` representing the maximum validity time any certificate issued via ACME is valid. The ACMEv2
+   protocol allows for clients to request a non-default validity time, but certbot currently does not expose
+   this feature.
 
 .. _settings-acme-order-validity:
 
-ACME_ORDER_VALIDITY
+CA_ACME_ORDER_VALIDITY
    Default: ``1``
 
-   Default time a request for a new certificate ("order") remains valid.
+   Default time (in hours) a request for a new certificate ("order") remains valid. You may also set
+   a ``timedelta`` object.
 
 ****************
 Project settings

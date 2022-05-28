@@ -4,8 +4,9 @@
 # Default hostname to use when generating CRLs and OCSP responses
 CA_DEFAULT_HOSTNAME: ca.example.com
 
-# Enable optional ACMEv2 support. Set to false to completely disable ACMEv2 support.
-#CA_ENABLE_ACME: true
+# Enable ACMEv2 support (enabled by default starting 1.22.0). Set to false to completely disable ACMEv2
+# support.
+CA_ENABLE_ACME: true
 
 # Secret key used by this installation. Generate e.g. with "openssl rand -base64 32".
 SECRET_KEY: ""

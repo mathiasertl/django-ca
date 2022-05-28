@@ -94,7 +94,8 @@ and add at least these settings (and adjust to your configuration):
    # Default hostname to use when generating CRLs and OCSP responses
    CA_DEFAULT_HOSTNAME: ca.example.com
 
-   # Optional: Enable ACMEv2 support
+   # Enable ACMEv2 support (enabled by default starting 1.22.0). Set to false to completely disable ACMEv2
+   # support.
    CA_ENABLE_ACME: true
 
 Note that you can pass simple configuration variables also via environment variables prefixed with

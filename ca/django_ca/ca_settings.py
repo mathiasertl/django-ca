@@ -221,6 +221,7 @@ CA_CRL_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = getattr(
 CA_PASSWORDS: typing.Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
 
 # ACME settings
+CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", False)
 ACME_ORDER_VALIDITY: timedelta = getattr(settings, "CA_ACME_ORDER_VALIDITY", timedelta(hours=1))
 ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, "CA_ACME_ACCOUNT_REQUIRES_CONTACT", True)
 ACME_MAX_CERT_VALIDITY = getattr(settings, "CA_ACME_MAX_CERT_VALIDITY", timedelta(days=90))
@@ -276,8 +277,6 @@ CA_FILE_STORAGE_KWARGS = getattr(
 )
 
 CA_FILE_STORAGE_URL = "https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later"
-
-CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", False)
 
 # Decide if we should use Celery or not
 CA_USE_CELERY = getattr(settings, "CA_USE_CELERY", None)

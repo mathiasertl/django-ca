@@ -127,7 +127,8 @@ For a quick start, there are only a few variables you need to specify:
    # WARNING: Changing this requires new CAs (because the hostname goes into the certificates).
    DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com
 
-   # Enable ACMEv2 support
+   # Enable ACMEv2 support (enabled by default starting 1.22.0). Set to false to completely disable ACMEv2
+   # support.
    DJANGO_CA_CA_ENABLE_ACME=true
 
    # PostgreSQL superuser password (required by the Docker image), see also:

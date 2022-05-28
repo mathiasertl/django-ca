@@ -84,8 +84,9 @@ Simply add ``django_ca`` to your ``INSTALLED_APPS`` (and if you don't use it alr
    # RECOMMENDED: Use Celery as an asynchronous task worker if configured
    CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 
-   # Enable ACMEv2 support
-   DJANGO_CA_CA_ENABLE_ACME = True
+   # Enable ACMEv2 support (enabled by default starting 1.22.0). Set to False to completely disable ACMEv2
+   # support.
+   CA_ENABLE_ACME = True
 
 Please check out :doc:`/settings` for settings specific to django-ca.
 

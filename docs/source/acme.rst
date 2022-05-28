@@ -7,33 +7,21 @@ standard ACME clients.
 
 .. WARNING::
 
-   Support for ACME is preliminary and must be explicitly activated. Several features are not yet implemented.
-   Use this feature only with the necessary caution.
+   Support for ACME is still in development and must be explicitly activated. Some features are not yet
+   implemented.  Use this feature only with the necessary caution.
 
-*****************************
-Install required dependencies
-*****************************
+   ACME support will be enabled by default starting with ``django-ca=1.22.0``.
 
-The Docker image already includes all required dependencies, so there is nothing you need to do.
-
-If you install **django-ca** via pip, you can install all required dependencies using the ``acme`` extra:
-
-.. code-block:: console
-
-   $ pip install django-ca[acme]
-
-If you want to install dependencies manually, you need `acme <https://pypi.org/project/acme/>`_ and `requests
-<https://pypi.org/project/requests/>`_ (for challenge validation).
-
-
-*********************
-Enable ACMEv2 support
-*********************
+*************
+Configuration
+*************
 
 To enable ACME support, simply set ``CA_ENABLE_ACME=True`` in your settings.
 
-You must enable ACME for each CA individually, either in the admin interface or view the ``edit_ca``
-management command.
+There are some more settings for ACMEv2 support, please see :ref:`settings-acme` for more information.
+
+You must enable ACME for each CA individually, either in the admin interface or via the ``edit_ca`` management
+command.
 
 Enable ACMEv2 for a CA
 ======================
@@ -60,7 +48,6 @@ certificate issuance is working.
 The following things are known to not yet work:
 
 * Pre-Authorization for certificates
-* Account update
 * External account bindings
 * CAA validation (django-ca will happily issue certificates for google.com etc.)
 * Wildcard certificates
@@ -109,29 +96,3 @@ explicitly name the CA you want to use:
 
 The default CA used is determined by the :ref:`CA_DEFAULT_CA setting <settings-ca-default-ca>` and the
 algorithm described there.
-
-********
-Settings
-********
-
-.. _settings-ca-acme-enable:
-
-CA_ENABLE_ACME
-   Default: ``False``
-
-   Enable ACMEv2 support. Without it, all functionality is disabled.
-
-CA_ACME_MAX_CERT_VALIDITY
-   Default: ``90``
-
-   Maximum time in days that certificate via ACMEv2 can be valid. Can also be set to a ``timedelta`` object.
-
-CA_ACME_DEFAULT_CERT_VALIDITY
-   Default: ``90``
-
-   Default time in days that certificate via ACMEv2 can be valid. Can also be set to a ``timedelta`` object.
-
-CA_ACME_ACCOUNT_REQUIRES_CONTACT
-   Default: ``True``
-
-   Set to false to allow creating ACMEv2 accounts without an email address.
