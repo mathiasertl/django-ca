@@ -83,7 +83,6 @@ Version                                                Redis PostgreSQL  NGINX
 :download:`1.20.0 </_files/1.20.0/docker-compose.yml>` 6     12          1.20
 :download:`1.19.0 </_files/1.19.0/docker-compose.yml>` 6     12          1.20
 :download:`1.18.0 </_files/1.18.0/docker-compose.yml>` 6     12          1.18
-:download:`1.17.3 </_files/1.17.3/docker-compose.yml>` 6     12          1.18
 ====================================================== ===== =========== =====
 
 Add ``docker-compose.override.yml``
@@ -299,6 +298,50 @@ Inside the backend container, ``manage`` is an alias for ``manage.py``.
    :file: include/guide-where-to-go.rst.jinja
    :header_update_levels:
 
+.. _docker-compose-backup:
+
+******
+Backup
+******
+
+To backup your data, you need to store the PostgreSQL database and the private key files for your certificate
+authorities.
+
+If possible for you, you can first stop the ``frontend`` and ``backend`` containers to make absolutely sure
+that you have a consistent backup:
+
+.. code-block:: console
+
+   user@host:~/ca/$ docker-compose stop frontend
+   user@host:~/ca/$ docker-compose stop backend
+
+Create a database backup:
+
+.. code-block:: console
+
+   user@host:~/ca/$ docker-compose exec db pg_dump -U postgres postgres > db.backup.sql
+
+Backing up Docker volumes is not as straight forward as maybe it should be, please see `the official
+documentation <https://docs.docker.com/storage/volumes/#backup-restore-or-migrate-data-volumes>` for more
+information.
+
+You should always backup ``/var/lib/django-ca/certs/`` from both the ``backend`` and the ``frontend``
+container.
+
+Here is an example that should work for the ``backend`` container.:
+
+.. code-block:: console
+
+   user@host:~/ca/$ docker run -it --rm --volumes-from `basename $PWD`_backend_1 \
+   >     -v `pwd`:/backup ubuntu tar czf /backup/backend.tar.gz /var/lib/django-ca/certs/
+   user@host:~/ca/$ tar tf backend.tar.gz
+   var/lib/django-ca/certs/
+   var/lib/django-ca/certs/ca/
+   var/lib/django-ca/certs/ca/1BBB69C1D3B64AB5EF39C2946015F57A0FB04107.key
+   var/lib/django-ca/certs/ca/shared/
+   var/lib/django-ca/certs/ca/shared/secret_key
+   ...
+
 ******
 Update
 ******
@@ -308,6 +351,8 @@ Update
 .. WARNING::
 
    **Updating from django-ca 1.18.0 or earlier?** Please see :ref:`update_119`.
+
+Remember to :ref:`backup your data <docker-compose-backup>` before you perform any update.
 
 In general, updating django-ca is done by getting the :ref:`latest version of docker-compose.yml
 <docker-compose.yml>` and then simply recreating the containers:

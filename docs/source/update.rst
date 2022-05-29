@@ -2,7 +2,8 @@
 Update
 ######
 
-Each :doc:`installation guide <install>` includes update instructions matching the installation method used.
+Each :doc:`installation guide <install>` includes backup and update instructions matching the installation
+method used.
 
 This document lists special update instructions when you update to a certain version.
 
