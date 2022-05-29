@@ -4,6 +4,32 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.22.0:
+
+************
+1.22.0 (TBR)
+************
+
+.. WARNING::
+
+   **docker-compose users:** 
+
+   * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
+     volumes.
+
+Backwards incompatible changes
+==============================
+
+* Drop support for cryptography 35.0.
+* Drop support for acme 1.23, 1.24, 1.25 and 1.26.
+* Drop support for Celery 5.0.
+
+Deprecation notices
+===================
+
+* The ``acme`` extra will be removed in ``django-ca==1.23.0``.
+* Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
+  removed in ``django-ca==1.23.0``.
 .. _changelog-1.21.0:
 
 *******************

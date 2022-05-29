@@ -7,16 +7,15 @@ requires = ["setuptools>=45", "wheel"]
 python = ["3.7.13", "3.8.13", "3.9.13", "3.10.4"]
 # https://www.djangoproject.com/download/
 django = ["3.2.13", "4.0.4"]
-cryptography = ["35.0.0", "36.0.2", "37.0.2"]
-acme = ["1.23.0","1.24.0", "1.25.0", "1.26.0", "1.27.0"]
-idna = ["3.2", "3.3"]
+cryptography = ["36.0.2", "37.0.2"]
+acme = ["1.27.0"]
 josepy = ["1.13.0"]
 
 # https://alpinelinux.org/releases/
 alpine = ["3.14", "3.15", "3.16"]
 
 # The last django-ca release
-last_release = "1.20.1"
+last_release = "1.21.0"
 
 [tool.black]
 line-length = 110

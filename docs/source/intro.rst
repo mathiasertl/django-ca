@@ -9,7 +9,7 @@ Features:
 #. Set up a secure local certificate authority in just a few minutes.
 #. Certificate revocation via CRLs and OCSP.
 #. Preliminary ACMEv2 support.
-#. Written in Python 3.7+, Django 3.2+ and cryptography 35.0+.
+#. Written in Python 3.7+, Django 3.2+ and cryptography 36.0+.
 #. Management via command line and/or via Djangos admin interface.
 #. Get email notifications about certificates about to expire.
 
