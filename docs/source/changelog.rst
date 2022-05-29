@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.21.0:
 
-************
-1.21.0 (TBR)
-************
+*******************
+1.21.0 (2022-05-29)
+*******************
 
 .. WARNING::
 
@@ -18,7 +18,7 @@ ChangeLog
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
-* Add support for cryptography 37.0.
+* Add support for cryptography 37.0 and Alpine Linux 3.16.
 * Fix issuing certificates with multiple SubjectAlternativeNames (fixes `issue 86
   <https://github.com/mathiasertl/django-ca/issues/86>`_).
 * Fix overriding the default certificate expiry in profiles (fixes `issue 87
@@ -49,8 +49,9 @@ Deprecation notices
 * The ``acme`` extra will be removed in ``django-ca==1.23.0``.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
   removed in ``django-ca==1.23.0``.
+* This is the last release to support cryptography 35.0.
 * This is the last release to support Celery 5.0 (5.1+ is of course still supported).
-* This is the last release to support acme 1.23, 1.24 and 1.25.
+* This is the last release to support acme 1.23, 1.24, 1.25 and 1.26.
 
 .. _changelog-1.20.1:
 

@@ -173,7 +173,7 @@ You thus need to start two containers with slightly different configuration:
 
 .. code-block:: console
 
-   user@host:~$ docker run \
+   user@host:~$ docker run -d \
    >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
    >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
    >     -v static:/usr/share/django-ca/static/ \
@@ -182,7 +182,7 @@ You thus need to start two containers with slightly different configuration:
    >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
    >     -v nginx_config:/usr/src/django-ca/nginx/ \
    >     --name=frontend --network=django-ca mathiasertl/django-ca
-   user@host:~$ docker run \
+   user@host:~$ docker run -d \
    >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
    >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
    >     -v backend_ca_dir:/var/lib/django-ca/certs/ \

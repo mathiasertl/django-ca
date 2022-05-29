@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 DJANGO_CA_SECRET_KEY=${DJANGO_CA_SECRET_KEY:-}
-DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/secret_key}
+DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
     KEY_DIR=`dirname $DJANGO_CA_SECRET_KEY_FILE`

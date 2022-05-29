@@ -156,6 +156,16 @@ Check that the same fails in the frontend container (because the root CA is only
    ...
    manage sign_cert: error: argument --ca: Root: ca/...key: Private key does not exist.
 
+But you can create a certificate for the "Child" CA in the frontend container:
+
+.. code-block:: console
+
+   $ cat ca/django_ca/tests/fixtures/child-cert.csr | \
+   >     docker-compose exec -T frontend manage sign_cert --ca=Intermediate \
+   >        --subject="/CN=signed-in-frontend.example.com"
+   Please paste the CSR:
+   ...
+
 Finally, verify that CRL and OCSP validation works:
 
 .. code-block:: console
@@ -177,9 +187,17 @@ Test that a restart works:
 .. code-block:: console
 
    $ docker-compose down
-   $ docker-compose up
+   $ docker-compose up -d
    $ docker-compose exec backend manage list_cas
    $ docker-compose exec backend manage list_certs
+   $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
+   >     docker-compose exec -T backend manage sign_cert --ca=Root \
+   >        --subject="/CN=signed-in-backend.example.com"
+   $ cat ca/django_ca/tests/fixtures/child-cert.csr | \
+   >     docker-compose exec -T frontend manage sign_cert --ca=Intermediate \
+   >        --subject="/CN=signed-in-frontend.example.com"
+   Please paste the CSR:
+   ...
 
 ... and validate that the admin interface still sees the intermediate CA.
 
