@@ -9,9 +9,9 @@ This document lists special update instructions when you update to a certain ver
 
 .. _update_121:
 
-*************************
-Update to 1.21.0 or later
-*************************
+*****************************
+Update from 1.20.0 or earlier
+*****************************
 
 .. _update_121-docker-compose:
 
@@ -29,12 +29,11 @@ using data from the previous container:
 
 .. code-block:: console
 
-   $ (django-ca) mertl@pcn97:~/git/mati/django-ca$ docker-compose up -d
+   $ docker-compose up -d
    Recreating django-ca_db_1 ...
    Recreating django-ca_cache_1 ...
    WARNING: Service "db" is using volume "/var/lib/postgresql/data" from the previous container. Host mapping
-   "django-ca_pgdata" has no effect. Remove the existing containers (with `docker-compo
-   se rm db`) to use the host volume mapping.
+   "django-ca_pgdata" has no effect. Remove the existing containers (with `docker-compose rm db`) to use the host volume mapping.
    ...
 
 To switch to named volumes, create a database backup, remove and recreate the `db` container with the new
@@ -59,7 +58,7 @@ Third, you might want to check if :file:`db.sql` contains a valid database dump.
 
 Fourth, remove the containers:
 
-.. code-block:: console2yy
+.. code-block:: console
 
    $ docker-compose rm -sf cache db
 
@@ -69,7 +68,7 @@ updated the file before performing the above steps.
 
 Sixth, start the ``db`` container again (it will be recreated) and import the dump.
 
-.. code-block:: console2
+.. code-block:: console
 
    $ docker-compose up -d db
    $ docker-compose exec -T db psql -U postgres postgres < db.sql
@@ -77,7 +76,7 @@ Sixth, start the ``db`` container again (it will be recreated) and import the du
 
 Seventh, start all other containers:
 
-.. code-block:: console2
+.. code-block:: console
 
    $ docker-compose up -d
 
@@ -90,9 +89,9 @@ And finally, verify success - you should see your CAs:
 
 .. _update_119:
 
-*************************
-Update to 1.19.0 or later
-*************************
+***************************
+Update from 1.18 or earlier
+***************************
 
 If you use **docker-compose**, you need to backup private keys and update your :file:`docker-compose.yml`
 before upgrading. If you don't private keys will be lost. The change to :file:`docker-compose.yml` will make
@@ -162,19 +161,8 @@ backup these locations as well.
 
 .. _update_114:
 
-*************************
-Update to 1.14.0 or later
-*************************
-
-**django-ca** has changed the layout of the :ref:`CA_PROFILES <settings-ca-profiles>`, you have to update any
-any custom setting. Please see documentation for django-ca 1.16 for more detailed instructions.
-
-The old profile settings will be supported until (and including) version 1.16.
-
-.. _update-file-storage:
-
-*************************
-Update to 1.12.0 or later
-*************************
+***************************
+Update from 1.17 or earlier
+***************************
 
 Please see documentation for previous versions on documentation how to upgrade.

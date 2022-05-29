@@ -5,6 +5,8 @@ services:
         networks:
             - cache
         restart: unless-stopped
+        volumes:
+           - redis:/data
     db:
         image: postgres:12-alpine
         environment:
@@ -17,6 +19,8 @@ services:
         networks:
             - database
         restart: unless-stopped
+        volumes:
+            - pgdata:/var/lib/postgresql/data
 
     backend:
         image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.21.0}
@@ -37,6 +41,8 @@ services:
             DJANGO_CA_CA_DEFAULT_CA:
             DJANGO_CA_CA_DEFAULT_HOSTNAME:
             DJANGO_CA_CA_ENABLE_ACME:
+            DJANGO_CA_SECRET_KEY:
+            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
             POSTGRES_DB:
             POSTGRES_DB_FILE:
@@ -68,6 +74,8 @@ services:
             DJANGO_CA_CA_DEFAULT_CA:
             DJANGO_CA_CA_DEFAULT_HOSTNAME:
             DJANGO_CA_CA_ENABLE_ACME:
+            DJANGO_CA_SECRET_KEY:
+            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
             POSTGRES_DB:
             POSTGRES_DB_FILE:
@@ -113,6 +121,8 @@ volumes:
     shared_ca_dir:
     ocsp_key_dir:
     nginx_config:
+    pgdata:
+    redis:
 
 networks:
     public:

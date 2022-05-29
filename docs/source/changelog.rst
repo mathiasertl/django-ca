@@ -441,7 +441,7 @@ Backwards incompatible changes
 * Drop support for cryptography 2.5 and 2.6.
 * Drop support for Alpine 3.8 (because PostgreSQL and MySQL depend on LibreSSL).
 * Removed the ``manage.py migrate_ca`` command. If you upgrade from before :ref:`1.12.0 <changelog-1.12.0>`,
-  upgrade to :ref:`1.14.0 <changelog-1.14.0>` first and :ref:`update file storage <update-file-storage>`.
+  upgrade to :ref:`1.14.0 <changelog-1.14.0>` first and update the file storage setting.
 * Removed the ``ca_crl`` setting in :py:class:`~django_ca.views.CertificateRevocationListView`, use ``scope``
   instead.
 
@@ -527,8 +527,8 @@ Deprecation notices
 * This is the last release to support Python 2.7.
 * This is the last release to support cryptography 2.5 and 2.6.
 * This is the last release to be tested with Alpine 3.7.
-* This is the last release to support :ref:`updating CA private keys to the Filestorage API
-  <update-file-storage>`. :command:`manage.py migrate_ca` will be removed in the next release.
+* This is the last release to support updating CA private keys to the filestorage API. :command:`manage.py
+  migrate_ca` will be removed in the next release.
 * This will be the last release to support the ``ca_crl`` setting in
   :py:class:`~django_ca.views.CertificateRevocationListView`.
 * ``Certificate.objects.init()`` has been deprecated in favor of :py:func:`Certificate.objects.create_cert()
@@ -662,8 +662,8 @@ file system shared between different servers, e.g. to provide a redundant setup.
 .. NOTE::
 
    The switch does require some manual intervention when upgrading. The old way of storing files is still
-   supported and will continue to work until version 1.14. Please see the :ref:`upgrade notes
-   <update-file-storage>` for information on how to upgrade.
+   supported and will continue to work until version 1.14. Please see previous versions for information on how
+   to upgrade.
 
 * Use file storage API for reading/writing private keys of CAs.
 * Use file storage API for reading the responder key and certificate for OCSP.
