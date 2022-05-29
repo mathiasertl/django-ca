@@ -41,7 +41,6 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA122Warning
 from .deprecation import RemovedInDjangoCA123Warning
 from .deprecation import deprecate_argument
 from .deprecation import deprecate_type
@@ -57,7 +56,6 @@ from .profiles import profiles
 from .signals import post_create_ca
 from .signals import post_issue_cert
 from .signals import pre_create_ca
-from .subject import Subject
 from .typehints import Expires
 from .typehints import ParsableExtension
 from .typehints import ParsableKeyType
@@ -68,11 +66,8 @@ from .utils import get_cert_builder
 from .utils import int_to_hex
 from .utils import parse_expires
 from .utils import parse_general_name
-from .utils import parse_hash_algorithm
-from .utils import sort_name
 from .utils import validate_hostname
 from .utils import validate_key_parameters
-from .utils import x509_name
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
 if TYPE_CHECKING:
@@ -258,13 +253,6 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
-        .. deprecated:: 1.20.0
-
-           Passing unparsed values is deprecated and will be removed in ``django_ca==1.22``. This affects the
-           following parameters:
-
-           * Passing a ``str`` or :py:class:`~django_ca.subject.Subject` for ``subject``.
-
         .. deprecated:: 1.21.0
 
            * The `name_constraints` parameter is deprecated and will be removed in ``django_ca==1.23``. Use
@@ -371,13 +359,6 @@ class CertificateAuthorityManager(
             algorithm = None
         elif algorithm is None:
             algorithm = ca_settings.CA_DIGEST_ALGORITHM
-        elif not isinstance(algorithm, HashAlgorithm):
-            warnings.warn(
-                f"Passing a {algorithm.__class__.__name__} as algorithm is deprecated",
-                category=RemovedInDjangoCA122Warning,
-                stacklevel=1,
-            )
-            algorithm = parse_hash_algorithm(algorithm)
         expires = parse_expires(expires)
 
         if openssh_ca and parent:
@@ -394,15 +375,6 @@ class CertificateAuthorityManager(
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
             extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
-
-        # Handle old types for subject
-        _subject_warning = f"Passing a {subject.__class__.__name__} as subject is deprecated"
-        if isinstance(subject, Subject):
-            warnings.warn(_subject_warning, category=RemovedInDjangoCA122Warning, stacklevel=1)
-            subject = subject.name
-        elif not isinstance(subject, x509.Name):
-            warnings.warn(_subject_warning, category=RemovedInDjangoCA122Warning, stacklevel=1)
-            subject = sort_name(x509_name(subject))
 
         # Normalize extensions to django_ca.extensions.Extension subclasses
         if isinstance(issuer_alt_name, str):

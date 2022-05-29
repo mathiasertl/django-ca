@@ -38,7 +38,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from .. import utils
-from ..deprecation import RemovedInDjangoCA122Warning
 from ..utils import ELLIPTIC_CURVE_NAMES
 from ..utils import HASH_ALGORITHM_NAMES
 from ..utils import OID_NAME_MAPPINGS
@@ -46,7 +45,6 @@ from ..utils import GeneralNameList
 from ..utils import bytes_to_hex
 from ..utils import format_general_name
 from ..utils import format_name
-from ..utils import format_relative_name
 from ..utils import generate_private_key
 from ..utils import get_cert_builder
 from ..utils import is_power2
@@ -55,10 +53,8 @@ from ..utils import parse_encoding
 from ..utils import parse_general_name
 from ..utils import parse_hash_algorithm
 from ..utils import parse_key_curve
-from ..utils import parse_name
 from ..utils import parse_name_x509
 from ..utils import read_file
-from ..utils import shlex_split
 from ..utils import split_str
 from ..utils import validate_email
 from ..utils import validate_hostname
@@ -373,15 +369,6 @@ class ParseNameX509TestCase(TestCase):
             parse_name_x509(f"/{field}=example.com")
         self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
 
-    def test_deprecation(self) -> None:
-        """Test old parse_name() function."""
-
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning,
-            r"^parse_name\(\) has been deprecated, use parse_name_x509\(\) instead$",
-        ):
-            self.assertEqual(parse_name("/CN=example.com"), [("CN", "example.com")])
-
 
 class RelativeNameTestCase(TestCase):
     """Some tests related to relative names."""
@@ -389,27 +376,12 @@ class RelativeNameTestCase(TestCase):
     def test_format(self) -> None:
         """Test formatting..."""
         rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning, r"^This function is deprecated, use format_name\(\) instead\.$"
-        ):
-            self.assertEqual(format_relative_name(rdn), "/CN=example.com")
-
         self.assertEqual(format_name(rdn), "/CN=example.com")
 
     def test_parse(self) -> None:
         """Test parsing..."""
         expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         self.assertEqual(x509_relative_name("/CN=example.com"), expected)
-
-    def test_deprecated(self) -> None:
-        """Test deprecated input values."""
-        # pylint: disable=consider-using-f-string
-        expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        msg = r"^Passing a %s to x509_relative_name\(\) is deprecated, pass a str instead$"
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning, msg % x509.RelativeDistinguishedName.__name__
-        ):
-            self.assertEqual(x509_relative_name(expected), expected)  # type: ignore[arg-type]
 
 
 class ValidateEmailTestCase(TestCase):
@@ -815,25 +787,6 @@ class FormatNameTestCase(TestCase):
         self.assertFormatParse('no single-quote: slash/double"quote')
         self.assertFormatParse('no single-quote but with backslash: slash/double"quote\\backslash')
         self.assertFormatParse("multiple\\\\backslash")
-
-    def test_deprecated(self) -> None:
-        """Test passing a deprecated list."""
-
-        subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
-        subject_dict = [
-            ("C", "AT"),
-            ("ST", "Vienna"),
-            ("L", "Vienna"),
-            ("O", "O"),
-            ("OU", "OU"),
-            ("CN", "example.com"),
-            ("emailAddress", "user@example.com"),
-        ]
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning,
-            r"^Passing a list to format_name\(\) is deprecated, pass a str instead$",
-        ):
-            self.assertEqual(format_name(subject_dict), subject)  # type: ignore[arg-type]
 
 
 class Power2TestCase(TestCase):
@@ -1326,14 +1279,6 @@ class SplitStrTestCase(TestCase):
         self.assertCountEqual(split_str("foo|bar", "/"), ["foo|bar"])
         self.assertCountEqual(split_str("(foo|bar)/bla/baz(bla", "/"), ["(foo|bar)", "bla", "baz(bla"])
         self.assertCountEqual(split_str("(foo|{b,}ar)/bla/baz(bla", "/"), ["(foo|{b,}ar)", "bla", "baz(bla"])
-
-    def test_shlex_split(self) -> None:
-        """Test deprecation for old name."""
-
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning, r"^shlex_split\(\) has been deprecated, use split_str\(\) instead$"
-        ):
-            self.assertEqual(shlex_split("foo/bar", "/"), ["foo", "bar"])
 
 
 class GeneralNameListTestCase(TestCase):

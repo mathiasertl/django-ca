@@ -18,7 +18,6 @@ import re
 import shlex
 import sys
 import typing
-import warnings
 from collections import abc
 from datetime import datetime
 from datetime import timedelta
@@ -29,7 +28,6 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Type
 from typing import Union
 from urllib.parse import urlparse
@@ -54,7 +52,6 @@ from django.utils import timezone as tz
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA122Warning
 from .typehints import Expires
 from .typehints import Literal
 from .typehints import ParsableGeneralName
@@ -308,10 +305,6 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
 
     This function does not take care of sorting the subject in any meaningful order.
 
-    .. deprecated:: 1.20.0
-
-       Passing a list of two-tuples is deprecated. The functionality will be removed in ``django_ca==1.22``.
-
     Examples::
 
         >>> format_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
@@ -324,33 +317,10 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
             return val
         return '"' + val.replace('"', r"\"").replace(r"\\", r"\\\\") + '"'
 
-    if isinstance(subject, (x509.Name, x509.RelativeDistinguishedName)):
-        items = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
-    else:
-        warnings.warn(
-            "Passing a list to format_name() is deprecated, pass a str instead",
-            category=RemovedInDjangoCA122Warning,
-            stacklevel=1,
-        )
-        items = subject
+    items = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
 
     values = "/".join([f"{k}={_format_value(v)}" for k, v in items])  # type: ignore[arg-type]
     return f"/{values}"
-
-
-def format_relative_name(name: x509.RelativeDistinguishedName) -> str:
-    """Convert a relative name (RDN) into a canonical form.
-
-    .. deprecated:: 1.20.0
-
-       Use ``format_name()`` instead. This function will be removed in ``django_ca==1.22``.
-    """
-    warnings.warn(
-        "This function is deprecated, use format_name() instead.",
-        category=RemovedInDjangoCA122Warning,
-        stacklevel=1,
-    )
-    return format_name(name)
 
 
 def format_general_name(name: x509.GeneralName) -> str:
@@ -537,26 +507,6 @@ def parse_name_x509(name: ParsableName) -> typing.Tuple[x509.NameAttribute, ...]
     return tuple(x509.NameAttribute(oid, value) for oid, value in items)
 
 
-def parse_name(name: str) -> List[Tuple[str, str]]:
-    """Parses a subject string as used in OpenSSLs command line utilities.
-
-    .. deprecated:: 1.20.0
-
-       This function was renamed to :py:func:`~django_ca.utils.parse_name_x509`. The old name will be removed
-       in ``django_ca==1.22``.
-    """
-
-    warnings.warn(
-        "parse_name() has been deprecated, use parse_name_x509() instead",
-        category=RemovedInDjangoCA122Warning,
-        stacklevel=1,
-    )
-    attrs = parse_name_x509(name)
-
-    # Parse OIDs back to their cannonical string representation
-    return [(OID_NAME_MAPPINGS[attr.oid], attr.value) for attr in attrs]  # type: ignore[misc]
-
-
 def x509_name(name: ParsableName) -> x509.Name:
     """Parses a string into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
@@ -572,12 +522,6 @@ def x509_relative_name(name: ParsableName) -> x509.RelativeDistinguishedName:
     >>> x509_relative_name('/CN=example.com')
     <RelativeDistinguishedName(CN=example.com)>
     """
-
-    msg = f"Passing a {name.__class__.__name__} to x509_relative_name() is deprecated, pass a str instead"
-
-    if isinstance(name, x509.RelativeDistinguishedName):
-        warnings.warn(msg, category=RemovedInDjangoCA122Warning, stacklevel=1)
-        return name
 
     return x509.RelativeDistinguishedName(parse_name_x509(name))
 
@@ -1201,22 +1145,6 @@ def split_str(val: str, sep: str) -> typing.Iterator[str]:
     lex.whitespace = sep
     lex.whitespace_split = True
     yield from lex
-
-
-def shlex_split(val: str, sep: str) -> List[str]:
-    """Split a character on the given set of characters.
-
-    .. deprecated:: 1.20.0
-
-       This function has been renamed to :py:func:`~django_ca.utils.split_str`. The old name will be removed
-       in ``django_ca==1.22``.
-    """
-    warnings.warn(
-        "shlex_split() has been deprecated, use split_str() instead",
-        category=RemovedInDjangoCA122Warning,
-        stacklevel=2,
-    )
-    return list(split_str(val=val, sep=sep))
 
 
 class GeneralNameList(List[x509.GeneralName]):

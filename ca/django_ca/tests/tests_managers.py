@@ -17,7 +17,6 @@ import typing
 import unittest
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
@@ -25,7 +24,6 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA122Warning
 from ..deprecation import RemovedInDjangoCA123Warning
 from ..extensions import AuthorityInformationAccess
 from ..extensions import CRLDistributionPoints
@@ -37,7 +35,6 @@ from ..models import CertificateAuthority
 from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet
 from ..querysets import CertificateQuerySet
-from ..subject import Subject
 from ..typehints import ParsableExtension
 from ..utils import x509_name
 from .base import certs
@@ -270,25 +267,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_deprecation(self) -> None:
         """Test passing deprecated types to init()."""
 
-        with self.assertWarnsRegex(RemovedInDjangoCA122Warning, r"^Passing a str as subject is deprecated$"):
-            CertificateAuthority.objects.init("ca1", "CN=example.com")  # type: ignore[arg-type]
-
-        cn2 = "subject-as-str.example.com"
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning, r"^Passing a Subject as subject is deprecated$"
-        ):
-            CertificateAuthority.objects.init("ca2", Subject(f"CN={cn2}"))  # type: ignore[arg-type]
-        ca2 = CertificateAuthority.objects.get(name="ca2")
-        self.assertEqual(ca2.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn2)]))
-
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "hash-algo.example.com")])
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA122Warning, r"^Passing a str as algorithm is deprecated$"
-        ):
-            CertificateAuthority.objects.init("ca3", subject, algorithm="SHA256")  # type: ignore[arg-type]
-        ca3 = CertificateAuthority.objects.get(name="ca3")
-        self.assertIsInstance(ca3.algorithm, hashes.SHA256)
-
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ian-as-str.example.com")])
         with self.assertWarnsRegex(
             RemovedInDjangoCA123Warning,
             r"^Passing str for issuer_alt_name is deprecated and will be removed in django ca 1\.23\.$",
@@ -299,6 +278,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         ca3 = CertificateAuthority.objects.get(name="ca4")
         self.assertEqual(ca3.issuer_alt_name, "URI:https://example.com")
 
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ian-as-ext.example.com")])
         ian = IssuerAlternativeName({"value": ["https://example.net"]})
         with self.assertWarnsRegex(
             RemovedInDjangoCA123Warning,

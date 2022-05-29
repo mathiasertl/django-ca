@@ -546,14 +546,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
                 self.assertIsInstance(key.curve, ec.BrainpoolP256R1)
 
-            # pass the name of an ecc curve (deprecated in 1.22)
-            with self.assertRemovedIn122Warning(
-                r"^Passing a str as ecc_curve is deprecated$"
-            ), self.generate_ocsp_key(ca, key_type="ECC", ecc_curve="BrainpoolP256R1") as (key, cert):
-                key = typing.cast(ec.EllipticCurvePrivateKey, key)
-                self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
-                self.assertIsInstance(key.curve, ec.BrainpoolP256R1)
-
 
 class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.Certificate`."""
@@ -744,17 +736,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, cert in self.certs.items():
             for algo_name, algorithm in algorithms.items():
                 self.assertEqual(cert.get_fingerprint(algorithm), certs[name][algo_name])
-
-    def test_digest(self) -> None:
-        """Test getting the digest value (deprecated function)."""
-        msg = r"^get_digest\(\) is deprecated, use get_fingerprint\(\) instead$"
-        for name, ca in self.cas.items():
-            with self.assertRemovedIn122Warning(msg):
-                self.assertEqual(ca.get_digest("MD5"), certs[name]["md5"])
-
-        for name, cert in self.certs.items():
-            with self.assertRemovedIn122Warning(msg):
-                self.assertEqual(cert.get_digest("MD5"), certs[name]["md5"])
 
     def test_hpkp_pin(self) -> None:
         """Test getting a HPKP pin for a certificate."""

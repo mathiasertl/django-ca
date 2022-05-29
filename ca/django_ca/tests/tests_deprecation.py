@@ -20,8 +20,8 @@ import warnings
 from django.test import TestCase
 
 from ..deprecation import DeprecationWarningType
-from ..deprecation import RemovedInDjangoCA122Warning
 from ..deprecation import RemovedInDjangoCA123Warning
+from ..deprecation import RemovedInDjangoCA124Warning
 from ..deprecation import RemovedInNextVersionWarning
 from ..deprecation import deprecate_argument
 
@@ -29,17 +29,17 @@ from ..deprecation import deprecate_argument
 class TestDjangoCATestCase(TestCase):
     """Test :py:mod:`django_ca.deprecation`."""
 
-    msg_in_122 = "deprecated in 1.21"
-    msg_in_123 = "deprecated in 1.22"
+    msg_in_123 = "deprecated in 1.23"
+    msg_in_124 = "deprecated in 1.24"
     msg_in_next = "deprecated in next version"
-
-    def deprecated_in_122(self) -> None:
-        """Emit a message about deprecation in 1.22."""
-        warnings.warn(self.msg_in_122, category=RemovedInDjangoCA122Warning)
 
     def deprecated_in_123(self) -> None:
         """Emit a message about deprecation in 1.23."""
         warnings.warn(self.msg_in_123, category=RemovedInDjangoCA123Warning)
+
+    def deprecated_in_124(self) -> None:
+        """Emit a message about deprecation in 1.24."""
+        warnings.warn(self.msg_in_124, category=RemovedInDjangoCA124Warning)
 
     def deprecated_in_next(self) -> None:
         """Emit a message about deprecation in the next version."""
@@ -48,10 +48,10 @@ class TestDjangoCATestCase(TestCase):
     def test_base(self) -> None:
         """Test warning messages."""
 
-        with self.assertWarnsRegex(RemovedInDjangoCA122Warning, rf"^{self.msg_in_122}$"):
-            self.deprecated_in_122()
         with self.assertWarnsRegex(RemovedInDjangoCA123Warning, rf"^{self.msg_in_123}$"):
             self.deprecated_in_123()
+        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, rf"^{self.msg_in_124}$"):
+            self.deprecated_in_124()
         with self.assertWarnsRegex(RemovedInNextVersionWarning, rf"^{self.msg_in_next}$"):
             self.deprecated_in_next()
 

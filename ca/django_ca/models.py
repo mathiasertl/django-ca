@@ -24,7 +24,6 @@ import logging
 import random
 import re
 import typing
-import warnings
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone as tz
@@ -76,7 +75,6 @@ from .acme.constants import BASE64_URL_ALPHABET
 from .acme.constants import IdentifierType
 from .acme.constants import Status
 from .constants import ReasonFlags
-from .deprecation import RemovedInDjangoCA122Warning
 from .extensions import OID_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -372,20 +370,6 @@ class X509CertMixin(DjangoCAModel):
     def algorithm(self) -> Optional[hashes.HashAlgorithm]:
         """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
         return self.pub.loaded.signature_hash_algorithm
-
-    def get_digest(self, algo: ParsableHash) -> str:
-        """Get the fingerprint for this certificate.
-
-        .. deprecated:: 1.21.0
-
-           Use :py:func:`~django_ca.models.X509CertMixin.get_fingerprint` instead.
-        """
-        warnings.warn(
-            "get_digest() is deprecated, use get_fingerprint() instead",
-            category=RemovedInDjangoCA122Warning,
-            stacklevel=1,
-        )
-        return self.get_fingerprint(parse_hash_algorithm(algo))
 
     def get_fingerprint(self, algorithm: hashes.HashAlgorithm) -> str:
         """Get the digest for a certificate as string, including colons."""
@@ -921,13 +905,6 @@ class CertificateAuthority(X509CertMixin):
     ) -> Tuple[str, str, "Certificate"]:
         """Generate OCSP keys for this CA.
 
-        .. deprecated:: 1.20.0
-
-           Passing unparsed values is deprecated and will be removed in ``django_ca==1.22``. This affects the
-           following parameters:
-
-           * Passing a ``str`` for ``ecc_curve``.
-
         Parameters
         ----------
 
@@ -963,10 +940,6 @@ class CertificateAuthority(X509CertMixin):
             key_type = "DSA"
         if key_type == "DSA":
             algorithm = hashes.SHA1()
-
-        if key_type == "ECC" and isinstance(ecc_curve, str):
-            warnings.warn("Passing a str as ecc_curve is deprecated", category=RemovedInDjangoCA122Warning)
-            ecc_curve = parse_key_curve(ecc_curve)
 
         validate_key_parameters(key_size, key_type, ecc_curve)
         expires = parse_expires(expires)
