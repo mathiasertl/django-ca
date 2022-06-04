@@ -138,7 +138,6 @@ from .utils import parse_encoding
 from .utils import parse_expires
 from .utils import parse_general_name
 from .utils import parse_hash_algorithm
-from .utils import parse_key_curve
 from .utils import read_file
 from .utils import validate_key_parameters
 

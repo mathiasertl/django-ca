@@ -130,7 +130,7 @@ child_pathlen = 0
 ecc_pathlen = 1
 pwd_pathlen = 2
 dsa_pathlen = 3
-dsa_algorithm = "SHA1"
+dsa_algorithm = hashes.SHA1()
 testserver = "http://%s" % ca_settings.CA_DEFAULT_HOSTNAME
 
 if not os.path.exists(args.dest):
@@ -190,10 +190,10 @@ def update_cert_data(cert, data):
     data["valid_from"] = cert.pub.loaded.not_valid_before.strftime(_timeformat)
     data["valid_until"] = cert.pub.loaded.not_valid_after.strftime(_timeformat)
 
-    data["md5"] = cert.get_digest("MD5")
-    data["sha1"] = cert.get_digest("SHA1")
-    data["sha256"] = cert.get_digest("SHA256")
-    data["sha512"] = cert.get_digest("SHA512")
+    data["md5"] = cert.get_fingerprint(hashes.MD5())
+    data["sha1"] = cert.get_fingerprint(hashes.SHA1())
+    data["sha256"] = cert.get_fingerprint(hashes.SHA256())
+    data["sha512"] = cert.get_fingerprint(hashes.SHA512())
 
     aki = cert.authority_key_identifier
     if aki is not None:
@@ -311,10 +311,10 @@ def update_contrib(data, cert, name, filename):
         "serial": cert.serial,
         "subject": cert.distinguished_name,
         "hpkp": cert.hpkp_pin,
-        "md5": cert.get_digest("MD5"),
-        "sha1": cert.get_digest("SHA1"),
-        "sha256": cert.get_digest("SHA256"),
-        "sha512": cert.get_digest("SHA512"),
+        "md5": cert.get_fingerprint(hashes.MD5()),
+        "sha1": cert.get_fingerprint(hashes.SHA1()),
+        "sha256": cert.get_fingerprint(hashes.SHA256()),
+        "sha512": cert.get_fingerprint(hashes.SHA512()),
     }
 
     for ext in cert.extensions:
@@ -619,7 +619,7 @@ for cert, cert_values in data.items():
     cert_values["name"] = cert
     cert_values.setdefault("type", "cert")
     cert_values.setdefault("cat", "generated")
-    cert_values.setdefault("algorithm", "SHA256")
+    cert_values.setdefault("algorithm", hashes.SHA256())
     cert_values.setdefault("subject", {})
     cert_values["subject"].setdefault("CN", "%s.example.com" % cert_values["name"])
     cert_values["subject_str"] = str(Subject(cert_values["subject"]))
@@ -717,7 +717,7 @@ if not args.only_contrib:
                     csr=csr,
                     profile=profiles["server"],
                     expires=data[name]["expires"],
-                    algorithm=getattr(hashes, data[name]["algorithm"])(),
+                    algorithm=data[name]["algorithm"],
                     password=pwd,
                     subject=subject,
                 )
@@ -745,7 +745,7 @@ if not args.only_contrib:
                     ca=ca,
                     csr=csr,
                     profile=profiles[profile],
-                    algorithm=getattr(hashes, data[name]["algorithm"])(),
+                    algorithm=data[name]["algorithm"],
                     expires=data[name]["expires"],
                     password=pwd,
                     subject=subject,
@@ -807,7 +807,7 @@ if not args.only_contrib:
                 ca=ca,
                 csr=csr,
                 profile=profiles["webserver"],
-                algorithm=getattr(hashes, data[name]["algorithm"])(),
+                algorithm=data[name]["algorithm"],
                 subject=data[name]["subject"],
                 expires=data[name]["expires"],
                 password=pwd,
@@ -831,7 +831,7 @@ if not args.only_contrib:
                 ca=ca,
                 csr=csr,
                 profile=profiles["webserver"],
-                algorithm=getattr(hashes, data[name]["algorithm"])(),
+                algorithm=data[name]["algorithm"],
                 subject=data[name]["subject"],
                 expires=data[name]["expires"],
                 password=pwd,
@@ -944,5 +944,15 @@ else:
         "ocsp": ocsp_data,
     }
 
+
+class CertificateEncoder(json.JSONEncoder):
+    """Minor class to encode certificate data into json."""
+
+    def default(self, obj):
+        if isinstance(obj, hashes.HashAlgorithm):
+            return obj.name
+        return json.JSONEncoder.default(self, obj)
+
+
 with open(out_path, "w") as stream:
-    json.dump(fixture_data, stream, indent=4)
+    json.dump(fixture_data, stream, indent=4, cls=CertificateEncoder)

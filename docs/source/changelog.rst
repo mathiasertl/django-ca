@@ -30,6 +30,7 @@ Deprecation notices
 * The ``acme`` extra will be removed in ``django-ca==1.23.0``.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
   removed in ``django-ca==1.23.0``.
+
 .. _changelog-1.21.0:
 
 *******************
