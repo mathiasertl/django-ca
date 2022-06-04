@@ -46,6 +46,10 @@ CANONICAL_PYPI_NAMES = {
     "django": "Django",
     "josepy": "josepy",
 }
+min_pyver = CONFIG["python-major"][0]
+min_djver = CONFIG["django-major"][0]
+min_cgver = CONFIG["cryptography-major"][0]
+exp_version_line = f"Written in Python {min_pyver}+, Django {min_djver}+ and cryptography {min_cgver}+."
 
 
 def check_path(path):
@@ -269,21 +273,21 @@ def check_pyproject_toml():
     return errors
 
 
-min_pyver = CONFIG["python-major"][0]
-min_djver = CONFIG["django-major"][0]
-min_cgver = CONFIG["cryptography-major"][0]
-exp_version_line = f"Written in Python {min_pyver}+, Django {min_djver}+ and cryptography {min_cgver}+."
+def validate_state():
+    total_errors = check(check_github_actions_tests)
+    total_errors += check(check_tox)
+    total_errors += check(check_setup_cfg)
+    total_errors += check(check_test_settings)
+    total_errors += check(check_intro)
+    total_errors += check(check_readme)
+    total_errors += check(check_pyproject_toml)
+    return total_errors
 
-total_errors = check(check_github_actions_tests)
-total_errors += check(check_tox)
-total_errors += check(check_setup_cfg)
-total_errors += check(check_test_settings)
-total_errors += check(check_intro)
-total_errors += check(check_readme)
-total_errors += check(check_pyproject_toml)
 
-if total_errors != 0:
-    print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
-    sys.exit(1)
-else:
-    print(colored("Congratulations. All clean.", "green"))
+if __name__ == "__main__":
+    total_errors = validate_state()
+    if total_errors != 0:
+        print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
+        sys.exit(1)
+    else:
+        print(colored("Congratulations. All clean.", "green"))

@@ -13,30 +13,25 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Various utility functions for output."""
-
-from termcolor import colored
-
-
-def err(msg):
-    """Print the error message."""
-    print(colored("[ERR]", "red", attrs=["bold"]), msg)
-    return 1
+import os
+import tempfile
+from contextlib import contextmanager
 
 
-def info(msg):
-    """Print warning message."""
-    print(colored("[INFO]", "magenta"), msg)
-    return 0
+@contextmanager
+def chdir(path):
+    """Context manager to temporarily change the working directory to `path`."""
+    orig_cwd = os.getcwd()
+    try:
+        os.chdir(path)
+        yield orig_cwd
+    finally:
+        os.chdir(orig_cwd)
 
 
-def warn(msg):
-    """Print warning message."""
-    print(colored("[WARN]", "yellow", attrs=["bold"]), msg)
-    return 0
+@contextmanager
+def tmpdir(**kwargs):
+    """Context manager to temporarily change the working directory to a temporary directory."""
 
-
-def ok(msg):  # pylint: disable=invalid-name
-    """Print success message."""
-    print(colored("[OKAY]", "green"), msg)
-    return 0
+    with tempfile.TemporaryDirectory(**kwargs) as tmpdirname, chdir(tmpdirname):
+        yield tmpdirname
