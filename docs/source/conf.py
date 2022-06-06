@@ -79,6 +79,7 @@ extensions = [
     "celery.contrib.sphinx",
     "numpydoc",
     "sphinx_jinja",
+    "django_ca_sphinx",
 ]
 
 autodoc_typehints = "none"
@@ -397,6 +398,13 @@ jinja_contexts = {
         "guide": "from-source",
         "manage": "django-ca",
         "user": "root",
+    },
+    "quickstart-with-docker": {
+        "ca_default_hostname": "ca.example.com",
+        "frontend_host": "frontend",
+        "postgres_host": "postgres",
+        "postgres_password": "password",
+        "redis_host": "redis",
     },
     "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
     "guide-docker-compose-where-to-go": {

@@ -66,37 +66,9 @@ name you have set up above.
 To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
 and add at least these settings (and adjust to your configuration):
 
-.. code-block:: yaml
+.. template-include:: yaml include/quickstart_with_docker/localsettings.yaml.jinja
    :caption: localsettings.yaml
-
-   # Configuration for django-ca. You can add/update settings here and then
-   # restart your containers.
-
-   # Where to find your database
-   DATABASES:
-       default:
-           ENGINE: django.db.backends.postgresql_psycopg2
-           HOST: postgres
-           PORT: 5432
-           PASSWORD: password
-
-   CACHES:
-       default:
-           BACKEND: redis_cache.RedisCache
-           LOCATION: redis://redis:6379
-           OPTIONS:
-               DB: 1
-               PARSER_CLASS: redis.connection.HiredisParser
-
-   # django-ca will use Celery as an asynchronous task worker
-   CELERY_BROKER_URL: redis://redis:6379/0
-
-   # Default hostname to use when generating CRLs and OCSP responses
-   CA_DEFAULT_HOSTNAME: ca.example.com
-
-   # Enable ACMEv2 support (enabled by default starting 1.22.0). Set to false to completely disable ACMEv2
-   # support.
-   CA_ENABLE_ACME: true
+   :context: quickstart-with-docker
 
 Note that you can pass simple configuration variables also via environment variables prefixed with
 ``DJANGO_CA_``. For example, you could also configure the broker URL with:
@@ -111,25 +83,9 @@ NGINX configuration
 
 NGINX requires a configuration file, so you first need to create it. A minimal example would be:
 
-.. code-block:: nginx
+.. template-include:: nginx include/quickstart_with_docker/nginx.conf.jinja
    :caption: nginx.conf
-
-   upstream django_ca_frontend {
-      server frontend:8000;
-   }
-
-   server {
-      listen       80;
-      server_name  ca.example.com;
-
-      location / {
-         uwsgi_pass django_ca_frontend;
-         include /etc/nginx/uwsgi_params;
-      }
-      location /static/ {
-         root   /usr/share/nginx/html/;
-      }
-   }
+   :context: quickstart-with-docker
 
 Recap
 =====

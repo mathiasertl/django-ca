@@ -1,0 +1,16 @@
+upstream django_ca_frontend {
+    server {{ frontend_host }}:8000;
+}
+
+server {
+    listen       80;
+    server_name  {{ ca_default_hostname }};
+
+    location / {
+        uwsgi_pass django_ca_frontend;
+        include /etc/nginx/uwsgi_params;
+    }
+    location /static/ {
+        root   /usr/share/nginx/html/;
+    }
+}

@@ -1,0 +1,24 @@
+# Configuration for django-ca. You can add/update settings here and then
+# restart your containers.
+
+# Where to find your database
+DATABASES:
+    default:
+        ENGINE: django.db.backends.postgresql_psycopg2
+        HOST: {{ postgres_host }}
+        PORT: 5432
+        PASSWORD: {{ postgres_password }}
+
+CACHES:
+    default:
+        BACKEND: redis_cache.RedisCache
+        LOCATION: redis://{{ redis_host }}:6379
+        OPTIONS:
+            DB: 1
+            PARSER_CLASS: redis.connection.HiredisParser
+
+# django-ca will use Celery as an asynchronous task worker
+CELERY_BROKER_URL: redis://{{ redis_host }}:6379/0
+
+# Default hostname to use when generating CRLs and OCSP responses
+CA_DEFAULT_HOSTNAME: {{ ca_default_hostname }}
