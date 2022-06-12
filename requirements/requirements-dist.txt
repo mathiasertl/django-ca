@@ -2,4 +2,5 @@ build==0.7.0
 twine==4.0.0
 wheel==0.37.1
 # >=39.2: version added in setup.cfg
-setuptools>=39.2
+# >= 61: Add setuptools.config.setupcfg.read_configuration
+setuptools>=61

@@ -1,6 +1,9 @@
 [build-system]
 # Minimum requirements for the build system to execute (PEP-518)
-requires = ["setuptools>=45", "wheel"]
+# >=39.2: version added in setup.cfg
+# >= 61: Add setuptools.config.setupcfg.read_configuration
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/#status-of-python-branches
