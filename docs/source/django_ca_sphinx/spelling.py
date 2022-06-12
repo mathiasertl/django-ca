@@ -28,13 +28,13 @@ from django_ca.extensions import ExtendedKeyUsage
 from django_ca.extensions import KeyUsage
 
 
-class URIFilter(URLFilter):
+class URIFilter(URLFilter):  # type: ignore[misc]
     """Overwrite URIFilter to only allow http/https URLs."""
 
     _pattern = re.compile(r"URI:https?://[^\s]*")
 
 
-class MagicWordsFilter(Filter):
+class MagicWordsFilter(Filter):  # type: ignore[misc]
     """Filter for a few magic words.
 
     This filter adds a few product names and keywords, as well as known extension names and
@@ -71,17 +71,17 @@ class MagicWordsFilter(Filter):
         "SystemD",
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self.words |= KeyUsage.CRYPTOGRAPHY_MAPPING.keys()
         self.words |= ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()
         self.words |= {e.name for e in KEY_TO_EXTENSION.values()}
 
-    def _skip(self, word):
+    def _skip(self, word: str) -> bool:
         return word in self.words
 
 
-class TypeHintsFilter(Filter):
+class TypeHintsFilter(Filter):  # type: ignore[misc]
     """Filter ``typing.TypeVar`` instances in :py:mod:`~django_ca.typehints` as known words.
 
     Return type annotations that are actually ``typing.TypeVar`` are not recognized as such. Sphinx also
@@ -94,5 +94,5 @@ class TypeHintsFilter(Filter):
         if isinstance(getattr(typehints, tv), typing.TypeVar)
     ]
 
-    def _skip(self, word):
+    def _skip(self, word: str) -> bool:
         return word in self.typehints

@@ -19,6 +19,7 @@ import sys
 import sphinx_rtd_theme
 from docutils.nodes import Text as DocutilsText
 from sphinx.addnodes import pending_xref
+from sphinx.application import Sphinx
 
 try:
     from sphinxcontrib import spelling
@@ -529,5 +530,5 @@ def resolve_internal_aliases(app, doctree):
             text_node.parent.replace(text_node, DocutilsText(text_overrides[alias], ""))
 
 
-def setup(app):
+def setup(app: Sphinx) -> None:
     app.connect("doctree-read", resolve_internal_aliases)

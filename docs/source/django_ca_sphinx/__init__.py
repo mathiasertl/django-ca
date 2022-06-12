@@ -13,14 +13,16 @@
 
 """Sphinx extension for django-ca specific features."""
 
+import typing
+
+from sphinx.application import Sphinx
+
 from .console_include import ConsoleIncludeDirective
 from .template_include import TemplateDirective
 
 
-def setup(app):
+def setup(app: Sphinx) -> typing.Dict[str, bool]:
     """Sphinx setup function."""
-    TemplateDirective.app = app
-    ConsoleIncludeDirective.app = app
     app.add_directive("template-include", TemplateDirective)
     app.add_directive("console-include", ConsoleIncludeDirective)
     return {"parallel_read_safe": True, "parallel_write_safe": True}

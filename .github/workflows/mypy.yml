@@ -33,4 +33,4 @@ jobs:
           pip install -r requirements.txt -r requirements/requirements-mypy.txt
 
       - name: run mypy
-        run: mypy ca/django_ca/
+        run: mypy ca/django_ca/ docs/source/django_ca_sphinx/

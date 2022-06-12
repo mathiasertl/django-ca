@@ -13,6 +13,8 @@
 
 """A directive that lets you include a Jinja2 template as a rendered code block."""
 
+import typing
+
 from docutils.parsers.rst import directives
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
@@ -43,19 +45,18 @@ class TemplateDirective(CodeBlock):
     has_content = False
     option_spec: OptionSpec = dict(CodeBlock.option_spec, context=directives.unchanged)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-        conf = self.app.config
         self.jinja_env = Environment(
-            loader=FileSystemLoader(conf.jinja_base, followlinks=True), **conf.jinja_env_kwargs
+            loader=FileSystemLoader(self.config.jinja_base, followlinks=True), **self.config.jinja_env_kwargs
         )
-        self.jinja_env.filters.update(conf.jinja_filters)
-        self.jinja_env.tests.update(conf.jinja_tests)
-        self.jinja_env.globals.update(conf.jinja_globals)
-        self.jinja_env.policies.update(conf.jinja_policies)
+        self.jinja_env.filters.update(self.config.jinja_filters)
+        self.jinja_env.tests.update(self.config.jinja_tests)
+        self.jinja_env.globals.update(self.config.jinja_globals)
+        self.jinja_env.policies.update(self.config.jinja_policies)
 
     @property
-    def content(self):
+    def content(self) -> typing.List[str]:
         """Actually render the template."""
 
         template = self.jinja_env.get_template(self.arguments[1])
@@ -64,14 +65,14 @@ class TemplateDirective(CodeBlock):
         # get the context
         if not context_name:
             context = {}
-        elif context_name not in self.app.config.jinja_contexts:
+        elif context_name not in self.config.jinja_contexts:
             raise ValueError(f"{context_name}: Unknow context specified.")
         else:
-            context = self.app.config.jinja_contexts[context_name].copy()
+            context = self.config.jinja_contexts[context_name].copy()
 
         content = template.render(**context)
         return content.splitlines()
 
     @content.setter
-    def content(self, value):
+    def content(self, value: typing.Any) -> None:
         """Setter for content (used by the constructor). Disregards the value."""

@@ -27,7 +27,7 @@ from yaml import load
 try:
     from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader
+    from yaml import Loader  # type: ignore[misc]  # mypy complains about different type
 
 
 class CommandLineTextWrapper(textwrap.TextWrapper):
@@ -43,14 +43,14 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
     the former.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self.subsequent_indent = ">    "
         self.break_on_hyphens = False
         self.break_long_words = False
 
-    def _unsplit_optargs(self, chunks):
-        unsplit = []
+    def _unsplit_optargs(self, chunks: typing.List[str]) -> typing.Iterator[str]:
+        unsplit: typing.List[str] = []
         for chunk in chunks:
             if re.match("-[a-z]$", chunk):  # chunk appears to be an option
                 if unsplit:  # previous option was also an optarg, so yield what was there
@@ -65,7 +65,7 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
             else:  # not an option
                 # The unsplit buffer has two values (short option and space) and this chunk looks like its
                 # value, so yield the buffer and this value as split
-                if len(unsplit) == 2 and re.match("[a-z0-9]", chunk):
+                if len(unsplit) == 2 and re.match("[a-zA-Z0-9`]", chunk):
                     # unsplit option, whitespace and option value
                     unsplit.append(chunk)
                     yield "".join(unsplit)
@@ -85,7 +85,7 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
         for chunk in unsplit:
             yield chunk
 
-    def _split(self, text):
+    def _split(self, text: str) -> typing.List[str]:
         chunks = super()._split(text)
         unsplit = list(self._unsplit_optargs(chunks))
         return unsplit
@@ -148,16 +148,15 @@ class ConsoleIncludeDirective(CodeBlock):
         line_length=directives.nonnegative_int,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-        conf = self.app.config
         self.jinja_env = Environment(
-            loader=FileSystemLoader(conf.jinja_base, followlinks=True), **conf.jinja_env_kwargs
+            loader=FileSystemLoader(self.config.jinja_base, followlinks=True), **self.config.jinja_env_kwargs
         )
-        self.jinja_env.filters.update(conf.jinja_filters)
-        self.jinja_env.tests.update(conf.jinja_tests)
-        self.jinja_env.globals.update(conf.jinja_globals)
-        self.jinja_env.policies.update(conf.jinja_policies)
+        self.jinja_env.filters.update(self.config.jinja_filters)
+        self.jinja_env.tests.update(self.config.jinja_tests)
+        self.jinja_env.globals.update(self.config.jinja_globals)
+        self.jinja_env.policies.update(self.config.jinja_policies)
 
     @property
     def arguments(self) -> typing.List[str]:
@@ -194,10 +193,10 @@ class ConsoleIncludeDirective(CodeBlock):
         context_name = self.options.get("context")
         if not context_name:
             context = {}
-        elif context_name not in self.app.config.jinja_contexts:
+        elif context_name not in self.config.jinja_contexts:
             raise ValueError(f"{context_name}: Unknow context specified.")
         else:
-            context = self.app.config.jinja_contexts[context_name].copy()
+            context = self.config.jinja_contexts[context_name].copy()
 
         root = "root" in self.options
         if root:
@@ -226,5 +225,5 @@ class ConsoleIncludeDirective(CodeBlock):
         return lines
 
     @content.setter
-    def content(self, value):
+    def content(self, value: typing.Any) -> None:
         """Setter for content (used by the constructor). Disregards the value."""

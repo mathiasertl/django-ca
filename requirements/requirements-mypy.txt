@@ -1,7 +1,8 @@
 # cryptography adds propper type annotations only in 35.0.0
 cryptography>=35.0.0
-mypy==0.960
+mypy==0.961
 django-stubs==1.9.0
-types-freezegun==1.1.9
+types-docutils==0.18.3
+types-freezegun==1.1.10
 types-pyRFC3339==1.1.1
-types-requests==2.27.28
+types-requests==2.27.30
