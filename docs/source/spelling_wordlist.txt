@@ -9,7 +9,9 @@ bugfix
 bugfixes
 certbot
 changelog
+conf
 cron
+django
 filestorage
 formatters
 frontend
@@ -23,11 +25,13 @@ isort
 iterable
 linters
 localhost
+localsettings
 middlewares
 misconfiguration
 mixin
 monospace
 mypy
+nginx
 nitpicky
 oldoldstable
 parsable
@@ -64,3 +68,5 @@ unparsed
 untrusted
 virtualenv
 whitespace
+yaml
+yml
