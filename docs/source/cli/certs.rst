@@ -82,8 +82,8 @@ Subject and alternative names
 The Certificate's Subject (that is, it's CommonName) and the names given in the ``SubjectAlternativeName``
 extension define where the certificate is valid.
 
-The CommonName is usually added to the ``SubjectAlternativeName`` extension as well and vice versa. This means that
-these two will give the same CommonName and ``subjectAltName``:
+The CommonName is usually added to the ``SubjectAlternativeName`` extension as well and vice versa. This means
+that these two will give the same CommonName and ``subjectAltName``:
 
 .. code-block:: console
 

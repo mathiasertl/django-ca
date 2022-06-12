@@ -30,11 +30,16 @@ exclude_lines = [
 ]
 
 [tool.doc8]
-max_line_length = 110
+max-line-length = 110
+ignore = [
+    "D000",
+]
 
 # NOTE: ideally, we would use ignore-path-errors to only ignore long lines, but doc8
 #       does not support directories for that.
-ignore_path = "docs/source/generated/"
+ignore-path = [
+    "docs/source/generated/",
+]
 
 [tool.isort]
 line_length = 110

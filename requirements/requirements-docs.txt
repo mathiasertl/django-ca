@@ -5,3 +5,4 @@ sphinx-jinja==2.0.1
 sphinx_rtd_theme==1.0.0
 sphinxcontrib-spelling==7.5.0
 toml>=0.10
+tomli==2.0.1

@@ -19,7 +19,7 @@ alphabetical order) from a preconfigured directory. Please see the respective in
 how to override settings.
 
 The django-ca project also lets you override simple string-like settings via environment variables. The
-environment variable name is the same as the setting but prefixed with ``DJANGO_CA_``. For example to set the 
+environment variable name is the same as the setting but prefixed with ``DJANGO_CA_``. For example to set the
 ``CA_DIR`` setting, pass a ``DJANGO_CA_CA_DIR`` environment variable. Environment variables take precedence
 over the YAML configuration files above.
 
@@ -113,7 +113,7 @@ CA_DEFAULT_HOSTNAME
    setting *must not* include the protocol, as OCSP always uses HTTP (not HTTPS) and this setting might be
    used for other values in the future.
 
-   .. WARNING:: 
+   .. WARNING::
 
       If you change this setting, CRLs configured to contain only CA revocation information (that is, to check
       if an intermediate CA *itself* was revoked) are no longer strictly valid. However, few if any
@@ -380,7 +380,7 @@ Databases
 
 Both the `PostgreSQL <https://hub.docker.com/_/postgres>`_ and `MySQL <https://hub.docker.com/_/mysql>`_
 Docker containers get their database name and access credentials from environment variables and **django-ca**
-also recognizes these variables. 
+also recognizes these variables.
 
 This is especially powerful when using docker-compose, where it is sufficient to set the ``POSTGRES_PASSWORD``
 environment variable to configure the database, all other options use default values that just work.

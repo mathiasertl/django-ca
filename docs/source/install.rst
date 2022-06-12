@@ -20,7 +20,7 @@ Why plain HTTP?!
 OCSP and CRL access (protocols used to obtain the revocation status of certificates) usually work via HTTP,
 **not** HTTPS. Clients would need to obtain the revocation status of the certificate used for the HTTPS
 connection using that same HTTPS connection. Responses are signed, so using HTTP is not considered a security
-vulnerability.  
+vulnerability.
 
 Just in case you doubt the above: check how publicly trusted and widely used certificate authorities set the
 :ref:`ca-example-crlDistributionPoints` and :ref:`ca-example-AuthorityInfoAccess` extensions.

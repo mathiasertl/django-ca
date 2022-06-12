@@ -12,7 +12,7 @@ ChangeLog
 
 .. WARNING::
 
-   **docker-compose users:** 
+   **docker-compose users:**
 
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
@@ -39,7 +39,7 @@ Deprecation notices
 
 .. WARNING::
 
-   **docker-compose users:** 
+   **docker-compose users:**
 
    * Update from 1.18 or earlier? See :ref:`the update notes <update_119>` or you might loose private keys!
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
@@ -180,7 +180,7 @@ Deprecation notices
 1.19.0 (2021-10-09)
 *******************
 
-.. WARNING:: 
+.. WARNING::
 
    **docker-compose users:** See :ref:`the update notes <update_119>` or you might loose private keys!
 
@@ -210,7 +210,7 @@ Backwards incompatible changes
 * Drop support for cryptography 3.0, 3.1 and 3.2.
 * Remove support for configuring absolute paths for manually configured :py:class:`django_ca.views.OCSPView`.
   This functionality was officially supposed to be removed in django-ca 1.14.0.
- 
+
 Minor non-functional changes
 ============================
 

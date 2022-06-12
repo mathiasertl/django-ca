@@ -38,7 +38,7 @@ In our guide, we are going to run PostgreSQL as a database, Redis as a cache and
 server each in a separate Docker container. Please refer to your operating system installation instructions
 for how to install the software on your own.
 
-.. NOTE:: 
+.. NOTE::
 
    Starting dependencies as Docker containers serves us well for this guide, but makes the guide technically
    almost identical to just using :doc:`docker-compose <quickstart_docker_compose>`. If you do not already

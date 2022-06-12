@@ -176,9 +176,9 @@ Using an extra configuration file is the most flexible way to configure django-c
 even complex settings. It has the added advantage that docker-compose will not recreate the containers if you
 update the configuration.
 
-As with the normal docker container, django-ca will read configuration files in ``/usr/src/django-ca/ca/conf/``
-in alphabetical order, but it will also read files in the subfolder ``/usr/src/django-ca/conf/ca/compose/``, which
-provides configuration specific to our docker-compose setup.
+As with the normal docker container, django-ca will read configuration files in
+``/usr/src/django-ca/ca/conf/`` in alphabetical order, but it will also read files in the subfolder
+``/usr/src/django-ca/conf/ca/compose/``, which provides configuration specific to our docker-compose setup.
 
 To add a configuration file, first add a volume mapping in your ``docker-compose.override.yml``:
 

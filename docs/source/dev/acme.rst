@@ -21,7 +21,7 @@ Test using certbot
 ==================
 
 The project includes a specialized docker-compose override file so that you can start django-ca using
-docker-compose and then use a container to use certbot. 
+docker-compose and then use a container to use certbot.
 
 If you want to test the current development state, you must first locally build the image::
 

@@ -115,9 +115,9 @@ configuration:
 Add SystemD services
 ====================
 
-SystemD services are included with **django-ca**. You need to add three services, one for the uWSGI application
-server (``django-ca``), one for the Celery task worker (``django-ca-celery``) and one for the Celery task
-scheduler (``django-ca-celerybeat``):
+SystemD services are included with **django-ca**. You need to add three services, one for the uWSGI
+application server (``django-ca``), one for the Celery task worker (``django-ca-celery``) and one for the
+Celery task scheduler (``django-ca-celerybeat``):
 
 .. code-block:: console
 

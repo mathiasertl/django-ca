@@ -51,7 +51,7 @@ For a minimal installation, you can install django-ca via pip:
 
 .. code-block:: console
 
-	user@host:~$ pip install django-ca
+   user@host:~$ pip install django-ca
 
 There are several extras available, ``acme`` and ``celery`` are strongly recommended:
 
@@ -61,7 +61,7 @@ To install django-ca with one or more extras, use the regular pip syntax:
 
 .. code-block:: console
 
-	user@host:~$ pip install django-ca[acme,celery,redis]
+   user@host:~$ pip install django-ca[acme,celery,redis]
 
 *********************
 Initial configuration
