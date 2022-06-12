@@ -35,6 +35,7 @@ import django
 from django.core.exceptions import ImproperlyConfigured
 
 from common import CADIR
+from common import DOCS_DIR
 from common import ROOTDIR
 from common import bold
 from common import error
@@ -121,6 +122,9 @@ def test():
     # pylint: disable=import-outside-toplevel; imported here so that script runs without django
     import django
     from django.core.management import call_command  # pylint: disable=redefined-outer-name
+
+    # Testing the sphinx extension needs documentation in the Python path
+    sys.path.insert(0, DOCS_DIR)
 
     # pylint: enable=import-outside-toplevel
 

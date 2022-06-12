@@ -1,0 +1,4 @@
+commands:
+    - command: docker network create {{ network }}
+    - command: docker run --name {{ postgres_host }}  --network={{ network }} -e POSTGRES_PASSWORD={{ postgres_password }} -v pgdata:/var/lib/postgresql -d postgres
+    - command: docker run --name {{ redis_host }} --network={{ network }} -d redis

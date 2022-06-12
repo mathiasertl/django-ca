@@ -114,12 +114,9 @@ the services this way.
 
 Create a Docker network and start PostgreSQL and Redis:
 
-.. code-block:: console
-
-   user@host:~$ docker network create django-ca
-   user@host:~$ docker run --name postgres --network=django-ca -e POSTGRES_PASSWORD=password \
-   >     -v pgdata:/var/lib/postgresql -d postgres
-   user@host:~$ docker run --name redis --network=django-ca -d redis
+.. console-include::
+   :include: include/quickstart_with_docker/start-dependencies.yaml
+   :context: quickstart-with-docker
 
 Start django-ca
 ===============
@@ -127,24 +124,10 @@ Start django-ca
 django-ca (usually) consists of two containers (using the same image): A uWSGI server and a Celery task queue.
 You thus need to start two containers with slightly different configuration:
 
-.. code-block:: console
+.. console-include::
+   :include: include/quickstart_with_docker/start-django-ca.yaml
+   :context: quickstart-with-docker
 
-   user@host:~$ docker run -d \
-   >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
-   >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
-   >     -v static:/usr/share/django-ca/static/ \
-   >     -v frontend_ca_dir:/var/lib/django-ca/certs/ \
-   >     -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
-   >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-   >     -v nginx_config:/usr/src/django-ca/nginx/ \
-   >     --name=frontend --network=django-ca mathiasertl/django-ca
-   user@host:~$ docker run -d \
-   >     -e WAIT_FOR_CONNECTIONS=postgres:5432 \
-   >     -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
-   >     -v backend_ca_dir:/var/lib/django-ca/certs/ \
-   >     -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
-   >     -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-   >     --name=backend --network=django-ca mathiasertl/django-ca ./celery.sh
 
 Start NGINX
 ===========

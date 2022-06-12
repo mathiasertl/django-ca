@@ -400,6 +400,7 @@ jinja_contexts = {
         "user": "root",
     },
     "quickstart-with-docker": {
+        "network": "django-ca",
         "ca_default_hostname": "ca.example.com",
         "frontend_host": "frontend",
         "postgres_host": "postgres",

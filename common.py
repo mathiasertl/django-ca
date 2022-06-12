@@ -31,6 +31,8 @@ except ImportError:
 
 ROOTDIR = os.path.dirname(os.path.realpath(__file__))
 CADIR = os.path.join(ROOTDIR, "ca")
+DOCS_DIR = os.path.join(ROOTDIR, "docs", "source")
+DJANGO_CA_SPHINX_DIR = os.path.join(DOCS_DIR, "django_ca_sphinx")
 
 if CADIR not in sys.path:
     sys.path.insert(0, CADIR)
