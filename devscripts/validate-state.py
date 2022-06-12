@@ -274,6 +274,7 @@ def check_pyproject_toml():
 
 
 def validate_state():
+    """Main function."""
     total_errors = check(check_github_actions_tests)
     total_errors += check(check_tox)
     total_errors += check(check_setup_cfg)
@@ -285,9 +286,9 @@ def validate_state():
 
 
 if __name__ == "__main__":
-    total_errors = validate_state()
-    if total_errors != 0:
-        print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
+    script_errors = validate_state()
+    if script_errors != 0:
+        print(colored(f"A total of {script_errors} error(s) found!", "red", attrs=["bold"]))
         sys.exit(1)
     else:
         print(colored("Congratulations. All clean.", "green"))

@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Functions for validating the Docker image and the respective tutorial."""
+
 import os
 import subprocess
 from contextlib import contextmanager
@@ -18,15 +20,19 @@ from contextlib import contextmanager
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 
+# pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
 from dev import utils
 from dev.out import err
 from dev.out import ok
 from dev.out import warn
 
+# pylint: enable=no-name-in-module
+
 
 @contextmanager
 def postgres(network, password):
+    """Start the dependent postgres container."""
     with utils.docker_container(
         "postgres", name="postgres", network=network, environment={"POSTGRES_PASSWORD": password}
     ) as container:
@@ -35,11 +41,13 @@ def postgres(network, password):
 
 @contextmanager
 def redis(network):
+    """Start the dependent redis container."""
     with utils.docker_container("redis", name="redis", network=network) as container:
         yield container
 
 
 def validate_docker_image(tag, release, prune=True):
+    """Validate the Docker image."""
     print("\nValidating Docker image...")
 
     if prune:
@@ -91,9 +99,9 @@ def validate_docker_image(tag, release, prune=True):
     nginx = env.get_template("quickstart_with_docker/nginx.conf.jinja").render(**context)
 
     with utils.tmpdir():
-        with open("localsettings.yaml", "w") as stream:
+        with open("localsettings.yaml", "w", encoding="utf-8") as stream:
             stream.write(localsettings)
-        with open("nginx.conf", "w") as stream:
+        with open("nginx.conf", "w", encoding="utf-8") as stream:
             stream.write(nginx)
 
         # Create Docker network

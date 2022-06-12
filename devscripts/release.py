@@ -13,24 +13,29 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
+"""Release script."""
+
 import argparse
 import subprocess
 from importlib import import_module
 
 from validation.docker import validate_docker_image
 
+# pylint: disable=no-name-in-module  # false positive due to dev.py in top-level
 from dev import config
 from dev.out import info
 from dev.out import ok
 from dev.out import warn
 from dev.utils import redirect_output
 
+# pylint: enable=no-name-in-module
+
 
 def validate_state():
     """Validate state of various config files."""
-    validate_state = import_module("validate-state")
+    validate_state_mod = import_module("validate-state")
     with redirect_output() as stream:
-        errors = validate_state.validate_state()
+        errors = validate_state_mod.validate_state()
 
     if errors == 0:
         ok("State validated.")
