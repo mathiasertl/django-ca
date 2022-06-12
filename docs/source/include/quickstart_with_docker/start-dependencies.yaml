@@ -1,4 +1,12 @@
 commands:
     - command: docker network create {{ network }}
+      clean:
+          - docker network rm {{ network }}
     - command: docker run --name {{ postgres_host }}  --network={{ network }} -e POSTGRES_PASSWORD={{ postgres_password }} -v pgdata:/var/lib/postgresql -d postgres
+      clean:
+          - docker kill {{ postgres_host }}
+          - docker rm -f {{ postgres_host }}
     - command: docker run --name {{ redis_host }} --network={{ network }} -d redis
+      clean:
+          - docker kill {{ redis_host }}
+          - docker rm -f {{ redis_host }}

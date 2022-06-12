@@ -17,13 +17,23 @@
 
 import io
 import os
+import shlex
 import subprocess
 import tempfile
 from contextlib import contextmanager
 from contextlib import redirect_stderr
 from contextlib import redirect_stdout
 
-import docker
+import yaml
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+
+from . import config
+
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 
 @contextmanager
@@ -45,43 +55,37 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
+@contextmanager
+def console_include(path, context):
+    env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
+
+    with open(os.path.join(config.DOC_TEMPLATES_DIR, path), encoding="utf-8") as stream:
+        commands = yaml.load(stream, Loader=Loader)["commands"]
+
+    clean_commands = []
+
+    try:
+        for command in commands:
+            args = shlex.split(env.from_string(command["command"]).render(**context))
+            with redirect_output():
+                print("+", shlex.join(args))
+                subprocess.run(args, check=True)
+
+            for clean in reversed(command.get("clean", [])):
+                clean_commands.append(shlex.split(env.from_string(clean).render(**context)))
+
+        yield
+    finally:
+        for args in reversed(clean_commands):
+            print("+", shlex.join(args))
+            subprocess.run(args, check=False)
+
+
 def docker_run(*args, **kwargs):
     """Shortcut for running a docker command."""
     # pylint: disable=subprocess-run-check  # is in kwargs/defaults
     kwargs.setdefault("check", True)
     return subprocess.run(["docker", "run", "--rm"] + list(args), **kwargs)
-
-
-@contextmanager
-def docker_container(tag, **kwargs):
-    """Context manager to start a docker container and remove it afterwards."""
-    client = docker.from_env()
-    kwargs.setdefault("detach", True)
-
-    container = client.containers.run(tag, **kwargs)
-    try:
-        yield container
-    finally:
-        container.reload()
-        container.kill()
-        try:
-            container.remove(v=True)
-        except docker.errors.NotFound:
-            pass
-
-
-@contextmanager
-def docker_network(name):
-    """Context manager to create a Docker network and remove it after use."""
-    client = docker.from_env()
-    network = client.networks.create(name)
-    try:
-        yield network
-    finally:
-        network.reload()
-        for container in network.containers:
-            network.disconnect(container)
-        network.remove()
 
 
 @contextmanager

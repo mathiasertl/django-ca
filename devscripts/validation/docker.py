@@ -15,7 +15,6 @@
 
 import os
 import subprocess
-from contextlib import contextmanager
 
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
@@ -28,22 +27,6 @@ from dev.out import ok
 from dev.out import warn
 
 # pylint: enable=no-name-in-module
-
-
-@contextmanager
-def postgres(network, password):
-    """Start the dependent postgres container."""
-    with utils.docker_container(
-        "postgres", name="postgres", network=network, environment={"POSTGRES_PASSWORD": password}
-    ) as container:
-        yield container
-
-
-@contextmanager
-def redis(network):
-    """Start the dependent redis container."""
-    with utils.docker_container("redis", name="redis", network=network) as container:
-        yield container
 
 
 def validate_docker_image(tag, release, prune=True):
@@ -89,6 +72,7 @@ def validate_docker_image(tag, release, prune=True):
 
     env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
     context = {
+        "network": "django-ca",
         "ca_default_hostname": "localhost",
         "frontend_host": "frontend",
         "postgres_host": "postgres",
@@ -104,11 +88,7 @@ def validate_docker_image(tag, release, prune=True):
         with open("nginx.conf", "w", encoding="utf-8") as stream:
             stream.write(nginx)
 
-        # Create Docker network
-        with utils.docker_network("djca-docker-quickstart") as network:
-
-            # Create Postgres and Redis containers
-            with postgres(network.id, postgres_password), redis(network.id):
-                pass
+        with utils.console_include("quickstart_with_docker/start-dependencies.yaml", context):
+            print("running django-ca")
 
     return errors
