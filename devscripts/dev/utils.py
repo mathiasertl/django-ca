@@ -26,7 +26,6 @@ from contextlib import redirect_stdout
 
 import yaml
 from jinja2 import Environment
-from jinja2 import FileSystemLoader
 
 from . import config
 
@@ -57,7 +56,8 @@ def chdir(path):
 
 @contextmanager
 def console_include(path, context):
-    env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
+    """Run a console-include from the django_ca_sphinx Sphinx extension."""
+    env = Environment(autoescape=False)
 
     with open(os.path.join(config.DOC_TEMPLATES_DIR, path), encoding="utf-8") as stream:
         commands = yaml.load(stream, Loader=Loader)["commands"]
