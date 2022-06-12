@@ -33,7 +33,7 @@ import argparse
 import os
 import sys
 
-from setuptools.config import read_configuration
+from setuptools.config.setupcfg import read_configuration
 
 import django
 from django.conf import settings

@@ -24,7 +24,7 @@ import sys
 import git
 import semantic_version
 import yaml
-from setuptools.config import read_configuration
+from setuptools.config.setupcfg import read_configuration
 from termcolor import colored
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py
