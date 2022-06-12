@@ -24,8 +24,8 @@ from contextlib import contextmanager
 from contextlib import redirect_stderr
 from contextlib import redirect_stdout
 
+import jinja2
 import yaml
-from jinja2 import Environment
 
 from . import config
 
@@ -57,12 +57,13 @@ def chdir(path):
 @contextmanager
 def console_include(path, context):
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
-    env = Environment(autoescape=False)
+    env = jinja2.Environment(autoescape=False, undefined=jinja2.StrictUndefined)
 
     with open(os.path.join(config.DOC_TEMPLATES_DIR, path), encoding="utf-8") as stream:
         commands = yaml.load(stream, Loader=Loader)["commands"]
 
     clean_commands = []
+    context.setdefault("pwd", os.getcwd())
 
     try:
         for command in commands:

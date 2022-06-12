@@ -72,9 +72,11 @@ def validate_docker_image(tag, release, prune=True):
 
     env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
     context = {
-        "network": "django-ca",
+        "backend_host": "backend",
         "ca_default_hostname": "localhost",
         "frontend_host": "frontend",
+        "network": "django-ca",
+        "nginx_host": "nginx",
         "postgres_host": "postgres",
         "postgres_password": postgres_password,
         "redis_host": "redis",
@@ -89,6 +91,9 @@ def validate_docker_image(tag, release, prune=True):
             stream.write(nginx)
 
         with utils.console_include("quickstart_with_docker/start-dependencies.yaml", context):
-            print("running django-ca")
+            with utils.console_include("quickstart_with_docker/start-django-ca.yaml", context):
+                with utils.console_include("quickstart_with_docker/start-nginx.yaml", context):
+                    print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
+                    input("Press enter to continue:")
 
     return errors

@@ -93,7 +93,7 @@ Recap
 By now, there should be two configuration files in your local directory: ``localsettings.yaml`` configures
 django-ca, and ``nginx.conf`` configures NGINX itself:
 
-.. code-block:: bash
+.. code-block:: console
 
    user@host:~$ ls
    nginx.conf localsettings.yaml
@@ -135,11 +135,9 @@ Start NGINX
 NGINX unfortunately will crash if you haven't started django-ca first (due to the name of the frontend
 container not resolving yet). So you have to start NGINX *after* the frontend container:
 
-.. code-block:: console
-
-   user@host:~$ docker run --name nginx -p 80:80 --network=django-ca \
-   >     -v static:/usr/share/nginx/html/static/ \
-   >     -v `pwd`/nginx.conf:/etc/nginx/conf.d/default.conf -d nginx
+.. console-include::
+   :include: include/quickstart_with_docker/start-nginx.yaml
+   :context: quickstart-with-docker
 
 Create admin user and set up CAs
 ================================

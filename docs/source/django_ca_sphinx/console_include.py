@@ -17,9 +17,8 @@ import re
 import textwrap
 import typing
 
+import jinja2
 from docutils.parsers.rst import directives
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
 from sphinx.directives.code import CodeBlock  # code-block directive from Sphinx
 from sphinx.util.typing import OptionSpec
 from yaml import load
@@ -150,8 +149,11 @@ class ConsoleIncludeDirective(CodeBlock):
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(self.config.jinja_base, followlinks=True), **self.config.jinja_env_kwargs
+        jinja_env_kwargs = self.config.jinja_env_kwargs.copy()
+        jinja_env_kwargs["undefined"] = jinja2.StrictUndefined
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(self.config.jinja_base, followlinks=True),
+            **jinja_env_kwargs,
         )
         self.jinja_env.filters.update(self.config.jinja_filters)
         self.jinja_env.tests.update(self.config.jinja_tests)
@@ -198,6 +200,7 @@ class ConsoleIncludeDirective(CodeBlock):
             raise ValueError(f"{context_name}: Unknow context specified.")
         else:
             context = self.config.jinja_contexts[context_name].copy()
+        context.setdefault("pwd", "`pwd`")
 
         root = "root" in self.options
         if root:

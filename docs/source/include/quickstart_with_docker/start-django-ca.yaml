@@ -1,19 +1,25 @@
 commands:
     - command: >
         docker run -d
-            -e WAIT_FOR_CONNECTIONS=postgres:5432
-            -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml
+            -e WAIT_FOR_CONNECTIONS={{ postgres_host }}:5432
+            -v {{ pwd }}/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml
             -v static:/usr/share/django-ca/static/
             -v frontend_ca_dir:/var/lib/django-ca/certs/
             -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
             -v nginx_config:/usr/src/django-ca/nginx/
-            --name=frontend --network=django-ca mathiasertl/django-ca
+            --name={{ frontend_host }} --network={{ network }} mathiasertl/django-ca
+      clean:
+          - docker kill {{ frontend_host }}
+          - docker rm -f {{ frontend_host }}
     - command: >
         docker run -d
-            -e WAIT_FOR_CONNECTIONS=postgres:5432
-            -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml
+            -e WAIT_FOR_CONNECTIONS={{ postgres_host }}:5432
+            -v {{ pwd }}/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml
             -v backend_ca_dir:/var/lib/django-ca/certs/
             -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-            --name=backend --network=django-ca mathiasertl/django-ca ./celery.sh
+            --name={{ backend_host }} --network={{ network }} mathiasertl/django-ca ./celery.sh
+      clean:
+          - docker kill {{ backend_host }}
+          - docker rm -f {{ backend_host }}
