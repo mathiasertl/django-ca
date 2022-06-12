@@ -15,13 +15,14 @@
 
 import typing
 
-from sphinx.application import Sphinx
+if typing.TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 from .console_include import ConsoleIncludeDirective
 from .template_include import TemplateDirective
 
 
-def setup(app: Sphinx) -> typing.Dict[str, bool]:
+def setup(app: "Sphinx") -> typing.Dict[str, bool]:
     """Sphinx setup function."""
     app.add_directive("template-include", TemplateDirective)
     app.add_directive("console-include", ConsoleIncludeDirective)
