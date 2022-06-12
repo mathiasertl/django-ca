@@ -15,11 +15,11 @@
 
 import typing
 
-if typing.TYPE_CHECKING:
-    from sphinx.application import Sphinx
-
 from .console_include import ConsoleIncludeDirective
 from .template_include import TemplateDirective
+
+if typing.TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 
 def setup(app: "Sphinx") -> typing.Dict[str, bool]:
