@@ -53,7 +53,8 @@ class TemplateDirective(CodeBlock):
         self.jinja_env.filters.update(self.config.jinja_filters)
         self.jinja_env.tests.update(self.config.jinja_tests)
         self.jinja_env.globals.update(self.config.jinja_globals)
-        self.jinja_env.policies.update(self.config.jinja_policies)
+        # TYPEHINT NOTE: false positive
+        self.jinja_env.policies.update(self.config.jinja_policies)  # type: ignore[attr-defined]
 
     @property
     def content(self) -> typing.List[str]:
