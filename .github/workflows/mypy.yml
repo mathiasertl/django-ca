@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt -r requirements/requirements-mypy.txt
+          pip install -r requirements.txt -r requirements/requirements-mypy.txt -r requirements/requirements-docs.txt
 
       - name: run mypy
         run: mypy ca/django_ca/ docs/source/django_ca_sphinx/

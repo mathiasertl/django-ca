@@ -47,7 +47,7 @@ jobs:
           echo "django==${{ matrix.django-version }}" >> constraints.txt
           echo "acme==${{ matrix.acme-version }}" >> constraints.txt
           pip install -U pip setuptools
-          pip install -c constraints.txt -r requirements.txt -r requirements/requirements-test.txt
+          pip install -c constraints.txt -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt
 
       - name: Install program
         run: python setup.py develop
