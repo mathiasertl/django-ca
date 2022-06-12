@@ -14,6 +14,7 @@
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
 
 import os
+from pathlib import Path
 
 import toml
 
@@ -28,6 +29,8 @@ def minor_to_major(version):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 PYPROJECT_PATH = os.path.join(ROOT_DIR, "pyproject.toml")
+DOCS_DIR = Path(ROOT_DIR) / "docs"
+DOC_TEMPLATES_DIR = DOCS_DIR / "source" / "include"
 
 with open(PYPROJECT_PATH, encoding="utf-8") as stream:
     FULL_CONFIG = toml.load(stream)
@@ -44,6 +47,7 @@ CONFIG["acme-major"] = [minor_to_major(acmever) for acmever in CONFIG["acme"]]
 CONFIG["josepy-map"] = {minor_to_major(josepyver): josepyver for josepyver in CONFIG["josepy"]}
 CONFIG["josepy-major"] = [minor_to_major(josepyver) for josepyver in CONFIG["josepy"]]
 
+DOCKER_TAG = "mathiasertl/django-ca"
 DOCKER_CONFIG = FULL_CONFIG["django-ca"].setdefault("docker", {})
 _alpine_images = DOCKER_CONFIG.setdefault("alpine-images", [])
 if "default" not in _alpine_images:

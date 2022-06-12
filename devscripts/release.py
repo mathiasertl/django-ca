@@ -14,46 +14,22 @@
 # see <http://www.gnu.org/licenses/>.
 
 import argparse
-import io
-import os
 import subprocess
-import sys
-from contextlib import contextmanager
-from contextlib import redirect_stderr
-from contextlib import redirect_stdout
 from importlib import import_module
 
-from dev.out import err
+from validation.docker import validate_docker_image
+
+from dev import config
 from dev.out import info
 from dev.out import ok
 from dev.out import warn
-from dev.utils import tmpdir
-
-DOCKER_TAG = "mathiasertl/django-ca"
-
-
-@contextmanager
-def silence():
-    f = io.StringIO()
-    with redirect_stdout(f), redirect_stderr(f):
-        yield f
-
-
-def docker(cmd, *args, **kwargs):
-    proc = subprocess.run(
-        ["docker", "run", "--rm"] + list(args) + [DOCKER_TAG] + cmd,
-        capture_output=True,
-        check=True,
-        text=True,
-        **kwargs,
-    )
-    return proc
+from dev.utils import redirect_output
 
 
 def validate_state():
     """Validate state of various config files."""
     validate_state = import_module("validate-state")
-    with silence() as stream:
+    with redirect_output() as stream:
         errors = validate_state.validate_state()
 
     if errors == 0:
@@ -72,7 +48,7 @@ def create_docker_image(prune):
 
     info("Building docker image...")
     subprocess.run(
-        ["docker", "build", "--progress=plain", "-t", DOCKER_TAG, "."],
+        ["docker", "build", "--progress=plain", "-t", config.DOCKER_TAG, "."],
         check=True,
         env={
             "DOCKER_BUILDKIT": "1",
@@ -83,45 +59,23 @@ def create_docker_image(prune):
     ok("Docker image built.")
 
 
-def test_docker_image(release):
-    print("\nValidating Docker image...")
-    proc = docker(
-        ["manage", "shell", "-c", "import django_ca; print(django_ca.__version__)"],
-    )
-    actual_release = proc.stdout.strip()
-    if actual_release != release:
-        err(f"Docker image identifies as {actual_release}.")
-        sys.exit(1)
-    ok(f"Image identifies as {actual_release}.")
-
-    cwd = os.getcwd()
-    docker(
-        ["devscripts/test-imports.py", "--all-extras"],
-        "-v",
-        f"{cwd}/setup.cfg:/usr/src/django-ca/setup.cfg",
-        "-v",
-        f"{cwd}/devscripts/:/usr/src/django-ca/devscripts",
-        "-w",
-        "/usr/src/django-ca/",
-    )
-    ok("Imports validated.")
-
-    with tmpdir() as tmpdirname:
-        pass
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Build a django-ca release.")
     docker_grp = parser.add_argument_group("Docker options")
     docker_grp.add_argument(
-        "--no-prune",
+        "--no-docker-prune",
         default=True,
         dest="docker_prune",
         action="store_false",
         help="Prune system before building Docker image.",
     )
+    docker_grp.add_argument(
+        "--skip-docker", default=False, action="store_true", help="Skip Docker image tests."
+    )
+
     parser.add_argument("release", help="The actual release you want to build.")
     args = parser.parse_args()
     validate_state()
-    # create_docker_image(args.docker_prune)
-    test_docker_image(args.release)
+
+    if not args.skip_docker:
+        validate_docker_image(config.DOCKER_TAG, args.release, prune=args.docker_prune)
