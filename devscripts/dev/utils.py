@@ -20,6 +20,7 @@ import os
 import shlex
 import subprocess
 import tempfile
+import time
 from contextlib import contextmanager
 from contextlib import redirect_stderr
 from contextlib import redirect_stdout
@@ -54,6 +55,20 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
+def _waitfor(waitfor, env, context):
+    """Helper function to wait until the "waitfor" command succeeds."""
+    if not waitfor:
+        return
+
+    waitfor = shlex.split(env.from_string(waitfor).render(**context))
+    for i in range(0, 10):
+        print("+", shlex.join(waitfor))
+        waitfor_proc = subprocess.run(waitfor, check=False, capture_output=True)
+        if waitfor_proc == 0:
+            break
+        time.sleep(1)
+
+
 @contextmanager
 def console_include(path, context):
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
@@ -67,19 +82,29 @@ def console_include(path, context):
 
     try:
         for command in commands:
-            args = shlex.split(env.from_string(command["command"]).render(**context))
-            with redirect_output():
-                print("+", shlex.join(args))
-                subprocess.run(args, check=True)
+            command_str = command.get("run", command["command"])
+
+            # Render commands early so that we fail as soon as possible if there is an error in the templates
+            args = shlex.split(env.from_string(command_str).render(**context))
+            tmp_clean_commands = [
+                shlex.split(env.from_string(cmd).render(**context))
+                for cmd in reversed(command.get("clean", []))
+            ]
+
+            # If a "waitfor" command is defined, don't run actual command until it succeeds
+            _waitfor(command.get("waitfor"), env, context)
+
+            print("+", shlex.join(args))
+            subprocess.run(args, check=True)
 
             for clean in reversed(command.get("clean", [])):
-                clean_commands.append(shlex.split(env.from_string(clean).render(**context)))
+                clean_commands += tmp_clean_commands
 
         yield
     finally:
         for args in reversed(clean_commands):
             print("+", shlex.join(args))
-            subprocess.run(args, check=False)
+            subprocess.run(args, check=False, capture_output=True)
 
 
 def docker_run(*args, **kwargs):
