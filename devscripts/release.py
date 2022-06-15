@@ -16,16 +16,12 @@
 """Release script."""
 
 import argparse
-import subprocess
 from importlib import import_module
 
 from validation.docker import validate_docker_image
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py in top-level
-from dev import config
-from dev.out import info
 from dev.out import ok
-from dev.out import warn
 from dev.utils import redirect_output
 
 # pylint: enable=no-name-in-module
@@ -44,43 +40,10 @@ def validate_state():
         raise RuntimeError("State validation failed.")
 
 
-def create_docker_image(prune):
-    """Create the docker image."""
-    if prune:
-        subprocess.run(["docker", "system", "prune", "-af"], check=True, stdout=subprocess.DEVNULL)
-    else:
-        warn("Not pruning Docker daemon before building")
-
-    info("Building docker image...")
-    subprocess.run(
-        ["docker", "build", "--progress=plain", "-t", config.DOCKER_TAG, "."],
-        check=True,
-        env={
-            "DOCKER_BUILDKIT": "1",
-        },
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    ok("Docker image built.")
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Build a django-ca release.")
-    docker_grp = parser.add_argument_group("Docker options")
-    docker_grp.add_argument(
-        "--no-docker-prune",
-        default=True,
-        dest="docker_prune",
-        action="store_false",
-        help="Prune system before building Docker image.",
-    )
-    docker_grp.add_argument(
-        "--skip-docker", default=False, action="store_true", help="Skip Docker image tests."
-    )
-
     parser.add_argument("release", help="The actual release you want to build.")
     args = parser.parse_args()
-    validate_state()
 
-    if not args.skip_docker:
-        validate_docker_image(config.DOCKER_TAG, args.release, prune=args.docker_prune)
+    validate_state()
+    validate_docker_image(release=args.release)
