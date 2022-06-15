@@ -120,3 +120,10 @@ def tmpdir(**kwargs):
 
     with tempfile.TemporaryDirectory(**kwargs) as tmpdirname, chdir(tmpdirname):
         yield tmpdirname
+
+
+def run(args, **kwargs):
+    kwargs.setdefault("check", True)
+    if kwargs.pop("quiet", False):
+        print("+", subprocess.join(args))
+    return subprocess.run(args, **kwargs)
