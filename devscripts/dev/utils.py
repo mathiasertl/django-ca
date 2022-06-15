@@ -123,7 +123,8 @@ def tmpdir(**kwargs):
 
 
 def run(args, **kwargs):
+    """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
     if not kwargs.pop("quiet", False):
         print("+", shlex.join(args))
-    return subprocess.run(args, **kwargs)
+    return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check

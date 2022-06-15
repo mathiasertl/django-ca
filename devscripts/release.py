@@ -16,11 +16,15 @@
 """Release script."""
 
 import argparse
+import sys
 from importlib import import_module
 
+from git import Repo
 from validation.docker import validate_docker_image
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py in top-level
+from dev import config
+from dev.out import err
 from dev.out import ok
 from dev.utils import redirect_output
 
@@ -29,9 +33,12 @@ from dev.utils import redirect_output
 
 def validate_state():
     """Validate state of various config files."""
+    print(1)
     validate_state_mod = import_module("validate-state")
+    print(2)
     with redirect_output() as stream:
         errors = validate_state_mod.validate_state()
+    print(3)
 
     if errors == 0:
         ok("State validated.")
@@ -45,5 +52,22 @@ if __name__ == "__main__":
     parser.add_argument("release", help="The actual release you want to build.")
     args = parser.parse_args()
 
-    validate_state()
-    validate_docker_image(release=args.release)
+    repo = Repo(config.ROOT_DIR)
+    if repo.is_dirty(untracked_files=True):
+        err("Repository has untracked changes.")
+        sys.exit(1)
+
+    sys.path.insert(0, str(config.SRC_DIR))
+    import django_ca
+
+    if django_ca.__version__ != args.release:
+        err(f"ca/django_ca/__init__.py: Version is {django_ca.__version__}")
+        sys.exit(1)
+
+    git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
+    try:
+        validate_state()
+        validate_docker_image(release=args.release)
+    except Exception:
+        repo.delete_tag(git_tag)
+        raise
