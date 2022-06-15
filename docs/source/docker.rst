@@ -161,9 +161,11 @@ Build your own container
 ************************
 
 If you want to build the container by yourself, simply clone `the repository from GitHub
-<https://github.com/mathiasertl/django-ca/>`_ and execute::
+<https://github.com/mathiasertl/django-ca/>`_ and execute:
 
-   DOCKER_BUILDKIT=1 docker build -t django-ca .
+.. code-block:: console
+
+   $ DOCKER_BUILDKIT=1 docker build -t django-ca .
 
 ******
 Update
