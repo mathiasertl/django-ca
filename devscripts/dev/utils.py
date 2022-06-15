@@ -55,22 +55,24 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
-def _waitfor(waitfor, env, context):
+def _waitfor(waitfor, env, context, quiet=True):
     """Helper function to wait until the "waitfor" command succeeds."""
     if not waitfor:
         return
 
-    waitfor = shlex.split(env.from_string(waitfor).render(**context))
-    for i in range(0, 10):
-        print("+", shlex.join(waitfor))
-        waitfor_proc = subprocess.run(waitfor, check=False, capture_output=True)
-        if waitfor_proc == 0:
-            break
-        time.sleep(1)
+    for command in waitfor:
+        waitfor_cmd = shlex.split(env.from_string(command["command"]).render(**context))
+        print("+", shlex.join(waitfor_cmd))
+
+        for i in range(0, 15):
+            waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True)
+            if waitfor_proc.returncode == 0:
+                break
+            time.sleep(1)
 
 
 @contextmanager
-def console_include(path, context):
+def console_include(path, context, quiet=False):
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
     env = jinja2.Environment(autoescape=False, undefined=jinja2.StrictUndefined)
 
@@ -94,8 +96,7 @@ def console_include(path, context):
             # If a "waitfor" command is defined, don't run actual command until it succeeds
             _waitfor(command.get("waitfor"), env, context)
 
-            print("+", shlex.join(args))
-            subprocess.run(args, check=True)
+            run(args, quiet=quiet, capture_output=True)
 
             for clean in reversed(command.get("clean", [])):
                 clean_commands += tmp_clean_commands
@@ -103,8 +104,7 @@ def console_include(path, context):
         yield
     finally:
         for args in reversed(clean_commands):
-            print("+", shlex.join(args))
-            subprocess.run(args, check=False, capture_output=True)
+            run(args, check=False, capture_output=True, quiet=quiet)
 
 
 def docker_run(*args, **kwargs):
@@ -124,6 +124,6 @@ def tmpdir(**kwargs):
 
 def run(args, **kwargs):
     kwargs.setdefault("check", True)
-    if kwargs.pop("quiet", False):
-        print("+", subprocess.join(args))
+    if not kwargs.pop("quiet", False):
+        print("+", shlex.join(args))
     return subprocess.run(args, **kwargs)

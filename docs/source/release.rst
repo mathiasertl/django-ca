@@ -26,6 +26,7 @@ Test current state
 
 * Make sure that :command:`tox` runs through for all environments.
 * Make sure that :command:`./dev.py docker-test` runs through.
+* Push the last commit and make sure that GitHub actions and Read The Docs run through.
 
 Test demo
 =========
@@ -300,12 +301,18 @@ configured to use the local registry)::
     - Congratulations! Your certificate and chain have been saved at:
    ...
 
+****************
+Create a release
+****************
+
+Create a release with::
+
+   $ devscripts/release.py $version
 
 ***************
 Release process
 ***************
 
-* Push the last commit and make sure that GitHub actions and Read The Docs run through.
 * Tag the release: :command:`git tag -s $version -m "release $version"`
 * Push the tag: :command:`git push origin --tags`
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.

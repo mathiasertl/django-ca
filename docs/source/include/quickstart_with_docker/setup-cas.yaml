@@ -1,6 +1,8 @@
 commands:
     - command: docker exec -it backend manage createsuperuser
       run: docker exec -it backend manage shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
-      waitfor: nc -z {{ postgres_host }}:5432
+      waitfor:
+          - command: docker exec -it backend nc -z {{ postgres_host }}:5432
+          - command: docker exec -it -e PGPASSWORD={{ postgres_password }} backend psql -U postgres -h {{ postgres_host }} -p 5432 postgres -c "SELECT count(*) from auth_user"
     - command: docker exec -it backend manage init_ca --pathlen=1 Root "/CN=Root CA"
     - command: docker exec -it backend manage init_ca --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
