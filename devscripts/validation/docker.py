@@ -29,16 +29,7 @@ from dev.out import warn
 # pylint: enable=no-name-in-module
 
 
-def validate_docker_image(tag, release, prune=True):
-    """Validate the Docker image."""
-    print("\nValidating Docker image...")
-
-    if prune:
-        subprocess.run(["docker", "system", "prune", "-af"], check=True, stdout=subprocess.DEVNULL)
-    else:
-        warn("Not pruning Docker daemon before building")
-
-    errors = 0
+def _test_version(tag, release):
     proc = utils.docker_run(
         tag,
         "manage",
@@ -50,9 +41,11 @@ def validate_docker_image(tag, release, prune=True):
     )
     actual_release = proc.stdout.strip()
     if actual_release != release:
-        errors += err(f"Docker image identifies as {actual_release}.")
-    ok(f"Image identifies as {actual_release}.")
+        return err(f"Docker image identifies as {actual_release}.")
+    return ok(f"Image identifies as {actual_release}.")
 
+
+def _test_extras(tag):
     cwd = os.getcwd()
     utils.docker_run(
         "-v",
@@ -65,10 +58,21 @@ def validate_docker_image(tag, release, prune=True):
         "devscripts/test-imports.py",
         "--all-extras",
     )
-    ok("Imports validated.")
+    return ok("Imports validated.")
 
-    # shared variables
-    postgres_password = "password"
+
+def validate_docker_image(tag, release, prune=True):
+    """Validate the Docker image."""
+    print("\nValidating Docker image...")
+
+    if prune:
+        subprocess.run(["docker", "system", "prune", "-af"], check=True, stdout=subprocess.DEVNULL)
+    else:
+        warn("Not pruning Docker daemon before building")
+
+    errors = 0
+    errors += _test_version(tag, release)
+    errors += _test_extras(tag)
 
     env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
     context = {
@@ -78,7 +82,7 @@ def validate_docker_image(tag, release, prune=True):
         "network": "django-ca",
         "nginx_host": "nginx",
         "postgres_host": "postgres",
-        "postgres_password": postgres_password,
+        "postgres_password": "random-password",
         "redis_host": "redis",
     }
     localsettings = env.get_template("quickstart_with_docker/localsettings.yaml.jinja").render(**context)
@@ -90,10 +94,16 @@ def validate_docker_image(tag, release, prune=True):
         with open("nginx.conf", "w", encoding="utf-8") as stream:
             stream.write(nginx)
 
-        with utils.console_include("quickstart_with_docker/start-dependencies.yaml", context):
-            with utils.console_include("quickstart_with_docker/start-django-ca.yaml", context):
-                with utils.console_include("quickstart_with_docker/start-nginx.yaml", context):
-                    print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
-                    input("Press enter to continue:")
+        with utils.console_include(
+            "quickstart_with_docker/start-dependencies.yaml", context
+        ), utils.console_include(
+            "quickstart_with_docker/start-django-ca.yaml", context
+        ), utils.console_include(
+            "quickstart_with_docker/start-nginx.yaml", context
+        ), utils.console_include(
+            "quickstart_with_docker/setup-cas.yaml", context
+        ):
+            print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
+            input("Press enter to continue:")
 
     return errors

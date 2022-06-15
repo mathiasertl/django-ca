@@ -128,7 +128,6 @@ You thus need to start two containers with slightly different configuration:
    :include: include/quickstart_with_docker/start-django-ca.yaml
    :context: quickstart-with-docker
 
-
 Start NGINX
 ===========
 
@@ -139,17 +138,17 @@ container not resolving yet). So you have to start NGINX *after* the frontend co
    :include: include/quickstart_with_docker/start-nginx.yaml
    :context: quickstart-with-docker
 
+You are now able to view the admin interface at http;//ca.example.com. You cannot log in yet, as you haven't
+created a user yet.
+
 Create admin user and set up CAs
 ================================
 
 It's finally time to create a user for the admin interface and some certificate authorities.
 
-.. code-block:: console
-
-   user@host:~$ docker exec -it backend manage createsuperuser
-   user@host:~$ docker exec -it backend manage init_ca --pathlen=1 Root "/CN=Root CA"
-   user@host:~$ docker exec -it backend manage init_ca \
-   >     --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"
+.. console-include::
+   :include: include/quickstart_with_docker/setup-cas.yaml
+   :context: quickstart-with-docker
 
 ***********
 Use your CA
