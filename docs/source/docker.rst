@@ -138,7 +138,7 @@ container not resolving yet). So you have to start NGINX *after* the frontend co
    :include: include/quickstart_with_docker/start-nginx.yaml
    :context: quickstart-with-docker
 
-You are now able to view the admin interface at http;//ca.example.com. You cannot log in yet, as you haven't
+You are now able to view the admin interface at http://ca.example.com. You cannot log in yet, as you haven't
 created a user yet.
 
 Create admin user and set up CAs
