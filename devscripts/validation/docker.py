@@ -120,4 +120,7 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
             input("Press enter to continue:")
 
+    if release:
+        utils.run(["docker", "tag", config.DOCKER_TAG, f"{config.DOCKER_TAG}:{release}"], quiet=quiet)
+
     return errors
