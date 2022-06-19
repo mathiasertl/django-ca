@@ -110,8 +110,8 @@ structure is required). Simply create a file called :file:`.env` next to :file:`
 
 For a quick start, there are only a few variables you need to specify:
 
-.. template-include:: bash include/quickstart_with_docker_compose/env.jinja
-   :caption: docker-compose.override.yml
+.. template-include:: bash include/quickstart_with_docker_compose/.env.jinja
+   :caption: .env
    :context: quickstart-with-docker-compose
 
 Generate DH parameters
