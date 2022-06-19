@@ -19,6 +19,7 @@ import argparse
 import sys
 from importlib import import_module
 
+import semver
 from git import Repo
 from validation.docker import validate_docker_image
 
@@ -33,12 +34,9 @@ from dev.utils import redirect_output
 
 def validate_state():
     """Validate state of various config files."""
-    print(1)
     validate_state_mod = import_module("validate-state")
-    print(2)
     with redirect_output() as stream:
         errors = validate_state_mod.validate_state()
-    print(3)
 
     if errors == 0:
         ok("State validated.")
@@ -55,6 +53,14 @@ if __name__ == "__main__":
     repo = Repo(config.ROOT_DIR)
     if repo.is_dirty(untracked_files=True):
         err("Repository has untracked changes.")
+        # sys.exit(1)
+
+    try:
+        ver = semver.VersionInfo.parse(args.release)
+        if ver.prerelease or ver.build:
+            raise ValueError("Version has prerelease or build number.")
+    except ValueError as ex:
+        err(ex)
         sys.exit(1)
 
     sys.path.insert(0, str(config.SRC_DIR))
@@ -70,4 +76,4 @@ if __name__ == "__main__":
         validate_docker_image(release=args.release)
     except Exception:
         repo.delete_tag(git_tag)
-        raise
+        sys.exit(1)

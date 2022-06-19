@@ -1,6 +1,6 @@
 PyVirtualDisplay==3.0
 PyYAML>=5.4.1
-Sphinx==4.5.0
+Sphinx==4.5.0 
 coverage[toml]==6.4
 django-webtest==1.9.10
 freezegun==1.2.1
@@ -10,5 +10,6 @@ pyOpenSSL>=19
 pyrfc3339==1.1
 requests-mock==1.9.3
 selenium==4.1.5
+semver==2.13.0
 termcolor==1.1.0
 toml==0.10.2
