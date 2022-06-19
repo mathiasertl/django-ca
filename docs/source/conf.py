@@ -411,7 +411,12 @@ jinja_contexts = {
         "postgres_password": "password",
         "redis_host": "redis",
     },
-    "quickstart-with-docker-compose": {},
+    "quickstart-with-docker-compose": {
+        "ca_default_hostname": "ca.example.com",
+        "postgres_password": "mysecretpassword",
+        "privkey_path": "/etc/certs/live/ca.example.com/privkey.pem",
+        "pubkey_path": "/etc/certs/live/ca.example.com/fullchain.pem",
+    },
     "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
     "guide-docker-compose-where-to-go": {
         "shared": True,

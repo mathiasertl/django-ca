@@ -110,26 +110,9 @@ structure is required). Simply create a file called :file:`.env` next to :file:`
 
 For a quick start, there are only a few variables you need to specify:
 
-.. code-block:: bash
-
-   # The hostname for your CA.
-   # WARNING: Changing this requires new CAs (because the hostname goes into the certificates).
-   DJANGO_CA_CA_DEFAULT_HOSTNAME=ca.example.com
-
-   # Enable ACMEv2 support (enabled by default starting 1.22.0). Set to false to completely disable ACMEv2
-   # support.
-   DJANGO_CA_CA_ENABLE_ACME=true
-
-   # PostgreSQL superuser password (required by the Docker image), see also:
-   #   https://hub.docker.com/_/postgres
-   #
-   # Generate a secure password e.g. with "openssl rand -base64 32"
-   POSTGRES_PASSWORD=mysecretpassword
-
-   # NGINX TLS configuration
-   NGINX_TEMPLATE=tls
-   NGINX_PRIVATE_KEY=/etc/certs/live/ca.example.com/privkey.pem
-   NGINX_PUBLIC_KEY=/etc/certs/live/ca.example.com/fullchain.pem
+.. template-include:: bash include/quickstart_with_docker_compose/env.jinja
+   :caption: docker-compose.override.yml
+   :context: quickstart-with-docker-compose
 
 Generate DH parameters
 ======================
