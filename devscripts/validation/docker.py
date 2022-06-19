@@ -78,7 +78,7 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
     print("Validating Docker image...")
 
     if prune:
-        utils.run(["docker", "system", "prune", "-af"], quiet=quiet, capture_ouptut=True)
+        utils.run(["docker", "system", "prune", "-af"], quiet=quiet, capture_output=True)
 
     if build:
         build_docker_image(quiet=quiet)
