@@ -18,6 +18,7 @@
 import argparse
 
 from validation.docker import validate_docker_image
+from validation.docker_compose import validate_docker_compose
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("A collection of validation scripts.")
@@ -40,7 +41,11 @@ if __name__ == "__main__":
         help="Do not rebuild the image before testing.",
     )
 
+    subparsers.add_parser("docker-compose", help="Validate docker-compose setup.")
+
     args = parser.parse_args()
 
     if args.command == "docker":
         validate_docker_image(prune=args.docker_prune, build=args.build, quiet=args.quiet)
+    elif args.command == "docker-compose":
+        validate_docker_compose(quiet=args.quiet)

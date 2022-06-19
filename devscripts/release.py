@@ -22,6 +22,7 @@ from importlib import import_module
 import semantic_version
 from git import Repo
 from validation.docker import validate_docker_image
+from validation.docker_compose import validate_docker_compose
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py in top-level
 from dev import config
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     try:
         validate_state()
         validate_docker_image(release=args.release)
+        validate_docker_compose(release=args.release)
     except Exception:
         repo.delete_tag(git_tag)
         sys.exit(1)
