@@ -99,7 +99,7 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
 
     with start_tutorial("quickstart_with_docker", context, quiet=quiet) as tut:
         tut.write_template("localsettings.yaml.jinja")
-        tut.write_template("nginx.conf")
+        tut.write_template("nginx.conf.jinja")
 
         with tut.run("start-dependencies.yaml"), tut.run("start-django-ca.yaml"), tut.run(
             "start-nginx.yaml"
