@@ -19,8 +19,6 @@ from pathlib import Path
 import semantic_version
 import toml
 
-import django_ca
-
 
 def minor_to_major(version):
     """Convert minor to major version."""
@@ -33,6 +31,9 @@ def get_semantic_version(version=None) -> semantic_version.Version:
     """Function to get the last git release."""
 
     if version is None:
+        # import django_ca only here so that it is not imported before coverage tests start
+        import django_ca
+
         version = django_ca.VERSION
 
     kwargs = {"major": version[0], "minor": version[1], "patch": version[2]}
