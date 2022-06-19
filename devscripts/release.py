@@ -76,6 +76,7 @@ if __name__ == "__main__":
         validate_state()
         validate_docker_image(release=args.release)
         validate_docker_compose(release=args.release)
-    except Exception:
+    except Exception as ex:  # pylint: disable=broad-except
+        err(ex)
         repo.delete_tag(git_tag)
         sys.exit(1)

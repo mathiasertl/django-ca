@@ -44,7 +44,7 @@ def get_release_tags(repo):
 def get_last_release():
     """Function to get the last git release."""
     # Lazy import because git is not installed in some environments (e.g. tests in Docker)
-    import git
+    import git  # pylint: disable=import-outside-toplevel
 
     repo = git.Repo(ROOT_DIR)
     prev_tag, last_tag = sorted(get_release_tags(repo))[-2:]

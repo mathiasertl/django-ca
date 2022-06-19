@@ -11,7 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Functions for validating the Docker image and the respective tutorial."""
+"""Functions for validating docker-compose and the respective tutorial."""
+
+import os
 
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
@@ -19,15 +21,23 @@ from jinja2 import FileSystemLoader
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
 from dev import utils
+from dev.out import err
 
 # pylint: enable=no-name-in-module
 
 
-def validate_docker_compose(release=None, quiet=False):
+def validate_docker_compose(release=None, quiet=False):  # pylint: disable=unused-argument
     """Validate the docker-compose file (and the tutorial)."""
     print("Validating docker-compose setup...")
 
     errors = 0
+
+    docker_compose_yml = os.path.join(config.ROOT_DIR, "docker-compose.yml")
+    if release:
+        docker_compose_yml = os.path.join(config.DOCS_DIR, "source", "_files", release, "docker-compose.yml")
+
+    if not os.path.exists(docker_compose_yml):
+        return err(f"{docker_compose_yml}: File not found.")
 
     env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
     context = {
