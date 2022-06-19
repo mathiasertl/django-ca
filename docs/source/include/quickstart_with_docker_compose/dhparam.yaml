@@ -1,0 +1,2 @@
+commands:
+    - command: openssl dhparam -dsaparam -out dhparam.pem 4096

@@ -120,9 +120,10 @@ Generate DH parameters
 The TLS configuration also requires that you generate a DH parameter file, used by some TLS ciphers. You can
 generate it with:
 
-.. code-block:: console
-
-   user@host:~/ca/$ openssl dhparam -dsaparam -out dhparam.pem 4096
+.. console-include::
+   :include: include/quickstart_with_docker_compose/dhparam.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
 
 Customization
 =============

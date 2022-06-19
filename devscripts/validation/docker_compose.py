@@ -26,7 +26,7 @@ from dev.out import err
 # pylint: enable=no-name-in-module
 
 
-def validate_docker_compose(release=None, quiet=False):  # pylint: disable=unused-argument
+def validate_docker_compose(release=None, quiet=False):
     """Validate the docker-compose file (and the tutorial)."""
     print("Validating docker-compose setup...")
 
@@ -43,13 +43,24 @@ def validate_docker_compose(release=None, quiet=False):  # pylint: disable=unuse
     context = {
         "ca_default_hostname": "localhost",
         "postgres_password": "random-password",
+        "privkey_path": "",
+        "pubkey_path": "",
     }
     overrides = env.get_template("quickstart_with_docker_compose/docker-compose.override.yml.jinja").render(
         **context
     )
+    env = env.get_template("quickstart_with_docker_compose/env.jinja").render(**context)
 
     with utils.tmpdir():
         with open("docker-compose.override.yml", "w", encoding="utf-8") as stream:
             stream.write(overrides)
+        with open(".env", "w", encoding="utf-8") as stream:
+            stream.write(env)
+
+        with utils.console_include("quickstart_with_docker_compose/dhparam.yaml", context, quiet=quiet):
+            print(os.listdir("."))
 
     return errors
+
+
+print("in mod", validate_docker_compose)
