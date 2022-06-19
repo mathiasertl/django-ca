@@ -16,6 +16,8 @@
 import os
 from pathlib import Path
 
+import git
+import semantic_version
 import toml
 
 
@@ -26,12 +28,39 @@ def minor_to_major(version):
     return ".".join(version.split(".", 2)[:2])
 
 
+def get_release_tags(repo):
+    for tag in repo.tags:
+        try:
+            ver = semantic_version.Version(tag.name)
+        except ValueError:  # not a semantic version
+            continue
+
+        if ver.prerelease or ver.build:
+            continue
+
+        yield (ver, tag)
+
+
+def get_last_release():
+    repo = git.Repo(ROOT_DIR)
+    prev_tag, last_tag = sorted(get_release_tags(repo))[-2:]
+
+    # if the current head is a tag (= this is a release commit), return the tag before that
+    if repo.head.commit == last_tag[1].commit:
+        return prev_tag[1]
+
+    # ... otherwise just return the last tag
+    return last_tag[1]
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 PYPROJECT_PATH = os.path.join(ROOT_DIR, "pyproject.toml")
 DOCS_DIR = Path(ROOT_DIR) / "docs"
 DOC_TEMPLATES_DIR = DOCS_DIR / "source" / "include"
 SRC_DIR = Path(ROOT_DIR) / "ca"
+
+LAST_RELEASE = get_last_release()
 
 with open(PYPROJECT_PATH, encoding="utf-8") as stream:
     FULL_CONFIG = toml.load(stream)
@@ -47,6 +76,7 @@ CONFIG["acme-map"] = {minor_to_major(acmever): acmever for acmever in CONFIG["ac
 CONFIG["acme-major"] = [minor_to_major(acmever) for acmever in CONFIG["acme"]]
 CONFIG["josepy-map"] = {minor_to_major(josepyver): josepyver for josepyver in CONFIG["josepy"]}
 CONFIG["josepy-major"] = [minor_to_major(josepyver) for josepyver in CONFIG["josepy"]]
+CONFIG["LAST_RELEASE"] = LAST_RELEASE
 
 DOCKER_TAG = "mathiasertl/django-ca"
 DOCKER_CONFIG = FULL_CONFIG["django-ca"].setdefault("docker", {})
