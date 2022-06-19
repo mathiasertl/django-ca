@@ -15,15 +15,13 @@
 
 import os
 
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
-
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
 from dev import utils
 from dev.out import err
 from dev.out import info
 from dev.out import ok
+from dev.tutorial import start_tutorial
 
 # pylint: enable=no-name-in-module
 
@@ -88,7 +86,6 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
         errors += _test_version(release)
     errors += _test_extras()
 
-    env = Environment(loader=FileSystemLoader(config.DOC_TEMPLATES_DIR), autoescape=False)
     context = {
         "backend_host": "backend",
         "ca_default_hostname": "localhost",
@@ -99,14 +96,10 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
         "postgres_password": "random-password",
         "redis_host": "redis",
     }
-    localsettings = env.get_template("quickstart_with_docker/localsettings.yaml.jinja").render(**context)
-    nginx = env.get_template("quickstart_with_docker/nginx.conf.jinja").render(**context)
 
-    with utils.tmpdir():
-        with open("localsettings.yaml", "w", encoding="utf-8") as stream:
-            stream.write(localsettings)
-        with open("nginx.conf", "w", encoding="utf-8") as stream:
-            stream.write(nginx)
+    with start_tutorial("quickstart_with_docker", context) as tutorial:
+        tutorial.write_template("localsettings.yaml.jinja")
+        tutorial.write_template("nginx.conf")
 
         with utils.console_include(
             "quickstart_with_docker/start-dependencies.yaml", context, quiet=quiet
