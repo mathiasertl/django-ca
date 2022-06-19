@@ -17,10 +17,8 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 
-# Celery==5.2.3 requires setuptools<59.7 and installation fails with newer setuptools
 COPY requirements/ requirements/
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U "setuptools<59.7" pip wheel
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install -r requirements/requirements-dist.txt
+RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY setup.cfg setup.py pyproject.toml ./
@@ -43,7 +41,6 @@ ENV SQLITE_NAME=:memory:
 
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
-    -r requirements/requirements-dist.txt \
     -r requirements/requirements-test.txt
 
 # copy this late so that changes do not trigger a cache miss during build
