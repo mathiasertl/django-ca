@@ -14,18 +14,28 @@
 """Helper functions/classes for testing Sphinx tutorials."""
 
 import os
+import typing
 from contextlib import contextmanager
 
 import jinja2
 
+# pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
 from dev import utils
 
+# pylint: enable=no-name-in-module
+
 
 class Tutorial:
-    def __init__(self, name: str, context, quiet: bool) -> None:
+    """Wrapper class for testing a tutorial from Sphinx.
+
+    This class lets you easily render templates or run commands from a sphinx tutorial.
+    """
+
+    def __init__(self, name: str, context: typing.Dict[str, typing.Any], quiet: bool) -> None:
         self.name = name
         self.context = context
+        self.quiet = quiet
 
         # Get a strict Jinja2 environment
         self.env = jinja2.Environment(
@@ -35,6 +45,7 @@ class Tutorial:
         )
 
     def write_template(self, name: str) -> None:
+        """Write a template with the given name."""
         dest, ext = os.path.splitext(name)
         if ext != ".jinja":
             raise ValueError(f"{name}: Template extension should be 'jinja'.")
@@ -46,13 +57,17 @@ class Tutorial:
             stream.write(content)
 
     @contextmanager
-    def run(self, path: str):
+    def run(self, path: str) -> typing.Iterator[None]:
+        """Run commands from the specified YAML file."""
         path = os.path.join(self.name, path)
         with utils.console_include(path, self.context, quiet=self.quiet):
             yield
 
 
 @contextmanager
-def start_tutorial(name, context):
+def start_tutorial(
+    name: str, context: typing.Dict[str, typing.Any], quiet: bool
+) -> typing.Iterator[Tutorial]:
+    """Context manager to start a tutorial in a temporary directory."""
     with utils.tmpdir():
-        yield Tutorial(name, context=context)
+        yield Tutorial(name, context=context, quiet=quiet)

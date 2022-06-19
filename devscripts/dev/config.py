@@ -20,7 +20,7 @@ import semantic_version
 import toml
 
 
-def minor_to_major(version):
+def minor_to_major(version: str) -> str:
     """Convert minor to major version."""
     if version.count(".") == 1:
         return version
@@ -31,8 +31,8 @@ def get_semantic_version(version=None) -> semantic_version.Version:
     """Function to get the last git release."""
 
     if version is None:
-        # import django_ca only here so that it is not imported before coverage tests start
-        import django_ca
+        # PYLINT NOTE: import django_ca only here so that it is not imported before coverage tests start
+        import django_ca  # pylint: disable=import-outside-toplevel
 
         version = django_ca.VERSION
 
@@ -47,6 +47,7 @@ def get_semantic_version(version=None) -> semantic_version.Version:
 
 
 def get_last_version():
+    """Get the last version that was released from ``django_ca.VERSION``."""
     version = get_semantic_version()
 
     # If this is a development release, just remove prerelease/build and return it
