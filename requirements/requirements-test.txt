@@ -1,5 +1,5 @@
+-r requirements/requirements-ci.txt
 PyVirtualDisplay==3.0
-PyYAML>=5.4.1
 Sphinx==4.5.0 
 coverage[toml]==6.4
 django-webtest==1.9.10
