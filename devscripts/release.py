@@ -19,7 +19,7 @@ import argparse
 import sys
 from importlib import import_module
 
-import semver
+import semantic_version
 from git import Repo
 from validation.docker import validate_docker_image
 
@@ -53,10 +53,10 @@ if __name__ == "__main__":
     repo = Repo(config.ROOT_DIR)
     if repo.is_dirty(untracked_files=True):
         err("Repository has untracked changes.")
-        # sys.exit(1)
+        sys.exit(1)
 
     try:
-        ver = semver.VersionInfo.parse(args.release)
+        ver = semantic_version.Version(args.release)
         if ver.prerelease or ver.build:
             raise ValueError("Version has prerelease or build number.")
     except ValueError as ex:

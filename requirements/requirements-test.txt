@@ -10,6 +10,5 @@ pyOpenSSL>=19
 pyrfc3339==1.1
 requests-mock==1.9.3
 selenium==4.1.5
-semver==2.13.0
 termcolor==1.1.0
 toml==0.10.2
