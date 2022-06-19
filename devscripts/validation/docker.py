@@ -97,19 +97,13 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
         "redis_host": "redis",
     }
 
-    with start_tutorial("quickstart_with_docker", context) as tutorial:
-        tutorial.write_template("localsettings.yaml.jinja")
-        tutorial.write_template("nginx.conf")
+    with start_tutorial("quickstart_with_docker", context, quiet=quiet) as tut:
+        tut.write_template("localsettings.yaml.jinja")
+        tut.write_template("nginx.conf")
 
-        with utils.console_include(
-            "quickstart_with_docker/start-dependencies.yaml", context, quiet=quiet
-        ), utils.console_include(
-            "quickstart_with_docker/start-django-ca.yaml", context, quiet=quiet
-        ), utils.console_include(
-            "quickstart_with_docker/start-nginx.yaml", context, quiet=quiet
-        ), utils.console_include(
-            "quickstart_with_docker/setup-cas.yaml", context, quiet=quiet
-        ):
+        with tut.run("start-dependencies.yaml"), tut.run("start-django-ca.yaml"), tut.run(
+            "start-nginx.yaml"
+        ), tut.run("setup-cas.yaml"):
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
             input("Press enter to continue:")
 

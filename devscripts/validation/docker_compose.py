@@ -17,7 +17,6 @@ import os
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
-from dev import utils
 from dev.out import err
 from dev.tutorial import start_tutorial
 
@@ -44,14 +43,11 @@ def validate_docker_compose(release=None, quiet=False):
         "pubkey_path": "",
     }
 
-    with start_tutorial("quickstart_with_docker_compose", context) as tutorial:
-        tutorial.write_template("docker-compose.override.yml.jinja")
-        tutorial.write_template(".env.jinja")
+    with start_tutorial("quickstart_with_docker_compose", context, quiet) as tut:
+        tut.write_template("docker-compose.override.yml.jinja")
+        tut.write_template(".env.jinja")
 
-        with utils.console_include("quickstart_with_docker_compose/dhparam.yaml", context, quiet=quiet):
+        with tut.run("dhparam.yaml"):
             print(os.listdir("."))
 
     return errors
-
-
-print("in mod", validate_docker_compose)

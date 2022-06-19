@@ -14,7 +14,6 @@
 """Helper functions/classes for testing Sphinx tutorials."""
 
 import os
-import typing
 from contextlib import contextmanager
 
 import jinja2
@@ -24,7 +23,7 @@ from dev import utils
 
 
 class Tutorial:
-    def __init__(self, name: str, context: typing.Dict[str, typing.Any] = None) -> None:
+    def __init__(self, name: str, context, quiet: bool) -> None:
         self.name = name
         self.context = context
 
@@ -35,19 +34,22 @@ class Tutorial:
             undefined=jinja2.StrictUndefined,
         )
 
-    def write_template(self, name: str, **additional_context) -> None:
+    def write_template(self, name: str) -> None:
         dest, ext = os.path.splitext(name)
         if ext != ".jinja":
             raise ValueError(f"{name}: Template extension should be 'jinja'.")
 
-        context = self.context.copy()
-        context.update(additional_context)
-
         template = self.env.get_template(os.path.join(self.name, name))
-        content = template.render(**context)
+        content = template.render(**self.context)
 
         with open(dest, "w", encoding="utf-8") as stream:
             stream.write(content)
+
+    @contextmanager
+    def run(self, path: str):
+        path = os.path.join(self.name, path)
+        with utils.console_include(path, self.context, quiet=self.quiet):
+            yield
 
 
 @contextmanager
