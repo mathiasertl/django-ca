@@ -410,6 +410,7 @@ jinja_contexts = {
         "postgres_password": "password",
         "redis_host": "redis",
     },
+    "quickstart-with-docker-compose": {},
     "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
     "guide-docker-compose-where-to-go": {
         "shared": True,

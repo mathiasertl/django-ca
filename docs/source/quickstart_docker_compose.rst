@@ -94,19 +94,9 @@ are different from system to system. We need to add a `docker-compose override f
 into the container.  Simply add a file called :file:`docker-compose.override.yml` next to your main
 configuration file:
 
-.. code-block:: yaml
+.. template-include:: yaml include/quickstart_with_docker_compose/docker-compose.override.yml.jinja
    :caption: docker-compose.override.yml
-
-   version: "3.6"
-   services:
-       webserver:
-           volumes:
-               - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
-               - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
-               - ${PWD}/dhparam.pem:/etc/nginx/dhparams/dhparam.pem
-               - ${PWD}/acme/:/usr/share/django-ca/acme/
-           ports:
-               - 443:443
+   :context: quickstart-with-docker-compose
 
 This will work if you get your certificates using ``certbot`` or a similar client. If your private key in
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your

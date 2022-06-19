@@ -1,0 +1,10 @@
+version: "3.6"
+services:
+    webserver:
+        volumes:
+            - /etc/letsencrypt/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
+            - /etc/letsencrypt/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:/etc/certs/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
+            - ${PWD}/dhparam.pem:/etc/nginx/dhparams/dhparam.pem
+            - ${PWD}/acme/:/usr/share/django-ca/acme/
+        ports:
+            - 443:443
