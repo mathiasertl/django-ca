@@ -1,4 +1,4 @@
-PyYAML>=5.4.1
+-r requirements-ci.txt
 Sphinx==4.5.0
 doc8==0.11.2
 numpydoc==1.4.0
