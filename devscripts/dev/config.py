@@ -16,7 +16,6 @@
 import os
 from pathlib import Path
 
-import git
 import semantic_version
 import toml
 
@@ -29,6 +28,7 @@ def minor_to_major(version):
 
 
 def get_release_tags(repo):
+    """Get all git tags that are a semantic version."""
     for tag in repo.tags:
         try:
             ver = semantic_version.Version(tag.name)
@@ -42,6 +42,10 @@ def get_release_tags(repo):
 
 
 def get_last_release():
+    """Function to get the last git release."""
+    # Lazy import because git is not installed in some environments (e.g. tests in Docker)
+    import git
+
     repo = git.Repo(ROOT_DIR)
     prev_tag, last_tag = sorted(get_release_tags(repo))[-2:]
 
@@ -60,8 +64,6 @@ DOCS_DIR = Path(ROOT_DIR) / "docs"
 DOC_TEMPLATES_DIR = DOCS_DIR / "source" / "include"
 SRC_DIR = Path(ROOT_DIR) / "ca"
 
-LAST_RELEASE = get_last_release()
-
 with open(PYPROJECT_PATH, encoding="utf-8") as stream:
     FULL_CONFIG = toml.load(stream)
 
@@ -76,7 +78,6 @@ CONFIG["acme-map"] = {minor_to_major(acmever): acmever for acmever in CONFIG["ac
 CONFIG["acme-major"] = [minor_to_major(acmever) for acmever in CONFIG["acme"]]
 CONFIG["josepy-map"] = {minor_to_major(josepyver): josepyver for josepyver in CONFIG["josepy"]}
 CONFIG["josepy-major"] = [minor_to_major(josepyver) for josepyver in CONFIG["josepy"]]
-CONFIG["LAST_RELEASE"] = LAST_RELEASE
 
 DOCKER_TAG = "mathiasertl/django-ca"
 DOCKER_CONFIG = FULL_CONFIG["django-ca"].setdefault("docker", {})

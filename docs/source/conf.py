@@ -46,6 +46,7 @@ import django  # NOQA: E402
 from django.conf import settings  # NOQA: E402
 
 from dev.config import CONFIG  # NOQA: E402
+from dev.config import get_last_release  # NOQA: E402
 
 settings.configure(
     SECRET_KEY="dummy",
@@ -419,7 +420,7 @@ jinja_contexts = {
         "path": "~/ca/",
     },
 }
-jinja_globals = {"version": version, "last_version": str(CONFIG["LAST_RELEASE"])}
+jinja_globals = {"version": version, "last_version": str(get_last_release())}
 
 # Make typehints to third-party libraries work in Shpinx:
 #   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805
