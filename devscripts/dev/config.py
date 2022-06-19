@@ -19,6 +19,8 @@ from pathlib import Path
 import semantic_version
 import toml
 
+import django_ca
+
 
 def minor_to_major(version):
     """Convert minor to major version."""
@@ -27,34 +29,37 @@ def minor_to_major(version):
     return ".".join(version.split(".", 2)[:2])
 
 
-def get_release_tags(repo):
-    """Get all git tags that are a semantic version."""
-    for tag in repo.tags:
-        try:
-            ver = semantic_version.Version(tag.name)
-        except ValueError:  # not a semantic version
-            continue
-
-        if ver.prerelease or ver.build:
-            continue
-
-        yield (ver, tag)
-
-
-def get_last_release():
+def get_semantic_version(version=None) -> semantic_version.Version:
     """Function to get the last git release."""
-    # Lazy import because git is not installed in some environments (e.g. tests in Docker)
-    import git  # pylint: disable=import-outside-toplevel
 
-    repo = git.Repo(ROOT_DIR)
-    prev_tag, last_tag = sorted(get_release_tags(repo))[-2:]
+    if version is None:
+        version = django_ca.VERSION
 
-    # if the current head is a tag (= this is a release commit), return the tag before that
-    if repo.head.commit == last_tag[1].commit:
-        return prev_tag[1]
+    kwargs = {"major": version[0], "minor": version[1], "patch": version[2]}
+    if len(version) >= 5:
+        kwargs["prerelease"] = tuple(str(e) for e in version[3:5])
+        version = version[:3]
+    elif len(version) != 3:
+        raise ValueError(f"{version}: django_ca.VERSION must have either three or five elements.")
 
-    # ... otherwise just return the last tag
-    return last_tag[1]
+    return semantic_version.Version(**kwargs)
+
+
+def get_last_version():
+    version = get_semantic_version()
+
+    # If this is a development release, just remove prerelease/build and return it
+    if version.prerelease or version.build:
+        version.prerelease = version.build = None
+        return version
+
+    if version.patch > 0:
+        version.patch -= 1
+        return version
+    if version.minor > 0:
+        version.minor -= 1
+        return version
+    raise ValueError("Unable to get last release version.")
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
