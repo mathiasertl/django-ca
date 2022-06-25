@@ -19,10 +19,53 @@ from pathlib import Path
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
+from dev import utils
 from dev.out import err
+from dev.out import ok
 from dev.tutorial import start_tutorial
 
 # pylint: enable=no-name-in-module
+
+
+def _compose_exec(*args, **kwargs):
+    return utils.run(["docker-compose", "exec"] + list(args), **kwargs)
+
+
+def _manage(container, *args, **kwargs):
+    return _compose_exec(container, "manage", *args, **kwargs)
+
+
+def _run_py(container, code, **kwargs):
+    return _manage(container, "shell", "-c", code, capture_output=True, text=True, **kwargs).stdout
+
+
+def _validate_container_versions(release, quiet):
+    errors = 0
+    backend_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", quiet=quiet).strip()
+    frontend_ver = _run_py("frontend", "import django_ca; print(django_ca.__version__)", quiet=quiet).strip()
+
+    if backend_ver != frontend_ver:
+        errors += err(f"frontend and backend versions differ: {frontend_ver} vs. {backend_ver}")
+    elif release and backend_ver != release:
+        errors += err(f"Container identifies as {backend_ver}.")
+    elif release and frontend_ver != release:
+        errors += err(f"Container identifies as {frontend_ver}.")
+    else:
+        ok(f"Container version: {backend_ver}")
+    return errors
+
+
+def _validate_secret_key(quiet):
+    code = "from django.conf import settings; print(settings.SECRET_KEY)"
+    backend_key = _run_py("backend", code, quiet=quiet).strip()
+    frontend_key = _run_py("frontend", code, quiet=quiet).strip()
+
+    if backend_key != frontend_key:
+        return err(f"Secret keys do not match ({frontend_key} vs. {backend_key}")
+    if len(backend_key) < 32 or len(backend_key) > 128:
+        return err(f"Secret key seems to have an unusual length: {backend_key}")
+    ok("Secret keys match.")
+    return 0
 
 
 def validate_docker_compose(release=None, quiet=False):
@@ -70,6 +113,11 @@ def validate_docker_compose(release=None, quiet=False):
         (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
 
         with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"), tut.run("verify-setup.yaml"):
+            ok("Containers seem to have started properly.")
+            _manage("backend", "makemigrations", "--check", quiet=quiet, capture_output=True)
+            _manage("frontend", "makemigrations", "--check", quiet=quiet, capture_output=True)
+            errors += _validate_container_versions(release, quiet)
+            errors += _validate_secret_key(quiet)
             print(os.getcwd(), os.listdir("."))
             input()
 
