@@ -69,7 +69,7 @@ def validate_docker_compose(release=None, quiet=False):
         (live_path / "privkey.pem").symlink_to(os.path.relpath(archive_privkey, live_path))
         (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
 
-        with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"):
+        with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"), tut.run("verify-setup.yaml"):
             print(os.getcwd(), os.listdir("."))
             input()
 

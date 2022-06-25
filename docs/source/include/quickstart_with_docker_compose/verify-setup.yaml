@@ -1,0 +1,5 @@
+commands:
+    - command: docker-compose exec backend manage check --deploy
+      display_output: System check identified no issues (4 silenced).
+    - command: docker-compose exec frontend manage check --deploy
+      display_output: System check identified no issues (4 silenced).

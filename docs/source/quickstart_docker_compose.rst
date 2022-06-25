@@ -159,7 +159,6 @@ To add a configuration file, first add a volume mapping in your ``docker-compose
 .. code-block:: yaml
    :caption: docker-compose.override.yml
 
-   version: "3.6"
    services:
        backend:
            volumes:
@@ -195,7 +194,6 @@ If you want to use environment variables for configuration, we recommend you fir
 .. code-block:: yaml
    :caption: docker-compose.override.yml
 
-   version: "3.6"
    services:
        backend:
            environment:
@@ -243,10 +241,11 @@ Verify setup
 
 You can run the deployment checks for your setup, which should not return any issues:
 
-.. code-block:: console
+.. console-include::
+   :include: include/quickstart_with_docker_compose/verify-setup.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
 
-   user@host:~/ca/$ docker-compose exec backend manage check --deploy
-   user@host:~/ca/$ docker-compose exec frontend manage check --deploy
 
 Create admin user and set up CAs
 ================================
