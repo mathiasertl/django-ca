@@ -229,7 +229,7 @@ class ConsoleIncludeDirective(CodeBlock):
             lines += self._split_command(prompt, command)
 
             if "display_output" in config:
-                lines += self._render_template(config["display_output"], context)
+                lines += self._render_template(config["display_output"], context).splitlines()
 
         return lines
 

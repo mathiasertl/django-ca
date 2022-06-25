@@ -375,6 +375,10 @@ rst_epilog = f"""
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
+# reusable variables for contexts below
+_ca_default_hostname = "ca.example.com"
+_tls_cert_root = "/etc/certs/"
+
 # Jinja template contexts
 jinja_contexts = {
     "full-requirements-from-source": {
@@ -403,7 +407,7 @@ jinja_contexts = {
     },
     "quickstart-with-docker": {
         "backend_host": "backend",
-        "ca_default_hostname": "ca.example.com",
+        "ca_default_hostname": _ca_default_hostname,
         "frontend_host": "frontend",
         "network": "django-ca",
         "nginx_host": "nginx",
@@ -412,10 +416,13 @@ jinja_contexts = {
         "redis_host": "redis",
     },
     "quickstart-with-docker-compose": {
-        "ca_default_hostname": "ca.example.com",
+        "ca_default_hostname": _ca_default_hostname,
         "postgres_password": "mysecretpassword",
-        "privkey_path": "/etc/certs/live/ca.example.com/privkey.pem",
-        "pubkey_path": "/etc/certs/live/ca.example.com/fullchain.pem",
+        "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
+        "pubkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/fullchain.pem",
+        "dhparam_name": "dhparam.pem",
+        "certbot_root": "/etc/letsencrypt/",
+        "tls_cert_root": _tls_cert_root,
     },
     "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
     "guide-docker-compose-where-to-go": {
