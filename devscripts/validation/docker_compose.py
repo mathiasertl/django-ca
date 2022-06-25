@@ -14,6 +14,8 @@
 """Functions for validating docker-compose and the respective tutorial."""
 
 import os
+import shutil
+from pathlib import Path
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
@@ -36,18 +38,39 @@ def validate_docker_compose(release=None, quiet=False):
     if not os.path.exists(docker_compose_yml):
         return err(f"{docker_compose_yml}: File not found.")
 
+    _ca_default_hostname = "localhost"
+    _tls_cert_root = "/etc/certs/"
     context = {
-        "ca_default_hostname": "localhost",
+        "ca_default_hostname": _ca_default_hostname,
         "postgres_password": "random-password",
-        "privkey_path": "",
-        "pubkey_path": "",
+        "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
+        "pubkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/fullchain.pem",
+        "dhparam_name": "dhparam.pem",
+        "certbot_root": "./",
+        "tls_cert_root": _tls_cert_root,
     }
 
     with start_tutorial("quickstart_with_docker_compose", context, quiet) as tut:
         tut.write_template("docker-compose.override.yml.jinja")
         tut.write_template(".env.jinja")
+        shutil.copy(docker_compose_yml, ".")
 
-        with tut.run("dhparam.yaml"):
-            print(os.listdir("."))
+        # Set up fake ACME certificates
+        live_path = Path("live", _ca_default_hostname).resolve()
+        live_path.mkdir(parents=True)
+        archive_dir = Path("archive", _ca_default_hostname).resolve()
+        archive_dir.mkdir(parents=True)
+        archive_privkey = archive_dir / "privkey.pem"
+        archive_fullchain = archive_dir / "fullchain.pem"
+
+        shutil.copyfile(config.FIXTURES_DIR / "root.key", archive_privkey)
+        shutil.copyfile(config.FIXTURES_DIR / "root.pub", archive_fullchain)
+
+        (live_path / "privkey.pem").symlink_to(os.path.relpath(archive_privkey, live_path))
+        (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
+
+        with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"):
+            print(os.getcwd(), os.listdir("."))
+            input()
 
     return errors

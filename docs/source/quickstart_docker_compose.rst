@@ -22,9 +22,9 @@ This tutorial will give you a CA with
 Required software
 =================
 
-To run **django-ca**, you need Docker and Docker Compose. You also need certbot to acquire Let's Encrypt
-certificates for the admin interface. OpenSSL is used to generate the DH parameter file. On Debian/Ubuntu,
-simply do:
+To run **django-ca**, you need Docker (at least version 19.03.0) and Docker Compose (at least version 1.27.0).
+You also need certbot to acquire Let's Encrypt certificates for the admin interface. OpenSSL is used to
+generate the DH parameter file. On Debian/Ubuntu, simply do:
 
 .. code-block:: console
 
@@ -216,7 +216,7 @@ and in your ``.env`` file, set the variable:
 Recap
 =====
 
-By now, you should have four files in ``~/ca/``:
+By now, you should have at least four files in ``~/ca/``:
 
 .. code-block:: console
 
@@ -230,20 +230,10 @@ Start your CA
 Now, you can start **django-ca** for the first time. Inside the folder with all your configuration, run
 docker-compose (and verify that everything is running):
 
-.. code-block:: console
-
-   user@host:~/ca/$ docker-compose up -d
-   ...
-   Creating django-ca_backend_1  ... done
-   Creating django-ca_webserver_1 ... done
-   user@host:~/ca/$ docker-compose ps
-   Name                       Command               State         Ports
-   -----------------------------------------------------------------------------------
-   django-ca_backend_1     ./celery.sh -l info              Up
-   django-ca_cache_1       docker-entrypoint.sh redis ...   Up
-   django-ca_db_1          docker-entrypoint.sh postgres    Up
-   django-ca_frontend_1    /bin/sh -c ./uwsgi.sh            Up
-   django-ca_webserver_1   /docker-entrypoint.sh /bin ...   Up    0.0.0.0:443->443/tcp,...
+.. console-include::
+   :include: include/quickstart_with_docker_compose/docker-compose-up.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
 
 By now, you should be able to see the admin interface (but not log in yet - you haven't created a user yet).
 Simply go to https://ca.example.com/admin/.

@@ -20,6 +20,7 @@ ChangeLog
 Backwards incompatible changes
 ==============================
 
+* The docker-compose setup requires at least docker-compose 1.27.0.
 * Drop support for cryptography 35.0.
 * Drop support for acme 1.23, 1.24, 1.25 and 1.26.
 * Drop support for Celery 5.0.

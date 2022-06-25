@@ -70,6 +70,7 @@ PYPROJECT_PATH = os.path.join(ROOT_DIR, "pyproject.toml")
 DOCS_DIR = Path(ROOT_DIR) / "docs"
 DOC_TEMPLATES_DIR = DOCS_DIR / "source" / "include"
 SRC_DIR = Path(ROOT_DIR) / "ca"
+FIXTURES_DIR = SRC_DIR / "django_ca" / "tests" / "fixtures"
 
 with open(PYPROJECT_PATH, encoding="utf-8") as stream:
     FULL_CONFIG = toml.load(stream)

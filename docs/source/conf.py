@@ -433,6 +433,9 @@ jinja_contexts = {
     },
 }
 jinja_globals = {"version": version, "last_version": str(get_last_version())}
+jinja_filters = {
+    "basename": os.path.basename,
+}
 
 # Make typehints to third-party libraries work in Shpinx:
 #   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805

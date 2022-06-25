@@ -233,11 +233,11 @@ class ConsoleIncludeDirective(CodeBlock):
 
         return lines
 
-    def _render_template(self, path, context):
-        """Small wrapper to render a template."""
-        output_template = self.jinja_env.from_string(path)
-        return output_template.render(context)
-
     @content.setter
     def content(self, value: typing.Any) -> None:
         """Setter for content (used by the constructor). Disregards the value."""
+
+    def _render_template(self, path: str, context: typing.Dict[str, typing.Any]) -> str:
+        """Small wrapper to render a template."""
+        output_template = self.jinja_env.from_string(path)
+        return output_template.render(context)
