@@ -200,7 +200,6 @@ class ConsoleIncludeDirective(CodeBlock):
             raise ValueError(f"{context_name}: Unknow context specified.")
         else:
             context = self.config.jinja_contexts[context_name].copy()
-        context.setdefault("pwd", "`pwd`")
 
         root = "root" in self.options
         if root:
@@ -212,6 +211,12 @@ class ConsoleIncludeDirective(CodeBlock):
         host = self.options.get("host", "host")
         path = self.options.get("path", "~")
 
+        # Set some variables always present in the context
+        context.setdefault("pwd", "`pwd`")
+        context.setdefault("path", path)
+        context.setdefault("host", host)
+        context.setdefault("user", user)
+
         lines = []
         for config in commands:
             if root:
@@ -220,13 +225,18 @@ class ConsoleIncludeDirective(CodeBlock):
                 delimiter = "$"
             prompt = f"{user}@{host}:{path}{delimiter}"
 
-            command = config["command"]
-            template = self.jinja_env.from_string(config["command"])
-            command = template.render(context)
-
+            command = self._render_template(config["command"], context)
             lines += self._split_command(prompt, command)
 
+            if "display_output" in config:
+                lines += self._render_template(config["display_output"], context)
+
         return lines
+
+    def _render_template(self, path, context):
+        """Small wrapper to render a template."""
+        output_template = self.jinja_env.from_string(path)
+        return output_template.render(context)
 
     @content.setter
     def content(self, value: typing.Any) -> None:
