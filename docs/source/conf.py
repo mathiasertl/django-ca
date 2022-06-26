@@ -393,6 +393,9 @@ jinja_contexts = {
     "manage-in-docker-compose": {
         "manage": "docker-compose exec backend manage",
         "shared": True,
+        "console_include": "include/quickstart_with_docker_compose/setup-cas.yaml",
+        "context": "quickstart-with-docker-compose",
+        "path": "~/ca/",
     },
     "manage-from-source": {"manage": "django-ca"},
     "requirements-as-py": {},
@@ -417,6 +420,7 @@ jinja_contexts = {
     },
     "quickstart-with-docker-compose": {
         "ca_default_hostname": _ca_default_hostname,
+        "postgres_host": "db",
         "postgres_password": "mysecretpassword",
         "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
         "pubkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/fullchain.pem",

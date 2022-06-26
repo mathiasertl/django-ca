@@ -8,12 +8,13 @@ commands:
           Creating {{ path.rstrip('/') | basename }}_webserver_1 ... done
     - command: docker-compose ps
       waitfor:
-          - command: sleep 5
+          - command: docker-compose exec backend nc -z {{ postgres_host }}:5432
+          - command: docker-compose exec -e PGPASSWORD={{ postgres_password }} backend psql -U postgres -h {{ postgres_host }} -p 5432 postgres -c "SELECT count(*) from auth_user"
       display_output: |
           Name                       Command               State         Ports
           -----------------------------------------------------------------------------------
           {{ path.rstrip('/') | basename }}_backend_1     ./celery.sh -l info              Up
           {{ path.rstrip('/') | basename }}_cache_1       docker-entrypoint.sh redis ...   Up
-          {{ path.rstrip('/') | basename }}_db_1          docker-entrypoint.sh postgres    Up
+          {{ path.rstrip('/') | basename }}_{{ postgres_host }}_1          docker-entrypoint.sh postgres    Up
           {{ path.rstrip('/') | basename }}_frontend_1    /bin/sh -c ./uwsgi.sh            Up
           {{ path.rstrip('/') | basename }}_webserver_1   /docker-entrypoint.sh /bin ...   Up    0.0.0.0:443->443/tcp,...

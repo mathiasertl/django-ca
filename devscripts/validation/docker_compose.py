@@ -21,6 +21,7 @@ from pathlib import Path
 from dev import config
 from dev import utils
 from dev.out import err
+from dev.out import info
 from dev.out import ok
 from dev.tutorial import start_tutorial
 
@@ -85,6 +86,7 @@ def validate_docker_compose(release=None, quiet=False):
     _tls_cert_root = "/etc/certs/"
     context = {
         "ca_default_hostname": _ca_default_hostname,
+        "postgres_host": "db",  # name in compose file
         "postgres_password": "random-password",
         "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
         "pubkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/fullchain.pem",
@@ -94,6 +96,7 @@ def validate_docker_compose(release=None, quiet=False):
     }
 
     with start_tutorial("quickstart_with_docker_compose", context, quiet) as tut:
+        info(f"Temporary working directory: {os.getcwd()}")
         tut.write_template("docker-compose.override.yml.jinja")
         tut.write_template(".env.jinja")
         shutil.copy(docker_compose_yml, ".")
@@ -110,9 +113,6 @@ def validate_docker_compose(release=None, quiet=False):
         ca_pub = config.FIXTURES_DIR / "root.pub"
         utils.create_signed_cert(_ca_default_hostname, ca_key, ca_pub, archive_privkey, archive_fullchain)
 
-        # shutil.copyfile(config.FIXTURES_DIR / "root-cert.key", archive_privkey)
-        # shutil.copyfile(config.FIXTURES_DIR / "root-cert.pub", archive_fullchain)
-
         (live_path / "privkey.pem").symlink_to(os.path.relpath(archive_privkey, live_path))
         (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
 
@@ -122,7 +122,16 @@ def validate_docker_compose(release=None, quiet=False):
             _manage("frontend", "makemigrations", "--check", quiet=quiet, capture_output=True)
             errors += _validate_container_versions(release, quiet)
             errors += _validate_secret_key(quiet)
-            print(os.getcwd(), os.listdir("."))
-            input()
+
+            with tut.run("setup-cas.yaml"):
+                info(
+                    f"""Test admin interface at
+
+    * URL: http://{_ca_default_hostname}/admin
+    * Credentials: user/nopass
+"""
+                )
+                info("Press enter to continue...")
+                input()
 
     return errors
