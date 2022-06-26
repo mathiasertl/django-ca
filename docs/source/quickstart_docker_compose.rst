@@ -285,7 +285,7 @@ Create a database backup:
    user@host:~/ca/$ docker-compose exec db pg_dump -U postgres postgres > db.backup.sql
 
 Backing up Docker volumes is not as straight forward as maybe it should be, please see `the official
-documentation <https://docs.docker.com/storage/volumes/#backup-restore-or-migrate-data-volumes>` for more
+documentation <https://docs.docker.com/storage/volumes/#backup-restore-or-migrate-data-volumes>`_ for more
 information.
 
 You should always backup ``/var/lib/django-ca/certs/`` from both the ``backend`` and the ``frontend``

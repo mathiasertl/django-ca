@@ -15,6 +15,7 @@
 
 """Various utillity functions."""
 
+import datetime
 import io
 import os
 import shlex
@@ -27,6 +28,15 @@ from contextlib import redirect_stdout
 
 import jinja2
 import yaml
+
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import NoEncryption
+from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509.oid import NameOID
 
 from . import config
 
@@ -128,3 +138,47 @@ def run(args, **kwargs):
     if not kwargs.pop("quiet", False):
         print("+", shlex.join(args))
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
+
+
+def create_signed_cert(hostname, signer_privkey, signer_pubkey, priv_out, pub_out, password=None):
+    """Create a self-signed cert for the given hostname.
+
+    .. seealso:: https://letsencrypt.org/docs/certificates-for-localhost/
+    """
+
+    with open(signer_privkey, "rb") as stream:
+        signer_private_key = load_pem_private_key(stream.read(), password)
+    with open(signer_pubkey, "rb") as stream:
+        signer_public_key = x509.load_pem_x509_certificate(stream.read())
+
+    one_day = datetime.timedelta(1, 0, 0)
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    public_key = private_key.public_key()
+    builder = x509.CertificateBuilder()
+    builder = builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)]))
+    builder = builder.issuer_name(signer_public_key.subject)
+
+    builder = builder.not_valid_before(datetime.datetime.today() - one_day)
+    builder = builder.not_valid_after(datetime.datetime.today() + (one_day * 30))
+    builder = builder.serial_number(x509.random_serial_number())
+    builder = builder.public_key(public_key)
+    builder = builder.add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname)]), critical=False)
+
+    builder = builder.add_extension(
+        x509.BasicConstraints(ca=False, path_length=None),
+        critical=True,
+    )
+    certificate = builder.sign(private_key=signer_private_key, algorithm=hashes.SHA256())
+
+    with open(priv_out, "wb") as stream:
+        stream.write(
+            private_key.private_bytes(
+                encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
+            )
+        )
+
+    with open(pub_out, "wb") as stream:
+        stream.write(certificate.public_bytes(Encoding.PEM))

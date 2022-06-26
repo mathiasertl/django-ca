@@ -106,8 +106,12 @@ def validate_docker_compose(release=None, quiet=False):
         archive_privkey = archive_dir / "privkey.pem"
         archive_fullchain = archive_dir / "fullchain.pem"
 
-        shutil.copyfile(config.FIXTURES_DIR / "root.key", archive_privkey)
-        shutil.copyfile(config.FIXTURES_DIR / "root.pub", archive_fullchain)
+        ca_key = config.FIXTURES_DIR / "root.key"
+        ca_pub = config.FIXTURES_DIR / "root.pub"
+        utils.create_signed_cert(_ca_default_hostname, ca_key, ca_pub, archive_privkey, archive_fullchain)
+
+        # shutil.copyfile(config.FIXTURES_DIR / "root-cert.key", archive_privkey)
+        # shutil.copyfile(config.FIXTURES_DIR / "root-cert.pub", archive_fullchain)
 
         (live_path / "privkey.pem").symlink_to(os.path.relpath(archive_privkey, live_path))
         (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
