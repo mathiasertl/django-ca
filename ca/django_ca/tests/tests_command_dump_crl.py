@@ -145,7 +145,9 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
                     "dump_crl",
                     f"--ca={root.serial}",
                     "--include-issuing-distribution-point",
-                ]
+                ],
+                stdout=BytesIO(),
+                stderr=BytesIO(),
             )
         # TODO: capture stdout
         # self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)

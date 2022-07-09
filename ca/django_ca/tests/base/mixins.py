@@ -659,11 +659,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             util = ManagementUtility(["manage.py"] + list(cmd))
             util.execute()
 
-        if isinstance(stdout, io.BytesIO) and isinstance(stderr, io.BytesIO):
-            return stdout.getvalue(), stderr.getvalue()
-        if isinstance(stdout, io.StringIO) and isinstance(stderr, io.StringIO):
-            return stdout.getvalue(), stderr.getvalue()
-        raise ValueError("not possible")
+        return stdout.getvalue(), stderr.getvalue()
 
     def cmd_help_text(self, cmd: str) -> str:
         """Get the help message for a given management command.
