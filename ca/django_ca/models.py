@@ -1169,7 +1169,7 @@ class CertificateAuthority(X509CertMixin):
             or relative_name
         )
 
-        if add_idp:  # pragma: no branch
+        if add_idp:
             builder = builder.add_extension(
                 x509.IssuingDistributionPoint(
                     indirect_crl=indirect_crl,

@@ -20,6 +20,7 @@ from io import BytesIO
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import CRLEntryExtensionOID
 
 from django.test import TestCase
@@ -37,12 +38,14 @@ from .base import timestamps
 from .base.mixins import TestCaseMixin
 
 
+@freeze_time(timestamps["everything_valid"])
 class DumpCRLTestCase(TestCaseMixin, TestCase):
     """Test the dump_crl management command."""
 
     default_ca = "root"
     load_cas = (
         "root",
+        "child",
         "pwd",
     )
     load_certs = ("root-cert",)
@@ -110,6 +113,23 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(list(crl), [])
 
     @override_tmpcadir()
+    def test_scope_none(self) -> None:
+        """Test behavior of CRLs when they have no scope."""
+
+        # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
+        root = self.cas["root"]
+        stdout, stderr = self.cmd("dump_crl", ca=root, scope=None, stdout=BytesIO(), stderr=BytesIO())
+        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)
+        self.assertEqual(stderr, b"")
+
+        # ... but the child CA should have one
+        child = self.cas["child"]
+        idp = self.get_idp(full_name=self.get_idp_full_name(child))
+        stdout, stderr = self.cmd("dump_crl", ca=child, scope=None, stdout=BytesIO(), stderr=BytesIO())
+        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=child, idp=idp)
+        self.assertEqual(stderr, b"")
+
+    @override_tmpcadir()
     def test_disabled(self) -> None:
         """Test creating a CRL with a disabled CA."""
 
@@ -125,7 +145,6 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
         self.assertEqual(list(crl), [])
 
-    @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
     def test_revoked(self) -> None:
         """Test revoked certificates
@@ -160,7 +179,6 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             if reason != "unspecified":
                 self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
 
-    @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
     def test_compromised(self) -> None:
         """Test creating a CRL with a compromized cert."""
@@ -180,7 +198,6 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(crl[0].extensions[0].value.invalidity_date, stamp.replace(tzinfo=None))
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
     def test_ca_crl(self) -> None:
         """Test creating a CA CRL.
 

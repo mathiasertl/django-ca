@@ -115,6 +115,14 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
         self.assertEqual(response["Content-Type"], "application/pkix-crl")
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
+        # If scope is None, CRLs for a root CA should *not* include the IssuingDistributionPoint extension:
+        response = self.client.get(reverse("full", kwargs={"serial": self.cas["root"].serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        self.assertCRL(
+            response.content, encoding=Encoding.DER, expires=600, signer=self.cas["root"], idp=None
+        )
+
     @override_tmpcadir()
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
