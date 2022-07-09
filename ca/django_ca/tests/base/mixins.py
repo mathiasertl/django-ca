@@ -576,13 +576,57 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return stdout.getvalue(), stderr.getvalue()
 
+    @typing.overload
+    def cmd_e2e(
+        self,
+        cmd: typing.Sequence[str],
+        *,
+        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
+        stdout: typing.Optional[io.StringIO] = None,
+        stderr: typing.Optional[io.StringIO] = None,
+    ) -> typing.Tuple[str, str]:
+        ...
+
+    @typing.overload
+    def cmd_e2e(
+        self,
+        cmd: typing.Sequence[str],
+        *,
+        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
+        stdout: io.BytesIO,
+        stderr: typing.Optional[io.StringIO] = None,
+    ) -> typing.Tuple[bytes, str]:
+        ...
+
+    @typing.overload
+    def cmd_e2e(
+        self,
+        cmd: typing.Sequence[str],
+        *,
+        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
+        stdout: typing.Optional[io.StringIO] = None,
+        stderr: io.BytesIO,
+    ) -> typing.Tuple[str, bytes]:
+        ...
+
+    @typing.overload
+    def cmd_e2e(
+        self,
+        cmd: typing.Sequence[str],
+        *,
+        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
+        stdout: io.BytesIO,
+        stderr: io.BytesIO,
+    ) -> typing.Tuple[bytes, bytes]:
+        ...
+
     def cmd_e2e(
         self,
         cmd: typing.Sequence[str],
         stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
         stdout: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
         stderr: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
-    ) -> typing.Tuple[str, str]:
+    ) -> typing.Tuple[typing.Union[str, bytes], typing.Union[str, bytes]]:
         """Call a management command the way manage.py does.
 
         Unlike call_command, this method also tests the argparse configuration of the called command.
@@ -607,15 +651,19 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         # BinaryCommand commands (such as dump_crl) write to sys.stdout.buffer, but BytesIO does not have a
         # buffer attribute, so we manually add the attribute.
         if isinstance(stdout, io.BytesIO):
-            stdout.buffer = stdout
+            stdout.buffer = stdout  # type: ignore[attr-defined]
         if isinstance(stderr, io.BytesIO):
-            stderr.buffer = stderr
+            stderr.buffer = stderr  # type: ignore[attr-defined]
 
         with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
             util = ManagementUtility(["manage.py"] + list(cmd))
             util.execute()
 
-        return stdout.getvalue(), stderr.getvalue()
+        if isinstance(stdout, io.BytesIO) and isinstance(stderr, io.BytesIO):
+            return stdout.getvalue(), stderr.getvalue()
+        if isinstance(stdout, io.StringIO) and isinstance(stderr, io.StringIO):
+            return stdout.getvalue(), stderr.getvalue()
+        raise ValueError("not possible")
 
     def cmd_help_text(self, cmd: str) -> str:
         """Get the help message for a given management command.

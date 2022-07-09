@@ -24,6 +24,7 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from ...models import CertificateAuthority
+from ...typehints import Literal
 from ..base import BinaryCommand
 
 
@@ -81,7 +82,7 @@ class Command(BinaryCommand):
         path: str,
         ca: CertificateAuthority,
         encoding: Encoding,
-        scope: typing.Optional[typing.Literal["ca", "user", "attribute"]],
+        scope: typing.Optional[Literal["ca", "user", "attribute"]],
         include_issuing_distribution_point: typing.Optional[bool],
         **options: typing.Any
     ) -> None:
