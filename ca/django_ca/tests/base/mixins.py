@@ -580,8 +580,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         cmd: typing.Sequence[str],
         stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
-        stdout: typing.Optional[io.StringIO] = None,
-        stderr: typing.Optional[io.StringIO] = None,
+        stdout: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
+        stderr: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
     ) -> typing.Tuple[str, str]:
         """Call a management command the way manage.py does.
 
@@ -603,6 +603,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             stdin_mock = mock.patch(  # type: ignore[assignment]
                 "sys.stdin.buffer.read", side_effect=_read_mock
             )
+
+        # BinaryCommand commands (such as dump_crl) write to sys.stdout.buffer, but BytesIO does not have a
+        # buffer attribute, so we manually add the attribute.
+        if isinstance(stdout, io.BytesIO):
+            stdout.buffer = stdout
+        if isinstance(stderr, io.BytesIO):
+            stderr.buffer = stderr
 
         with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
             util = ManagementUtility(["manage.py"] + list(cmd))

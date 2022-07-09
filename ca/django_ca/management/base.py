@@ -83,6 +83,7 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         # pylint: disable=super-init-not-called
 
         self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
+        # TODO: we set stdout below?!
         self.stderr = BinaryOutputWrapper(stdout or sys.stdout.buffer)
 
     def execute(self, *args: typing.Any, **options: typing.Any) -> None:

@@ -130,6 +130,62 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
     @override_tmpcadir()
+    def test_include_issuing_distribution_point(self) -> None:
+        """Test forcing the inclusion of the IssuingDistributionPoint extension.
+
+        Note: The only case where it is not included is for CRLs for root CAs with no scope, in which case not
+        enough information is available to even add the extension, so the test here asserts that the call
+        raises an extension.
+        """
+
+        root = self.cas["root"]
+        with self.assertRaisesRegex(SystemExit, r"^1$"):
+            self.cmd_e2e(
+                [
+                    "dump_crl",
+                    f"--ca={root.serial}",
+                    "--include-issuing-distribution-point",
+                ],
+                stdout=BytesIO(),
+                stderr=BytesIO(),
+            )
+        # TODO: capture stdout
+        # self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)
+        # self.assertEqual(stderr, b"")
+
+    @override_tmpcadir()
+    def test_exclude_issuing_distribution_point(self) -> None:
+        """Test forcing the exclusion of the IssuingDistributionPoint extension."""
+
+        # For Root CAs, there should not be an IssuingDistributionPoint extension, test that forced exclusion
+        # does not break this.
+        root = self.cas["root"]
+        stdout, stderr = self.cmd_e2e(
+            [
+                "dump_crl",
+                f"--ca={root.serial}",
+                "--exclude-issuing-distribution-point",
+            ],
+            stdout=BytesIO(),
+            stderr=BytesIO(),
+        )
+        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)
+        self.assertEqual(stderr, b"")
+
+        child = self.cas["child"]  # CRL for child CA would normally include extension
+        stdout, stderr = self.cmd_e2e(
+            [
+                "dump_crl",
+                f"--ca={child.serial}",
+                "--exclude-issuing-distribution-point",
+            ],
+            stdout=BytesIO(),
+            stderr=BytesIO(),
+        )
+        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=child, idp=None)
+        self.assertEqual(stderr, b"")
+
+    @override_tmpcadir()
     def test_disabled(self) -> None:
         """Test creating a CRL with a disabled CA."""
 
@@ -204,7 +260,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         NOTE: freeze_time() b/c it does not work for expired CAs.
         """
 
-        child = self.load_ca("child")
+        child = self.cas["child"]
         self.assertIsNotNone(child.key(password=None))
         self.assertNotRevoked(child)
 
@@ -232,7 +288,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         """Test the old --ca-crl option."""
 
         # create a child CA
-        child = self.load_ca("child")
+        child = self.cas["child"]
         self.assertIsNotNone(child.key(password=None))
         self.assertNotRevoked(child)
 

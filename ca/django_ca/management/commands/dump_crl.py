@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
+from ...models import CertificateAuthority
 from ..base import BinaryCommand
 
 
@@ -55,30 +56,52 @@ class Command(BinaryCommand):
             choices=["ca", "user", "attribute"],
             help="Limit the scope for the CRL (default: %(default)s).",
         )
+
+        include_idp_group = parser.add_mutually_exclusive_group()
+        include_idp_group.add_argument(
+            "--include-issuing-distribution-point",
+            action="store_true",
+            default=None,
+            help="Force inclusion of an IssuingDistributionPoint extension.",
+        )
+        include_idp_group.add_argument(
+            "--exclude-issuing-distribution-point",
+            action="store_false",
+            dest="include_issuing_distribution_point",
+            help="Force exclusion of an IssuingDistributionPoint extension.",
+        )
         self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
         self.add_password(parser)
         super().add_arguments(parser)
 
-    def handle(self, path: str, encoding: Encoding, **options: typing.Any) -> None:  # type: ignore[override]
+    def handle(  # type: ignore[override]
+        self,
+        path: str,
+        ca: CertificateAuthority,
+        encoding: Encoding,
+        scope: typing.Optional[typing.Literal["ca", "user", "attribute"]],
+        include_issuing_distribution_point: typing.Optional[bool],
+        **options: typing.Any
+    ) -> None:
         if options["ca_crl"]:
             self.stderr.write(self.style.WARNING("WARNING: --ca-crl is deprecated, use --scope=ca instead."))
-            options["scope"] = "ca"
+            scope = "ca"
 
         kwargs = {
             "expires": options["expires"],
             "algorithm": options["algorithm"],
             "password": options["password"],
-            "scope": options["scope"],
         }
 
         # See if we can work with the private key
-        ca = options["ca"]
         self.test_private_key(ca, options["password"])
 
         try:
-            crl = ca.get_crl(**kwargs).public_bytes(encoding)
+            crl = ca.get_crl(
+                include_issuing_distribution_point=include_issuing_distribution_point, scope=scope, **kwargs
+            ).public_bytes(encoding)
         except Exception as ex:
             # Note: all parameters are already sanitized by parser actions
             raise CommandError(ex) from ex

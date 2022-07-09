@@ -1058,6 +1058,7 @@ class CertificateAuthority(X509CertMixin):
         counter: Optional[str] = None,
         full_name: Optional[typing.Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,
+        include_issuing_distribution_point: typing.Optional[bool] = None,
     ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
 
@@ -1065,11 +1066,6 @@ class CertificateAuthority(X509CertMixin):
         the `Issuing Distribution Point extension <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_.
         The former defaults to the ``crl_url`` field, pass ``None`` to not include the value. At most one of
         the two may be set.
-
-        .. versionchanged:: 1.20.0
-
-           The ``full_name`` parameter must be a list of :py:class:`~cg:cryptography.x509.GeneralName`,
-           ``str`` are no longer allowed.
 
         Parameters
         ----------
@@ -1094,6 +1090,9 @@ class CertificateAuthority(X509CertMixin):
             ``crl_url`` if set.
         relative_name : :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`, optional
             Used in Issuing Distribution Point extension, retrieve the CRL relative to the issuer.
+        include_issuing_distribution_point: bool, optional
+            Force the inclusion/exclusion of the IssuingDistributionPoint extension. By default, the inclusion
+            is automatically determined.
 
         Returns
         -------
@@ -1122,7 +1121,7 @@ class CertificateAuthority(X509CertMixin):
         if full_name is not None:
             parsed_full_name = full_name
 
-        # CRLs for root CAs with scope "ca" (or no scope - this includes CAs) do not sete a full_name in the
+        # CRLs for root CAs with scope "ca" (or no scope - this includes CAs) do not set a full_name in the
         # IssuingDistributionPoint extension by default. For full path validation with CRLs, the CRL is also
         # used for validating the Root CA (which does not contain a CRL Distribution Point). But the Full Name
         # in the CRL IDP and the CA CRL DP have to match. See also:
@@ -1161,15 +1160,16 @@ class CertificateAuthority(X509CertMixin):
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
         # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
-        add_idp = (
-            only_contains_attribute_certs
-            or only_contains_user_certs
-            or only_contains_ca_certs
-            or parsed_full_name
-            or relative_name
-        )
+        if include_issuing_distribution_point is None:
+            include_issuing_distribution_point = (
+                only_contains_attribute_certs
+                or only_contains_user_certs
+                or only_contains_ca_certs
+                or parsed_full_name is not None
+                or relative_name is not None
+            )
 
-        if add_idp:
+        if include_issuing_distribution_point is True:
             builder = builder.add_extension(
                 x509.IssuingDistributionPoint(
                     indirect_crl=indirect_crl,
