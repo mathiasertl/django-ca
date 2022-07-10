@@ -546,8 +546,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile("example", subject=Subject({"C": "AT"}))
         msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
         warning = "Passing Subject for subject is deprecated and will be removed in django ca 1.24."
-        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            with self.assertRemovedIn124Warning(warning):
+        with self.assertRemovedIn124Warning(warning):
+            with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
                 self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 0)
 
