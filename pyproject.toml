@@ -19,7 +19,7 @@ alpine = ["3.14", "3.15", "3.16"]
 
 [tool.black]
 line-length = 110
-exclude = "migrations"
+extend-exclude = "(migrations|stubs)/"
 
 [tool.coverage.report]
 exclude_lines = [

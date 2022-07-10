@@ -16,7 +16,6 @@
 """Various commands used in development."""
 
 import argparse
-import glob
 import json
 import os
 import shutil
@@ -305,23 +304,22 @@ elif args.command == "coverage":
         sys.exit(2)  # coverage cli utility also exits with 2
 
 elif args.command == "code-quality":
-    files = ["ca/", "devscripts/", "docs/source/"] + glob.glob("*.py")
-    print("+ isort --check-only --diff %s" % " ".join(files))
+    print("+ isort --check-only --diff .")
     try:
-        subprocess.run(["isort", "--check-only", "--diff"] + files, check=True)
+        subprocess.run(["isort", "--check-only", "--diff", "."], check=True)
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
 
-    print("+ flake8 %s" % " ".join(files))
+    print("+ flake8 .")
     try:
-        subprocess.run(["flake8"] + files, check=True)
+        subprocess.run(["flake8", "."], check=True)
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     print("")
 
-    print("+ black --check %s" % " ".join(files))
+    print("+ black --check .")
     try:
-        subprocess.run(["black", "--check"] + files, check=True)
+        subprocess.run(["black", "--check", "."], check=True)
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     print("")
