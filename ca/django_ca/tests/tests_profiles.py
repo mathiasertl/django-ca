@@ -128,14 +128,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test django-ca extensions as extensions."""
         prof1 = Profile(
             "test",
-            subject=Subject("/C=AT/CN=example.com"),
+            subject=[("C", "AT"), ("CN", self.hostname)],
             extensions={
                 OCSPNoCheck.key: {},
             },
         )
         prof2 = Profile(
             "test",
-            subject="/C=AT/CN=example.com",
+            subject=[("C", "AT"), ("CN", self.hostname)],
             extensions={
                 OCSPNoCheck.key: OCSPNoCheck(),
             },
@@ -166,12 +166,11 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         desc = "foo bar"
         kusage = ["digitalSignature"]
-        subject = {"CN": "example.com"}
         prof = Profile(
             "test",
             cn_in_san=True,
             description=desc,
-            subject=Subject(subject),
+            subject=[("CN", self.hostname)],
             extensions={
                 KeyUsage.key: {"value": kusage},
             },
@@ -180,7 +179,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             prof.serialize(),
             {
                 "cn_in_san": True,
-                "subject": subject,
+                "subject": {"CN": self.hostname},
                 "description": desc,
                 "extensions": {
                     BasicConstraints.key: {
@@ -201,7 +200,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=Subject())
+        prof = Profile("example", subject=[])
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -230,7 +229,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
         subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
-        prof = Profile("example", subject=Subject())
+        prof = Profile("example", subject=[])
+
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -263,7 +263,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         prof = Profile(
             "example",
-            subject=Subject({"C": "AT"}),
+            subject=[("C", "AT")],
             add_crl_url=False,
             add_ocsp_url=False,
             add_issuer_url=False,
@@ -321,12 +321,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             ]
         )
 
-        prof = Profile(
-            "example",
-            subject=Subject({"C": "AT"}),
-            add_issuer_alternative_name=False,
-            cn_in_san=False,
-        )
+        prof = Profile("example", subject=[("C", "AT")], add_issuer_alternative_name=False, cn_in_san=False)
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
@@ -396,7 +391,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             value=x509.SubjectKeyIdentifier(b"custom value"),
         )
 
-        prof = Profile("example", subject=Subject())
+        prof = Profile("example", subject=[])
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -433,7 +428,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             value=x509.SubjectKeyIdentifier(b"custom value"),
         )
 
-        prof = Profile("example", subject=Subject())
+        prof = Profile("example", subject=[])
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -465,7 +460,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -497,7 +492,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -525,7 +520,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=Subject({"C": "AT"}))
+        prof = Profile("example", subject=[("C", "AT")])
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=None)
@@ -543,12 +538,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = certs["child-cert"]["csr"]["parsed"]
         cname = "foo bar"
 
-        prof = Profile("example", subject=Subject({"C": "AT"}))
+        prof = Profile("example", subject=[("C", "AT"), ("CN", cname)])
         msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
-        warning = "Passing Subject for subject is deprecated and will be removed in django ca 1.24."
-        with self.assertRemovedIn124Warning(warning):
-            with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-                self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
+        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(prof, ca, csr)
         self.assertEqual(pre.call_count, 0)
 
     @override_tmpcadir()
@@ -560,7 +553,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
         ski = SubjectKeyIdentifier({"value": b"333333"})
-        prof = Profile("example", subject=Subject())
+        prof = Profile("example", subject=[])
 
         msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
         with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
@@ -635,6 +628,20 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test repr()."""
         for name in ca_settings.CA_PROFILES:
             self.assertEqual(repr(profiles[name]), f"<Profile: {name}>")
+
+    @override_tmpcadir()
+    def test_deprecated_create_cert_subject(self) -> None:
+        """Pass an old subject to create_cert, to be removed in 1.24."""
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        prof = Profile(self.id(), subject=[])
+        warning = "Passing Subject for subject is deprecated and will be removed in django ca 1.24."
+        with self.assertRemovedIn124Warning(warning):
+            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": self.hostname}))
+        self.assertEqual(cert.subject, self.subject)
+
+        with self.assertRemovedIn124Warning(warning):
+            prof = Profile(self.id(), subject=Subject({"C": "AT"}))  # type: ignore[arg-type]
 
 
 class GetProfileTestCase(TestCase):

@@ -45,7 +45,6 @@ from .signals import pre_issue_cert
 from .subject import Subject
 from .typehints import Expires
 from .typehints import ParsableHash
-from .typehints import ParsableSubject
 from .typehints import SerializedProfile
 from .utils import get_cert_builder
 from .utils import parse_expires
@@ -71,10 +70,11 @@ class Profile:
     # pylint: disable=too-many-instance-attributes
     extension: Dict[str, Extension[Any, Any, Any]]
 
+    @deprecate_type("subject", (dict, Subject), RemovedInDjangoCA124Warning)
     def __init__(
         self,
         name: str,
-        subject: Optional[Union[Subject, ParsableSubject]] = None,
+        subject: typing.Optional[typing.Union[x509.Name, typing.Iterable[typing.Tuple[str, str]]]] = None,
         algorithm: ParsableHash = None,
         extensions: Optional[Dict[str, Any]] = None,
         cn_in_san: bool = True,
@@ -94,13 +94,13 @@ class Profile:
         if extensions is None:
             extensions = {}
 
-        # self.subject is default subject with updates from subject argument
-        if subject is not None:
-            if not isinstance(subject, Subject):
-                subject = Subject(subject)  # NOTE: also accepts None
-            self.subject = subject
-        else:
+        # If no subject is passed, use the default subject
+        if subject is None:
             self.subject = Subject(ca_settings.CA_DEFAULT_SUBJECT)
+        elif not isinstance(subject, Subject):  # parse subject to an internal Subject class
+            self.subject = Subject(subject)
+        else:  # pragma: django-ca<=1.24
+            self.subject = subject
 
         self.algorithm = parse_hash_algorithm(algorithm)
         self.cn_in_san = cn_in_san
@@ -290,9 +290,9 @@ class Profile:
             add_issuer_alternative_name=add_issuer_alternative_name,
         )
 
-        if not isinstance(subject, Subject):  # pragma: only django_ca<=1.24
+        if not isinstance(subject, Subject):
             converted_subject = Subject(subject)  # NOTE: also accepts None
-        else:
+        else:  # pragma: only django_ca<=1.24
             converted_subject = subject
         cert_subject.update(converted_subject)
 
