@@ -80,6 +80,12 @@ class Command(BinaryCommand):
         include_issuing_distribution_point: typing.Optional[bool],
         **options: typing.Any
     ) -> None:
+        # Catch this case early so that we can give a better error message.
+        if include_issuing_distribution_point is True and ca.parent is None and scope is None:
+            raise CommandError(
+                "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
+            )
+
         kwargs = {
             "expires": options["expires"],
             "algorithm": options["algorithm"],

@@ -139,19 +139,10 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         """
 
         root = self.cas["root"]
-        with self.assertRaisesRegex(SystemExit, r"^1$"):
-            self.cmd_e2e(
-                [
-                    "dump_crl",
-                    f"--ca={root.serial}",
-                    "--include-issuing-distribution-point",
-                ],
-                stdout=BytesIO(),
-                stderr=BytesIO(),
-            )
-        # TODO: capture stdout
-        # self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)
-        # self.assertEqual(stderr, b"")
+        self.assertE2ECommandError(
+            ["dump_crl", f"--ca={root.serial}", "--include-issuing-distribution-point"],
+            b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
+        )
 
     @override_tmpcadir()
     def test_exclude_issuing_distribution_point(self) -> None:

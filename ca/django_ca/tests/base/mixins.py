@@ -299,6 +299,19 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
 
+    def assertE2ECommandError(
+        self, cmd: typing.Sequence[str], stdout: bytes = b"", stderr: bytes = b""
+    ) -> None:
+        actual_stdout = io.BytesIO()
+        actual_stderr = io.BytesIO()
+
+        stdout = b"CommandError: " + stdout + b"\n"
+
+        with self.assertRaisesRegex(SystemExit, r"^1$"):
+            self.cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
+        self.assertEqual(stdout, actual_stdout.getvalue())
+        self.assertEqual(stderr, actual_stderr.getvalue())
+
     def assertExtensions(  # pylint: disable=invalid-name
         self,
         cert: typing.Union[X509CertMixin, x509.Certificate],
