@@ -641,7 +641,8 @@ class ListExtensionTestMixin(
 
     def test_extend(self) -> None:
         """Test ext.extend()."""
-        func = lambda c, j: c.extend(j)  # noqa
+        # pylint: disable-next=unnecessary-lambda-assignment  # just much shorter
+        func = lambda c, j: c.extend(j)  # NOQA[E371]
         for config in self.test_values.values():
             set_value = config["expected"]
             if "expected_djca" in config:
@@ -670,7 +671,8 @@ class ListExtensionTestMixin(
 
     def test_getitem(self) -> None:
         """Test item getter (e.g. ``x = ext[0]``)."""
-        func = lambda c, j: operator.getitem(c, j)  # noqa
+        # pylint: disable-next=unnecessary-lambda-assignment  # just much shorter
+        func = lambda c, j: operator.getitem(c, j)  # NOQA[E371]
         for config in self.test_values.values():
             ct_expected = config["expected"]
             if "expected_djca" in config:
@@ -690,7 +692,8 @@ class ListExtensionTestMixin(
 
     def test_getitem_slices(self) -> None:
         """Test getting slices (e.g. ``x = ext[0:1]``)."""
-        func = lambda c, j: operator.getitem(c, j)  # noqa
+        # pylint: disable-next=unnecessary-lambda-assignment  # just much shorter
+        func = lambda c, j: operator.getitem(c, j)  # NOQA[E371]
         for config in self.test_values.values():
             ct_expected = config["expected"]
             if "expected_djca" in config:
@@ -754,7 +757,8 @@ class ListExtensionTestMixin(
 
     def test_setitem(self) -> None:
         """Test setting items (e.g. ``ext[0] = ...``)."""
-        func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
+        # pylint: disable-next=unnecessary-lambda-assignment  # just much shorter
+        func = lambda c, j: operator.setitem(c, j[0], j[1])  # NOQA[E731]
         for config in self.test_values.values():
             ct_expected = config["expected"]
             if "expected_djca" in config:
@@ -772,7 +776,8 @@ class ListExtensionTestMixin(
 
     def test_setitem_slices(self) -> None:
         """Test setting slices."""
-        func = lambda c, j: operator.setitem(c, j[0], j[1])  # noqa
+        # pylint: disable-next=unnecessary-lambda-assignment  # just much shorter
+        func = lambda c, j: operator.setitem(c, j[0], j[1])  # NOQA[E731]
         for config in self.test_values.values():
             ct_expected = config["expected"]
             if "expected_djca" in config:

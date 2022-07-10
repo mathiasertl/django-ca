@@ -67,6 +67,13 @@ class-const-rgx = "(?:(?P<snake>[a-z_]+)|(?P<upper>[A-Z_]+))"
 # Allow dashes in module names (= top level scripts)
 module-rgx = "[a-z_][a-z_-]+"
 
+# ignore migrations
+ignore-paths = [
+    "migrations",
+    "django_ca/migrations",
+    "ca/django_ca/migrations",
+]
+
 # Configure Django
 init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('ca'))"
 django-settings-module = "ca.test_settings"
@@ -117,7 +124,6 @@ disable = [
 
     # These are just annoying
     "too-few-public-methods",
-    "no-self-use",
     "fixme",
 
     # covered by isort:
