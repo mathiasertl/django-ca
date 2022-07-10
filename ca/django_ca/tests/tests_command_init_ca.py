@@ -35,6 +35,7 @@ from ..extensions import CRLDistributionPoints
 from ..extensions import NameConstraints
 from ..models import CertificateAuthority
 from ..utils import int_to_hex
+from ..utils import x509_name
 from .base import override_settings
 from .base import override_tmpcadir
 from .base import timestamps
@@ -83,16 +84,18 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsInstance(key, RSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
-        self.assertSubject(
-            ca.pub.loaded,
-            [
-                ("C", "AT"),
-                ("ST", "Vienna"),
-                ("L", "Vienna"),
-                ("O", "Org"),
-                ("OU", "OrgUnit"),
-                ("CN", name),
-            ],
+        self.assertEqual(
+            ca.pub.loaded.subject,
+            x509_name(
+                [
+                    ("C", "AT"),
+                    ("ST", "Vienna"),
+                    ("L", "Vienna"),
+                    ("O", "Org"),
+                    ("OU", "OrgUnit"),
+                    ("CN", name),
+                ]
+            ),
         )
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
@@ -395,9 +398,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         name = "test_empty_subject_fields"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd(
-                "init_ca", name, "/ST=/L=/O=/OU=/CN=test", key_size=ca_settings.CA_MIN_KEY_SIZE
-            )
+            out, err = self.cmd("init_ca", name, f"/L=/CN={self.hostname}")
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -405,7 +406,15 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPostCreateCa(post, ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertSubject(ca.pub.loaded, [("CN", "test")])
+        self.assertEqual(
+            ca.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, ""),
+                    x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
+                ]
+            ),
+        )
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
 

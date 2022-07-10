@@ -51,6 +51,7 @@ from ..typehints import SerializedExtension
 from ..typehints import SerializedValue
 from ..utils import MULTIPLE_OIDS
 from ..utils import NAME_OID_MAPPINGS
+from ..utils import x509_name
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -105,7 +106,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
+        self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
         self.assertIssuer(ca, cert)
         self.assertExtensions(
             cert,
@@ -313,7 +314,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
+        self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr.pem.strip(), csr)
@@ -430,7 +431,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.pub.loaded, [("C", "US"), ("CN", cname)])
+        self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{cname}"]}))

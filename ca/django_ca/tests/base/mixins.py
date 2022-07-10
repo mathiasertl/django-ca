@@ -79,8 +79,6 @@ from ...signals import post_issue_cert
 from ...signals import post_revoke_cert
 from ...signals import pre_create_ca
 from ...signals import pre_issue_cert
-from ...subject import Subject
-from ...typehints import ParsableSubject
 from ...utils import ca_storage
 from ...utils import parse_general_name
 from . import certs
@@ -493,13 +491,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         loaded_cert = load_certificate(FILETYPE_PEM, cert.pub.pem.encode())
         store_ctx = X509StoreContext(store, loaded_cert)
         self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
-
-    def assertSubject(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, expected: ParsableSubject
-    ) -> None:
-        """Assert the subject of `cert` matches `expected`."""
-        expected_subj = Subject(expected)
-        self.assertEqual(Subject(cert.subject), expected_subj)
 
     @contextmanager
     def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name

@@ -41,6 +41,7 @@ from ..models import CertificateAuthority
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
 from ..utils import ca_storage
+from ..utils import x509_name
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -319,7 +320,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.pub.loaded, ca_settings.CA_DEFAULT_SUBJECT)
+        self.assertEqual(cert.pub.loaded.subject, x509_name(ca_settings.CA_DEFAULT_SUBJECT))
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
