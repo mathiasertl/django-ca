@@ -7,11 +7,11 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/#status-of-python-branches
-python = ["3.7.13", "3.8.13", "3.9.13", "3.10.4"]
+python = ["3.7.13", "3.8.13", "3.9.13", "3.10.5"]
 # https://www.djangoproject.com/download/
-django = ["3.2.13", "4.0.4"]
-cryptography = ["36.0.2", "37.0.2"]
-acme = ["1.27.0"]
+django = ["3.2.14", "4.0.6"]
+cryptography = ["36.0.2", "37.0.4"]
+acme = ["1.27.0", "1.28.0", "1.29.0"]
 josepy = ["1.13.0"]
 
 # https://alpinelinux.org/releases/
