@@ -87,7 +87,7 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
         try:
             return x509.load_pem_x509_csr(value.encode("utf-8"))
         except ValueError as ex:
-            raise forms.ValidationError(ex) from ex
+            raise forms.ValidationError(str(ex)) from ex
 
 
 class SubjectField(forms.MultiValueField):

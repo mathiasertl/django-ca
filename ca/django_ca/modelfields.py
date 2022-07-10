@@ -219,12 +219,19 @@ class LazyBinaryField(
             return value.der
         return self.wrapper(value).der
 
-    def formfield(self, **kwargs: typing.Any) -> forms.Field:
+    def formfield(
+        self,
+        form_class: typing.Optional[typing.Any] = None,
+        choices_form_class: typing.Optional[typing.Any] = None,
+        **kwargs: typing.Any,
+    ) -> forms.Field:
         """Customize the form field used by model forms."""
-        defaults = {"form_class": self.formfield_class}
-        defaults.update(kwargs)
+        if form_class is None:
+            form_class = self.formfield_class
         # TYPE NOTE: superclass seems to be not typed.
-        return super().formfield(**defaults)  # type: ignore[no-any-return]
+        return super().formfield(  # type: ignore[no-any-return]
+            form_class=form_class, choices_form_class=choices_form_class, **kwargs
+        )
 
     def to_python(
         self,
