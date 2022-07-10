@@ -1346,7 +1346,6 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="user@example.com",

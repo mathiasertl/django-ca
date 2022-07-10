@@ -21,6 +21,7 @@ import typing
 from datetime import timedelta
 
 from cryptography import x509
+from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -105,7 +106,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
     def handle(  # type: ignore[override] # pylint: disable=too-many-arguments,too-many-locals
         self,
         ca: CertificateAuthority,
-        subject: typing.Optional[Subject],
+        subject: typing.Optional[x509.Name],
         expires: typing.Optional[timedelta],
         watch: typing.List[str],
         password: typing.Optional[bytes],
@@ -122,7 +123,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             raise CommandError("Certificate Authority is revoked.")
         profile_obj = profiles[profile]
         self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)
-        subject = subject or Subject()
 
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]
@@ -146,7 +146,10 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                     critical=OID_DEFAULT_CRITICAL[cg_ext.oid], value=ext_type, oid=cg_ext.oid
                 )
 
-        if "CN" not in subject and not options[OID_TO_KEY[x509.SubjectAlternativeName.oid]]:
+        cname = None
+        if subject is not None:
+            cname = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        if not cname and not options["subject_alternative_name"]:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Read the CSR
@@ -176,7 +179,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 expires=expires,
                 extensions=extensions,
                 password=password,
-                subject=subject,
+                subject=Subject(subject),
             )
         except Exception as ex:
             raise CommandError(ex) from ex

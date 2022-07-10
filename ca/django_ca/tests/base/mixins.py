@@ -16,6 +16,7 @@
 import copy
 import io
 import json
+import re
 import typing
 from contextlib import contextmanager
 from datetime import datetime
@@ -38,6 +39,7 @@ from cryptography.hazmat.primitives.asymmetric import x448
 from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import NameOID
 
 import django
 from django.conf import settings
@@ -486,13 +488,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     def assertSubject(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, expected: typing.Union[Subject, ParsableSubject]
+        self, cert: x509.Certificate, expected: ParsableSubject
     ) -> None:
         """Assert the subject of `cert` matches `expected`."""
-        if not isinstance(expected, Subject):
-            expected = Subject(expected)
-
-        self.assertEqual(Subject([(s.oid, s.value) for s in cert.subject]), expected)  # type: ignore[misc]
+        expected_subj = Subject(expected)
+        self.assertEqual(Subject(cert.subject), expected_subj)
 
     @contextmanager
     def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name
@@ -771,6 +771,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
 
+    @property
+    def hostname(self) -> str:
+        """Get a hostname unique for the test case."""
+        name = self.id().split(".", 2)[-1].lower()
+        name = re.sub("[^a-z0-9.-]", "-", name)
+        return f"{name}.example.com"
+
     def issuer_alternative_name(self, *names: x509.GeneralName) -> x509.Extension[x509.IssuerAlternativeName]:
         """Shortcut for getting a IssuerAlternativeName extension."""
         return x509.Extension(
@@ -812,6 +819,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def precert_poison(self) -> x509.Extension[x509.PrecertPoison]:
         """Shortcut for getting a PrecertPoison extension."""
         return x509.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison())
+
+    @property
+    def subject(self) -> x509.Name:
+        """A simple subject that is unique for the test case."""
+        return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
     def subject_alternative_name(
         self, *names: x509.GeneralName

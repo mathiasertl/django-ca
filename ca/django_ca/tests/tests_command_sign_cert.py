@@ -40,7 +40,6 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
-from ..subject import Subject
 from ..utils import ca_storage
 from .base import certs
 from .base import override_settings
@@ -65,16 +64,15 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_from_stdin(self) -> None:
         """Test reading CSR from stdin."""
         stdin = self.csr_pem.encode()
-        subject = Subject([("CN", "example.com")])
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
+            stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
         self.assertEqual(stderr, "")
         self.assertEqual(pre.call_count, 1)
 
-        cert = Certificate.objects.get()
+        cert = Certificate.objects.get(cn=self.hostname)
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.pub.loaded, subject)
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         self.assertEqual(
@@ -82,9 +80,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}),
         )
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
-        self.assertEqual(
-            cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
-        )
+        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": [self.hostname]}))
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
@@ -93,8 +89,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test outputting the whole certificate bundle."""
 
         stdin = self.csr_pem.encode()
-        subject = Subject([("CN", "example.com")])
-        stdout, stderr = self.cmd("sign_cert", bundle=True, ca=self.ca, subject=subject, stdin=stdin)
+        stdout, stderr = self.cmd("sign_cert", bundle=True, ca=self.ca, subject=self.subject, stdin=stdin)
         cert = Certificate.objects.get()
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.bundle_as_pem}")
         self.assertEqual(stderr, "")
@@ -104,22 +99,20 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with all usable CAs."""
 
         for name, ca in self.cas.items():
-            cname = f"{name}-signed.example.com"
             stdin = self.csr_pem.encode()
-            subject = Subject([("CN", cname)])
 
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd(
-                    "sign_cert", ca=ca, subject=subject, password=certs[name]["password"], stdin=stdin
+                    "sign_cert", ca=ca, subject=self.subject, password=certs[name]["password"], stdin=stdin
                 )
 
             self.assertEqual(stderr, "")
             self.assertEqual(pre.call_count, 1)
 
-            cert = Certificate.objects.get(ca=ca, cn=cname)
+            cert = Certificate.objects.get(ca=ca, cn=self.hostname)
             self.assertPostIssueCert(post, cert)
             self.assertSignature(reversed(ca.bundle), cert)
-            self.assertSubject(cert.pub.loaded, subject)
+            self.assertEqual(cert.pub.loaded.subject, self.subject)
             self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
             self.assertEqual(
@@ -130,7 +123,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             )
             self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
             self.assertEqual(
-                cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{cname}"]})
+                cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
             )
             self.assertIssuer(ca, cert)
             self.assertAuthorityKeyIdentifier(ca, cert)
@@ -138,35 +131,29 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_from_file(self) -> None:
         """Test reading CSR from file."""
-        csr_path = os.path.join(ca_settings.CA_DIR, "test.csr")
+        csr_path = os.path.join(ca_settings.CA_DIR, f"{self.hostname}.csr")
         with open(csr_path, "w", encoding="ascii") as csr_stream:
             csr_stream.write(self.csr_pem)
 
-        try:
-            subject = Subject([("CN", "example.com"), ("emailAddress", "user@example.com")])
-            with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-                stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, csr=csr_path)
-            self.assertEqual(stderr, "")
-            self.assertEqual(pre.call_count, 1)
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=self.subject, csr=csr_path)
+        self.assertEqual(stderr, "")
+        self.assertEqual(pre.call_count, 1)
 
-            cert = Certificate.objects.get()
-            self.assertPostIssueCert(post, cert)
-            self.assertSignature([self.ca], cert)
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
 
-            self.assertSubject(cert.pub.loaded, subject)
-            self.assertEqual(stdout, cert.pub.pem)
-            self.assertEqual(
-                cert.key_usage,
-                KeyUsage(
-                    {"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}
-                ),
-            )
-            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
-            self.assertEqual(
-                cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
-            )
-        finally:
-            os.remove(csr_path)
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
+        self.assertEqual(stdout, cert.pub.pem)
+        self.assertEqual(
+            cert.key_usage,
+            KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}),
+        )
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
+        self.assertEqual(
+            cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
+        )
 
     @override_tmpcadir()
     def test_to_file(self) -> None:
@@ -177,11 +164,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         try:
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd(
-                    "sign_cert",
-                    ca=self.ca,
-                    subject=Subject([("CN", "example.com")]),
-                    out=out_path,
-                    stdin=stdin,
+                    "sign_cert", ca=self.ca, subject=self.subject, out=out_path, stdin=stdin
                 )
             self.assertEqual(pre.call_count, 1)
 
@@ -243,11 +226,12 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
         cname = "foo bar"
         msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)])
 
         with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post:
-            self.cmd("sign_cert", ca=self.ca, subject=Subject([("CN", cname)]), cn_in_san=True, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject=subject, cn_in_san=True, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -259,7 +243,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                subject=Subject([("CN", "example.net")]),
+                subject=self.subject,
                 cn_in_san=False,
                 alt=SubjectAlternativeName({"value": ["example.com"]}),
                 stdin=stdin,
@@ -271,7 +255,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertSignature([self.ca], cert)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertSubject(cert.pub.loaded, [("CN", "example.net")])
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertEqual(
@@ -282,12 +266,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_no_san(self) -> None:
         """Test signing without passing any SANs."""
         stdin = self.csr_pem.encode()
-        subject = Subject([("CN", "example.net")])
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                subject=subject,
+                subject=self.subject,
                 cn_in_san=False,
                 alt=SubjectAlternativeName(),
                 stdin=stdin,
@@ -297,7 +280,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.pub.loaded, subject)
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
@@ -327,7 +310,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=SubjectAlternativeName({"value": ["example.net"]}),
+                alt=SubjectAlternativeName({"value": [self.hostname]}),
                 stdin=stdin,
             )
         self.assertEqual(stderr, "")
@@ -342,15 +325,15 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         # replace subject fields via command-line argument:
-        subject = Subject(
+        subject = x509.Name(
             [
-                ("C", "US"),
-                ("ST", "California"),
-                ("L", "San Francisco"),
-                ("O", "MyOrg2"),
-                ("OU", "MyOrg2Unit2"),
-                ("CN", "CommonName2"),
-                ("emailAddress", "user@example.net"),
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "MyOrg2"),
+                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "MyOrg2Unit2"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "CommonName2"),
+                x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.net"),
             ]
         )
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -358,7 +341,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=SubjectAlternativeName({"value": ["example.net"]}),
+                alt=SubjectAlternativeName({"value": [self.hostname]}),
                 stdin=stdin,
                 subject=subject,
             )
@@ -366,7 +349,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn="CommonName2")
         self.assertPostIssueCert(post, cert)
-        self.assertSubject(cert.pub.loaded, subject)
+        self.assertEqual(cert.pub.loaded.subject, subject)
 
     @override_tmpcadir()
     def test_extensions(self) -> None:
@@ -378,7 +361,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
-            f"--subject={Subject([('CN', 'example.com')])}",
+            f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
             "--key-usage=critical,keyCertSign",
             "--ext-key-usage=clientAuth",
@@ -394,7 +377,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.pub.loaded, [("CN", "example.com")])
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(cert.key_usage, KeyUsage({"critical": True, "value": ["keyCertSign"]}))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
@@ -406,7 +389,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 value=x509.SubjectAlternativeName(
                     [
                         x509.UniformResourceIdentifier("https://example.net"),
-                        x509.DNSName("example.com"),
+                        x509.DNSName(self.hostname),
                     ]
                 ),
             ),
@@ -423,7 +406,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
-            f"--subject={Subject([('CN', 'example.com')])}",
+            f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
             "--alt=URI:https://example.net",
             "--alt=DNS:example.org",
@@ -436,7 +419,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.pub.loaded, [("CN", "example.com")])
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
             cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
@@ -447,7 +430,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                     [
                         x509.UniformResourceIdentifier("https://example.net"),
                         x509.DNSName("example.org"),
-                        x509.DNSName("example.com"),
+                        x509.DNSName(self.hostname),
                     ]
                 ),
             ),
@@ -459,7 +442,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
-                "sign_cert", ca=self.ca, alt=SubjectAlternativeName({"value": ["example.com"]}), stdin=stdin
+                "sign_cert", ca=self.ca, alt=SubjectAlternativeName({"value": [self.hostname]}), stdin=stdin
             )
 
         cert = Certificate.objects.get()
@@ -467,11 +450,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertSubject(cert.pub.loaded, [("CN", "example.com")])
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertEqual(
-            cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
+            cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -550,31 +533,25 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         with open(csr_path, "wb") as csr_stream:
             csr_stream.write(certs["child-cert"]["csr"]["der"])
 
-        try:
-            subject = Subject([("CN", "example.com"), ("emailAddress", "user@example.com")])
-            with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-                stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=subject, csr=csr_path)
-            self.assertEqual(pre.call_count, 1)
-            self.assertEqual(stderr, "")
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=self.subject, csr=csr_path)
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(stderr, "")
 
-            cert = Certificate.objects.get()
-            self.assertPostIssueCert(post, cert)
-            self.assertSignature([self.ca], cert)
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
 
-            self.assertSubject(cert.pub.loaded, subject)
-            self.assertEqual(stdout, cert.pub.pem)
-            self.assertEqual(
-                cert.key_usage,
-                KeyUsage(
-                    {"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}
-                ),
-            )
-            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
-            self.assertEqual(
-                cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
-            )
-        finally:
-            os.remove(csr_path)
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
+        self.assertEqual(stdout, cert.pub.pem)
+        self.assertEqual(
+            cert.key_usage,
+            KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}),
+        )
+        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
+        self.assertEqual(
+            cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
+        )
 
     @override_tmpcadir()
     def test_expiry_too_late(self) -> None:
@@ -593,10 +570,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:
         """Test signing a cert that has neither CN nor SAN."""
+        subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
         with self.assertCommandError(
             r"^Must give at least a CN in --subject or one or more --alt arguments\.$"
         ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd("sign_cert", ca=self.ca, subject=Subject([("C", "AT")]))
+            self.cmd("sign_cert", ca=self.ca, subject=subject)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -606,12 +584,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with a revoked CA."""
         self.ca.revoke()
         stdin = io.StringIO(self.csr_pem)
-        subject = Subject([("CN", "example.com")])
 
         with self.assertCommandError(r"^Certificate Authority is revoked\.$"), self.mockSignal(
             pre_issue_cert
         ) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -623,12 +600,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         os.remove(path)
         msg = rf"^\[Errno 2\] No such file or directory: '{path}'"
         stdin = io.StringIO(self.csr_pem)
-        subject = Subject([("CN", "example.com")])
 
         with self.assertCommandError(msg), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post:
-            self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -637,12 +613,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_expired_ca(self) -> None:
         """Test signing with an expired CA."""
         stdin = io.StringIO(self.csr_pem)
-        subject = Subject([("CN", "example.com")])
 
         with self.assertCommandError(r"^Certificate Authority has expired\.$"), self.mockSignal(
             pre_issue_cert
         ) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd("sign_cert", ca=self.ca, subject=subject, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 

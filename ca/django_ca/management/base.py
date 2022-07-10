@@ -128,7 +128,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         help_text: typing.Optional[str] = None,
     ) -> None:
         """Add subject option."""
-        parser.add_argument(arg, action=actions.SubjectAction, metavar=metavar, help=help_text)
+        parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
 
     def add_ecc_curve(self, parser: CommandParser) -> None:
         """Add --ecc-curve option."""

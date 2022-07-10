@@ -38,7 +38,6 @@ from ..extensions import TLSFeature
 from ..management import actions
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..subject import Subject
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -115,44 +114,6 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
                     x509.UniformResourceIdentifier("https://example.net"),
                 ]
             ),
-        )
-
-
-class SubjectActionTestCase(ParserTestCaseMixin, TestCase):
-    """Test SubjectAction."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("--subject", action=actions.SubjectAction)
-
-    def test_basic(self) -> None:
-        """Test basic functionality of action."""
-        namespace = self.parser.parse_args(["--subject=/CN=example.com"])
-        self.assertEqual(namespace.subject, Subject([("CN", "example.com")]))
-
-        namespace = self.parser.parse_args(["--subject=/ST=foo/CN=example.com"])
-        self.assertEqual(namespace.subject, Subject([("ST", "foo"), ("CN", "example.com")]))
-
-        namespace = self.parser.parse_args(["--subject=/ST=/CN=example.com"])
-        self.assertEqual(namespace.subject, Subject([("ST", ""), ("CN", "example.com")]))
-
-    def test_order(self) -> None:
-        """Test that order is always consistent."""
-        namespace = self.parser.parse_args(["--subject=/CN=example.com/ST=foo"])
-        self.assertEqual(namespace.subject, Subject([("ST", "foo"), ("CN", "example.com")]))
-
-    def test_multiple(self) -> None:
-        """Test that we can pass multiple OUs."""
-        namespace = self.parser.parse_args(["--subject=/C=AT/OU=foo/OU=bar"])
-        self.assertEqual(namespace.subject, Subject([("C", "AT"), ("OU", "foo"), ("OU", "bar")]))
-
-    def test_error(self) -> None:
-        """Test false option values."""
-        self.assertParserError(
-            ["--subject=/WRONG=foobar"],
-            "usage: {script} [-h] [--subject SUBJECT]\n"
-            "{script}: error: argument --subject: Unknown x509 name field: WRONG\n",
         )
 
 

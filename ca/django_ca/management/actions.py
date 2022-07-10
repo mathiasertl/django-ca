@@ -32,7 +32,6 @@ from ..constants import ReasonFlags
 from ..extensions import OID_TO_KEY
 from ..models import Certificate
 from ..models import CertificateAuthority
-from ..subject import Subject
 from ..utils import is_power2
 from ..utils import parse_encoding
 from ..utils import parse_general_name
@@ -307,23 +306,6 @@ class ReasonAction(SingleValueAction[ReasonFlags]):
         """Parse the value for this action."""
         # NOTE: set of choices already assures that value is a valid ReasonFlag
         return ReasonFlags[value]
-
-
-class SubjectAction(SingleValueAction[Subject]):
-    """Action for giving a subject.
-
-    >>> parser.add_argument('--subject', action=SubjectAction)  # doctest: +ELLIPSIS
-    SubjectAction(...)
-    >>> parser.parse_args(['--subject', '/CN=example.com'])
-    Namespace(subject=Subject("/CN=example.com"))
-    """
-
-    def parse_value(self, value: str) -> Subject:
-        """Parse the value for this action."""
-        try:
-            return Subject(value)
-        except ValueError as e:
-            raise argparse.ArgumentError(self, str(e))
 
 
 class NameAction(SingleValueAction[x509.Name]):

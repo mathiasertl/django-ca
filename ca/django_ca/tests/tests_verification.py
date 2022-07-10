@@ -21,13 +21,13 @@ import typing
 from contextlib import contextmanager
 
 from cryptography import x509
+from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
 from django.urls import reverse
 
 from ..models import CertificateAuthority
 from ..models import X509CertMixin
-from ..subject import Subject
 from .base import certs
 from .base import override_tmpcadir
 from .base.mixins import TestCaseMixin
@@ -112,12 +112,11 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     ) -> typing.Iterator[str]:
         """Create a signed certificate in a temporary directory."""
         stdin = self.csr_pem.encode()
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
 
         with tempfile.TemporaryDirectory() as tempdir:
             out_path = os.path.join(tempdir, f"{hostname}.pem")
-            self.cmd(
-                "sign_cert", ca=ca, subject=Subject([("CN", hostname)]), out=out_path, stdin=stdin, **kwargs
-            )
+            self.cmd("sign_cert", ca=ca, subject=subject, out=out_path, stdin=stdin, **kwargs)
             yield out_path
 
     def openssl(self, cmd: str, *args: str, code: int = 0, **kwargs: str) -> None:

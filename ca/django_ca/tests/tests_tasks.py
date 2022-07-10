@@ -189,7 +189,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def setUp(self) -> None:
         super().setUp()
-        self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:user@example.com",
@@ -482,7 +481,6 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:user@example.com",
@@ -614,7 +612,6 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.hostname = "challenge.example.com"
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:user@example.com",

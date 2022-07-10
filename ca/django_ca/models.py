@@ -451,12 +451,7 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def issuer(self) -> x509.Name:
-        """The certificate issuer field as :py:class:`~cg:cryptography.x509.Name`.
-
-        .. versionchanged:: 1.20.0
-
-           This property was a :py:class:`~django_ca.subject.Subject` before ``django-ca==1.20.0``.
-        """
+        """The certificate issuer field as :py:class:`~cg:cryptography.x509.Name`."""
         return self.pub.loaded.issuer
 
     @property
@@ -474,7 +469,7 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def not_before(self) -> datetime:
-        """Date/Time this certificate was created"""
+        """Date/Time before this certificate is **not** valid."""
         return self.pub.loaded.not_valid_before
 
     @property
@@ -509,17 +504,12 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def subject(self) -> x509.Name:
-        """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`.
-
-        .. versionchanged:: 1.20.0
-
-           This property was a :py:class:`~django_ca.subject.Subject` before ``django-ca==1.20.0``.
-        """
+        """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`."""
         return self.pub.loaded.subject
 
     @property
     def distinguished_name(self) -> str:
-        """The certificates distinguished name formatted as string."""
+        """The certificate subject formatted as string."""
         return format_name(self.pub.loaded.subject)
 
     ###################
