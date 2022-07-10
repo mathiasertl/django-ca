@@ -69,8 +69,6 @@ module-rgx = "[a-z_][a-z_-]+"
 
 # ignore migrations
 ignore-paths = [
-    "migrations",
-    "django_ca/migrations",
     "ca/django_ca/migrations",
 ]
 

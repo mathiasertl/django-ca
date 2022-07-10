@@ -1,5 +1,5 @@
 # Sphinx extension is also typehinted
-Sphinx==4.5.0
+Sphinx==5.0.2
 # cryptography adds propper type annotations only in 35.0.0
 cryptography>=35.0.0
 mypy==0.961
