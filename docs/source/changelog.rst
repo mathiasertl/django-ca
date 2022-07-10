@@ -24,6 +24,8 @@ Backwards incompatible changes
 * Drop support for cryptography 35.0.
 * Drop support for acme 1.23, 1.24, 1.25 and 1.26.
 * Drop support for Celery 5.0.
+* Remove the ``--ca-crl`` parameter in ``manage.py dump_crl`` (this was a left
+  over and has been marked as deprecated since 1.12.0).
 
 Deprecation notices
 ===================

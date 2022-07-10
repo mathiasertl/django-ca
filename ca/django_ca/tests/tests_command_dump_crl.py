@@ -284,22 +284,6 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(len(crl[0].extensions), 0)
 
     @override_tmpcadir()
-    def test_ca_crl_old_option(self) -> None:
-        """Test the old --ca-crl option."""
-
-        # create a child CA
-        child = self.cas["child"]
-        self.assertIsNotNone(child.key(password=None))
-        self.assertNotRevoked(child)
-
-        stdout, stderr = self.cmd("dump_crl", ca=self.ca, ca_crl=True, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"WARNING: --ca-crl is deprecated, use --scope=ca instead.\n")
-
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
-
-    @override_tmpcadir()
     def test_error(self) -> None:
         """Test that creating a CRL fails for an unknown reason."""
 

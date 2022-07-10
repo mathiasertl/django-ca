@@ -46,12 +46,6 @@ class Command(BinaryCommand):
             "path", nargs="?", default="-", help='Path for the output file. Use "-" for stdout.'
         )
         parser.add_argument(
-            "--ca-crl",
-            action="store_true",
-            default=False,
-            help="*DEPRECATED:* Use --scope=ca instead. Generate the CRL for revoked child CAs.",
-        )
-        parser.add_argument(
             "-s",
             "--scope",
             choices=["ca", "user", "attribute"],
@@ -86,10 +80,6 @@ class Command(BinaryCommand):
         include_issuing_distribution_point: typing.Optional[bool],
         **options: typing.Any
     ) -> None:
-        if options["ca_crl"]:
-            self.stderr.write(self.style.WARNING("WARNING: --ca-crl is deprecated, use --scope=ca instead."))
-            scope = "ca"
-
         kwargs = {
             "expires": options["expires"],
             "algorithm": options["algorithm"],
