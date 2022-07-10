@@ -31,7 +31,6 @@ from . import ca_settings
 from .extensions import ExtendedKeyUsage
 from .extensions import KeyUsage
 from .extensions import TLSFeature
-from .fields import CertificateSigningRequestField
 from .fields import MultiValueExtensionField
 from .fields import SubjectAltNameField
 from .fields import SubjectField
@@ -234,9 +233,6 @@ class CreateCertificateForm(CreateCertificateBaseForm):
             "watchers",
             "ca",
         ]
-        field_classes = {
-            "csr": CertificateSigningRequestField,
-        }
 
 
 class ResignCertificateForm(CreateCertificateBaseForm):

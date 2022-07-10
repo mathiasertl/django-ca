@@ -253,5 +253,7 @@ class CertificateSigningRequestField(
 class CertificateField(LazyBinaryField[DecodableCertificate, LazyCertificate]):
     """Django model field for Certificates."""
 
-    formfield_class = CertificateSigningRequestFormField  # TODO
+    # NOTE: Since certificates are never submitted in a form, there never is an active form field for this
+    #       field, and formfield() is never called for this class. Thus it's okay to use the wrong class.
+    formfield_class = CertificateSigningRequestFormField
     wrapper = LazyCertificate
