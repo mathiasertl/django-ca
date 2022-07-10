@@ -36,7 +36,6 @@ from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet
 from ..querysets import CertificateQuerySet
 from ..typehints import ParsableExtension
-from ..utils import x509_name
 from .base import certs
 from .base import override_settings
 from .base import override_tmpcadir
@@ -78,10 +77,9 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test creating the most basic possible CA."""
         name = "basic"
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, subject)
-        self.assertProperties(ca, name, subject)
+            ca = CertificateAuthority.objects.init(name, self.subject)
+        self.assertProperties(ca, name, self.subject)
         ca.key().public_key()  # just access private key to make sure we can load it
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -354,24 +352,20 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_basic(self) -> None:
         """Test creating the most basic cert possible."""
-        subject = "/CN=example.com"
-
         with self.assertCreateCertSignals():
-            cert = Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
-        self.assertEqual(cert.subject, x509_name(subject))
-        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName("example.com"))])
+            cert = Certificate.objects.create_cert(self.ca, self.csr, subject=self.subject)
+        self.assertEqual(cert.subject, self.subject)
+        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName(self.hostname))])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_explicit_profile(self) -> None:
         """Test creating a cert with a profile."""
-        subject = "/CN=example.com"
-
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(
-                self.ca, self.csr, subject=subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
+                self.ca, self.csr, subject=self.subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
-        self.assertEqual(cert.subject, x509_name(subject))
-        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName("example.com"))])
+        self.assertEqual(cert.subject, self.subject)
+        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName(self.hostname))])
 
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:

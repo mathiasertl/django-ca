@@ -30,6 +30,8 @@ from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA124Warning
+from .deprecation import deprecate_type
 from .extensions import KEY_TO_EXTENSION
 from .extensions import AuthorityInformationAccess
 from .extensions import AuthorityKeyIdentifier
@@ -156,11 +158,12 @@ class Profile:
     def __str__(self) -> str:
         return repr(self)
 
+    @deprecate_type("subject", (dict, str, Subject), RemovedInDjangoCA124Warning)
     def create_cert(
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
-        subject: Optional[Subject] = None,
+        subject: Optional[x509.Name] = None,
         expires: Expires = None,
         algorithm: typing.Optional[HashAlgorithm] = None,
         extensions: Optional[
@@ -178,11 +181,17 @@ class Profile:
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
+        .. deprecated:: 1.22.0
+
+           * Passing a :py:class:`~django_ca.subject.Subject` as `subject` is now deprecated. The feature will
+             be removed in ``django_ca==1.24``. Pass a :py:class:`~cg:cryptography.x509.Name` instance
+             instead.
+
         This function is the core function used to create x509 certificates. In it's simplest form, you only
         need to pass a ca, a CSR and a subject to get a valid certificate::
 
             >>> profile = get_profile('webserver')
-            >>> profile.create_cert(ca, csr, subject='/CN=example.com')  # doctest: +ELLIPSIS
+            >>> profile.create_cert(ca, csr, subject=x509_name('/CN=example.com'))  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
 
         The function will add CRL, OCSP, Issuer and IssuerAlternativeName URLs based on the CA if the profile
@@ -200,9 +209,9 @@ class Profile:
             The CA to sign the certificate with.
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The CSR for the certificate.
-        subject : dict or str or :py:class:`~django_ca.subject.Subject`
-            Update the subject string, e.g. ``"/CN=example.com"`` or ``Subject("/CN=example.com")``. The
-            values from the passed subject will update the profiles subject.
+        subject : :py:class:`~cg:cryptography.x509.Name`, optional
+            Subject for the certificate. The value will be merged with the subject of the profile. If not
+            given, the certificate's subject will be identical to the subject from the profile.
         expires : int or datetime or timedelta, optional
             Override when this certificate will expire.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
@@ -281,9 +290,11 @@ class Profile:
             add_issuer_alternative_name=add_issuer_alternative_name,
         )
 
-        if not isinstance(subject, Subject):
-            subject = Subject(subject)  # NOTE: also accepts None
-        cert_subject.update(subject)
+        if not isinstance(subject, Subject):  # pragma: only django_ca<=1.24
+            converted_subject = Subject(subject)  # NOTE: also accepts None
+        else:
+            converted_subject = subject
+        cert_subject.update(converted_subject)
 
         if algorithm is None:
             algorithm = self.algorithm
@@ -294,7 +305,7 @@ class Profile:
         # Finally, update SAN with the current CN, if set and requested
         self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
 
-        if not subject.get("CN") and (
+        if not converted_subject.get("CN") and (
             SubjectAlternativeName.key not in extensions_update
             or not cast(SubjectAlternativeName, extensions_update[SubjectAlternativeName.key]).value
         ):

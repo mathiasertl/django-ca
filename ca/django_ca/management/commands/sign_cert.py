@@ -36,7 +36,6 @@ from ...models import Certificate
 from ...models import CertificateAuthority
 from ...models import Watcher
 from ...profiles import profiles
-from ...subject import Subject
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -179,7 +178,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 expires=expires,
                 extensions=extensions,
                 password=password,
-                subject=Subject(subject),
+                subject=subject,
             )
         except Exception as ex:
             raise CommandError(ex) from ex

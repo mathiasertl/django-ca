@@ -20,6 +20,7 @@ import typing
 from datetime import timedelta
 
 from cryptography import x509
+from cryptography.x509 import NameOID
 
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -38,7 +39,6 @@ from ...models import CertificateAuthority
 from ...models import Watcher
 from ...profiles import Profile
 from ...profiles import profiles
-from ...subject import Subject
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -74,7 +74,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         self,
         cert: Certificate,
         ca: typing.Optional[CertificateAuthority],
-        subject: typing.Optional[Subject],
+        subject: typing.Optional[x509.Name],
         expires: typing.Optional[timedelta],
         watch: typing.List[str],
         password: typing.Optional[bytes],
@@ -94,7 +94,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             watchers = list(cert.watchers.all())
 
         if subject is None:
-            subject = Subject(cert.subject)
+            subject = cert.subject
 
         if not options[KeyUsage.key]:
             key_usage = cert.key_usage
@@ -115,7 +115,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             "algorithm": options["algorithm"],
             "extensions": {},
             "password": password,
-            "subject": subject,
             "cn_in_san": False,  # we already copy the SAN/CN from the original cert
         }
 
@@ -133,12 +132,12 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             )
         kwargs["extensions"][OID_TO_KEY[SubjectAlternativeName.oid]] = san
 
-        if "CN" not in kwargs["subject"] and not san:
+        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not san:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
             cert = Certificate.objects.create_cert(
-                ca=ca, csr=cert.csr.loaded, expires=expires, profile=profile_obj, **kwargs
+                ca=ca, csr=cert.csr.loaded, profile=profile_obj, expires=expires, subject=subject, **kwargs
             )
         except Exception as ex:
             raise CommandError(ex) from ex

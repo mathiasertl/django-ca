@@ -39,7 +39,6 @@ from ..models import CertificateAuthority
 from ..models import Watcher
 from ..signals import post_issue_cert
 from ..signals import pre_issue_cert
-from ..subject import Subject
 from .base import override_tmpcadir
 from .base import timestamps
 from .base.mixins import TestCaseMixin
@@ -231,14 +230,14 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_cn(self) -> None:
         """Test resigning with a subject that has no CN."""
-        subject = "/C=AT"  # has no CN
         cert = self.certs["no-extensions"]
+        subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
 
         msg = r"^Must give at least a CN in --subject or one or more --alt arguments\."
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
             post_issue_cert
         ) as post, self.assertCommandError(msg):
-            self.cmd("resign_cert", cert, subject=Subject(subject))
+            self.cmd("resign_cert", cert, subject=subject)
 
         # signals not called
         self.assertEqual(pre.call_count, 0)

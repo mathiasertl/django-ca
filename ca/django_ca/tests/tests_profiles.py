@@ -200,7 +200,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Create a certificate with minimal parameters."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"CN": "example.com"})
 
         prof = Profile("example", subject=Subject())
         with self.mockSignal(pre_issue_cert) as pre:
@@ -208,16 +207,16 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_issuer_alternative_name=False,
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject.name)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -228,10 +227,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca.issuer_alt_name = "https://example.com"
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
-        cname = "example.com"
-        subject = x509.Name(
-            [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, cname)]
-        )
+        country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
+        subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
         prof = Profile("example", subject=Subject())
         with self.mockSignal(pre_issue_cert) as pre:
@@ -239,20 +236,20 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject="/C=AT",
+                subject=x509.Name([country_name]),
                 algorithm=hashes.SHA256(),
                 expires=timedelta(days=30),
-                extensions=[SubjectAlternativeName({"value": ["example.com"]})],
+                extensions=[SubjectAlternativeName({"value": [self.hostname]})],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.cn, cname)
+        self.assertEqual(cert.cn, self.hostname)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
                 self.issuer_alternative_name(x509.UniformResourceIdentifier(ca.issuer_alt_name)),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -261,10 +258,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test other overrides."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        cname = "example.com"
-        subject = x509.Name(
-            [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, cname)]
-        )
+        country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
+        expected_subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
         prof = Profile(
             "example",
@@ -275,9 +270,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             add_issuer_alternative_name=False,
         )
         with self.mockSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
+            cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, expected_subject)
         self.assertEqual(cert.ca, ca)
 
         self.assertExtensions(
@@ -286,7 +281,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 self.subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -296,21 +291,21 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_crl_url=True,
                 add_ocsp_url=True,
                 add_issuer_url=True,
                 add_issuer_alternative_name=True,
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, expected_subject)
         self.assertEqual(cert.ca, ca)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -319,9 +314,11 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test writing the common name into the SAN."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        cname = "example.com"
         subject = x509.Name(
-            [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, cname)]
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
+            ]
         )
 
         prof = Profile(
@@ -331,21 +328,21 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cn_in_san=False,
         )
         with self.mockSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
+            cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
 
         # Create the same cert, but pass cn_in_san=True to create_cert
         with self.mockSignal(pre_issue_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}), cn_in_san=True)
+            cert = self.create_cert(prof, ca, csr, subject=self.subject, cn_in_san=True)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -355,9 +352,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=Subject({"CN": cname}),
+                subject=self.subject,
                 cn_in_san=True,
-                extensions=[SubjectAlternativeName({"value": ["DNS:example.com"]})],
+                extensions=[SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -365,7 +362,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -376,7 +373,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 ca,
                 csr,
                 cn_in_san=True,
-                extensions=[SubjectAlternativeName({"value": ["DNS:example.com"]})],
+                extensions=[SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -384,7 +381,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -393,7 +390,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test overriding the subject key identifier."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"CN": "example.com"})
         ski = x509.Extension(
             oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
             critical=False,
@@ -406,7 +402,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -414,13 +410,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions={"subject_key_identifier": ski},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject.name)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
                 ski,
             ],
             expect_defaults=False,
@@ -431,7 +427,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test with a dict for an extension."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"CN": "example.com"})
         ski = x509.Extension(
             oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
             critical=False,
@@ -444,7 +439,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -452,13 +447,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions={"subject_key_identifier": ski},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject.name)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
                 ski,
             ],
             expect_defaults=False,
@@ -469,7 +464,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test with hiding extensions from the profile."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"CN": "example.com"})
 
         prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
         with self.mockSignal(pre_issue_cert) as pre:
@@ -477,7 +471,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,
@@ -485,14 +479,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions={OCSPNoCheck.key: None},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject.name)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
                 self.subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -502,7 +496,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test with a profile that has cryptography extensions."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"CN": "example.com"})
 
         prof = Profile("example", subject=Subject(), extensions={OCSPNoCheck.key: {}})
         with self.mockSignal(pre_issue_cert) as pre:
@@ -510,19 +503,19 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_issuer_alternative_name=False,
                 extensions={"ocsp_no_check": self.ocsp_no_check()},
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject.name)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
                 self.ocsp_no_check(),
-                self.subject_alternative_name(x509.DNSName("example.com")),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
         )
 
@@ -535,7 +528,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile("example", subject=Subject({"C": "AT"}))
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, subject=Subject())
+            self.create_cert(prof, ca, csr, subject=None)
         self.assertEqual(pre.call_count, 0)
 
         # pass an empty SAN
@@ -552,8 +545,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         prof = Profile("example", subject=Subject({"C": "AT"}))
         msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
+        warning = "Passing Subject for subject is deprecated and will be removed in django ca 1.24."
         with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
+            with self.assertRemovedIn124Warning(warning):
+                self.create_cert(prof, ca, csr, subject=Subject({"CN": cname}))
         self.assertEqual(pre.call_count, 0)
 
     @override_tmpcadir()
@@ -564,7 +559,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca.issuer_alt_name = "https://ian.example.com"
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
-        subject = Subject({"CN": "example.com"})
         ski = SubjectKeyIdentifier({"value": b"333333"})
         prof = Profile("example", subject=Subject())
 
@@ -574,7 +568,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_ocsp_url=False,
                 add_issuer_url=True,
                 extensions={AuthorityInformationAccess.key: ski},
@@ -587,7 +581,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_crl_url=True,
                 extensions={CRLDistributionPoints.key: ski},
             )
@@ -599,7 +593,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_ocsp_url=True,
                 extensions={AuthorityInformationAccess.key: ski},
             )
@@ -611,7 +605,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_ocsp_url=False,
                 add_issuer_url=True,
                 extensions={AuthorityInformationAccess.key: ski},
@@ -624,7 +618,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 prof,
                 ca,
                 csr,
-                subject=subject,
+                subject=self.subject,
                 add_ocsp_url=False,
                 add_issuer_url=False,
                 add_issuer_alternative_name=True,

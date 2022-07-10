@@ -119,7 +119,7 @@ using ``Certificate.objects``, e.g.::
    >>> csr  # doctest: +ELLIPSIS
    <builtins.CertificateSigningRequest object at ...>
    >>> from django_ca.models import Certificate
-   >>> Certificate.objects.create_cert(csr=csr, ca=ca, subject='/CN=example.com')
+   >>> Certificate.objects.create_cert(csr=csr, ca=ca, subject=x509_name('/CN=example.com'))
    <Certificate: example.com>
 
 .. autoclass:: django_ca.managers.CertificateManager

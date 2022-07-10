@@ -65,6 +65,7 @@ from freezegun.api import StepTickTimeFactory
 from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning
+from ...deprecation import RemovedInDjangoCA124Warning
 from ...extensions import Extension
 from ...extensions.base import CRLDistributionPointsBase
 from ...extensions.base import IterableExtension
@@ -436,6 +437,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
 
     @contextmanager
+    def assertRemovedIn124Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+        """Assert that a RemovedInDjangoCA124Warning is thrown."""
+        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
+            yield
+
+    @contextmanager
     def assertRemovedArgumentIn123Warning(  # pylint: disable=invalid-name
         self, argument: str
     ) -> typing.Iterator[None]:
@@ -694,7 +701,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cls,
         ca: CertificateAuthority,
         csr: x509.CertificateSigningRequest,
-        subject: typing.Optional[Subject],
+        subject: typing.Optional[x509.Name],
         **kwargs: typing.Any,
     ) -> Certificate:
         """Create a certificate with the given data."""

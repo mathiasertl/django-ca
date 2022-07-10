@@ -64,7 +64,6 @@ from ..models import Certificate
 from ..models import CertificateAuthority
 from ..models import Watcher
 from ..models import X509CertMixin
-from ..subject import Subject
 from ..utils import ca_storage
 from ..utils import get_crl_cache_key
 from .base import CERT_PEM_REGEX
@@ -635,7 +634,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         weird_cert = self.create_cert(
             self.cas["child"],
             certs["child-cert"]["csr"]["parsed"],
-            subject=Subject({"CN": "all.example.com"}),
+            subject=self.subject,
             extensions=[
                 SubjectAlternativeName(
                     {
@@ -651,7 +650,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
                     "dirname:/C=AT/CN=example.com",
                     "email:user@example.com",
                     "IP:fd00::1",
-                    "DNS:all.example.com",
+                    f"DNS:{self.hostname}",
                 ]
             }
         )
