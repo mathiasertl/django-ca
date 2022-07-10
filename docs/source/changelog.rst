@@ -17,6 +17,8 @@ ChangeLog
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
+* Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
+
 Backwards incompatible changes
 ==============================
 

@@ -57,6 +57,16 @@ urlpatterns = [
         CertificateRevocationListView.as_view(scope="ca", type=Encoding.PEM),
         name="ca_crl",
     ),
+    re_path(
+        r"^include_idp/(?P<serial>[0-9A-F:]+)/$",
+        CertificateRevocationListView.as_view(scope=None, include_issuing_distribution_point=True),
+        name="include_idp",
+    ),
+    re_path(
+        r"^exclude_idp/(?P<serial>[0-9A-F:]+)/$",
+        CertificateRevocationListView.as_view(scope=None, include_issuing_distribution_point=False),
+        name="exclude_idp",
+    ),
 ]
 
 
@@ -201,6 +211,30 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain")
         self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.MD5())
+
+    @override_tmpcadir()
+    def test_force_idp_inclusion(self) -> None:
+        """Test that forcing inclusion of CRLs works."""
+        # View still works with self.ca, because its the child CA
+        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca))
+        response = self.client.get(reverse("include_idp", kwargs={"serial": self.ca.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=idp)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"^Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs\.$",
+        ):
+            response = self.client.get(reverse("include_idp", kwargs={"serial": self.cas["root"].serial}))
+
+    @override_tmpcadir()
+    def test_force_idp_exclusion(self) -> None:
+        """Test that forcing exclusion of CRLs works."""
+        response = self.client.get(reverse("exclude_idp", kwargs={"serial": self.ca.serial}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=None)
 
 
 @override_settings(USE_TZ=True)

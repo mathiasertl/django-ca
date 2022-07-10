@@ -99,6 +99,9 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
+    include_issuing_distribution_point: typing.Optional[bool] = None
+    """Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension."""
+
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         encoding = parse_encoding(request.GET.get("encoding", self.type))
@@ -107,9 +110,20 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         crl = cache.get(cache_key)
         if crl is None:
             ca = self.get_object()
+
+            # Catch this case early so that we can give a better error message
+            if self.include_issuing_distribution_point is True and ca.parent is None and self.scope is None:
+                raise ValueError(
+                    "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
+                )
+
             encoding = parse_encoding(self.type)
             crl = ca.get_crl(
-                expires=self.expires, algorithm=self.digest, password=self.password, scope=self.scope
+                expires=self.expires,
+                algorithm=self.digest,
+                password=self.password,
+                scope=self.scope,
+                include_issuing_distribution_point=self.include_issuing_distribution_point,
             )
             crl = crl.public_bytes(encoding)
             cache.set(cache_key, crl, self.expires)

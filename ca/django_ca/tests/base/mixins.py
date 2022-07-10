@@ -299,9 +299,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
 
-    def assertE2ECommandError(
+    def assertE2ECommandError(  # pylint: disable=invalid-name
         self, cmd: typing.Sequence[str], stdout: bytes = b"", stderr: bytes = b""
     ) -> None:
+        """Assert that the passed command raises a CommandError with the given message."""
         actual_stdout = io.BytesIO()
         actual_stderr = io.BytesIO()
 
