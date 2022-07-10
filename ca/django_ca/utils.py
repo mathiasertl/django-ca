@@ -508,9 +508,11 @@ def parse_name_x509(name: ParsableName) -> typing.Tuple[x509.NameAttribute, ...]
 
 
 def x509_name(name: ParsableName) -> x509.Name:
-    """Parses a string into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
+    """Parses a string or iterable of two-tuples into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
     >>> x509_name('/C=AT/CN=example.com')
+    <Name(C=AT,CN=example.com)>
+    >>> x509_name([('C', 'AT'), ('CN', 'example.com')])
     <Name(C=AT,CN=example.com)>
     """
     return check_name(x509.Name(parse_name_x509(name)))
