@@ -427,6 +427,8 @@ jinja_contexts = {
         "dhparam_name": "dhparam.pem",
         "certbot_root": "/etc/letsencrypt/",
         "tls_cert_root": _tls_cert_root,
+        "validation": False,  # True when run as automatic validation
+        "sphinx": True,  # Yes, we render for Sphinx documentation
     },
     "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
     "guide-docker-compose-where-to-go": {

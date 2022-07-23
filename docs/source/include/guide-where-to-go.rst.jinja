@@ -20,9 +20,25 @@ certificates.{% if guide == "from-source" %} The :command:`manage.py` script is 
 {% elif guide == "with-docker-compose" %}
 The :command:`manage.py` script can be invoked via ``{{ manage }}``, for example:
 
-.. code-block:: console
+.. console-include::
+   :include: include/quickstart_with_docker_compose/list_cas.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
 
-   user@host:~/ca/$ {{ manage }} list_cas
+To sign a certificate from the command line, simply invoke the ``sign_cert`` command.
+
+.. console-include::
+   :include: include/quickstart_with_docker_compose/sign_cert.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
+
+To pass data from stdin, for example to sign a certificate non-interactively by passing the CSR from stdin,
+you need to pass the ``-T`` parameter to :command:`docer-compose exec`:
+
+.. console-include::
+   :include: include/quickstart_with_docker_compose/sign_cert_stdin.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
 
 {% endif %}
 

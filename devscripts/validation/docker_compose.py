@@ -14,8 +14,12 @@
 """Functions for validating docker-compose and the respective tutorial."""
 
 import os
+import re
 import shutil
+import subprocess
 from pathlib import Path
+
+import requests
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
@@ -29,11 +33,28 @@ from dev.tutorial import start_tutorial
 
 
 def _compose_exec(*args, **kwargs):
-    return utils.run(["docker-compose", "exec"] + list(args), **kwargs)
+    cmd = ["docker-compose", "exec"] + kwargs.pop("compose_args", []) + list(args)
+    return utils.run(cmd, **kwargs)
 
 
 def _manage(container, *args, **kwargs):
     return _compose_exec(container, "manage", *args, **kwargs)
+
+
+def sign_cert(container, ca, csr, quiet):
+    subject = f"/CN=signed-in-{container}.{ca.lower()}.example.com"
+
+    return _manage(
+        container,
+        "sign_cert",
+        f"--ca={ca}",
+        f"--subject={subject}",
+        quiet=quiet,
+        capture_output=True,
+        input=csr,
+        text=True,
+        compose_args=["-T"],
+    )
 
 
 def _run_py(container, code, **kwargs):
@@ -82,6 +103,15 @@ def validate_docker_compose(release=None, quiet=False):
     if not os.path.exists(docker_compose_yml):
         return err(f"{docker_compose_yml}: File not found.")
 
+    # Calculate some static paths
+    ca_key = config.FIXTURES_DIR / "root.key"
+    ca_pub = config.FIXTURES_DIR / "root.pub"
+    csr_path = config.FIXTURES_DIR / "root-cert.csr"
+
+    # Read CSR so we can pass it in context
+    with open(csr_path) as stream:
+        csr = stream.read()
+
     _ca_default_hostname = "localhost"
     _tls_cert_root = "/etc/certs/"
     context = {
@@ -93,6 +123,7 @@ def validate_docker_compose(release=None, quiet=False):
         "dhparam_name": "dhparam.pem",
         "certbot_root": "./",
         "tls_cert_root": _tls_cert_root,
+        "csr": csr,
     }
 
     with start_tutorial("quickstart_with_docker_compose", context, quiet) as tut:
@@ -109,8 +140,6 @@ def validate_docker_compose(release=None, quiet=False):
         archive_privkey = archive_dir / "privkey.pem"
         archive_fullchain = archive_dir / "fullchain.pem"
 
-        ca_key = config.FIXTURES_DIR / "root.key"
-        ca_pub = config.FIXTURES_DIR / "root.pub"
         utils.create_signed_cert(_ca_default_hostname, ca_key, ca_pub, archive_privkey, archive_fullchain)
 
         (live_path / "privkey.pem").symlink_to(os.path.relpath(archive_privkey, live_path))
@@ -118,16 +147,52 @@ def validate_docker_compose(release=None, quiet=False):
 
         with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"), tut.run("verify-setup.yaml"):
             ok("Containers seem to have started properly.")
+
+            # Check that we didn't forget any migrations
             _manage("backend", "makemigrations", "--check", quiet=quiet, capture_output=True)
             _manage("frontend", "makemigrations", "--check", quiet=quiet, capture_output=True)
+
+            # Validate that the container versions match the expected version
             errors += _validate_container_versions(release, quiet)
+
+            # Validate that the secret keys match
             errors += _validate_secret_key(quiet)
 
-            with tut.run("setup-cas.yaml"):
+            # Test that HTTPS connection and admin interface is working:
+            resp = requests.get("https://localhost/admin/", verify=ca_pub)
+            resp.raise_for_status()
+
+            # Test static files
+            resp = requests.get("https://localhost/static/admin/css/base.css", verify=ca_pub)
+            resp.raise_for_status()
+
+            with tut.run("setup-cas.yaml"):  # Creates initial CAs
+                with tut.run("list_cas.yaml"):
+                    pass  # nothing really to do here
+                with tut.run("sign_cert.yaml", {"csr": csr}):
+                    pass  # nothing really to do here
+                with tut.run("sign_cert_stdin.yaml", {"csr": csr}):
+                    pass  # nothing really to do here
+
+                # Sign some certs in the backend
+                sign_cert("backend", "Root", csr, quiet=quiet)
+                sign_cert("backend", "Intermediate", csr, quiet=quiet)
+
+                # Sign certs in the frontend (only intermediate works, root was created in backend)
+                sign_cert("frontend", "Intermediate", csr, quiet=quiet)
+
+                try:
+                    sign_cert("frontend", "Root", csr, quiet=quiet)
+                except subprocess.CalledProcessError as ex:
+                    assert re.search(r"Root:.*Private key does not exist\.", ex.stderr)
+                else:
+                    raise RuntimeError("Was able to sign root cert in frontend.")
+
+                # Finally some manual testing
                 info(
                     f"""Test admin interface at
 
-    * URL: http://{_ca_default_hostname}/admin
+    * URL: https://{_ca_default_hostname}/admin
     * Credentials: user/nopass
 """
                 )
