@@ -106,7 +106,7 @@ def console_include(path, context, quiet=False):
             stdin = command.get("input")
             stdin_file = command.get("input_file")
             if stdin_file is not None:
-                with open(stdin_file) as stream:
+                with open(stdin_file, encoding="utf-8") as stream:
                     stdin = stream.read()
 
             if stdin is not None:

@@ -41,7 +41,7 @@ def _manage(container, *args, **kwargs):
     return _compose_exec(container, "manage", *args, **kwargs)
 
 
-def sign_cert(container, ca, csr, quiet):
+def _sign_cert(container, ca, csr, quiet):
     subject = f"/CN=signed-in-{container}.{ca.lower()}.example.com"
 
     return _manage(
@@ -109,7 +109,7 @@ def validate_docker_compose(release=None, quiet=False):
     csr_path = config.FIXTURES_DIR / "root-cert.csr"
 
     # Read CSR so we can pass it in context
-    with open(csr_path) as stream:
+    with open(csr_path, encoding="utf-8") as stream:
         csr = stream.read()
 
     _ca_default_hostname = "localhost"
@@ -175,14 +175,14 @@ def validate_docker_compose(release=None, quiet=False):
                     pass  # nothing really to do here
 
                 # Sign some certs in the backend
-                sign_cert("backend", "Root", csr, quiet=quiet)
-                sign_cert("backend", "Intermediate", csr, quiet=quiet)
+                _sign_cert("backend", "Root", csr, quiet=quiet)
+                _sign_cert("backend", "Intermediate", csr, quiet=quiet)
 
                 # Sign certs in the frontend (only intermediate works, root was created in backend)
-                sign_cert("frontend", "Intermediate", csr, quiet=quiet)
+                _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
 
                 try:
-                    sign_cert("frontend", "Root", csr, quiet=quiet)
+                    _sign_cert("frontend", "Root", csr, quiet=quiet)
                 except subprocess.CalledProcessError as ex:
                     assert re.search(r"Root:.*Private key does not exist\.", ex.stderr)
                 else:
