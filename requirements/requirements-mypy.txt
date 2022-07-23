@@ -1,9 +1,9 @@
 # Sphinx extension is also typehinted
 Sphinx==5.0.2
-mypy==0.961
+mypy==0.971
 django-stubs==1.9.0
 types-docutils==0.19.0
 types-freezegun==1.1.10
 types-jinja2==2.11.9
 types-pyRFC3339==1.1.1
-types-requests==2.28.0
+types-requests==2.28.3
