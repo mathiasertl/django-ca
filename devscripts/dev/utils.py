@@ -103,10 +103,19 @@ def console_include(path, context, quiet=False):
                 for cmd in reversed(command.get("clean", []))
             ]
 
+            stdin = command.get("input")
+            stdin_file = command.get("input_file")
+            if stdin_file is not None:
+                with open(stdin_file) as stream:
+                    stdin = stream.read()
+
+            if stdin is not None:
+                stdin = env.from_string(stdin).render(**context).encode("utf-8")
+
             # If a "waitfor" command is defined, don't run actual command until it succeeds
             _waitfor(command.get("waitfor"), env, context)
 
-            run(args, quiet=quiet, capture_output=True)
+            run(args, quiet=quiet, capture_output=True, input=stdin)
 
             for clean in reversed(command.get("clean", [])):
                 clean_commands += tmp_clean_commands
