@@ -169,9 +169,9 @@ def validate_docker_compose(release=None, quiet=False):
             with tut.run("setup-cas.yaml"):  # Creates initial CAs
                 with tut.run("list_cas.yaml"):
                     pass  # nothing really to do here
-                with tut.run("sign_cert.yaml", {"csr": csr}):
+                with tut.run("sign_cert.yaml"):
                     pass  # nothing really to do here
-                with tut.run("sign_cert_stdin.yaml", {"csr": csr}):
+                with tut.run("sign_cert_stdin.yaml"):
                     pass  # nothing really to do here
 
                 # Sign some certs in the backend
