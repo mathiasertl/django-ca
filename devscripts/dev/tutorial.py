@@ -36,6 +36,8 @@ class Tutorial:
         self.name = name
         self.context = context
         self.quiet = quiet
+        self.context["sphinx"] = False
+        self.context["validation"] = True
 
         # Get a strict Jinja2 environment
         self.env = jinja2.Environment(
