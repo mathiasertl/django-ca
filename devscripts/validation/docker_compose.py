@@ -42,19 +42,20 @@ def _manage(container, *args, **kwargs):
 
 
 def _sign_cert(container, ca, csr, quiet):
-    subject = f"/CN=signed-in-{container}.{ca.lower()}.example.com"
+    subject = f"signed-in-{container}.{ca.lower()}.example.com"
 
-    return _manage(
+    _manage(
         container,
         "sign_cert",
         f"--ca={ca}",
-        f"--subject={subject}",
+        f"--subject=/CN={subject}",
         quiet=quiet,
         capture_output=True,
         input=csr,
         text=True,
         compose_args=["-T"],
     )
+    return subject
 
 
 def _run_py(container, code, **kwargs):
@@ -174,12 +175,16 @@ def validate_docker_compose(release=None, quiet=False):
                 with tut.run("sign_cert_stdin.yaml"):
                     pass  # nothing really to do here
 
+                # test number of CAs
+                cas = _manage("frontend", "list_cas", capture_output=True, text=True).stdout.splitlines()
+                assert len(cas) == 2, f"Found {len(cas)} CAs."
+
                 # Sign some certs in the backend
-                _sign_cert("backend", "Root", csr, quiet=quiet)
-                _sign_cert("backend", "Intermediate", csr, quiet=quiet)
+                backend_root_subj = _sign_cert("backend", "Root", csr, quiet=quiet)
+                backend_intermediate_subj = _sign_cert("backend", "Intermediate", csr, quiet=quiet)
 
                 # Sign certs in the frontend (only intermediate works, root was created in backend)
-                _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
+                frontend_intermediate_subj = _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
 
                 try:
                     _sign_cert("frontend", "Root", csr, quiet=quiet)
@@ -187,6 +192,31 @@ def validate_docker_compose(release=None, quiet=False):
                     assert re.search(r"Root:.*Private key does not exist\.", ex.stderr)
                 else:
                     raise RuntimeError("Was able to sign root cert in frontend.")
+
+                certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
+                assert len(certs) == 5, f"Found {len(certs)} certs instead of 5."
+
+                # Test CRL and OCSP validation
+                with open("root.pem", "w") as stream:
+                    _manage("backend", "dump_ca", "Root", stdout=stream)
+                with open("intermediate.pem", "w") as stream:
+                    _manage("backend", "dump_ca", "Intermediate", stdout=stream)
+                for subject in [backend_root_subj, backend_intermediate_subj, frontend_intermediate_subj]:
+                    with open(f"{subject}.pem", "w") as stream:
+                        _manage("frontend", "dump_cert", subject, stdout=stream)
+
+                utils.run(
+                    [
+                        "openssl",
+                        "verify",
+                        "-CAfile",
+                        "root.pem",
+                        "-crl_download",
+                        "-crl_check",
+                        f"{backend_root_subj}.pem",
+                    ],
+                    quiet=quiet,
+                )
 
                 # Finally some manual testing
                 info(
@@ -196,6 +226,7 @@ def validate_docker_compose(release=None, quiet=False):
     * Credentials: user/nopass
 """
                 )
+                info(f"Working directory is {os.getcwd()}")
                 info("Press enter to continue...")
                 input()
 
