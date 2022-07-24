@@ -22,6 +22,10 @@ from pathlib import Path
 
 import requests
 
+from cryptography import x509
+from cryptography.x509.oid import AuthorityInformationAccessOID
+from cryptography.x509.oid import ExtensionOID
+
 # pylint: disable=no-name-in-module  # false positive due to dev.py
 from dev import config
 from dev import utils
@@ -67,7 +71,28 @@ def openssl_verify(ca_file, cert_file, quiet):
     return utils.run(
         ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file],
         quiet=quiet,
-        capture_stdout=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def openssl_ocsp(ca_file, cert_file, url, quiet):
+    return utils.run(
+        [
+            "openssl",
+            "ocsp",
+            "-CAfile",
+            ca_file,
+            "-issuer",
+            ca_file,
+            "-cert",
+            cert_file,
+            "-resp_text",
+            "-url",
+            url,
+        ],
+        quiet=quiet,
+        capture_output=True,
         text=True,
     )
 
@@ -99,6 +124,45 @@ def _validate_secret_key(quiet):
         return err(f"Secret key seems to have an unusual length: {backend_key}")
     ok("Secret keys match.")
     return 0
+
+
+def _validate_crl_ocsp(ca_file, cert_file, cert_subject, quiet):
+    """Test OpenSSL CRL and OCSP validation.
+
+    This only tests the CRL for the root CA. It's the test suites job to test the views in more detail.
+    """
+
+    with open(cert_file, "rb") as stream:
+        cert = x509.load_pem_x509_certificate(stream.read())
+
+    # Get the OCSP url from the certificate
+    aia = cert.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
+    ocsp_ad = [ad for ad in aia if ad.access_method == AuthorityInformationAccessOID.OCSP][0]
+    ocsp_url = ocsp_ad.access_location.value
+
+    openssl_verify(ca_file, cert_file, quiet=quiet)
+    openssl_ocsp(ca_file, cert_file, ocsp_url, quiet=quiet)
+
+    _manage("frontend", "revoke_cert", cert_subject)
+
+    # Still okay, because CRL is cached
+    openssl_verify("root.pem", cert_file, quiet=quiet)
+    _manage("frontend", "cache_crls")
+    time.sleep(1)  # give celery task some time
+
+    # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
+    proc = openssl_ocsp(ca_file, cert_file, ocsp_url, quiet=quiet)
+    assert "Cert Status: revoked" in proc.stdout
+
+    # Make sure that CRL validation fails now too
+    try:
+        openssl_verify(ca_file, cert_file, quiet=quiet)
+    except subprocess.CalledProcessError as ex:
+        assert "verification failed" in ex.stdout
+    else:
+        raise RuntimeError("Certificate is not revoked in CRL.")
+
+    ok("CRL and OCSP validation works.")
 
 
 def validate_docker_compose(release=None, quiet=False):
@@ -178,6 +242,7 @@ def validate_docker_compose(release=None, quiet=False):
             resp.raise_for_status()
 
             with tut.run("setup-cas.yaml"):  # Creates initial CAs
+                ok("Setup certificate authorities.")
                 with tut.run("list_cas.yaml"):
                     pass  # nothing really to do here
                 with tut.run("sign_cert.yaml"):
@@ -190,11 +255,11 @@ def validate_docker_compose(release=None, quiet=False):
                 assert len(cas) == 2, f"Found {len(cas)} CAs."
 
                 # Sign some certs in the backend
-                backend_root_subj = _sign_cert("backend", "Root", csr, quiet=quiet)
-                backend_intermediate_subj = _sign_cert("backend", "Intermediate", csr, quiet=quiet)
+                cert_subject = _sign_cert("backend", "Root", csr, quiet=quiet)
+                _sign_cert("backend", "Intermediate", csr, quiet=quiet)
 
                 # Sign certs in the frontend (only intermediate works, root was created in backend)
-                frontend_intermediate_subj = _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
+                _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
 
                 try:
                     _sign_cert("frontend", "Root", csr, quiet=quiet)
@@ -205,30 +270,16 @@ def validate_docker_compose(release=None, quiet=False):
 
                 certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
                 assert len(certs) == 5, f"Found {len(certs)} certs instead of 5."
+                ok("Signed certificates.")
 
-                # Test CRL and OCSP validation
+                # Write root CA and cert to disk for OpenSSL validation
                 with open("root.pem", "w") as stream:
                     _manage("backend", "dump_ca", "Root", stdout=stream)
-                with open("intermediate.pem", "w") as stream:
-                    _manage("backend", "dump_ca", "Intermediate", stdout=stream)
-                for subject in [backend_root_subj, backend_intermediate_subj, frontend_intermediate_subj]:
-                    with open(f"{subject}.pem", "w") as stream:
-                        _manage("frontend", "dump_cert", subject, stdout=stream)
+                with open(f"{cert_subject}.pem", "w") as stream:
+                    _manage("frontend", "dump_cert", cert_subject, stdout=stream)
 
-                openssl_verify("root.pem", f"{backend_root_subj}.pem", quiet=quiet)
-                _manage("frontend", "revoke_cert", backend_root_subj)
-
-                # Still okay, because CRL is cached
-                openssl_verify("root.pem", f"{backend_root_subj}.pem", quiet=quiet)
-                _manage("frontend", "cache_crls")
-                time.sleep(1)
-                try:
-                    openssl_verify("root.pem", f"{backend_root_subj}.pem", quiet=quiet)
-                except subprocess.CalledProcessError as ex:
-                    print("stdout", ex.stdout)
-                    print("stderr", ex.stderr)
-                else:
-                    raise RuntimeError("Certificate is not revoked in CRL.")
+                # Test CRL and OCSP validation
+                _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject, quiet=quiet)
 
                 # Finally some manual testing
                 info(
