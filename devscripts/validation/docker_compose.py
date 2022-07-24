@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 import requests
@@ -60,6 +61,15 @@ def _sign_cert(container, ca, csr, quiet):
 
 def _run_py(container, code, **kwargs):
     return _manage(container, "shell", "-c", code, capture_output=True, text=True, **kwargs).stdout
+
+
+def openssl_verify(ca_file, cert_file, quiet):
+    return utils.run(
+        ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file],
+        quiet=quiet,
+        capture_stdout=True,
+        text=True,
+    )
 
 
 def _validate_container_versions(release, quiet):
@@ -205,18 +215,20 @@ def validate_docker_compose(release=None, quiet=False):
                     with open(f"{subject}.pem", "w") as stream:
                         _manage("frontend", "dump_cert", subject, stdout=stream)
 
-                utils.run(
-                    [
-                        "openssl",
-                        "verify",
-                        "-CAfile",
-                        "root.pem",
-                        "-crl_download",
-                        "-crl_check",
-                        f"{backend_root_subj}.pem",
-                    ],
-                    quiet=quiet,
-                )
+                openssl_verify("root.pem", f"{backend_root_subj}.pem", quiet=quiet)
+                _manage("frontend", "revoke_cert", backend_root_subj)
+
+                # Still okay, because CRL is cached
+                openssl_verify("root.pem", f"{backend_root_subj}.pem", quiet=quiet)
+                _manage("frontend", "cache_crls")
+                time.sleep(1)
+                try:
+                    openssl_verify("root.pem", f"{backend_root_subj}.pem", quiet=quiet)
+                except subprocess.CalledProcessError as ex:
+                    print("stdout", ex.stdout)
+                    print("stderr", ex.stderr)
+                else:
+                    raise RuntimeError("Certificate is not revoked in CRL.")
 
                 # Finally some manual testing
                 info(
