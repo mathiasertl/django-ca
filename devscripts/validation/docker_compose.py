@@ -67,7 +67,7 @@ def _run_py(container, code, **kwargs):
     return _manage(container, "shell", "-c", code, capture_output=True, text=True, **kwargs).stdout
 
 
-def openssl_verify(ca_file, cert_file, quiet):
+def _openssl_verify(ca_file, cert_file, quiet):
     return utils.run(
         ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file],
         quiet=quiet,
@@ -76,7 +76,7 @@ def openssl_verify(ca_file, cert_file, quiet):
     )
 
 
-def openssl_ocsp(ca_file, cert_file, url, quiet):
+def _openssl_ocsp(ca_file, cert_file, url, quiet):
     return utils.run(
         [
             "openssl",
@@ -140,23 +140,23 @@ def _validate_crl_ocsp(ca_file, cert_file, cert_subject, quiet):
     ocsp_ad = [ad for ad in aia if ad.access_method == AuthorityInformationAccessOID.OCSP][0]
     ocsp_url = ocsp_ad.access_location.value
 
-    openssl_verify(ca_file, cert_file, quiet=quiet)
-    openssl_ocsp(ca_file, cert_file, ocsp_url, quiet=quiet)
+    _openssl_verify(ca_file, cert_file, quiet=quiet)
+    _openssl_ocsp(ca_file, cert_file, ocsp_url, quiet=quiet)
 
     _manage("frontend", "revoke_cert", cert_subject)
 
     # Still okay, because CRL is cached
-    openssl_verify("root.pem", cert_file, quiet=quiet)
+    _openssl_verify("root.pem", cert_file, quiet=quiet)
     _manage("frontend", "cache_crls")
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
-    proc = openssl_ocsp(ca_file, cert_file, ocsp_url, quiet=quiet)
+    proc = _openssl_ocsp(ca_file, cert_file, ocsp_url, quiet=quiet)
     assert "Cert Status: revoked" in proc.stdout
 
     # Make sure that CRL validation fails now too
     try:
-        openssl_verify(ca_file, cert_file, quiet=quiet)
+        _openssl_verify(ca_file, cert_file, quiet=quiet)
     except subprocess.CalledProcessError as ex:
         assert "verification failed" in ex.stdout
     else:
@@ -165,7 +165,25 @@ def _validate_crl_ocsp(ca_file, cert_file, cert_subject, quiet):
     ok("CRL and OCSP validation works.")
 
 
-def validate_docker_compose(release=None, quiet=False):
+def _sign_certificates(csr, quiet):
+    # Sign some certs in the backend
+    cert_subject = _sign_cert("backend", "Root", csr, quiet=quiet)
+    _sign_cert("backend", "Intermediate", csr, quiet=quiet)
+
+    # Sign certs in the frontend (only intermediate works, root was created in backend)
+    _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
+
+    try:
+        _sign_cert("frontend", "Root", csr, quiet=quiet)
+    except subprocess.CalledProcessError as ex:
+        assert re.search(r"Root:.*Private key does not exist\.", ex.stderr)
+    else:
+        raise RuntimeError("Was able to sign root cert in frontend.")
+
+    return cert_subject
+
+
+def validate_docker_compose(release=None, quiet=False):  # pylint: disable=too-many-statements,too-many-locals
     """Validate the docker-compose file (and the tutorial)."""
     print("Validating docker-compose setup...")
 
@@ -254,32 +272,25 @@ def validate_docker_compose(release=None, quiet=False):
                 cas = _manage("frontend", "list_cas", capture_output=True, text=True).stdout.splitlines()
                 assert len(cas) == 2, f"Found {len(cas)} CAs."
 
-                # Sign some certs in the backend
-                cert_subject = _sign_cert("backend", "Root", csr, quiet=quiet)
-                _sign_cert("backend", "Intermediate", csr, quiet=quiet)
-
-                # Sign certs in the frontend (only intermediate works, root was created in backend)
-                _sign_cert("frontend", "Intermediate", csr, quiet=quiet)
-
-                try:
-                    _sign_cert("frontend", "Root", csr, quiet=quiet)
-                except subprocess.CalledProcessError as ex:
-                    assert re.search(r"Root:.*Private key does not exist\.", ex.stderr)
-                else:
-                    raise RuntimeError("Was able to sign root cert in frontend.")
+                # sign some certs
+                cert_subject = _sign_certificates(csr, quiet=quiet)
 
                 certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
                 assert len(certs) == 5, f"Found {len(certs)} certs instead of 5."
                 ok("Signed certificates.")
 
                 # Write root CA and cert to disk for OpenSSL validation
-                with open("root.pem", "w") as stream:
+                with open("root.pem", "w", encoding="utf-8") as stream:
                     _manage("backend", "dump_ca", "Root", stdout=stream)
-                with open(f"{cert_subject}.pem", "w") as stream:
+                with open(f"{cert_subject}.pem", "w", encoding="utf-8") as stream:
                     _manage("frontend", "dump_cert", cert_subject, stdout=stream)
 
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject, quiet=quiet)
+
+                utils.run(["docker-compose", "down"], capture_output=True, quiet=quiet)
+                utils.run(["docker-compose", "up", "-d"], capture_output=True, quiet=quiet)
+                ok("Restarted docker containers.")
 
                 # Finally some manual testing
                 info(
@@ -292,5 +303,16 @@ def validate_docker_compose(release=None, quiet=False):
                 info(f"Working directory is {os.getcwd()}")
                 info("Press enter to continue...")
                 input()
+
+                # test again that we find the correct number of CAs/certs, this way we can be sure that the
+                # restart didn't break the database
+                cas = _manage("frontend", "list_cas", capture_output=True, text=True).stdout.splitlines()
+                assert len(cas) == 2, f"Found {len(cas)} CAs instead of 2."
+                certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
+                # only four now, as one was revoked:
+                assert len(certs) == 4, f"Found {len(certs)} certs instead of 4."
+
+                # sign certificates again to make sure that CAs are still present
+                cert_subject = _sign_certificates(csr, quiet=quiet)
 
     return errors
