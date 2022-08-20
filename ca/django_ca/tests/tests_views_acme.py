@@ -336,7 +336,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         kwargs.setdefault("index", response.wsgi_request.build_absolute_uri(directory))
 
         expected = [{"rel": k, "url": v} for k, v in kwargs.items()]
-        actual = parse_header_links(response["Link"])  # type: ignore[no-untyped-call]
+        actual = parse_header_links(response["Link"])
         self.assertEqual(expected, actual)
 
     def assertMalformed(  # pylint: disable=invalid-name

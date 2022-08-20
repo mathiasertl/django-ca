@@ -827,7 +827,12 @@ class CertificateAuthority(X509CertMixin):
     def cache_crls(  # pylint: disable=too-many-locals
         self, password: Optional[Union[str, bytes]] = None, algorithm: ParsableHash = None
     ) -> None:
-        """Function to cache all CRLs for this CA."""
+        """Function to cache all CRLs for this CA.
+
+        .. versionchanged:: 1.22.0
+
+           This function now always generates new CRLs.
+        """
 
         password = password or self.get_password()
         ca_key = self.key(password)
@@ -847,16 +852,15 @@ class CertificateAuthority(X509CertMixin):
             scope = overrides.get("scope", config.get("scope"))
             full_name = overrides.get("full_name", config.get("full_name"))
             relative_name = overrides.get("relative_name", config.get("relative_name"))
-            encodings = overrides.get(
-                "encodings",
-                config.get(
-                    "encodings",
-                    [
-                        "DER",
-                    ],
-                ),
+            encodings = overrides.get("encodings", config.get("encodings", ["DER"]))
+            crl = self.get_crl(
+                expires=expires,
+                algorithm=algorithm,
+                password=password,
+                scope=scope,
+                full_name=full_name,
+                relative_name=relative_name,
             )
-            crl = None  # only compute crl when it is actually needed
 
             for encoding in encodings:
                 encoding = parse_encoding(encoding)
@@ -867,19 +871,8 @@ class CertificateAuthority(X509CertMixin):
                     # distributed a bit
                     cache_expires = expires - random.randint(1, 5) * 60
 
-                if cache.get(cache_key) is None:
-                    if crl is None:
-                        crl = self.get_crl(
-                            expires=expires,
-                            algorithm=algorithm,
-                            password=password,
-                            scope=scope,
-                            full_name=full_name,
-                            relative_name=relative_name,
-                        )
-
-                    encoded_crl = crl.public_bytes(encoding)
-                    cache.set(cache_key, encoded_crl, cache_expires)
+                encoded_crl = crl.public_bytes(encoding)
+                cache.set(cache_key, encoded_crl, cache_expires)
 
     def generate_ocsp_key(
         self,

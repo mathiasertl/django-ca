@@ -22,12 +22,16 @@ import shlex
 import subprocess
 import tempfile
 import time
+import typing
 from contextlib import contextmanager
 from contextlib import redirect_stderr
 from contextlib import redirect_stdout
+from pathlib import Path
 
 import jinja2
+import semantic_version
 import yaml
+from git import Repo
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -65,17 +69,18 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
-def _waitfor(waitfor, env, context, quiet=True):
+def _waitfor(waitfor, jinja_env, context, quiet=True, **kwargs):
     """Helper function to wait until the "waitfor" command succeeds."""
     if not waitfor:
         return
 
     for command in waitfor:
-        waitfor_cmd = shlex.split(env.from_string(command["command"]).render(**context))
-        print("+", shlex.join(waitfor_cmd))
+        waitfor_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
+        if not quiet:
+            print("+", shlex.join(waitfor_cmd))
 
         for i in range(0, 15):
-            waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True)
+            waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True, **kwargs)
             if waitfor_proc.returncode == 0:
                 break
             time.sleep(1)
@@ -103,10 +108,25 @@ def console_include(path, context, quiet=False):
                 for cmd in reversed(command.get("clean", []))
             ]
 
-            # If a "waitfor" command is defined, don't run actual command until it succeeds
-            _waitfor(command.get("waitfor"), env, context)
+            stdin = command.get("input")
+            stdin_file = command.get("input_file")
+            if stdin_file is not None:
+                with open(stdin_file, encoding="utf-8") as stream:
+                    stdin = stream.read()
 
-            run(args, quiet=quiet, capture_output=True)
+            if stdin is not None:
+                stdin = env.from_string(stdin).render(**context).encode("utf-8")
+
+            # add shell environment variables
+            shell_env = command.get("env")
+            if shell_env is not None:
+                shell_env = {k: env.from_string(v).render(**context) for k, v in shell_env.items()}
+                shell_env = dict(os.environ, **shell_env)
+
+            # If a "waitfor" command is defined, don't run actual command until it succeeds
+            _waitfor(command.get("waitfor"), env, context, env=shell_env)
+
+            run(args, quiet=quiet, capture_output=True, input=stdin, env=shell_env)
 
             for clean in reversed(command.get("clean", [])):
                 clean_commands += tmp_clean_commands
@@ -115,6 +135,30 @@ def console_include(path, context, quiet=False):
     finally:
         for args in reversed(clean_commands):
             run(args, check=False, capture_output=True, quiet=quiet)
+
+
+def get_previous_release(current_release: typing.Optional[str] = None) -> str:
+    """Get the the previous release based on git tags.
+
+    This function returns the name at the last tag that is a valid semantic version. Prerelease or build tags
+    are automatically excluded.  If `current_release` is given, it will be excluded from the list.
+    """
+    repo = Repo(config.ROOT_DIR)
+    tags = [tag.name for tag in repo.tags]
+
+    # Exclude release tag if we are on a release
+    if current_release is not None:
+        tags = [tag for tag in tags if tag != current_release]
+
+    parsed_tags = []
+    for tag in tags:
+        try:
+            parsed_tags.append(semantic_version.Version(tag))
+        except ValueError:
+            continue
+
+    parsed_tags = sorted([tag for tag in parsed_tags if not tag.prerelease and not tag.build])
+    return str(parsed_tags[-1])
 
 
 def docker_run(*args, **kwargs):
@@ -138,6 +182,22 @@ def run(args, **kwargs):
     if not kwargs.pop("quiet", False):
         print("+", shlex.join(args))
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
+
+
+def git_archive(ref: str, dest: str) -> Path:
+    """Export the git repository to `django-ca-{ref}/` in the given destination directory.
+
+    `ref` may be any valid git reference, usually a git tag.
+    """
+    dest = os.path.join(dest, f"django-ca-{ref}")
+    if not os.path.exists(dest):
+        os.makedirs(dest)
+
+    with subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE) as git_archive_cmd:
+        with subprocess.Popen(["tar", "-x", "-C", dest], stdin=git_archive_cmd.stdout) as tar:
+            git_archive_cmd.stdout.close()
+            tar.communicate()
+    return Path(dest)
 
 
 def create_signed_cert(hostname, signer_privkey, signer_pubkey, priv_out, pub_out, password=None):

@@ -53,6 +53,7 @@ serializable
 sortable
 sqlite
 stderr
+stdin
 stdout
 subcommands
 subdirectory

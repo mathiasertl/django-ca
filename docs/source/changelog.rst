@@ -18,6 +18,7 @@ ChangeLog
      volumes.
 
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
+* Ensure that CRLs are regenerated periodically before the cache expires.
 
 Backwards incompatible changes
 ==============================

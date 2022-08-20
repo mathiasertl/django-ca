@@ -43,6 +43,7 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 from django.test import RequestFactory
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from freezegun import freeze_time
@@ -418,6 +419,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             self.ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)  # type: ignore[arg-type]
 
     @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
     def test_cache_crls(self) -> None:
         """Test caching of CRLs."""
         crl_profiles = self.crl_profiles
@@ -432,6 +434,15 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             pem_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "user")
             der_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
             pem_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "ca")
+            user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+            if ca.parent is None:
+                ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
+            else:
+                crl_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
+                full_name = [
+                    x509.UniformResourceIdentifier(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
+                ]
+                ca_idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
 
             self.assertIsNone(cache.get(der_ca_key))
             self.assertIsNone(cache.get(pem_ca_key))
@@ -443,24 +454,28 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
 
             der_user_crl = cache.get(der_user_key)
             pem_user_crl = cache.get(pem_user_key)
-            self.assertIsInstance(der_user_crl, bytes)
-            self.assertIsInstance(pem_user_crl, bytes)
+            self.assertCRL(der_user_crl, idp=user_idp, crl_number=0, encoding=Encoding.DER, signer=ca)
+            self.assertCRL(pem_user_crl, idp=user_idp, crl_number=0, encoding=Encoding.PEM, signer=ca)
 
             der_ca_crl = cache.get(der_ca_key)
             pem_ca_crl = cache.get(pem_ca_key)
-            self.assertIsInstance(der_ca_crl, bytes)
-            self.assertIsInstance(pem_ca_crl, bytes)
+            self.assertCRL(der_ca_crl, idp=ca_idp, crl_number=0, encoding=Encoding.DER, signer=ca)
+            self.assertCRL(pem_ca_crl, idp=ca_idp, crl_number=0, encoding=Encoding.PEM, signer=ca)
 
-            # cache again - which should not trigger a new computation
+            # cache again - which will force triggering a new computation
             with self.settings(CA_CRL_PROFILES=crl_profiles):
                 ca.cache_crls()
 
-            # Get CRLs from cache
-            # If the CRLs in the cache were new ones, they would have a different CRL number
-            self.assertEqual(cache.get(der_user_key), der_user_crl)
-            self.assertEqual(cache.get(pem_user_key), pem_user_crl)
-            self.assertEqual(cache.get(der_ca_key), der_ca_crl)
-            self.assertEqual(cache.get(pem_ca_key), pem_ca_crl)
+            # Get CRLs from cache - we have a new CRLNumber
+            der_user_crl = cache.get(der_user_key)
+            pem_user_crl = cache.get(pem_user_key)
+            self.assertCRL(der_user_crl, idp=user_idp, crl_number=1, encoding=Encoding.DER, signer=ca)
+            self.assertCRL(pem_user_crl, idp=user_idp, crl_number=1, encoding=Encoding.PEM, signer=ca)
+
+            der_ca_crl = cache.get(der_ca_key)
+            pem_ca_crl = cache.get(pem_ca_key)
+            self.assertCRL(der_ca_crl, idp=ca_idp, crl_number=1, encoding=Encoding.DER, signer=ca)
+            self.assertCRL(pem_ca_crl, idp=ca_idp, crl_number=1, encoding=Encoding.PEM, signer=ca)
 
             # clear caches and skip generation
             cache.clear()

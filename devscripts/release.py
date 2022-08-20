@@ -21,8 +21,10 @@ from importlib import import_module
 
 import semantic_version
 from git import Repo
+from validation.docker import build_docker_image
 from validation.docker import validate_docker_image
 from validation.docker_compose import validate_docker_compose
+from validation.docker_compose import validate_docker_compose_files
 
 # pylint: disable=no-name-in-module  # false positive due to dev.py in top-level
 from dev import config
@@ -48,6 +50,12 @@ def validate_state():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Build a django-ca release.")
+    parser.add_argument(
+        "--delete-tag",
+        action="store_true",
+        default=False,
+        help="Delete the tag again after release (for testing).",
+    )
     parser.add_argument("release", help="The actual release you want to build.")
     args = parser.parse_args()
 
@@ -56,6 +64,7 @@ if __name__ == "__main__":
         err("Repository has untracked changes.")
         sys.exit(1)
 
+    # Make sure that user passed a valid semantic version
     try:
         ver = semantic_version.Version(args.release)
         if ver.prerelease or ver.build:
@@ -67,15 +76,24 @@ if __name__ == "__main__":
     sys.path.insert(0, str(config.SRC_DIR))
     import django_ca
 
+    # Make sure that the software identifies as the right version
     if django_ca.__version__ != args.release:
         err(f"ca/django_ca/__init__.py: Version is {django_ca.__version__}")
+        sys.exit(1)
+
+    # Make sure that the docker-compose files are present and default to the about-to-be-released version
+    if validate_docker_compose_files(args.release) != 0:
         sys.exit(1)
 
     git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
     try:
         validate_state()
+        build_docker_image(release=args.release)
         validate_docker_image(release=args.release)
         validate_docker_compose(release=args.release)
+
+        if args.delete_tag:
+            repo.delete_tag(git_tag)
     except Exception as ex:  # pylint: disable=broad-except
         err(ex)
         repo.delete_tag(git_tag)
