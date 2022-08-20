@@ -9,7 +9,7 @@ pip>=21.3
 
 tox>=3.24.4
 
-flake8-isort==4.1.1
+flake8-isort==4.2.0
 tabulate==0.8.10
 termcolor==1.1.0
 toml>=0.10.2
