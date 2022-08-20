@@ -17,8 +17,14 @@ Run these steps when you begin to create a new release:
   * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.
   * Add a deprecation notice for versions no longer supported upstream.
 
-* Verify that :file:`docker-compose.yml` uses up-to-date version of 3rd-party containers.
 * Run :command:`devscripts/validate-state.py` and fix any errors.
+
+docker-compose
+==============
+
+* Verify that :file:`docker-compose.yml` uses up-to-date version of 3rd-party containers.
+* Set the default django-ca version in :file:`docker-compose.yml` to the new version.
+* Copy :file:`docker-compose.yml` to :file:`docs/source/_files/{version}/docker-compose.yml`.
 
 ******************
 Test current state
@@ -70,237 +76,6 @@ Test admin interface
 * Check if the profile selection when creating a certificate works.
 * Check if pasting a CSR shows values from the CSR next to the "Subject" field.
 
-******
-Docker
-******
-
-Create the docker image::
-
-   $ docker system prune -af
-   $ export DOCKER_BUILDKIT=1
-   $ docker build --progress=plain -t mathiasertl/django-ca .
-
-Testing
-=======
-
-Do some basic sanity checking of the Docker image::
-
-   $ docker run -e DJANGO_CA_SECRET_KEY=dummy --rm \
-   >     mathiasertl/django-ca manage shell -c \
-   >     "import django_ca; print(django_ca.__version__)"
-   ...
-   $ docker run --rm \
-   >     -v `pwd`/setup.cfg:/usr/src/django-ca/setup.cfg \
-   >     -v `pwd`/devscripts/:/usr/src/django-ca/devscripts \
-   >     -w /usr/src/django-ca/ \
-   >     mathiasertl/django-ca devscripts/test-imports.py --all-extras
-
-Finally follow :doc:`docker` and make sure that everything works:
-
-* Use ``localhost`` instead of ``ca.example.com`` as a hostname.
-* You cannot test ACMEv2 this way, as challenge validation would not work.
-
-**************
-docker-compose
-**************
-
-* Follow :doc:`quickstart_docker_compose` to set up a CA (but skip the TLS parts - no CA will issue a
-  certificate for localhost). Don't forget to add an admin user and set up CAs.
-* Add an updated :file:`docker-compose.yml` in `docs/source/_files/{version}/`` and add it to the table in
-  :file:`docs/source/quickstart_docker_compose.rst`.
-* Use this for your :file:`.env` file:
-
-  .. code-block:: bash
-
-     DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
-     DJANGO_CA_CA_ENABLE_ACME=true
-     POSTGRES_PASSWORD=mysecretpassword
-
-After starting the setup, first verify that you're running the correct version::
-
-   $ docker-compose exec backend manage shell -c "import django_ca; print(django_ca.__version__)"
-   $ docker-compose exec frontend manage shell -c "import django_ca; print(django_ca.__version__)"
-
-Do some basic sanity checking of the setup::
-
-   $ docker-compose exec backend manage check --deploy
-   $ docker-compose exec backend manage makemigrations --check
-   $ docker-compose exec frontend manage check --deploy
-   $ docker-compose exec frontend manage makemigrations --check
-
-Verify that the two secret keys match (also serves as checking if settings work properly)::
-
-   $ docker-compose exec backend manage shell-c \
-   >    "from django.conf import settings; print(settings.SECRET_KEY)"
-   $ docker-compose exec frontend manage shell -c \
-   >    "from django.conf import settings; print(settings.SECRET_KEY)"
-
-You should now be able to log in at http://localhost/admin. You are able to sign a certificate, but *only* for
-the "child" CA.
-
-Now, let's create a certificate for the root CA. Because it's only present for Celery, we need to create it
-using the CLI:
-
-.. code-block:: console
-
-   $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec -T backend manage sign_cert --ca=Root \
-   >        --subject="/CN=signed-in-backend.example.com"
-   Please paste the CSR:
-   ...
-
-Check that the same fails in the frontend container (because the root CA is only available in the backend):
-
-.. code-block:: console
-
-   $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec -T frontend manage sign_cert --ca=Root \
-   >        --subject="/CN=signed-in-backend.example.com"
-   ...
-   manage sign_cert: error: argument --ca: Root: ca/...key: Private key does not exist.
-
-But you can create a certificate for the "Child" CA in the frontend container:
-
-.. code-block:: console
-
-   $ cat ca/django_ca/tests/fixtures/child-cert.csr | \
-   >     docker-compose exec -T frontend manage sign_cert --ca=Intermediate \
-   >        --subject="/CN=signed-in-frontend.example.com"
-   Please paste the CSR:
-   ...
-
-Finally, verify that CRL and OCSP validation works:
-
-.. code-block:: console
-
-   $ docker-compose exec backend manage dump_ca Root > root.pem
-   $ docker-compose exec backend manage dump_cert signed-in-backend.example.com > cert.pem
-   $ openssl verify -CAfile root.pem -crl_download -crl_check cert.pem
-   cert.pem: OK
-   $ openssl x509 -in cert.pem -noout -text | grep OCSP
-         OCSP - URI:http://localhost/django_ca/ocsp/...
-   $ openssl ocsp -CAfile root.pem -issuer root.pem -cert cert.pem -resp_text \
-   >     -url http://localhost/django_ca/ocsp/...
-   ...
-   Response verify OK
-   cert.pem: good
-
-Test that a restart works:
-
-.. code-block:: console
-
-   $ docker-compose down
-   $ docker-compose up -d
-   $ docker-compose exec backend manage list_cas
-   $ docker-compose exec backend manage list_certs
-   $ cat ca/django_ca/tests/fixtures/root-cert.csr | \
-   >     docker-compose exec -T backend manage sign_cert --ca=Root \
-   >        --subject="/CN=signed-in-backend.example.com"
-   $ cat ca/django_ca/tests/fixtures/child-cert.csr | \
-   >     docker-compose exec -T frontend manage sign_cert --ca=Intermediate \
-   >        --subject="/CN=signed-in-frontend.example.com"
-   Please paste the CSR:
-   ...
-
-... and validate that the admin interface still sees the intermediate CA.
-
-Finally, clean up the test setup:
-
-.. code-block:: console
-
-   $ docker-compose down -v
-
-Test update
-===========
-
-* Checkout the previous version on git:
-
-  .. code-block:: console
-
-     $ git checkout $PREVIOUS_VERSION
-
-* Add a basic :file:`.env` file:
-
-  .. code-block:: bash
-
-     DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
-     DJANGO_CA_CA_ENABLE_ACME=true
-     POSTGRES_PASSWORD=mysecretpassword
-
-* Start the old version with::
-
-     $ DJANGO_CA_VERSION=$PREVIOUS_VERSION docker-compose up -d
-
-* Create test data::
-
-     $ docker cp devscripts/create-testdata.py \
-     >   django-ca_backend_1:/usr/src/django-ca/ca/
-     $ docker cp devscripts/create-testdata.py \
-     >   django-ca_frontend_1:/usr/src/django-ca/ca/
-     $ docker-compose exec backend ./create-testdata.py --env backend
-     $ docker-compose exec frontend ./create-testdata.py --env frontend
-
-* Log into the admin interface and create some certificates.
-* Update to the newest version::
-
-     $ git checkout main
-     $ DJANGO_CA_VERSION=latest docker-compose up -d
-
-* Finally, validate that data was correctly migrated::
-
-     $ docker cp devscripts/validate-testdata.py \
-     >   django-ca_backend_1:/usr/src/django-ca/ca/
-     $ docker cp devscripts/validate-testdata.py \
-     >   django-ca_frontend_1:/usr/src/django-ca/ca/
-     $ docker-compose exec backend ./validate-testdata.py --env backend
-     $ docker-compose exec frontend ./validate-testdata.py --env frontend
-
-Test ACMEv2
-===========
-
-First, make sure you're starting from a clean slate::
-
-   $ docker-compose down -v
-
-Start the stack again, but this time add a second docker-compose override-file (we use the ``COMPOSE_FILE``
-environment variable here)::
-
-   $ export COMPOSE_FILE="docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml"
-   $ docker-compose build
-   $ docker-compose up -d
-   $ docker-compose exec backend manage createsuperuser
-   $ docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root
-   $ docker-compose exec backend manage init_ca \
-   >  --acme-enable \
-   >  --path=ca/shared/ --parent=Root Intermediate /CN=Intermediate
-
-You should be able to view the admin interface at http://localhost/admin. But the additional docker-compose
-override file adds a certbot container, that you can use to get certificates (note that certbot is already
-configured to use the local registry)::
-
-   $ docker-compose exec certbot /bin/bash
-   root@certbot:~# certbot register
-   IMPORTANT NOTES:
-    - Your account credentials have been saved in your Certbot
-   ...
-   root@certbot:~# django-ca-test-validation.sh http http-01.example.com
-   + certbot certonly ...
-   ...
-   http-01 challenge for http-01.example.com
-   ...
-
-   IMPORTANT NOTES:
-    - Congratulations! Your certificate and chain have been saved at:
-   ...
-   root@certbot:~# django-ca-test-validation.sh dns dns-01.example.com
-   + certbot certonly ...
-   ...
-   dns-01 challenge for dns-01.example.com
-   ...
-   IMPORTANT NOTES:
-    - Congratulations! Your certificate and chain have been saved at:
-   ...
-
 ****************
 Create a release
 ****************
@@ -309,11 +84,17 @@ Create a release with::
 
    $ devscripts/release.py $version
 
+The release script will:
+
+* validate the current state in your repository
+* create a new signed git tag
+* build and test the Docker image
+* Test the various tutorials
+
 ***************
 Release process
 ***************
 
-* Tag the release: :command:`git tag -s $version -m "release $version"`
 * Push the tag: :command:`git push origin --tags`
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Create package for PyPi::
