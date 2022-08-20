@@ -251,8 +251,13 @@ POSTGRES_PASSWORD=mysecretpassword
             # copy new docker-compose file
             shutil.copy(root_dir / "docker-compose.yml", tmpdir)
 
-            with _compose_up(quiet=quiet, env=dict(os.environ, DJANGO_CA_VERSION="latest")):
-                # _validate_container_versions(release, quiet)
+            if release:
+                environ = dict(os.environ, DJANGO_CA_VERSION=release)
+            else:
+                environ = dict(os.environ, DJANGO_CA_VERSION="latest")
+
+            with _compose_up(quiet=quiet, env=environ):
+                _validate_container_versions(release, quiet)
                 utils.run(
                     [
                         "docker",
