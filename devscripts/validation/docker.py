@@ -26,9 +26,9 @@ from dev.tutorial import start_tutorial
 # pylint: enable=no-name-in-module
 
 
-def _test_version(release):
+def _test_version(docker_tag, release):
     proc = utils.docker_run(
-        config.DOCKER_TAG,
+        docker_tag,
         "manage",
         "shell",
         "-c",
@@ -42,7 +42,7 @@ def _test_version(release):
     return ok(f"Image identifies as {actual_release}.")
 
 
-def _test_extras():
+def _test_extras(docker_tag):
     cwd = os.getcwd()
     utils.docker_run(
         "-v",
@@ -51,40 +51,40 @@ def _test_extras():
         f"{cwd}/devscripts/:/usr/src/django-ca/devscripts",
         "-w",
         "/usr/src/django-ca/",
-        config.DOCKER_TAG,
+        docker_tag,
         "devscripts/test-imports.py",
         "--all-extras",
     )
     return ok("Imports validated.")
 
 
-def build_docker_image(quiet=False):
+def build_docker_image(release, prune=True, build=True, quiet=False) -> str:
     """Build the docker image."""
-
-    info("Building docker image...")
-    utils.run(
-        ["docker", "build", "-t", config.DOCKER_TAG, "."],
-        env={"DOCKER_BUILDKIT": "1"},
-        quiet=quiet,
-        capture_output=True,
-    )
-    ok("Docker image built.")
-
-
-def validate_docker_image(release=None, prune=True, build=True, quiet=False):
-    """Validate the Docker image."""
-    print("Validating Docker image...")
 
     if prune:
         utils.run(["docker", "system", "prune", "-af"], quiet=quiet, capture_output=True)
 
+    tag = f"{config.DOCKER_TAG}:{release}"
     if build:
-        build_docker_image(quiet=quiet)
+        info("Building docker image...")
+        utils.run(
+            ["docker", "build", "-t", tag, "."],
+            env={"DOCKER_BUILDKIT": "1"},
+            quiet=quiet,
+            capture_output=True,
+        )
+        ok("Docker image built.")
+    return tag
+
+
+def validate_docker_image(release, docker_tag, quiet=False):
+    """Validate the Docker image."""
+    print("Validating Docker image...")
 
     errors = 0
     if release is not None:
-        errors += _test_version(release)
-    errors += _test_extras()
+        errors += _test_version(docker_tag, release)
+    errors += _test_extras(docker_tag)
 
     context = {
         "backend_host": "backend",
@@ -97,6 +97,7 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
         "redis_host": "redis",
     }
 
+    info("Testing tutorial...")
     with start_tutorial("quickstart_with_docker", context, quiet=quiet) as tut:
         tut.write_template("localsettings.yaml.jinja")
         tut.write_template("nginx.conf.jinja")
@@ -106,8 +107,5 @@ def validate_docker_image(release=None, prune=True, build=True, quiet=False):
         ), tut.run("setup-cas.yaml"):
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
             input("Press enter to continue:")
-
-    if release:
-        utils.run(["docker", "tag", config.DOCKER_TAG, f"{config.DOCKER_TAG}:{release}"], quiet=quiet)
 
     return errors

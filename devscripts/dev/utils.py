@@ -76,7 +76,8 @@ def _waitfor(waitfor, jinja_env, context, quiet=True, **kwargs):
 
     for command in waitfor:
         waitfor_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
-        print("+", shlex.join(waitfor_cmd))
+        if not quiet:
+            print("+", shlex.join(waitfor_cmd))
 
         for i in range(0, 15):
             waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True, **kwargs)

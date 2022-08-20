@@ -21,6 +21,7 @@ from importlib import import_module
 
 import semantic_version
 from git import Repo
+from validation.docker import build_docker_image
 from validation.docker import validate_docker_image
 from validation.docker_compose import validate_docker_compose
 
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
     try:
         validate_state()
+        build_docker_image(release=args.release)
         validate_docker_image(release=args.release)
         validate_docker_compose(release=args.release)
     except Exception as ex:  # pylint: disable=broad-except

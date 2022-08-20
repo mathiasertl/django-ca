@@ -17,23 +17,23 @@
 
 import argparse
 
+from validation.docker import build_docker_image
 from validation.docker import validate_docker_image
 from validation.docker_compose import validate_docker_compose
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser("A collection of validation scripts.")
-    parser.add_argument("-q", "--quiet", default=False, action="store_true", help="Display commands.")
+from dev import config  # NOQA[I001]
 
-    subparsers = parser.add_subparsers(help="Aspects to validate.", dest="command")
-    docker_parser = subparsers.add_parser("docker", help="Validate the Docker image.")
-    docker_parser.add_argument(
-        "--no-docker-prune",
-        default=True,
-        dest="docker_prune",
-        action="store_false",
+import django_ca
+
+if __name__ == "__main__":
+    docker_options = argparse.ArgumentParser(add_help=False)
+    docker_options.add_argument(
+        "--docker-prune",
+        default=False,
+        action="store_true",
         help="Prune system before building Docker image.",
     )
-    docker_parser.add_argument(
+    docker_options.add_argument(
         "--no-rebuild",
         default=True,
         dest="build",
@@ -41,7 +41,15 @@ if __name__ == "__main__":
         help="Do not rebuild the image before testing.",
     )
 
-    compose_parser = subparsers.add_parser("docker-compose", help="Validate docker-compose setup.")
+    parser = argparse.ArgumentParser("A collection of validation scripts.")
+    parser.add_argument("-q", "--quiet", default=False, action="store_true", help="Do not display commands.")
+
+    subparsers = parser.add_subparsers(help="Aspects to validate.", dest="command")
+    subparsers.add_parser("docker", help="Validate the Docker image.", parents=[docker_options])
+
+    compose_parser = subparsers.add_parser(
+        "docker-compose", help="Validate docker-compose setup.", parents=[docker_options]
+    )
     compose_parser.add_argument(
         "--no-tutorial", dest="tutorial", default=True, action="store_false", help="Do not test the tutorial."
     )
@@ -57,8 +65,13 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    release = django_ca.__version__
 
     if args.command == "docker":
-        validate_docker_image(prune=args.docker_prune, build=args.build, quiet=args.quiet)
+        docker_tag = build_docker_image(release=release, prune=args.docker_prune, build=args.build)
+        validate_docker_image(release, docker_tag, quiet=args.quiet)
     elif args.command == "docker-compose":
-        validate_docker_compose(tutorial=args.tutorial, update=args.update, acme=args.acme, quiet=args.quiet)
+        build_docker_image(release=release, prune=args.docker_prune, build=args.build)
+        validate_docker_compose(
+            release=release, tutorial=args.tutorial, update=args.update, acme=args.acme, quiet=args.quiet
+        )

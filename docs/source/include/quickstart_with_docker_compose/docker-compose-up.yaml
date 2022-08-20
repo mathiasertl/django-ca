@@ -6,6 +6,8 @@ commands:
           ...
           Creating {{ path.rstrip('/') | basename }}_backend_1  ... done
           Creating {{ path.rstrip('/') | basename }}_webserver_1 ... done
+      env:
+          DJANGO_CA_VERSION: "{{ django_ca_version }}"
     - command: docker-compose ps
       waitfor:
           - command: docker-compose exec backend nc -z {{ postgres_host }}:5432
