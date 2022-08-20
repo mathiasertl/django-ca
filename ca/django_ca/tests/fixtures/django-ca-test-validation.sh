@@ -38,10 +38,10 @@ See also:
 }
 
 if [[ $TYPE == "dns" ]]; then
-    set -x
+    set -ex
     certbot certonly --manual --preferred-challenges dns --manual-auth-hook django-ca-dns-auth --manual-cleanup-hook django-ca-dns-clean -d $DOMAIN "$@"
 elif [[ $TYPE == "http" ]]; then
-    set -x
+    set -ex
     certbot certonly --standalone --preferred-challenges http -d $DOMAIN "$@"
 else
     usage
