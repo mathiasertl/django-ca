@@ -131,7 +131,11 @@ class SubjectAltNameWidget(CustomMultiWidget):
         _widgets = (widgets.TextInput(), LabeledCheckboxInput(label="Include CommonName"))
         super().__init__(_widgets, attrs)
 
-    def decompress(self, value: typing.Optional[typing.Tuple[str, bool]]) -> typing.Tuple[str, bool]:
+    # COVERAGE NOTE: In Django 4.1, decompress is not called if compress() returns a tuple
+    #       https://github.com/django/django/commit/37602e49484a88867f40e9498f86c49c2d1c5d7c
+    def decompress(  # pragma: no cover
+        self, value: typing.Optional[typing.Tuple[str, bool]]
+    ) -> typing.Tuple[str, bool]:
         # Invoked when resigning a certificate
         if value:  # pragma: no branch
             return value
