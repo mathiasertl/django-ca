@@ -206,7 +206,8 @@ def _sign_certificates(csr, quiet):
     return cert_subject
 
 
-def test_tutorial(release, quiet):
+def test_tutorial(release, quiet):  # pylint: disable=too-many-locals,too-many-statements
+    """Validate the docker-compose quickstart tutorial."""
     info("Validating tutorial...")
     errors = 0
     docker_compose_yml = os.path.join(config.ROOT_DIR, "docker-compose.yml")
@@ -345,6 +346,7 @@ def test_tutorial(release, quiet):
 
 
 def test_update(release, quiet):
+    """Validate updating with docker-compose."""
     info("Validating docker-compose update...")
     errors = 0
     # Get the last release, so we can update
@@ -356,7 +358,7 @@ def test_update(release, quiet):
 
         with utils.chdir(tmpdir):
             # Add a very basic .env file
-            with open(".env", "w") as stream:
+            with open(".env", "w", encoding="utf-8") as stream:
                 stream.write(
                     """DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
 DJANGO_CA_CA_ENABLE_ACME=true
@@ -426,6 +428,7 @@ POSTGRES_PASSWORD=mysecretpassword
 
 
 def test_acme(release, quiet):
+    """Test ACMEv2 validation."""
     info("Validating ACMVEv2 implementation...")
 
     compose_files = "docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml"
@@ -508,7 +511,7 @@ def _validate_default_version(path, release):
     info(f"Validating {path}...")
     if not os.path.exists(path):
         return err(f"{path}: File not found.")
-    with open(path) as stream:
+    with open(path, encoding="utf-8") as stream:
         services = yaml.load(stream, Loader=yaml.Loader)["services"]
 
     errors = 0
@@ -522,6 +525,7 @@ def _validate_default_version(path, release):
 
 
 def validate_docker_compose_files(release):
+    """Validate the state of docker-compose files when releasing."""
     errors = 0
     errors += _validate_default_version("docker-compose.yml", release)
     errors += _validate_default_version(Path(f"docs/source/_files/{release}/docker-compose.yml"), release)

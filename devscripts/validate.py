@@ -21,7 +21,7 @@ from validation.docker import build_docker_image
 from validation.docker import validate_docker_image
 from validation.docker_compose import validate_docker_compose
 
-from dev import config  # NOQA[I001]
+from dev import config  # NOQA[I001]  # pylint: disable=no-name-in-module
 
 import django_ca
 

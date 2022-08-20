@@ -193,10 +193,10 @@ def git_archive(ref: str, dest: str) -> Path:
     if not os.path.exists(dest):
         os.makedirs(dest)
 
-    git_archive = subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE)
-    tar = subprocess.Popen(["tar", "-x", "-C", dest], stdin=git_archive.stdout)
-    git_archive.stdout.close()
-    tar.communicate()
+    with subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE) as git_archive_cmd:
+        with subprocess.Popen(["tar", "-x", "-C", dest], stdin=git_archive_cmd.stdout) as tar:
+            git_archive_cmd.stdout.close()
+            tar.communicate()
     return Path(dest)
 
 
