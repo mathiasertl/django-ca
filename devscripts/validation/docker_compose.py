@@ -23,6 +23,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import requests
+import yaml
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -500,4 +501,28 @@ def validate_docker_compose(release=None, tutorial=True, update=True, acme=True,
     if acme and errors == 0:
         errors += test_acme(release, quiet=quiet)
 
+    return errors
+
+
+def _validate_default_version(path, release):
+    info(f"Validating {path}...")
+    if not os.path.exists(path):
+        return err(f"{path}: File not found.")
+    with open(path) as stream:
+        services = yaml.load(stream, Loader=yaml.Loader)["services"]
+
+    errors = 0
+    expected_image = f"{config.DOCKER_TAG}:${{DJANGO_CA_VERSION:-{release}}}"
+    if services["backend"]["image"] != expected_image:
+        errors += err(f"{path}: {services['backend']['image']} does not match {expected_image}")
+    if services["frontend"]["image"] != expected_image:
+        errors += err(f"{path}: {services['frontend']['image']} does not match {expected_image}")
+
+    return errors
+
+
+def validate_docker_compose_files(release):
+    errors = 0
+    errors += _validate_default_version("docker-compose.yml", release)
+    errors += _validate_default_version(Path(f"docs/source/_files/{release}/docker-compose.yml"), release)
     return errors
