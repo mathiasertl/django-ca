@@ -49,6 +49,12 @@ def validate_state():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Build a django-ca release.")
+    parser.add_argument(
+        "--delete-tag",
+        action="store_true",
+        default=False,
+        help="Delete the tag again after release (for testing).",
+    )
     parser.add_argument("release", help="The actual release you want to build.")
     args = parser.parse_args()
 
@@ -78,6 +84,9 @@ if __name__ == "__main__":
         build_docker_image(release=args.release)
         validate_docker_image(release=args.release)
         validate_docker_compose(release=args.release)
+
+        if args.delete_tag:
+            repo.delete_tag(git_tag)
     except Exception as ex:  # pylint: disable=broad-except
         err(ex)
         repo.delete_tag(git_tag)
