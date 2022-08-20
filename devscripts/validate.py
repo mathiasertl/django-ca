@@ -41,11 +41,24 @@ if __name__ == "__main__":
         help="Do not rebuild the image before testing.",
     )
 
-    subparsers.add_parser("docker-compose", help="Validate docker-compose setup.")
+    compose_parser = subparsers.add_parser("docker-compose", help="Validate docker-compose setup.")
+    compose_parser.add_argument(
+        "--no-tutorial", dest="tutorial", default=True, action="store_false", help="Do not test the tutorial."
+    )
+    compose_parser.add_argument(
+        "--no-update",
+        dest="update",
+        default=True,
+        action="store_false",
+        help="Do not test the update from the last version.",
+    )
+    compose_parser.add_argument(
+        "--no-acme", dest="acme", default=True, action="store_false", help="Do not test ACMEv2."
+    )
 
     args = parser.parse_args()
 
     if args.command == "docker":
         validate_docker_image(prune=args.docker_prune, build=args.build, quiet=args.quiet)
     elif args.command == "docker-compose":
-        validate_docker_compose(quiet=args.quiet)
+        validate_docker_compose(tutorial=args.tutorial, update=args.update, acme=args.acme, quiet=args.quiet)

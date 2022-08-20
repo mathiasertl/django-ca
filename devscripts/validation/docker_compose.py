@@ -48,7 +48,11 @@ def _compose_up(quiet, remove_volumes=True, **kwargs):
         down = ["docker-compose", "down"]
         if remove_volumes is True:
             down.append("-v")
-        utils.run(down, capture_output=True, quiet=quiet)
+        down_kwargs = {}
+        if "env" in kwargs:
+            down_kwargs["env"] = kwargs["env"]
+
+        utils.run(down, capture_output=True, quiet=quiet, **down_kwargs)
 
 
 def _compose_exec(*args, **kwargs):
@@ -111,10 +115,14 @@ def _openssl_ocsp(ca_file, cert_file, url, quiet):
     )
 
 
-def _validate_container_versions(release, quiet):
+def _validate_container_versions(release, quiet, **kwargs):
     errors = 0
-    backend_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", quiet=quiet).strip()
-    frontend_ver = _run_py("frontend", "import django_ca; print(django_ca.__version__)", quiet=quiet).strip()
+    backend_ver = _run_py(
+        "backend", "import django_ca; print(django_ca.__version__)", quiet=quiet, **kwargs
+    ).strip()
+    frontend_ver = _run_py(
+        "frontend", "import django_ca; print(django_ca.__version__)", quiet=quiet, **kwargs
+    ).strip()
 
     if backend_ver != frontend_ver:
         errors += err(f"frontend and backend versions differ: {frontend_ver} vs. {backend_ver}")
@@ -197,97 +205,8 @@ def _sign_certificates(csr, quiet):
     return cert_subject
 
 
-def test_update(release, quiet):
-    print("Validating docker-compose update...")
+def test_tutorial(release, quiet):
     errors = 0
-    # Get the last release, so we can update
-    last_release = utils.get_previous_release(current_release=release)
-    root_dir = Path(config.ROOT_DIR)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        info(f"Creating temporary clone in {tmpdir}")
-        last_release_dest = utils.git_archive(last_release, tmpdir)
-        shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
-
-        with utils.chdir(tmpdir):
-            # Add a very basic .env file
-            with open(".env", "w") as stream:
-                stream.write(
-                    """DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
-DJANGO_CA_CA_ENABLE_ACME=true
-POSTGRES_PASSWORD=mysecretpassword
-"""
-                )
-
-            # Start previous version
-            with _compose_up(
-                quiet=quiet, remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)
-            ):
-                # Make sure we have started the right version
-                _validate_container_versions(last_release, quiet)
-
-                tmpdirname = os.path.basename(tmpdir)
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(last_release_dest / "devscripts" / "create-testdata.py"),
-                        f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(last_release_dest / "devscripts" / "create-testdata.py"),
-                        f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-
-                _compose_exec("backend", "./create-testdata.py", "--env", "backend", quiet=quiet)
-                _compose_exec("frontend", "./create-testdata.py", "--env", "frontend", quiet=quiet)
-
-            # copy new docker-compose file
-            shutil.copy(root_dir / "docker-compose.yml", tmpdir)
-
-            if release:
-                environ = dict(os.environ, DJANGO_CA_VERSION=release)
-            else:
-                environ = dict(os.environ, DJANGO_CA_VERSION="latest")
-
-            with _compose_up(quiet=quiet, env=environ):
-                _validate_container_versions(release, quiet)
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(root_dir / "devscripts" / "validate-testdata.py"),
-                        f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(root_dir / "devscripts" / "validate-testdata.py"),
-                        f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-
-                _compose_exec("backend", "./validate-testdata.py", "--env", "backend", quiet=quiet)
-                _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend", quiet=quiet)
-
-    return errors
-
-
-def validate_docker_compose(release=None, quiet=False):  # pylint: disable=too-many-statements,too-many-locals
-    """Validate the docker-compose file (and the tutorial)."""
-    print("Validating docker-compose setup...")
-    errors = 0
-
     docker_compose_yml = os.path.join(config.ROOT_DIR, "docker-compose.yml")
     if release:
         docker_compose_yml = os.path.join(config.DOCS_DIR, "source", "_files", release, "docker-compose.yml")
@@ -412,6 +331,159 @@ def validate_docker_compose(release=None, quiet=False):  # pylint: disable=too-m
                 # sign certificates again to make sure that CAs are still present
                 cert_subject = _sign_certificates(csr, quiet=quiet)
 
-    errors += test_update(release, quiet=quiet)
+    return errors
+
+
+def test_update(release, quiet):
+    print("Validating docker-compose update...")
+    errors = 0
+    # Get the last release, so we can update
+    last_release = utils.get_previous_release(current_release=release)
+    root_dir = Path(config.ROOT_DIR)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        info(f"Creating temporary clone in {tmpdir}")
+        last_release_dest = utils.git_archive(last_release, tmpdir)
+        shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
+
+        with utils.chdir(tmpdir):
+            # Add a very basic .env file
+            with open(".env", "w") as stream:
+                stream.write(
+                    """DJANGO_CA_CA_DEFAULT_HOSTNAME=localhost
+DJANGO_CA_CA_ENABLE_ACME=true
+POSTGRES_PASSWORD=mysecretpassword
+"""
+                )
+
+            # Start previous version
+            with _compose_up(
+                quiet=quiet, remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)
+            ):
+                # Make sure we have started the right version
+                _validate_container_versions(last_release, quiet)
+
+                tmpdirname = os.path.basename(tmpdir)
+                utils.run(
+                    [
+                        "docker",
+                        "cp",
+                        str(last_release_dest / "devscripts" / "create-testdata.py"),
+                        f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
+                    ],
+                    quiet=quiet,
+                )
+                utils.run(
+                    [
+                        "docker",
+                        "cp",
+                        str(last_release_dest / "devscripts" / "create-testdata.py"),
+                        f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
+                    ],
+                    quiet=quiet,
+                )
+
+                _compose_exec("backend", "./create-testdata.py", "--env", "backend", quiet=quiet)
+                _compose_exec("frontend", "./create-testdata.py", "--env", "frontend", quiet=quiet)
+
+            # copy new docker-compose file
+            shutil.copy(root_dir / "docker-compose.yml", tmpdir)
+
+            if release:
+                environ = dict(os.environ, DJANGO_CA_VERSION=release)
+            else:
+                environ = dict(os.environ, DJANGO_CA_VERSION="latest")
+
+            with _compose_up(quiet=quiet, env=environ):
+                _validate_container_versions(release, quiet)
+                utils.run(
+                    [
+                        "docker",
+                        "cp",
+                        str(root_dir / "devscripts" / "validate-testdata.py"),
+                        f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
+                    ],
+                    quiet=quiet,
+                )
+                utils.run(
+                    [
+                        "docker",
+                        "cp",
+                        str(root_dir / "devscripts" / "validate-testdata.py"),
+                        f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
+                    ],
+                    quiet=quiet,
+                )
+
+                _compose_exec("backend", "./validate-testdata.py", "--env", "backend", quiet=quiet)
+                _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend", quiet=quiet)
+
+    return errors
+
+
+def test_acme(release, quiet):
+    print("Validating ACMVEv2 implementation...")
+
+    compose_files = "docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml"
+    if release:
+        environ = dict(os.environ, COMPOSE_FILE=compose_files, DJANGO_CA_VERSION=release)
+    else:
+        environ = dict(os.environ, COMPOSE_FILE=compose_files, DJANGO_CA_VERSION="latest")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest = utils.git_archive("HEAD", tmpdir)
+
+        with utils.chdir(dest):
+            # build containers
+            utils.run(["docker-compose", "build"], quiet=quiet, env=environ)
+
+            # Start containers
+            with _compose_up(quiet=quiet, env=environ):
+                _validate_container_versions(release, quiet, env=environ)
+                _manage("backend", "init_ca", "--pathlen=1", "Root", "/CN=Root", quiet=quiet, env=environ)
+                _manage(
+                    "backend",
+                    "init_ca",
+                    "--acme-enable",
+                    "--parent=Root",
+                    "--path=ca/shared",
+                    "Child",
+                    "/CN=Child",
+                    env=environ,
+                )
+                _compose_exec("certbot", "certbot", "register", quiet=quiet, env=environ)
+                _compose_exec(
+                    "certbot",
+                    "django-ca-test-validation.sh",
+                    "http",
+                    "http-01.example.com",
+                    quiet=quiet,
+                    env=environ,
+                )
+                _compose_exec(
+                    "certbot",
+                    "django-ca-test-validation.sh",
+                    "dns",
+                    "dns-01.example.com",
+                    quiet=quiet,
+                    env=environ,
+                )
+
+    errors = 0
+    return errors
+
+
+def validate_docker_compose(release=None, tutorial=True, update=True, acme=True, quiet=False):
+    """Validate the docker-compose file (and the tutorial)."""
+    print("Validating docker-compose setup...")
+    errors = 0
+
+    if tutorial:
+        errors += test_tutorial(release, quiet=quiet)
+
+    if update:
+        errors += test_update(release, quiet=quiet)
+
+    if acme:
+        errors += test_acme(release, quiet=quiet)
 
     return errors
