@@ -22,12 +22,16 @@ import shlex
 import subprocess
 import tempfile
 import time
+import typing
 from contextlib import contextmanager
 from contextlib import redirect_stderr
 from contextlib import redirect_stdout
+from pathlib import Path
 
 import jinja2
+import semantic_version
 import yaml
+from git import Repo
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -126,6 +130,30 @@ def console_include(path, context, quiet=False):
             run(args, check=False, capture_output=True, quiet=quiet)
 
 
+def get_previous_release(current_release: typing.Optional[str] = None) -> str:
+    """Get the the previous release based on git tags.
+
+    This function returns the name at the last tag that is a valid semantic version. Prerelease or build tags
+    are automatically excluded.  If `current_release` is given, it will be excluded from the list.
+    """
+    repo = Repo(config.ROOT_DIR)
+    tags = [tag.name for tag in repo.tags]
+
+    # Exclude release tag if we are on a release
+    if current_release is not None:
+        tags = [tag for tag in tags if tag != current_release]
+
+    parsed_tags = []
+    for tag in tags:
+        try:
+            parsed_tags.append(semantic_version.Version(tag))
+        except ValueError:
+            continue
+
+    parsed_tags = sorted([tag for tag in parsed_tags if not tag.prerelease and not tag.build])
+    return str(parsed_tags[-1])
+
+
 def docker_run(*args, **kwargs):
     """Shortcut for running a docker command."""
     # pylint: disable=subprocess-run-check  # is in kwargs/defaults
@@ -147,6 +175,22 @@ def run(args, **kwargs):
     if not kwargs.pop("quiet", False):
         print("+", shlex.join(args))
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
+
+
+def git_archive(ref: str, dest: str) -> Path:
+    """Export the git repository to `django-ca-{ref}/` in the given destination directory.
+
+    `ref` may be any valid git reference, usually a git tag.
+    """
+    dest = os.path.join(dest, f"django-ca-{ref}")
+    if not os.path.exists(dest):
+        os.makedirs(dest)
+
+    git_archive = subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE)
+    tar = subprocess.Popen(["tar", "-x", "-C", dest], stdin=git_archive.stdout)
+    git_archive.stdout.close()
+    tar.communicate()
+    return Path(dest)
 
 
 def create_signed_cert(hostname, signer_privkey, signer_pubkey, priv_out, pub_out, password=None):
