@@ -69,17 +69,17 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
-def _waitfor(waitfor, env, context, quiet=True):
+def _waitfor(waitfor, jinja_env, context, quiet=True, **kwargs):
     """Helper function to wait until the "waitfor" command succeeds."""
     if not waitfor:
         return
 
     for command in waitfor:
-        waitfor_cmd = shlex.split(env.from_string(command["command"]).render(**context))
+        waitfor_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
         print("+", shlex.join(waitfor_cmd))
 
         for i in range(0, 15):
-            waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True)
+            waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True, **kwargs)
             if waitfor_proc.returncode == 0:
                 break
             time.sleep(1)
@@ -116,10 +116,16 @@ def console_include(path, context, quiet=False):
             if stdin is not None:
                 stdin = env.from_string(stdin).render(**context).encode("utf-8")
 
-            # If a "waitfor" command is defined, don't run actual command until it succeeds
-            _waitfor(command.get("waitfor"), env, context)
+            # add shell environment variables
+            shell_env = command.get("env")
+            if shell_env is not None:
+                shell_env = {k: env.from_string(v).render(**context) for k, v in shell_env.items()}
+                shell_env = dict(os.environ, **shell_env)
 
-            run(args, quiet=quiet, capture_output=True, input=stdin)
+            # If a "waitfor" command is defined, don't run actual command until it succeeds
+            _waitfor(command.get("waitfor"), env, context, env=shell_env)
+
+            run(args, quiet=quiet, capture_output=True, input=stdin, env=shell_env)
 
             for clean in reversed(command.get("clean", [])):
                 clean_commands += tmp_clean_commands
