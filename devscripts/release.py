@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("release", help="The actual release you want to build.")
     args = parser.parse_args()
 
-    repo = Repo(config.ROOT_DIR)
+    repo = Repo(str(config.ROOT_DIR))
     if repo.is_dirty(untracked_files=True):
         err("Repository has untracked changes.")
         sys.exit(1)

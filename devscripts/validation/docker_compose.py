@@ -210,8 +210,8 @@ def test_tutorial(release, quiet):  # pylint: disable=too-many-locals,too-many-s
     """Validate the docker-compose quickstart tutorial."""
     info("Validating tutorial...")
     errors = 0
-    docker_compose_yml = os.path.join(config.ROOT_DIR, "docker-compose.yml")
-    if not os.path.exists(docker_compose_yml):
+    docker_compose_yml = config.ROOT_DIR / "docker-compose.yml"
+    if not docker_compose_yml.exists():
         return err(f"{docker_compose_yml}: File not found.")
 
     # Calculate some static paths
@@ -351,7 +351,6 @@ def test_update(release, quiet):
     errors = 0
     # Get the last release, so we can update
     last_release = utils.get_previous_release(current_release=release)
-    root_dir = Path(config.ROOT_DIR)
     with tempfile.TemporaryDirectory() as tmpdir:
         last_release_dest = utils.git_archive(last_release, tmpdir)
         shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
@@ -397,7 +396,7 @@ POSTGRES_PASSWORD=mysecretpassword
                 _compose_exec("frontend", "./create-testdata.py", "--env", "frontend", quiet=quiet)
 
             # copy new docker-compose file
-            shutil.copy(root_dir / "docker-compose.yml", tmpdir)
+            shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
 
             with _compose_up(quiet=quiet, env=dict(os.environ, DJANGO_CA_VERSION=release)):
                 _validate_container_versions(release, quiet)
@@ -405,7 +404,7 @@ POSTGRES_PASSWORD=mysecretpassword
                     [
                         "docker",
                         "cp",
-                        str(root_dir / "devscripts" / "validate-testdata.py"),
+                        str(config.ROOT_DIR / "devscripts" / "validate-testdata.py"),
                         f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
                     ],
                     quiet=quiet,
@@ -414,7 +413,7 @@ POSTGRES_PASSWORD=mysecretpassword
                     [
                         "docker",
                         "cp",
-                        str(root_dir / "devscripts" / "validate-testdata.py"),
+                        str(config.ROOT_DIR / "devscripts" / "validate-testdata.py"),
                         f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
                     ],
                     quiet=quiet,
