@@ -18,6 +18,11 @@
 from termcolor import colored
 
 
+def bold(msg):
+    """Return the text as bold text."""
+    return colored(msg, attrs=["bold"])
+
+
 def err(msg):
     """Print the error message."""
     print(colored("[ERR]", "red", attrs=["bold"]), msg)
