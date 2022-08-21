@@ -63,12 +63,14 @@ def get_last_version():
     raise ValueError("Unable to get last release version.")
 
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve()
 ROOT_DIR = Path(BASE_DIR).parent.parent
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 DOCS_DIR = Path(ROOT_DIR) / "docs"
+DOCS_BUILD_DIR = DOCS_DIR / "build"
 DOC_TEMPLATES_DIR = DOCS_DIR / "source" / "include"
 SRC_DIR = Path(ROOT_DIR) / "ca"
+MANAGE_PY = SRC_DIR / "manage.py"
 FIXTURES_DIR = SRC_DIR / "django_ca" / "tests" / "fixtures"
 
 with open(PYPROJECT_PATH, encoding="utf-8") as stream:
