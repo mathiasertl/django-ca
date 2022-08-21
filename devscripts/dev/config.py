@@ -13,7 +13,6 @@
 
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
 
-import os
 from pathlib import Path
 
 import semantic_version
@@ -64,9 +63,9 @@ def get_last_version():
     raise ValueError("Unable to get last release version.")
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
-PYPROJECT_PATH = os.path.join(ROOT_DIR, "pyproject.toml")
+BASE_DIR = Path(__file__).resolve().parent
+ROOT_DIR = Path(BASE_DIR).parent.parent
+PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 DOCS_DIR = Path(ROOT_DIR) / "docs"
 DOC_TEMPLATES_DIR = DOCS_DIR / "source" / "include"
 SRC_DIR = Path(ROOT_DIR) / "ca"

@@ -20,6 +20,7 @@ import importlib.util
 import os
 import re
 import sys
+from pathlib import Path
 
 import yaml
 from setuptools.config.setupcfg import read_configuration
@@ -203,8 +204,8 @@ def check_setup_cfg():
 
 def check_test_settings():
     """Check test_settings.py"""
-    relpath = os.path.join("ca", "ca", "test_settings.py")
-    fullpath = os.path.join(ROOT_DIR, relpath)
+    relpath = Path("ca/ca/test_settings.py")
+    fullpath = ROOT_DIR / relpath
     check_path(relpath)
     errors = 0
 
