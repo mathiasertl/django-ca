@@ -86,6 +86,8 @@ RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localse
 RUN cp -a /install/* /usr/local/
 RUN python devscripts/commands/clean.py
 RUN DJANGO_CA_SECRET_KEY=dummy devscripts/test-imports.py
+
+# Finally, clean up to minimize the image
 RUN python devscripts/commands/clean.py
 RUN rm -rf setup.py setup.cfg pyproject.toml
 RUN rm -rf docs/ devscripts/
