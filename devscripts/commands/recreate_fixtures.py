@@ -19,6 +19,7 @@ The test suite should be sufficiently modular to still run without errors after 
 
 import json
 import os
+import sys
 from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
@@ -349,6 +350,10 @@ class Command(DevCommand):
         parser.add_argument("-q", "--quiet", action="store_true", default=False)
 
     def handle(self, args):
+        if "TOX_ENV_DIR" in os.environ:  # was invoked via tox
+            # insert ca/ into path, otherwise it won't find test_settings in django project
+            sys.path.insert(0, str(config.SRC_DIR))
+
         os.environ["DJANGO_SETTINGS_MODULE"] = "ca.test_settings"
         self.setup_django()
         recreate_fixtures(
