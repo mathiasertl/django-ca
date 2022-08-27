@@ -86,6 +86,14 @@ def add_command(cmd_subparser, name):
     mod = importlib.import_module(f"devscripts.commands.{mod_name}")
     cmd = mod.Command()
 
-    cmd_parser = cmd_subparser.add_parser(name, help=cmd.help)
+    help_text = None
+    description = None
+    if cmd.__doc__ is not None:
+        doc_lines = cmd.__doc__.splitlines()
+        help_text = doc_lines[0].strip()
+        if len(doc_lines) > 1:
+            description = " ".join(doc_lines[1:]).strip()
+
+    cmd_parser = cmd_subparser.add_parser(name, help=help_text, description=description)
     cmd_parser.set_defaults(func=cmd.exec)
     cmd.add_arguments(cmd_parser)

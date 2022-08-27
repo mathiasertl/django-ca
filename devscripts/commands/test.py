@@ -26,8 +26,8 @@ from devscripts import config
 from devscripts.commands import DevCommand
 
 
-class Command(DevCommand):  # pylint: disable=missing-class-docstring
-    help = "Run the test suite."
+class Command(DevCommand):
+    """Run the test suite."""
 
     def add_arguments(self, parser):
         parser.add_argument(

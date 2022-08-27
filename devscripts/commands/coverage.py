@@ -99,8 +99,8 @@ def exclude_versions(cov, software, current_version, pragma_version, version_str
             cov.exclude(f"pragma: {software}<={version_str} branch")
 
 
-class Command(TestCommand):  # pylint: disable=missing-class-docstring
-    help = "Run the test suite with coverage analysis enabled."
+class Command(TestCommand):
+    """Run the test suite with coverage analysis enabled."""
 
     def add_arguments(self, parser):
         super().add_arguments(parser)

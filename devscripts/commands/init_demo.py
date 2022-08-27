@@ -30,8 +30,8 @@ def ok(msg=" OK.", **kwargs):  # pylint: disable=invalid-name
     print(colored(msg, "green"), **kwargs)
 
 
-class Command(DevCommand):  # pylint: disable=missing-class-docstring
-    help = "Initialize this project with useful example data."
+class Command(DevCommand):
+    """Initialize this project with useful example data."""
 
     def add_arguments(self, parser):
         parser.add_argument(

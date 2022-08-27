@@ -11,17 +11,18 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""The code-quality subcommand invokes fast linters and manage.py check commands.
+# pylint: disable=missing-module-docstring  # covered in class docstring
 
-This command does **not** invoke pylint (too slow) or mypy.
-"""
 
 from devscripts import config
 from devscripts.commands import DevCommand
 
 
-class Command(DevCommand):  # pylint: disable=missing-class-docstring
-    help = "Run linters and manage.py check commands."
+class Command(DevCommand):
+    """Run linters and manage.py check commands.
+
+    This command does **not** invoke pylint (too slow) or mypy.
+    """
 
     def manage(self, *args):
         """Shortcut to run manage.py with warnings turned into errors."""
