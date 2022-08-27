@@ -24,7 +24,7 @@ import cryptography
 import django
 
 from devscripts import config
-from devscripts.test import Command as TestCommand
+from devscripts.commands.test import Command as TestCommand
 
 
 def exclude_versions(cov, software, current_version, pragma_version, version_str):

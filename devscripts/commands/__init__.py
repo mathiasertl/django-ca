@@ -23,7 +23,7 @@ from termcolor import colored
 
 import django
 
-from . import utils
+from .. import utils
 
 
 class CommandError(Exception):
@@ -74,7 +74,7 @@ def add_command(cmd_subparser, name):
     """
 
     mod_name = name.replace("-", "_")
-    mod = importlib.import_module(f"devscripts.{mod_name}")
+    mod = importlib.import_module(f"devscripts.commands.{mod_name}")
     cmd = mod.Command()
 
     cmd_parser = cmd_subparser.add_parser(name, help=cmd.help)
