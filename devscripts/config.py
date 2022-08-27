@@ -15,7 +15,6 @@
 
 from pathlib import Path
 
-import semantic_version
 import toml
 
 
@@ -26,8 +25,10 @@ def minor_to_major(version: str) -> str:
     return ".".join(version.split(".", 2)[:2])
 
 
-def get_semantic_version(version=None) -> semantic_version.Version:
+def get_semantic_version(version=None):
     """Function to get the last git release."""
+    # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
+    import semantic_version  # pylint: import-outside-toplevel
 
     if version is None:
         # PYLINT NOTE: import django_ca only here so that it is not imported before coverage tests start

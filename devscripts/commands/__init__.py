@@ -19,11 +19,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-from termcolor import colored
-
 import django
 
 from .. import utils
+
+try:
+    from termcolor import colored
+except ImportError:
+    # Dummy function in case termcolor is not installed. This is so that scripts (e.g. the clean command) can
+    # import this module without any external dependencies.
+    def colored(value, *args, **kwargs):
+        return value
 
 
 class CommandError(Exception):
