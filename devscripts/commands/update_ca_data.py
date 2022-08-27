@@ -14,8 +14,6 @@
 # see <http://www.gnu.org/licenses/>.
 
 """Update tables for ca_examples.rst in docs."""
-# pylint: disable=invalid-name; pylint complains about dashes in script name
-# pylint: enable=invalid-name; this enables the check for the rest of the script
 
 import os
 
@@ -27,11 +25,6 @@ from cryptography.hazmat.primitives import hashes
 from devscripts import config
 from devscripts.commands import DevCommand
 from devscripts.out import warn
-
-# from django_ca.extensions import KeyUsage
-# from django_ca.utils import bytes_to_hex
-# from django_ca.utils import format_general_name
-# from django_ca.utils import format_name
 
 HASH_NAMES = {
     hashes.SHA1: "SHA-1",
@@ -231,7 +224,7 @@ def ref_as_str(ref):
     """Convert a CertificatePolicies reference to a str."""
 
     numbers = [str(n) for n in ref.notice_numbers]
-    return "%s: %s" % (ref.organization, ", ".join(numbers))
+    return f"{ref.organization}: {', '.join(numbers)}"
 
 
 def policy_as_str(policy):
@@ -242,21 +235,25 @@ def policy_as_str(policy):
     if policy.explicit_text is None and policy.notice_reference is None:
         return "Empty UserNotice"
     if policy.notice_reference is None:
-        return "User Notice: %s" % policy.explicit_text
+        return f"User Notice: {policy.explicit_text}"
     if policy.explicit_text is None:
-        return "User Notice: %s" % (ref_as_str(policy.notice_reference))
+        return f"User Notice: {ref_as_str(policy.notice_reference)}"
 
-    return "User Notice: %s: %s" % (ref_as_str(policy.notice_reference), policy.explicit_text)
+    return f"User Notice: {ref_as_str(policy.notice_reference)}: {policy.explicit_text}"
 
 
 def update_cert_data(prefix, dirname, cert_data, name_header):
     """Update certificate/ca data."""
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
+
+    # pylint: disable=import-outside-toplevel  # django is not configured at top level
     from django_ca.extensions import KeyUsage
     from django_ca.utils import bytes_to_hex
     from django_ca.utils import format_general_name
     from django_ca.utils import format_name
+
+    # pylint: enable=import-outside-toplevel
 
     cert_values = {
         "subject": [
@@ -290,9 +287,9 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
 
     for cert_filename in sorted(os.listdir(dirname), key=lambda f: cert_data.get(f, {}).get("name", "")):
         if cert_filename not in cert_data:
-            warn("Unknown %s: %s" % (prefix, cert_filename))
+            warn(f"Unknown {prefix}: {cert_filename}")
             continue
-        print("Parsing %s (%s)..." % (cert_filename, prefix))
+        print(f"Parsing {cert_filename} ({prefix})...")
 
         cert_name = cert_data[cert_filename]["name"]
 
@@ -303,8 +300,8 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
         with open(os.path.join(dirname, cert_filename), "rb") as cert_stream:
             cert = x509.load_pem_x509_certificate(cert_stream.read())
 
-        this_cert_values["subject"] = ["``%s``" % format_name(cert.subject)]
-        this_cert_values["issuer"] = ["``%s``" % format_name(cert.issuer)]
+        this_cert_values["subject"] = [f"``{format_name(cert.subject)}``"]
+        this_cert_values["issuer"] = [f"``{format_name(cert.issuer)}``"]
 
         for cert_ext in cert.extensions:
             value = cert_ext.value
@@ -315,11 +312,8 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                     critical,
                     "\n".join(
                         [
-                            "* %s: %s"
-                            % (
-                                v.access_method._name,  # pylint: disable=protected-access
-                                format_general_name(v.access_location),
-                            )
+                            # pylint: disable-next=protected-access
+                            f"* {v.access_method._name}: {format_general_name(v.access_location)}"
                             for v in value
                         ]
                     ),
@@ -376,16 +370,12 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                 for policy in value:
                     policy_name = policy.policy_identifier.dotted_string
                     if policy.policy_qualifiers is None:
-                        policies.append("* %s" % policy_name)
+                        policies.append(f"* {policy_name}")
                     elif len(policy.policy_qualifiers) == 1:
-                        policies.append(
-                            "* %s: %s" % (policy_name, policy_as_str(policy.policy_qualifiers[0]))
-                        )
+                        policies.append(f"* {policy_name}: {policy_as_str(policy.policy_qualifiers[0])}")
                     else:
-                        qualifiers = "\n".join(
-                            ["  * %s" % policy_as_str(p) for p in policy.policy_qualifiers]
-                        )
-                        policies.append("* %s:\n\n%s\n" % (policy_name, qualifiers))
+                        qualifiers = "\n".join([f"  * {policy_as_str(p)}" for p in policy.policy_qualifiers])
+                        policies.append(f"* {policy_name}:\n\n{qualifiers}\n")
 
                 this_cert_values["certificatepolicies"] = [critical, "\n".join(policies)]
             elif isinstance(value, x509.ExtendedKeyUsage):
@@ -411,12 +401,12 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                 ] + key_usages
             elif isinstance(value, x509.NameConstraints):
                 permitted = (
-                    "\n".join(["* %s" % format_general_name(n) for n in value.permitted_subtrees])
+                    "\n".join([f"* {format_general_name(n)}" for n in value.permitted_subtrees])
                     if value.permitted_subtrees
                     else "✗"
                 )
                 excluded = (
-                    "\n".join(["* %s" % format_general_name(n) for n in value.excluded_subtrees])
+                    "\n".join([f"* {format_general_name(n)}" for n in value.excluded_subtrees])
                     if value.excluded_subtrees
                     else "✗"
                 )
@@ -424,9 +414,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
             elif isinstance(value, x509.PrecertificateSignedCertificateTimestamps):
                 this_cert_values["sct"] = [
                     critical,
-                    "\n".join(
-                        ["* Type: %s, version: %s" % (e.entry_type.name, e.version.name) for e in value]
-                    ),
+                    "\n".join([f"* Type: {e.entry_type.name}, version: {e.version.name}" for e in value]),
                 ]
             elif isinstance(value, x509.SubjectKeyIdentifier):
                 this_cert_values["ski"] = [critical, bytes_to_hex(value.digest)]
@@ -443,10 +431,10 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                 else:
                     name = cert_ext.oid._name  # pylint: disable=protected-access; only way to get name
 
-                ext_str = "%s (Critical: %s, OID: %s)" % (name, cert_ext.critical, cert_ext.oid.dotted_string)
+                ext_str = f"{name} (Critical: {cert_ext.critical}, OID: {cert_ext.oid.dotted_string})"
                 this_cert_values["unknown"].append(ext_str)
 
-        this_cert_values["unknown"] = ["\n".join(["* %s" % v for v in this_cert_values["unknown"][1:]])]
+        this_cert_values["unknown"] = ["\n".join([f"* {v}" for v in this_cert_values["unknown"][1:]])]
 
         for key, row in this_cert_values.items():
             if isinstance(row[0], list):
@@ -457,8 +445,6 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                 cert_values[key].append([cert_name] + row)
 
     for name, values in cert_values.items():
-        cert_filename = os.path.join(OUT_DIR, "%s_%s.rst" % (prefix, name))
-
         if name in exclude_empty_lines:
             values = [v for v in values if "".join(v[1:])]
 
@@ -467,16 +453,19 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
         else:
             table = ""
 
-        with open(cert_filename, "w") as stream:
+        with open(OUT_DIR / f"{prefix}_{name}.rst", "w", encoding="utf-8") as stream:
             stream.write(table)
 
 
 def update_crl_data():  # pylint: disable=too-many-locals
     """Update CRL data."""
 
+    # pylint: disable=import-outside-toplevel  # django is not configured at top level
     from django_ca.utils import bytes_to_hex
     from django_ca.utils import format_general_name
     from django_ca.utils import format_name
+
+    # pylint: enable=import-outside-toplevel
 
     crls = {
         "gdig2s1-1015.crl": {
@@ -516,33 +505,33 @@ def update_crl_data():  # pylint: disable=too-many-locals
             "url": "http://crl.pki.goog/GTSGIAG3.crl",
         },
         "comodo_ev_user.pem": {
-            "info": "CRL in %s end user certificates" % certs["comodo_ev.pem"]["name"],
+            "info": f"CRL in {certs['comodo_ev.pem']['name']} end user certificates",
             "last": "2019-04-21",
-            "name": "%s (user)" % cas["comodo_ev.pem"]["name"],
+            "name": f"{cas['comodo_ev.pem']['name']} (user)",
             "url": "http://crl.comodoca.com/COMODORSAExtendedValidationSecureServerCA.crl",
         },
         "digicert_ha_intermediate.crl": {
-            "info": "CRL in %s" % cas["digicert_ha_intermediate.pem"]["name"],
+            "info": f"CRL in {cas['digicert_ha_intermediate.pem']['name']}",
             "last": "2019-04-21",
-            "name": "%s/ca" % cas["digicert_ha_intermediate.pem"]["name"],
+            "name": f"{cas['digicert_ha_intermediate.pem']['name']}/ca",
             "url": "http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl",
         },
         "digicert_ha_intermediate_user.crl": {
-            "info": "CRL %s end user certificates" % cas["digicert_ha_intermediate.pem"]["name"],
+            "info": f"CRL {cas['digicert_ha_intermediate.pem']['name']} end user certificates",
             "last": "2019-04-21",
-            "name": "%s/user" % certs["digicert_ha_intermediate.pem"]["name"],
+            "name": f"{certs['digicert_ha_intermediate.pem']['name']}/user",
             "url": "http://crl3.digicert.com/sha2-ha-server-g6.crl",
         },
         "trustid_server_a52_ca.crl": {
-            "info": "CRL in %s" % cas["trustid_server_a52.pem"]["name"],
+            "info": f"CRL in {cas['trustid_server_a52.pem']['name']}",
             "last": "2019-04-21",
-            "name": "%s/ca" % cas["trustid_server_a52.pem"]["name"],
+            "name": f"{cas['trustid_server_a52.pem']['name']}/ca",
             "url": "http://validation.identrust.com/crl/commercialrootca1.crl",
         },
         "trustid_server_a52_user.crl": {
-            "info": "CRL %s end user certificates" % cas["trustid_server_a52.pem"]["name"],
+            "info": f"CRL {cas['trustid_server_a52.pem']['name']} end user certificates",
             "last": "2019-04-21",
-            "name": "%s/user" % certs["trustid_server_a52.pem"]["name"],
+            "name": f"{certs['trustid_server_a52.pem']['name']}/user",
             "url": "http://validation.identrust.com/crl/trustidcaa52.crl",
         },
     }
@@ -570,27 +559,26 @@ def update_crl_data():  # pylint: disable=too-many-locals
         ],
     }
 
-    for crl_filename in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).get("name", "")):
-        if crl_filename not in crls:
-            warn("Unknown CRL: %s" % crl_filename)
+    for crl_path in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).get("name", "")):
+        if crl_path not in crls:
+            warn(f"Unknown CRL: {crl_path}")
             continue
 
-        crl_name = crls[crl_filename]["name"]
+        crl_name = crls[crl_path]["name"]
 
         # set empty string as default value
         this_crl_values = {}
-        for crl_key in crl_values:
-            this_crl_values[crl_key] = [""] * (len(crl_values[crl_key][0]) - 1)
+        for crl_key, crl_value in crl_values.items():
+            this_crl_values[crl_key] = [""] * (len(crl_value[0]) - 1)
 
-        with open(os.path.join(crl_dir, crl_filename), "rb") as crl_stream:
+        with open(os.path.join(crl_dir, crl_path), "rb") as crl_stream:
             crl = x509.load_der_x509_crl(crl_stream.read())
 
         # add info
         this_crl_values["crl_info"] = (
-            ":download:`%s </_files/crl/%s>` (`URL <%s>`__)"
-            % (crl_filename, crl_filename, crls[crl_filename]["url"]),
-            crls[crl_filename]["last"],
-            crls[crl_filename]["info"],
+            f":download:`{crl_path} </_files/crl/{crl_path}>` (`URL <{crls[crl_path]['url']}>`__)",
+            crls[crl_path]["last"],
+            crls[crl_path]["info"],
         )
 
         # add data row
@@ -598,7 +586,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
             crl.next_update - crl.last_update,
             HASH_NAMES[type(crl.signature_hash_algorithm)],
         )
-        this_crl_values["crl_issuer"] = ("``%s``" % format_name(crl.issuer),)
+        this_crl_values["crl_issuer"] = (f"``{format_name(crl.issuer)}``",)
 
         # add extension values
         for ext in crl.extensions:
@@ -616,17 +604,18 @@ def update_crl_data():  # pylint: disable=too-many-locals
                     optional(value.only_some_reasons, lambda v: ", ".join([f.name for f in v]), "✗"),
                     "✓" if value.indirect_crl else "✗",
                 )
+                print(this_crl_values["crl_idp"])
             elif isinstance(value, x509.AuthorityKeyIdentifier):
                 crl_aci = optional(
                     value.authority_cert_issuer,
-                    lambda v: "* ".join(["``%s``" % format_general_name(n) for n in v]),
+                    lambda v: "* ".join([f"``{format_general_name(n)}``" for n in v]),
                     "✗",
                 )
                 crl_acsn = optional(value.authority_cert_serial_number, fallback="✗")
 
                 this_crl_values["crl_aki"] = (bytes_to_hex(value.key_identifier), crl_aci, crl_acsn)
             else:
-                warn("Unknown extension: %s" % ext.oid._name)  # pylint: disable=protected-access
+                warn(f"Unknown extension: {ext.oid._name}")  # pylint: disable=protected-access
 
         for crl_key, crl_row in this_crl_values.items():
             crl_values[crl_key].append([crl_name] + list(crl_row))
@@ -634,7 +623,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
     # Finally, write CRL data to RST table
     for crl_name, crl_extensions in crl_values.items():
         crl_table = tabulate(crl_extensions, headers="firstrow", tablefmt="rst")
-        with open(os.path.join(OUT_DIR, "%s.rst" % crl_name), "w") as crl_table_stream:
+        with open(OUT_DIR / f"{crl_name}.rst", "w", encoding="utf-8") as crl_table_stream:
             crl_table_stream.write(crl_table)
 
 

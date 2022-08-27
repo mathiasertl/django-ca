@@ -109,5 +109,6 @@ def validate_docker_image(release, docker_tag, quiet=False):
 
 
 def validate(release, prune, build, quiet=False):
+    """Main validation entry function."""
     docker_tag = build_docker_image(release=release, prune=prune, build=build)
     validate_docker_image(release, docker_tag, quiet=quiet)

@@ -306,7 +306,7 @@ def _generate_contrib_files(data):
             raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
 
-def create_cas(dest, now, delay, data, quiet):
+def create_cas(dest, now, delay, data):
     """Create CAs."""
     testserver = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}"
     ca_names = [v["name"] for k, v in data.items() if v.get("type") == "ca"]

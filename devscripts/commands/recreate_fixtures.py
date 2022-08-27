@@ -259,7 +259,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     ocsp_data = {}
     if not only_contrib:
         with override_tmpcadir():
-            ca_instances = create_cas(dest, now, delay, data, quiet=quiet)
+            ca_instances = create_cas(dest, now, delay, data)
             create_certs(dest, ca_instances, now, delay, data, quiet=quiet)
             create_special_certs(dest, now, delay, data, quiet=quiet)
 
