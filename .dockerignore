@@ -1,5 +1,9 @@
 **/*.backup
+**/*.crl
+**/*.csr
+**/*.key
 **/*.log
+**/*.pem
 **/*.py[co]
 **/*.sqlite3
 **/*.sw[a-z]

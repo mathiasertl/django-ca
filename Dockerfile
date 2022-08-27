@@ -39,13 +39,15 @@ COPY --from=build /install /usr/local
 ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
 
+RUN --mount=type=cache,target=/etc/apk/cache apk add git
+
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-test.txt
 
 # copy this late so that changes do not trigger a cache miss during build
 COPY tox.ini pyproject.toml ./
-COPY setup.py dev.py common.py recreate-fixtures.py ./
+COPY setup.py dev.py ./
 COPY --chown=django-ca:django-ca ca/ ca/
 
 # Create some files/directories that we need later on
@@ -75,17 +77,18 @@ COPY scripts/* ca/
 COPY conf/ ca/conf/
 COPY uwsgi/ uwsgi/
 COPY nginx/ nginx/
-RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example ca/.coverage
+
+COPY devscripts/ devscripts/
+
+RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example 
 
 # Test that imports are working
-COPY dev.py common.py ./
 RUN cp -a /install/* /usr/local/
-ENV DJANGO_CA_SECRET_KEY=dummy
-COPY devscripts/test-imports.py ./
-RUN ./test-imports.py
-
-# Remove files from working directory
-RUN rm dev.py
+RUN python devscripts/commands/clean.py
+RUN DJANGO_CA_SECRET_KEY=dummy devscripts/test-imports.py
+RUN python devscripts/commands/clean.py
+RUN rm -rf setup.py setup.cfg pyproject.toml
+RUN rm -rf docs/ devscripts/
 
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
 COPY --from=test /usr/src/django-ca/.coverage /tmp
