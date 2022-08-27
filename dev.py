@@ -29,9 +29,10 @@ add_command(commands, "docker-test")
 add_command(commands, "init-demo")
 add_command(commands, "recreate-fixtures")
 add_command(commands, "test")
+add_command(commands, "validate")
 args = parser.parse_args()
 
 if hasattr(args, "func"):
-    args.func(args)
+    args.func(parser, args)
 else:  # no subcommand given
     parser.print_help()

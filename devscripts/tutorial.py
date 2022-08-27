@@ -19,11 +19,8 @@ from contextlib import contextmanager
 
 import jinja2
 
-# pylint: disable=no-name-in-module  # false positive due to dev.py
-from dev import config
-from dev import utils
-
-# pylint: enable=no-name-in-module
+from devscripts import config
+from devscripts import utils
 
 
 class Tutorial:
