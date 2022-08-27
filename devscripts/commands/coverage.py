@@ -144,6 +144,9 @@ class Command(TestCommand):
 
     def handle(self, args):
         if "TOX_ENV_DIR" in os.environ:  # was invoked via tox
+            # insert ca/ into path, otherwise it won't find test_settings in django project
+            sys.path.insert(0, str(config.SRC_DIR))
+
             # Write coverage into .tox/{env}/coverage
             report_dir = os.path.join(os.environ["TOX_ENV_DIR"], "coverage")
             # Use a dedicated data file to enable parallel tox runs
