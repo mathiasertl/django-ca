@@ -87,6 +87,19 @@ class Command(DevCommand):
                 category=DeprecationWarning,
                 module="django.utils.asyncio",
             )
+
+        # Can be removed with requests_toolbelt==2.9.2
+        #   https://github.com/requests/toolbelt/issues/331
+        warnings.filterwarnings(
+            action="ignore",
+            message=(
+                "'urllib3.contrib.pyopenssl' module is deprecated and will be removed in a "
+                "future release of urllib3 2.x. Read more in this issue: "
+                "https://github.com/urllib3/urllib3/issues/2680"
+            ),
+            category=DeprecationWarning,
+            module="requests_toolbelt._compat",
+        )
         warnings.filterwarnings(action="error", module="django_ca")  # turn our warnings into errors
 
         print("Testing with:")
