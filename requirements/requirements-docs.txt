@@ -1,5 +1,5 @@
--r requirements-ci.txt
-Sphinx==5.0.2
+-r requirements-devscripts.txt
+-r requirements-sphinx.txt
 doc8==0.11.2
 numpydoc==1.4.0
 sphinx-jinja==2.0.2
