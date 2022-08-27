@@ -10,8 +10,7 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
-
-"""The clean subcommand removes all generated files."""
+# pylint: disable=missing-module-docstring  # covered in class docstring
 
 import argparse
 
@@ -24,8 +23,8 @@ from devscripts.validation import state
 import django_ca
 
 
-class Command(DevCommand):  # pylint: disable=missing-class-docstring
-    help = "Validate of source files."
+class Command(DevCommand):
+    """Validate various aspects of this repository not covered in unit tests."""
 
     def add_arguments(self, parser):
         docker_options = argparse.ArgumentParser(add_help=False)

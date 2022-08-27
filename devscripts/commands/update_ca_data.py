@@ -17,7 +17,6 @@
 # pylint: disable=invalid-name; pylint complains about dashes in script name
 # pylint: enable=invalid-name; this enables the check for the rest of the script
 
-import argparse
 import os
 
 from tabulate import tabulate
@@ -25,30 +24,21 @@ from tabulate import tabulate
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 
-import common
+from devscripts import config
+from devscripts.commands import DevCommand
+from devscripts.out import warn
 
-common.setup_django()
-
-# pylint: disable=import-error,wrong-import-position,wrong-import-order
-from django_ca.extensions import KeyUsage  # NOQA: E402
-from django_ca.utils import bytes_to_hex  # NOQA: E402
-from django_ca.utils import format_general_name  # NOQA: E402
-from django_ca.utils import format_name  # NOQA: E402
-
-# pylint: enable=import-error,wrong-import-position,wrong-import-order
+# from django_ca.extensions import KeyUsage
+# from django_ca.utils import bytes_to_hex
+# from django_ca.utils import format_general_name
+# from django_ca.utils import format_name
 
 HASH_NAMES = {
     hashes.SHA1: "SHA-1",
     hashes.SHA256: "SHA-256",
 }
 
-parser = argparse.ArgumentParser(description="Update tables for ca_examples.rst in docs.")
-args = parser.parse_args()
-
-docs_base = os.path.join(common.ROOTDIR, "docs", "source")
-out_base = os.path.join(docs_base, "generated")
-if not os.path.exists(out_base):
-    os.makedirs(out_base)
+OUT_DIR = config.DOCS_SOURCE_DIR / "generated"
 
 
 def optional(value, formatter=None, fallback=None):
@@ -63,8 +53,8 @@ def optional(value, formatter=None, fallback=None):
     return value
 
 
-cert_dir = os.path.join(docs_base, "_files", "cert")
-ca_dir = os.path.join(docs_base, "_files", "ca")
+cert_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "cert")
+ca_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "ca")
 certs = {
     "digicert_sha2.pem": {  # derstandard.at
         "name": "DigiCert Secure Server",
@@ -263,6 +253,10 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
     """Update certificate/ca data."""
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
+    from django_ca.extensions import KeyUsage
+    from django_ca.utils import bytes_to_hex
+    from django_ca.utils import format_general_name
+    from django_ca.utils import format_name
 
     cert_values = {
         "subject": [
@@ -296,7 +290,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
 
     for cert_filename in sorted(os.listdir(dirname), key=lambda f: cert_data.get(f, {}).get("name", "")):
         if cert_filename not in cert_data:
-            common.warn("Unknown %s: %s" % (prefix, cert_filename))
+            warn("Unknown %s: %s" % (prefix, cert_filename))
             continue
         print("Parsing %s (%s)..." % (cert_filename, prefix))
 
@@ -463,7 +457,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                 cert_values[key].append([cert_name] + row)
 
     for name, values in cert_values.items():
-        cert_filename = os.path.join(out_base, "%s_%s.rst" % (prefix, name))
+        cert_filename = os.path.join(OUT_DIR, "%s_%s.rst" % (prefix, name))
 
         if name in exclude_empty_lines:
             values = [v for v in values if "".join(v[1:])]
@@ -479,6 +473,11 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
 
 def update_crl_data():  # pylint: disable=too-many-locals
     """Update CRL data."""
+
+    from django_ca.utils import bytes_to_hex
+    from django_ca.utils import format_general_name
+    from django_ca.utils import format_name
+
     crls = {
         "gdig2s1-1015.crl": {
             "info": "CRL in Go Daddy G2 end user certificates",
@@ -548,7 +547,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
         },
     }
 
-    crl_dir = os.path.join(docs_base, "_files", "crl")
+    crl_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "crl")
     crl_values = {
         # meta data
         "crl_info": [("CRL", "Source", "Last accessed", "Info")],
@@ -573,7 +572,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
 
     for crl_filename in sorted(os.listdir(crl_dir), key=lambda f: crls.get(f, {}).get("name", "")):
         if crl_filename not in crls:
-            common.warn("Unknown CRL: %s" % crl_filename)
+            warn("Unknown CRL: %s" % crl_filename)
             continue
 
         crl_name = crls[crl_filename]["name"]
@@ -627,7 +626,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
 
                 this_crl_values["crl_aki"] = (bytes_to_hex(value.key_identifier), crl_aci, crl_acsn)
             else:
-                common.warn("Unknown extension: %s" % ext.oid._name)  # pylint: disable=protected-access
+                warn("Unknown extension: %s" % ext.oid._name)  # pylint: disable=protected-access
 
         for crl_key, crl_row in this_crl_values.items():
             crl_values[crl_key].append([crl_name] + list(crl_row))
@@ -635,14 +634,21 @@ def update_crl_data():  # pylint: disable=too-many-locals
     # Finally, write CRL data to RST table
     for crl_name, crl_extensions in crl_values.items():
         crl_table = tabulate(crl_extensions, headers="firstrow", tablefmt="rst")
-        with open(os.path.join(out_base, "%s.rst" % crl_name), "w") as crl_table_stream:
+        with open(os.path.join(OUT_DIR, "%s.rst" % crl_name), "w") as crl_table_stream:
             crl_table_stream.write(crl_table)
 
 
-######################
-# Generate Cert data #
-######################
+class Command(DevCommand):
+    """Update tables for docs/source/ca_examples.rst.
 
-update_cert_data("cert", cert_dir, certs, "Certificate")
-update_cert_data("ca", ca_dir, cas, "CA")
-update_crl_data()
+    This command updates the generated tables showing how X509 extensions are used in real-world certificates.
+    It should be used when new CAs/certificates are added in docs/source/_files/.
+    """
+
+    def handle(self, args):
+        OUT_DIR.mkdir(exist_ok=True)
+        self.setup_django()
+
+        update_cert_data("cert", cert_dir, certs, "Certificate")
+        update_cert_data("ca", ca_dir, cas, "CA")
+        update_crl_data()

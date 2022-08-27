@@ -296,8 +296,8 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         json.dump(fixture_data, stream, indent=4, cls=CertificateEncoder)
 
 
-class Command(DevCommand):  # pylint: disable=missing-class-docstring
-    help = "Regenerate fixtures for testing."
+class Command(DevCommand):
+    """Regenerate fixtures for testing."""
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -24,8 +24,8 @@ from devscripts.out import info
 from devscripts.out import ok
 
 
-class Command(DevCommand):  # pylint: disable=missing-class-docstring
-    help = "Build the Docker image using various base images."
+class Command(DevCommand):
+    """Build the Docker image using various base images."""
 
     def add_arguments(self, parser):
         parser.add_argument(
