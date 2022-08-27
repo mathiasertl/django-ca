@@ -20,8 +20,6 @@ from devscripts.validation import docker
 from devscripts.validation import docker_compose
 from devscripts.validation import state
 
-import django_ca
-
 
 class Command(DevCommand):
     """Validate various aspects of this repository not covered in unit tests."""
@@ -71,6 +69,8 @@ class Command(DevCommand):
         )
 
     def handle(self, args):
+        import django_ca  # pylint: disable=import-outside-toplevel  # late import for code coverage
+
         release = django_ca.__version__
 
         if args.subcommand == "state":

@@ -30,8 +30,6 @@ from devscripts.validation import docker
 from devscripts.validation import docker_compose
 from devscripts.validation import state
 
-import django_ca
-
 
 def validate_state():
     """Validate state of various config files."""
@@ -59,6 +57,8 @@ class Command(DevCommand):
 
     def pre_tag_checks(self, release):
         """Perform checks that can be done before we even tag the repository."""
+
+        import django_ca  # pylint: disable=import-outside-toplevel  # late import for code coverage
 
         repo = Repo(str(config.ROOT_DIR))
         if repo.is_dirty(untracked_files=True):
