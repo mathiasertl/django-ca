@@ -1,5 +1,4 @@
-# Sphinx extension is also typehinted
-Sphinx==5.0.2
+-r requirements-sphinx.txt
 mypy==0.971
 django-stubs==1.9.0
 types-docutils==0.19.0

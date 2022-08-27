@@ -46,7 +46,7 @@ jobs:
 
       # Will show outdate dependencies, etc
       - name: Validate state
-        run: devscripts/validate-state.py
+        run: python dev.py validate state
 
       - name: Validate sdist/wheel
         run: |
