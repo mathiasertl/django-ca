@@ -28,7 +28,7 @@ try:
 except ImportError:
     # Dummy function in case termcolor is not installed. This is so that scripts (e.g. the clean command) can
     # import this module without any external dependencies.
-    def colored(value, *args, **kwargs):
+    def colored(value, *args, **kwargs):  # pylint: disable=missing-function-docstring
         return value
 
 

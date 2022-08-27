@@ -28,10 +28,7 @@ from contextlib import redirect_stderr
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import jinja2
-import semantic_version
 import yaml
-from git import Repo
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -89,6 +86,9 @@ def _waitfor(waitfor, jinja_env, context, quiet=True, **kwargs):
 @contextmanager
 def console_include(path, context, quiet=False):
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
+    # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
+    import jinja2  # pylint: disable=import-outside-toplevel
+
     env = jinja2.Environment(autoescape=False, undefined=jinja2.StrictUndefined)
 
     with open(os.path.join(config.DOC_TEMPLATES_DIR, path), encoding="utf-8") as stream:
@@ -143,6 +143,10 @@ def get_previous_release(current_release: typing.Optional[str] = None) -> str:
     This function returns the name at the last tag that is a valid semantic version. Prerelease or build tags
     are automatically excluded.  If `current_release` is given, it will be excluded from the list.
     """
+    # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
+    import semantic_version  # pylint: disable=import-outside-toplevel
+    from git import Repo  # pylint: disable=import-outside-toplevel
+
     repo = Repo(config.ROOT_DIR)
     tags = [tag.name for tag in repo.tags]
 
