@@ -15,15 +15,12 @@
 
 import os
 
-# pylint: disable=no-name-in-module  # false positive due to dev.py
-from dev import config
-from dev import utils
-from dev.out import err
-from dev.out import info
-from dev.out import ok
-from dev.tutorial import start_tutorial
-
-# pylint: enable=no-name-in-module
+from devscripts import config
+from devscripts import utils
+from devscripts.out import err
+from devscripts.out import info
+from devscripts.out import ok
+from devscripts.tutorial import start_tutorial
 
 
 def _test_version(docker_tag, release):
@@ -109,3 +106,8 @@ def validate_docker_image(release, docker_tag, quiet=False):
             input("Press enter to continue:")
 
     return errors
+
+
+def validate(release, prune, build, quiet=False):
+    docker_tag = build_docker_image(release=release, prune=prune, build=build)
+    validate_docker_image(release, docker_tag, quiet=quiet)

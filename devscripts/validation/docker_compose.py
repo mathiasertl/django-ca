@@ -29,15 +29,13 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtensionOID
 
-# pylint: disable=no-name-in-module  # false positive due to dev.py
-from dev import config
-from dev import utils
-from dev.out import err
-from dev.out import info
-from dev.out import ok
-from dev.tutorial import start_tutorial
-
-# pylint: enable=no-name-in-module
+from devscripts import config
+from devscripts import utils
+from devscripts.out import err
+from devscripts.out import info
+from devscripts.out import ok
+from devscripts.tutorial import start_tutorial
+from devscripts.validation.docker import build_docker_image
 
 
 @contextmanager
@@ -489,9 +487,11 @@ def test_acme(release, quiet):
     return errors
 
 
-def validate_docker_compose(release=None, tutorial=True, update=True, acme=True, quiet=False):
+def validate(release, prune, build, tutorial, update, acme, quiet=False):
     """Validate the docker-compose file (and the tutorial)."""
     print("Validating docker-compose setup...")
+    build_docker_image(release=release, prune=prune, build=build)
+
     errors = 0
 
     if tutorial:

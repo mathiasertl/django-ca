@@ -35,6 +35,13 @@ class CommandError(Exception):
         self.code = code
 
 
+class ParserError(CommandError):
+    """Exception that allows a command to show usage information."""
+
+    def __init__(self, value, code=2):
+        super().__init__(value, code)
+
+
 class DevCommand:
     """Base class for all dev.py sub-commands."""
 
@@ -45,10 +52,12 @@ class DevCommand:
         """Method that is supposed to be implemented by sub-commands."""
         raise NotImplementedError
 
-    def exec(self, args):
+    def exec(self, parser, args):
         """Default argparse entry point."""
         try:
             self.handle(args)
+        except ParserError as ex:
+            parser.error(ex.value)
         except CommandError as ex:
             print(colored(f"ERROR: {ex.value}", "red", attrs=["bold"]))
             sys.exit(ex.code)

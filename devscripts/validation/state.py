@@ -26,11 +26,10 @@ import yaml
 from setuptools.config.setupcfg import read_configuration
 from termcolor import colored
 
-# pylint: disable=no-name-in-module  # false positive due to dev.py
-from dev.config import CONFIG
-from dev.config import ROOT_DIR
-from dev.out import err
-from dev.out import ok
+from devscripts.config import CONFIG
+from devscripts.config import ROOT_DIR
+from devscripts.out import err
+from devscripts.out import ok
 
 # pylint: enable=no-name-in-module
 
@@ -250,7 +249,7 @@ def check_readme():
     return errors
 
 
-def validate_state():
+def validate():
     """Main function."""
     total_errors = check(check_github_actions_tests)
     total_errors += check(check_tox)
@@ -258,13 +257,8 @@ def validate_state():
     total_errors += check(check_test_settings)
     total_errors += check(check_intro)
     total_errors += check(check_readme)
-    return total_errors
-
-
-if __name__ == "__main__":
-    script_errors = validate_state()
-    if script_errors != 0:
-        print(colored(f"A total of {script_errors} error(s) found!", "red", attrs=["bold"]))
+    if total_errors:
+        print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
         sys.exit(1)
     else:
         print(colored("Congratulations. All clean.", "green"))
