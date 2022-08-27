@@ -28,13 +28,14 @@ class Command(DevCommand):
     """Build the Docker image using various base images."""
 
     def add_arguments(self, parser):
+        project_config = config.get_project_config()
         parser.add_argument(
             "-i",
             "--image",
             action="append",
             dest="images",
-            choices=config.DOCKER_CONFIG["alpine-images"],
-            metavar=config.DOCKER_CONFIG["metavar"],
+            choices=project_config["docker"]["alpine-images"],
+            metavar=project_config["docker"]["metavar"],
             help="Base images to test on, may be given multiple times.",
         )
         parser.add_argument(
@@ -48,7 +49,8 @@ class Command(DevCommand):
     def handle(self, args):
         docker_runs = []
 
-        images = args.images or config.DOCKER_CONFIG["alpine-images"]
+        project_config = config.get_project_config()
+        images = args.images or project_config["docker"]["alpine-images"]
         for image in images:
             info(f"### Testing {image} ###")
             tag = f"django-ca-test-{image}"
