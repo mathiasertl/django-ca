@@ -487,7 +487,7 @@ def test_acme(release, quiet):
     return errors
 
 
-def validate(release, prune, build, tutorial, update, acme, quiet=False):
+def validate(release, prune, build, tutorial=True, update=True, acme=True, quiet=False):
     """Validate the docker-compose file (and the tutorial)."""
     print("Validating docker-compose setup...")
     build_docker_image(release=release, prune=prune, build=build)
