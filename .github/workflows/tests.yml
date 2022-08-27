@@ -57,4 +57,4 @@ jobs:
       - name: Run tests
         run: |
           python dev.py init-demo
-          python dev.py coverage --format=text --shuffle
+          python dev.py coverage --format=text
