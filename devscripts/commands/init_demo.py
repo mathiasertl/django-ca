@@ -16,11 +16,13 @@
 import json
 import os
 import subprocess
+import sys
 
 from termcolor import colored
 
 from cryptography import x509
 
+from devscripts import config
 from devscripts.commands import DevCommand
 from devscripts.out import bold
 
@@ -131,6 +133,9 @@ class Command(DevCommand):
         os.environ["DJANGO_CA_SECRET_KEY"] = "dummy"
 
         if "TOX_ENV_DIR" in os.environ:
+            # insert ca/ into path, otherwise it won't find test_settings in django project
+            sys.path.insert(0, str(config.SRC_DIR))
+
             os.environ["DJANGO_CA_SKIP_LOCAL_CONFIG"] = "1"
             os.environ["CA_DIR"] = os.environ["TOX_ENV_DIR"]
             os.environ["SQLITE_NAME"] = os.path.join(os.environ["TOX_ENV_DIR"], "db.sqlite3")
