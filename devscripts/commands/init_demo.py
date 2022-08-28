@@ -37,7 +37,7 @@ class Command(DevCommand):
 
     def ok(self, msg=" OK.", **kwargs):  # pylint: disable=invalid-name
         """Just print "OK" in green."""
-        print(self.termcolor.colored(msg, "green"), **kwargs)
+        print(self.termcolor.colored(msg, "green"), **kwargs)  # pylint: disable=no-member  # from lazy import
 
     def output_info(self, ca_dir, ca_storage, loaded_cas, certs, base_url):
         """Output demo info to the user."""

@@ -90,7 +90,7 @@ def validate_docker_image(release, docker_tag, quiet=False):
 
     errors = 0
 
-    _test_clean(docker_tag, release)
+    _test_clean(docker_tag)
     if release is not None:
         errors += _test_version(docker_tag, release)
     errors += _test_extras(docker_tag)

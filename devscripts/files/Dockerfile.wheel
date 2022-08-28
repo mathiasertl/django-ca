@@ -1,63 +1,66 @@
 # Dockerfile to test wheels in an isolated environment
 
 ARG IMAGE=python:3.10
-
-#########################
-# Build sdist and wheel #
-#########################
 FROM $IMAGE as build
 WORKDIR /work/
 
-RUN pip install -U pip
+# Add/update basic Python tools
+RUN pip install -U pip setuptools
 
-ADD requirements/requirements-dist.txt requirements.txt
-RUN pip install -r requirements.txt
+# Install build dependencies
+ADD requirements/requirements-dist.txt ./
+RUN pip install -r requirements-dist.txt
 
-# Add full source code so that we can build a wheel.
+# Add files necessary to build the wheel
 ADD LICENSE MANIFEST.in README.md setup.cfg setup.py pyproject.toml ./
 ADD docs/source/intro.rst docs/source/
 ADD ca/django_ca ca/django_ca
 
-# Build and test wheel
+# Build wheel
 RUN python -m build
+
+# Do a twine check (Note that this is extremely minimal)
 RUN twine check --strict dist/*
 
-FROM $IMAGE as test-base
-RUN pip install -U pip
+FROM $IMAGE
 WORKDIR /work/
-COPY setup.cfg devscripts/test-imports.py ./
+ADD devscripts/test-imports.py ./
+COPY --from=build /work/dist/* dist/
 
-# Test sdist
-FROM test-base as sdist-test
-COPY --from=build /work/dist/django-ca*.tar.gz dist/
-RUN pip install dist/django-ca*.tar.gz
-RUN ./test-imports.py
-
-FROM test-base as wheel-base
-COPY --from=build /work/dist/django_ca*.whl dist/
-
-# Test wheel
-FROM wheel-base as wheel-test
-RUN pip install dist/django_ca*.whl
-RUN ./test-imports.py
-
-# Twest wheel in combination with extras
-FROM wheel-base as wheel-test-acme
-RUN pip install $(ls dist/django_ca*.whl)[acme]
-RUN ./test-imports.py --extra=acme
-
-FROM wheel-base as wheel-test-redis
-RUN pip install $(ls dist/django_ca*.whl)[redis]
-RUN ./test-imports.py --extra=redis
-
-FROM wheel-base as wheel-test-celery
-RUN pip install $(ls dist/django_ca*.whl)[celery]
-RUN ./test-imports.py --extra=celery
-
-FROM wheel-base as wheel-test-mysql
-RUN pip install $(ls dist/django_ca*.whl)[mysql]
-RUN ./test-imports.py --extra=mysql
-
-FROM wheel-base as wheel-test-postgres
-RUN pip install $(ls dist/django_ca*.whl)[postgres]
-RUN ./test-imports.py --extra=postgres
+#RUN pip install -U pip
+#WORKDIR /work/
+#COPY setup.cfg devscripts/test-imports.py ./
+#
+## Test sdist
+#FROM test-base as sdist-test
+#RUN pip install dist/django-ca*.tar.gz
+#RUN ./test-imports.py
+#
+#FROM test-base as wheel-base
+#COPY --from=build /work/dist/django_ca*.whl dist/
+#
+## Test wheel
+#FROM wheel-base as wheel-test
+#RUN pip install dist/django_ca*.whl
+#RUN ./test-imports.py
+#
+## Twest wheel in combination with extras
+#FROM wheel-base as wheel-test-acme
+#RUN pip install $(ls dist/django_ca*.whl)[acme]
+#RUN ./test-imports.py --extra=acme
+#
+#FROM wheel-base as wheel-test-redis
+#RUN pip install $(ls dist/django_ca*.whl)[redis]
+#RUN ./test-imports.py --extra=redis
+#
+#FROM wheel-base as wheel-test-celery
+#RUN pip install $(ls dist/django_ca*.whl)[celery]
+#RUN ./test-imports.py --extra=celery
+#
+#FROM wheel-base as wheel-test-mysql
+#RUN pip install $(ls dist/django_ca*.whl)[mysql]
+#RUN ./test-imports.py --extra=mysql
+#
+#FROM wheel-base as wheel-test-postgres
+#RUN pip install $(ls dist/django_ca*.whl)[postgres]
+#RUN ./test-imports.py --extra=postgres
