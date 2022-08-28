@@ -18,8 +18,6 @@ import os
 import subprocess
 import sys
 
-from termcolor import colored
-
 from cryptography import x509
 
 from devscripts import config
@@ -27,18 +25,19 @@ from devscripts.commands import DevCommand
 from devscripts.out import bold
 
 
-def ok(msg=" OK.", **kwargs):  # pylint: disable=invalid-name
-    """Just print "OK" in green."""
-    print(colored(msg, "green"), **kwargs)
-
-
 class Command(DevCommand):
     """Initialize this project with useful example data."""
+
+    modules = (("termcolor", "termcolor"),)
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--base-url", metavar="URL", default="http://localhost:8000/", help="Base URL for CRL/OCSP URLs."
         )
+
+    def ok(self, msg=" OK.", **kwargs):  # pylint: disable=invalid-name
+        """Just print "OK" in green."""
+        print(self.termcolor.colored(msg, "green"), **kwargs)
 
     def output_info(self, ca_dir, ca_storage, loaded_cas, certs, base_url):
         """Output demo info to the user."""
@@ -61,17 +60,17 @@ class Command(DevCommand):
 
         print("")
         print(f"* All certificates are in {bold(ca_dir)}")
-        ok("* Start webserver with the admin interface:")
+        self.ok("* Start webserver with the admin interface:")
         print(f'  * Run "{bold("python ca/manage.py runserver")}"')
         print(f"  * Visit {bold(f'{base_url}/admin/')}")
         print(f"  * User/Password: {bold('user')} / {bold('nopass')}")
-        ok("* Create CRLs with:")
+        self.ok("* Create CRLs with:")
         print(f"  * {bold(f'{dump_crl} -f PEM --ca {root_serial} > root.crl')}")
         print(f"  * {bold(f'{dump_crl} -f PEM --ca {child_serial} > child.crl')}")
-        ok("* Verify with CRL:")
+        self.ok("* Verify with CRL:")
         print(f"  * {bold(f'openssl verify -CAfile {root} -CRLfile root.crl -crl_check {root_cert}')}")
         print(f"  * {bold(f'openssl verify -CAfile {root} -crl_download -crl_check {root_cert}')}")
-        ok("* Verify certificate with OCSP:")
+        self.ok("* Verify certificate with OCSP:")
         cmd = f"openssl ocsp -CAfile {root} -issuer {child} -cert {child_cert} -url {ocsp_url} -resp_text"
         print(f"    {bold(cmd)}")
 
@@ -153,7 +152,7 @@ class Command(DevCommand):
 
         print("Creating database...", end="")
         manage("migrate", verbosity=0)
-        ok()
+        self.ok()
 
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
@@ -182,10 +181,10 @@ class Command(DevCommand):
         )
         with open(os.path.join(ca_settings.CA_DIR, "cert-data.json"), encoding="utf-8") as stream:
             fixture_data = json.load(stream)
-        ok()
+        self.ok()
 
         print("Saving fixture data to database.", end="")
         loaded_cas = self.save_fixture_data(ca_settings, fixture_data)
-        ok()
+        self.ok()
 
         self.output_info(ca_settings.CA_DIR, ca_storage, loaded_cas, fixture_data["certs"], args.base_url)

@@ -21,15 +21,7 @@ from pathlib import Path
 
 import django
 
-from .. import utils
-
-try:
-    from termcolor import colored
-except ImportError:
-    # Dummy function in case termcolor is not installed. This is so that scripts (e.g. the clean command) can
-    # import this module without any external dependencies.
-    def colored(value, *args, **kwargs):  # pylint: disable=missing-function-docstring
-        return value
+from devscripts import utils
 
 
 class CommandError(Exception):
@@ -51,6 +43,8 @@ class ParserError(CommandError):
 class DevCommand:
     """Base class for all dev.py sub-commands."""
 
+    modules = None
+
     def add_arguments(self, parser):
         """Add arguments to the command line parser."""
 
@@ -60,12 +54,18 @@ class DevCommand:
 
     def exec(self, parser, args):
         """Default argparse entry point."""
+
+        if self.modules is not None:
+            for mod_name, pip_name in self.modules:
+                mod = importlib.import_module(mod_name)
+                setattr(self, mod_name, mod)
+
         try:
             self.handle(args)
         except ParserError as ex:
             parser.error(ex.value)
         except CommandError as ex:
-            print(colored(f"ERROR: {ex.value}", "red", attrs=["bold"]))
+            print(f"ERROR: {ex.value}")
             sys.exit(ex.code)
 
     def setup_django(self, settings_module="ca.test_settings"):
