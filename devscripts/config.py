@@ -26,6 +26,8 @@ SRC_DIR = ROOT_DIR / "ca"
 MANAGE_PY = SRC_DIR / "manage.py"
 FIXTURES_DIR = SRC_DIR / "django_ca" / "tests" / "fixtures"
 DOCKER_TAG = "mathiasertl/django-ca"
+DEVSCRIPTS_DIR = ROOT_DIR / "devscripts"
+DEVSCRIPTS_FILES = DEVSCRIPTS_DIR / "files"
 
 
 def minor_to_major(version: str) -> str:

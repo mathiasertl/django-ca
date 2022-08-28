@@ -29,9 +29,9 @@ def err(msg):
     return 1
 
 
-def info(msg):
+def info(msg, indent=""):
     """Print warning message."""
-    print(colored("[INFO]", "magenta"), msg)
+    print(colored(f"{indent}[INFO]", "magenta"), msg)
     return 0
 
 

@@ -26,6 +26,7 @@ from devscripts.utils import redirect_output
 from devscripts.validation import docker
 from devscripts.validation import docker_compose
 from devscripts.validation import state
+from devscripts.validation import wheel
 
 
 def validate_state():
@@ -61,19 +62,20 @@ class Command(DevCommand):
     def pre_tag_checks(self, release):
         """Perform checks that can be done before we even tag the repository."""
 
-        repo = self.git.Repo(str(config.ROOT_DIR))
+        repo = self.git.Repo(str(config.ROOT_DIR))  # pylint: disable=no-member  # from lazy import
         if repo.is_dirty(untracked_files=True):
             err("Repository has untracked changes.")
             sys.exit(1)
 
         # Make sure that user passed a valid semantic version
-        ver = self.semantic_version.Version(release)
+        ver = self.semantic_version.Version(release)  # pylint: disable=no-member  # from lazy import
         if ver.prerelease or ver.build:
             raise CommandError("Version has prerelease or build number.")
 
         # Make sure that the software identifies as the right version
-        if self.django_ca.__version__ != release:
-            raise CommandError(f"ca/django_ca/__init__.py: Version is {self.django_ca.__version__}")
+        version = self.django_ca.__version__  # pylint: disable=no-member  # from lazy import
+        if version != release:
+            raise CommandError(f"ca/django_ca/__init__.py: Version is {version}")
 
         # Make sure that the docker-compose files are present and default to the about-to-be-released version
         if docker_compose.validate_docker_compose_files(release) != 0:
@@ -89,6 +91,7 @@ class Command(DevCommand):
             validate_state()
             docker.validate(release=args.release, prune=True, build=True, quiet=True)
             docker_compose.validate(release=args.release, prune=False, build=False, quiet=True)
+            wheel.validate(release=args.release)
 
             if args.delete_tag:
                 repo.delete_tag(git_tag)

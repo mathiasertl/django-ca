@@ -67,13 +67,14 @@ class Command(DevCommand):
         compose_parser.add_argument(
             "--no-acme", dest="acme", default=True, action="store_false", help="Do not test ACMEv2."
         )
+        subcommands.add_parser("wheel")
 
     def handle(self, args):
         # Validation modules is imported on execution so that external libraries used there do not
         # automatically become dependencies for all other dev.py commands.
         submodule = importlib.import_module(f"devscripts.validation.{args.subcommand.replace('-', '_')}")
 
-        release = self.django_ca.__version__
+        release = self.django_ca.__version__  # pylint: disable=no-member  # from lazy import
 
         if args.subcommand == "state":
             submodule.validate()
@@ -89,6 +90,8 @@ class Command(DevCommand):
                 acme=args.acme,
                 quiet=args.quiet,
             )
+        elif args.subcommand == "wheel":
+            submodule.validate(release)
         else:  # pragma: no cover
             # COVERAGE NOTE: This should not happen, parser catches all errors.
             raise ParserError("Unknown subcommand.")
