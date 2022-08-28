@@ -55,6 +55,16 @@ def _test_extras(docker_tag):
     return ok("Imports validated.")
 
 
+def _test_clean(docker_tag):
+    """Make sure that the Docker image does not contain any unwanted files."""
+    cwd = os.getcwd()
+    script = "check-clean-docker.py"
+    utils.docker_run(
+        "-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}"
+    )
+    return ok("Docker image is clean.")
+
+
 def build_docker_image(release, prune=True, build=True, quiet=False) -> str:
     """Build the docker image."""
 
@@ -79,6 +89,8 @@ def validate_docker_image(release, docker_tag, quiet=False):
     print("Validating Docker image...")
 
     errors = 0
+
+    _test_clean(docker_tag, release)
     if release is not None:
         errors += _test_version(docker_tag, release)
     errors += _test_extras(docker_tag)
