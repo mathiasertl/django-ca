@@ -13,16 +13,16 @@
 # pylint: disable=missing-module-docstring  # covered in class docstring
 
 import argparse
+import importlib
 
 from devscripts.commands import DevCommand
 from devscripts.commands import ParserError
-from devscripts.validation import docker
-from devscripts.validation import docker_compose
-from devscripts.validation import state
 
 
 class Command(DevCommand):
     """Validate various aspects of this repository not covered in unit tests."""
+
+    modules = (("django_ca", "django-ca"),)
 
     def add_arguments(self, parser):
         docker_options = argparse.ArgumentParser(add_help=False)
@@ -69,16 +69,18 @@ class Command(DevCommand):
         )
 
     def handle(self, args):
-        import django_ca  # pylint: disable=import-outside-toplevel  # late import for code coverage
+        # Validation modules is imported on execution so that external libraries used there do not
+        # automatically become dependencies for all other dev.py commands.
+        submodule = importlib.import_module(f"devscripts.validation.{args.subcommand.replace('-', '_')}")
 
-        release = django_ca.__version__
+        release = self.django_ca.__version__
 
         if args.subcommand == "state":
-            state.validate()
+            submodule.validate()
         elif args.subcommand == "docker":
-            docker.validate(release=release, prune=args.docker_prune, build=args.build, quiet=args.quiet)
+            submodule.validate(release=release, prune=args.docker_prune, build=args.build, quiet=args.quiet)
         elif args.subcommand == "docker-compose":
-            docker_compose.validate(
+            submodule.validate(
                 release=release,
                 prune=args.docker_prune,
                 build=args.build,
