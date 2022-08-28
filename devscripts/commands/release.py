@@ -15,6 +15,7 @@
 
 """Release script."""
 
+import importlib
 import sys
 
 from devscripts import config
@@ -23,22 +24,6 @@ from devscripts.commands import DevCommand
 from devscripts.out import err
 from devscripts.out import ok
 from devscripts.utils import redirect_output
-from devscripts.validation import docker
-from devscripts.validation import docker_compose
-from devscripts.validation import state
-from devscripts.validation import wheel
-
-
-def validate_state():
-    """Validate state of various config files."""
-    with redirect_output() as stream:
-        errors = state.validate()
-
-    if errors == 0:
-        ok("State validated.")
-    else:
-        print(stream.getvalue())
-        raise RuntimeError("State validation failed.")
 
 
 class Command(DevCommand):
@@ -62,6 +47,8 @@ class Command(DevCommand):
     def pre_tag_checks(self, release):
         """Perform checks that can be done before we even tag the repository."""
 
+        docker_compose = importlib.import_module("devscripts.validation.docker_compose")
+
         repo = self.git.Repo(str(config.ROOT_DIR))  # pylint: disable=no-member  # from lazy import
         if repo.is_dirty(untracked_files=True):
             err("Repository has untracked changes.")
@@ -83,12 +70,30 @@ class Command(DevCommand):
 
         return repo
 
+    def validate_state(self):
+        """Validate state of various config files."""
+        state = importlib.import_module("devscripts.validation.state")
+        with redirect_output() as stream:
+            errors = state.validate()
+
+        if errors == 0:
+            ok("State validated.")
+        else:
+            print(stream.getvalue())
+            raise RuntimeError("State validation failed.")
+
     def handle(self, args):
+        # Validation modules is imported on execution so that external libraries used there do not
+        # automatically become dependencies for all other dev.py commands.
+        docker = importlib.import_module("devscripts.validation.docker")
+        docker_compose = importlib.import_module("devscripts.validation.docker_compose")
+        wheel = importlib.import_module("devscripts.validation.wheel")
+
         repo = self.pre_tag_checks(args.release)
 
         git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
         try:
-            validate_state()
+            self.validate_state()
             docker.validate(release=args.release, prune=True, build=True, quiet=True)
             docker_compose.validate(release=args.release, prune=False, build=False, quiet=True)
             wheel.validate(release=args.release)
