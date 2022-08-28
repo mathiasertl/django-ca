@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""The clean subcommand removes all generated files."""
+"""The docker-test subcommand generates the Docker image using various base images."""
 
 import os
 import subprocess
