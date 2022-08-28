@@ -17,9 +17,6 @@
 
 import sys
 
-import semantic_version
-from git import Repo
-
 from devscripts import config
 from devscripts.commands import CommandError
 from devscripts.commands import DevCommand
@@ -46,6 +43,12 @@ def validate_state():
 class Command(DevCommand):
     """Create a new release."""
 
+    modules = (
+        ("django_ca", "django-ca"),
+        ("git", "GitPython"),
+        ("semantic_version", "semantic-version"),
+    )
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--delete-tag",
@@ -58,21 +61,19 @@ class Command(DevCommand):
     def pre_tag_checks(self, release):
         """Perform checks that can be done before we even tag the repository."""
 
-        import django_ca  # pylint: disable=import-outside-toplevel  # late import for code coverage
-
-        repo = Repo(str(config.ROOT_DIR))
+        repo = self.git.Repo(str(config.ROOT_DIR))
         if repo.is_dirty(untracked_files=True):
             err("Repository has untracked changes.")
             sys.exit(1)
 
         # Make sure that user passed a valid semantic version
-        ver = semantic_version.Version(release)
+        ver = self.semantic_version.Version(release)
         if ver.prerelease or ver.build:
             raise CommandError("Version has prerelease or build number.")
 
         # Make sure that the software identifies as the right version
-        if django_ca.__version__ != release:
-            raise CommandError(f"ca/django_ca/__init__.py: Version is {django_ca.__version__}")
+        if self.django_ca.__version__ != release:
+            raise CommandError(f"ca/django_ca/__init__.py: Version is {self.django_ca.__version__}")
 
         # Make sure that the docker-compose files are present and default to the about-to-be-released version
         if docker_compose.validate_docker_compose_files(release) != 0:

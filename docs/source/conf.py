@@ -45,8 +45,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
 import django  # NOQA: E402
 from django.conf import settings  # NOQA: E402
 
-from devscripts.config import get_last_version  # NOQA: E402
 from devscripts.config import get_project_config  # NOQA: E402
+from devscripts.versions import get_last_version  # NOQA: E402
 
 CONFIG = get_project_config()
 

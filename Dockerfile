@@ -39,8 +39,6 @@ COPY --from=build /install /usr/local
 ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
 
-RUN --mount=type=cache,target=/etc/apk/cache apk add git
-
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-test.txt
