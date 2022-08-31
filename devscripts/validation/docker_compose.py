@@ -36,6 +36,7 @@ from devscripts.out import info
 from devscripts.out import ok
 from devscripts.tutorial import start_tutorial
 from devscripts.validation.docker import build_docker_image
+from devscripts.validation.docker import docker_cp
 
 
 @contextmanager
@@ -352,6 +353,10 @@ def test_update(release, quiet):
     with tempfile.TemporaryDirectory() as tmpdir:
         last_release_dest = utils.git_archive(last_release, tmpdir)
         shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
+        standalone_dir = last_release_dest / "devscripts" / "standalone"
+        backend = f"{os.path.basename(tmpdir)}_backend_1"
+        frontend = f"{os.path.basename(tmpdir)}_frontend_1"
+        standalone_dest = "/usr/src/django-ca/ca/"
 
         with utils.chdir(tmpdir):
             # Add a very basic .env file
@@ -370,26 +375,8 @@ POSTGRES_PASSWORD=mysecretpassword
                 # Make sure we have started the right version
                 _validate_container_versions(last_release, quiet)
 
-                tmpdirname = os.path.basename(tmpdir)
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(last_release_dest / "devscripts" / "create-testdata.py"),
-                        f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(last_release_dest / "devscripts" / "create-testdata.py"),
-                        f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-
+                docker_cp(str(standalone_dir / "create-testdata.py"), backend, standalone_dest, quiet=quiet)
+                docker_cp(str(standalone_dir / "create-testdata.py"), frontend, standalone_dest, quiet=quiet)
                 _compose_exec("backend", "./create-testdata.py", "--env", "backend", quiet=quiet)
                 _compose_exec("frontend", "./create-testdata.py", "--env", "frontend", quiet=quiet)
 
@@ -397,28 +384,16 @@ POSTGRES_PASSWORD=mysecretpassword
             shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
 
             with _compose_up(quiet=quiet, env=dict(os.environ, DJANGO_CA_VERSION=release)):
+                # Make sure we have the new version
                 _validate_container_versions(release, quiet)
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(config.ROOT_DIR / "devscripts" / "validate-testdata.py"),
-                        f"{tmpdirname}_backend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
-                utils.run(
-                    [
-                        "docker",
-                        "cp",
-                        str(config.ROOT_DIR / "devscripts" / "validate-testdata.py"),
-                        f"{tmpdirname}_frontend_1:/usr/src/django-ca/ca/",
-                    ],
-                    quiet=quiet,
-                )
 
+                docker_cp(str(standalone_dir / "validate-testdata.py"), backend, standalone_dest, quiet=quiet)
+                docker_cp(
+                    str(standalone_dir / "validate-testdata.py"), frontend, standalone_dest, quiet=quiet
+                )
                 _compose_exec("backend", "./validate-testdata.py", "--env", "backend", quiet=quiet)
                 _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend", quiet=quiet)
+
                 ok("Testdata still present after update.")
 
     return errors

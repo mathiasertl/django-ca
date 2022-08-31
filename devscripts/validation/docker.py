@@ -49,7 +49,7 @@ def _test_extras(docker_tag):
         "-w",
         "/usr/src/django-ca/",
         docker_tag,
-        "devscripts/test-imports.py",
+        "devscripts/standalone/test-imports.py",
         "--all-extras",
     )
     return ok("Imports validated.")
@@ -63,6 +63,13 @@ def _test_clean(docker_tag):
         "-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}"
     )
     return ok("Docker image is clean.")
+
+
+def docker_cp(src, container, dest, quiet=False):
+    utils.run(
+        ["docker", "cp", src, f"{container}:{dest}"],
+        quiet=quiet,
+    )
 
 
 def build_docker_image(release, prune=True, build=True, quiet=False) -> str:
