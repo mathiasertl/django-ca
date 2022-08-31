@@ -83,7 +83,7 @@ RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localse
 # Test that imports are working
 RUN cp -a /install/* /usr/local/
 RUN python devscripts/standalone/clean.py
-RUN DJANGO_CA_SECRET_KEY=dummy devscripts/test-imports.py
+RUN DJANGO_CA_SECRET_KEY=dummy devscripts/standalone/test-imports.py
 
 # Finally, clean up to minimize the image
 RUN python devscripts/standalone/clean.py
