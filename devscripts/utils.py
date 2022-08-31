@@ -167,9 +167,7 @@ def get_previous_release(current_release: typing.Optional[str] = None) -> str:
 
 def docker_run(*args, **kwargs):
     """Shortcut for running a docker command."""
-    # pylint: disable=subprocess-run-check  # is in kwargs/defaults
-    kwargs.setdefault("check", True)
-    return subprocess.run(["docker", "run", "--rm"] + list(args), **kwargs)
+    return run(["docker", "run", "--rm"] + list(args), **kwargs)
 
 
 @contextmanager

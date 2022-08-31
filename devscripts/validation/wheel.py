@@ -21,13 +21,13 @@ import docker
 from setuptools.config.setupcfg import read_configuration
 
 from devscripts import config
+from devscripts import utils
 from devscripts.out import info
 
 
 def run(release, client, image, pip_cache_dir, extra=None):
     """Actually run a given wheel test."""
     docker_pip_cache = "/tmp/cache"
-    volumes = [f"{pip_cache_dir}:{docker_pip_cache}"]
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
     command = "test-imports.py"
 
@@ -41,14 +41,23 @@ def run(release, client, image, pip_cache_dir, extra=None):
         f"/tmp/venv/bin/python {command}",
     ]
 
-    return client.containers.run(
-        image.id,
-        ["/bin/sh", "-c", "; ".join(commands)],
-        auto_remove=True,
-        volumes=volumes,
-        user=os.getuid(),
-        stderr=True,
-    ).decode("utf-8")
+    try:
+        return utils.docker_run(
+            "-v",
+            f"{pip_cache_dir}:{docker_pip_cache}",
+            f"--user={os.getuid()}:{os.getgid()}",
+            "--rm",
+            image,
+            "/bin/sh",
+            "-c",
+            "; ".join(commands),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    except subprocess.CalledProcessError as ex:
+        print(ex.stdout)
+        raise
 
 
 def validate(release):
@@ -74,12 +83,12 @@ def validate(release):
         )
 
         # get cache dir in image
-        run(release, client, image, host_pip_cache)
+        run(release, client, image.id, host_pip_cache)
 
         for extra in list(setup_cfg["options"]["extras_require"]):
             info(f"Test extra: {extra}", indent="    ")
-            run(release, client, image, host_pip_cache, extra=extra)
+            run(release, client, image.id, host_pip_cache, extra=extra)
 
         time.sleep(1)
-        image.remove()
+        image.remove(force=True)
     info("Python wheel is okay.")
