@@ -33,6 +33,11 @@ import argparse
 import os
 import sys
 
+try:
+    from setuptools.config.setupcfg import read_configuration
+except ImportError:  # pragma: only py<3.8
+    from setuptools.config import read_configuration
+
 import django
 from django.conf import settings
 
@@ -42,12 +47,24 @@ SRC_DIR = os.path.join(ROOT_DIR, "ca")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+setup_cfg = read_configuration(os.path.join(ROOT_DIR, "setup.cfg"))
+ALL_EXTRAS = list(setup_cfg["options"]["extras_require"])
+
 parser = argparse.ArgumentParser("Test imports.")
-parser.add_argument(
+extra_group = parser.add_mutually_exclusive_group()
+extra_group.add_argument(
+    "--all-extras",
+    action="store_const",
+    const=ALL_EXTRAS,
+    default=[],
+    dest="extra",
+    help="Test all known extras.",
+)
+extra_group.add_argument(
     "--extra",
     action="append",
-    default=[],
-    help="Test an extra from extras_require, can be given multiple times.",
+    choices=ALL_EXTRAS,
+    help="Test an extra from extras_require, can be given multiple times. Valid choices are %(choices)s.",
     metavar="EXTRA",
 )
 args = parser.parse_args()
