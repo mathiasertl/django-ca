@@ -1,7 +1,6 @@
 -r requirements-devscripts.txt
 -r requirements-sphinx.txt
 PyVirtualDisplay==3.0
-Sphinx==5.0.2
 django-webtest==1.9.10
 freezegun==1.2.2
 ocspbuilder==0.10.2
@@ -9,6 +8,6 @@ oscrypto==1.3.0
 pyOpenSSL>=19
 pyrfc3339==1.1
 requests-mock==1.9.3
-selenium==4.3.0
+selenium==4.4.3
 termcolor==1.1.0
 toml==0.10.2
