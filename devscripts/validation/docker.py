@@ -82,10 +82,8 @@ def _test_clean(docker_tag):
 
 
 def docker_cp(src, container, dest, quiet=False):
-    utils.run(
-        ["docker", "cp", src, f"{container}:{dest}"],
-        quiet=quiet,
-    )
+    """Copy file into the container."""
+    utils.run(["docker", "cp", src, f"{container}:{dest}"], quiet=quiet)
 
 
 def build_docker_image(release, prune=True, build=True, quiet=False) -> str:

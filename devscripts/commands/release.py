@@ -15,8 +15,10 @@
 
 """Release script."""
 
+import difflib
 import importlib
 import sys
+from datetime import date
 
 from devscripts import config
 from devscripts.commands import CommandError
@@ -44,6 +46,28 @@ class Command(DevCommand):
         )
         parser.add_argument("release", help="The actual release you want to build.")
 
+    def _validate_changelog(self, release):
+        path = str(config.DOCS_SOURCE_DIR / "changelog.rst")
+        with open(path, encoding="utf-8") as stream:
+            changelog = stream.read()
+        changelog_header = changelog.splitlines(keepends=True)[:11]
+        expected = f"""#########
+ChangeLog
+#########
+
+.. _changelog-head:
+
+.. _changelog-{release}:
+
+*******************
+{release} ({date.today().strftime('%Y-%m-%d')})
+*******************""".splitlines(
+            keepends=True
+        )
+        if changelog_header != expected:
+            diff = difflib.unified_diff(changelog_header, expected, fromfile=path, tofile="expected")
+            raise CommandError(f"ChangeLog has improper header:\n\n{''.join(diff)}")
+
     def pre_tag_checks(self, release):
         """Perform checks that can be done before we even tag the repository."""
 
@@ -67,6 +91,9 @@ class Command(DevCommand):
         # Make sure that the docker-compose files are present and default to the about-to-be-released version
         if docker_compose.validate_docker_compose_files(release) != 0:
             raise CommandError("docker-compose files in inconsistent state.")
+
+        # Validate that docs/source/changelog.rst has a proper header
+        self._validate_changelog(release)
 
         return repo
 

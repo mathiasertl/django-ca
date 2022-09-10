@@ -25,7 +25,7 @@ from devscripts import utils
 from devscripts.out import info
 
 
-def run(release, client, image, pip_cache_dir, extra=None):
+def run(release, image, pip_cache_dir, extra=None):
     """Actually run a given wheel test."""
     docker_pip_cache = "/tmp/cache"
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
@@ -83,11 +83,11 @@ def validate(release):
         )
 
         # get cache dir in image
-        run(release, client, image.id, host_pip_cache)
+        run(release, image.id, host_pip_cache)
 
         for extra in list(setup_cfg["options"]["extras_require"]):
             info(f"Test extra: {extra}", indent="    ")
-            run(release, client, image.id, host_pip_cache, extra=extra)
+            run(release, image.id, host_pip_cache, extra=extra)
 
         time.sleep(1)
         image.remove(force=True)
