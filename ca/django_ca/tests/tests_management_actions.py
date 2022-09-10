@@ -20,9 +20,7 @@ import sys
 import typing
 from datetime import timedelta
 from io import StringIO
-from unittest import TestLoader
-from unittest import TestSuite
-from unittest import mock
+from unittest import TestLoader, TestSuite, mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -33,14 +31,10 @@ from cryptography.x509.oid import NameOID
 from django.test import TestCase
 
 from ..constants import ReasonFlags
-from ..extensions import OID_TO_KEY
-from ..extensions import TLSFeature
+from ..extensions import OID_TO_KEY, TLSFeature
 from ..management import actions
-from ..models import Certificate
-from ..models import CertificateAuthority
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
+from ..models import Certificate, CertificateAuthority
+from .base import certs, override_settings, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 

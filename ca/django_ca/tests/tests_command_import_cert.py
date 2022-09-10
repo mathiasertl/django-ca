@@ -23,9 +23,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from ..models import Certificate
-from .base import certs
-from .base import override_tmpcadir
-from .base import timestamps
+from .base import certs, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 

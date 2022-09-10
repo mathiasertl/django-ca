@@ -21,15 +21,12 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.management.base import BaseCommand
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from .. import ca_settings
 from ..extensions import get_extension_name
 from ..extensions.utils import extension_as_text
-from ..models import CertificateAuthority
-from ..models import X509CertMixin
+from ..models import CertificateAuthority, X509CertMixin
 from ..utils import add_colons
 from . import actions
 

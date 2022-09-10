@@ -16,45 +16,40 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-from typing import ClassVar
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Union
+from typing import ClassVar, Optional, Set, Tuple, Union
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
-from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from ..typehints import ParsableAuthorityInformationAccess
-from ..typehints import ParsableAuthorityKeyIdentifier
-from ..typehints import ParsableBasicConstraints
-from ..typehints import ParsableExtension
-from ..typehints import ParsableGeneralNameList
-from ..typehints import ParsableNameConstraints
-from ..typehints import ParsablePolicyConstraints
-from ..typehints import ParsablePolicyInformation
-from ..typehints import ParsableSubjectKeyIdentifier
-from ..typehints import SerializedAuthorityInformationAccess
-from ..typehints import SerializedAuthorityKeyIdentifier
-from ..typehints import SerializedBasicConstraints
-from ..typehints import SerializedNameConstraints
-from ..typehints import SerializedPolicyConstraints
-from ..typehints import SerializedPolicyInformation
-from ..utils import GeneralNameList
-from ..utils import bytes_to_hex
-from ..utils import hex_to_bytes
-from .base import AlternativeNameExtension
-from .base import CRLDistributionPointsBase
-from .base import Extension
-from .base import ListExtension
-from .base import NullExtension
-from .base import OrderedSetExtension
-from .base import SignedCertificateTimestampsBase
-from .utils import EXTENDED_KEY_USAGE_NAMES
-from .utils import KEY_USAGE_NAMES
-from .utils import PolicyInformation
+from ..typehints import (
+    ParsableAuthorityInformationAccess,
+    ParsableAuthorityKeyIdentifier,
+    ParsableBasicConstraints,
+    ParsableExtension,
+    ParsableGeneralNameList,
+    ParsableNameConstraints,
+    ParsablePolicyConstraints,
+    ParsablePolicyInformation,
+    ParsableSubjectKeyIdentifier,
+    SerializedAuthorityInformationAccess,
+    SerializedAuthorityKeyIdentifier,
+    SerializedBasicConstraints,
+    SerializedNameConstraints,
+    SerializedPolicyConstraints,
+    SerializedPolicyInformation,
+)
+from ..utils import GeneralNameList, bytes_to_hex, hex_to_bytes
+from .base import (
+    AlternativeNameExtension,
+    CRLDistributionPointsBase,
+    Extension,
+    ListExtension,
+    NullExtension,
+    OrderedSetExtension,
+    SignedCertificateTimestampsBase,
+)
+from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, PolicyInformation
 
 # Placeholder until we fill in something good
 ParsableValueDummy = str

@@ -17,58 +17,59 @@ import doctest
 import os
 import sys
 import typing
-from unittest import TestLoader
-from unittest import TestSuite
+from unittest import TestLoader, TestSuite
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
-from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtendedKeyUsageOID
-from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import ObjectIdentifier
+from cryptography.x509.oid import (
+    AuthorityInformationAccessOID,
+    ExtendedKeyUsageOID,
+    ExtensionOID,
+    ObjectIdentifier,
+)
 
 from django.conf import settings
 from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ..extensions import KEY_TO_EXTENSION
-from ..extensions import OID_TO_EXTENSION
-from ..extensions import AuthorityInformationAccess
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
-from ..extensions import CertificatePolicies
-from ..extensions import CRLDistributionPoints
-from ..extensions import ExtendedKeyUsage
-from ..extensions import Extension
-from ..extensions import FreshestCRL
-from ..extensions import InhibitAnyPolicy
-from ..extensions import IssuerAlternativeName
-from ..extensions import KeyUsage
-from ..extensions import NameConstraints
-from ..extensions import OCSPNoCheck
-from ..extensions import PolicyConstraints
-from ..extensions import PrecertificateSignedCertificateTimestamps
-from ..extensions import PrecertPoison
-from ..extensions import SubjectAlternativeName
-from ..extensions import SubjectKeyIdentifier
-from ..extensions import TLSFeature
+from ..extensions import (
+    KEY_TO_EXTENSION,
+    OID_TO_EXTENSION,
+    AuthorityInformationAccess,
+    AuthorityKeyIdentifier,
+    BasicConstraints,
+    CertificatePolicies,
+    CRLDistributionPoints,
+    ExtendedKeyUsage,
+    Extension,
+    FreshestCRL,
+    InhibitAnyPolicy,
+    IssuerAlternativeName,
+    KeyUsage,
+    NameConstraints,
+    OCSPNoCheck,
+    PolicyConstraints,
+    PrecertificateSignedCertificateTimestamps,
+    PrecertPoison,
+    SubjectAlternativeName,
+    SubjectKeyIdentifier,
+    TLSFeature,
+)
 from ..extensions.base import UnrecognizedExtension
-from ..extensions.utils import PolicyInformation
-from ..extensions.utils import extension_as_admin_html
-from ..extensions.utils import extension_as_text
+from ..extensions.utils import PolicyInformation, extension_as_admin_html, extension_as_text
 from ..models import X509CertMixin
 from ..typehints import ParsablePolicyInformation
 from ..utils import GeneralNameList
-from .base import certs
-from .base import dns
-from .base import uri
-from .base.extensions import CRLDistributionPointsTestCaseBase
-from .base.extensions import ExtensionTestMixin
-from .base.extensions import ListExtensionTestMixin
-from .base.extensions import NullExtensionTestMixin
-from .base.extensions import OrderedSetExtensionTestMixin
-from .base.extensions import TestValues
+from .base import certs, dns, uri
+from .base.extensions import (
+    CRLDistributionPointsTestCaseBase,
+    ExtensionTestMixin,
+    ListExtensionTestMixin,
+    NullExtensionTestMixin,
+    OrderedSetExtensionTestMixin,
+    TestValues,
+)
 from .base.mixins import TestCaseMixin
 
 

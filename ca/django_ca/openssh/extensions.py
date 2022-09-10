@@ -15,9 +15,7 @@
 
 import typing
 
-from cryptography.x509 import Extension
-from cryptography.x509 import ObjectIdentifier
-from cryptography.x509 import UnrecognizedExtension
+from cryptography.x509 import Extension, ObjectIdentifier, UnrecognizedExtension
 
 SSH_HOST_CA = ObjectIdentifier("1.2.22.2")
 SSH_USER_CA = ObjectIdentifier("1.2.22.1")

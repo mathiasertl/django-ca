@@ -42,9 +42,10 @@ ignore-path = [
 ]
 
 [tool.isort]
+profile = "black"
+skip_gitignore = true
 line_length = 110
 extend_skip = ["migrations", "stubs"]
-force_single_line = true
 known_crypto = [
     "cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto",
 ]

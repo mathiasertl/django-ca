@@ -19,37 +19,26 @@ import json
 import re
 import typing
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from http import HTTPStatus
 from unittest import mock
 from urllib.parse import quote
 
-from OpenSSL.crypto import FILETYPE_PEM
-from OpenSSL.crypto import X509Store
-from OpenSSL.crypto import X509StoreContext
-from OpenSSL.crypto import load_certificate
+from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ed448
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric import x448
-from cryptography.hazmat.primitives.asymmetric import x25519
+from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 import django
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import ValidationError
-from django.core.management import ManagementUtility
-from django.core.management import call_command
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.management import ManagementUtility, call_command
 from django.core.management.base import CommandError
 from django.db import models
 from django.dispatch.dispatcher import Signal
@@ -59,30 +48,17 @@ from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
 from freezegun import freeze_time
-from freezegun.api import FrozenDateTimeFactory
-from freezegun.api import StepTickTimeFactory
+from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from ... import ca_settings
 from ...constants import ReasonFlags
-from ...deprecation import RemovedInDjangoCA123Warning
-from ...deprecation import RemovedInDjangoCA124Warning
+from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
 from ...extensions import Extension
-from ...extensions.base import CRLDistributionPointsBase
-from ...extensions.base import IterableExtension
-from ...extensions.base import ListExtension
-from ...models import Certificate
-from ...models import CertificateAuthority
-from ...models import DjangoCAModel
-from ...models import X509CertMixin
-from ...signals import post_create_ca
-from ...signals import post_issue_cert
-from ...signals import post_revoke_cert
-from ...signals import pre_create_ca
-from ...signals import pre_issue_cert
-from ...utils import ca_storage
-from ...utils import parse_general_name
-from . import certs
-from . import timestamps
+from ...extensions.base import CRLDistributionPointsBase, IterableExtension, ListExtension
+from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
+from ...signals import post_create_ca, post_issue_cert, post_revoke_cert, pre_create_ca, pre_issue_cert
+from ...utils import ca_storage, parse_general_name
+from . import certs, timestamps
 from .typehints import DjangoCAModelTypeVar
 
 if typing.TYPE_CHECKING:

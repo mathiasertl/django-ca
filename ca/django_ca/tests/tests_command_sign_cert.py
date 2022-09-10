@@ -18,8 +18,7 @@ import os
 import re
 import stat
 import unittest
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -30,22 +29,18 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import OID_DEFAULT_CRITICAL
-from ..extensions import ExtendedKeyUsage
-from ..extensions import IssuerAlternativeName
-from ..extensions import KeyUsage
-from ..extensions import SubjectAlternativeName
-from ..extensions import TLSFeature
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..signals import post_issue_cert
-from ..signals import pre_issue_cert
-from ..utils import ca_storage
-from ..utils import x509_name
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from ..extensions import (
+    OID_DEFAULT_CRITICAL,
+    ExtendedKeyUsage,
+    IssuerAlternativeName,
+    KeyUsage,
+    SubjectAlternativeName,
+    TLSFeature,
+)
+from ..models import Certificate, CertificateAuthority
+from ..signals import post_issue_cert, pre_issue_cert
+from ..utils import ca_storage, x509_name
+from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 

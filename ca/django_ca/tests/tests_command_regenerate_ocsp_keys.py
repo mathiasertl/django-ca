@@ -21,13 +21,10 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 from django.test import TestCase
 
-from ..models import Certificate
-from ..models import CertificateAuthority
+from ..models import Certificate, CertificateAuthority
 from ..typehints import PrivateKeyTypes
-from ..utils import add_colons
-from ..utils import ca_storage
-from .base import certs
-from .base import override_tmpcadir
+from ..utils import add_colons, ca_storage
+from .base import certs, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 

@@ -19,8 +19,7 @@ from datetime import timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import dsa, ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.x509.oid import NameOID
 
@@ -30,15 +29,10 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import AuthorityInformationAccess
-from ..extensions import CRLDistributionPoints
-from ..extensions import NameConstraints
+from ..extensions import AuthorityInformationAccess, CRLDistributionPoints, NameConstraints
 from ..models import CertificateAuthority
-from ..utils import int_to_hex
-from ..utils import x509_name
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from ..utils import int_to_hex, x509_name
+from .base import override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 

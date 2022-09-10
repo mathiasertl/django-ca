@@ -23,27 +23,24 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.x509.oid import NameOID
 
 from django.db import models
-from django.test import TestCase
-from django.test import TransactionTestCase
+from django.test import TestCase, TransactionTestCase
 
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import BasicConstraints
-from ..extensions import KeyUsage
-from ..models import AcmeAccount
-from ..models import AcmeAuthorization
-from ..models import AcmeCertificate
-from ..models import AcmeChallenge
-from ..models import AcmeOrder
-from ..models import Certificate
-from ..models import CertificateAuthority
+from ..extensions import BasicConstraints, KeyUsage
+from ..models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+)
 from ..utils import x509_name
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
-from .base.mixins import AcmeValuesMixin
-from .base.mixins import TestCaseMixin
+from .base import override_settings, override_tmpcadir, timestamps
+from .base.mixins import AcmeValuesMixin, TestCaseMixin
 
 
 class QuerySetTestCaseMixin(TestCaseMixin):

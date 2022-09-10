@@ -19,11 +19,13 @@ import warnings
 
 from django.test import TestCase
 
-from ..deprecation import DeprecationWarningType
-from ..deprecation import RemovedInDjangoCA123Warning
-from ..deprecation import RemovedInDjangoCA124Warning
-from ..deprecation import RemovedInNextVersionWarning
-from ..deprecation import deprecate_argument
+from ..deprecation import (
+    DeprecationWarningType,
+    RemovedInDjangoCA123Warning,
+    RemovedInDjangoCA124Warning,
+    RemovedInNextVersionWarning,
+    deprecate_argument,
+)
 
 
 class TestDjangoCATestCase(TestCase):

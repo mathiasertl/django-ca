@@ -18,52 +18,53 @@
 import abc
 import binascii
 import collections.abc
-from typing import Any
-from typing import ClassVar
-from typing import Collection
-from typing import Generic
-from typing import Hashable
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import NoReturn
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
-from typing import Union
-from typing import cast
-from typing import overload
+from typing import (
+    Any,
+    ClassVar,
+    Collection,
+    Generic,
+    Hashable,
+    Iterable,
+    Iterator,
+    List,
+    NoReturn,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+    cast,
+    overload,
+)
 
 from cryptography import x509
-from cryptography.x509.certificate_transparency import LogEntryType
-from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
+from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
 
-from ..typehints import AlternativeNameTypeVar
-from ..typehints import ExtensionType
-from ..typehints import ExtensionTypeTypeVar
-from ..typehints import IterableItem
-from ..typehints import ParsableDistributionPoint
-from ..typehints import ParsableExtension
-from ..typehints import ParsableGeneralName
-from ..typehints import ParsableGeneralNameList
-from ..typehints import ParsableItem
-from ..typehints import ParsableSignedCertificateTimestamp
-from ..typehints import ParsableValue
-from ..typehints import SerializedDistributionPoint
-from ..typehints import SerializedDistributionPoints
-from ..typehints import SerializedExtension
-from ..typehints import SerializedItem
-from ..typehints import SerializedNullExtension
-from ..typehints import SerializedSignedCertificateTimestamp
-from ..typehints import SerializedSortableItem
-from ..typehints import SerializedValue
-from ..typehints import SignedCertificateTimestampsBaseTypeVar
-from ..typehints import UnrecognizedExtensionType
-from ..utils import GeneralNameList
-from ..utils import format_general_name
-from .utils import DistributionPoint
-from .utils import extension_as_text
+from ..typehints import (
+    AlternativeNameTypeVar,
+    ExtensionType,
+    ExtensionTypeTypeVar,
+    IterableItem,
+    ParsableDistributionPoint,
+    ParsableExtension,
+    ParsableGeneralName,
+    ParsableGeneralNameList,
+    ParsableItem,
+    ParsableSignedCertificateTimestamp,
+    ParsableValue,
+    SerializedDistributionPoint,
+    SerializedDistributionPoints,
+    SerializedExtension,
+    SerializedItem,
+    SerializedNullExtension,
+    SerializedSignedCertificateTimestamp,
+    SerializedSortableItem,
+    SerializedValue,
+    SignedCertificateTimestampsBaseTypeVar,
+    UnrecognizedExtensionType,
+)
+from ..utils import GeneralNameList, format_general_name
+from .utils import DistributionPoint, extension_as_text
 
 
 class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=abc.ABCMeta):

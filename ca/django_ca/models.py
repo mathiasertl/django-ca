@@ -24,37 +24,23 @@ import logging
 import random
 import re
 import typing
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from datetime import timezone as tz
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
-from typing import cast
+from typing import Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import josepy as jose
-from acme import challenges
-from acme import messages
+from acme import challenges, messages
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dh
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import ed448
-from cryptography.hazmat.primitives.asymmetric import x448
-from cryptography.hazmat.primitives.asymmetric import x25519
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import PrivateFormat
-from cryptography.hazmat.primitives.serialization import PublicFormat
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, x448, x25519
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    PrivateFormat,
+    PublicFormat,
+    load_pem_private_key,
+)
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -71,75 +57,79 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .acme.constants import BASE64_URL_ALPHABET
-from .acme.constants import IdentifierType
-from .acme.constants import Status
+from .acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from .constants import ReasonFlags
-from .extensions import OID_TO_EXTENSION
-from .extensions import AuthorityInformationAccess
-from .extensions import AuthorityKeyIdentifier
-from .extensions import BasicConstraints
-from .extensions import CertificatePolicies
-from .extensions import CRLDistributionPoints
-from .extensions import ExtendedKeyUsage
-from .extensions import FreshestCRL
-from .extensions import InhibitAnyPolicy
-from .extensions import IssuerAlternativeName
-from .extensions import KeyUsage
-from .extensions import NameConstraints
-from .extensions import OCSPNoCheck
-from .extensions import PolicyConstraints
-from .extensions import PrecertificateSignedCertificateTimestamps
-from .extensions import PrecertPoison
-from .extensions import SubjectAlternativeName
-from .extensions import SubjectKeyIdentifier
-from .extensions import TLSFeature
-from .extensions import get_extension_name
+from .extensions import (
+    OID_TO_EXTENSION,
+    AuthorityInformationAccess,
+    AuthorityKeyIdentifier,
+    BasicConstraints,
+    CertificatePolicies,
+    CRLDistributionPoints,
+    ExtendedKeyUsage,
+    FreshestCRL,
+    InhibitAnyPolicy,
+    IssuerAlternativeName,
+    KeyUsage,
+    NameConstraints,
+    OCSPNoCheck,
+    PolicyConstraints,
+    PrecertificateSignedCertificateTimestamps,
+    PrecertPoison,
+    SubjectAlternativeName,
+    SubjectKeyIdentifier,
+    TLSFeature,
+    get_extension_name,
+)
 from .extensions.base import Extension
-from .managers import AcmeAccountManager
-from .managers import AcmeAuthorizationManager
-from .managers import AcmeCertificateManager
-from .managers import AcmeChallengeManager
-from .managers import AcmeOrderManager
-from .managers import CertificateAuthorityManager
-from .managers import CertificateManager
-from .modelfields import CertificateField
-from .modelfields import CertificateSigningRequestField
-from .modelfields import LazyCertificate
-from .openssh import SshHostCaExtension
-from .openssh import SshUserCaExtension
+from .managers import (
+    AcmeAccountManager,
+    AcmeAuthorizationManager,
+    AcmeCertificateManager,
+    AcmeChallengeManager,
+    AcmeOrderManager,
+    CertificateAuthorityManager,
+    CertificateManager,
+)
+from .modelfields import CertificateField, CertificateSigningRequestField, LazyCertificate
+from .openssh import SshHostCaExtension, SshUserCaExtension
 from .profiles import profiles
-from .querysets import AcmeAccountQuerySet
-from .querysets import AcmeAuthorizationQuerySet
-from .querysets import AcmeCertificateQuerySet
-from .querysets import AcmeChallengeQuerySet
-from .querysets import AcmeOrderQuerySet
-from .querysets import CertificateAuthorityQuerySet
-from .querysets import CertificateQuerySet
-from .signals import post_revoke_cert
-from .signals import pre_revoke_cert
-from .typehints import Expires
-from .typehints import ExtensionTypeTypeVar
-from .typehints import Literal
-from .typehints import ParsableHash
-from .typehints import ParsableKeyType
-from .typehints import ParsableValue
-from .typehints import PrivateKeyTypes
-from .typehints import SerializedValue
-from .utils import bytes_to_hex
-from .utils import ca_storage
-from .utils import classproperty
-from .utils import format_name
-from .utils import generate_private_key
-from .utils import get_crl_cache_key
-from .utils import int_to_hex
-from .utils import multiline_url_validator
-from .utils import parse_encoding
-from .utils import parse_expires
-from .utils import parse_general_name
-from .utils import parse_hash_algorithm
-from .utils import read_file
-from .utils import validate_key_parameters
+from .querysets import (
+    AcmeAccountQuerySet,
+    AcmeAuthorizationQuerySet,
+    AcmeCertificateQuerySet,
+    AcmeChallengeQuerySet,
+    AcmeOrderQuerySet,
+    CertificateAuthorityQuerySet,
+    CertificateQuerySet,
+)
+from .signals import post_revoke_cert, pre_revoke_cert
+from .typehints import (
+    Expires,
+    ExtensionTypeTypeVar,
+    Literal,
+    ParsableHash,
+    ParsableKeyType,
+    ParsableValue,
+    PrivateKeyTypes,
+    SerializedValue,
+)
+from .utils import (
+    bytes_to_hex,
+    ca_storage,
+    classproperty,
+    format_name,
+    generate_private_key,
+    get_crl_cache_key,
+    int_to_hex,
+    multiline_url_validator,
+    parse_encoding,
+    parse_expires,
+    parse_general_name,
+    parse_hash_algorithm,
+    read_file,
+    validate_key_parameters,
+)
 
 log = logging.getLogger(__name__)
 

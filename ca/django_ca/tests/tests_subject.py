@@ -15,8 +15,7 @@
 
 import doctest
 import typing
-from unittest import TestLoader
-from unittest import TestSuite
+from unittest import TestLoader, TestSuite
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID

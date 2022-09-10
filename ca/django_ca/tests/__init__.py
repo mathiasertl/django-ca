@@ -17,13 +17,11 @@
 """handle signal when reloading settings, so that ca_settings is also reloaded."""
 
 import importlib
-from typing import Any
-from typing import Type
+from typing import Any, Type
 
 from django.test.signals import setting_changed
 
-from .. import ca_settings
-from .. import profiles
+from .. import ca_settings, profiles
 
 
 def reload_ca_settings(  # pylint: disable=unused-argument

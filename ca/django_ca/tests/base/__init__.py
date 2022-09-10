@@ -21,8 +21,7 @@ import shutil
 import tempfile
 import typing
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import cryptography
@@ -35,10 +34,8 @@ from django.test.utils import override_settings
 
 from ...extensions import KEY_TO_EXTENSION
 from ...profiles import profiles
-from ...typehints import PrivateKeyTypes
-from ...typehints import TypedDict
-from ...utils import add_colons
-from ...utils import ca_storage
+from ...typehints import PrivateKeyTypes, TypedDict
+from ...utils import add_colons, ca_storage
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
 KeyDict = TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})

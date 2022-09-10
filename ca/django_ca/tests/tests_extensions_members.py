@@ -20,8 +20,7 @@ from cryptography.x509.oid import ObjectIdentifier
 
 from django.test import TestCase
 
-from ..extensions.utils import DistributionPoint
-from ..extensions.utils import PolicyInformation
+from ..extensions.utils import DistributionPoint, PolicyInformation
 from ..typehints import ParsablePolicyInformation
 from .base import uri
 from .base.mixins import TestCaseMixin

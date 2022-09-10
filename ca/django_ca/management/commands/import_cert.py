@@ -21,11 +21,9 @@ import typing
 
 from cryptography import x509
 
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
+from django.core.management.base import CommandError, CommandParser
 
-from ...models import Certificate
-from ...models import CertificateAuthority
+from ...models import Certificate, CertificateAuthority
 from ..base import BaseCommand
 
 

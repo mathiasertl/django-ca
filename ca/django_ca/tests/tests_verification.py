@@ -26,10 +26,8 @@ from cryptography.x509.oid import NameOID
 from django.test import TestCase
 from django.urls import reverse
 
-from ..models import CertificateAuthority
-from ..models import X509CertMixin
-from .base import certs
-from .base import override_tmpcadir
+from ..models import CertificateAuthority, X509CertMixin
+from .base import certs, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 

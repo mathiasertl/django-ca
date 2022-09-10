@@ -19,8 +19,7 @@
 import argparse
 import typing
 
-from ...tasks import cache_crls
-from ...tasks import run_task
+from ...tasks import cache_crls, run_task
 from ..base import BaseCommand
 
 

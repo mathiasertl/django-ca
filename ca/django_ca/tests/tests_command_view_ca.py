@@ -17,8 +17,7 @@ import typing
 
 from django.test import TestCase
 
-from .base import override_settings
-from .base import override_tmpcadir
+from .base import override_settings, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 expected = {

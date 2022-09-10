@@ -24,12 +24,8 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from ..extensions import SubjectKeyIdentifier
-from ..models import Certificate
-from ..models import Watcher
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from ..models import Certificate, Watcher
+from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 output = {

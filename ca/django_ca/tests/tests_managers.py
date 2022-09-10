@@ -25,21 +25,18 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA123Warning
-from ..extensions import AuthorityInformationAccess
-from ..extensions import CRLDistributionPoints
-from ..extensions import IssuerAlternativeName
-from ..extensions import NameConstraints
-from ..extensions import SubjectAlternativeName
-from ..models import Certificate
-from ..models import CertificateAuthority
+from ..extensions import (
+    AuthorityInformationAccess,
+    CRLDistributionPoints,
+    IssuerAlternativeName,
+    NameConstraints,
+    SubjectAlternativeName,
+)
+from ..models import Certificate, CertificateAuthority
 from ..profiles import profiles
-from ..querysets import CertificateAuthorityQuerySet
-from ..querysets import CertificateQuerySet
+from ..querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from ..typehints import ParsableExtension
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 

@@ -25,9 +25,7 @@ from django.utils.translation import gettext_lazy as _
 from .extensions import Extension
 from .profiles import profile
 from .utils import ADMIN_SUBJECT_OIDS
-from .widgets import MultiValueExtensionWidget
-from .widgets import SubjectAltNameWidget
-from .widgets import SubjectWidget
+from .widgets import MultiValueExtensionWidget, SubjectAltNameWidget, SubjectWidget
 
 if typing.TYPE_CHECKING:
     from .modelfields import LazyCertificateSigningRequest

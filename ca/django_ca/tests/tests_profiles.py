@@ -20,33 +20,28 @@ from datetime import timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
-from ..extensions import AuthorityInformationAccess
-from ..extensions import BasicConstraints
-from ..extensions import CRLDistributionPoints
-from ..extensions import IssuerAlternativeName
-from ..extensions import KeyUsage
-from ..extensions import OCSPNoCheck
-from ..extensions import SubjectAlternativeName
-from ..extensions import SubjectKeyIdentifier
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..profiles import Profile
-from ..profiles import get_profile
-from ..profiles import profile
-from ..profiles import profiles
+from ..extensions import (
+    AuthorityInformationAccess,
+    BasicConstraints,
+    CRLDistributionPoints,
+    IssuerAlternativeName,
+    KeyUsage,
+    OCSPNoCheck,
+    SubjectAlternativeName,
+    SubjectKeyIdentifier,
+)
+from ..models import Certificate, CertificateAuthority
+from ..profiles import Profile, get_profile, profile, profiles
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import parse_hash_algorithm
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
+from .base import certs, override_settings, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 

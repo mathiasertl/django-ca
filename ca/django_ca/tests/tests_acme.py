@@ -26,20 +26,14 @@ from dns import resolver
 from dns.rdtypes.txtbase import TXTBase
 
 from django.test import TestCase
-from django.urls import include
-from django.urls import path
-from django.urls import reverse
+from django.urls import include, path, reverse
 from django.urls.exceptions import NoReverseMatch
 from django.utils.crypto import get_random_string
 
 from .. import urls
 from ..acme import validation
-from ..acme.constants import IdentifierType
-from ..acme.constants import Status
-from ..models import AcmeAccount
-from ..models import AcmeAuthorization
-from ..models import AcmeChallenge
-from ..models import AcmeOrder
+from ..acme.constants import IdentifierType, Status
+from ..models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
 from .base import override_settings
 from .base.mixins import TestCaseMixin
 

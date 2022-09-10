@@ -14,8 +14,7 @@
 """Specialized variants of ACME message classes."""
 
 import josepy as jose
-from acme import fields
-from acme import messages
+from acme import fields, messages
 
 identifiers_decoder = messages.Order._fields["identifiers"].fdec
 

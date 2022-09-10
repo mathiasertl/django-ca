@@ -24,41 +24,26 @@ import binascii
 import logging
 import os
 import typing
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509 import ExtensionNotFound
-from cryptography.x509 import OCSPNonce
-from cryptography.x509 import load_pem_x509_certificate
-from cryptography.x509 import ocsp
+from cryptography.x509 import ExtensionNotFound, OCSPNonce, load_pem_x509_certificate, ocsp
 
 from django.core.cache import cache
-from django.http import HttpRequest
-from django.http import HttpResponse
-from django.http import HttpResponseServerError
+from django.http import HttpRequest, HttpResponse, HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from . import ca_settings
-from .models import Certificate
-from .models import CertificateAuthority
-from .typehints import Literal
-from .typehints import PrivateKeyTypes
-from .utils import SERIAL_RE
-from .utils import get_crl_cache_key
-from .utils import int_to_hex
-from .utils import parse_encoding
-from .utils import read_file
+from .models import Certificate, CertificateAuthority
+from .typehints import Literal, PrivateKeyTypes
+from .utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
 

@@ -23,18 +23,13 @@ from datetime import timedelta
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
+from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...extensions import OID_DEFAULT_CRITICAL
-from ...extensions import OID_TO_KEY
-from ...extensions import Extension
+from ...extensions import OID_DEFAULT_CRITICAL, OID_TO_KEY, Extension
 from ...management.base import BaseSignCommand
-from ...models import Certificate
-from ...models import CertificateAuthority
-from ...models import Watcher
+from ...models import Certificate, CertificateAuthority, Watcher
 from ...profiles import profiles
 
 

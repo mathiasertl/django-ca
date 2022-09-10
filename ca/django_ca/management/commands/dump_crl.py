@@ -20,8 +20,7 @@ import typing
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
+from django.core.management.base import CommandError, CommandParser
 
 from ...models import CertificateAuthority
 from ...typehints import Literal

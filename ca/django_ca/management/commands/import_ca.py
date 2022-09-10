@@ -22,12 +22,10 @@ import typing
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 
 from django.core.files.base import ContentFile
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
+from django.core.management.base import CommandError, CommandParser
 
 from ... import ca_settings
 from ...models import CertificateAuthority

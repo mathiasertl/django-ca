@@ -14,32 +14,22 @@
 """Specialized Django forms for the admin interface."""
 
 import typing
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
 from django import forms
-from django.contrib.admin.widgets import AdminDateWidget
-from django.contrib.admin.widgets import AdminSplitDateTime
+from django.contrib.admin.widgets import AdminDateWidget, AdminSplitDateTime
 from django.forms.models import ModelFormOptions
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .extensions import ExtendedKeyUsage
-from .extensions import KeyUsage
-from .extensions import TLSFeature
-from .fields import MultiValueExtensionField
-from .fields import SubjectAltNameField
-from .fields import SubjectField
-from .models import Certificate
-from .models import CertificateAuthority
-from .models import X509CertMixin
-from .utils import EXTENDED_KEY_USAGE_DESC
-from .utils import KEY_USAGE_DESC
-from .utils import parse_general_name
+from .extensions import ExtendedKeyUsage, KeyUsage, TLSFeature
+from .fields import MultiValueExtensionField, SubjectAltNameField, SubjectField
+from .models import Certificate, CertificateAuthority, X509CertMixin
+from .utils import EXTENDED_KEY_USAGE_DESC, KEY_USAGE_DESC, parse_general_name
 from .widgets import ProfileWidget
 
 if typing.TYPE_CHECKING:

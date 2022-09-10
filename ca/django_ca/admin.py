@@ -21,8 +21,7 @@ import functools
 import logging
 import sys
 import typing
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from http import HTTPStatus
 
 from cryptography import x509
@@ -35,16 +34,17 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.db import models
 from django.forms import ModelForm
 from django.forms.widgets import MediaDefiningClass
-from django.http import Http404
-from django.http import HttpRequest
-from django.http import HttpResponse
-from django.http import HttpResponseBadRequest
-from django.http import HttpResponseRedirect
-from django.http import JsonResponse
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
-from django.urls import path
-from django.urls import reverse
+from django.urls import path, reverse
 from django.urls.resolvers import URLPattern
 from django.utils import timezone
 from django.utils.html import format_html
@@ -54,33 +54,24 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import ExtendedKeyUsage
-from .extensions import KeyUsage
-from .extensions import SubjectAlternativeName
-from .extensions import TLSFeature
-from .extensions import get_extension_name
+from .extensions import ExtendedKeyUsage, KeyUsage, SubjectAlternativeName, TLSFeature, get_extension_name
 from .extensions.utils import extension_as_admin_html
-from .forms import CreateCertificateForm
-from .forms import ResignCertificateForm
-from .forms import RevokeCertificateForm
-from .forms import X509CertMixinAdminForm
-from .models import AcmeAccount
-from .models import AcmeAuthorization
-from .models import AcmeCertificate
-from .models import AcmeChallenge
-from .models import AcmeOrder
-from .models import Certificate
-from .models import CertificateAuthority
-from .models import Watcher
-from .models import X509CertMixin
+from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
+from .models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+    Watcher,
+    X509CertMixin,
+)
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
-from .utils import OID_NAME_MAPPINGS
-from .utils import SERIAL_RE
-from .utils import add_colons
-from .utils import format_name
-from .utils import x509_name
+from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name, x509_name
 
 log = logging.getLogger(__name__)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)

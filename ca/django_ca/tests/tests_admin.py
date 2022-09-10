@@ -25,25 +25,18 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.http import HttpResponse
-from django.test import Client
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..models import Watcher
+from ..models import Certificate, CertificateAuthority, Watcher
 from ..subject import Subject
 from ..typehints import PrivateKeyTypes
-from ..utils import OID_NAME_MAPPINGS
-from ..utils import x509_name
-from .base import certs
-from .base import override_tmpcadir
-from .base import timestamps
-from .base.mixins import AdminTestCaseMixin
-from .base.mixins import StandardAdminViewTestCaseMixin
+from ..utils import OID_NAME_MAPPINGS, x509_name
+from .base import certs, override_tmpcadir, timestamps
+from .base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
 
 User = get_user_model()
 

@@ -26,36 +26,22 @@ import typing
 from datetime import datetime
 from datetime import timezone as tz
 from http import HTTPStatus
-from typing import Dict
-from typing import Generic
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Type
-from typing import TypeVar
-from typing import Union
-from typing import cast
+from typing import Dict, Generic, Iterable, List, Optional, Set, Type, TypeVar, Union, cast
 
 import acme.jws
 import josepy as jose
 from acme import messages
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import transaction
-from django.http import Http404
-from django.http import HttpRequest
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -64,41 +50,35 @@ from django.views.generic.base import View
 from .. import ca_settings
 from ..constants import REASON_CODES
 from ..extensions import SubjectAlternativeName
-from ..models import AcmeAccount
-from ..models import AcmeAuthorization
-from ..models import AcmeCertificate
-from ..models import AcmeChallenge
-from ..models import AcmeOrder
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..tasks import acme_issue_certificate
-from ..tasks import acme_validate_challenge
-from ..tasks import run_task
-from ..utils import check_name
-from ..utils import int_to_hex
-from ..utils import make_naive
-from ..utils import validate_email
-from .errors import AcmeBadCSR
-from .errors import AcmeException
-from .errors import AcmeForbidden
-from .errors import AcmeMalformed
-from .errors import AcmeUnauthorized
-from .messages import CertificateRequest
-from .messages import NewOrder
-from .responses import AcmeResponse
-from .responses import AcmeResponseAccount
-from .responses import AcmeResponseAccountCreated
-from .responses import AcmeResponseAuthorization
-from .responses import AcmeResponseBadNonce
-from .responses import AcmeResponseChallenge
-from .responses import AcmeResponseError
-from .responses import AcmeResponseMalformed
-from .responses import AcmeResponseMalformedPayload
-from .responses import AcmeResponseNotFound
-from .responses import AcmeResponseOrder
-from .responses import AcmeResponseOrderCreated
-from .responses import AcmeResponseUnauthorized
-from .responses import AcmeResponseUnsupportedMediaType
+from ..models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+)
+from ..tasks import acme_issue_certificate, acme_validate_challenge, run_task
+from ..utils import check_name, int_to_hex, make_naive, validate_email
+from .errors import AcmeBadCSR, AcmeException, AcmeForbidden, AcmeMalformed, AcmeUnauthorized
+from .messages import CertificateRequest, NewOrder
+from .responses import (
+    AcmeResponse,
+    AcmeResponseAccount,
+    AcmeResponseAccountCreated,
+    AcmeResponseAuthorization,
+    AcmeResponseBadNonce,
+    AcmeResponseChallenge,
+    AcmeResponseError,
+    AcmeResponseMalformed,
+    AcmeResponseMalformedPayload,
+    AcmeResponseNotFound,
+    AcmeResponseOrder,
+    AcmeResponseOrderCreated,
+    AcmeResponseUnauthorized,
+    AcmeResponseUnsupportedMediaType,
+)
 from .utils import parse_acme_csr
 
 log = logging.getLogger(__name__)

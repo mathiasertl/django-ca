@@ -21,18 +21,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
 from django.test import TestCase
-from django.urls import include
-from django.urls import path
-from django.urls import re_path
-from django.urls import reverse
+from django.urls import include, path, re_path, reverse
 
 from freezegun import freeze_time
 
 from .. import ca_settings
 from ..views import CertificateRevocationListView
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
+from .base import certs, override_settings, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 app_name = "django_ca"
