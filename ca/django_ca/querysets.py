@@ -15,10 +15,7 @@
 
 import abc
 import typing
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Generic
-from typing import TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
@@ -44,14 +41,16 @@ if not TYPE_CHECKING:
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
     X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
 else:  # pragma: no cover  # only used for type checking
-    from .models import AcmeAccount
-    from .models import AcmeAuthorization
-    from .models import AcmeCertificate
-    from .models import AcmeChallenge
-    from .models import AcmeOrder
-    from .models import Certificate
-    from .models import CertificateAuthority
-    from .models import X509CertMixin
+    from .models import (
+        AcmeAccount,
+        AcmeAuthorization,
+        AcmeCertificate,
+        AcmeChallenge,
+        AcmeOrder,
+        Certificate,
+        CertificateAuthority,
+        X509CertMixin,
+    )
 
     AcmeAccountQuerySetBase = models.QuerySet[AcmeAccount]
     AcmeAuthorizationQuerySetBase = models.QuerySet[AcmeAuthorization]

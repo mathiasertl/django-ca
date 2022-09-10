@@ -22,23 +22,17 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.dispatch.dispatcher import Signal
 from django.http import HttpResponse
-from django.test import Client
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
-from django_webtest import DjangoWebtestResponse
-from django_webtest import WebTestMixin
+from django_webtest import DjangoWebtestResponse, WebTestMixin
 from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
 from ..models import Certificate
-from ..signals import post_issue_cert
-from ..signals import post_revoke_cert
-from ..signals import pre_issue_cert
-from ..signals import pre_revoke_cert
-from .base import override_tmpcadir
-from .base import timestamps
+from ..signals import post_issue_cert, post_revoke_cert, pre_issue_cert, pre_revoke_cert
+from .base import override_tmpcadir, timestamps
 from .base.mixins import AdminTestCaseMixin
 from .base.typehints import DjangoCAModelTypeVar
 

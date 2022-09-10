@@ -22,14 +22,8 @@ from django.contrib.admin.templatetags.admin_modify import submit_row
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES
-from ..extensions.utils import key_usage_items
-from ..extensions.utils import signed_certificate_timestamp_values
-from ..utils import add_colons
-from ..utils import bytes_to_hex
-from ..utils import format_general_name
-from ..utils import format_name
-from ..utils import int_to_hex
+from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, key_usage_items, signed_certificate_timestamp_values
+from ..utils import add_colons, bytes_to_hex, format_general_name, format_name, int_to_hex
 
 register = template.Library()
 

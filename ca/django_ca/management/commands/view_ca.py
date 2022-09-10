@@ -22,8 +22,7 @@ from django.core.management.base import CommandParser
 
 from ... import ca_settings
 from ...models import CertificateAuthority
-from ...utils import add_colons
-from ...utils import ca_storage
+from ...utils import add_colons, ca_storage
 from ..base import BaseCommand
 
 

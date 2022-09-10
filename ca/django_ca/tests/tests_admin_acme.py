@@ -18,12 +18,14 @@ import typing
 from django.test import TestCase
 from django.utils import timezone
 
-from ..models import AcmeAccount
-from ..models import AcmeAuthorization
-from ..models import AcmeCertificate
-from ..models import AcmeChallenge
-from ..models import AcmeOrder
-from ..models import CertificateAuthority
+from ..models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    CertificateAuthority,
+)
 from .base import override_tmpcadir
 from .base.mixins import StandardAdminViewTestCaseMixin
 from .base.typehints import DjangoCAModelTypeVar

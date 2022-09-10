@@ -14,12 +14,9 @@
 """URL configuration for this project."""
 
 from django.conf import settings
-from django.urls import path
-from django.urls import register_converter
+from django.urls import path, register_converter
 
-from . import ca_settings
-from . import converters
-from . import views
+from . import ca_settings, converters, views
 
 app_name = "django_ca"
 

@@ -20,34 +20,18 @@ import operator
 import typing
 
 from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.x509.oid import ObjectIdentifier
+from cryptography.x509.oid import NameOID, ObjectIdentifier
 
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ...extensions import KEY_TO_EXTENSION
-from ...extensions import OID_TO_EXTENSION
-from ...extensions import CRLDistributionPoints
-from ...extensions import Extension
-from ...extensions import FreshestCRL
-from ...extensions.base import IterableExtension
-from ...extensions.base import ListExtension
-from ...extensions.base import NullExtension
-from ...extensions.base import OrderedSetExtension
-from ...extensions.utils import DistributionPoint
-from ...extensions.utils import extension_as_admin_html
-from ...extensions.utils import extension_as_text
+from ...extensions import KEY_TO_EXTENSION, OID_TO_EXTENSION, CRLDistributionPoints, Extension, FreshestCRL
+from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
+from ...extensions.utils import DistributionPoint, extension_as_admin_html, extension_as_text
 from ...models import X509CertMixin
-from ...typehints import CRLExtensionTypeTypeVar
-from ...typehints import ParsableDistributionPoint
-from ...typehints import ParsableExtension
-from ...typehints import TypedDict
-from . import dns
-from . import rdn
-from . import uri
-from .mixins import TestCaseMixin
-from .mixins import TestCaseProtocol
+from ...typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension, TypedDict
+from . import dns, rdn, uri
+from .mixins import TestCaseMixin, TestCaseProtocol
 
 ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)  # type: ignore[type-arg]
 NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)  # type: ignore[type-arg]

@@ -23,9 +23,7 @@ from cryptography import x509
 from django.conf import settings
 from django.test import TestCase
 
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
+from .base import certs, override_settings, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))

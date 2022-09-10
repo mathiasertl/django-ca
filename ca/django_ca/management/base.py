@@ -18,26 +18,20 @@ import argparse
 import io
 import sys
 import typing
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from cryptography import x509
 
 from django.core.management.base import BaseCommand as _BaseCommand
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
-from django.core.management.base import OutputWrapper
+from django.core.management.base import CommandError, CommandParser, OutputWrapper
 from django.utils import timezone
 
 from .. import ca_settings
-from ..extensions import ExtendedKeyUsage
-from ..extensions import KeyUsage
-from ..extensions import TLSFeature
+from ..extensions import ExtendedKeyUsage, KeyUsage, TLSFeature
 from ..models import CertificateAuthority
 from ..profiles import Profile
 from ..utils import NAME_OID_MAPPINGS
-from . import actions
-from . import mixins
+from . import actions, mixins
 
 
 class BinaryOutputWrapper(OutputWrapper):

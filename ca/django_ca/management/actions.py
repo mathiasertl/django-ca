@@ -30,15 +30,16 @@ from django.core.validators import URLValidator
 from .. import ca_settings
 from ..constants import ReasonFlags
 from ..extensions import OID_TO_KEY
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..utils import is_power2
-from ..utils import parse_encoding
-from ..utils import parse_general_name
-from ..utils import parse_hash_algorithm
-from ..utils import parse_key_curve
-from ..utils import split_str
-from ..utils import x509_name
+from ..models import Certificate, CertificateAuthority
+from ..utils import (
+    is_power2,
+    parse_encoding,
+    parse_general_name,
+    parse_hash_algorithm,
+    parse_key_curve,
+    split_str,
+    x509_name,
+)
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
 ExtensionType = typing.TypeVar("ExtensionType", bound=x509.ExtensionType)  # pylint: disable=invalid-name

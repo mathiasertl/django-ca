@@ -17,23 +17,13 @@
 import pathlib
 import typing
 import warnings
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Generic
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import TypeVar
-from typing import Union
+from typing import TYPE_CHECKING, Any, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django.core.files.base import ContentFile
@@ -41,46 +31,37 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA123Warning
-from .deprecation import deprecate_argument
-from .deprecation import deprecate_type
-from .extensions import OID_DEFAULT_CRITICAL
-from .extensions import Extension
-from .extensions import IssuerAlternativeName
-from .extensions import NameConstraints
+from .deprecation import RemovedInDjangoCA123Warning, deprecate_argument, deprecate_type
+from .extensions import OID_DEFAULT_CRITICAL, Extension, IssuerAlternativeName, NameConstraints
 from .modelfields import LazyCertificateSigningRequest
-from .openssh import SshHostCaExtension
-from .openssh import SshUserCaExtension
-from .profiles import Profile
-from .profiles import profiles
-from .signals import post_create_ca
-from .signals import post_issue_cert
-from .signals import pre_create_ca
-from .typehints import Expires
-from .typehints import ParsableExtension
-from .typehints import ParsableKeyType
-from .utils import ca_storage
-from .utils import format_general_name
-from .utils import generate_private_key
-from .utils import get_cert_builder
-from .utils import int_to_hex
-from .utils import parse_expires
-from .utils import parse_general_name
-from .utils import validate_hostname
-from .utils import validate_key_parameters
+from .openssh import SshHostCaExtension, SshUserCaExtension
+from .profiles import Profile, profiles
+from .signals import post_create_ca, post_issue_cert, pre_create_ca
+from .typehints import Expires, ParsableExtension, ParsableKeyType
+from .utils import (
+    ca_storage,
+    format_general_name,
+    generate_private_key,
+    get_cert_builder,
+    int_to_hex,
+    parse_expires,
+    parse_general_name,
+    validate_hostname,
+    validate_key_parameters,
+)
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
 if TYPE_CHECKING:
-    from .models import AcmeAccount
-    from .models import AcmeAuthorization
-    from .models import AcmeCertificate
-    from .models import AcmeChallenge
-    from .models import AcmeOrder
-    from .models import Certificate
-    from .models import CertificateAuthority
-    from .querysets import AcmeAccountQuerySet
-    from .querysets import CertificateAuthorityQuerySet
-    from .querysets import CertificateQuerySet
+    from .models import (
+        AcmeAccount,
+        AcmeAuthorization,
+        AcmeCertificate,
+        AcmeChallenge,
+        AcmeOrder,
+        Certificate,
+        CertificateAuthority,
+    )
+    from .querysets import AcmeAccountQuerySet, CertificateAuthorityQuerySet, CertificateQuerySet
 
     AcmeAccountManagerBase = models.Manager[AcmeAccount]
     AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]

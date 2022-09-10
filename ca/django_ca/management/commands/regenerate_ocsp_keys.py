@@ -22,13 +22,11 @@ from datetime import timedelta
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
-from django.core.management.base import CommandError
-from django.core.management.base import CommandParser
+from django.core.management.base import CommandError, CommandParser
 
 from ... import ca_settings
 from ...models import CertificateAuthority
-from ...tasks import generate_ocsp_key
-from ...tasks import run_task
+from ...tasks import generate_ocsp_key, run_task
 from ...typehints import ParsableKeyType
 from ...utils import add_colons
 from ..actions import ExpiresAction

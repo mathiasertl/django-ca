@@ -17,33 +17,33 @@ The classes in this module wrap cryptography extensions, but allow adding/removi
 in a more pythonic manner and provide access functions."""
 
 import typing
-from typing import Any
-from typing import Dict
-from typing import Type
+from typing import Any, Dict, Type
 
 from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
 from cryptography.x509.oid import ExtensionOID
 
 from .base import Extension
-from .extensions import AuthorityInformationAccess
-from .extensions import AuthorityKeyIdentifier
-from .extensions import BasicConstraints
-from .extensions import CertificatePolicies
-from .extensions import CRLDistributionPoints
-from .extensions import ExtendedKeyUsage
-from .extensions import FreshestCRL
-from .extensions import InhibitAnyPolicy
-from .extensions import IssuerAlternativeName
-from .extensions import KeyUsage
-from .extensions import NameConstraints
-from .extensions import OCSPNoCheck
-from .extensions import PolicyConstraints
-from .extensions import PrecertificateSignedCertificateTimestamps
-from .extensions import PrecertPoison
-from .extensions import SubjectAlternativeName
-from .extensions import SubjectKeyIdentifier
-from .extensions import TLSFeature
+from .extensions import (
+    AuthorityInformationAccess,
+    AuthorityKeyIdentifier,
+    BasicConstraints,
+    CertificatePolicies,
+    CRLDistributionPoints,
+    ExtendedKeyUsage,
+    FreshestCRL,
+    InhibitAnyPolicy,
+    IssuerAlternativeName,
+    KeyUsage,
+    NameConstraints,
+    OCSPNoCheck,
+    PolicyConstraints,
+    PrecertificateSignedCertificateTimestamps,
+    PrecertPoison,
+    SubjectAlternativeName,
+    SubjectKeyIdentifier,
+    TLSFeature,
+)
 
 # NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
 KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {

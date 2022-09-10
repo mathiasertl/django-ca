@@ -22,9 +22,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from ..models import CertificateAuthority
-from .base import certs
-from .base import override_settings
-from .base import timestamps
+from .base import certs, override_settings, timestamps
 from .base.mixins import TestCaseMixin
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}

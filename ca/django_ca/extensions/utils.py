@@ -15,38 +15,29 @@
 
 import textwrap
 import typing
-from typing import Any
-from typing import FrozenSet
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Union
+from typing import Any, FrozenSet, Iterable, List, Optional, Set, Union
 
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
-from cryptography.x509.certificate_transparency import LogEntryType
-from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
+from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
 from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 
 from django.template.loader import render_to_string
 
-from ..typehints import ParsableDistributionPoint
-from ..typehints import ParsablePolicyIdentifier
-from ..typehints import ParsablePolicyInformation
-from ..typehints import ParsablePolicyQualifier
-from ..typehints import PolicyQualifier
-from ..typehints import SerializedDistributionPoint
-from ..typehints import SerializedPolicyInformation
-from ..typehints import SerializedPolicyQualifier
-from ..typehints import SerializedPolicyQualifiers
-from ..typehints import SerializedUserNotice
-from ..utils import bytes_to_hex
-from ..utils import format_general_name
-from ..utils import format_name
-from ..utils import parse_general_name
-from ..utils import x509_relative_name
+from ..typehints import (
+    ParsableDistributionPoint,
+    ParsablePolicyIdentifier,
+    ParsablePolicyInformation,
+    ParsablePolicyQualifier,
+    PolicyQualifier,
+    SerializedDistributionPoint,
+    SerializedPolicyInformation,
+    SerializedPolicyQualifier,
+    SerializedPolicyQualifiers,
+    SerializedUserNotice,
+)
+from ..utils import bytes_to_hex, format_general_name, format_name, parse_general_name, x509_relative_name
 
 
 class DistributionPoint:

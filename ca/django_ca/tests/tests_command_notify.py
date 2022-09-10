@@ -21,8 +21,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from ..models import Watcher
-from .base import override_settings
-from .base import timestamps
+from .base import override_settings, timestamps
 from .base.mixins import TestCaseMixin
 
 

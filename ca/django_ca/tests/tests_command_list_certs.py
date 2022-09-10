@@ -22,8 +22,7 @@ from freezegun import freeze_time
 
 from ..models import Certificate
 from ..utils import add_colons
-from .base import override_settings
-from .base import timestamps
+from .base import override_settings, timestamps
 from .base.mixins import TestCaseMixin
 
 

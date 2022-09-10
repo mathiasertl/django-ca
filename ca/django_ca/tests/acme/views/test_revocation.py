@@ -18,8 +18,7 @@ from http import HTTPStatus
 
 import acme
 import josepy as jose
-from OpenSSL.crypto import X509
-from OpenSSL.crypto import X509Req
+from OpenSSL.crypto import X509, X509Req
 
 from django.http import HttpResponse
 from django.test import TestCase
@@ -28,15 +27,9 @@ from freezegun import freeze_time
 
 from .... import ca_settings
 from ....constants import ReasonFlags
-from ....models import AcmeAccount
-from ....models import AcmeAuthorization
-from ....models import AcmeCertificate
-from ....models import AcmeOrder
-from ....models import Certificate
+from ....models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
 from ....utils import get_cert_builder
-from ...base import certs
-from ...base import override_tmpcadir
-from ...base import timestamps
+from ...base import certs, override_tmpcadir, timestamps
 from ...tests_views_acme import AcmeWithAccountViewTestCaseMixin
 
 

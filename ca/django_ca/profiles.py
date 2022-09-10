@@ -15,42 +15,30 @@
 
 import typing
 from copy import deepcopy
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from threading import local
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import Optional
-from typing import Union
-from typing import cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union, cast
 
 from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA124Warning
-from .deprecation import deprecate_type
-from .extensions import KEY_TO_EXTENSION
-from .extensions import AuthorityInformationAccess
-from .extensions import AuthorityKeyIdentifier
-from .extensions import BasicConstraints
-from .extensions import CRLDistributionPoints
-from .extensions import Extension
-from .extensions import IssuerAlternativeName
-from .extensions import SubjectAlternativeName
-from .extensions import SubjectKeyIdentifier
+from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
+from .extensions import (
+    KEY_TO_EXTENSION,
+    AuthorityInformationAccess,
+    AuthorityKeyIdentifier,
+    BasicConstraints,
+    CRLDistributionPoints,
+    Extension,
+    IssuerAlternativeName,
+    SubjectAlternativeName,
+    SubjectKeyIdentifier,
+)
 from .signals import pre_issue_cert
 from .subject import Subject
-from .typehints import Expires
-from .typehints import ParsableHash
-from .typehints import SerializedProfile
-from .utils import get_cert_builder
-from .utils import parse_expires
-from .utils import parse_general_name
-from .utils import parse_hash_algorithm
-from .utils import split_str
+from .typehints import Expires, ParsableHash, SerializedProfile
+from .utils import get_cert_builder, parse_expires, parse_general_name, parse_hash_algorithm, split_str
 
 if TYPE_CHECKING:
     from .models import CertificateAuthority

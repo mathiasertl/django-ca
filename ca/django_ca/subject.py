@@ -14,15 +14,7 @@
 """Module for handling x509 subjects."""
 
 from collections import abc
-from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
-from typing import cast
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union, cast
 
 from cryptography import x509
 
@@ -30,11 +22,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from . import ca_settings
 from .typehints import ParsableSubject
-from .utils import MULTIPLE_OIDS
-from .utils import NAME_OID_MAPPINGS
-from .utils import OID_NAME_MAPPINGS
-from .utils import SUBJECT_FIELDS
-from .utils import parse_name_x509
+from .utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, OID_NAME_MAPPINGS, SUBJECT_FIELDS, parse_name_x509
 
 
 class Subject:

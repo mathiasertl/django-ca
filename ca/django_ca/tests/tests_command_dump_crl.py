@@ -29,12 +29,8 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..models import Certificate
-from ..models import CertificateAuthority
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from ..models import Certificate, CertificateAuthority
+from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 

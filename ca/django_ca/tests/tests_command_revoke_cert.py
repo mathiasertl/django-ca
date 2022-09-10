@@ -17,8 +17,7 @@ from django.test import TestCase
 
 from ..constants import ReasonFlags
 from ..models import Certificate
-from ..signals import post_revoke_cert
-from ..signals import pre_revoke_cert
+from ..signals import post_revoke_cert, pre_revoke_cert
 from .base.mixins import TestCaseMixin
 
 

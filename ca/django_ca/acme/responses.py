@@ -14,14 +14,11 @@
 """Collection of Django HTTP response subclasses representing ACME responses."""
 
 from http import HTTPStatus
-from typing import Any
-from typing import Optional
-from typing import Type
+from typing import Any, Optional, Type
 
 from acme import messages
 
-from django.http import HttpRequest
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.urls import reverse
 
 from ..models import AcmeAccount

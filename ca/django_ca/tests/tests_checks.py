@@ -15,8 +15,8 @@
 
 
 from django.apps import apps
-from django.core.checks import Error
 from django.core.checks import Warning  # pylint: disable=redefined-builtin
+from django.core.checks import Error
 from django.test import TestCase
 
 from .. import checks

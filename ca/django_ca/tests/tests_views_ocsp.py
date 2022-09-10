@@ -17,8 +17,7 @@ import base64
 import os
 import sys
 import typing
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from http import HTTPStatus
 from unittest import mock
 
@@ -26,8 +25,7 @@ import asn1crypto
 import asn1crypto.x509
 import ocspbuilder
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID
 from oscrypto import asymmetric
@@ -35,27 +33,17 @@ from oscrypto import asymmetric
 from django.conf import settings
 from django.http import HttpResponse
 from django.test import TestCase
-from django.urls import path
-from django.urls import re_path
-from django.urls import reverse
+from django.urls import path, re_path, reverse
 
 from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
 from ..modelfields import LazyCertificate
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..models import X509CertMixin
-from ..utils import ca_storage
-from ..utils import hex_to_bytes
-from ..utils import int_to_hex
+from ..models import Certificate, CertificateAuthority, X509CertMixin
+from ..utils import ca_storage, hex_to_bytes, int_to_hex
 from ..views import OCSPView
-from .base import certs
-from .base import ocsp_data
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from .base import certs, ocsp_data, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8

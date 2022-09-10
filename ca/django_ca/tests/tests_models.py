@@ -17,32 +17,26 @@ import os
 import re
 import typing
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from datetime import timezone as tz
 from unittest import mock
 
 import josepy as jose
-from acme import challenges
-from acme import messages
+from acme import challenges, messages
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtensionOID
+from cryptography.hazmat.primitives.serialization import Encoding, load_pem_private_key
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import IntegrityError
-from django.test import RequestFactory
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -50,31 +44,27 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
-from ..extensions import KEY_TO_EXTENSION
-from ..extensions import Extension
-from ..extensions import PrecertificateSignedCertificateTimestamps
-from ..extensions import SubjectAlternativeName
-from ..modelfields import LazyCertificate
-from ..modelfields import LazyCertificateSigningRequest
-from ..models import AcmeAccount
-from ..models import AcmeAuthorization
-from ..models import AcmeCertificate
-from ..models import AcmeChallenge
-from ..models import AcmeOrder
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..models import Watcher
-from ..models import X509CertMixin
-from ..utils import ca_storage
-from ..utils import get_crl_cache_key
-from .base import CERT_PEM_REGEX
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
-from .base.mixins import AcmeValuesMixin
-from .base.mixins import TestCaseMixin
-from .base.mixins import TestCaseProtocol
+from ..extensions import (
+    KEY_TO_EXTENSION,
+    Extension,
+    PrecertificateSignedCertificateTimestamps,
+    SubjectAlternativeName,
+)
+from ..modelfields import LazyCertificate, LazyCertificateSigningRequest
+from ..models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+    Watcher,
+    X509CertMixin,
+)
+from ..utils import ca_storage, get_crl_cache_key
+from .base import CERT_PEM_REGEX, certs, override_settings, override_tmpcadir, timestamps
+from .base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
 

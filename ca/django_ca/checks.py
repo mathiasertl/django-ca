@@ -20,11 +20,8 @@ import typing
 
 from django.apps import AppConfig
 from django.conf import settings
-from django.core.checks import CheckMessage
-from django.core.checks import Error
-from django.core.checks import Tags
 from django.core.checks import Warning  # pylint: disable=redefined-builtin
-from django.core.checks import register
+from django.core.checks import CheckMessage, Error, Tags, register
 
 # List of cache backends that do not share the data between multiple worker processes
 _UNSUPPORTED_BACKENDS = (

@@ -16,8 +16,7 @@
 import html
 import typing
 import unittest
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from cryptography import x509
@@ -31,31 +30,22 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 
 from .. import ca_settings
-from ..extensions import BasicConstraints
-from ..extensions import ExtendedKeyUsage
-from ..extensions import Extension
-from ..extensions import KeyUsage
-from ..extensions import SubjectAlternativeName
-from ..extensions import TLSFeature
+from ..extensions import (
+    BasicConstraints,
+    ExtendedKeyUsage,
+    Extension,
+    KeyUsage,
+    SubjectAlternativeName,
+    TLSFeature,
+)
 from ..extensions.utils import ExtendedKeyUsageOID
 from ..fields import CertificateSigningRequestField
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..profiles import Profile
-from ..profiles import profiles
-from ..signals import post_issue_cert
-from ..signals import pre_issue_cert
-from ..typehints import ExtensionTypeTypeVar
-from ..typehints import ParsableValue
-from ..typehints import SerializedExtension
-from ..typehints import SerializedValue
-from ..utils import MULTIPLE_OIDS
-from ..utils import NAME_OID_MAPPINGS
-from ..utils import x509_name
-from .base import certs
-from .base import override_settings
-from .base import override_tmpcadir
-from .base import timestamps
+from ..models import Certificate, CertificateAuthority
+from ..profiles import Profile, profiles
+from ..signals import post_issue_cert, pre_issue_cert
+from ..typehints import ExtensionTypeTypeVar, ParsableValue, SerializedExtension, SerializedValue
+from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, x509_name
+from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.testcases import SeleniumTestCase
 from .tests_admin import CertificateModelAdminTestCaseMixin
 

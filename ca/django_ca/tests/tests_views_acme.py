@@ -30,17 +30,14 @@ from requests.utils import parse_header_links
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import PublicFormat
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.http import HttpResponse
-from django.test import TestCase
-from django.test import TransactionTestCase
+from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
-from django.urls import reverse
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
@@ -48,23 +45,20 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..acme.errors import AcmeUnauthorized
-from ..acme.messages import CertificateRequest
-from ..acme.messages import NewOrder
+from ..acme.messages import CertificateRequest, NewOrder
 from ..acme.responses import AcmeResponseUnauthorized
-from ..models import AcmeAccount
-from ..models import AcmeAuthorization
-from ..models import AcmeCertificate
-from ..models import AcmeChallenge
-from ..models import AcmeOrder
-from ..models import CertificateAuthority
-from ..models import acme_slug
-from ..tasks import acme_issue_certificate
-from ..tasks import acme_validate_challenge
+from ..models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    CertificateAuthority,
+    acme_slug,
+)
+from ..tasks import acme_issue_certificate, acme_validate_challenge
 from ..typehints import PrivateKeyTypes
-from .base import CERT_PEM_REGEX
-from .base import certs
-from .base import override_tmpcadir
-from .base import timestamps
+from .base import CERT_PEM_REGEX, certs, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)

@@ -23,9 +23,8 @@ from django.test import TestCase
 
 from .. import ca_settings
 from ..utils import add_colons
-from .base import override_settings
-from .base import override_tmpcadir
 from .base import pragmas  # NOQA: F401  # import module to enable pragma checks
+from .base import override_settings, override_tmpcadir
 from .base.mixins import TestCaseMixin
 
 

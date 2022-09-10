@@ -19,17 +19,9 @@ import shlex
 import sys
 import typing
 from collections import abc
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-from ipaddress import ip_address
-from ipaddress import ip_network
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
+from datetime import datetime, timedelta, timezone
+from ipaddress import ip_address, ip_network
+from typing import Any, Dict, List, Optional, Type, Union
 from urllib.parse import urlparse
 
 import idna
@@ -37,11 +29,7 @@ import idna
 import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import ed448
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
@@ -52,14 +40,16 @@ from django.utils import timezone as tz
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .typehints import Expires
-from .typehints import Literal
-from .typehints import ParsableGeneralName
-from .typehints import ParsableGeneralNameList
-from .typehints import ParsableHash
-from .typehints import ParsableKeyType
-from .typehints import ParsableName
-from .typehints import SupportsIndex
+from .typehints import (
+    Expires,
+    Literal,
+    ParsableGeneralName,
+    ParsableGeneralNameList,
+    ParsableHash,
+    ParsableKeyType,
+    ParsableName,
+    SupportsIndex,
+)
 
 # List of possible subject fields, in order
 SUBJECT_FIELDS = [

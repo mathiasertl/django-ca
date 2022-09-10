@@ -27,20 +27,18 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import AuthorityKeyIdentifier
-from ..extensions import BasicConstraints
-from ..extensions import CRLDistributionPoints
-from ..extensions import ExtendedKeyUsage
-from ..extensions import KeyUsage
-from ..extensions import SubjectAlternativeName
-from ..extensions import TLSFeature
-from ..models import Certificate
-from ..models import CertificateAuthority
-from ..models import Watcher
-from ..signals import post_issue_cert
-from ..signals import pre_issue_cert
-from .base import override_tmpcadir
-from .base import timestamps
+from ..extensions import (
+    AuthorityKeyIdentifier,
+    BasicConstraints,
+    CRLDistributionPoints,
+    ExtendedKeyUsage,
+    KeyUsage,
+    SubjectAlternativeName,
+    TLSFeature,
+)
+from ..models import Certificate, CertificateAuthority, Watcher
+from ..signals import post_issue_cert, pre_issue_cert
+from .base import override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 

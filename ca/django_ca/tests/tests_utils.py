@@ -19,16 +19,13 @@ import os
 import typing
 import unittest
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import ed448
+from cryptography.hazmat.primitives.asymmetric import ec, ed448
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import NameOID
-from cryptography.x509.oid import ObjectIdentifier
+from cryptography.x509.oid import NameOID, ObjectIdentifier
 
 import django
 from django.core.exceptions import ValidationError
@@ -36,34 +33,33 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from .. import utils
-from ..utils import ELLIPTIC_CURVE_NAMES
-from ..utils import HASH_ALGORITHM_NAMES
-from ..utils import OID_NAME_MAPPINGS
-from ..utils import GeneralNameList
-from ..utils import bytes_to_hex
-from ..utils import format_general_name
-from ..utils import format_name
-from ..utils import generate_private_key
-from ..utils import get_cert_builder
-from ..utils import is_power2
-from ..utils import multiline_url_validator
-from ..utils import parse_encoding
-from ..utils import parse_general_name
-from ..utils import parse_hash_algorithm
-from ..utils import parse_key_curve
-from ..utils import parse_name_x509
-from ..utils import read_file
-from ..utils import split_str
-from ..utils import validate_email
-from ..utils import validate_hostname
-from ..utils import validate_key_parameters
-from ..utils import x509_name
-from ..utils import x509_relative_name
-from .base import dns
-from .base import override_settings
-from .base import override_tmpcadir
+from .. import ca_settings, utils
+from ..utils import (
+    ELLIPTIC_CURVE_NAMES,
+    HASH_ALGORITHM_NAMES,
+    OID_NAME_MAPPINGS,
+    GeneralNameList,
+    bytes_to_hex,
+    format_general_name,
+    format_name,
+    generate_private_key,
+    get_cert_builder,
+    is_power2,
+    multiline_url_validator,
+    parse_encoding,
+    parse_general_name,
+    parse_hash_algorithm,
+    parse_key_curve,
+    parse_name_x509,
+    read_file,
+    split_str,
+    validate_email,
+    validate_hostname,
+    validate_key_parameters,
+    x509_name,
+    x509_relative_name,
+)
+from .base import dns, override_settings, override_tmpcadir
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=typing.Type[object])
 

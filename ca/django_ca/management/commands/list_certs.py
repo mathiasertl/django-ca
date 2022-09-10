@@ -21,8 +21,7 @@ import typing
 from django.core.management.base import CommandParser
 from django.utils import timezone
 
-from ...models import Certificate
-from ...models import CertificateAuthority
+from ...models import Certificate, CertificateAuthority
 from ...utils import add_colons
 from ..base import BaseCommand
 
