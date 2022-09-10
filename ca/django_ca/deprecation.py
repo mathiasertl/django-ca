@@ -18,7 +18,7 @@ import typing
 import warnings
 from inspect import signature
 
-F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])  # pylint: disable=invalid-name
+F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
 
 class RemovedInDjangoCA123Warning(PendingDeprecationWarning):

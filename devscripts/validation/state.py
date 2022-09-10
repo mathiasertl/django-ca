@@ -115,6 +115,7 @@ def check_tox(project_config):
     tox_env_reqs = dict([line.split(": ", 1) for line in tox_deps if ": " in line])
 
     # Check that there is a testenv listing all versions
+    # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
     # expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
     #    ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),

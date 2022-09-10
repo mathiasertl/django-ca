@@ -24,8 +24,6 @@ class ReasonFlags(enum.Enum):
     with your Django project.
     """
 
-    # pylint: disable=invalid-name; check was added in pylint 2.7.2, cannot be updated without db migration
-
     unspecified = "unspecified"
     key_compromise = "keyCompromise"
     ca_compromise = "cACompromise"

@@ -329,7 +329,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
 
     @property
     def extension_type(self) -> ExtensionTypeTypeVar:
-        return self.ext_class()  # pylint: disable=no-member; concrete classes are expected to set this
+        return self.ext_class()
 
     def from_extension(self, value: ExtensionTypeTypeVar) -> None:
         pass
@@ -364,11 +364,10 @@ class IterableExtension(
         cRLSign
     """
 
-    # pylint: disable=abstract-method; class is itself a base class
     value: Collection[IterableItem]
 
     def __contains__(self, value: ParsableItem) -> bool:
-        return self.parse_value(value) in self.value  # pylint: disable=unsupported-membership-test
+        return self.parse_value(value) in self.value
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self)) and self.critical == other.critical and self.value == other.value
@@ -402,7 +401,7 @@ class IterableExtension(
     def serialize_value(self) -> List[SerializedItem]:
         """Serialize the whole iterable contained in this extension."""
 
-        return [self.serialize_item(v) for v in self.value]  # pylint: disable=not-an-iterable
+        return [self.serialize_item(v) for v in self.value]
 
     def serialize_item(self, value: IterableItem) -> SerializedItem:
         """Serialize a single item in the iterable contained in this extension."""
@@ -587,7 +586,6 @@ class OrderedSetExtension(
         return set(self.parse_value(i) for i in iterable)
 
     def from_dict(self, value: Iterable[ParsableItem]) -> None:
-        # pylint: disable=attribute-defined-outside-init; https://github.com/PyCQA/pylint/issues/3605
         self.value = self.parse_iterable(value)
 
     def serialize_value(self) -> List[SerializedSortableItem]:
@@ -795,7 +793,7 @@ class SignedCertificateTimestampsBase(
     def count(self, value: ParsableSignedCertificateTimestamp) -> int:
         if isinstance(value, dict):
             return self.serialize_value().count(value)
-        return self.value.count(value)  # pylint: disable=protected-access
+        return self.value.count(value)
 
     def extend(self, iterable):  # type: ignore
         raise NotImplementedError

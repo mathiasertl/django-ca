@@ -122,7 +122,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def add_subject(
         self,
-        parser: argparse._ActionsContainer,  # pylint: disable=protected-access; called with an argument group
+        parser: argparse._ActionsContainer,
         arg: str = "subject",
         metavar: typing.Optional[str] = None,
         help_text: typing.Optional[str] = None,

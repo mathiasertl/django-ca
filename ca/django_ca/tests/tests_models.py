@@ -389,7 +389,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test an getting the CRL from a CA with no AuthorityKeyIdentifier."""
         # All CAs have a authority key identifier, so we mock that this exception is not present
         def side_effect(cls: typing.Any) -> typing.NoReturn:
-            # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
         full_name = "http://localhost/crl"
@@ -824,7 +823,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
         def side_effect(cls: typing.Any) -> typing.NoReturn:
-            # pylint: disable=no-member; false positive x509.SubjectKeyIdentifier.oid
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
         ca = self.cas["child"]

@@ -301,7 +301,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
-        # self.prepared = OrderedDict()  # pylint: disable=attribute-defined-outside-init
         try:
             response = super().dispatch(request, serial=serial, slug=slug)
             self.set_link_relations(response)
@@ -321,7 +320,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     def post(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> AcmeResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=too-many-return-statements,too-many-branches; b/c of the many checks
+        # pylint: disable=too-many-return-statements; b/c of the many checks
 
         # TODO: RFC 8555, 6.2 has a nice list of things to check here that we don't yet fully cover
         if request.content_type != "application/jose+json":
@@ -513,10 +512,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
     message_cls = messages.Registration
     requires_key = True
 
-    # TODO: possible to make slug non-optional?
-    def acme_request(  # pylint: disable=unused-argument
-        self, message: messages.Registration, slug: Optional[str]
-    ) -> AcmeResponseAccount:
+    def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
         """Process ACME request."""
         pem = (
             self.jwk.key.public_bytes(
@@ -596,17 +592,13 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
         return AcmeResponseAccountCreated(self.request, account)
 
 
-class AcmeAccountView(
-    ContactValidationMixin, AcmeMessageBaseView[messages.Registration]
-):  # pylint: disable=abstract-method
+class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Registration]):
     """View showing account details."""
 
     message_cls = messages.Registration
 
     @transaction.atomic
-    def acme_request(  # pylint: disable=unused-argument
-        self, message: messages.Registration, slug: Optional[str] = None
-    ) -> AcmeResponseAccount:
+    def acme_request(self, message: messages.Registration, slug: Optional[str] = None) -> AcmeResponseAccount:
         account = AcmeAccount.objects.get(slug=slug)
 
         if message.status == AcmeAccount.STATUS_DEACTIVATED:
@@ -630,7 +622,7 @@ class AcmeAccountView(
         return AcmeResponseAccount(self.request, account)
 
 
-class AcmeAccountOrdersView(AcmeBaseView):  # pylint: disable=abstract-method
+class AcmeAccountOrdersView(AcmeBaseView):
     """View showing orders for an account (not yet implemented)"""
 
     # TODO: implement this view
@@ -655,9 +647,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
     message_cls = NewOrder
 
     @transaction.atomic
-    def acme_request(  # pylint: disable=unused-argument
-        self, message: NewOrder, slug: Optional[str] = None
-    ) -> AcmeResponseOrderCreated:
+    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
         """Process ACME request."""
         now = datetime.now(tz.utc)
 

@@ -275,7 +275,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     load_cas: typing.Tuple[str, ...] = ("root",)
     load_certs: typing.Tuple[str, ...] = ("root-cert",)
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
         self.ca.acme_enabled = True
         self.ca.save()
@@ -514,7 +514,6 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     @override_tmpcadir()
     def test_internal_server_error(self) -> None:
         """Test raising an uncaught exception -> Internal server error"""
-        # pylint: disable=no-member; false positives in this test case
         view = "django.views.generic.base.View.dispatch"
         msg = f"{self.url} mock-exception"
         with mock.patch(view, side_effect=Exception(msg)), self.assertLogs() as logcm:
@@ -536,8 +535,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     def test_unknown_nonce(self) -> None:
         """Test sending an unknown nonce."""
         resp = self.acme(self.url, self.message, nonce=b"foo")
-        # PYLINT NOTE: pylint 2.11.1 falsely thinks that resp is a WSGIRequest (not a HttpResponse)
-        self.assertMalformed(resp, "Bad or invalid nonce.", typ="badNonce")  # pylint: disable=no-member
+        self.assertMalformed(resp, "Bad or invalid nonce.", typ="badNonce")
 
     @override_tmpcadir()
     def test_duplicate_nonce(self) -> None:
@@ -545,15 +543,13 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         nonce = self.get_nonce()
         self.acme(self.url, self.message, nonce=nonce)
         resp1 = self.acme(self.url, self.message, nonce=nonce)
-        # PYLINT NOTE: pylint 2.11.1 falsely thinks that resp is a WSGIRequest (not a HttpResponse)
-        self.assertMalformed(resp1, "Bad or invalid nonce.", typ="badNonce")  # pylint: disable=no-member
+        self.assertMalformed(resp1, "Bad or invalid nonce.", typ="badNonce")
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_disabled_acme(self) -> None:
         """Test that we get HTTP 404 if ACME is disabled."""
         resp = self.acme(self.url, self.message, nonce=b"foo")
-        # PYLINT NOTE: pylint 2.11.1 falsely thinks that resp is a WSGIRequest (not a HttpResponse)
-        self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)  # pylint: disable=no-member
+        self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)
 
     @override_tmpcadir()
     def test_invalid_content_type(self) -> None:
@@ -669,7 +665,7 @@ class AcmeWithAccountViewTestCaseMixin(
 ):
     """Mixin that also adds accounts to the database."""
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
             ca=self.ca,

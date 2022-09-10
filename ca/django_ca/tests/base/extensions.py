@@ -400,9 +400,7 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
 
     repr_tmpl = "<{name}: critical={critical}>"
 
-    def assertExtensionEqual(  # pylint: disable=invalid-name
-        self, first: ExtensionTypeVar, second: ExtensionTypeVar
-    ) -> None:
+    def assertExtensionEqual(self, first: ExtensionTypeVar, second: ExtensionTypeVar) -> None:
         """Function to test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
@@ -411,7 +409,7 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
         self.assertEqual(first.__class__, second.__class__)
         self.assertEqual(first.critical, second.critical)
 
-    def assertSerialized(  # pylint: disable=missing-function-docstring,invalid-name
+    def assertSerialized(
         self, ext: NullExtensionTypeVar, config: typing.Any, critical: typing.Optional[bool] = None
     ) -> None:
         if critical is None:
@@ -1199,7 +1197,7 @@ class CRLDistributionPointsTestCaseBase(
 
     invalid_values = [True, None]
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         self.test_values = {
             "one": {
                 "admin_html": f"""DistributionPoint:

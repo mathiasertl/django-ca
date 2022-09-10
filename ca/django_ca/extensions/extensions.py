@@ -122,7 +122,6 @@ class AuthorityInformationAccess(
 
     @property
     def extension_type(self) -> x509.AuthorityInformationAccess:
-        # pylint: disable=not-an-iterable; pylint does not detect GeneralNameList as iterable
         descs = [x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, v) for v in self._issuers]
         descs += [x509.AccessDescription(AuthorityInformationAccessOID.OCSP, v) for v in self._ocsp]
         return x509.AuthorityInformationAccess(descriptions=descs)
@@ -253,7 +252,6 @@ class AuthorityKeyIdentifier(
 
     def from_subject_key_identifier(self, ext: "SubjectKeyIdentifier") -> None:
         """Create an extension based on SubjectKeyIdentifier extension."""
-        # pylint: disable=attribute-defined-outside-init; func is designed to be called by init
         self.key_identifier = ext.value
         self.authority_cert_issuer = GeneralNameList()
         self.authority_cert_serial_number = None

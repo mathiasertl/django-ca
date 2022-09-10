@@ -428,7 +428,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
 
         return fieldsets
 
-    class Media:  # pylint: disable=missing-class-docstring
+    class Media:
         css = {
             "all": (
                 "django_ca/admin/css/base.css",
@@ -971,7 +971,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         else:
             obj.save()
 
-    class Media:  # pylint: disable=missing-class-docstring
+    class Media:
         css = {
             "all": (
                 "django_ca/admin/css/base.css",

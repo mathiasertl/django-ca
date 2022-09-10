@@ -170,9 +170,7 @@ class AdminChangeActionTestCaseMixin(
         with self.mockSignals(False, False) as (pre, post):
             yield pre, post
 
-    def assertRequiresLogin(  # pylint: disable=invalid-name
-        self, response: HttpResponse, **kwargs: typing.Any
-    ) -> None:
+    def assertRequiresLogin(self, response: HttpResponse, **kwargs: typing.Any) -> None:
         """Overwritten as a shortcut to also test that the certificate was not revoked."""
         super().assertRequiresLogin(response, **kwargs)
         self.assertFailedRequest(response)
@@ -250,7 +248,6 @@ class AdminChangeActionTestCaseMixin(
     def test_unknown_object(self) -> None:
         """Test an unknown object (get_change_actions() fetches object, so it should work)."""
         with self.mockSignals(False, False):
-            # pylint: disable=not-callable; self.model is None in Mixin
             response = self.client.get(self.change_url(self.model(pk=1234)))
         self.assertRedirects(response, "/admin/")
 

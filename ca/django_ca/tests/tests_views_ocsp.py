@@ -209,7 +209,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         "email_address": NameOID.EMAIL_ADDRESS,
     }
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
 
         # used for verifying signatures

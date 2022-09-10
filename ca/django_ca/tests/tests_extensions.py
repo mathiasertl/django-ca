@@ -1349,7 +1349,6 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
 class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase):
     """Test PrecertificateSignedCertificateTimestamps extension."""
 
-    # pylint: disable=too-many-public-methods; RO-extension requires implementing everything again
     # pylint: disable=too-many-instance-attributes; RO-extension requires implementing everything again
 
     default_ca = "letsencrypt_x3"

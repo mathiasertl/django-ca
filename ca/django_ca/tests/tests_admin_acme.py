@@ -69,7 +69,7 @@ class AcmeAdminTestCaseMixin(
     )
     cas: typing.Dict[str, CertificateAuthority]
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
         kid1 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1)
         account1 = AcmeAccount.objects.create(

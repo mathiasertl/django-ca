@@ -75,7 +75,7 @@ class X509CertMixinAdminForm(X509CertMixinModelForm):
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
 
-        meta = self._meta  # pylint: disable=no-member; false positive
+        meta = self._meta
         if meta.help_texts is None:  # pragma: no cover
             # help_texts is always set since we have a Meta class, but keeping this here as a precaution.
             meta.help_texts = {}

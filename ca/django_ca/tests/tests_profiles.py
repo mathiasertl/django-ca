@@ -74,7 +74,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_module(self) -> None:
         """Test doctests from main module."""
-        # pylint: disable=redefined-outer-name,import-outside-toplevel; we need the top-level module
+        # pylint: disable=import-outside-toplevel; we need the top-level module
         from .. import profiles as profiles_mod
 
         doctest.testmod(profiles_mod, globs=self.get_globs())

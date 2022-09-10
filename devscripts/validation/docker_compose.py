@@ -198,7 +198,7 @@ def _sign_certificates(csr):
     return cert_subject
 
 
-def test_tutorial(release):  # pylint: disable=too-many-locals,too-many-statements
+def test_tutorial(release):  # pylint: disable=too-many-statements
     """Validate the docker-compose quickstart tutorial."""
     info("Validating tutorial...")
     errors = 0

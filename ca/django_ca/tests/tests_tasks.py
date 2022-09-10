@@ -418,10 +418,10 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     def mock_challenge(
         self,
         challenge: typing.Optional[AcmeChallenge] = None,
-        status: int = HTTPStatus.OK,  # pylint: disable=unused-argument  # used in subclasses
+        status: int = HTTPStatus.OK,
         content: typing.Optional[bytes] = None,
         call_count: int = 1,
-        token: typing.Optional[str] = None,  # pylint: disable=unused-argument  # used in subclasses
+        token: typing.Optional[str] = None,
     ) -> typing.Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
 
