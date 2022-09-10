@@ -73,27 +73,21 @@ class CertificateEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def _create_key(path, key_type, quiet=False):
+def _create_key(path, key_type):
     if key_type == "RSA":
-        utils.run(
-            ["openssl", "genrsa", "-out", path, str(DEFAULT_KEY_SIZE)], stderr=subprocess.DEVNULL, quiet=quiet
-        )
+        utils.run(["openssl", "genrsa", "-out", path, str(DEFAULT_KEY_SIZE)], stderr=subprocess.DEVNULL)
     elif key_type == "ECC":
         utils.run(
             ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", path],
             stderr=subprocess.DEVNULL,
-            quiet=quiet,
         )
     else:
         raise ValueError(f"Unknown key type: {key_type}")
 
 
-def _create_csr(key_path, path, subject="/CN=ignored.example.com", key_type="RSA", quiet=False):
-    _create_key(key_path, key_type, quiet=quiet)
-    utils.run(
-        ["openssl", "req", "-new", "-key", key_path, "-out", path, "-utf8", "-batch", "-subj", subject],
-        quiet=quiet,
-    )
+def _create_csr(key_path, path, subject="/CN=ignored.example.com", key_type="RSA"):
+    _create_key(key_path, key_type)
+    utils.run(["openssl", "req", "-new", "-key", key_path, "-out", path, "-utf8", "-batch", "-subj", subject])
 
     with open(path, encoding="utf-8") as stream:
         csr = stream.read()
@@ -357,7 +351,7 @@ def create_cas(dest, now, delay, data):
     return ca_instances
 
 
-def create_certs(dest, cas, now, delay, data, quiet=False):
+def create_certs(dest, cas, now, delay, data):
     """Create regular certificates."""
     # let's create a standard certificate for every CA
     for ca in cas:
@@ -369,7 +363,6 @@ def create_certs(dest, cas, now, delay, data, quiet=False):
             csr_path,
             subject=data[name]["csr_subject_str"],
             key_type=data[name]["key_type"],
-            quiet=quiet,
         )
 
         freeze_now = now
@@ -402,7 +395,6 @@ def create_certs(dest, cas, now, delay, data, quiet=False):
             csr_path,
             subject=data[name]["csr_subject_str"],
             key_type=data[name]["key_type"],
-            quiet=quiet,
         )
 
         freeze_now = now
@@ -426,14 +418,14 @@ def create_certs(dest, cas, now, delay, data, quiet=False):
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
-def create_special_certs(dest, now, delay, data, quiet=False):
+def create_special_certs(dest, now, delay, data):
     """Create special-interest certificates (edge cases etc.)."""
     # create a cert with absolutely no extensions
     name = "no-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
-    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"], quiet=quiet)
+    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
 
     freeze_now = now
     if delay:
@@ -474,7 +466,7 @@ def create_special_certs(dest, now, delay, data, quiet=False):
     pwd = data[ca.name]["password"]
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
-    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"], quiet=quiet)
+    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
 
     with freeze_time(now + data[name]["delta"]):
         cert = Certificate.objects.create_cert(
@@ -498,7 +490,7 @@ def create_special_certs(dest, now, delay, data, quiet=False):
     pwd = data[ca.name]["password"]
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
-    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"], quiet=quiet)
+    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
 
     with freeze_time(now + data[name]["delta"]):
         cert = Certificate.objects.create_cert(

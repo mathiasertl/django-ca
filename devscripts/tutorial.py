@@ -29,10 +29,9 @@ class Tutorial:
     This class lets you easily render templates or run commands from a sphinx tutorial.
     """
 
-    def __init__(self, name: str, context: typing.Dict[str, typing.Any], quiet: bool) -> None:
+    def __init__(self, name: str, context: typing.Dict[str, typing.Any]) -> None:
         self.name = name
         self.context = context
-        self.quiet = quiet
         self.context["sphinx"] = False
         self.context["validation"] = True
 
@@ -59,14 +58,12 @@ class Tutorial:
     def run(self, path: str) -> typing.Iterator[None]:
         """Run commands from the specified YAML file."""
         path = os.path.join(self.name, path)
-        with utils.console_include(path, self.context, quiet=self.quiet):
+        with utils.console_include(path, self.context):
             yield
 
 
 @contextmanager
-def start_tutorial(
-    name: str, context: typing.Dict[str, typing.Any], quiet: bool
-) -> typing.Iterator[Tutorial]:
+def start_tutorial(name: str, context: typing.Dict[str, typing.Any]) -> typing.Iterator[Tutorial]:
     """Context manager to start a tutorial in a temporary directory."""
     with utils.tmpdir():
-        yield Tutorial(name, context=context, quiet=quiet)
+        yield Tutorial(name, context=context)

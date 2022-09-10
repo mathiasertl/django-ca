@@ -40,10 +40,6 @@ class Command(DevCommand):
             help="Do not rebuild the image before testing.",
         )
 
-        parser.add_argument(
-            "-q", "--quiet", default=False, action="store_true", help="Do not display commands."
-        )
-
         subcommands = parser.add_subparsers(dest="subcommand", required=True)
         subcommands.add_parser("state")
         subcommands.add_parser("docker", parents=[docker_options])
@@ -79,7 +75,7 @@ class Command(DevCommand):
         if args.subcommand == "state":
             submodule.validate()
         elif args.subcommand == "docker":
-            submodule.validate(release=release, prune=args.docker_prune, build=args.build, quiet=args.quiet)
+            submodule.validate(release=release, prune=args.docker_prune, build=args.build)
         elif args.subcommand == "docker-compose":
             submodule.validate(
                 release=release,
@@ -88,7 +84,6 @@ class Command(DevCommand):
                 tutorial=args.tutorial,
                 update=args.update,
                 acme=args.acme,
-                quiet=args.quiet,
             )
         elif args.subcommand == "wheel":
             submodule.validate(release)
