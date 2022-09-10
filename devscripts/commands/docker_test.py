@@ -19,9 +19,7 @@ import sys
 
 from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.out import err
-from devscripts.out import info
-from devscripts.out import ok
+from devscripts.out import err, info, ok
 
 
 class Command(DevCommand):

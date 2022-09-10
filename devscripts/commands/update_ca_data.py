@@ -249,9 +249,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
     from django_ca.extensions import KeyUsage
-    from django_ca.utils import bytes_to_hex
-    from django_ca.utils import format_general_name
-    from django_ca.utils import format_name
+    from django_ca.utils import bytes_to_hex, format_general_name, format_name
 
     # pylint: enable=import-outside-toplevel
 
@@ -461,9 +459,7 @@ def update_crl_data():  # pylint: disable=too-many-locals
     """Update CRL data."""
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
-    from django_ca.utils import bytes_to_hex
-    from django_ca.utils import format_general_name
-    from django_ca.utils import format_name
+    from django_ca.utils import bytes_to_hex, format_general_name, format_name
 
     # pylint: enable=import-outside-toplevel
 

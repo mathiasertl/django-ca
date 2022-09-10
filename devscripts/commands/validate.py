@@ -15,8 +15,7 @@
 import argparse
 import importlib
 
-from devscripts.commands import DevCommand
-from devscripts.commands import ParserError
+from devscripts.commands import DevCommand, ParserError
 
 
 class Command(DevCommand):

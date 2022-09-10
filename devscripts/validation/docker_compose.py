@@ -26,17 +26,12 @@ import requests
 import yaml
 
 from cryptography import x509
-from cryptography.x509.oid import AuthorityInformationAccessOID
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from devscripts import config
-from devscripts import utils
-from devscripts.out import err
-from devscripts.out import info
-from devscripts.out import ok
+from devscripts import config, utils
+from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
-from devscripts.validation.docker import build_docker_image
-from devscripts.validation.docker import docker_cp
+from devscripts.validation.docker import build_docker_image, docker_cp
 
 
 @contextmanager

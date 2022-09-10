@@ -27,8 +27,7 @@ from setuptools.config.setupcfg import read_configuration
 from termcolor import colored
 
 from devscripts import config
-from devscripts.out import err
-from devscripts.out import ok
+from devscripts.out import err, ok
 
 # pylint: enable=no-name-in-module
 
@@ -195,14 +194,9 @@ def check_setup_cfg(project_config):
     if expected_django_req not in install_requires:
         errors += err(f"{expected_django_req}: Expected Django requirement not found.")
 
-    expected_cg_req = f"cryptography>={project_config['cryptography-major'][0]}"
-    if expected_cg_req not in install_requires:
-        errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
-
-    # Do not check setup.cfg minimum dependency, as actually any version works fine right now
-    # expected_idna_req = f"idna>={project_config['idna-major'][0]}"
-    # if expected_idna_req not in install_requires:
-    #    errors += err(f"{expected_idna_req}: Expected idna requirement not found.")
+    # expected_cg_req = f"cryptography>={project_config['cryptography-major'][0]}"
+    # if expected_cg_req not in install_requires:
+    #    errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
     return errors
 
