@@ -16,8 +16,7 @@
 import typing
 
 from docutils.parsers.rst import directives
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 from sphinx.directives.code import CodeBlock  # code-block directive from Sphinx
 from sphinx.util.typing import OptionSpec
 
