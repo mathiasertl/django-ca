@@ -29,34 +29,30 @@ from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import NoEncryption
-from cryptography.hazmat.primitives.serialization import PrivateFormat
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.serialization import (
+    BestAvailableEncryption,
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    load_pem_private_key,
+)
 from cryptography.x509 import ocsp
-from cryptography.x509.oid import ExtensionOID
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test.utils import override_settings
 from django.urls import reverse
 
 from freezegun import freeze_time
 
-from devscripts import config
-from devscripts import utils
+from devscripts import config, utils
 
 from django_ca import ca_settings
-from django_ca.extensions import OID_TO_EXTENSION
-from django_ca.extensions import Extension
-from django_ca.models import Certificate
-from django_ca.models import CertificateAuthority
+from django_ca.extensions import OID_TO_EXTENSION, Extension
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.subject import Subject
-from django_ca.utils import bytes_to_hex
-from django_ca.utils import ca_storage
+from django_ca.utils import bytes_to_hex, ca_storage
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"

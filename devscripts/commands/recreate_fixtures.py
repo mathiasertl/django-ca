@@ -20,8 +20,7 @@ The test suite should be sufficiently modular to still run without errors after 
 import json
 import os
 import sys
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes
@@ -46,13 +45,15 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     # pylint: disable=import-outside-toplevel  # django needs to be set up
     from django.core.management import call_command as manage
 
-    from devscripts.recreate_fixtures_helpers import CertificateEncoder
-    from devscripts.recreate_fixtures_helpers import _generate_contrib_files
-    from devscripts.recreate_fixtures_helpers import create_cas
-    from devscripts.recreate_fixtures_helpers import create_certs
-    from devscripts.recreate_fixtures_helpers import create_special_certs
-    from devscripts.recreate_fixtures_helpers import override_tmpcadir
-    from devscripts.recreate_fixtures_helpers import regenerate_ocsp_files
+    from devscripts.recreate_fixtures_helpers import (
+        CertificateEncoder,
+        _generate_contrib_files,
+        create_cas,
+        create_certs,
+        create_special_certs,
+        override_tmpcadir,
+        regenerate_ocsp_files,
+    )
 
     from django_ca.subject import Subject
 

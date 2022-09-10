@@ -26,9 +26,7 @@ import os
 import sys
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 
 import django
 

@@ -20,8 +20,7 @@ import time
 import docker
 from setuptools.config.setupcfg import read_configuration
 
-from devscripts import config
-from devscripts import utils
+from devscripts import config, utils
 from devscripts.out import info
 
 

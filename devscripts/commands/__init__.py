@@ -21,8 +21,7 @@ from pathlib import Path
 
 import django
 
-from devscripts import config
-from devscripts import utils
+from devscripts import config, utils
 
 
 class CommandError(Exception):

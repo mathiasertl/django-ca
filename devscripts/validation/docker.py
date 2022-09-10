@@ -15,11 +15,8 @@
 
 import os
 
-from devscripts import config
-from devscripts import utils
-from devscripts.out import err
-from devscripts.out import info
-from devscripts.out import ok
+from devscripts import config, utils
+from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
 

@@ -79,8 +79,7 @@ class Command(DevCommand):
         # pylint: disable=import-outside-toplevel  # see handle() imports
         from django.contrib.auth import get_user_model
 
-        from django_ca.models import Certificate
-        from django_ca.models import CertificateAuthority
+        from django_ca.models import Certificate, CertificateAuthority
 
         # pylint: enable=import-outside-toplevel
 
