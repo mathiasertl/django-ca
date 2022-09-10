@@ -17,7 +17,7 @@ import josepy as jose
 from acme import fields
 from acme import messages
 
-identifiers_decoder = messages.Order._fields["identifiers"].fdec  # pylint: disable=no-member; false positive
+identifiers_decoder = messages.Order._fields["identifiers"].fdec
 
 
 class Order(messages.Order):

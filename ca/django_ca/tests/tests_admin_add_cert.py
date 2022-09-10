@@ -833,7 +833,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     ) -> None:
         """Assert that the admin form equals the given profile."""
 
-        # pylint: disable=too-many-locals
         profile = profiles[profile_name]
 
         ku_expected = self.get_expected(profile, KeyUsage, [])

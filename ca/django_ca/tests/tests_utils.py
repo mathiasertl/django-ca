@@ -525,14 +525,12 @@ class ParseGeneralNameTest(TestCase):
         # wildcard in the outermost level
         msg = r"^Could not parse name: %s$"
 
-        # pylint: disable=consider-using-f-string  # reuse the message string
         with self.assertRaisesRegex(ValueError, msg % r"test\.\*\.example\.com"):
             parse_general_name("test.*.example.com")
         with self.assertRaisesRegex(ValueError, msg % r"\*\.\*\.example\.com"):
             parse_general_name("*.*.example.com")
         with self.assertRaisesRegex(ValueError, msg % r"example\.com\.\*"):
             parse_general_name("example.com.*")
-        # pylint: enable=consider-using-f-string
 
     def test_dirname(self) -> None:
         """Test parsing a dirname."""

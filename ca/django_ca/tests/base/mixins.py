@@ -109,7 +109,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^Could not decrypt private key - bad password\?$"
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
         cache.clear()
 
@@ -1061,7 +1061,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     # TODO: we should get rid of this, it's ugly
     obj: typing.Optional[DjangoCAModel]
 
-    def setUp(self) -> None:  # pylint: disable=invalid-name,missing-function-docstring
+    def setUp(self) -> None:
         super().setUp()
         self.user = self.create_superuser()
         self.client.force_login(self.user)

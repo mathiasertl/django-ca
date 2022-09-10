@@ -38,7 +38,7 @@ class AcmeSimpleResponse(AcmeResponse):
     message_cls: Type[messages.ResourceBody]
 
     def __init__(self, **kwargs: Any):
-        super().__init__(self.message_cls(**kwargs).to_json())  # pylint: disable=no-member
+        super().__init__(self.message_cls(**kwargs).to_json())
 
 
 class AcmeResponseAccount(AcmeResponse):

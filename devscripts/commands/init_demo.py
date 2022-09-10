@@ -141,14 +141,13 @@ class Command(DevCommand):
 
         self.setup_django("ca.settings")
 
-        # pylint: disable=ungrouped-imports; have to call setup_django() first
         # pylint: disable=import-outside-toplevel; have to call setup_django() first
         from django.core.management import call_command as manage
 
         from django_ca import ca_settings
         from django_ca.utils import ca_storage
 
-        # pylint: enable=ungrouped-imports,import-outside-toplevel
+        # pylint: enable=import-outside-toplevel
 
         print("Creating database...", end="")
         manage("migrate", verbosity=0)

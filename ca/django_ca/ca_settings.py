@@ -177,7 +177,6 @@ CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
     settings, "CA_DEFAULT_SUBJECT", tuple()
 )
 if isinstance(CA_DEFAULT_SUBJECT, dict):
-    # pylint: disable=consider-using-f-string # don't want to use f-string here
     warnings.warn(_SUBJECT_AS_DICT_MAPPING % "CA_DEFAULT_SUBJECT", category=RemovedInDjangoCA123Warning)
     CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT.items())
 

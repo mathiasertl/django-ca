@@ -86,7 +86,7 @@ class Profile:
         add_issuer_url: bool = True,
         add_issuer_alternative_name: bool = True,
     ) -> None:
-        # pylint: disable=too-many-locals,too-many-arguments
+        # pylint: disable=too-many-arguments
         self.name = name
 
         if isinstance(expires, int):

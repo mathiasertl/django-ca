@@ -196,7 +196,7 @@ class CertificateAuthorityManager(
     if TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=missing-function-docstring; just defining stubs here
 
         def acme(self) -> "CertificateAuthorityQuerySet":
             ...
@@ -561,7 +561,7 @@ class CertificateManager(
     if TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=missing-function-docstring; just defining stubs here
 
         def expired(self) -> "CertificateQuerySet":
             ...
@@ -628,7 +628,7 @@ class AcmeAccountManager(AcmeAccountManagerBase):
     if TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=missing-function-docstring; just defining stubs here
 
         def viewable(self) -> "AcmeAccountQuerySet":
             ...

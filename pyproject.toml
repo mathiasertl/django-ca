@@ -115,6 +115,10 @@ max-line-length = 110
 max-module-lines = 3000
 
 [tool.pylint.messages_control]
+enable = [
+    "useless-suppression",
+]
+
 # https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
 disable = [
     # devscripts have some larger overlapping parts

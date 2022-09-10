@@ -77,7 +77,7 @@ class CertificateAdminViewTestCase(
     load_certs = "__usable__"
     model = Certificate
 
-    def assertChangeResponse(  # pylint: disable=invalid-name,missing-function-docstring
+    def assertChangeResponse(
         self, response: HttpResponse, obj: Certificate, status: int = HTTPStatus.OK
     ) -> None:
         super().assertChangeResponse(response, obj=obj, status=status)

@@ -127,6 +127,6 @@ ChangeLog
 
             if args.delete_tag:
                 repo.delete_tag(git_tag)
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:
             repo.delete_tag(git_tag)
             raise CommandError(str(ex)) from ex

@@ -1141,13 +1141,11 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         def side_effect(cls: typing.Any) -> None:
             raise NotImplementedError
 
-        # pylint: disable=consider-using-f-string  # reuse path
         ca_storage = "django_ca.management.commands.view_ca.ca_storage.%s"
         with self.patch(ca_storage % "path", side_effect=side_effect) as path_mock, self.patch(
             ca_storage % "exists", return_value=True
         ) as exists_mock:
             stdout, stderr = self.cmd("view_ca", self.cas["root"].serial)
-        # pylint: enable=consider-using-f-string
 
         path_mock.assert_called_once_with(self.cas["root"].private_key_path)
         exists_mock.assert_called_once_with(self.cas["root"].private_key_path)
