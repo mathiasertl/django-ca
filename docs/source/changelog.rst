@@ -18,6 +18,7 @@ ChangeLog
      volumes.
 
 * Add support for Django 4.1.
+* Add support for cryptography 38.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
 * Ensure that CRLs are regenerated periodically before the cache expires.
 
