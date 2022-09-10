@@ -39,6 +39,22 @@ def _test_version(docker_tag, release):
     return ok(f"Image identifies as {actual_release}.")
 
 
+def _test_alpine_version(docker_tag, alpine_version):
+    proc = utils.docker_run(
+        docker_tag,
+        "cat",
+        "/etc/alpine-release",
+        capture_output=True,
+        text=True,
+    )
+    actual_release = proc.stdout.strip()
+    actual_major = config.minor_to_major(actual_release)
+
+    if actual_major != alpine_version:
+        return err(f"Docker image uses outdated Alpine Linux version {actual_release}.")
+    return ok(f"Docker image uses Alpine Linux {actual_release}.")
+
+
 def _test_extras(docker_tag):
     cwd = os.getcwd()
     utils.docker_run(
@@ -96,10 +112,12 @@ def validate_docker_image(release, docker_tag, quiet=False):
     print("Validating Docker image...")
 
     errors = 0
+    project_config = config.get_project_config()
 
     _test_clean(docker_tag)
     if release is not None:
         errors += _test_version(docker_tag, release)
+    errors += _test_alpine_version(docker_tag, project_config["alpine"][-1])
     errors += _test_extras(docker_tag)
 
     context = {
