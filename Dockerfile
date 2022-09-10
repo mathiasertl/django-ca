@@ -1,4 +1,5 @@
-# syntax = docker/dockerfile:experimental
+# syntax = docker/dockerfile:1.4.3
+# https://hub.docker.com/r/docker/dockerfile
 ARG IMAGE=python:3.10-alpine3.16
 
 FROM $IMAGE as base
