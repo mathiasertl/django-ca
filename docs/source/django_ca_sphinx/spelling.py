@@ -19,13 +19,10 @@
 import re
 import typing
 
-from enchant.tokenize import Filter
-from enchant.tokenize import URLFilter
+from enchant.tokenize import Filter, URLFilter
 
 from django_ca import typehints
-from django_ca.extensions import KEY_TO_EXTENSION
-from django_ca.extensions import ExtendedKeyUsage
-from django_ca.extensions import KeyUsage
+from django_ca.extensions import KEY_TO_EXTENSION, ExtendedKeyUsage, KeyUsage
 
 
 class URIFilter(URLFilter):  # type: ignore[misc]

@@ -1,8 +1,7 @@
 # Django settings for ca project.
 
 import os
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
 from django.core.exceptions import ImproperlyConfigured
 
