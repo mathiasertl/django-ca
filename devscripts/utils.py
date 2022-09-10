@@ -66,25 +66,23 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
-def _waitfor(waitfor, jinja_env, context, quiet=True, **kwargs):
+def _waitfor(waitfor, jinja_env, context, **kwargs):
     """Helper function to wait until the "waitfor" command succeeds."""
     if not waitfor:
         return
 
     for command in waitfor:
         waitfor_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
-        if not quiet:
-            print("+", shlex.join(waitfor_cmd))
 
         for i in range(0, 15):
-            waitfor_proc = run(waitfor_cmd, quiet=quiet, check=False, capture_output=True, **kwargs)
+            waitfor_proc = run(waitfor_cmd, check=False, capture_output=True, **kwargs)
             if waitfor_proc.returncode == 0:
                 break
             time.sleep(1)
 
 
 @contextmanager
-def console_include(path, context, quiet=False):
+def console_include(path, context):
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
     import jinja2  # pylint: disable=import-outside-toplevel
@@ -126,7 +124,7 @@ def console_include(path, context, quiet=False):
             # If a "waitfor" command is defined, don't run actual command until it succeeds
             _waitfor(command.get("waitfor"), env, context, env=shell_env)
 
-            run(args, quiet=quiet, capture_output=True, input=stdin, env=shell_env)
+            run(args, capture_output=True, input=stdin, env=shell_env)
 
             for clean in reversed(command.get("clean", [])):
                 clean_commands += tmp_clean_commands
@@ -134,7 +132,7 @@ def console_include(path, context, quiet=False):
         yield
     finally:
         for args in reversed(clean_commands):
-            run(args, check=False, capture_output=True, quiet=quiet)
+            run(args, check=False, capture_output=True)
 
 
 def get_previous_release(current_release: typing.Optional[str] = None) -> str:
@@ -181,7 +179,7 @@ def tmpdir(**kwargs):
 def run(args, **kwargs):
     """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
-    if not kwargs.pop("quiet", False):
+    if config.OUTPUT_COMMANDS:
         print("+", shlex.join(args))
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
 

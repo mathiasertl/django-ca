@@ -81,31 +81,26 @@ def _test_clean(docker_tag):
     return ok("Docker image is clean.")
 
 
-def docker_cp(src, container, dest, quiet=False):
+def docker_cp(src, container, dest):
     """Copy file into the container."""
-    utils.run(["docker", "cp", src, f"{container}:{dest}"], quiet=quiet)
+    utils.run(["docker", "cp", src, f"{container}:{dest}"])
 
 
-def build_docker_image(release, prune=True, build=True, quiet=False) -> str:
+def build_docker_image(release, prune=True, build=True) -> str:
     """Build the docker image."""
 
     if prune:
-        utils.run(["docker", "system", "prune", "-af"], quiet=quiet, capture_output=True)
+        utils.run(["docker", "system", "prune", "-af"], capture_output=True)
 
     tag = f"{config.DOCKER_TAG}:{release}"
     if build:
         info("Building docker image...")
-        utils.run(
-            ["docker", "build", "-t", tag, "."],
-            env={"DOCKER_BUILDKIT": "1"},
-            quiet=quiet,
-            capture_output=True,
-        )
+        utils.run(["docker", "build", "-t", tag, "."], env={"DOCKER_BUILDKIT": "1"}, capture_output=True)
         ok("Docker image built.")
     return tag
 
 
-def validate_docker_image(release, docker_tag, quiet=False):
+def validate_docker_image(release, docker_tag):
     """Validate the Docker image."""
     print("Validating Docker image...")
 
@@ -130,7 +125,7 @@ def validate_docker_image(release, docker_tag, quiet=False):
     }
 
     info("Testing tutorial...")
-    with start_tutorial("quickstart_with_docker", context, quiet=quiet) as tut:
+    with start_tutorial("quickstart_with_docker", context) as tut:
         tut.write_template("localsettings.yaml.jinja")
         tut.write_template("nginx.conf.jinja")
 
@@ -143,7 +138,7 @@ def validate_docker_image(release, docker_tag, quiet=False):
     return errors
 
 
-def validate(release, prune, build, quiet=False):
+def validate(release, prune, build):
     """Main validation entry function."""
     docker_tag = build_docker_image(release=release, prune=prune, build=build)
-    validate_docker_image(release, docker_tag, quiet=quiet)
+    validate_docker_image(release, docker_tag)

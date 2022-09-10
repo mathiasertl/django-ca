@@ -20,6 +20,7 @@ import argparse
 from devscripts.commands import add_command
 
 parser = argparse.ArgumentParser(description="Helper-script for various tasks during development.")
+parser.add_argument("-q", "--quiet", default=False, action="store_true", help="Do not display commands.")
 commands = parser.add_subparsers(dest="command")
 
 add_command(commands, "clean")

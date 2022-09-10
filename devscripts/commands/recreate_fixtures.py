@@ -40,7 +40,7 @@ DSA_ALGORITHM = hashes.SHA1()
 
 
 def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
-    dest, delay, only_contrib, regenerate_ocsp, generate_contrib, ca_validity, cert_validity, quiet=False
+    dest, delay, only_contrib, regenerate_ocsp, generate_contrib, ca_validity, cert_validity
 ):
     """Main entry function to recreate fixtures."""
     # pylint: disable=import-outside-toplevel  # django needs to be set up
@@ -261,8 +261,8 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     if not only_contrib:
         with override_tmpcadir():
             ca_instances = create_cas(dest, now, delay, data)
-            create_certs(dest, ca_instances, now, delay, data, quiet=quiet)
-            create_special_certs(dest, now, delay, data, quiet=quiet)
+            create_certs(dest, ca_instances, now, delay, data)
+            create_special_certs(dest, now, delay, data)
 
         # Rebuild example OCSP requests
         if regenerate_ocsp:
@@ -347,7 +347,6 @@ class Command(DevCommand):
             default=config.FIXTURES_DIR,
             help="Where to store generated certificates (default: %(default)s).",
         )
-        parser.add_argument("-q", "--quiet", action="store_true", default=False)
 
     def handle(self, args):
         if "TOX_ENV_DIR" in os.environ:  # was invoked via tox
@@ -364,5 +363,4 @@ class Command(DevCommand):
             generate_contrib=args.generate_contrib,
             ca_validity=args.ca_validity,
             cert_validity=args.cert_validity,
-            quiet=args.quiet,
         )

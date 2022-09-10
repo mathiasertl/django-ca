@@ -121,8 +121,8 @@ ChangeLog
         git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
         try:
             self.validate_state()
-            docker.validate(release=args.release, prune=True, build=True, quiet=True)
-            docker_compose.validate(release=args.release, prune=False, build=False, quiet=True)
+            docker.validate(release=args.release, prune=True, build=True)
+            docker_compose.validate(release=args.release, prune=False, build=False)
             wheel.validate(release=args.release)
 
             if args.delete_tag:

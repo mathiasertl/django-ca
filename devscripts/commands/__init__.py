@@ -21,6 +21,7 @@ from pathlib import Path
 
 import django
 
+from devscripts import config
 from devscripts import utils
 
 
@@ -59,6 +60,9 @@ class DevCommand:
             for mod_name, pip_name in self.modules:
                 mod = importlib.import_module(mod_name)
                 setattr(self, mod_name, mod)
+
+        if args.quiet:
+            config.OUTPUT_COMMANDS = False
 
         try:
             self.handle(args)
