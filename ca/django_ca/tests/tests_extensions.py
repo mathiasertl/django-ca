@@ -1847,11 +1847,11 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request]),
             "expected": frozenset([TLSFeatureType.status_request]),
             "expected_repr": "['OCSPMustStaple']",
-            "expected_serialized": ["OCSPMustStaple"],
+            "expected_serialized": ["status_request"],
             "text": "* OCSPMustStaple",
         },
         "two": {
-            "admin_html": "<ul><li>MultipleCertStatusRequest</li><li>OCSPMustStaple</li></ul>",
+            "admin_html": "<ul><li>OCSPMustStaple</li><li>MultipleCertStatusRequest</li></ul>",
             "values": [
                 {TLSFeatureType.status_request, TLSFeatureType.status_request_v2},
                 {"OCSPMustStaple", "MultipleCertStatusRequest"},
@@ -1862,13 +1862,13 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             ],
             "extension_type": x509.TLSFeature(
                 features=[
-                    TLSFeatureType.status_request_v2,
                     TLSFeatureType.status_request,
+                    TLSFeatureType.status_request_v2,
                 ]
             ),
             "expected": frozenset([TLSFeatureType.status_request, TLSFeatureType.status_request_v2]),
             "expected_repr": "['MultipleCertStatusRequest', 'OCSPMustStaple']",
-            "expected_serialized": ["MultipleCertStatusRequest", "OCSPMustStaple"],
+            "expected_serialized": ["status_request", "status_request_v2"],
             "text": "* MultipleCertStatusRequest\n* OCSPMustStaple",
         },
         "three": {
@@ -1880,7 +1880,7 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
             "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request_v2]),
             "expected": frozenset([TLSFeatureType.status_request_v2]),
             "expected_repr": "['MultipleCertStatusRequest']",
-            "expected_serialized": ["MultipleCertStatusRequest"],
+            "expected_serialized": ["status_request_v2"],
             "text": "* MultipleCertStatusRequest",
         },
     }

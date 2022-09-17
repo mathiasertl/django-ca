@@ -1070,10 +1070,15 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
     CRYPTOGRAPHY_MAPPING = {
         # https://tools.ietf.org/html/rfc6066.html:
         "OCSPMustStaple": TLSFeatureType.status_request,
+        "status_request": TLSFeatureType.status_request,
         # https://tools.ietf.org/html/rfc6961.html (not commonly used):
         "MultipleCertStatusRequest": TLSFeatureType.status_request_v2,
+        "status_request_v2": TLSFeatureType.status_request_v2,
     }
-    _CRYPTOGRAPHY_MAPPING_REVERSED = {v: k for k, v in CRYPTOGRAPHY_MAPPING.items()}
+    SERIALIZER_MAPPING = {
+        TLSFeatureType.status_request: "OCSPMustStaple",
+        TLSFeatureType.status_request_v2: "MultipleCertStatusRequest",
+    }
     KNOWN_PARAMETERS = sorted(CRYPTOGRAPHY_MAPPING)
     """Known values that can be passed to this extension."""
 
@@ -1084,6 +1089,11 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
     def extension_type(self) -> x509.TLSFeature:
         # call serialize_item() to ensure consistent sort order
         return x509.TLSFeature(sorted(self.value, key=self.serialize_item))
+
+    def repr_value(self) -> str:
+        values = [f"'{self.SERIALIZER_MAPPING[value]}'" for value in self.value]
+        joined = ", ".join(sorted(values))
+        return f"[{joined}]"
 
     def serialize_item(self, value: TLSFeatureType) -> str:
         return value.name
