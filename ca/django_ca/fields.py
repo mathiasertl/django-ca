@@ -176,9 +176,10 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
     ) -> typing.Optional[x509.Extension[ExtensionTypeTypeVar]]:
         *value, critical = data_list
         if value:
-            return x509.Extension(
-                critical=critical, oid=self.extension_type.oid, value=self.get_value(*value)
-            )
+            ext_value = self.get_value(*value)
+            if ext_value is None:
+                return None
+            return x509.Extension(critical=critical, oid=self.extension_type.oid, value=ext_value)
         return None
 
     def get_fields(self) -> typing.Tuple[forms.Field, ...]:
@@ -191,8 +192,11 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
         raise ValueError("ExtensionField must either set fields or implement get_fields().")
 
     @abc.abstractmethod
-    def get_value(self, value: typing.Any) -> ExtensionTypeTypeVar:
-        """Get the extension value from the "compressed" form representation."""
+    def get_value(self, value: typing.Any) -> typing.Optional[ExtensionTypeTypeVar]:
+        """Get the extension value from the "compressed" form representation.
+
+        Return `None` if no value was set and the extension should **not** be added.
+        """
 
 
 class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
@@ -202,8 +206,9 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
     fields = (forms.BooleanField(required=False),)
     widget = widgets.OCSPNoCheckWidget
 
-    def get_value(self, value: bool) -> x509.OCSPNoCheck:
-        return self.extension_type()
+    def get_value(self, value: bool) -> typing.Optional[x509.OCSPNoCheck]:
+        if value is True:
+            return self.extension_type()
 
 
 class TLSFeatureField(ExtensionField[x509.TLSFeature]):
@@ -220,8 +225,10 @@ class TLSFeatureField(ExtensionField[x509.TLSFeature]):
         super().__init__(**kwargs)
 
     def get_fields(self) -> typing.Tuple[forms.MultipleChoiceField]:
-        return (forms.MultipleChoiceField(choices=self.choices),)
+        return (forms.MultipleChoiceField(choices=self.choices, required=False),)
 
-    def get_value(self, value: typing.List[str]) -> x509.TLSFeature:
+    def get_value(self, value: typing.List[str]) -> typing.Optional[x509.TLSFeature]:
+        if not value:
+            return None
         features = [getattr(x509.TLSFeatureType, elem) for elem in value]
         return self.extension_type(features=features)
