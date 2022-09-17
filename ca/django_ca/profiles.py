@@ -105,6 +105,8 @@ class Profile:
         for key, extension in deepcopy(extensions).items():
             if isinstance(extension, Extension):
                 self.extensions[key] = extension
+            elif extension is None:
+                self.extensions[key] = None
             else:
                 self.extensions[key] = KEY_TO_EXTENSION[key](extension)
 
@@ -348,11 +350,19 @@ class Profile:
         This is function is called by the admin interface to retrieve profile information to the browser, so
         the value returned by this function should always be JSON serializable.
         """
+        extensions = {}
+
+        for key, extension in self.extensions.items():
+            if extension is None:
+                extensions[key] = None
+            else:
+                extensions[key] = extension.serialize()
+
         data: SerializedProfile = {
             "cn_in_san": self.cn_in_san,
             "description": self.description,
             "subject": dict(self.subject),
-            "extensions": {k: e.serialize() for k, e in self.extensions.items()},
+            "extensions": extensions,
         }
 
         return data

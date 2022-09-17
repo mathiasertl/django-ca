@@ -13,6 +13,7 @@
 
 """Django form fields related to django-ca."""
 
+import abc
 import typing
 
 from cryptography import x509
@@ -22,10 +23,10 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from .extensions import Extension
+from . import widgets
+from .extensions import Extension, get_extension_name
 from .profiles import profile
 from .utils import ADMIN_SUBJECT_OIDS
-from .widgets import MultiValueExtensionWidget, SubjectAltNameWidget, SubjectWidget
 
 if typing.TYPE_CHECKING:
     from .modelfields import LazyCertificateSigningRequest
@@ -98,7 +99,7 @@ class SubjectField(forms.MultiValueField):
 
         # NOTE: do not pass initial here as this is done on webserver invocation
         #       This screws up tests.
-        kwargs.setdefault("widget", SubjectWidget)
+        kwargs.setdefault("widget", widgets.SubjectWidget)
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
     def compress(self, data_list: typing.List[str]) -> x509.Name:
@@ -116,7 +117,7 @@ class SubjectAltNameField(forms.MultiValueField):
             forms.CharField(required=False),
             forms.BooleanField(required=False),
         )
-        kwargs.setdefault("widget", SubjectAltNameWidget)
+        kwargs.setdefault("widget", widgets.SubjectAltNameWidget)
         kwargs.setdefault("initial", ["", profile.cn_in_san])
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
@@ -144,7 +145,7 @@ class MultiValueExtensionField(forms.MultiValueField):
             forms.BooleanField(required=False),
         )
 
-        widget = MultiValueExtensionWidget(choices=choices)
+        widget = widgets.MultiValueExtensionWidget(choices=choices)
         super().__init__(fields=fields, require_all_fields=False, widget=widget, **kwargs)
 
     def compress(
@@ -156,3 +157,57 @@ class MultiValueExtensionField(forms.MultiValueField):
                 "value": data_list[0],
             }
         )
+
+
+class ExtensionField(forms.MultiValueField, metaclass=abc.ABCMeta):
+    fields: typing.Optional[typing.Tuple[forms.Field, ...]] = None
+
+    def __init__(self, **kwargs):
+        fields = self.get_fields() + (forms.BooleanField(required=False),)
+        kwargs.setdefault("label", get_extension_name(self.extension_type.oid))
+        super().__init__(fields=fields, require_all_fields=False, **kwargs)
+
+    def compress(self, data_list):
+        *value, critical = data_list
+        if value:
+            return x509.Extension(
+                critical=critical, oid=self.extension_type.oid, value=self.get_value(*value)
+            )
+        return None
+
+    def get_fields(self) -> typing.Tuple[forms.Field, ...]:
+        if self.fields is not None:
+            return self.fields
+        raise ValueError("ExtensionField must either set fields or implement get_fields().")
+
+    @abc.abstractmethod
+    def get_value(self, value) -> x509.ExtensionType:
+        ...
+
+
+class OCSPNoCheckField(ExtensionField):
+    extension_type = x509.OCSPNoCheck
+    fields = (forms.BooleanField(required=False),)
+    widget = widgets.OCSPNoCheckWidget
+
+    def get_value(self, value: bool) -> x509.OCSPNoCheck:
+        return self.extension_type()
+
+
+class TLSFeatureField(ExtensionField):
+    extension_type = x509.TLSFeature
+    choices = (
+        (x509.TLSFeatureType.status_request.name, "OCSPMustStaple"),
+        (x509.TLSFeatureType.status_request_v2.name, "MultipleCertStatusRequest"),
+    )  # TODO: choices can also be a function - better for testing for completeness
+
+    def __init__(self, **kwargs):
+        kwargs["widget"] = widgets.TLSFeatureWidget(choices=self.choices)
+        super().__init__(**kwargs)
+
+    def get_fields(self) -> typing.Tuple[forms.MultipleChoiceField]:
+        return (forms.MultipleChoiceField(choices=self.choices),)
+
+    def get_value(self, value: typing.List[str]) -> x509.TLSFeatureType:
+        features = [getattr(x509.TLSFeatureType, elem) for elem in value]
+        return self.extension_type(features=features)

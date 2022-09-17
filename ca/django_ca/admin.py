@@ -54,7 +54,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import ExtendedKeyUsage, KeyUsage, SubjectAlternativeName, TLSFeature, get_extension_name
+from .extensions import ExtendedKeyUsage, KeyUsage, SubjectAlternativeName, get_extension_name
 from .extensions.utils import extension_as_admin_html
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
@@ -612,6 +612,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     "key_usage",
                     "extended_key_usage",
                     "tls_feature",
+                    "ocsp_no_check",
                 ]
             },
         ),
@@ -938,11 +939,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             san = SubjectAlternativeName({"value": [e.strip() for e in san.split(",") if e.strip()]})
             if san:
                 extensions[SubjectAlternativeName.key] = san
-            for key in [KeyUsage.key, ExtendedKeyUsage.key, TLSFeature.key]:
+            for key in [KeyUsage.key, ExtendedKeyUsage.key]:
                 if data[key].value:
                     extensions[key] = data[key]
                 else:
                     extensions[key] = None
+            for key in ["ocsp_no_check", "tls_feature"]:
+                extensions[key] = data[key]
 
             obj.profile = profile.name
             obj.update_certificate(

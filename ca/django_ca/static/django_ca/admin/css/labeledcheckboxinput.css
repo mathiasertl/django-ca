@@ -13,11 +13,12 @@ You should have received a copy of the GNU General Public License along with dja
 see <http://www.gnu.org/licenses/>.
 */
 
-span.critical-widget-wrapper {
+span.labeled-checkbox {
     display: block;
 }
 
-span.critical-widget-wrapper label {
-    float: none;
+span.labeled-checkbox label {
     display: inline;
+    float: none;
+    padding-left: 5px;
 }

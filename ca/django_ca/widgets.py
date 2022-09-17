@@ -32,12 +32,14 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
     template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 
-    def __init__(self, label: str, *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __init__(self, label: str, wrapper_classes: typing.Iterable[str] = tuple()) -> None:
+        self.wrapper_classes = tuple(wrapper_classes) + ("labeled-checkbox",)
         self.label = label
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
     def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
         ctx = super().get_context(*args, **kwargs)
+        ctx["widget"]["wrapper_classes"] = " ".join(self.wrapper_classes)
         ctx["widget"]["label"] = self.label
         return ctx
 
@@ -45,6 +47,13 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
         css = {
             "all": ("django_ca/admin/css/labeledcheckboxinput.css",),
         }
+
+
+class CriticalInput(LabeledCheckboxInput):
+    classes = ("critical",)
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        super().__init__(label=_("critical"), wrapper_classes=("critical",))
 
 
 class LabeledTextInput(widgets.TextInput):
@@ -155,7 +164,7 @@ class MultiValueExtensionWidget(CustomMultiWidget):
     ) -> None:
         _widgets = (
             widgets.SelectMultiple(choices=choices, attrs=attrs),
-            LabeledCheckboxInput(label=_("critical")),
+            CriticalInput(),
         )
         super().__init__(_widgets, attrs)
 
@@ -165,3 +174,36 @@ class MultiValueExtensionWidget(CustomMultiWidget):
         if value:
             return value.serialize_value(), value.critical
         return ([], False)
+
+
+class ExtensionWidget(widgets.MultiWidget):
+    widgets: typing.Optional[typing.Tuple[widgets.Widget, ...]]
+    template_name = "django_ca/forms/widgets/extension.html"
+
+    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs) -> None:
+        widgets = self.get_widgets(**kwargs) + (CriticalInput(),)
+        super().__init__(widgets, attrs)
+
+    def get_widgets(self, **kwargs) -> typing.Tuple[widgets.Widget, ...]:
+        if self.widgets is not None:
+            return self.widgets
+        raise ValueError("ExtensionWidget is expected to either set widgets or implement get_widgets().")
+
+
+class OCSPNoCheckWidget(ExtensionWidget):
+    widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
+
+    def decompress(self, value):
+        if value is None:
+            return [False, False]
+        return [value.critical, True]
+
+
+class TLSFeatureWidget(ExtensionWidget):
+    def get_widgets(self, choices, **kwargs):
+        return (widgets.SelectMultiple(choices=choices),)
+
+    def decompress(self, value):
+        if value is None:
+            return [False, []]
+        return [value.critical, [feature.name for feature in value.features]]

@@ -26,8 +26,14 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
-from .extensions import ExtendedKeyUsage, KeyUsage, TLSFeature
-from .fields import MultiValueExtensionField, SubjectAltNameField, SubjectField
+from .extensions import ExtendedKeyUsage, KeyUsage
+from .fields import (
+    MultiValueExtensionField,
+    OCSPNoCheckField,
+    SubjectAltNameField,
+    SubjectField,
+    TLSFeatureField,
+)
 from .models import Certificate, CertificateAuthority, X509CertMixin
 from .utils import EXTENDED_KEY_USAGE_DESC, KEY_USAGE_DESC, parse_general_name
 from .widgets import ProfileWidget
@@ -93,17 +99,6 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
     This is used by forms for creating a new certificate and resigning an existing one."""
 
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        # Set choices so we can filter out CAs where the private key does not exist locally
-        field = self.fields["ca"]
-        field.choices = [
-            (field.prepare_value(ca), field.label_from_instance(ca))
-            for ca in self.fields["ca"].queryset.filter(enabled=True)
-            if ca.key_exists
-        ]
-
     password = forms.CharField(
         widget=forms.PasswordInput,
         required=False,
@@ -141,12 +136,24 @@ class CreateCertificateBaseForm(CertificateModelForm):
     extended_key_usage = MultiValueExtensionField(
         help_text=EXTENDED_KEY_USAGE_DESC, extension=ExtendedKeyUsage
     )
-    tls_feature = MultiValueExtensionField(extension=TLSFeature)
+    ocsp_no_check = OCSPNoCheckField()
+    tls_feature = TLSFeatureField()
 
     # Prevent auto-filling the password field. Browsers will otherwise prefill this field with the *users*
     # password, which is usually the wrong password. Especially annoying for CAs without a password, as the
     # browser will prevent form submission without entering a different non-empty password.
     password.widget.attrs.update({"autocomplete": "new-password"})
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        # Set choices so we can filter out CAs where the private key does not exist locally
+        field = self.fields["ca"]
+        field.choices = [
+            (field.prepare_value(ca), field.label_from_instance(ca))
+            for ca in self.fields["ca"].queryset.filter(enabled=True)
+            if ca.key_exists
+        ]
 
     def clean_algorithm(self) -> hashes.HashAlgorithm:  # pylint: disable=missing-function-docstring
         algo = self.cleaned_data["algorithm"]

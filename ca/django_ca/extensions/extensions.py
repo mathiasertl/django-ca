@@ -1086,7 +1086,7 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
         return x509.TLSFeature(sorted(self.value, key=self.serialize_item))
 
     def serialize_item(self, value: TLSFeatureType) -> str:
-        return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
+        return value.name
 
     def parse_value(self, value: Union[TLSFeatureType, str]) -> TLSFeatureType:
         if isinstance(value, TLSFeatureType):

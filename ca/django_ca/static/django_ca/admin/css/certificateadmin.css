@@ -26,10 +26,6 @@ div.field-extendedKeyUsage select {
     min-width: 375px;
 }
 
-span.critical-widget-wrapper label {
-    padding-left: 5px;
-}
-
 #id_subjectAltName {
     min-width: 540px;
 }
