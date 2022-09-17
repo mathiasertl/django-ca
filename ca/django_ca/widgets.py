@@ -194,9 +194,11 @@ class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  
 
     def get_widgets(self, **kwargs: typing.Any) -> typing.Tuple[forms.Widget, ...]:
         """Get sub-widgets used by this widget."""
-        if self.extension_widgets is not None:
+        if self.extension_widgets is not None:  # pragma: no branch
             return self.extension_widgets
-        raise ValueError("ExtensionWidget is expected to either set widgets or implement get_widgets().")
+        raise ValueError(  # pragma: no cover
+            "ExtensionWidget is expected to either set widgets or implement get_widgets()."
+        )
 
 
 class OCSPNoCheckWidget(ExtensionWidget):

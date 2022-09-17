@@ -241,7 +241,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 ca=self.ca,
                 subject=self.subject,
                 cn_in_san=False,
-                alt=SubjectAlternativeName({"value": ["example.com"]}),
+                alt=x509.SubjectAlternativeName([x509.DNSName("example.com")]),
                 stdin=stdin,
             )
         self.assertEqual(pre.call_count, 1)
@@ -306,7 +306,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=SubjectAlternativeName({"value": [self.hostname]}),
+                alt=x509.SubjectAlternativeName([x509.DNSName(self.hostname)]),
                 stdin=stdin,
             )
         self.assertEqual(stderr, "")
@@ -337,7 +337,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=SubjectAlternativeName({"value": [self.hostname]}),
+                alt=x509.SubjectAlternativeName([x509.DNSName(self.hostname)]),
                 stdin=stdin,
                 subject=subject,
             )
@@ -438,7 +438,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         stdin = self.csr_pem.encode()
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
             stdout, stderr = self.cmd(
-                "sign_cert", ca=self.ca, alt=SubjectAlternativeName({"value": [self.hostname]}), stdin=stdin
+                "sign_cert",
+                ca=self.ca,
+                alt=x509.SubjectAlternativeName([x509.DNSName(self.hostname)]),
+                stdin=stdin,
             )
 
         cert = Certificate.objects.get()
@@ -477,7 +480,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.cmd(
                 "sign_cert",
                 ca=ca,
-                alt=SubjectAlternativeName({"value": ["example.com"]}),
+                alt=x509.SubjectAlternativeName([x509.DNSName("example.com")]),
                 stdin=stdin,
                 password=password,
             )
@@ -492,7 +495,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.cmd(
                 "sign_cert",
                 ca=ca,
-                alt=SubjectAlternativeName({"value": ["example.com"]}),
+                alt=x509.SubjectAlternativeName([x509.DNSName("example.com")]),
                 stdin=stdin,
                 password=b"wrong",
             )

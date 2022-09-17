@@ -137,6 +137,11 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         )
         self.assertEqual(prof1, prof2)
 
+    def test_init_none_extension(self) -> None:
+        prof = Profile("test", extensions={"ocsp_no_check": None})
+        self.assertEqual(prof.extensions, {"ocsp_no_check": None, "basic_constraints": BasicConstraints()})
+        self.assertIsNone(prof.serialize()["extensions"]["ocsp_no_check"])
+
     def test_init_no_subject(self) -> None:
         """Test with no default subject."""
         # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
@@ -302,6 +307,34 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 self.basic_constraints(),
                 self.subject_alternative_name(x509.DNSName(self.hostname)),
             ],
+        )
+
+    @override_tmpcadir()
+    def test_none_override(self) -> None:
+        """Test that we can remove a particular extension."""
+
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        prof = Profile(
+            "example",
+            extensions={"ocsp_no_check": self.ocsp_no_check()},
+            add_crl_url=False,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+            add_issuer_alternative_name=False,
+        )
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions={"ocsp_no_check": None})
+        self.assertEqual(pre.call_count, 1)
+        self.assertExtensions(
+            cert,
+            [
+                self.subject_key_identifier(cert),
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_alternative_name(x509.DNSName(self.hostname)),
+            ],
+            expect_defaults=False,
         )
 
     @override_tmpcadir()
@@ -521,10 +554,16 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             self.create_cert(prof, ca, csr, subject=None)
         self.assertEqual(pre.call_count, 0)
 
-        # pass an empty SAN
-        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, cn_in_san=True, extensions=[SubjectAlternativeName()])
-        self.assertEqual(pre.call_count, 0)
+    @override_tmpcadir()
+    def test_no_valid_cn_in_san(self) -> None:
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
+        san = self.subject_alternative_name(x509.RegisteredID(x509.ExtensionOID.OCSP_NO_CHECK))
+
+        with self.mockSignal(pre_issue_cert) as pre:
+            self.create_cert(prof, ca, csr, cn_in_san=True, extensions={"subject_alternative_name": san})
+        self.assertEqual(pre.call_count, 1)
 
     @override_tmpcadir()
     def test_unparsable_cn(self) -> None:

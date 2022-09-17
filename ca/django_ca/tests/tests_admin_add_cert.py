@@ -87,8 +87,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         "serverAuth",
                     ],
                     "extended_key_usage_1": False,
-                    "tls_feature_0": ["OCSPMustStaple", "MultipleCertStatusRequest"],
+                    "tls_feature_0": ["status_request", "status_request_v2"],
                     "tls_feature_1": False,
+                    "ocsp_no_check_0": True,
+                    "ocsp_no_check_1": False,
                 },
             )
         self.assertRedirects(response, self.changelist_url)
@@ -103,11 +105,11 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             [
                 self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
                 self.key_usage(digital_signature=True, key_agreement=True),
+                self.ocsp_no_check(),
                 self.subject_alternative_name(x509.DNSName(cname)),
-                self.tls_feature(x509.TLSFeatureType.status_request_v2, x509.TLSFeatureType.status_request),
+                self.tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
             ],
         )
-
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr.pem.strip(), csr)
         self.assertEqual(cert.profile, "webserver")
@@ -129,11 +131,25 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertIn("admin/change_form.html", templates)
         self.assertCSS(response, "django_ca/admin/css/base.css")
         self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
+        return response
 
     @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
     def test_get_dict(self) -> None:
         """Test get with no profiles and no default subject."""
         self.test_get()
+
+    @override_settings(
+        CA_PROFILES={"webserver": {"extensions": {"ocsp_no_check": {"critical": True}}}},
+        CA_DEFAULT_PROFILE="webserver",
+    )
+    def test_get_profiles(self) -> None:
+        """Test get with no profiles and no default subject."""
+        response = self.test_get()
+        form = response.context_data["adminform"].form
+
+        field = form.fields["ocsp_no_check"]
+        bound_field = field.get_bound_field(form, "ocsp_no_check")
+        self.assertEqual(bound_field.initial, self.ocsp_no_check(critical=True))
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add(self) -> None:
@@ -170,7 +186,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         "serverAuth",
                     ],
                     "extended_key_usage_1": False,
-                    "tls_feature_0": ["OCSPMustStaple", "MultipleCertStatusRequest"],
+                    "tls_feature_0": ["status_request", "status_request_v2"],
                     "tls_feature_1": False,
                 },
             )
@@ -215,7 +231,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         "serverAuth",
                     ],
                     "extended_key_usage_1": False,
-                    "tls_feature_0": ["OCSPMustStaple", "MultipleCertStatusRequest"],
+                    "tls_feature_0": ["status_request", "status_request_v2"],
                     "tls_feature_1": False,
                 },
             )
@@ -261,7 +277,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         "serverAuth",
                     ],
                     "extended_key_usage_1": False,
-                    "tls_feature_0": ["OCSPMustStaple", "MultipleCertStatusRequest"],
+                    "tls_feature_0": ["status_request", "status_request_v2"],
                     "tls_feature_1": False,
                 },
             )
@@ -698,7 +714,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         "serverAuth",
                     ],
                     "extended_key_usage_1": False,
-                    "tls_feature_0": ["OCSPMustStaple", "MultipleCertStatusRequest"],
+                    "tls_feature_0": ["status_request", "status_request_v2"],
                     "tls_feature_1": False,
                 },
             )

@@ -53,7 +53,7 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
-from ...extensions import Extension
+from ...extensions import Extension, TLSFeature
 from ...extensions.base import CRLDistributionPointsBase, IterableExtension, ListExtension
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import post_create_ca, post_issue_cert, post_revoke_cert, pre_create_ca, pre_issue_cert
@@ -786,9 +786,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             critical=critical,
         )
 
-    def ocsp_no_check(self) -> x509.Extension[x509.OCSPNoCheck]:
+    def ocsp_no_check(self, critical: bool = False) -> x509.Extension[x509.OCSPNoCheck]:
         """Shortcut for getting a OCSPNoCheck extension."""
-        return x509.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=x509.OCSPNoCheck())
+        return x509.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=critical, value=x509.OCSPNoCheck())
 
     def precert_poison(self) -> x509.Extension[x509.PrecertPoison]:
         """Shortcut for getting a PrecertPoison extension."""
@@ -814,9 +814,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
         return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
 
-    def tls_feature(self, *features: x509.TLSFeatureType) -> x509.Extension[x509.TLSFeature]:
+    def tls_feature(self, *features: x509.TLSFeatureType, critical=False) -> x509.Extension[x509.TLSFeature]:
         """Shortcut for getting a TLSFeature extension."""
-        return x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=False, value=x509.TLSFeature(features))
+        return x509.Extension(
+            oid=ExtensionOID.TLS_FEATURE, critical=critical, value=x509.TLSFeature(features)
+        )
 
     @classmethod
     def expires(cls, days: int) -> datetime:
@@ -875,6 +877,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             if isinstance(value, CRLDistributionPointsBase):
                 for i, ext_value in enumerate(value.value):
                     ctx[f"{key}_{i}"] = ext_value
+            elif isinstance(value, TLSFeature):
+                features = [TLSFeature.CRYPTOGRAPHY_MAPPING[val] for val in value]
+                feature_names = [TLSFeature.SERIALIZER_MAPPING[feature] for feature in features]
+                for i, val in enumerate(sorted(feature_names)):
+                    ctx[f"{key}_{i}"] = val
             elif isinstance(value, IterableExtension):
                 for i, ext_value in enumerate(value.serialize_value()):
                     ctx[f"{key}_{i}"] = ext_value

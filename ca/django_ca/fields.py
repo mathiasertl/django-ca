@@ -135,7 +135,7 @@ class MultiValueExtensionField(forms.MultiValueField):
         self.extension = extension
         kwargs.setdefault("label", extension.name)
         ext = profile.extensions.get(self.extension.key)
-        if ext:
+        if ext:  # pragma: no cover  # this is on the way out anyway
             ext = ext.serialize()
             kwargs.setdefault("initial", [ext["value"], ext["critical"]])
 
@@ -174,22 +174,25 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
     def compress(
         self, data_list: typing.List[typing.Any]
     ) -> typing.Optional[x509.Extension[ExtensionTypeTypeVar]]:
+        if not data_list:
+            return None
+
         *value, critical = data_list
-        if value:
-            ext_value = self.get_value(*value)
-            if ext_value is None:
-                return None
-            return x509.Extension(critical=critical, oid=self.extension_type.oid, value=ext_value)
-        return None
+        ext_value = self.get_value(*value)
+        if ext_value is None:
+            return None
+        return x509.Extension(critical=critical, oid=self.extension_type.oid, value=ext_value)
 
     def get_fields(self) -> typing.Tuple[forms.Field, ...]:
         """Get the form fields used for this extension.
 
         Note that the `critical` input field is automatically appended.
         """
-        if self.fields is not None:
+        if self.fields is not None:  # pragma: no branch
             return self.fields
-        raise ValueError("ExtensionField must either set fields or implement get_fields().")
+        raise ValueError(  # pragma: no cover
+            "ExtensionField must either set fields or implement get_fields()."
+        )
 
     @abc.abstractmethod
     def get_value(self, value: typing.Any) -> typing.Optional[ExtensionTypeTypeVar]:
@@ -230,5 +233,7 @@ class TLSFeatureField(ExtensionField[x509.TLSFeature]):
     def get_value(self, value: typing.List[str]) -> typing.Optional[x509.TLSFeature]:
         if not value:
             return None
-        features = [getattr(x509.TLSFeatureType, elem) for elem in value]
+
+        # Note: sort value to get predictable output in test cases
+        features = [getattr(x509.TLSFeatureType, elem) for elem in sorted(value)]
         return self.extension_type(features=features)

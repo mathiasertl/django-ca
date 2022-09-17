@@ -77,7 +77,7 @@ from .models import (
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
-from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name, x509_name
+from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
 
 log = logging.getLogger(__name__)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
@@ -719,7 +719,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             }
         else:
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
-            data["subject"] = x509_name(profile.subject)
+            data["subject"] = profile.subject.name
 
             for key in CERTIFICATE_EXTENSIONS:
                 ext = profile.extensions.get(key)

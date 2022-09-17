@@ -134,16 +134,6 @@ class Profile:
             and self.description == value.description
         )
 
-    def _parse_extension_value(self, key: str, value: ExtensionTypes) -> ExtensionTypes:
-        """Parse an extension value into a django_ca extension."""
-
-        if isinstance(value, x509.Extension):
-            return value
-        if isinstance(value, Extension):
-            return value
-
-        return KEY_TO_EXTENSION[key](value)
-
     def __repr__(self) -> str:
         return f"<Profile: {self.name}>"
 
@@ -242,9 +232,7 @@ class Profile:
         if extensions is None:
             extensions_update: Dict[str, ExtensionTypes] = {}
         elif isinstance(extensions, dict):
-            extensions_update = {
-                k: self._parse_extension_value(k, v) for k, v in extensions.items() if v is not None
-            }
+            extensions_update = {k: v for k, v in extensions.items() if v is not None}
         else:
             extensions_update = {e.key: e for e in extensions}
 
@@ -430,13 +418,42 @@ class Profile:
                     f"{subject['CN']}: Could not parse CommonName as subjectAlternativeName."
                 ) from e
 
-            extensions.setdefault(SubjectAlternativeName.key, SubjectAlternativeName())
-            san_ext = cast(SubjectAlternativeName, extensions[SubjectAlternativeName.key])
-            if common_name not in san_ext:
-                san_ext.append(common_name)
+            if SubjectAlternativeName.key in extensions:
+                san_ext = extensions[SubjectAlternativeName.key]
+                if isinstance(san_ext, SubjectAlternativeName):
+                    san_ext = san_ext.as_extension()
+
+                if common_name not in san_ext.value:
+                    extensions[SubjectAlternativeName.key] = x509.Extension(
+                        oid=x509.ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                        critical=san_ext.critical,
+                        value=x509.SubjectAlternativeName(list(san_ext.value) + [common_name]),
+                    )
+
+            else:
+                extensions[SubjectAlternativeName.key] = x509.Extension(
+                    oid=x509.ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([common_name]),
+                )
+
         elif not subject.get("CN") and SubjectAlternativeName.key in extensions:
-            san_ext = cast(SubjectAlternativeName, extensions[SubjectAlternativeName.key])
-            cn_from_san = san_ext.get_common_name()
+            san_ext = extensions[SubjectAlternativeName.key]
+            if isinstance(san_ext, SubjectAlternativeName):
+                san_ext = cast(SubjectAlternativeName, extensions[SubjectAlternativeName.key])
+                cn_from_san = san_ext.get_common_name()
+            else:
+                san_ext = cast(
+                    x509.Extension[x509.SubjectAlternativeName], extensions[SubjectAlternativeName.key]
+                )
+                cn_from_san = next(
+                    (
+                        str(val.value)
+                        for val in san_ext.value
+                        if isinstance(val, (x509.DNSName, x509.UniformResourceIdentifier, x509.IPAddress))
+                    ),
+                    None,
+                )
             if cn_from_san is not None:
                 subject["CN"] = cn_from_san
 
