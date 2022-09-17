@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 from . import widgets
 from .extensions import Extension, get_extension_name
 from .profiles import profile
+from .typehints import ExtensionTypeTypeVar
 from .utils import ADMIN_SUBJECT_OIDS
 
 if typing.TYPE_CHECKING:
@@ -159,15 +160,18 @@ class MultiValueExtensionField(forms.MultiValueField):
         )
 
 
-class ExtensionField(forms.MultiValueField, metaclass=abc.ABCMeta):
+class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
+    extension_type: typing.Type[ExtensionTypeTypeVar]
     fields: typing.Optional[typing.Tuple[forms.Field, ...]] = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         fields = self.get_fields() + (forms.BooleanField(required=False),)
         kwargs.setdefault("label", get_extension_name(self.extension_type.oid))
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
-    def compress(self, data_list):
+    def compress(
+        self, data_list: typing.List[typing.Any]
+    ) -> typing.Optional[x509.Extension[ExtensionTypeTypeVar]]:
         *value, critical = data_list
         if value:
             return x509.Extension(
@@ -181,11 +185,11 @@ class ExtensionField(forms.MultiValueField, metaclass=abc.ABCMeta):
         raise ValueError("ExtensionField must either set fields or implement get_fields().")
 
     @abc.abstractmethod
-    def get_value(self, value) -> x509.ExtensionType:
+    def get_value(self, value: typing.Any) -> ExtensionTypeTypeVar:
         ...
 
 
-class OCSPNoCheckField(ExtensionField):
+class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
     extension_type = x509.OCSPNoCheck
     fields = (forms.BooleanField(required=False),)
     widget = widgets.OCSPNoCheckWidget
@@ -194,20 +198,20 @@ class OCSPNoCheckField(ExtensionField):
         return self.extension_type()
 
 
-class TLSFeatureField(ExtensionField):
+class TLSFeatureField(ExtensionField[x509.TLSFeature]):
     extension_type = x509.TLSFeature
     choices = (
         (x509.TLSFeatureType.status_request.name, "OCSPMustStaple"),
         (x509.TLSFeatureType.status_request_v2.name, "MultipleCertStatusRequest"),
     )  # TODO: choices can also be a function - better for testing for completeness
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: typing.Any) -> None:
         kwargs["widget"] = widgets.TLSFeatureWidget(choices=self.choices)
         super().__init__(**kwargs)
 
     def get_fields(self) -> typing.Tuple[forms.MultipleChoiceField]:
         return (forms.MultipleChoiceField(choices=self.choices),)
 
-    def get_value(self, value: typing.List[str]) -> x509.TLSFeatureType:
+    def get_value(self, value: typing.List[str]) -> x509.TLSFeature:
         features = [getattr(x509.TLSFeatureType, elem) for elem in value]
         return self.extension_type(features=features)

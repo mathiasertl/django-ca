@@ -806,7 +806,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     ) -> SerializedExtension:
         """Get expected value for a given extension for the given profile."""
         if extension_class.key in profile.extensions:
-            return profile.extensions[extension_class.key].serialize()
+            return profile.extensions[extension_class.key].serialize()  # type: ignore  # todo
         return {"value": default, "critical": extension_class.default_critical}
 
     def assertProfile(  # pylint: disable=invalid-name

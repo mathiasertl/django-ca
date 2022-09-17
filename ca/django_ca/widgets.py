@@ -17,6 +17,7 @@ import typing
 
 from cryptography import x509
 
+from django import forms
 from django.forms import widgets
 from django.utils.translation import gettext as _
 
@@ -177,33 +178,39 @@ class MultiValueExtensionWidget(CustomMultiWidget):
 
 
 class ExtensionWidget(widgets.MultiWidget):
-    widgets: typing.Optional[typing.Tuple[widgets.Widget, ...]]
+    extension_widgets: typing.Optional[typing.Tuple[forms.Widget, ...]]
     template_name = "django_ca/forms/widgets/extension.html"
 
-    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs) -> None:
+    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs: typing.Any) -> None:
         widgets = self.get_widgets(**kwargs) + (CriticalInput(),)
         super().__init__(widgets, attrs)
 
-    def get_widgets(self, **kwargs) -> typing.Tuple[widgets.Widget, ...]:
-        if self.widgets is not None:
-            return self.widgets
+    def get_widgets(self, **kwargs: typing.Any) -> typing.Tuple[forms.Widget, ...]:
+        if self.extension_widgets is not None:
+            return self.extension_widgets
         raise ValueError("ExtensionWidget is expected to either set widgets or implement get_widgets().")
 
 
 class OCSPNoCheckWidget(ExtensionWidget):
-    widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
+    extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
 
-    def decompress(self, value):
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.OCSPNoCheck]]
+    ) -> typing.Tuple[bool, bool]:
         if value is None:
-            return [False, False]
-        return [True, value.critical]
+            return (False, False)
+        return (True, value.critical)
 
 
 class TLSFeatureWidget(ExtensionWidget):
-    def get_widgets(self, choices, **kwargs):
+    def get_widgets(  # type: ignore[override]  # we are more specific here
+        self, choices: typing.Sequence[typing.Tuple[str, str]]
+    ) -> typing.Tuple[widgets.SelectMultiple]:
         return (widgets.SelectMultiple(choices=choices),)
 
-    def decompress(self, value):
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.TLSFeature]]
+    ) -> typing.Tuple[typing.List[str], bool]:
         if value is None:
-            return [[], False]
-        return [[feature.name for feature in value.value], value.critical]
+            return ([], False)
+        return ([feature.name for feature in value.value], value.critical)
