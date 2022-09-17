@@ -212,6 +212,7 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
     def get_value(self, value: bool) -> typing.Optional[x509.OCSPNoCheck]:
         if value is True:
             return self.extension_type()
+        return None
 
 
 class TLSFeatureField(ExtensionField[x509.TLSFeature]):

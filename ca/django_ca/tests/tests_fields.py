@@ -11,6 +11,12 @@
 # You should have received a copy of the GNU General Public License along with django-ca.  If not,
 # see <http://www.gnu.org/licenses/>
 
+# TYPEHINT NOTE: mypy-django typehints assertFieldOutput complete wrong.
+# type: ignore
+
+"""Test custom Django form fields."""
+
+
 from cryptography import x509
 
 from django.test import TestCase
@@ -22,7 +28,7 @@ from .base.mixins import TestCaseMixin
 class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):
     """Tests for the OCSPNoCheckField."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """basic tests."""
         self.assertFieldOutput(
             fields.OCSPNoCheckField,
@@ -40,7 +46,7 @@ class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):
 class TLSFeatureTestCase(TestCase, TestCaseMixin):
     """Tests for the TLSFeatureField."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         """basic tests."""
         self.assertFieldOutput(
             fields.TLSFeatureField,

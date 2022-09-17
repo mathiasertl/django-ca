@@ -22,6 +22,7 @@ from http import HTTPStatus
 from cryptography import x509
 
 from django.conf import settings
+from django.http.response import HttpResponse
 from django.test import TestCase
 
 from freezegun import freeze_time
@@ -122,7 +123,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     @override_tmpcadir()
-    def test_get(self) -> None:
+    def test_get(self) -> HttpResponse:
         """Do a basic get request (to test CSS etc)."""
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -145,7 +146,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_get_profiles(self) -> None:
         """Test get with no profiles and no default subject."""
         response = self.test_get()
-        form = response.context_data["adminform"].form
+        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
 
         field = form.fields["ocsp_no_check"]
         bound_field = field.get_bound_field(form, "ocsp_no_check")

@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union, cast
 
 from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
+from cryptography.x509.oid import ExtensionOID
 
 from . import ca_settings
 from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
@@ -419,26 +420,28 @@ class Profile:
                 ) from e
 
             if SubjectAlternativeName.key in extensions:
-                san_ext = extensions[SubjectAlternativeName.key]
+                san_ext = typing.cast(
+                    x509.Extension[x509.SubjectAlternativeName], extensions[SubjectAlternativeName.key]
+                )
                 if isinstance(san_ext, SubjectAlternativeName):
                     san_ext = san_ext.as_extension()
 
                 if common_name not in san_ext.value:
                     extensions[SubjectAlternativeName.key] = x509.Extension(
-                        oid=x509.ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                         critical=san_ext.critical,
                         value=x509.SubjectAlternativeName(list(san_ext.value) + [common_name]),
                     )
 
             else:
                 extensions[SubjectAlternativeName.key] = x509.Extension(
-                    oid=x509.ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                     critical=False,
                     value=x509.SubjectAlternativeName([common_name]),
                 )
 
         elif not subject.get("CN") and SubjectAlternativeName.key in extensions:
-            san_ext = extensions[SubjectAlternativeName.key]
+            san_ext = extensions[SubjectAlternativeName.key]  # type: ignore[assignment]
             if isinstance(san_ext, SubjectAlternativeName):
                 san_ext = cast(SubjectAlternativeName, extensions[SubjectAlternativeName.key])
                 cn_from_san = san_ext.get_common_name()

@@ -138,6 +138,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(prof1, prof2)
 
     def test_init_none_extension(self) -> None:
+        """Test profiles that explicitly deactivate an extension."""
         prof = Profile("test", extensions={"ocsp_no_check": None})
         self.assertEqual(prof.extensions, {"ocsp_no_check": None, "basic_constraints": BasicConstraints()})
         self.assertIsNone(prof.serialize()["extensions"]["ocsp_no_check"])
@@ -556,10 +557,11 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_no_valid_cn_in_san(self) -> None:
+        """TEst what happens when the SAN has nothing usable as CN."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
         prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
-        san = self.subject_alternative_name(x509.RegisteredID(x509.ExtensionOID.OCSP_NO_CHECK))
+        san = self.subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with self.mockSignal(pre_issue_cert) as pre:
             self.create_cert(prof, ca, csr, cn_in_san=True, extensions={"subject_alternative_name": san})

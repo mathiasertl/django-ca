@@ -814,7 +814,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
         return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
 
-    def tls_feature(self, *features: x509.TLSFeatureType, critical=False) -> x509.Extension[x509.TLSFeature]:
+    def tls_feature(
+        self, *features: x509.TLSFeatureType, critical: bool = False
+    ) -> x509.Extension[x509.TLSFeature]:
         """Shortcut for getting a TLSFeature extension."""
         return x509.Extension(
             oid=ExtensionOID.TLS_FEATURE, critical=critical, value=x509.TLSFeature(features)
