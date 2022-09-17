@@ -713,8 +713,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "watchers": resign_obj.watchers.all(),
             }
         else:
-            profile = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]
-            data["subject"] = x509_name(profile.get("subject", tuple()))
+            profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
+            data["subject"] = x509_name(profile.subject)
+
+            for key in ["ocsp_no_check", "tls_feature"]:
+                ext = profile.extensions.get(key)
+                if ext is not None:
+                    data[key] = ext.as_extension()
 
         return data
 
