@@ -135,6 +135,8 @@ class Profile:
     ) -> Extension[Any, Any, Any]:
         """Parse an extension value into a django_ca extension."""
 
+        if isinstance(value, x509.Extension):
+            return value
         if isinstance(value, Extension):
             return value
 
@@ -317,7 +319,10 @@ class Profile:
         builder = builder.subject_name(cert_subject.name)
 
         for _key, extension in cert_extensions.items():
-            builder = builder.add_extension(*extension.for_builder())
+            if isinstance(extension, x509.Extension):
+                builder = builder.add_extension(extension.value, critical=extension.critical)
+            else:
+                builder = builder.add_extension(*extension.for_builder())
 
         # Add the SubjectKeyIdentifier
         if SubjectKeyIdentifier.key not in cert_extensions:
