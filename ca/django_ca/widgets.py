@@ -196,7 +196,7 @@ class OCSPNoCheckWidget(ExtensionWidget):
     def decompress(self, value):
         if value is None:
             return [False, False]
-        return [value.critical, True]
+        return [True, value.critical]
 
 
 class TLSFeatureWidget(ExtensionWidget):
@@ -205,5 +205,5 @@ class TLSFeatureWidget(ExtensionWidget):
 
     def decompress(self, value):
         if value is None:
-            return [False, []]
-        return [value.critical, [feature.name for feature in value.features]]
+            return [[], False]
+        return [[feature.name for feature in value.value], value.critical]
