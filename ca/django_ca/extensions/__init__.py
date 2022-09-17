@@ -84,6 +84,17 @@ OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
 }
 
 
+#: Tuple of extensions that can be set when creating a new certificate
+CERTIFICATE_EXTENSIONS = tuple(
+    sorted(
+        [
+            "ocsp_no_check",
+            "tls_feature",
+        ]
+    )
+)
+
+
 def get_extension_name(oid: x509.ObjectIdentifier) -> str:
     """Function to get the name of an extension from the extensions OID.
 

@@ -54,7 +54,13 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import ExtendedKeyUsage, KeyUsage, SubjectAlternativeName, get_extension_name
+from .extensions import (
+    CERTIFICATE_EXTENSIONS,
+    ExtendedKeyUsage,
+    KeyUsage,
+    SubjectAlternativeName,
+    get_extension_name,
+)
 from .extensions.utils import extension_as_admin_html
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
@@ -611,9 +617,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "fields": [
                     "key_usage",
                     "extended_key_usage",
-                    "tls_feature",
-                    "ocsp_no_check",
                 ]
+                + list(CERTIFICATE_EXTENSIONS)
             },
         ),
     ]
@@ -640,8 +645,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "fields": [
                     "key_usage",
                     "extended_key_usage",
-                    "tls_feature",
                 ]
+                + list(CERTIFICATE_EXTENSIONS)
             },
         ),
     ]
@@ -716,7 +721,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
             data["subject"] = x509_name(profile.subject)
 
-            for key in ["ocsp_no_check", "tls_feature"]:
+            for key in CERTIFICATE_EXTENSIONS:
                 ext = profile.extensions.get(key)
                 if ext is not None:
                     data[key] = ext.as_extension()
@@ -949,7 +954,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     extensions[key] = data[key]
                 else:
                     extensions[key] = None
-            for key in ["ocsp_no_check", "tls_feature"]:
+            for key in CERTIFICATE_EXTENSIONS:
                 extensions[key] = data[key]
 
             obj.profile = profile.name
