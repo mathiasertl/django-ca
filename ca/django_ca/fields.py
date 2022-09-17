@@ -161,6 +161,8 @@ class MultiValueExtensionField(forms.MultiValueField):
 
 
 class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
+    """Base class for form fields that serialize to a :py:class:`~cg:cryptography.Extension`."""
+
     extension_type: typing.Type[ExtensionTypeTypeVar]
     fields: typing.Optional[typing.Tuple[forms.Field, ...]] = None
 
@@ -180,16 +182,22 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
         return None
 
     def get_fields(self) -> typing.Tuple[forms.Field, ...]:
+        """Get the form fields used for this extension.
+
+        Note that the `critical` input field is automatically appended.
+        """
         if self.fields is not None:
             return self.fields
         raise ValueError("ExtensionField must either set fields or implement get_fields().")
 
     @abc.abstractmethod
     def get_value(self, value: typing.Any) -> ExtensionTypeTypeVar:
-        ...
+        """Get the extension value from the "compressed" form representation."""
 
 
 class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
+    """Form field for a :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
+
     extension_type = x509.OCSPNoCheck
     fields = (forms.BooleanField(required=False),)
     widget = widgets.OCSPNoCheckWidget
@@ -199,6 +207,8 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
 
 
 class TLSFeatureField(ExtensionField[x509.TLSFeature]):
+    """Form field for a :py:class:`~cg:cryptography.x509.TLSFeature` extension."""
+
     extension_type = x509.TLSFeature
     choices = (
         (x509.TLSFeatureType.status_request.name, "OCSPMustStaple"),

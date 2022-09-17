@@ -51,6 +51,8 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 
 
 class CriticalInput(LabeledCheckboxInput):
+    """Widget for setting the `critical` value of an extension."""
+
     classes = ("critical",)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -177,21 +179,29 @@ class MultiValueExtensionWidget(CustomMultiWidget):
         return ([], False)
 
 
-class ExtensionWidget(widgets.MultiWidget):
+class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
+    """Base class for widgets that display a :py:class:`~cg:cryptography.Extension`.
+
+    Subclasses of this class are expected to set the `extension_widgets` attribute or implement `get_widgets`.
+    """
+
     extension_widgets: typing.Optional[typing.Tuple[forms.Widget, ...]]
     template_name = "django_ca/forms/widgets/extension.html"
 
     def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs: typing.Any) -> None:
-        widgets = self.get_widgets(**kwargs) + (CriticalInput(),)
-        super().__init__(widgets, attrs)
+        sub_widgets = self.get_widgets(**kwargs) + (CriticalInput(),)
+        super().__init__(widgets=sub_widgets, attrs=attrs)
 
     def get_widgets(self, **kwargs: typing.Any) -> typing.Tuple[forms.Widget, ...]:
+        """Get sub-widgets used by this widget."""
         if self.extension_widgets is not None:
             return self.extension_widgets
         raise ValueError("ExtensionWidget is expected to either set widgets or implement get_widgets().")
 
 
 class OCSPNoCheckWidget(ExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
+
     extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
 
     def decompress(
@@ -203,6 +213,8 @@ class OCSPNoCheckWidget(ExtensionWidget):
 
 
 class TLSFeatureWidget(ExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.TLSFeature` extension."""
+
     def get_widgets(  # type: ignore[override]  # we are more specific here
         self, choices: typing.Sequence[typing.Tuple[str, str]]
     ) -> typing.Tuple[widgets.SelectMultiple]:
