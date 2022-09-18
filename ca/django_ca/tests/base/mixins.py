@@ -54,7 +54,7 @@ from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
 from ...extensions import Extension, TLSFeature
-from ...extensions.base import CRLDistributionPointsBase, IterableExtension, ListExtension
+from ...extensions.base import CRLDistributionPointsBase, IterableExtension
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import post_create_ca, post_issue_cert, post_revoke_cert, pre_create_ca, pre_issue_cert
 from ...utils import ca_storage, parse_general_name
@@ -862,10 +862,17 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             elif isinstance(value, Extension):
                 ctx[key] = value
 
-                if isinstance(value, ListExtension):
-                    for i, val in enumerate(value):
+                if isinstance(value, CRLDistributionPointsBase):
+                    for i, ext_value in enumerate(value.value):
+                        ctx[f"{key}_{i}"] = ext_value
+                elif isinstance(value, TLSFeature):
+                    features = [TLSFeature.CRYPTOGRAPHY_MAPPING[val] for val in value]
+                    feature_names = [TLSFeature.SERIALIZER_MAPPING[feature] for feature in features]
+                    for i, val in enumerate(sorted(feature_names)):
                         ctx[f"{key}_{i}"] = val
-
+                elif isinstance(value, IterableExtension):
+                    for i, ext_value in enumerate(value.serialize_value()):
+                        ctx[f"{key}_{i}"] = ext_value
                 else:
                     ctx[f"{key}_text"] = value.as_text()
 
@@ -875,18 +882,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     ctx[f"{key}_critical"] = ""
             else:
                 ctx[key] = value
-
-            if isinstance(value, CRLDistributionPointsBase):
-                for i, ext_value in enumerate(value.value):
-                    ctx[f"{key}_{i}"] = ext_value
-            elif isinstance(value, TLSFeature):
-                features = [TLSFeature.CRYPTOGRAPHY_MAPPING[val] for val in value]
-                feature_names = [TLSFeature.SERIALIZER_MAPPING[feature] for feature in features]
-                for i, val in enumerate(sorted(feature_names)):
-                    ctx[f"{key}_{i}"] = val
-            elif isinstance(value, IterableExtension):
-                for i, ext_value in enumerate(value.serialize_value()):
-                    ctx[f"{key}_{i}"] = ext_value
 
         if certs[name].get("parent"):
             parent = certs[certs[name]["parent"]]
