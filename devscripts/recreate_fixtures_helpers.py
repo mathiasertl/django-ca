@@ -66,6 +66,12 @@ class CertificateEncoder(json.JSONEncoder):
             return o.name
         if isinstance(o, Path):
             return str(o)
+
+        # Serializing extensions for now depends on django_ca.extension classes
+        if isinstance(o, x509.Extension):
+            ext_class = OID_TO_EXTENSION[o.oid]
+            ext = ext_class(o)
+            return ext.serialize()
         return json.JSONEncoder.default(self, o)
 
 

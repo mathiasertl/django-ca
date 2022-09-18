@@ -17,13 +17,16 @@
 
 The test suite should be sufficiently modular to still run without errors after running this command."""
 
+import ipaddress
 import json
 import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -132,26 +135,95 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
                 "emailAddress": "user@example.com",
             },
             "extensions": {
-                "name_constraints": {"value": {"permitted": ["DNS:.org"], "excluded": ["DNS:.net"]}},
-                "issuer_alternative_name": {"value": ["http://ian.child.example.com/"]},
-                "tls_feature": {"critical": True, "value": ["OCSPMustStaple", "MultipleCertStatusRequest"]},
-                "key_usage": {"value": ["encipherOnly", "keyAgreement", "nonRepudiation"]},
-                "extended_key_usage": {
-                    "value": ["serverAuth", "clientAuth", "codeSigning", "emailProtection"],
-                },
-                "subject_alternative_name": {
-                    "value": [
-                        "san1.all-extensions.example.com",
-                        "san2.all-extensions.example.com",
-                    ]
-                },
-                "ocsp_no_check": {"critical": False},
-                "precert_poison": {"critical": True},
-                "freshest_crl": {"value": [{"full_name": ["URI:https://example.com"]}]},
-                "inhibit_any_policy": {"value": 1},
-                "policy_constraints": {
-                    "value": {"require_explicit_policy": 1, "inhibit_policy_mapping": 2},
-                },
+                "extended_key_usage": x509.Extension(
+                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
+                    critical=False,
+                    value=x509.ExtendedKeyUsage(
+                        [
+                            ExtendedKeyUsageOID.CLIENT_AUTH,
+                            ExtendedKeyUsageOID.CODE_SIGNING,
+                            ExtendedKeyUsageOID.EMAIL_PROTECTION,
+                            ExtendedKeyUsageOID.SERVER_AUTH,
+                        ]
+                    ),
+                ),
+                "freshest_crl": x509.Extension(
+                    oid=ExtensionOID.FRESHEST_CRL,
+                    critical=False,
+                    value=x509.FreshestCRL(
+                        [
+                            x509.DistributionPoint(
+                                full_name=[x509.UniformResourceIdentifier("https://example.com")],
+                                relative_name=None,
+                                crl_issuer=None,
+                                reasons=None,
+                            )
+                        ]
+                    ),
+                ),
+                "inhibit_any_policy": x509.Extension(
+                    oid=ExtensionOID.INHIBIT_ANY_POLICY,
+                    critical=True,  # required by RFC 5280
+                    value=x509.InhibitAnyPolicy(skip_certs=1),
+                ),
+                "issuer_alternative_name": x509.Extension(
+                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.IssuerAlternativeName(
+                        [x509.UniformResourceIdentifier("http://ian.child.example.com/")]
+                    ),
+                ),
+                "key_usage": x509.Extension(
+                    oid=ExtensionOID.KEY_USAGE,
+                    critical=True,
+                    value=x509.KeyUsage(
+                        digital_signature=False,
+                        content_commitment=True,
+                        key_encipherment=False,
+                        data_encipherment=False,
+                        key_agreement=True,
+                        key_cert_sign=False,
+                        crl_sign=False,
+                        encipher_only=True,
+                        decipher_only=False,
+                    ),
+                ),
+                "name_constraints": x509.Extension(
+                    oid=ExtensionOID.NAME_CONSTRAINTS,
+                    critical=True,
+                    value=x509.NameConstraints(
+                        permitted_subtrees=[x509.DNSName(".org")],
+                        excluded_subtrees=[x509.DNSName(".net")],
+                    ),
+                ),
+                "policy_constraints": x509.Extension(
+                    oid=ExtensionOID.POLICY_CONSTRAINTS,
+                    critical=True,  # required by RFC 5280
+                    value=x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=2),
+                ),
+                "precert_poison": x509.Extension(
+                    oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison()
+                ),
+                "ocsp_no_check": x509.Extension(
+                    oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=x509.OCSPNoCheck()
+                ),
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName(
+                        [
+                            x509.DNSName("san1.all-extensions.example.com"),
+                            x509.DNSName("san2.all-extensions.example.com"),
+                        ]
+                    ),
+                ),
+                "tls_feature": x509.Extension(
+                    oid=ExtensionOID.TLS_FEATURE,
+                    critical=True,
+                    value=x509.TLSFeature(
+                        [x509.TLSFeatureType.status_request_v2, x509.TLSFeatureType.status_request]
+                    ),
+                ),
             },
         },
         "alt-extensions": {
@@ -159,70 +231,113 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "delta": timedelta(days=20),
             "csr": True,
             "extensions": {
-                "basic_constraints": {
-                    "critical": False,  # usually critical
-                    "value": {"ca": False},
-                },
-                "authority_key_identifier": {
-                    "critical": True,  # not usually critical
-                    "value": {
-                        "key_identifier": b"0",
-                        "authority_cert_issuer": ["example.com"],
-                        "authority_cert_serial_number": 1,
-                    },
-                },
-                "crl_distribution_points": {
-                    "critical": True,  # not usually critical
-                    "value": [  # two distribution points
-                        {
-                            "full_name": ["URI:https://example.com"],
-                        },
-                        {
-                            # values are otherwise not present in CRLs
-                            "relative_name": "/CN=rdn.ca.example.com",
-                            "crl_issuer": ["http://crl.ca.example.com", "http://crl.ca.example.net"],
-                            "reasons": ["key_compromise", "ca_compromise"],
-                        },
-                    ],
-                },
-                "extended_key_usage": {
-                    "critical": True,  # not usually critical
-                    "value": ["serverAuth", "clientAuth", "codeSigning", "emailProtection"],
-                },
-                "issuer_alternative_name": {
-                    "critical": True,  # not usually critical
-                    "value": [  # usually just one value
-                        "http://ian.example.com",
-                        "http://ian.example.net",
-                    ],
-                },
-                "key_usage": {
-                    "critical": False,  # usually critical
-                    "value": ["encipherOnly", "keyAgreement", "nonRepudiation"],
-                },
-                "name_constraints": {
-                    "critical": True,  # not usually critical
-                    "value": {
-                        "permitted": ["DNS:.org"],  # just permitted, no excluded
-                    },
-                },
-                "ocsp_no_check": {
-                    "critical": True,  # not usually critical
-                },
-                "subject_alternative_name": {
-                    "critical": True,  # not usually critical
-                    "value": {
-                        "san1.alt-extensions.example.com",
-                        "san2.alt-extensions.example.com",
-                        "san3.alt-extensions.example.com",
-                        "IP:192.0.2.3",
-                        "URI:http://example.com",
-                    },
-                },
-                "tls_feature": {
-                    "critical": False,  # critical in all-extensions
-                    "value": ["OCSPMustStaple"],
-                },
+                "authority_key_identifier": x509.Extension(
+                    oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                    critical=True,  # not usually critical
+                    value=x509.AuthorityKeyIdentifier(
+                        key_identifier=b"0",
+                        authority_cert_issuer=[x509.DNSName("example.com")],
+                        authority_cert_serial_number=1,
+                    ),
+                ),
+                "basic_constraints": x509.Extension(
+                    oid=ExtensionOID.BASIC_CONSTRAINTS,
+                    critical=False,  # usually critical,
+                    value=x509.BasicConstraints(ca=False, path_length=None),
+                ),
+                "crl_distribution_points": x509.Extension(
+                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                    critical=True,  # not usually critical
+                    value=x509.CRLDistributionPoints(
+                        [
+                            x509.DistributionPoint(
+                                full_name=[x509.UniformResourceIdentifier("https://example.com")],
+                                relative_name=None,
+                                crl_issuer=None,
+                                reasons=None,
+                            ),
+                            x509.DistributionPoint(
+                                # values are otherwise not present in CRLs
+                                full_name=None,
+                                relative_name=x509.RelativeDistinguishedName(
+                                    [x509.NameAttribute(NameOID.COMMON_NAME, "rdn.ca.example.com")]
+                                ),
+                                crl_issuer=[
+                                    x509.UniformResourceIdentifier("http://crl.ca.example.com"),
+                                    x509.UniformResourceIdentifier("http://crl.ca.example.net"),
+                                ],
+                                reasons=frozenset(
+                                    [x509.ReasonFlags.key_compromise, x509.ReasonFlags.ca_compromise]
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+                "extended_key_usage": x509.Extension(
+                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
+                    critical=True,  # not usually critical
+                    value=x509.ExtendedKeyUsage(
+                        [
+                            ExtendedKeyUsageOID.CLIENT_AUTH,
+                            ExtendedKeyUsageOID.CODE_SIGNING,
+                            ExtendedKeyUsageOID.EMAIL_PROTECTION,
+                            ExtendedKeyUsageOID.SERVER_AUTH,
+                        ]
+                    ),
+                ),
+                "issuer_alternative_name": x509.Extension(
+                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                    critical=True,  # not usually critical
+                    value=x509.IssuerAlternativeName(
+                        [
+                            x509.UniformResourceIdentifier("http://ian.example.com"),
+                            x509.UniformResourceIdentifier("http://ian.example.net"),
+                        ],
+                    ),
+                ),
+                "key_usage": x509.Extension(
+                    oid=ExtensionOID.KEY_USAGE,
+                    critical=False,  # usually critical
+                    value=x509.KeyUsage(
+                        digital_signature=False,
+                        content_commitment=True,
+                        key_encipherment=False,
+                        data_encipherment=False,
+                        key_agreement=True,
+                        key_cert_sign=False,
+                        crl_sign=False,
+                        encipher_only=True,
+                        decipher_only=False,
+                    ),
+                ),
+                "name_constraints": x509.Extension(
+                    oid=ExtensionOID.NAME_CONSTRAINTS,
+                    critical=True,
+                    value=x509.NameConstraints(
+                        permitted_subtrees=[x509.DNSName(".org")], excluded_subtrees=None
+                    ),
+                ),
+                "ocsp_no_check": x509.Extension(
+                    oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=x509.OCSPNoCheck()
+                ),
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=True,  # not usually critical
+                    value=x509.SubjectAlternativeName(
+                        [
+                            x509.DNSName("san1.alt-extensions.example.com"),
+                            x509.DNSName("san2.alt-extensions.example.com"),
+                            x509.DNSName("san3.alt-extensions.example.com"),
+                            x509.IPAddress(ipaddress.IPv4Address("192.0.2.3")),
+                            x509.UniformResourceIdentifier("http://example.com"),
+                        ]
+                    ),
+                ),
+                "tls_feature": x509.Extension(
+                    oid=ExtensionOID.TLS_FEATURE,
+                    critical=False,  # critical in all-extensions
+                    value=x509.TLSFeature([x509.TLSFeatureType.status_request]),
+                ),
             },
         },
     }
