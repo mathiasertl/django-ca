@@ -44,32 +44,10 @@ django.jQuery(document).ready(function() {
             django.jQuery(cn_in_san).prop('checked', false);
         }
 
-        // update extensions
-        extensions = ['key_usage', 'extended_key_usage'];
-        extensions.map(function(ext) {
-            var critical_selector = '.field-' + ext + ' .labeled-checkbox.critical input';
-            var value_selector = '.field-' + ext + ' select';
-            if (profile.extensions[ext] == null) {
-                // the extension may be null, meaning the extension should not be added
-                django.jQuery(critical_selector).prop('checked', false);
-                django.jQuery(value_selector).val([]);
-                django.jQuery(value_selector).change();  // so any existing callbacks are called
-            } else {
-                django.jQuery(critical_selector).prop('checked', profile.extensions[ext].critical);
-                django.jQuery(value_selector).val(profile.extensions[ext].value);
-                django.jQuery(value_selector).change();  // so any existing callbacks are called
-            }
-        });
-
         if (typeof profile.extensions !== 'undefined') {
             django.jQuery.each(profile.extensions, function(key, ext) {
                 var field = django.jQuery('.form-row.field-' + key);
                 var critical = ext !== null && ext.critical === true;
-
-                // extensions not yet handled in this function
-                if (key == 'key_usage' || key == 'extended_key_usage') {
-                    return;
-                }
 
                 // profile serialization will make sure that any not-null extension will have a critical value
                 field.find('.labeled-checkbox.critical input').prop('checked', critical);
@@ -77,7 +55,9 @@ django.jQuery(document).ready(function() {
                 if (key == 'ocsp_no_check') {
                     field.find('.labeled-checkbox.include input').prop('checked', ext !== null);
                     field.find('.labeled-checkbox.include input').change();  // so any existing callbacks are called
-                } else if (key == 'tls_feature') {
+
+                // handle "multiple choice" extensions
+                } else if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(key)) {
                     if (ext == null) {
                         field.find('select').val([]);
                     } else {
