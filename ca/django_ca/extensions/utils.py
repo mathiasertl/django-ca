@@ -517,6 +517,25 @@ EXTENDED_KEY_USAGE_NAMES = {
     _ipsec_ike_oid: "ipsecIKE",
 }
 
+# TODO: rename this to the above
+# TOOD: validate completeness in unit test
+EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = {
+    ExtendedKeyUsageOID.SERVER_AUTH: "SSL/TLS Web Server Authentication",
+    ExtendedKeyUsageOID.CLIENT_AUTH: "SSL/TLS Web Client Authentication",
+    ExtendedKeyUsageOID.CODE_SIGNING: "Code signing",
+    ExtendedKeyUsageOID.EMAIL_PROTECTION: "E-mail Protection (S/MIME)",
+    ExtendedKeyUsageOID.TIME_STAMPING: "Trusted Timestamping",
+    ExtendedKeyUsageOID.OCSP_SIGNING: "OCSP Signing",
+    ExtendedKeyUsageOID.SMARTCARD_LOGON: "Smart card logon",
+    ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION: "Kerberos Domain Controller",
+    ExtendedKeyUsageOID.IPSEC_END_SYSTEM: "IPSec EndSystem",
+    _ipsec_ike_oid: "IPSec Internet Key Exchange",
+    ExtendedKeyUsageOID.IPSEC_TUNNEL: "IPSec Tunnel",
+    ExtendedKeyUsageOID.IPSEC_USER: "IPSec User",
+    ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
+    ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
+    ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "Any Extended Key Usage",
+}
 
 KEY_USAGE_NAMES = {
     "crl_sign": "cRLSign",

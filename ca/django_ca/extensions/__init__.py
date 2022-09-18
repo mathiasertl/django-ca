@@ -66,6 +66,7 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {
     SubjectKeyIdentifier.key: SubjectKeyIdentifier,
     TLSFeature.key: TLSFeature,
 }
+KEY_TO_OID = {key: ext.oid for key, ext in KEY_TO_EXTENSION.items()}
 
 OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType, Any, Any]]] = {
     e.oid: e for e in KEY_TO_EXTENSION.values()
@@ -88,6 +89,8 @@ OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
 CERTIFICATE_EXTENSIONS = tuple(
     sorted(
         [
+            "key_usage",
+            "extended_key_usage",
             "ocsp_no_check",
             "tls_feature",
         ]

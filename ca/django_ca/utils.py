@@ -37,7 +37,6 @@ from cryptography.x509.oid import NameOID
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
 from django.utils import timezone as tz
-from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .typehints import (
@@ -67,10 +66,6 @@ SUBJECT_FIELDS = [
     NameOID.EMAIL_ADDRESS,
     NameOID.SERIAL_NUMBER,
 ]
-
-# Description strings for various X509 extensions, taken from "man x509v3_config".
-EXTENDED_KEY_USAGE_DESC = _("Purposes for which the certificate public key can be used for.")
-KEY_USAGE_DESC = _("Permitted key usages.")
 
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)

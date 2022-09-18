@@ -22,7 +22,7 @@ from django.forms import widgets
 from django.utils.translation import gettext as _
 
 from . import ca_settings
-from .extensions import Extension
+from .extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
 from .utils import ADMIN_SUBJECT_OIDS
 
 
@@ -157,28 +157,6 @@ class SubjectAltNameWidget(CustomMultiWidget):
         return ("", True)  # pragma: no cover
 
 
-class MultiValueExtensionWidget(CustomMultiWidget):
-    """A widget for multiple-choice extensions (e.g. :py:class:`~django_ca.extensions.KeyUsage`."""
-
-    def __init__(
-        self,
-        choices: typing.Sequence[typing.Tuple[str, str]],
-        attrs: typing.Optional[typing.Dict[str, str]] = None,
-    ) -> None:
-        _widgets = (
-            widgets.SelectMultiple(choices=choices, attrs=attrs),
-            CriticalInput(),
-        )
-        super().__init__(_widgets, attrs)
-
-    def decompress(
-        self, value: typing.Optional[Extension[typing.Any, typing.Any, typing.Any]]
-    ) -> typing.Tuple[typing.List[str], bool]:
-        if value:
-            return value.serialize_value(), value.critical
-        return ([], False)
-
-
 class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
     """Base class for widgets that display a :py:class:`~cg:cryptography.Extension`.
 
@@ -201,6 +179,41 @@ class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  
         )
 
 
+class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an abstract class
+    ExtensionWidget
+):
+    """Base class for widgets that can be displayed with a simple SelectMultiple widget."""
+
+    def get_widgets(  # type: ignore[override]  # we are more specific here
+        self, choices: typing.Sequence[typing.Tuple[str, str]]
+    ) -> typing.Tuple[widgets.SelectMultiple]:
+        return (widgets.SelectMultiple(choices=choices),)
+
+
+class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.ExtendedKeyUsage` extension."""
+
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.ExtendedKeyUsage]]
+    ) -> typing.Tuple[typing.List[str], bool]:
+        if value is None:
+            return ([], False)
+        choices = [EXTENDED_KEY_USAGE_NAMES[usage] for usage in value.value]
+        return (choices, value.critical)
+
+
+class KeyUsageWidget(MultipleChoiceExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.KeyUsage` extension."""
+
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.KeyUsage]]
+    ) -> typing.Tuple[typing.List[str], bool]:
+        if value is None:
+            return ([], False)
+        choices = [name for choice, name in KEY_USAGE_NAMES.items() if getattr(value.value, choice)]
+        return (choices, value.critical)
+
+
 class OCSPNoCheckWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
 
@@ -214,13 +227,8 @@ class OCSPNoCheckWidget(ExtensionWidget):
         return (True, value.critical)
 
 
-class TLSFeatureWidget(ExtensionWidget):
+class TLSFeatureWidget(MultipleChoiceExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.TLSFeature` extension."""
-
-    def get_widgets(  # type: ignore[override]  # we are more specific here
-        self, choices: typing.Sequence[typing.Tuple[str, str]]
-    ) -> typing.Tuple[widgets.SelectMultiple]:
-        return (widgets.SelectMultiple(choices=choices),)
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.TLSFeature]]

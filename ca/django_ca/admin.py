@@ -54,13 +54,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import (
-    CERTIFICATE_EXTENSIONS,
-    ExtendedKeyUsage,
-    KeyUsage,
-    SubjectAlternativeName,
-    get_extension_name,
-)
+from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, SubjectAlternativeName, get_extension_name
 from .extensions.utils import extension_as_admin_html
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
@@ -613,13 +607,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         ),
         (
             _("X.509 Extensions"),
-            {
-                "fields": [
-                    "key_usage",
-                    "extended_key_usage",
-                ]
-                + list(CERTIFICATE_EXTENSIONS)
-            },
+            {"fields": CERTIFICATE_EXTENSIONS},
         ),
     ]
 
@@ -641,13 +629,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         ),
         (
             _("X.509 Extensions"),
-            {
-                "fields": [
-                    "key_usage",
-                    "extended_key_usage",
-                ]
-                + list(CERTIFICATE_EXTENSIONS)
-            },
+            {"fields": CERTIFICATE_EXTENSIONS},
         ),
     ]
     x509_fieldset_index = 1
@@ -709,14 +691,16 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             data = {
                 "algorithm": algo,
                 "ca": resign_obj.ca,
-                "extended_key_usage": resign_obj.extended_key_usage,
-                "key_usage": resign_obj.key_usage,
                 "profile": profile,
                 "subject": resign_obj.subject,
                 "subject_alternative_name": san,
-                "tls_feature": resign_obj.tls_feature,
                 "watchers": resign_obj.watchers.all(),
             }
+
+            # Add values from editable extensions
+            extensions = resign_obj._x509_extensions  # pylint: disable=protected-access
+            for key in CERTIFICATE_EXTENSIONS:
+                data[key] = extensions.get(KEY_TO_OID[key])
         else:
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
             data["subject"] = profile.subject.name
@@ -949,11 +933,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             san = SubjectAlternativeName({"value": [e.strip() for e in san.split(",") if e.strip()]})
             if san:
                 extensions[SubjectAlternativeName.key] = san
-            for key in [KeyUsage.key, ExtendedKeyUsage.key]:
-                if data[key].value:
-                    extensions[key] = data[key]
-                else:
-                    extensions[key] = None
             for key in CERTIFICATE_EXTENSIONS:
                 extensions[key] = data[key]
 
