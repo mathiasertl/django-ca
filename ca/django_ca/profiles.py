@@ -400,13 +400,16 @@ class Profile:
 
         if add_issuer_alternative_name is not False and ca.issuer_alt_name:
             ian = extensions.get(IssuerAlternativeName.key, IssuerAlternativeName())
-            if not isinstance(ian, IssuerAlternativeName):
+            if isinstance(ian, IssuerAlternativeName):
+                ian.extend(split_str(ca.issuer_alt_name, ","))
+                extensions[IssuerAlternativeName.key] = ian
+            elif isinstance(ian, x509.Extension):
+                # Passed a cryptography extension (currently happens only via the admin interface)
+                pass
+            else:
                 raise ValueError(
                     f"extensions[{IssuerAlternativeName.key}] is not of type IssuerAlternativeName"
                 )
-
-            ian.extend(split_str(ca.issuer_alt_name, ","))
-            extensions[IssuerAlternativeName.key] = ian
 
     def _update_san_from_cn(
         self, cn_in_san: bool, subject: Subject, extensions: Dict[str, ExtensionTypes]

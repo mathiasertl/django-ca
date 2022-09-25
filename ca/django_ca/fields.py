@@ -32,7 +32,7 @@ from .extensions.utils import (
 )
 from .profiles import profile
 from .typehints import ExtensionTypeTypeVar
-from .utils import ADMIN_SUBJECT_OIDS
+from .utils import ADMIN_SUBJECT_OIDS, parse_general_name
 
 if typing.TYPE_CHECKING:
     from .modelfields import LazyCertificateSigningRequest
@@ -138,6 +138,24 @@ class SubjectAltNameField(forms.MultiValueField):
         return data_list
 
 
+class GeneralNamesField(forms.CharField):
+    widget = forms.Textarea
+    default_error_messages = {
+        "invalid": _("Unparsable General Name: %(error)s"),
+    }
+
+    def to_python(self, value: str) -> typing.List[x509.GeneralName]:
+        values = []
+        for line in value.splitlines():
+            try:
+                values.append(parse_general_name(line))
+            except ValueError as ex:
+                raise forms.ValidationError(
+                    self.error_messages["invalid"], params={"error": ex}, code="invalid"
+                )
+        return values
+
+
 class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for form fields that serialize to a :py:class:`~cg:cryptography.Extension`."""
 
@@ -212,6 +230,17 @@ class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage])
 
     def get_values(self, value: typing.List[str]) -> typing.Optional[x509.ExtendedKeyUsage]:
         return x509.ExtendedKeyUsage(usages=[_EXTENDED_KEY_USAGE_MAPPING[name] for name in value])
+
+
+class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
+    extension_type = x509.IssuerAlternativeName
+    fields = (GeneralNamesField(required=False),)
+    widget = widgets.IssuerAlternativeNameWidget
+
+    def get_value(self, value: str) -> typing.Optional[x509.IssuerAlternativeName]:
+        if not value:
+            return None
+        return x509.IssuerAlternativeName(general_names=value)
 
 
 class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):

@@ -23,7 +23,7 @@ from django.utils.translation import gettext as _
 
 from . import ca_settings
 from .extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
-from .utils import ADMIN_SUBJECT_OIDS
+from .utils import ADMIN_SUBJECT_OIDS, format_general_name
 
 
 class LabeledCheckboxInput(widgets.CheckboxInput):
@@ -210,8 +210,34 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
     ) -> typing.Tuple[typing.List[str], bool]:
         if value is None:
             return ([], False)
-        choices = [name for choice, name in KEY_USAGE_NAMES.items() if getattr(value.value, choice)]
+        choices = []
+
+        # Cannot use a list comprehension here, because cryptography raises ValueError for some attributes
+        for choice, name in KEY_USAGE_NAMES.items():
+            try:
+                chosen = getattr(value.value, choice)
+            except ValueError:
+                # cryptography raises ValueError for decipher/encipher_only if key_agreement is not set
+                chosen = False
+
+            if chosen:
+                choices.append(name)
+
         return (choices, value.critical)
+
+
+class IssuerAlternativeNameWidget(ExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+
+    extension_widgets = (widgets.Textarea,)
+
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.IssuerAlternativeName]]
+    ) -> typing.Tuple[typing.List[str], bool]:
+        if value is None:
+            return ("", False)
+        general_names = [format_general_name(name) for name in value.value]
+        return ("\n".join(general_names), value.critical)
 
 
 class OCSPNoCheckWidget(ExtensionWidget):

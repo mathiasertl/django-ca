@@ -29,7 +29,7 @@ from cryptography import x509
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.messages import constants as messages
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.handlers.wsgi import WSGIRequest
 from django.db import models
 from django.forms import ModelForm
@@ -702,8 +702,28 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             for key in CERTIFICATE_EXTENSIONS:
                 data[key] = extensions.get(KEY_TO_OID[key])
         else:
+            ca = None
+            try:
+                ca = CertificateAuthority.objects.default()
+            except ImproperlyConfigured as ex:
+                log.error(ex)
+
+            # If the default CA is not usable, use the first one that we can use instead.
+            if ca is None or ca.key_exists is False:
+                for usable_ca in CertificateAuthority.usable().order_by("-expires", "serial"):
+                    if usable_ca.key_exists:
+                        ca = usable_ca
+
+            # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
+            # button would not even show up.
+            if ca is None:
+                raise ImproperlyConfigured("Cannot determine default CA.")
+
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
+            data["ca"] = ca
             data["subject"] = profile.subject.name
+
+            data.update(ca.extensions_for_certificate)
 
             for key in CERTIFICATE_EXTENSIONS:
                 ext = profile.extensions.get(key)

@@ -128,6 +128,7 @@ from .utils import (
     parse_general_name,
     parse_hash_algorithm,
     read_file,
+    split_str,
     validate_key_parameters,
 )
 
@@ -863,6 +864,18 @@ class CertificateAuthority(X509CertMixin):
 
                 encoded_crl = crl.public_bytes(encoding)
                 cache.set(cache_key, encoded_crl, cache_expires)
+
+    @property
+    def extensions_for_certificate(self):
+        extensions = {}
+        if self.issuer_alt_name:
+            names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
+            extensions["issuer_alternative_name"] = x509.Extension(
+                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                critical=False,
+                value=x509.IssuerAlternativeName(names),
+            )
+        return extensions
 
     def generate_ocsp_key(
         self,

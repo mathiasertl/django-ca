@@ -89,8 +89,9 @@ OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
 CERTIFICATE_EXTENSIONS = tuple(
     sorted(
         [
-            "key_usage",
             "extended_key_usage",
+            "issuer_alternative_name",
+            "key_usage",
             "ocsp_no_check",
             "tls_feature",
         ]
