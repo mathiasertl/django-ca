@@ -2,6 +2,7 @@
 {% load django_ca i18n admin_urls %}
 
 {% block extrahead %}{{ block.super }}
+<meta name="ca-details-url" value="{{ ca_details_url }}">
 <meta name="csr-details-url" value="{{ csr_details_url }}">
 <meta name="get-profiles-url" value="{{ profiles_url }}">
 {% endblock %}

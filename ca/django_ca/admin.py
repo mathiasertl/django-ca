@@ -71,7 +71,7 @@ from .models import (
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
-from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
+from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name, split_str
 
 log = logging.getLogger(__name__)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
@@ -272,7 +272,7 @@ class CertificateMixin(
             func = functools.partial(self.output_template, oid=oid)
             func.short_description = get_extension_name(oid)  # type: ignore[attr-defined]  # django standard
             return func
-        raise AttributeError
+        raise AttributeError(name)
 
     def get_oid_name(self, oid: x509.ObjectIdentifier) -> str:
         """Get a normalized name for the given OID."""
@@ -634,6 +634,23 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     ]
     x509_fieldset_index = 1
 
+    @property
+    def ca_details_view_name(self) -> str:
+        """URL for the profiles view."""
+        return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_ca_details"
+
+    def ca_details_view(self, request: HttpRequest) -> JsonResponse:
+        data = {}
+        for ca in CertificateAuthority.objects.usable():
+            if ca.key_exists is False:
+                continue
+            data[ca.pk] = {}
+
+            if ca.issuer_alt_name:
+                data[ca.pk]["issuer_alternative_name"] = "\n".join(split_str(ca.issuer_alt_name, ","))
+
+        return JsonResponse(data)
+
     def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one useable CA
         for ca in CertificateAuthority.objects.filter(enabled=True):
@@ -741,6 +758,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         extra_context = extra_context or {}
         extra_context["profiles_url"] = reverse(f"admin:{self.profiles_view_name}")
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
+        extra_context["ca_details_url"] = reverse(f"admin:{self.ca_details_view_name}")
         return super().add_view(
             request,
             form_url=form_url,
@@ -800,6 +818,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             0,
             path(
                 "ajax/profiles", self.admin_site.admin_view(self.profiles_view), name=self.profiles_view_name
+            ),
+        )
+        urls.insert(
+            0,
+            path(
+                "ajax/ca-details/",
+                self.admin_site.admin_view(self.ca_details_view),
+                name=self.ca_details_view_name,
             ),
         )
 

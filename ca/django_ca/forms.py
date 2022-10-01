@@ -205,6 +205,12 @@ class CreateCertificateBaseForm(CertificateModelForm):
             self.add_error("expires", _("CA expires on %s, certificate must not expire after that.") % stamp)
         return data
 
+    class Media:
+        js = (
+            "admin/js/jquery.init.js",
+            "django_ca/admin/js/ca-details.js",
+        )
+
     class Meta:
         model = Certificate
         fields = [
