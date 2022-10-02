@@ -24,6 +24,7 @@ from django.forms import widgets
 from django.utils.translation import gettext as _
 
 from . import ca_settings
+from .constants import REVOCATION_REASONS
 from .extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
 from .utils import ADMIN_SUBJECT_OIDS, format_general_name
 
@@ -63,7 +64,15 @@ class DjangoCaWidgetMixin:
         return ctx
 
 
+class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
+    pass
+
+
 class Textarea(DjangoCaWidgetMixin, widgets.Textarea):
+    pass
+
+
+class TextInput(DjangoCaWidgetMixin, widgets.TextInput):
     pass
 
 
@@ -218,6 +227,34 @@ class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  
         raise ValueError(  # pragma: no cover
             "ExtensionWidget is expected to either set widgets or implement get_widgets()."
         )
+
+
+class DistributionPointWidget(ExtensionWidget):
+    extension_widgets = (Textarea, TextInput, Textarea, SelectMultiple(choices=REVOCATION_REASONS))
+
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
+    ) -> typing.Tuple[str, str, str, typing.List[str]]:
+        full_name = relative_name = crl_issuer = ""
+        reasons = []
+
+        if value is None:
+            return full_name, relative_name, crl_issuer, reasons
+        if len(value.value) > 1:
+            raise ValueError("Only one DistributionPoint is supported at this time.")
+
+        dp = value.value[0]
+
+        if dp.full_name:
+            full_name = "\n".join([format_general_name(name) for name in dp.full_name])
+        if dp.relative_name:
+            relative_name = dp.relative_name.rfc4514_string()
+        if dp.crl_issuer:
+            full_name = "\n".join([format_general_name(name) for name in dp.crl_issuer])
+        if dp.reasons:
+            reasons = [reason.name for reason in dp.reasons]
+
+        return full_name, relative_name, crl_issuer, reasons
 
 
 class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an abstract class

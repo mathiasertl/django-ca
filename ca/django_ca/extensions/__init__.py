@@ -90,6 +90,7 @@ CERTIFICATE_EXTENSIONS = tuple(
     sorted(
         [
             "authority_information_access",
+            "crl_distribution_points",
             "extended_key_usage",
             "issuer_alternative_name",
             "key_usage",

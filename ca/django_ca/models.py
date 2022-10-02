@@ -58,7 +58,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from .constants import ReasonFlags
+from .constants import REVOCATION_REASONS, ReasonFlags
 from .extensions import (
     OID_TO_EXTENSION,
     AuthorityInformationAccess,
@@ -246,18 +246,7 @@ class X509CertMixin(DjangoCAModel):
     # X.509 certificates are complex. Sorry.
 
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
-    REVOCATION_REASONS = (
-        (ReasonFlags.aa_compromise.name, _("Attribute Authority compromised")),
-        (ReasonFlags.affiliation_changed.name, _("Affiliation changed")),
-        (ReasonFlags.ca_compromise.name, _("CA compromised")),
-        (ReasonFlags.certificate_hold.name, _("On Hold")),
-        (ReasonFlags.cessation_of_operation.name, _("Cessation of operation")),
-        (ReasonFlags.key_compromise.name, _("Key compromised")),
-        (ReasonFlags.privilege_withdrawn.name, _("Privilege withdrawn")),
-        (ReasonFlags.remove_from_crl.name, _("Removed from CRL")),
-        (ReasonFlags.superseded.name, _("Superseded")),
-        (ReasonFlags.unspecified.name, _("Unspecified")),
-    )
+    REVOCATION_REASONS = REVOCATION_REASONS
 
     created = models.DateTimeField(auto_now=True)
 
@@ -896,6 +885,17 @@ class CertificateAuthority(X509CertMixin):
                 oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
                 critical=False,
                 value=x509.AuthorityInformationAccess(descriptions=access_descriptions),
+            )
+        if self.crl_url:
+            full_name = [parse_general_name(name) for name in self.crl_url.splitlines()]
+            extensions["crl_distribution_points"] = x509.Extension(
+                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                critical=False,
+                value=[
+                    x509.DistributionPoint(
+                        full_name=full_name, relative_name=None, crl_issuer=None, reasons=None
+                    )
+                ],
             )
 
         return extensions

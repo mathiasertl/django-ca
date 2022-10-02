@@ -15,6 +15,8 @@
 
 import enum
 
+from django.utils.translation import gettext_lazy as _
+
 
 class ReasonFlags(enum.Enum):
     """An enumeration for CRL reasons.
@@ -49,3 +51,17 @@ REASON_CODES = {
     9: ReasonFlags.privilege_withdrawn,
     10: ReasonFlags.aa_compromise,
 }
+
+#: Mapping of ReasonFlags to human-readable strings
+REVOCATION_REASONS = (
+    (ReasonFlags.aa_compromise.name, _("Attribute Authority compromised")),
+    (ReasonFlags.affiliation_changed.name, _("Affiliation changed")),
+    (ReasonFlags.ca_compromise.name, _("CA compromised")),
+    (ReasonFlags.certificate_hold.name, _("On Hold")),
+    (ReasonFlags.cessation_of_operation.name, _("Cessation of operation")),
+    (ReasonFlags.key_compromise.name, _("Key compromised")),
+    (ReasonFlags.privilege_withdrawn.name, _("Privilege withdrawn")),
+    (ReasonFlags.remove_from_crl.name, _("Removed from CRL")),
+    (ReasonFlags.superseded.name, _("Superseded")),
+    (ReasonFlags.unspecified.name, _("Unspecified")),
+)

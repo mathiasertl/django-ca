@@ -376,11 +376,14 @@ class Profile:
 
         if add_crl_url is not False and ca.crl_url:
             crldp = extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints())
-            if not isinstance(crldp, CRLDistributionPoints):
+            if isinstance(crldp, CRLDistributionPoints):
+                crldp.append({"full_name": [url.strip() for url in ca.crl_url.split()]})
+            elif isinstance(crldp, x509.Extension):
+                pass
+            else:
                 raise ValueError(
                     f"extensions[{CRLDistributionPoints.key}] is not of type CRLDistributionPoints"
                 )
-            crldp.append({"full_name": [url.strip() for url in ca.crl_url.split()]})
 
         if add_ocsp_url is not False and ca.ocsp_url:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
@@ -399,7 +402,7 @@ class Profile:
                 aia.issuers.append(parse_general_name(ca.issuer_url))
             elif isinstance(aia, x509.Extension):
                 pass
-            elif not isinstance(aia, AuthorityInformationAccess):
+            else:
                 raise ValueError(
                     f"extensions[{AuthorityInformationAccess.key}] is not of type AuthorityInformationAccess"
                 )

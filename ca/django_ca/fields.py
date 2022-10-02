@@ -24,6 +24,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from . import widgets
+from .constants import REVOCATION_REASONS
 from .extensions import get_extension_name
 from .extensions.utils import (
     EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES,
@@ -156,6 +157,32 @@ class GeneralNamesField(forms.CharField):
         return values
 
 
+class RelativeDistinguishedNameField(forms.CharField):
+    def to_python(self, value: str) -> x509.RelativeDistinguishedName:
+        if not value:
+            return None
+        rdns = x509.Name.from_rfc4514_string(value).rdns
+        attributes = [attr for rdn in rdns for attr in rdn]
+        return x509.RelativeDistinguishedName(attributes=attributes)
+
+
+class ReasonsField(forms.MultipleChoiceField):
+    def __init__(self, **kwargs):
+        super().__init__(choices=REVOCATION_REASONS, **kwargs)
+
+    def _to_python(self, value: typing.List[str]) -> typing.FrozenSet[x509.ReasonFlags]:
+        print(self.choices)
+        try:
+            return frozenset(x509.ReasonFlags[flag] for flag in value)
+        except KeyError as ex:
+            # NOTE: KeyError cannot usually happen, as the list of choices is tested for completeness and does
+            #       not change. This could only happen if cryptography adds a new reason (which will probably
+            #       never happen, as it's a very old RFC defining the reasons) and django-ca being used in a
+            #       version not yet tested.
+            code = "invalid_choice"
+            raise forms.ValidationError(self.error_messages[code], params={"value": ex.args[0]}, code=code)
+
+
 class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for form fields that serialize to a :py:class:`~cg:cryptography.Extension`."""
 
@@ -221,6 +248,27 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
         """Get the ExtensionType instance from the selected values."""
 
 
+class DistributionPointField(ExtensionField[ExtensionTypeTypeVar]):
+    fields = (
+        GeneralNamesField(required=False),  # full_name
+        RelativeDistinguishedNameField(required=False),  # relative_name
+        GeneralNamesField(required=False),  # crl_issuer
+        ReasonsField(required=False),  # reasons
+    )
+
+    def get_value(self, full_name, relative_distinguished_name, crl_issuer, reasons):
+        print(full_name, relative_distinguished_name, crl_issuer, reasons)
+        if reasons:
+            reasons = frozenset(x509.ReasonFlags[flag] for flag in reasons)
+        dp = x509.DistributionPoint(
+            full_name=full_name,
+            relative_name=relative_distinguished_name,
+            crl_issuer=crl_issuer,
+            reasons=reasons,
+        )
+        return self.extension_type(distribution_points=[dp])
+
+
 class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAccess]):
     extension_type = x509.AuthorityInformationAccess
     fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
@@ -242,6 +290,11 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
         if descriptions:
             return x509.AuthorityInformationAccess(descriptions=descriptions)
         return None
+
+
+class CRLDistributionPointField(DistributionPointField[x509.CRLDistributionPoints]):
+    extension_type = x509.CRLDistributionPoints
+    widget = widgets.DistributionPointWidget
 
 
 class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage]):
