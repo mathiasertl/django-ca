@@ -17,7 +17,7 @@ import abc
 import typing
 
 from cryptography import x509
-from cryptography.x509 import NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, NameOID
 
 from django import forms
 from django.utils.safestring import mark_safe
@@ -219,6 +219,29 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
     @abc.abstractmethod
     def get_values(self, value: typing.List[str]) -> typing.Optional[ExtensionTypeTypeVar]:
         """Get the ExtensionType instance from the selected values."""
+
+
+class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAccess]):
+    extension_type = x509.AuthorityInformationAccess
+    fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
+    widget = widgets.AuthorityInformationAccessWidget
+
+    def get_value(self, ca_issuers: str, ocsp: str) -> typing.Optional[x509.AuthorityInformationAccess]:
+        if not ca_issuers and not ocsp:
+            return None
+        descriptions = [
+            x509.AccessDescription(
+                access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=name
+            )
+            for name in ca_issuers
+        ]
+        descriptions += [
+            x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
+            for name in ca_issuers
+        ]
+        if descriptions:
+            return x509.AuthorityInformationAccess(descriptions=descriptions)
+        return None
 
 
 class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage]):

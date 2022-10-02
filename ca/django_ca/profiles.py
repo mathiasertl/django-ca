@@ -384,19 +384,25 @@ class Profile:
 
         if add_ocsp_url is not False and ca.ocsp_url:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
-            if not isinstance(aia, AuthorityInformationAccess):
+            if isinstance(aia, AuthorityInformationAccess):
+                aia.ocsp.append(parse_general_name(ca.ocsp_url))
+            elif isinstance(aia, x509.Extension):
+                pass
+            elif not isinstance(aia, AuthorityInformationAccess):
                 raise ValueError(
                     f"extensions[{AuthorityInformationAccess.key}] is not of type AuthorityInformationAccess"
                 )
-            aia.ocsp.append(parse_general_name(ca.ocsp_url))
 
         if add_issuer_url is not False and ca.issuer_url:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
-            if not isinstance(aia, AuthorityInformationAccess):
+            if isinstance(aia, AuthorityInformationAccess):
+                aia.issuers.append(parse_general_name(ca.issuer_url))
+            elif isinstance(aia, x509.Extension):
+                pass
+            elif not isinstance(aia, AuthorityInformationAccess):
                 raise ValueError(
                     f"extensions[{AuthorityInformationAccess.key}] is not of type AuthorityInformationAccess"
                 )
-            aia.issuers.append(parse_general_name(ca.issuer_url))
 
         if add_issuer_alternative_name is not False and ca.issuer_alt_name:
             ian = extensions.get(IssuerAlternativeName.key, IssuerAlternativeName())

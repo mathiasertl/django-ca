@@ -875,6 +875,29 @@ class CertificateAuthority(X509CertMixin):
                 critical=False,
                 value=x509.IssuerAlternativeName(names),
             )
+
+        access_descriptions = []
+        if self.issuer_url:
+            ca_issuers = [parse_general_name(name) for name in self.issuer_url.splitlines()]
+            access_descriptions += [
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=name
+                )
+                for name in ca_issuers
+            ]
+        if self.ocsp_url:
+            ocsp = [parse_general_name(name) for name in self.ocsp_url.splitlines()]
+            access_descriptions += [
+                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
+                for name in ocsp
+            ]
+        if access_descriptions:
+            extensions["authority_information_access"] = x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=False,
+                value=x509.AuthorityInformationAccess(descriptions=access_descriptions),
+            )
+
         return extensions
 
     def generate_ocsp_key(

@@ -719,6 +719,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             for key in CERTIFICATE_EXTENSIONS:
                 data[key] = extensions.get(KEY_TO_OID[key])
         else:
+            # Form for a completely new certificate
+
             ca = None
             try:
                 ca = CertificateAuthority.objects.default()

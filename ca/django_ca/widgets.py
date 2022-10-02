@@ -13,9 +13,11 @@
 
 """Form widgets for django-ca admin interface."""
 
+import logging
 import typing
 
 from cryptography import x509
+from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django import forms
 from django.forms import widgets
@@ -24,6 +26,45 @@ from django.utils.translation import gettext as _
 from . import ca_settings
 from .extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
 from .utils import ADMIN_SUBJECT_OIDS, format_general_name
+
+log = logging.getLogger(__name__)
+
+
+class DjangoCaWidgetMixin:
+    """Widget mixin with some generic functionality.
+
+    This class is *not* intended for MultiWidget instances.
+
+    Classes using this mixin will have a ``django-ca-widget`` CSS class and can define further classes using
+    the ``css_classes`` attribute.
+    """
+
+    css_classes: typing.Iterable[str] = ("django-ca-widget",)
+
+    def get_css_classes(self) -> typing.Set[str]:
+        css_classes = set()
+        for c in reversed(self.__class__.__mro__):
+            css_classes |= set(getattr(c, "css_classes", set()))
+        return css_classes
+
+    def add_css_classes(self, attrs: typing.Dict[str, str]) -> None:
+        css_classes = " ".join(sorted(self.get_css_classes()))
+        if not css_classes:
+            return
+
+        if "class" in attrs:
+            attrs["class"] += f" {css_classes}"
+        else:
+            attrs["class"] = css_classes
+
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+        ctx = super().get_context(*args, **kwargs)
+        self.add_css_classes(ctx["widget"]["attrs"])
+        return ctx
+
+
+class Textarea(DjangoCaWidgetMixin, widgets.Textarea):
+    pass
 
 
 class LabeledCheckboxInput(widgets.CheckboxInput):
@@ -188,6 +229,28 @@ class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an
         self, choices: typing.Sequence[typing.Tuple[str, str]]
     ) -> typing.Tuple[widgets.SelectMultiple]:
         return (widgets.SelectMultiple(choices=choices),)
+
+
+class AuthorityInformationAccessWidget(ExtensionWidget):
+    extension_widgets = (Textarea, Textarea)
+
+    def decompress(
+        self, value: typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]
+    ) -> typing.Tuple[str, str, bool]:
+        if value is None:
+            return ("", "", False)
+
+        ocsp = []
+        ca_issuers = []
+        for description in value.value:
+            if description.access_method == AuthorityInformationAccessOID.OCSP:
+                ocsp.append(format_general_name(description.access_location))
+            elif description.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
+                ca_issuers.append(format_general_name(description.access_location))
+            else:
+                log.warning("%s: Received an unknown access method.", description.access_method)
+
+        return "\n".join(ca_issuers), "\n".join(ocsp), value.critical
 
 
 class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
