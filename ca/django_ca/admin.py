@@ -640,7 +640,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_ca_details"
 
     def ca_details_view(self, request: HttpRequest) -> JsonResponse:
-        data = {}
+        data: typing.Dict[int, typing.Dict[str, typing.Any]] = {}
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists is False:
                 continue
@@ -729,7 +729,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             # If the default CA is not usable, use the first one that we can use instead.
             if ca is None or ca.key_exists is False:
-                for usable_ca in CertificateAuthority.usable().order_by("-expires", "serial"):
+                for usable_ca in CertificateAuthority.objects.usable().order_by("-expires", "serial"):
                     if usable_ca.key_exists:
                         ca = usable_ca
 
@@ -976,25 +976,27 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             expires = datetime.combine(data["expires"], datetime.min.time())
 
-            extensions = {}
+            extensions: typing.List[x509.Extension[x509.ExtensionType]] = []
             san, cn_in_san = data["subject_alternative_name"]
             san = SubjectAlternativeName({"value": [e.strip() for e in san.split(",") if e.strip()]})
             if san:
-                extensions[SubjectAlternativeName.key] = san
+                extensions.append(san.as_extension())
             for key in CERTIFICATE_EXTENSIONS:
-                extensions[key] = data[key]
+                if data[key] is not None:
+                    extensions.append(data[key])
+
+            ca: CertificateAuthority = data["ca"]
 
             obj.profile = profile.name
             obj.update_certificate(
-                profile.create_cert(
-                    data["ca"],
+                ca.sign(
                     csr,
                     subject=data["subject"],
-                    expires=expires,
                     algorithm=data["algorithm"],
+                    expires=expires,
+                    extensions=extensions,
                     cn_in_san=cn_in_san,
                     password=data["password"],
-                    extensions=extensions,
                 )
             )
             obj.save()

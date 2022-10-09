@@ -80,6 +80,7 @@ django-settings-module = "ca.test_settings"
 [tool.pylint.basic]
 good-names = [
     "ca",
+    "cn",
     "ex",
     "pk",
     "e",  # TODO: consistently use ex

@@ -24,6 +24,7 @@ import logging
 import random
 import re
 import typing
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from typing import Dict, Iterable, List, Optional, Tuple, Union, cast
@@ -120,6 +121,7 @@ from .utils import (
     classproperty,
     format_name,
     generate_private_key,
+    get_cert_builder,
     get_crl_cache_key,
     int_to_hex,
     multiline_url_validator,
@@ -855,8 +857,8 @@ class CertificateAuthority(X509CertMixin):
                 cache.set(cache_key, encoded_crl, cache_expires)
 
     @property
-    def extensions_for_certificate(self):
-        extensions = {}
+    def extensions_for_certificate(self) -> typing.Dict[str, x509.Extension[x509.ExtensionType]]:
+        extensions: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
         if self.issuer_alt_name:
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
             extensions["issuer_alternative_name"] = x509.Extension(
@@ -891,14 +893,90 @@ class CertificateAuthority(X509CertMixin):
             extensions["crl_distribution_points"] = x509.Extension(
                 oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
                 critical=False,
-                value=[
-                    x509.DistributionPoint(
-                        full_name=full_name, relative_name=None, crl_issuer=None, reasons=None
-                    )
-                ],
+                value=x509.CRLDistributionPoints(
+                    [
+                        x509.DistributionPoint(
+                            full_name=full_name, relative_name=None, crl_issuer=None, reasons=None
+                        )
+                    ]
+                ),
             )
 
         return extensions
+
+    def sign(
+        self,
+        csr: x509.CertificateSigningRequest,
+        subject: x509.Name,
+        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
+        expires: typing.Optional[datetime] = None,
+        extensions: typing.Optional[typing.Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        cn_in_san: bool = False,
+        password: Optional[Union[str, bytes]] = None,
+    ) -> x509.Certificate:
+        if algorithm is None:
+            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        if expires is None:
+            expires = timezone.now() + ca_settings.CA_DEFAULT_EXPIRES
+            expires = expires.replace(second=0, microsecond=0)
+        if extensions is None:
+            extensions = []
+
+        public_key = csr.public_key()
+        exts = OrderedDict([(ext.oid, ext) for ext in extensions])
+
+        # TODO: basic constraints
+        # Add Subject- and AuthorityKeyIdentifier extensions if not already set.
+        if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in exts:
+            exts[ExtensionOID.SUBJECT_KEY_IDENTIFIER] = x509.Extension(
+                oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                value=x509.SubjectKeyIdentifier.from_public_key(public_key),
+                critical=False,  # MUST be non-critical (RFC 5280, section 4.2.1.2)
+            )
+        if ExtensionOID.AUTHORITY_KEY_IDENTIFIER not in exts:
+            exts[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = self.get_authority_key_identifier_extension()
+
+        # Add CommonNames to the SubjectAlternativeName extension if cn_in_san == True
+        common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        san = typing.cast(
+            typing.Optional[x509.Extension[x509.SubjectAlternativeName]],
+            exts.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
+        )
+        if cn_in_san is True:
+            for raw_common_name in common_names:
+                try:
+                    # TYPEHINT NOTE: NameAttribute.value may be bytes but must be str for COMMON_NAME.
+                    #   This is guaranteed by the NameAttribute constructor.
+                    raw_common_name_value = typing.cast(str, raw_common_name.value)
+                    cn = parse_general_name(raw_common_name_value)
+                except ValueError:
+                    continue
+
+                if not san:
+                    san = x509.Extension(
+                        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                        critical=False,
+                        value=x509.SubjectAlternativeName([cn]),
+                    )
+                    exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
+
+                elif cn not in san.value:
+                    san = x509.Extension(
+                        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                        critical=exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].critical,
+                        value=x509.SubjectAlternativeName(list(san.value) + [cn]),
+                    )
+                    exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
+
+        builder = get_cert_builder(expires)
+        builder = builder.public_key(public_key)
+        builder = builder.issuer_name(self.subject)
+        builder = builder.subject_name(subject)
+
+        for ext in exts.values():
+            builder = builder.add_extension(extval=ext.value, critical=ext.critical)
+
+        return builder.sign(private_key=self.key(password), algorithm=algorithm)
 
     def generate_ocsp_key(
         self,
@@ -994,6 +1072,7 @@ class CertificateAuthority(X509CertMixin):
         self,
     ) -> typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]:
         """Get the AuthorityInformationAccess extension to use in certificates signed by this CA."""
+        # TODO: this function is not used outside of the test suite
         if not self.issuer_url and not self.ocsp_url:
             return None
 
