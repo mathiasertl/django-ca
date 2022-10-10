@@ -30,7 +30,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 import django
 from django.conf import settings
@@ -484,6 +484,31 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
 
+    def authority_information_access(
+        self,
+        ca_issuers: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        ocsp: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        critical: bool = True,
+    ) -> x509.Extension[x509.AuthorityInformationAccess]:
+        """Shortcut for getting a AuthorityInformationAccess extension."""
+
+        access_descriptions = []
+        if ca_issuers is not None:
+            access_descriptions += [
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=issuer
+                )
+                for issuer in ca_issuers
+            ]
+        if ocsp is not None:
+            access_descriptions += [
+                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
+                for name in ocsp
+            ]
+        value = x509.AuthorityInformationAccess(access_descriptions)
+
+        return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=critical, value=value)
+
     def basic_constraints(
         self, ca: bool = False, path_length: typing.Optional[int] = None
     ) -> x509.Extension[x509.BasicConstraints]:
@@ -682,6 +707,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
         reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
         crl_issuer: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        critical: bool = False,
     ) -> x509.Extension[x509.CRLDistributionPoints]:
         """Shortcut for getting a CRLDistributionPoints extension."""
         dpoint = x509.DistributionPoint(
@@ -689,7 +715,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
         return x509.Extension(
             oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-            critical=False,
+            critical=critical,
             value=x509.CRLDistributionPoints([dpoint]),
         )
 
@@ -707,10 +733,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return profiles
 
-    def extended_key_usage(self, *usages: x509.ObjectIdentifier) -> x509.Extension[x509.ExtendedKeyUsage]:
+    def extended_key_usage(
+        self, *usages: x509.ObjectIdentifier, critical: bool = False
+    ) -> x509.Extension[x509.ExtendedKeyUsage]:
         """Shortcut for getting an ExtendedKeyUsage extension."""
         return x509.Extension(
-            oid=ExtensionOID.EXTENDED_KEY_USAGE, critical=False, value=x509.ExtendedKeyUsage(usages)
+            oid=ExtensionOID.EXTENDED_KEY_USAGE, critical=critical, value=x509.ExtendedKeyUsage(usages)
         )
 
     def get_idp(

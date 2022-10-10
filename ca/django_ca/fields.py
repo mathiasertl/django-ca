@@ -158,7 +158,7 @@ class GeneralNamesField(forms.CharField):
 
 
 class RelativeDistinguishedNameField(forms.CharField):
-    def to_python(self, value: str) -> x509.RelativeDistinguishedName:
+    def to_python(self, value: str) -> typing.Optional[x509.RelativeDistinguishedName]:
         if not value:
             return None
         rdns = x509.Name.from_rfc4514_string(value).rdns
@@ -249,6 +249,9 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
 
 
 class DistributionPointField(ExtensionField[ExtensionTypeTypeVar]):
+    default_error_messages = {
+        "full-and-relative-name": _("You cannot provide both full_name and relative_name."),
+    }
     fields = (
         GeneralNamesField(required=False),  # full_name
         RelativeDistinguishedNameField(required=False),  # relative_name
@@ -259,17 +262,29 @@ class DistributionPointField(ExtensionField[ExtensionTypeTypeVar]):
     def get_value(
         self,
         full_name: typing.List[x509.GeneralName],
-        relative_distinguished_name: x509.RelativeDistinguishedName,
+        relative_distinguished_name: typing.Optional[x509.RelativeDistinguishedName],
         crl_issuer: typing.List[x509.GeneralName],
-        reasons: typing.List[str],
+        reasons: typing.Optional[typing.Iterable[str]],
     ):
+        if not full_name:
+            full_name = None
+        if not crl_issuer:
+            crl_issuer = None
         if reasons:
-            reasons = frozenset(x509.ReasonFlags[flag] for flag in reasons)
+            parsed_reasons = frozenset(x509.ReasonFlags[flag] for flag in reasons)
+        else:
+            parsed_reasons = None
+
+        if full_name and relative_distinguished_name:
+            raise forms.ValidationError(
+                self.error_messages["full-and-relative-name"], code="full-and-relative-name"
+            )
+
         dp = x509.DistributionPoint(
             full_name=full_name,
             relative_name=relative_distinguished_name,
             crl_issuer=crl_issuer,
-            reasons=reasons,
+            reasons=parsed_reasons,
         )
         return self.extension_type(distribution_points=[dp])
 
@@ -292,11 +307,9 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
         ]
         descriptions += [
             x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
-            for name in ca_issuers
+            for name in ocsp
         ]
-        if descriptions:
-            return x509.AuthorityInformationAccess(descriptions=descriptions)
-        return None
+        return x509.AuthorityInformationAccess(descriptions=descriptions)
 
 
 class CRLDistributionPointField(DistributionPointField[x509.CRLDistributionPoints]):
