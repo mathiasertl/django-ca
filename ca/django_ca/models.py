@@ -332,7 +332,7 @@ class X509CertMixin(DjangoCAModel):
         This function will also populate the `cn`, `serial, `expires` and `valid_from` fields.
         """
         self.pub = LazyCertificate(value)
-        self.cn = next(  # pylint: disable=invalid-name
+        self.cn = next(
             (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME), ""  # type: ignore
         )
         self.expires = self.not_after
@@ -858,6 +858,8 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def extensions_for_certificate(self) -> typing.Dict[str, x509.Extension[x509.ExtensionType]]:
+        """Get a list of extensions to use for the certificate."""
+
         extensions: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
         if self.issuer_alt_name:
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
@@ -911,9 +913,38 @@ class CertificateAuthority(X509CertMixin):
         algorithm: typing.Optional[hashes.HashAlgorithm] = None,
         expires: typing.Optional[datetime] = None,
         extensions: typing.Optional[typing.Iterable[x509.Extension[x509.ExtensionType]]] = None,
-        cn_in_san: bool = False,
+        cn_in_san: bool = True,
         password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
+        """Create a signed certificate.
+
+        This function is a low-level signing function, with optional values taken from the configuration.
+
+        Required extensions are added if not provided. Unless already included in `extensions`, this function
+        will add the AuthorityKeyIdentifier, BasicConstraints and SubjectKeyIdentifier extensions with values
+        coming from the certificate authority. The common names in `subject` are added to
+        SubjectAlternativeName if `cn_in_san` is ``True``.
+
+        Parameters
+        ----------
+
+        csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+            The certificate signing request to sign.
+        subject : :class:`~cg:cryptography.x509.Name`
+            Subject for the certificate
+        algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
+            Hash algorithm used for signing the certificate, defaults to the ``CA_DIGEST_ALGORITHM`` setting.
+        expires : datetime, optional
+            When the certificate expires. If not provided, the ``CA_DEFAULT_EXPIRES`` setting will be used.
+        extensions : list of :py:class:`~cg:cryptography.x509.Extension`, optional
+            List of extensions to add to the certificates. The function will add some extensions unless
+            provided here, see above fore details.
+        cn_in_san : bool, optional
+            Include common names from the subject in the SubjectAlternativeName extension. ``True`` by
+            default.
+        password : str or bytes, optional
+            Password for loading the private key of the CA, if any.
+        """
         if algorithm is None:
             algorithm = ca_settings.CA_DIGEST_ALGORITHM
         if expires is None:
