@@ -218,7 +218,7 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
         )
 
     @abc.abstractmethod
-    def get_value(self, value: typing.Any) -> typing.Optional[ExtensionTypeTypeVar]:
+    def get_value(self, *value: typing.Any) -> typing.Optional[ExtensionTypeTypeVar]:
         """Get the extension value from the "compressed" form representation.
 
         Return `None` if no value was set and the extension should **not** be added.
@@ -256,8 +256,13 @@ class DistributionPointField(ExtensionField[ExtensionTypeTypeVar]):
         ReasonsField(required=False),  # reasons
     )
 
-    def get_value(self, full_name, relative_distinguished_name, crl_issuer, reasons):
-        print(full_name, relative_distinguished_name, crl_issuer, reasons)
+    def get_value(
+        self,
+        full_name: typing.List[x509.GeneralName],
+        relative_distinguished_name: x509.RelativeDistinguishedName,
+        crl_issuer: typing.List[x509.GeneralName],
+        reasons: typing.List[str],
+    ):
         if reasons:
             reasons = frozenset(x509.ReasonFlags[flag] for flag in reasons)
         dp = x509.DistributionPoint(
@@ -274,7 +279,9 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
     fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
     widget = widgets.AuthorityInformationAccessWidget
 
-    def get_value(self, ca_issuers: str, ocsp: str) -> typing.Optional[x509.AuthorityInformationAccess]:
+    def get_value(
+        self, ca_issuers: typing.List[x509.GeneralName], ocsp: typing.List[x509.GeneralName]
+    ) -> typing.Optional[x509.AuthorityInformationAccess]:
         if not ca_issuers and not ocsp:
             return None
         descriptions = [
@@ -313,7 +320,7 @@ class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
     fields = (GeneralNamesField(required=False),)
     widget = widgets.IssuerAlternativeNameWidget
 
-    def get_value(self, value: str) -> typing.Optional[x509.IssuerAlternativeName]:
+    def get_value(self, value: typing.List[x509.GeneralName]) -> typing.Optional[x509.IssuerAlternativeName]:
         if not value:
             return None
         return x509.IssuerAlternativeName(general_names=value)
