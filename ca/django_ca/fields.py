@@ -32,7 +32,7 @@ from .extensions.utils import (
     KEY_USAGE_NAMES,
 )
 from .profiles import profile
-from .typehints import ExtensionTypeTypeVar
+from .typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
 from .utils import ADMIN_SUBJECT_OIDS, parse_general_name
 
 if typing.TYPE_CHECKING:
@@ -145,7 +145,9 @@ class GeneralNamesField(forms.CharField):
         "invalid": _("Unparsable General Name: %(error)s"),
     }
 
-    def to_python(self, value: str) -> typing.List[x509.GeneralName]:
+    def to_python(  # type: ignore[override]  # superclass uses Any for str, violates inheritance (in theory)
+        self, value: str
+    ) -> typing.List[x509.GeneralName]:
         values = []
         for line in value.splitlines():
             try:
@@ -158,7 +160,9 @@ class GeneralNamesField(forms.CharField):
 
 
 class RelativeDistinguishedNameField(forms.CharField):
-    def to_python(self, value: str) -> typing.Optional[x509.RelativeDistinguishedName]:
+    def to_python(  # type: ignore[override]  # superclass uses Any for str, violates inheritance (in theory)
+        self, value: str
+    ) -> typing.Optional[x509.RelativeDistinguishedName]:
         if not value:
             return None
         rdns = x509.Name.from_rfc4514_string(value).rdns
@@ -167,11 +171,10 @@ class RelativeDistinguishedNameField(forms.CharField):
 
 
 class ReasonsField(forms.MultipleChoiceField):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: typing.Any):
         super().__init__(choices=REVOCATION_REASONS, **kwargs)
 
     def _to_python(self, value: typing.List[str]) -> typing.FrozenSet[x509.ReasonFlags]:
-        print(self.choices)
         try:
             return frozenset(x509.ReasonFlags[flag] for flag in value)
         except KeyError as ex:
@@ -238,7 +241,9 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
     def get_fields(self) -> typing.Tuple[forms.MultipleChoiceField]:
         return (forms.MultipleChoiceField(choices=self.choices, required=False),)
 
-    def get_value(self, value: typing.List[str]) -> typing.Optional[ExtensionTypeTypeVar]:
+    def get_value(  # type: ignore[override]
+        self, value: typing.List[str]
+    ) -> typing.Optional[ExtensionTypeTypeVar]:
         if not value:
             return None
         return self.get_values(value)
@@ -248,7 +253,7 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
         """Get the ExtensionType instance from the selected values."""
 
 
-class DistributionPointField(ExtensionField[ExtensionTypeTypeVar]):
+class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
     default_error_messages = {
         "full-and-relative-name": _("You cannot provide both full_name and relative_name."),
     }
@@ -259,17 +264,20 @@ class DistributionPointField(ExtensionField[ExtensionTypeTypeVar]):
         ReasonsField(required=False),  # reasons
     )
 
-    def get_value(
+    def get_value(  # type: ignore[override]
         self,
         full_name: typing.List[x509.GeneralName],
         relative_distinguished_name: typing.Optional[x509.RelativeDistinguishedName],
         crl_issuer: typing.List[x509.GeneralName],
         reasons: typing.Optional[typing.Iterable[str]],
-    ):
+    ) -> typing.Optional[CRLExtensionTypeTypeVar]:
         if not full_name:
-            full_name = None
+            # TYPEHINT NOTE: Field returns empty list, which x509.DistributionPoint() treats different from
+            #   None. Any other solution is less efficient, so we don't use them just for mypy.
+            full_name = None  # type: ignore[assignment]
         if not crl_issuer:
-            crl_issuer = None
+            crl_issuer = None  # type: ignore[assignment]  # same as above for full_name
+
         if reasons:
             parsed_reasons = frozenset(x509.ReasonFlags[flag] for flag in reasons)
         else:
@@ -294,7 +302,7 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
     fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
     widget = widgets.AuthorityInformationAccessWidget
 
-    def get_value(
+    def get_value(  # type: ignore[override]
         self, ca_issuers: typing.List[x509.GeneralName], ocsp: typing.List[x509.GeneralName]
     ) -> typing.Optional[x509.AuthorityInformationAccess]:
         if not ca_issuers and not ocsp:
@@ -333,7 +341,9 @@ class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
     fields = (GeneralNamesField(required=False),)
     widget = widgets.IssuerAlternativeNameWidget
 
-    def get_value(self, value: typing.List[x509.GeneralName]) -> typing.Optional[x509.IssuerAlternativeName]:
+    def get_value(  # type: ignore[override]
+        self, value: typing.List[x509.GeneralName]
+    ) -> typing.Optional[x509.IssuerAlternativeName]:
         if not value:
             return None
         return x509.IssuerAlternativeName(general_names=value)
@@ -361,7 +371,7 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
     fields = (forms.BooleanField(required=False),)
     widget = widgets.OCSPNoCheckWidget
 
-    def get_value(self, value: bool) -> typing.Optional[x509.OCSPNoCheck]:
+    def get_value(self, value: bool) -> typing.Optional[x509.OCSPNoCheck]:  # type: ignore[override]
         if value is True:
             return self.extension_type()
         return None

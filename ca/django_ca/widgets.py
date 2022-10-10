@@ -31,6 +31,9 @@ from .utils import ADMIN_SUBJECT_OIDS, format_general_name
 log = logging.getLogger(__name__)
 
 
+ExtensionWidgetsType = typing.Tuple[typing.Union[typing.Type[forms.Widget], forms.Widget], ...]
+
+
 class DjangoCaWidgetMixin:
     """Widget mixin with some generic functionality.
 
@@ -59,7 +62,8 @@ class DjangoCaWidgetMixin:
             attrs["class"] = css_classes
 
     def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
-        ctx = super().get_context(*args, **kwargs)
+        # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
+        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
         self.add_css_classes(ctx["widget"]["attrs"])
         return ctx
 
@@ -213,14 +217,14 @@ class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  
     Subclasses of this class are expected to set the `extension_widgets` attribute or implement `get_widgets`.
     """
 
-    extension_widgets: typing.Optional[typing.Tuple[forms.Widget, ...]]
+    extension_widgets: typing.Optional[ExtensionWidgetsType]
     template_name = "django_ca/forms/widgets/extension.html"
 
     def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs: typing.Any) -> None:
         sub_widgets = self.get_widgets(**kwargs) + (CriticalInput(),)
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
-    def get_widgets(self, **kwargs: typing.Any) -> typing.Tuple[forms.Widget, ...]:
+    def get_widgets(self, **kwargs: typing.Any) -> ExtensionWidgetsType:
         """Get sub-widgets used by this widget."""
         if self.extension_widgets is not None:  # pragma: no branch
             return self.extension_widgets
@@ -236,7 +240,7 @@ class DistributionPointWidget(ExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
     ) -> typing.Tuple[str, str, str, typing.List[str]]:
         full_name = relative_name = crl_issuer = ""
-        reasons = []
+        reasons: typing.List[str] = []
 
         if value is None:
             return full_name, relative_name, crl_issuer, reasons
@@ -333,7 +337,7 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.IssuerAlternativeName]]
-    ) -> typing.Tuple[typing.List[str], bool]:
+    ) -> typing.Tuple[str, bool]:
         if value is None:
             return ("", False)
         general_names = [format_general_name(name) for name in value.value]
