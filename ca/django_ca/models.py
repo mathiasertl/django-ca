@@ -104,7 +104,7 @@ from .querysets import (
     CertificateAuthorityQuerySet,
     CertificateQuerySet,
 )
-from .signals import post_revoke_cert, pre_revoke_cert
+from .signals import post_revoke_cert, pre_issue_cert, pre_revoke_cert
 from .typehints import (
     Expires,
     ExtensionTypeTypeVar,
@@ -956,7 +956,19 @@ class CertificateAuthority(X509CertMixin):
         public_key = csr.public_key()
         exts = OrderedDict([(ext.oid, ext) for ext in extensions])
 
-        # TODO: basic constraints
+        # Add BasicConstraints extension if not already set.
+        if ExtensionOID.BASIC_CONSTRAINTS not in exts:
+            exts[ExtensionOID.BASIC_CONSTRAINTS] = x509.Extension(
+                oid=ExtensionOID.BASIC_CONSTRAINTS,
+                critical=True,
+                value=x509.BasicConstraints(ca=False, path_length=None),
+            )
+
+        # Make sure that the "ca" value of the Basic Constraints extension is False. If it were True, the
+        # certificate would be usable as a CA and we want to make sure that his does not happen here.
+        if exts[ExtensionOID.BASIC_CONSTRAINTS].value.ca is True:
+            raise ValueError("This function cannot be used to create a Certificate Authority.")
+
         # Add Subject- and AuthorityKeyIdentifier extensions if not already set.
         if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in exts:
             exts[ExtensionOID.SUBJECT_KEY_IDENTIFIER] = x509.Extension(
@@ -998,6 +1010,19 @@ class CertificateAuthority(X509CertMixin):
                         value=x509.SubjectAlternativeName(list(san.value) + [cn]),
                     )
                     exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
+
+        # Convert extensions to legacy classes so that we can send the deprecated signal
+        cert_extensions = [OID_TO_EXTENSION[ext.oid](ext) for ext in extensions]
+        pre_issue_cert.send(
+            sender=self.__class__,
+            ca=self,
+            csr=csr,
+            expires=expires,
+            algorithm=algorithm,
+            subject=subject,
+            extensions=cert_extensions,
+            password=password,
+        )
 
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
