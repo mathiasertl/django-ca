@@ -549,6 +549,41 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
                 self.assertIsInstance(key.curve, ec.BrainpoolP256R1)
 
+    def test_empty_extensions_for_certificiate(self) -> None:
+        """Test extensions_for_certificate property when no values are set."""
+        self.ca.issuer_alt_name = ""
+        self.ca.issuer_url = ""
+        self.ca.ocsp_url = ""
+        self.ca.crl_url = ""
+        self.ca.save()
+        self.assertEqual(self.ca.extensions_for_certificate, {})
+
+    def test_extensions_for_certificiate(self) -> None:
+        """Test extensions_for_certificate property."""
+
+        self.ca.issuer_alt_name = "http://ian.example.com"
+        self.ca.issuer_url = "http://issuer.example.com"
+        self.ca.ocsp_url = "http://ocsp.example.com"
+        self.ca.crl_url = "http://crl.example.com"
+        self.ca.save()
+
+        self.assertEqual(
+            self.ca.extensions_for_certificate,
+            {
+                "authority_information_access": self.authority_information_access(
+                    ca_issuers=[x509.UniformResourceIdentifier(self.ca.issuer_url)],
+                    ocsp=[x509.UniformResourceIdentifier(self.ca.ocsp_url)],
+                    critical=False,
+                ),
+                "crl_distribution_points": self.crl_distribution_points(
+                    [x509.UniformResourceIdentifier(self.ca.crl_url)]
+                ),
+                "issuer_alternative_name": self.issuer_alternative_name(
+                    x509.UniformResourceIdentifier(self.ca.issuer_alt_name)
+                ),
+            },
+        )
+
 
 class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.Certificate`."""
