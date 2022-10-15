@@ -135,6 +135,39 @@ class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):
         )
 
 
+class IssuerAlternativeNameFieldTestCase(TestCase, TestCaseMixin):
+    """Tests for the IssuerAlternativeNameField."""
+
+    def test_field_output(self) -> None:
+        """Test field output."""
+        self.assertFieldOutput(
+            fields.IssuerAlternativeNameField,
+            {
+                (D1, True): self.issuer_alternative_name(DNS1, critical=True),
+                (D1, False): self.issuer_alternative_name(DNS1, critical=False),
+                ("", False): None,
+                ("", True): None,
+            },
+            {},
+            empty_value=None,
+        )
+
+
+class KeyUsageFieldTestCase(TestCase, TestCaseMixin):
+    """Tests for the KeyUsageField."""
+
+    def test_field_output(self) -> None:
+        """Test field output."""
+        self.assertFieldOutput(
+            fields.KeyUsageField,
+            {
+                (("cRLSign",), True): self.key_usage(crl_sign=True),
+            },
+            {},
+            empty_value=None,
+        )
+
+
 class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):
     """Tests for the OCSPNoCheckField."""
 

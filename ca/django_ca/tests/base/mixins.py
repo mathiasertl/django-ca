@@ -780,11 +780,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         name = re.sub("[^a-z0-9.-]", "-", name)
         return f"{name}.example.com"
 
-    def issuer_alternative_name(self, *names: x509.GeneralName) -> x509.Extension[x509.IssuerAlternativeName]:
+    def issuer_alternative_name(
+        self, *names: x509.GeneralName, critical: bool = False
+    ) -> x509.Extension[x509.IssuerAlternativeName]:
         """Shortcut for getting a IssuerAlternativeName extension."""
         return x509.Extension(
             oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-            critical=False,
+            critical=critical,
             value=x509.IssuerAlternativeName(names),
         )
 
