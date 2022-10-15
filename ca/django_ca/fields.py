@@ -326,16 +326,19 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
     ) -> typing.Optional[x509.AuthorityInformationAccess]:
         if not ca_issuers and not ocsp:
             return None
-        descriptions = [
-            x509.AccessDescription(
-                access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=name
-            )
-            for name in ca_issuers
-        ]
-        descriptions += [
-            x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
-            for name in ocsp
-        ]
+        descriptions = []
+        if ca_issuers:
+            descriptions += [
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=name
+                )
+                for name in ca_issuers
+            ]
+        if ocsp:
+            descriptions += [
+                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
+                for name in ocsp
+            ]
         return x509.AuthorityInformationAccess(descriptions=descriptions)
 
 

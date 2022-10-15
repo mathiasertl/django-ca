@@ -368,7 +368,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertEqual(obj.cn, resigned.cn)
         self.assertEqual(obj.csr, resigned.csr)
         self.assertEqual(obj.profile, resigned.profile)
-        self.assertEqual(obj.distinguished_name, resigned.distinguished_name)
+        self.assertEqual(obj.cn, resigned.cn)
         self.assertEqual(obj.extended_key_usage, resigned.extended_key_usage)
         self.assertEqual(obj.key_usage, resigned.key_usage)
         self.assertEqual(obj.subject_alternative_name, resigned.subject_alternative_name)
