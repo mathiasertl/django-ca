@@ -147,15 +147,25 @@ class GeneralNamesField(forms.CharField):
 
     def to_python(  # type: ignore[override]  # superclass uses Any for str, violates inheritance (in theory)
         self, value: str
-    ) -> typing.List[x509.GeneralName]:
+    ) -> typing.Optional[typing.List[x509.GeneralName]]:
+        if not value:
+            return None
+
         values = []
         for line in value.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
             try:
                 values.append(parse_general_name(line))
             except ValueError as ex:
                 raise forms.ValidationError(
                     self.error_messages["invalid"], params={"error": ex}, code="invalid"
                 )
+        if not values:
+            return None
+
         return values
 
 
@@ -256,6 +266,7 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
 class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
     default_error_messages = {
         "full-and-relative-name": _("You cannot provide both full_name and relative_name."),
+        "no-dp-or-issuer": _("A DistributionPoint needs at least a full or relative name or a crl issuer."),
     }
     fields = (
         GeneralNamesField(required=False),  # full_name
@@ -287,6 +298,14 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
             raise forms.ValidationError(
                 self.error_messages["full-and-relative-name"], code="full-and-relative-name"
             )
+
+        if not full_name and not relative_distinguished_name and not crl_issuer:
+            if reasons:
+                # NOTE: cryptography does not yet validate this on its own:
+                #   https://github.com/pyca/cryptography/pull/7710
+                raise forms.ValidationError(self.error_messages["no-dp-or-issuer"], code="no-dp-or-issuer")
+            else:
+                return None
 
         dp = x509.DistributionPoint(
             full_name=full_name,

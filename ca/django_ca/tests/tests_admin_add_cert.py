@@ -92,6 +92,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "tls_feature_1": False,
                     "ocsp_no_check_0": True,
                     "ocsp_no_check_1": False,
+                    "crl_distribution_points_0": ca.crl_url,
+                    "crl_distribution_points_1": "",
+                    "crl_distribution_points_2": "",
+                    "crl_distribution_points_3": [],
+                    "crl_distribution_points_4": False,
+                    "authority_information_access_0": ca.issuer_url,
+                    "authority_information_access_1": ca.ocsp_url,
+                    "authority_information_access_2": False,
                 },
             )
         self.assertRedirects(response, self.changelist_url)
@@ -314,6 +322,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "key_usage_1": False,
                     "extended_key_usage_0": [],
                     "extended_Key_usage_1": False,
+                    "crl_distribution_points_0": ca.crl_url,
+                    "crl_distribution_points_1": "",
+                    "crl_distribution_points_2": "",
+                    "crl_distribution_points_3": [],
+                    "crl_distribution_points_4": False,
+                    "authority_information_access_0": ca.issuer_url,
+                    "authority_information_access_1": ca.ocsp_url,
+                    "authority_information_access_2": False,
                 },
             )
         self.assertEqual(pre.call_count, 1)
