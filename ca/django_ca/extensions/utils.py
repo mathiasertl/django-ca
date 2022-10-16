@@ -548,6 +548,7 @@ KEY_USAGE_NAMES = {
     "key_encipherment": "keyEncipherment",
     "content_commitment": "nonRepudiation",  # http://marc.info/?t=107176106300005&r=1&w=2
 }
+KEY_USAGE_NAMES_MAPPING = {v: k for k, v in KEY_USAGE_NAMES.items()}
 
 
 def _authority_information_access_as_text(value: x509.AuthorityInformationAccess) -> str:
@@ -654,7 +655,7 @@ def key_usage_items(value: x509.KeyUsage) -> typing.Iterator[str]:
 
 
 def _key_usage_as_text(value: x509.KeyUsage) -> str:
-    return "\n".join(f"* {name}" for name in key_usage_items(value))
+    return "\n".join(f"* {name}" for name in sorted(key_usage_items(value)))
 
 
 def _name_constraints_as_text(value: x509.NameConstraints) -> str:

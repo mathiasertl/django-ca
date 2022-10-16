@@ -81,7 +81,7 @@ certificates more easily. These classes are easy to instantiate and provide conv
 Both certificate authorities and certificates have many common extensions available as properties::
 
    >>> ca.key_usage
-   <KeyUsage: ['cRLSign', 'keyCertSign'], critical=True>
+   <KeyUsage: ['crl_sign', 'key_cert_sign'], critical=True>
    >>> ca.basic_constraints
    <BasicConstraints: ca=True, pathlen=None, critical=True>
 

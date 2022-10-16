@@ -166,7 +166,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test profile serialization."""
 
         desc = "foo bar"
-        kusage = ["digitalSignature"]
+        kusage = ["digital_signature"]
         prof = Profile(
             "test",
             cn_in_san=True,

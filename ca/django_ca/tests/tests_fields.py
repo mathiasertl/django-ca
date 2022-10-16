@@ -25,9 +25,9 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from .. import ca_settings
-from .. import fields
+from .. import ca_settings, fields
 from ..constants import REVOCATION_REASONS
+from ..extensions.utils import KEY_USAGE_NAMES_MAPPING
 from .base.mixins import TestCaseMixin
 
 D1 = "example.com"
@@ -298,7 +298,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         self.assertFieldOutput(
             fields.KeyUsageField,
             {
-                (("cRLSign",), True): self.key_usage(crl_sign=True),
+                (("crl_sign",), True): self.key_usage(crl_sign=True),
             },
             {},
             empty_value=None,
@@ -313,9 +313,25 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         for choice, text in self.field_class.choices:
             self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
 
-        html = field.widget.render(name, [])
+        html = field.widget.render(name, ([], False))
         for choice, text in self.field_class.choices:
             self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
+
+    def test_rendering_profiles(self) -> None:
+        field = self.field_class()
+
+        for profile_name, profile in ca_settings.CA_PROFILES.items():
+            choices = profile["extensions"]["key_usage"]["value"]
+            choices = [KEY_USAGE_NAMES_MAPPING[choice] for choice in choices]
+
+            ext = self.key_usage(**{choice: True for choice in choices})
+            html = field.widget.render("unused", ext)
+
+            for choice, text in self.field_class.choices:
+                if choice in choices:
+                    self.assertInHTML(f'<option value="{choice}" selected>{text}</option>', html)
+                else:
+                    self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
 
 
 class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):

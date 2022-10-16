@@ -961,8 +961,8 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
             "admin_html": "<ul><li>keyAgreement</li></ul>",
             "values": [{"key_agreement"}, ["keyAgreement"]],
             "expected": frozenset(["key_agreement"]),
-            "expected_repr": "['keyAgreement']",
-            "expected_serialized": ["keyAgreement"],
+            "expected_repr": "['key_agreement']",
+            "expected_serialized": ["key_agreement"],
             "extension_type": x509.KeyUsage(
                 digital_signature=False,
                 content_commitment=False,
@@ -988,8 +988,8 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
                 ["keyEncipherment", "key_agreement"],
             ],
             "expected": frozenset(["key_agreement", "key_encipherment"]),
-            "expected_repr": "['keyAgreement', 'keyEncipherment']",
-            "expected_serialized": ["keyAgreement", "keyEncipherment"],
+            "expected_repr": "['key_agreement', 'key_encipherment']",
+            "expected_serialized": ["key_agreement", "key_encipherment"],
             "extension_type": x509.KeyUsage(
                 digital_signature=False,
                 content_commitment=False,
@@ -1039,8 +1039,8 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
                     "content_commitment",
                 ]
             ),
-            "expected_repr": "['keyAgreement', 'keyEncipherment', 'nonRepudiation']",
-            "expected_serialized": ["keyAgreement", "keyEncipherment", "nonRepudiation"],
+            "expected_repr": "['content_commitment', 'key_agreement', 'key_encipherment']",
+            "expected_serialized": ["content_commitment", "key_agreement", "key_encipherment"],
             "extension_type": x509.KeyUsage(
                 digital_signature=False,
                 content_commitment=True,

@@ -322,7 +322,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
         choices = []
 
         # Cannot use a list comprehension here, because cryptography raises ValueError for some attributes
-        for choice, name in KEY_USAGE_NAMES.items():
+        for choice in KEY_USAGE_NAMES:
             try:
                 chosen = getattr(value.value, choice)
             except ValueError:
@@ -330,7 +330,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
                 chosen = False
 
             if chosen:
-                choices.append(name)
+                choices.append(choice)
 
         return (choices, value.critical)
 

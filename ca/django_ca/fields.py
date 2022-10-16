@@ -376,13 +376,13 @@ class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
 
     # TYPEHINT NOTE: mypy typehints the tuple to the lambda function wrong and then mypy thinks the return
     #   value thought to be not comparable
-    choices = sorted([(v, v) for v in KEY_USAGE_NAMES.values()], key=lambda t: t[1])  # type: ignore
+    choices = sorted(KEY_USAGE_NAMES.items(), key=lambda t: t[1])  # type: ignore
 
     extension_type = x509.KeyUsage
     widget = widgets.KeyUsageWidget
 
     def get_values(self, value: typing.List[str]) -> typing.Optional[x509.KeyUsage]:
-        values = {kwarg: choice in value for choice, kwarg in _KEY_USAGE_MAPPING.items()}
+        values = {choice: choice in value for choice in KEY_USAGE_NAMES}
         return x509.KeyUsage(**values)
 
 

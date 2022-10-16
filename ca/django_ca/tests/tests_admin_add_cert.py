@@ -79,8 +79,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -186,8 +186,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -231,8 +231,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -277,8 +277,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -370,8 +370,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -403,8 +403,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -437,8 +437,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -495,8 +495,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -541,8 +541,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -585,8 +585,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "wrong algo",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -630,8 +630,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -676,8 +676,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -722,8 +722,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -766,8 +766,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
@@ -809,8 +809,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "algorithm": "SHA256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
-                        "digitalSignature",
-                        "keyAgreement",
+                        "digital_signature",
+                        "key_agreement",
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [

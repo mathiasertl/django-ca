@@ -8,7 +8,7 @@ constructor, they always take either a ``dict`` or a cryptography extension::
 
    >>> from django_ca.extensions import KeyUsage
    >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-   <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+   <KeyUsage: ['key_agreement', 'key_encipherment'], critical=True>
 
 ... but you can also pass an equivalent cryptography extension::
 
@@ -20,7 +20,7 @@ constructor, they always take either a ``dict`` or a cryptography extension::
    ...         content_commitment=False, data_encipherment=False, key_cert_sign=False, encipher_only=False,
    ...         decipher_only=False)
    ... ))
-   <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+   <KeyUsage: ['key_agreement', 'key_encipherment'], critical=True>
 
 ... regardless of how you created the extension, you can modify it at will until you actually use it
 somewhere::
@@ -30,7 +30,7 @@ somewhere::
    >>> ku |= ['nonRepudiation']
    >>> ku.add('cRLSign')
    >>> ku
-   <KeyUsage: ['cRLSign', 'keyAgreement', 'keyEncipherment', 'nonRepudiation'], critical=True>
+   <KeyUsage: ['content_commitment', 'crl_sign', 'key_agreement', 'key_encipherment'], critical=True>
 
 You can always convert extensions to valid cryptography extensions::
 
@@ -47,11 +47,11 @@ For example, :py:class:`~django_ca.extensions.KeyUsage` inherits from
     >>> ku |= {'decipherOnly', }
     >>> ku |= KeyUsage({'value': ['digitalSignature']})
     >>> ku
-    <KeyUsage: ['decipherOnly', 'digitalSignature'], critical=True>
+    <KeyUsage: ['decipher_only', 'digital_signature'], critical=True>
     >>> ku.add('nonRepudiation')
     >>> ku.add('nonRepudiation')
     >>> ku
-    <KeyUsage: ['decipherOnly', 'digitalSignature', 'nonRepudiation'], critical=True>
+    <KeyUsage: ['content_commitment', 'decipher_only', 'digital_signature'], critical=True>
 
 When passing a dictionary, you can always pass a ``critical`` value.  If omitted, the default value is
 determined by the ``default_critical`` flag, which matches common X.509 usage for each extension::

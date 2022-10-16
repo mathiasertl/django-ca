@@ -557,7 +557,7 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
         raise ValueError(f"Unknown value: {value}")  # pragma: no cover  # function returns/raises before
 
     def serialize_item(self, value: str) -> str:
-        return self._CRYPTOGRAPHY_MAPPING_REVERSED[value]
+        return value
 
 
 class ExtendedKeyUsage(

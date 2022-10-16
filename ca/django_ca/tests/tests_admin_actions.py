@@ -389,7 +389,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             "subject_alternative_name_1": True,
             "algorithm": "SHA256",
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
-            "key_usage_0": ["digitalSignature", "keyAgreement", "keyEncipherment"],
+            "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],
             "key_usage_1": True,
             "extended_key_usage_0": [
                 "serverAuth",

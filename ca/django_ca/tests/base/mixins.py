@@ -53,8 +53,9 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
-from ...extensions import Extension, TLSFeature
+from ...extensions import Extension, KeyUsage, TLSFeature
 from ...extensions.base import CRLDistributionPointsBase, IterableExtension
+from ...extensions.utils import KEY_USAGE_NAMES
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import post_create_ca, post_issue_cert, post_revoke_cert, pre_create_ca, pre_issue_cert
 from ...utils import ca_storage, parse_general_name
@@ -900,6 +901,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     feature_names = [TLSFeature.SERIALIZER_MAPPING[feature] for feature in features]
                     for i, val in enumerate(sorted(feature_names)):
                         ctx[f"{key}_{i}"] = val
+                elif isinstance(value, KeyUsage):
+                    values = [KEY_USAGE_NAMES[ext_value] for ext_value in value.serialize_value()]
+                    for i, ext_value in enumerate(sorted(values)):
+                        ctx[f"{key}_{i}"] = ext_value
                 elif isinstance(value, IterableExtension):
                     for i, ext_value in enumerate(value.serialize_value()):
                         ctx[f"{key}_{i}"] = ext_value

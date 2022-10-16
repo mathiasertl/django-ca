@@ -73,9 +73,9 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
 
         >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=True>
+        <KeyUsage: ['key_agreement', 'key_encipherment'], critical=True>
         >>> KeyUsage({'critical': False, 'value': ['key_agreement', 'key_encipherment']})
-        <KeyUsage: ['keyAgreement', 'keyEncipherment'], critical=False>
+        <KeyUsage: ['key_agreement', 'key_encipherment'], critical=False>
 
     ... but can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
     from ``cryptography``::
@@ -362,7 +362,7 @@ class IterableExtension(
         1
         >>> for val in e:
         ...     print(val)
-        cRLSign
+        crl_sign
     """
 
     value: Collection[IterableItem]
@@ -508,10 +508,10 @@ class OrderedSetExtension(
         >>> e = KeyUsage({'value': {'cRLSign', }})
         >>> e.add('keyAgreement')
         >>> e
-        <KeyUsage: ['cRLSign', 'keyAgreement'], critical=True>
+        <KeyUsage: ['crl_sign', 'key_agreement'], critical=True>
         >>> e -= {'keyAgreement', }
         >>> e
-        <KeyUsage: ['cRLSign'], critical=True>
+        <KeyUsage: ['crl_sign'], critical=True>
     """
 
     # pylint: disable=abstract-method; class is itself a base class

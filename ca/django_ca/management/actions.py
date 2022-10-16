@@ -366,7 +366,7 @@ class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method
     ...                     extension=KeyUsage)  # doctest: +ELLIPSIS
     OrderedSetExtensionAction(...)
     >>> parser.parse_args(['--ext', 'critical,keyCertSign'])
-    Namespace(key_usage=<KeyUsage: ['keyCertSign'], critical=True>)
+    Namespace(key_usage=<KeyUsage: ['key_cert_sign'], critical=True>)
     """
 
     def __init__(self, **kwargs: typing.Any) -> None:
@@ -386,7 +386,7 @@ class OrderedSetExtensionAction(ExtensionAction):
     ...                     extension=KeyUsage)  # doctest: +ELLIPSIS
     OrderedSetExtensionAction(...)
     >>> parser.parse_args(['--ext', 'critical,keyCertSign'])
-    Namespace(key_usage=<KeyUsage: ['keyCertSign'], critical=True>)
+    Namespace(key_usage=<KeyUsage: ['key_cert_sign'], critical=True>)
     """
 
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
