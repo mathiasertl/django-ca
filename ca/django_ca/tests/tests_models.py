@@ -29,7 +29,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import Encoding, load_pem_private_key
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -147,6 +147,7 @@ class X509CertMixinTestCaseMixin(TestCaseProtocol):
         self.assertEqual(encoded_chain, found)
 
 
+# pylint: disable-next=too-many-public-methods
 class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.CertificateAuthority`."""
 
@@ -583,6 +584,217 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 ),
             },
         )
+
+
+class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
+    """Test signing a certificiate."""
+
+    load_cas = ("root", "child")
+    csr = certs["child-cert"]["csr"]["parsed"]
+
+    def assertBasicCert(self, cert: x509.Certificate) -> None:  # pylint: disable=invalid-name
+        """Basic assertions about the certificate."""
+        self.assertEqual(cert.issuer, self.ca.subject)
+        self.assertEqual(cert.not_valid_before, datetime.utcnow())
+        self.assertEqual(cert.version, x509.Version.v3)
+        self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
+
+    def assertExtensionDict(  # pylint: disable=invalid-name
+        self, cert: x509.Certificate, expected: typing.Iterable[x509.Extension[x509.ExtensionType]]
+    ) -> None:
+        """Test that the certificate has the expected extensions."""
+        actual = {ext.oid: ext for ext in cert.extensions}
+        expected_dict = {ext.oid: ext for ext in expected}
+        self.assertEqual(actual, expected_dict)
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_simple(self) -> None:
+        """Test the simplest invocation of the function."""
+
+        cn = "example.com"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(csr, subject=subject)
+
+        self.assertBasicCert(cert)
+        self.assertEqual(cert.not_valid_after, datetime.utcnow() + ca_settings.CA_DEFAULT_EXPIRES)
+        self.assertEqual(cert.subject, subject)
+        self.assertIsInstance(cert.signature_hash_algorithm, ca_settings.CA_DIGEST_ALGORITHM.__class__)
+        self.assertExtensionDict(
+            cert,
+            [
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                    critical=False,
+                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
+                ),
+                self.subject_alternative_name(x509.DNSName(cn)),
+                self.basic_constraints(),
+                self.ca.get_authority_key_identifier_extension(),
+            ],
+        )
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_non_default_values(self) -> None:
+        """Pass non-default parameters."""
+        cn = "example.com"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        algorithm = hashes.SHA256()
+        expires = datetime.utcnow() + ca_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(csr, subject=subject, algorithm=algorithm, expires=expires)
+
+        self.assertBasicCert(cert)
+        self.assertEqual(cert.not_valid_after, expires)
+        self.assertIsInstance(cert.signature_hash_algorithm, hashes.SHA256)
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_non_default_extensions(self) -> None:
+        """Pass non-default extensions."""
+        cn = "example.com"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        aki = x509.Extension(
+            oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+            critical=True,
+            value=x509.AuthorityKeyIdentifier(
+                key_identifier=b"1", authority_cert_issuer=None, authority_cert_serial_number=None
+            ),
+        )
+        ski = x509.Extension(
+            oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+            critical=True,
+            value=x509.SubjectKeyIdentifier(digest=b"1"),
+        )
+
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(
+                csr,
+                subject=subject,
+                cn_in_san=False,
+                extensions=[self.basic_constraints(critical=False), ski, aki],
+            )
+
+        self.assertBasicCert(cert)
+        self.assertExtensionDict(cert, [ski, self.basic_constraints(critical=False), aki])
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_cn_not_in_san(self) -> None:
+        """Test the cn_in_san option."""
+        cn = "example.com"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        san = self.subject_alternative_name(x509.DNSName("example.net"))
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(csr, subject=subject, cn_in_san=False, extensions=[san])
+
+        self.assertBasicCert(cert)
+        self.assertExtensionDict(
+            cert,
+            [
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                    critical=False,
+                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
+                ),
+                san,
+                self.basic_constraints(),
+                self.ca.get_authority_key_identifier_extension(),
+            ],
+        )
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_append_cn_to_san(self) -> None:
+        """Test appending a CommonName to SubjectAlternativeName."""
+        cn = "example.com"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        san = self.subject_alternative_name(x509.DNSName("example.net"))
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
+
+        self.assertBasicCert(cert)
+        self.assertExtensionDict(
+            cert,
+            [
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                    critical=False,
+                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
+                ),
+                self.subject_alternative_name(x509.DNSName("example.net"), x509.DNSName(cn)),
+                self.basic_constraints(),
+                self.ca.get_authority_key_identifier_extension(),
+            ],
+        )
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_cn_already_in_san(self) -> None:
+        """Test using a CommonName that is already in SubjectAlternativeName."""
+        cn = "example.com"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        san = self.subject_alternative_name(x509.DNSName(cn))
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
+
+        self.assertBasicCert(cert)
+        self.assertExtensionDict(
+            cert,
+            [
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                    critical=False,
+                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
+                ),
+                san,
+                self.basic_constraints(),
+                self.ca.get_authority_key_identifier_extension(),
+            ],
+        )
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_unparsable_cn(self) -> None:
+        """Test using a CommonName that cannot be used as a SubjectAlternativeName."""
+        cn = "foo..bar*"
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+        san = self.subject_alternative_name(x509.DNSName("example.net"))
+        with self.assertSignCertSignals():
+            cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
+
+        self.assertBasicCert(cert)
+        self.assertExtensionDict(
+            cert,
+            [
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                    critical=False,
+                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
+                ),
+                san,
+                self.basic_constraints(),
+                self.ca.get_authority_key_identifier_extension(),
+            ],
+        )
+
+    def test_create_ca(self) -> None:
+        """Try passing a BasicConstraints extension that allows creating a CA."""
+
+        csr = certs["child-cert"]["csr"]["parsed"]
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        msg = r"^This function cannot be used to create a Certificate Authority\.$"
+        with self.assertSignCertSignals(pre=False, post=False), self.assertRaisesRegex(ValueError, msg):
+            self.ca.sign(csr, subject=subject, extensions=[self.basic_constraints(ca=True)])
 
 
 class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):

@@ -1011,6 +1011,7 @@ class CertificateAuthority(X509CertMixin):
                         value=x509.SubjectAlternativeName(list(san.value) + [cn]),
                     )
                     exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
+                # else: CommonName already in SubjectAlternativeName
 
         # Convert extensions to legacy classes so that we can send the deprecated signal
         cert_extensions = [OID_TO_EXTENSION[ext.oid](ext) for ext in extensions]

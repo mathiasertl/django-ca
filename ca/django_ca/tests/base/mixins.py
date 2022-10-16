@@ -57,7 +57,15 @@ from ...extensions import Extension, KeyUsage, TLSFeature
 from ...extensions.base import CRLDistributionPointsBase, IterableExtension
 from ...extensions.utils import KEY_USAGE_NAMES
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
-from ...signals import post_create_ca, post_issue_cert, post_revoke_cert, pre_create_ca, pre_issue_cert
+from ...signals import (
+    post_create_ca,
+    post_issue_cert,
+    post_revoke_cert,
+    post_sign_cert,
+    pre_create_ca,
+    pre_issue_cert,
+    pre_sign_cert,
+)
 from ...utils import ca_storage, parse_general_name
 from . import certs, timestamps
 from .typehints import DjangoCAModelTypeVar
@@ -259,6 +267,18 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
+            try:
+                yield (pre_sig, post_sig)
+            finally:
+                self.assertTrue(pre_sig.called is pre)
+                self.assertTrue(post_sig.called is post)
+
+    @contextmanager
+    def assertSignCertSignals(  # pylint: disable=invalid-name
+        self, pre: bool = True, post: bool = True
+    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+        """Context manager mocking both pre and post_create_ca signals."""
+        with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_sign_cert) as post_sig:
             try:
                 yield (pre_sig, post_sig)
             finally:
@@ -511,12 +531,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=critical, value=value)
 
     def basic_constraints(
-        self, ca: bool = False, path_length: typing.Optional[int] = None
+        self, ca: bool = False, path_length: typing.Optional[int] = None, critical: bool = True
     ) -> x509.Extension[x509.BasicConstraints]:
         """Shortcut for getting a BasicConstraints extension."""
         return x509.Extension(
             oid=ExtensionOID.BASIC_CONSTRAINTS,
-            critical=True,
+            critical=critical,
             value=x509.BasicConstraints(ca=ca, path_length=path_length),
         )
 
@@ -903,8 +923,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                         ctx[f"{key}_{i}"] = val
                 elif isinstance(value, KeyUsage):
                     values = [KEY_USAGE_NAMES[ext_value] for ext_value in value.serialize_value()]
-                    for i, ext_value in enumerate(sorted(values)):
-                        ctx[f"{key}_{i}"] = ext_value
+                    for i, ku_value in enumerate(sorted(values)):
+                        ctx[f"{key}_{i}"] = ku_value
                 elif isinstance(value, IterableExtension):
                     for i, ext_value in enumerate(value.serialize_value()):
                         ctx[f"{key}_{i}"] = ext_value
