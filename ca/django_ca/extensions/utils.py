@@ -32,6 +32,7 @@ from ..typehints import (
     ParsablePolicyQualifier,
     PolicyQualifier,
     SerializedDistributionPoint,
+    SerializedExtension,
     SerializedPolicyInformation,
     SerializedPolicyQualifier,
     SerializedPolicyQualifiers,
@@ -564,6 +565,19 @@ def _authority_information_access_as_text(value: x509.AuthorityInformationAccess
     return "\n".join(lines)
 
 
+def _authority_information_access_serialized(
+    value: x509.AuthorityInformationAccess,
+) -> typing.Dict[str, typing.List[str]]:
+    descriptions = {}
+    issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
+    ocsp = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.OCSP]
+    if issuers:
+        descriptions["issuers"] = [format_general_name(ad.access_location) for ad in issuers]
+    if ocsp:
+        descriptions["ocsp"] = [format_general_name(ad.access_location) for ad in ocsp]
+    return descriptions
+
+
 def _authority_key_identifier_as_text(value: x509.AuthorityKeyIdentifier) -> str:
     lines = []
     if value.key_identifier:
@@ -641,6 +655,26 @@ def _distribution_points_as_text(value: typing.List[x509.DistributionPoint]) -> 
             reasons = ", ".join(sorted([r.name for r in dpoint.reasons]))
             lines.append(f"  * Reasons: {reasons}")
     return "\n".join(lines)
+
+
+def _distribution_points_serialized(
+    value: typing.Union[x509.FreshestCRL, x509.CRLDistributionPoints]
+) -> typing.List[typing.Dict[str, typing.Any]]:
+    points = []
+
+    for dpoint in value:
+        point: typing.Dict[str, typing.Any] = {}
+        if dpoint.full_name:
+            point["full_name"] = [format_general_name(name) for name in dpoint.full_name]
+        elif dpoint.relative_name:
+            point["relative_name"] = format_name(dpoint.relative_name)
+        if dpoint.crl_issuer:
+            point["crl_issuer"] = [format_general_name(name) for name in dpoint.crl_issuer]
+        if dpoint.reasons:
+            point["reasons"] = sorted([r.name for r in dpoint.reasons])
+
+        points.append(point)
+    return points
 
 
 def key_usage_items(value: x509.KeyUsage) -> typing.Iterator[str]:
@@ -762,3 +796,18 @@ def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> st
         template = "django_ca/admin/extensions/unrecognized_extension.html"
 
     return render_to_string([template], context={"extension": extension, "x509": x509})
+
+
+def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> SerializedExtension:
+    if isinstance(extension.value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
+        value: typing.Any = [format_general_name(name) for name in extension.value]
+    elif isinstance(extension.value, x509.AuthorityInformationAccess):
+        value = _authority_information_access_serialized(extension.value)
+    elif isinstance(extension.value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
+        value = _distribution_points_serialized(extension.value)
+    else:
+        raise TypeError("Unknown extension type.")  # pragma: no cover
+
+    serialized: SerializedExtension = {"critical": extension.critical, "value": value}
+
+    return serialized

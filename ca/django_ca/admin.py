@@ -55,7 +55,7 @@ from django_object_actions import DjangoObjectActions
 from . import ca_settings
 from .constants import ReasonFlags
 from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, SubjectAlternativeName, get_extension_name
-from .extensions.utils import extension_as_admin_html
+from .extensions.utils import extension_as_admin_html, serialize_extension
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
     AcmeAccount,
@@ -71,7 +71,7 @@ from .models import (
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
-from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name, split_str
+from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
 
 log = logging.getLogger(__name__)
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
@@ -645,10 +645,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists is False:
                 continue
-            data[ca.pk] = {}
+            extensions = {}
+            for key, ext in ca.extensions_for_certificate.items():
+                extensions[key] = serialize_extension(ext)
 
-            if ca.issuer_alt_name:
-                data[ca.pk]["issuer_alternative_name"] = "\n".join(split_str(ca.issuer_alt_name, ","))
+            data[ca.pk] = {"extensions": extensions, "name": ca.name}
 
         return JsonResponse(data)
 

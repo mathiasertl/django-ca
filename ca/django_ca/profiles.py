@@ -36,6 +36,7 @@ from .extensions import (
     SubjectAlternativeName,
     SubjectKeyIdentifier,
 )
+from .extensions.utils import serialize_extension
 from .signals import pre_issue_cert
 from .subject import Subject
 from .typehints import Expires, ParsableHash, SerializedExtension, SerializedProfile
@@ -342,7 +343,11 @@ class Profile:
             if extension is None:
                 extensions[key] = None
             else:
-                extensions[key] = extension.serialize()
+                try:
+                    # use new extension method where already available
+                    extensions[key] = serialize_extension(extension.as_extension())
+                except TypeError:
+                    extensions[key] = extension.serialize()
 
         data: SerializedProfile = {
             "cn_in_san": self.cn_in_san,
