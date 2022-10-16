@@ -211,6 +211,13 @@ class SubjectAltNameWidget(CustomMultiWidget):
         return ("", True)  # pragma: no cover
 
 
+class GeneralNamesWidget(Textarea):
+    def format_value(self, value: typing.Optional[typing.Iterable[x509.GeneralName]]) -> str:
+        if not value:
+            return ""
+        return "\n".join([format_general_name(name) for name in value])
+
+
 class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
     """Base class for widgets that display a :py:class:`~cg:cryptography.Extension`.
 
@@ -234,7 +241,12 @@ class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  
 
 
 class DistributionPointWidget(ExtensionWidget):
-    extension_widgets = (Textarea, TextInput, Textarea, SelectMultiple(choices=REVOCATION_REASONS))
+    extension_widgets = (
+        GeneralNamesWidget,
+        TextInput,
+        GeneralNamesWidget,
+        SelectMultiple(choices=REVOCATION_REASONS),
+    )
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
@@ -248,17 +260,12 @@ class DistributionPointWidget(ExtensionWidget):
             raise ValueError("Only one DistributionPoint is supported at this time.")
 
         dp = value.value[0]
-
-        if dp.full_name:
-            full_name = "\n".join([format_general_name(name) for name in dp.full_name])
         if dp.relative_name:
             relative_name = dp.relative_name.rfc4514_string()
-        if dp.crl_issuer:
-            full_name = "\n".join([format_general_name(name) for name in dp.crl_issuer])
         if dp.reasons:
             reasons = [reason.name for reason in dp.reasons]
 
-        return full_name, relative_name, crl_issuer, reasons
+        return dp.full_name, relative_name, dp.crl_issuer, reasons
 
 
 class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an abstract class

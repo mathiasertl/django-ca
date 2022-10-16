@@ -16,12 +16,17 @@
 
 """Test custom Django form fields."""
 
-from cryptography import x509
-from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+import typing
 
+from cryptography import x509
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+
+from django import forms
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from .. import fields
+from ..constants import REVOCATION_REASONS
 from .base.mixins import TestCaseMixin
 
 D1 = "example.com"
@@ -30,6 +35,18 @@ D3 = "example.org"
 DNS1 = x509.DNSName(D1)
 DNS2 = x509.DNSName(D2)
 DNS3 = x509.DNSName(D3)
+
+
+class FieldTestCaseMixin(TestCaseMixin):
+    field_class: typing.Type[forms.Field]
+
+    def assertRequiredError(self, value) -> None:
+        field = self.field_class(required=True)
+        error_required = [field.error_messages["required"]]
+
+        with self.assertRaises(ValidationError) as context_manager:
+            field.clean(value)
+        self.assertEqual(context_manager.exception.messages, error_required)
 
 
 class AuthorityInformationAccessField(TestCase, TestCaseMixin):
@@ -60,8 +77,10 @@ class AuthorityInformationAccessField(TestCase, TestCaseMixin):
         )
 
 
-class CRLDistributionPointsTestCase(TestCase, TestCaseMixin):
+class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
     """Tests for the CRLDistributionPointsField."""
+
+    field_class = fields.CRLDistributionPointField
 
     def test_field_output(self) -> None:
         """Test field output."""
@@ -113,6 +132,121 @@ class CRLDistributionPointsTestCase(TestCase, TestCaseMixin):
                 },
                 empty_value=None,
             )
+
+    def test_rendering_empty_field(self) -> None:
+        """Test rendering an empty field as HTML."""
+        name = "field-name"
+        field = self.field_class()
+        html = field.widget.render(name, None)
+        self.assertInHTML(
+            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget"></textarea>', html
+        )
+        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget">', html)
+        self.assertInHTML(
+            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget"></textarea>', html
+        )
+        for choice, text in REVOCATION_REASONS:
+            self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
+
+    def test_rendering_full_field(self) -> None:
+        """Test rendering an empty field as HTML."""
+        name = "field-name"
+        field = self.field_class()
+        html = field.widget.render(
+            name,
+            self.crl_distribution_points(
+                [DNS1],
+                crl_issuer=[DNS2],
+                reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.certificate_hold]),
+            ),
+        )
+        self.assertInHTML(
+            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget">DNS:{D1}</textarea>',
+            html,
+        )
+        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget">', html)
+        self.assertInHTML('<option value="key_compromise" selected>Key compromised</option>', html)
+        self.assertInHTML('<option value="certificate_hold" selected>On Hold</option>', html)
+        self.assertInHTML(
+            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget">DNS:{D2}</textarea>',
+            html,
+        )
+
+    def test_rendering_relative_name(self) -> None:
+        name = "field-name"
+        field = self.field_class()
+        html = field.widget.render(
+            name,
+            self.crl_distribution_points(
+                relative_name=x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, D1)]),
+            ),
+        )
+        self.assertInHTML(
+            f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget">', html
+        )
+
+    def test_rendering_mutltiple_dps(self) -> None:
+        """Test rendering multiple distribution points (It's not supported yet)."""
+        field = self.field_class()
+        dpoint = x509.DistributionPoint(full_name=[DNS1], relative_name=None, reasons=None, crl_issuer=None)
+        ext = x509.Extension(
+            oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            critical=False,
+            value=x509.CRLDistributionPoints([dpoint, dpoint]),
+        )
+
+        with self.assertRaisesRegex(ValueError, r"^Only one DistributionPoint is supported at this time\.$"):
+            field.widget.render("error", ext)
+
+
+class GeneralNamesFieldTest(TestCase, FieldTestCaseMixin):
+    """Tests for the GeneralNamesField."""
+
+    field_class = fields.GeneralNamesField
+
+    def test_field_output(self) -> None:
+        """Test field output."""
+        self.assertFieldOutput(
+            fields.GeneralNamesField,
+            {
+                D1: [DNS1],
+                D2: [DNS2],
+                f"{D1}\n{D2}": [DNS1, DNS2],
+                f"DNS:{D1}\nDNS:{D2}": [DNS1, DNS2],
+                f"{D2}\n{D1}": [DNS2, DNS1],  # test order
+                f"\n  {D1}  \n  \n  {D2}  \n  ": [DNS1, DNS2],
+            },
+            {
+                "DNS:http://example.com": [
+                    "Unparsable General Name: Could not parse DNS name: http://example.com"
+                ],
+            },
+            empty_value=None,
+        )
+
+    def test_rendering(self) -> None:
+        """Test rendering the field as HTML."""
+        name = "field-name"
+        field = self.field_class()
+        self.assertInHTML(
+            f'<textarea name="{name}" cols="40" rows="10" class="django-ca-widget"></textarea>',
+            field.widget.render(name, None),
+        )
+        self.assertInHTML(
+            f'<textarea name="{name}" cols="40" rows="10" class="django-ca-widget">DNS:{D1}</textarea>',
+            field.widget.render(name, [DNS1]),
+        )
+        # assertInHTML() treats newline and space the same way, and we want to make sure we have a newline
+        # separating the names.
+        self.assertIn(f">\nDNS:{D1}\nDNS:{D2}</textarea>", field.widget.render(name, [DNS1, DNS2]))
+
+    def test_whitespace(self) -> None:
+        """Test that empty lines are completely ignored and return an empty value."""
+
+        self.assertRequiredError("  ")
+        self.assertRequiredError("\n")
+        self.assertRequiredError("\n  \n")
+        self.assertRequiredError("  \n")
 
 
 class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):

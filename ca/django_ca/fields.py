@@ -140,7 +140,7 @@ class SubjectAltNameField(forms.MultiValueField):
 
 
 class GeneralNamesField(forms.CharField):
-    widget = forms.Textarea
+    widget = widgets.GeneralNamesWidget
     default_error_messages = {
         "invalid": _("Unparsable General Name: %(error)s"),
     }
