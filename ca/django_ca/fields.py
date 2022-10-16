@@ -140,6 +140,8 @@ class SubjectAltNameField(forms.MultiValueField):
 
 
 class GeneralNamesField(forms.CharField):
+    """MultipleChoice field for :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`."""
+
     widget = widgets.GeneralNamesWidget
     default_error_messages = {
         "invalid": _("Unparsable General Name: %(error)s"),
@@ -170,6 +172,8 @@ class GeneralNamesField(forms.CharField):
 
 
 class RelativeDistinguishedNameField(forms.CharField):
+    """MultipleChoice field for :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`."""
+
     def to_python(  # type: ignore[override]  # superclass uses Any for str, violates inheritance (in theory)
         self, value: str
     ) -> typing.Optional[x509.RelativeDistinguishedName]:
@@ -181,19 +185,16 @@ class RelativeDistinguishedNameField(forms.CharField):
 
 
 class ReasonsField(forms.MultipleChoiceField):
-    def __init__(self, **kwargs: typing.Any):
-        super().__init__(choices=REVOCATION_REASONS, **kwargs)
+    """MultipleChoice field for :py:class:`~cg:cryptography.x509.ReasonFlags`.
 
-    def _to_python(self, value: typing.List[str]) -> typing.FrozenSet[x509.ReasonFlags]:
-        try:
-            return frozenset(x509.ReasonFlags[flag] for flag in value)
-        except KeyError as ex:
-            # NOTE: KeyError cannot usually happen, as the list of choices is tested for completeness and does
-            #       not change. This could only happen if cryptography adds a new reason (which will probably
-            #       never happen, as it's a very old RFC defining the reasons) and django-ca being used in a
-            #       version not yet tested.
-            code = "invalid_choice"
-            raise forms.ValidationError(self.error_messages[code], params={"value": ex.args[0]}, code=code)
+    .. NOTE::
+
+       This field does NOT convert to x509.ReasonFlags itself but uses string values instead. The choice
+       field always returns invalid choice errors otherwise.
+    """
+
+    def __init__(self, **kwargs: typing.Any) -> None:
+        super().__init__(choices=REVOCATION_REASONS, **kwargs)
 
 
 class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
@@ -264,6 +265,8 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
 
 
 class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
+    """Base class for extensions with DistributionPoints."""
+
     default_error_messages = {
         "full-and-relative-name": _("You cannot provide both full_name and relative_name."),
         "no-dp-or-issuer": _("A DistributionPoint needs at least a full or relative name or a crl issuer."),
@@ -304,19 +307,20 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
                 # NOTE: cryptography does not yet validate this on its own:
                 #   https://github.com/pyca/cryptography/pull/7710
                 raise forms.ValidationError(self.error_messages["no-dp-or-issuer"], code="no-dp-or-issuer")
-            else:
-                return None
+            return None  # nothing was entered at all
 
-        dp = x509.DistributionPoint(
+        dpoint = x509.DistributionPoint(
             full_name=full_name,
             relative_name=relative_distinguished_name,
             crl_issuer=crl_issuer,
             reasons=parsed_reasons,
         )
-        return self.extension_type(distribution_points=[dp])
+        return self.extension_type(distribution_points=[dpoint])
 
 
 class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAccess]):
+    """Form field for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
+
     extension_type = x509.AuthorityInformationAccess
     fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
     widget = widgets.AuthorityInformationAccessWidget
@@ -343,6 +347,8 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
 
 
 class CRLDistributionPointField(DistributionPointField[x509.CRLDistributionPoints]):
+    """Form field for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
+
     extension_type = x509.CRLDistributionPoints
     widget = widgets.DistributionPointWidget
 
@@ -359,6 +365,8 @@ class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage])
 
 
 class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
+    """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+
     extension_type = x509.IssuerAlternativeName
     fields = (GeneralNamesField(required=False),)
     widget = widgets.IssuerAlternativeNameWidget

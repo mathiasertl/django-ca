@@ -378,7 +378,7 @@ class Profile:
             crldp = extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints())
             if isinstance(crldp, CRLDistributionPoints):
                 crldp.append({"full_name": [url.strip() for url in ca.crl_url.split()]})
-            elif isinstance(crldp, x509.Extension):
+            elif isinstance(crldp, x509.Extension):  # pragma: no cover
                 pass
             else:
                 raise ValueError(
@@ -389,9 +389,9 @@ class Profile:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
             if isinstance(aia, AuthorityInformationAccess):
                 aia.ocsp.append(parse_general_name(ca.ocsp_url))
-            elif isinstance(aia, x509.Extension):
+            elif isinstance(aia, x509.Extension):  # pragma: no cover
                 pass
-            elif not isinstance(aia, AuthorityInformationAccess):
+            else:
                 raise ValueError(
                     f"extensions[{AuthorityInformationAccess.key}] is not of type AuthorityInformationAccess"
                 )
@@ -400,7 +400,7 @@ class Profile:
             aia = extensions.setdefault(AuthorityInformationAccess.key, AuthorityInformationAccess())
             if isinstance(aia, AuthorityInformationAccess):
                 aia.issuers.append(parse_general_name(ca.issuer_url))
-            elif isinstance(aia, x509.Extension):
+            elif isinstance(aia, x509.Extension):  # pragma: no cover
                 pass
             else:
                 raise ValueError(
@@ -412,7 +412,7 @@ class Profile:
             if isinstance(ian, IssuerAlternativeName):
                 ian.extend(split_str(ca.issuer_alt_name, ","))
                 extensions[IssuerAlternativeName.key] = ian
-            elif isinstance(ian, x509.Extension):
+            elif isinstance(ian, x509.Extension):  # pragma: no cover
                 # Passed a cryptography extension (currently happens only via the admin interface)
                 pass
             else:

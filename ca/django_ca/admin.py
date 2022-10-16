@@ -640,6 +640,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_ca_details"
 
     def ca_details_view(self, request: HttpRequest) -> JsonResponse:
+        """View for getting the extension values from the certificate authority."""
         data: typing.Dict[int, typing.Dict[str, typing.Any]] = {}
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists is False:

@@ -91,6 +91,7 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
                 fields.CRLDistributionPointField,
                 {
                     # fields: full_name, rdn, crl_issuer, reasons
+                    ("", "", "", (), critical): None,  # not an error, this is not covered elsewhere
                     (D1, "", "", (), critical): self.crl_distribution_points([DNS1], critical=critical),
                     (D2, "", "", (), critical): self.crl_distribution_points([DNS2], critical=critical),
                     # multiple full names:
@@ -129,6 +130,9 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
                 {
                     (D1, f"CN={D2}", "", (), critical): [
                         "You cannot provide both full_name and relative_name."
+                    ],
+                    ("", "", "", ("key_compromise",), critical): [
+                        "A DistributionPoint needs at least a full or relative name or a crl issuer."
                     ],
                 },
                 empty_value=None,
