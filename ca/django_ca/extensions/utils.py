@@ -799,6 +799,7 @@ def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> st
 
 
 def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> SerializedExtension:
+    """Serialize an extension to a dictionary."""
     if isinstance(extension.value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
         value: typing.Any = [format_general_name(name) for name in extension.value]
     elif isinstance(extension.value, x509.AuthorityInformationAccess):
@@ -806,8 +807,7 @@ def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> Serial
     elif isinstance(extension.value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
         value = _distribution_points_serialized(extension.value)
     else:
-        raise TypeError("Unknown extension type.")  # pragma: no cover
+        raise TypeError("Unknown extension type.")
 
     serialized: SerializedExtension = {"critical": extension.critical, "value": value}
-
     return serialized

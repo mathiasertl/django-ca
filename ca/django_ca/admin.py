@@ -645,6 +645,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists is False:
                 continue
+
             extensions = {}
             for key, ext in ca.extensions_for_certificate.items():
                 extensions[key] = serialize_extension(ext)
