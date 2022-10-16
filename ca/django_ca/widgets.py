@@ -53,8 +53,6 @@ class DjangoCaWidgetMixin:
 
     def add_css_classes(self, attrs: typing.Dict[str, str]) -> None:
         css_classes = " ".join(sorted(self.get_css_classes()))
-        if not css_classes:
-            return
 
         if "class" in attrs:
             attrs["class"] += f" {css_classes}"
@@ -295,7 +293,7 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
                 ocsp.append(format_general_name(description.access_location))
             elif description.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
                 ca_issuers.append(format_general_name(description.access_location))
-            else:
+            else:  # pragma: no cover  # everything that there is to support above
                 log.warning("%s: Received an unknown access method.", description.access_method)
 
         return "\n".join(ca_issuers), "\n".join(ocsp), value.critical

@@ -25,6 +25,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from .. import ca_settings
 from .. import fields
 from ..constants import REVOCATION_REASONS
 from .base.mixins import TestCaseMixin
@@ -287,8 +288,10 @@ class IssuerAlternativeNameFieldTestCase(TestCase, TestCaseMixin):
         )
 
 
-class KeyUsageFieldTestCase(TestCase, TestCaseMixin):
+class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
     """Tests for the KeyUsageField."""
+
+    field_class = fields.KeyUsageField
 
     def test_field_output(self) -> None:
         """Test field output."""
@@ -300,6 +303,19 @@ class KeyUsageFieldTestCase(TestCase, TestCaseMixin):
             {},
             empty_value=None,
         )
+
+    def test_rendering(self) -> None:
+        """Test rendering the field as HTML."""
+        name = "field-name"
+        field = self.field_class()
+
+        html = field.widget.render(name, None)
+        for choice, text in self.field_class.choices:
+            self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
+
+        html = field.widget.render(name, [])
+        for choice, text in self.field_class.choices:
+            self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
 
 
 class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):
