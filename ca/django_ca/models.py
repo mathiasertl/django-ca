@@ -104,7 +104,7 @@ from .querysets import (
     CertificateAuthorityQuerySet,
     CertificateQuerySet,
 )
-from .signals import post_revoke_cert, pre_issue_cert, pre_revoke_cert
+from .signals import post_revoke_cert, post_sign_cert, pre_issue_cert, pre_revoke_cert, pre_sign_cert
 from .typehints import (
     Expires,
     ExtensionTypeTypeVar,
@@ -966,7 +966,8 @@ class CertificateAuthority(X509CertMixin):
 
         # Make sure that the "ca" value of the Basic Constraints extension is False. If it were True, the
         # certificate would be usable as a CA and we want to make sure that his does not happen here.
-        if exts[ExtensionOID.BASIC_CONSTRAINTS].value.ca is True:
+        basic_constraints = typing.cast(x509.BasicConstraints, exts[ExtensionOID.BASIC_CONSTRAINTS].value)
+        if basic_constraints.ca is True:
             raise ValueError("This function cannot be used to create a Certificate Authority.")
 
         # Add Subject- and AuthorityKeyIdentifier extensions if not already set.
@@ -1024,15 +1025,29 @@ class CertificateAuthority(X509CertMixin):
             password=password,
         )
 
+        extensions = exts.values()
+        pre_sign_cert.send(
+            sender=self.__class__,
+            ca=self,
+            csr=csr,
+            expires=expires,
+            algorithm=algorithm,
+            subject=subject,
+            extensions=extensions,
+            password=password,
+        )
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(self.subject)
         builder = builder.subject_name(subject)
 
-        for ext in exts.values():
+        for ext in extensions:
             builder = builder.add_extension(extval=ext.value, critical=ext.critical)
 
-        return builder.sign(private_key=self.key(password), algorithm=algorithm)
+        signed_cert = builder.sign(private_key=self.key(password), algorithm=algorithm)
+        post_sign_cert.send(sender=self.__class__, ca=self, cert=signed_cert)
+
+        return signed_cert
 
     def generate_ocsp_key(
         self,

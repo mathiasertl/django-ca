@@ -69,6 +69,32 @@ cert : :py:class:`~django_ca.models.Certificate`
     The certificate that was just issued.
 """
 
+pre_sign_cert = django.dispatch.Signal()
+"""Called before signing a certificate.
+
+Parameters
+----------
+
+ca : :py:class:`~django_ca.models.CertificateAuthority`
+    The Certificate Authority used to sign the certificate
+**kwargs
+    The remaining keyword arguments are the parameters passed to
+    :py:meth:`~django_ca.models.CertificateAuthority.sign`, with defaults set as noted in the documentation.
+"""
+
+
+post_sign_cert = django.dispatch.Signal()
+"""Called after signing a certificate.
+
+Parameters
+----------
+
+ca : :py:class:`~django_ca.models.CertificateAuthority`
+    The Certificate Authority used to sign the certificate
+cert : :py:class:`~cg:x509.Certificate`
+    The raw certificate that was just created.
+"""
+
 pre_revoke_cert = django.dispatch.Signal()
 """Called before a certificate is revoked.
 
