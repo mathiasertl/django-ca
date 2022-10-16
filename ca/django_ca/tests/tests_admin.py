@@ -326,7 +326,6 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         enduser_desc = "A certificate for an enduser, allows client authentication, code and email signing."
-        self.maxDiff = None
         self.assertEqual(
             json.loads(response.content.decode("utf-8")),
             {

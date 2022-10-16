@@ -91,7 +91,7 @@ Parameters
 
 ca : :py:class:`~django_ca.models.CertificateAuthority`
     The Certificate Authority used to sign the certificate
-cert : :py:class:`~cg:x509.Certificate`
+cert : :py:class:`~cg:cryptography.x509.Certificate`
     The raw certificate that was just created.
 """
 

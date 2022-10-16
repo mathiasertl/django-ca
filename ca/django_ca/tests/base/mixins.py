@@ -514,14 +514,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Shortcut for getting a AuthorityInformationAccess extension."""
 
         access_descriptions = []
-        if ca_issuers is not None:
+        if ca_issuers is not None:  # pragma: no branch
             access_descriptions += [
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=issuer
                 )
                 for issuer in ca_issuers
             ]
-        if ocsp is not None:
+        if ocsp is not None:  # pragma: no branch
             access_descriptions += [
                 x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
                 for name in ocsp
@@ -894,7 +894,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with freeze_time(timestamp) as frozen:
             yield frozen
 
-    def get_cert_context(self, name: str) -> typing.Dict[str, typing.Any]:
+    def get_cert_context(  # pylint: disable=too-many-branches
+        self, name: str
+    ) -> typing.Dict[str, typing.Any]:
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: typing.Dict[str, typing.Any] = {}
         for key, value in certs[name].items():

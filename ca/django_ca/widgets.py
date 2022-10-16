@@ -46,12 +46,14 @@ class DjangoCaWidgetMixin:
     css_classes: typing.Iterable[str] = ("django-ca-widget",)
 
     def get_css_classes(self) -> typing.Set[str]:
+        """Get set of configured CSS classes."""
         css_classes = set()
-        for c in reversed(self.__class__.__mro__):
-            css_classes |= set(getattr(c, "css_classes", set()))
+        for cls in reversed(self.__class__.__mro__):
+            css_classes |= set(getattr(cls, "css_classes", set()))
         return css_classes
 
     def add_css_classes(self, attrs: typing.Dict[str, str]) -> None:
+        """Add CSS classes to the passed attributes."""
         css_classes = " ".join(sorted(self.get_css_classes()))
 
         if "class" in attrs:
@@ -60,6 +62,7 @@ class DjangoCaWidgetMixin:
             attrs["class"] = css_classes
 
     def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+        """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
         ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
         self.add_css_classes(ctx["widget"]["attrs"])
@@ -67,15 +70,15 @@ class DjangoCaWidgetMixin:
 
 
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
-    pass
+    """SelectMultiple field that uses the DjangoCaWidgetMixin."""
 
 
 class Textarea(DjangoCaWidgetMixin, widgets.Textarea):
-    pass
+    """Textarea field that uses the DjangoCaWidgetMixin."""
 
 
 class TextInput(DjangoCaWidgetMixin, widgets.TextInput):
-    pass
+    """TextInput field that uses the DjangoCaWidgetMixin."""
 
 
 class LabeledCheckboxInput(widgets.CheckboxInput):
@@ -210,6 +213,8 @@ class SubjectAltNameWidget(CustomMultiWidget):
 
 
 class GeneralNamesWidget(Textarea):
+    """Widget for a list of :py:class:`~cg:cryptography.x509.GeneralName` instances."""
+
     def format_value(self, value: typing.Optional[typing.Iterable[x509.GeneralName]]) -> str:
         if not value:
             return ""
@@ -239,6 +244,8 @@ class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  
 
 
 class DistributionPointWidget(ExtensionWidget):
+    """Widgets for extensions that use a DistributionPoint."""
+
     extension_widgets = (
         GeneralNamesWidget,
         TextInput,
@@ -257,13 +264,13 @@ class DistributionPointWidget(ExtensionWidget):
         if len(value.value) > 1:
             raise ValueError("Only one DistributionPoint is supported at this time.")
 
-        dp = value.value[0]
-        if dp.relative_name:
-            relative_name = dp.relative_name.rfc4514_string()
-        if dp.reasons:
-            reasons = [reason.name for reason in dp.reasons]
+        dpoint = value.value[0]
+        if dpoint.relative_name:
+            relative_name = dpoint.relative_name.rfc4514_string()
+        if dpoint.reasons:
+            reasons = [reason.name for reason in dpoint.reasons]
 
-        return dp.full_name, relative_name, dp.crl_issuer, reasons
+        return dpoint.full_name, relative_name, dpoint.crl_issuer, reasons
 
 
 class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an abstract class
@@ -278,6 +285,8 @@ class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an
 
 
 class AuthorityInformationAccessWidget(ExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
+
     extension_widgets = (Textarea, Textarea)
 
     def decompress(

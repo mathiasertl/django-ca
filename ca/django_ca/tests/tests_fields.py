@@ -39,9 +39,12 @@ DNS3 = x509.DNSName(D3)
 
 
 class FieldTestCaseMixin(TestCaseMixin):
+    """Subclass of TestCaseMixin that adds a few form-field related fields."""
+
     field_class: typing.Type[forms.Field]
 
-    def assertRequiredError(self, value) -> None:
+    def assertRequiredError(self, value) -> None:  # pylint: disable=invalid-name
+        """Assert that the field raises a required error for the given value."""
         field = self.field_class(required=True)
         error_required = [field.error_messages["required"]]
 
@@ -177,7 +180,8 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
             html,
         )
 
-    def test_rendering_relative_name(self) -> None:
+    def test_rendering_relative_distinguished_name(self) -> None:
+        """Test rendering a RelativeDistinguishedName."""
         name = "field-name"
         field = self.field_class()
         html = field.widget.render(
@@ -322,6 +326,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
             self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
 
     def test_rendering_profiles(self) -> None:
+        """Test rendering for all profiles."""
         field = self.field_class()
 
         for profile_name, profile in ca_settings.CA_PROFILES.items():
