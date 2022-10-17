@@ -656,7 +656,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one useable CA
-        for ca in CertificateAuthority.objects.filter(enabled=True):
+        for ca in CertificateAuthority.objects.usable():
             if ca.key_exists:
                 return True
         return False
@@ -738,7 +738,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
             # button would not even show up.
-            if ca is None:
+            if ca is None:  # pragma: no cover
                 raise ImproperlyConfigured("Cannot determine default CA.")
 
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]

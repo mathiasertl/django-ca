@@ -45,7 +45,7 @@ from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, profiles
 from ..signals import post_issue_cert, pre_issue_cert
 from ..typehints import ExtensionTypeTypeVar, ParsableValue, SerializedExtension, SerializedValue
-from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, x509_name
+from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
 from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.testcases import SeleniumTestCase
 from .tests_admin import CertificateModelAdminTestCaseMixin
@@ -146,6 +146,41 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_get_dict(self) -> None:
         """Test get with no profiles and no default subject."""
         self.test_get()
+
+    @override_tmpcadir()
+    def test_default_ca_key_does_not_exist(self) -> HttpResponse:
+        """Do a basic get request (to test CSS etc)."""
+        ca_storage.delete(self.ca.private_key_path)
+        response = self.client.get(self.add_url)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
+
+        field = form.fields["ca"]
+        bound_field = field.get_bound_field(form, "ca")
+        self.assertNotEqual(bound_field.initial, self.ca)
+        self.assertIsInstance(bound_field.initial, CertificateAuthority)
+
+    @override_tmpcadir(CA_DEFAULT_CA=certs["child"]["serial"])
+    def test_cas_expired(self) -> HttpResponse:
+        """Do a basic get request (to test CSS etc)."""
+        self.ca.enabled = False
+        self.ca.save()
+
+        with self.assertLogs() as logcm:
+            response = self.client.get(self.add_url)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(
+            logcm.output,
+            [f"ERROR:django_ca.admin:CA_DEFAULT_CA: {self.ca.serial} is disabled."],
+        )
+
+        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
+
+        field = form.fields["ca"]
+        bound_field = field.get_bound_field(form, "ca")
+        self.assertNotEqual(bound_field.initial, self.ca)
+        self.assertIsInstance(bound_field.initial, CertificateAuthority)
 
     @override_settings(
         CA_PROFILES={"webserver": {"extensions": {"ocsp_no_check": {"critical": True}}}},
