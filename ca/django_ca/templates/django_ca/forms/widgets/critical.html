@@ -1,1 +1,4 @@
-<span class="critical-widget">{% include "django_ca/forms/widgets/labeledcheckboxinput.html" %}</span>
+{% extends "django_ca/forms/widgets/labeledcheckboxinput.html" %}
+{% load django_ca %}
+
+{% block after-label %}<span class="help">- {{ widget.oid|critical_help }}</span>{% endblock %}

@@ -17,7 +17,7 @@ import logging
 import typing
 
 from cryptography import x509
-from cryptography.x509.oid import AuthorityInformationAccessOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django import forms
 from django.forms import widgets
@@ -69,6 +69,17 @@ class DjangoCaWidgetMixin:
         return ctx
 
 
+class CheckboxInput(DjangoCaWidgetMixin, widgets.CheckboxInput):
+    """CheckboxInput that uses the DjangoCaWidgetMixin."""
+
+
+class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=abstract-method
+    """MultiWidget that uses the DjangoCaWidgetMixin."""
+
+    css_classes = ("django-ca-multiwidget",)
+    template_name = "django_ca/forms/widgets/multiwidget.html"
+
+
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
     """SelectMultiple field that uses the DjangoCaWidgetMixin."""
 
@@ -81,7 +92,7 @@ class TextInput(DjangoCaWidgetMixin, widgets.TextInput):
     """TextInput field that uses the DjangoCaWidgetMixin."""
 
 
-class LabeledCheckboxInput(widgets.CheckboxInput):
+class LabeledCheckboxInput(CheckboxInput):
     """CheckboxInput widget that adds a label and wraps everything in a <span />.
 
     This is necessary because widgets in MultiValueFields don't render with a label."""
@@ -108,10 +119,17 @@ class LabeledCheckboxInput(widgets.CheckboxInput):
 class CriticalInput(LabeledCheckboxInput):
     """Widget for setting the `critical` value of an extension."""
 
-    classes = ("critical",)
+    css_classes = ("critical",)
+    template_name = "django_ca/forms/widgets/critical.html"
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        self.oid = kwargs.pop("oid")
         super().__init__(label=_("critical"), wrapper_classes=("critical",))
+
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+        ctx = super().get_context(*args, **kwargs)
+        ctx["widget"]["oid"] = self.oid.dotted_string
+        return ctx
 
 
 class LabeledTextInput(widgets.TextInput):
@@ -221,17 +239,18 @@ class GeneralNamesWidget(Textarea):
         return "\n".join([format_general_name(name) for name in value])
 
 
-class ExtensionWidget(widgets.MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
+class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
     """Base class for widgets that display a :py:class:`~cg:cryptography.Extension`.
 
     Subclasses of this class are expected to set the `extension_widgets` attribute or implement `get_widgets`.
     """
 
     extension_widgets: typing.Optional[ExtensionWidgetsType]
-    template_name = "django_ca/forms/widgets/extension.html"
+    oid: x509.ObjectIdentifier
+    css_classes = ("extension",)
 
     def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs: typing.Any) -> None:
-        sub_widgets = self.get_widgets(**kwargs) + (CriticalInput(),)
+        sub_widgets = self.get_widgets(**kwargs) + (CriticalInput(oid=self.oid),)
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
     def get_widgets(self, **kwargs: typing.Any) -> ExtensionWidgetsType:
@@ -288,6 +307,7 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
 
     extension_widgets = (Textarea, Textarea)
+    oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]
@@ -308,8 +328,16 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         return "\n".join(ca_issuers), "\n".join(ocsp), value.critical
 
 
+class CRLDistributionPointsWidget(DistributionPointWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
+
+    oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
+
+
 class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.ExtendedKeyUsage` extension."""
+
+    oid = ExtensionOID.EXTENDED_KEY_USAGE
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.ExtendedKeyUsage]]
@@ -322,6 +350,8 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
 
 class KeyUsageWidget(MultipleChoiceExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.KeyUsage` extension."""
+
+    oid = ExtensionOID.KEY_USAGE
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.KeyUsage]]
@@ -348,6 +378,7 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
     extension_widgets = (widgets.Textarea,)
+    oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.IssuerAlternativeName]]
@@ -362,6 +393,7 @@ class OCSPNoCheckWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
 
     extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
+    oid = ExtensionOID.OCSP_NO_CHECK
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.OCSPNoCheck]]
@@ -373,6 +405,8 @@ class OCSPNoCheckWidget(ExtensionWidget):
 
 class TLSFeatureWidget(MultipleChoiceExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.TLSFeature` extension."""
+
+    oid = ExtensionOID.TLS_FEATURE
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.TLSFeature]]

@@ -1,4 +1,4 @@
 <span class="{{ widget.wrapper_classes }}">
 {% include "django/forms/widgets/input.html" %}
-<label for="{{ widget.attrs.id }}">{{ widget.label }}</label>
+<label for="{{ widget.attrs.id }}">{{ widget.label }}</label>{% block after-label %}{% endblock %}
 </span>

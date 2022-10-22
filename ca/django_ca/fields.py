@@ -350,7 +350,7 @@ class CRLDistributionPointField(DistributionPointField[x509.CRLDistributionPoint
     """Form field for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
 
     extension_type = x509.CRLDistributionPoints
-    widget = widgets.DistributionPointWidget
+    widget = widgets.CRLDistributionPointsWidget
 
 
 class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage]):
