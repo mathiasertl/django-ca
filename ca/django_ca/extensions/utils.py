@@ -26,13 +26,13 @@ from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 
 from django.template.loader import render_to_string
 
+from .. import typehints
 from ..typehints import (
     ParsableDistributionPoint,
     ParsablePolicyIdentifier,
     ParsablePolicyInformation,
     ParsablePolicyQualifier,
     PolicyQualifier,
-    SerializedDistributionPoint,
     SerializedExtension,
     SerializedPolicyInformation,
     SerializedPolicyQualifier,
@@ -166,9 +166,9 @@ class DistributionPoint:
             reasons=reasons,
         )
 
-    def serialize(self) -> SerializedDistributionPoint:
+    def serialize(self) -> typehints.SerializedDistributionPoint:
         """Serialize this distribution point."""
-        val: SerializedDistributionPoint = {}
+        val: typehints.SerializedDistributionPoint = {}
 
         if self.full_name:
             val["full_name"] = [format_general_name(name) for name in self.full_name]
@@ -558,7 +558,7 @@ LOG_ENTRY_TYPE_MAPPING = {
 }
 
 
-def _authority_information_access_as_text(value: x509.AuthorityInformationAccess) -> str:
+def _authority_information_access_as_text(value: typehints.InformationAccessExtensionType) -> str:
     lines = []
     issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
     ocsp = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.OCSP]
@@ -572,7 +572,7 @@ def _authority_information_access_as_text(value: x509.AuthorityInformationAccess
 
 
 def _authority_information_access_serialized(
-    value: x509.AuthorityInformationAccess,
+    value: typehints.InformationAccessExtensionType,
 ) -> typing.Dict[str, typing.List[str]]:
     descriptions = {}
     issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
@@ -596,8 +596,10 @@ def _authority_key_identifier_as_text(value: x509.AuthorityKeyIdentifier) -> str
     return "\n".join(lines)
 
 
-def _authority_key_identifier_serialized(value: x509.AuthorityKeyIdentifier) -> str:
-    serialized = {}
+def _authority_key_identifier_serialized(
+    value: x509.AuthorityKeyIdentifier,
+) -> typehints.SerializedAuthorityKeyIdentifier:
+    serialized: typehints.SerializedAuthorityKeyIdentifier = {}
     if value.key_identifier:
         serialized["key_identifier"] = bytes_to_hex(value.key_identifier)
     if value.authority_cert_serial_number is not None:
@@ -620,8 +622,8 @@ def _basic_constraints_as_text(value: x509.BasicConstraints) -> str:
     return text
 
 
-def _basic_constraints_serialized(value: x509.BasicConstraints) -> typing.Dict[str, typing.Union[bool, int]]:
-    serialized = {"ca": value.ca}
+def _basic_constraints_serialized(value: x509.BasicConstraints) -> typehints.SerializedBasicConstraints:
+    serialized: typehints.SerializedBasicConstraints = {"ca": value.ca}
     if value.ca is True:
         serialized["pathlen"] = value.path_length
     return serialized
@@ -679,19 +681,24 @@ def _serialize_policy_qualifier(qualifier: PolicyQualifier) -> SerializedPolicyQ
 
 
 def _serialize_policy_information(pi: x509.PolicyInformation) -> SerializedPolicyInformation:
-    return {
+    policy_qualifiers: typing.Optional[SerializedPolicyQualifiers] = None
+    if pi.policy_qualifiers is not None:
+        policy_qualifiers = [_serialize_policy_qualifier(q) for q in pi.policy_qualifiers]
+
+    serialized: SerializedPolicyInformation = {
         "policy_identifier": pi.policy_identifier.dotted_string,
-        "policy_qualifiers": [_serialize_policy_qualifier(q) for q in pi.policy_qualifiers],
+        "policy_qualifiers": policy_qualifiers,
     }
+    return serialized
 
 
-def _certificate_policies_serialized(value: x509.CertificatePolicies) -> str:
+def _certificate_policies_serialized(
+    value: x509.CertificatePolicies,
+) -> typing.List[SerializedPolicyInformation]:
     return [_serialize_policy_information(pi) for pi in value]
 
-    return {}
 
-
-def _distribution_points_as_text(value: typing.List[x509.DistributionPoint]) -> str:
+def _distribution_points_as_text(value: typehints.CRLExtensionType) -> str:
     lines = []
     for dpoint in value:
         lines.append("* DistributionPoint:")
@@ -714,12 +721,12 @@ def _distribution_points_as_text(value: typing.List[x509.DistributionPoint]) -> 
 
 
 def _distribution_points_serialized(
-    value: typing.Union[x509.FreshestCRL, x509.CRLDistributionPoints]
-) -> typing.List[typing.Dict[str, typing.Any]]:
-    points = []
+    value: typehints.CRLExtensionType,
+) -> typing.List[typehints.SerializedDistributionPoint]:
+    points: typing.List[typehints.SerializedDistributionPoint] = []
 
     for dpoint in value:
-        point: typing.Dict[str, typing.Any] = {}
+        point: typehints.SerializedDistributionPoint = {}
         if dpoint.full_name:
             point["full_name"] = [format_general_name(name) for name in dpoint.full_name]
         elif dpoint.relative_name:
@@ -771,8 +778,8 @@ def _name_constraints_as_text(value: x509.NameConstraints) -> str:
     return "\n".join(lines)
 
 
-def _name_constraints_serialized(value: x509.NameConstraints) -> typing.Dict[str, typing.List[str]]:
-    serialized = {}
+def _name_constraints_serialized(value: x509.NameConstraints) -> typehints.SerializedNameConstraints:
+    serialized: typehints.SerializedNameConstraints = {}
     if value.permitted_subtrees:
         serialized["permitted"] = [format_general_name(name) for name in value.permitted_subtrees]
     if value.excluded_subtrees:
@@ -790,8 +797,8 @@ def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
     return "\n".join(lines)
 
 
-def _policy_constraints_serialized(value: x509.PolicyConstraints) -> typing.Dict[str, bool]:
-    serialized = {}
+def _policy_constraints_serialized(value: x509.PolicyConstraints) -> typehints.SerializedPolicyConstraints:
+    serialized: typehints.SerializedPolicyConstraints = {}
     if value.inhibit_policy_mapping is not None:
         serialized["inhibit_policy_mapping"] = value.inhibit_policy_mapping
     if value.require_explicit_policy is not None:
@@ -810,7 +817,7 @@ def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> typi
     return entry_type, sct.version.name, bytes_to_hex(sct.log_id), sct.timestamp.isoformat(" ")
 
 
-def _signed_certificate_timestamps_as_text(value: typing.List[SignedCertificateTimestamp]) -> str:
+def _signed_certificate_timestamps_as_text(value: typehints.SignedCertificateTimestampType) -> str:
     lines = []
     for sct in value:
         entry_type, version, log_id, timestamp = signed_certificate_timestamp_values(sct)
@@ -824,7 +831,9 @@ def _signed_certificate_timestamps_as_text(value: typing.List[SignedCertificateT
     return "\n".join(lines)
 
 
-def _signed_certificate_timestamps_serialized(value: typing.List[SignedCertificateTimestamp]) -> str:
+def _signed_certificate_timestamps_serialized(
+    value: typehints.SignedCertificateTimestampType,
+) -> typing.List[typehints.SerializedSignedCertificateTimestamp]:
     timeformat = "%Y-%m-%d %H:%M:%S.%f"
     return [
         {
@@ -851,8 +860,9 @@ def _tls_feature_as_text(value: x509.TLSFeature) -> str:
     return "\n".join(sorted(lines))
 
 
-def _tls_feature_serialized(value: x509.TLSFeature) -> str:
-    return [feature.name for feature in value]
+def _tls_feature_serialized(value: x509.TLSFeature) -> typing.List[str]:
+    serialized: typing.List[str] = [feature.name for feature in value]
+    return serialized
 
 
 def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-many-return-statements
@@ -860,11 +870,11 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-
     if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
         return "Yes"  # no need for extra function
     if isinstance(value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
-        return _distribution_points_as_text(list(value))
+        return _distribution_points_as_text(value)
     if isinstance(value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
         return "\n".join(f"* {format_general_name(name)}" for name in value)
     if isinstance(value, (x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps)):
-        return _signed_certificate_timestamps_as_text(list(value))
+        return _signed_certificate_timestamps_as_text(value)
     if isinstance(value, (x509.AuthorityInformationAccess, x509.SubjectInformationAccess)):
         return _authority_information_access_as_text(value)
     if isinstance(value, x509.AuthorityKeyIdentifier):
@@ -911,7 +921,7 @@ def _serialize_extension(value: x509.ExtensionType) -> typing.Any:
     if isinstance(value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
         return _distribution_points_serialized(value)
     if isinstance(value, (x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps)):
-        return _signed_certificate_timestamps_serialized(list(value))
+        return _signed_certificate_timestamps_serialized(value)
     if isinstance(value, x509.AuthorityKeyIdentifier):
         return _authority_key_identifier_serialized(value)
     if isinstance(value, x509.BasicConstraints):

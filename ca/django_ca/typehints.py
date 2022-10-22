@@ -94,23 +94,6 @@ SerializedExtension = TypedDict(
         "value": Any,
     },
 )
-SerializedDistributionPoint = TypedDict(
-    "SerializedDistributionPoint",
-    {
-        "full_name": List[str],
-        "relative_name": str,
-        "crl_issuer": List[str],
-        "reasons": List[str],
-    },
-    total=False,
-)
-SerializedDistributionPoints = TypedDict(
-    "SerializedDistributionPoints",
-    {
-        "critical": bool,
-        "value": List[SerializedDistributionPoint],
-    },
-)
 SerializedProfile = TypedDict(
     "SerializedProfile",
     {
@@ -121,15 +104,6 @@ SerializedProfile = TypedDict(
     },
 )
 
-SerializedNoticeReference = TypedDict(
-    "SerializedNoticeReference", {"organization": str, "notice_numbers": List[int]}, total=False
-)
-SerializedUserNotice = TypedDict(
-    "SerializedUserNotice", {"explicit_text": str, "notice_reference": SerializedNoticeReference}, total=False
-)
-
-SerializedPolicyQualifier = Union[str, SerializedUserNotice]
-SerializedPolicyQualifiers = List[SerializedPolicyQualifier]
 
 # Looser variants of the above for incoming arguments
 ParsableNoticeReference = TypedDict(
@@ -164,10 +138,6 @@ ParsablePolicyInformation = TypedDict(
 )
 
 PolicyQualifier = Union[str, x509.UserNotice]
-SerializedPolicyInformation = TypedDict(
-    "SerializedPolicyInformation",
-    {"policy_identifier": str, "policy_qualifiers": Optional[SerializedPolicyQualifiers]},
-)
 
 ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
@@ -275,17 +245,14 @@ ParsablePolicyConstraints = TypedDict(
 )
 
 
-class SerializedBasicConstraints(BasicConstraintsBase, total=False):
-    """Serialized representation of a BasicConstraints extension.
-
-    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-    has a ``"pathlen"`` value that is either ``None`` or an int.
-    """
-
-    pathlen: Optional[int]
-
-
 SerializedNullExtension = TypedDict("SerializedNullExtension", {"critical": bool})
+
+
+#####################
+# Serialized values #
+#####################
+# Collect JSON-serializable versions of cryptography values. Typehints in this section start with
+# "Serialized...".
 SerializedAuthorityInformationAccess = TypedDict(
     "SerializedAuthorityInformationAccess",
     {
@@ -303,6 +270,36 @@ SerializedAuthorityKeyIdentifier = TypedDict(
     },
     total=False,
 )
+
+
+class SerializedBasicConstraints(BasicConstraintsBase, total=False):
+    """Serialized representation of a BasicConstraints extension.
+
+    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
+    has a ``"pathlen"`` value that is either ``None`` or an int.
+    """
+
+    pathlen: Optional[int]
+
+
+SerializedDistributionPoint = TypedDict(
+    "SerializedDistributionPoint",
+    {
+        "full_name": List[str],
+        "relative_name": str,
+        "crl_issuer": List[str],
+        "reasons": List[str],
+    },
+    total=False,
+)
+SerializedDistributionPoints = TypedDict(
+    "SerializedDistributionPoints",
+    {
+        "critical": bool,
+        "value": List[SerializedDistributionPoint],
+    },
+)
+
 SerializedNameConstraints = TypedDict(
     "SerializedNameConstraints",
     {
@@ -319,6 +316,21 @@ SerializedPolicyConstraints = TypedDict(
     },
     total=False,
 )
+
+# PolicyInformation serialization
+SerializedNoticeReference = TypedDict(
+    "SerializedNoticeReference", {"organization": str, "notice_numbers": List[int]}, total=False
+)
+SerializedUserNotice = TypedDict(
+    "SerializedUserNotice", {"explicit_text": str, "notice_reference": SerializedNoticeReference}, total=False
+)
+SerializedPolicyQualifier = Union[str, SerializedUserNotice]
+SerializedPolicyQualifiers = List[SerializedPolicyQualifier]
+SerializedPolicyInformation = TypedDict(
+    "SerializedPolicyInformation",
+    {"policy_identifier": str, "policy_qualifiers": Optional[SerializedPolicyQualifiers]},
+)
+
 SerializedSignedCertificateTimestamp = TypedDict(
     "SerializedSignedCertificateTimestamp",
     {
@@ -330,4 +342,22 @@ SerializedSignedCertificateTimestamp = TypedDict(
 )
 """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 
+###################
+# Parsable values #
+###################
+# Collect typehints for values that can be parsed back into cryptography values. Typehints in this section
+# start with "Parsable...".
 ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]
+
+
+#####################
+# Type alternatives #
+#####################
+# Collect Union[] typehints that occur multiple times, e.g. multiple x509.ExtensionType classes that behave
+# the same way. Typehints in this section are named "...Type".
+
+CRLExtensionType = typing.Union[x509.FreshestCRL, x509.CRLDistributionPoints]
+InformationAccessExtensionType = typing.Union[x509.AuthorityInformationAccess, x509.SubjectInformationAccess]
+SignedCertificateTimestampType = typing.Union[
+    x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps
+]
