@@ -147,11 +147,13 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
         field = self.field_class()
         html = field.widget.render(name, None)
         self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget"></textarea>', html
+            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget full-name"></textarea>',
+            html,
         )
-        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget">', html)
+        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', html)
         self.assertInHTML(
-            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget"></textarea>', html
+            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget crl-issuer"></textarea>',
+            html,
         )
         for choice, text in REVOCATION_REASONS:
             self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
@@ -169,14 +171,16 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
             ),
         )
         self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget">DNS:{D1}</textarea>',
+            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget full-name">'
+            f"DNS:{D1}</textarea>",
             html,
         )
-        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget">', html)
+        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', html)
         self.assertInHTML('<option value="key_compromise" selected>Key compromised</option>', html)
         self.assertInHTML('<option value="certificate_hold" selected>On Hold</option>', html)
         self.assertInHTML(
-            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget">DNS:{D2}</textarea>',
+            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget crl-issuer">'
+            f"DNS:{D2}</textarea>",
             html,
         )
 
@@ -191,7 +195,8 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
             ),
         )
         self.assertInHTML(
-            f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget">', html
+            f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget relative-name">',
+            html,
         )
 
     def test_rendering_mutltiple_dps(self) -> None:

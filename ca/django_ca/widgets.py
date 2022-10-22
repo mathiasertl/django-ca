@@ -266,10 +266,10 @@ class DistributionPointWidget(ExtensionWidget):
     """Widgets for extensions that use a DistributionPoint."""
 
     extension_widgets = (
-        GeneralNamesWidget,
-        TextInput,
-        GeneralNamesWidget,
-        SelectMultiple(choices=REVOCATION_REASONS),
+        GeneralNamesWidget(attrs={"class": "full-name"}),
+        TextInput(attrs={"class": "relative-name"}),
+        GeneralNamesWidget(attrs={"class": "crl-issuer"}),
+        SelectMultiple(choices=REVOCATION_REASONS, attrs={"class": "reasons"}),
     )
 
     def decompress(
