@@ -1692,6 +1692,7 @@ class UnknownExtensionTestCase(TestCase):
             UnrecognizedExtension({"value": "foo"})  # type: ignore[arg-type]
 
     def test_serialized(self) -> None:
+        """Test serializing an unknown extension."""
         self.assertEqual(
             serialize_extension(self.ext), {"critical": self.ext.critical, "value": self.hex_value}
         )
@@ -2647,30 +2648,41 @@ DistributionPoint:
 
 
 class TypeErrorTests(TestCase):
+    """Test some unlikely edge cases for serialization and textualization."""
+
     dotted_string = "1.2.3"
     oid = ObjectIdentifier(dotted_string)
 
     class UnknownExtensionType(x509.ExtensionType):
+        """A self-defined, completely unknown extension type, only for testing."""
+
         oid = ObjectIdentifier("1.2.3")
+
+        def public_bytes(self) -> bytes:
+            return b""
 
     ext_type = UnknownExtensionType()
     ext = x509.Extension(oid=oid, critical=True, value=b"foo")  # type: ignore[type-var]
 
     def test_serialize_no_extension(self) -> None:
+        """Test serializing an extension that is not an extension type."""
         with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
             serialize_extension(self.ext)  # type: ignore[arg-type]
 
     def test_no_extension_as_text(self) -> None:
+        """Test textualizing an extension that is not an extension type."""
         with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
             extension_as_text(b"foo")  # type: ignore[arg-type]
 
     def test_unknown_extension_type_as_text(self) -> None:
+        """Test textualizing an extension of unknown type."""
         with self.assertRaisesRegex(
             TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
         ):
             extension_as_text(self.ext_type)
 
     def test_serialize_unknown_extension_type(self) -> None:
+        """Test serializing an extension of unknown type."""
         with self.assertRaisesRegex(
             TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
         ):

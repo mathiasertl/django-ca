@@ -680,13 +680,13 @@ def _serialize_policy_qualifier(qualifier: PolicyQualifier) -> SerializedPolicyQ
     return value
 
 
-def _serialize_policy_information(pi: x509.PolicyInformation) -> SerializedPolicyInformation:
+def _serialize_policy_information(policy_information: x509.PolicyInformation) -> SerializedPolicyInformation:
     policy_qualifiers: typing.Optional[SerializedPolicyQualifiers] = None
-    if pi.policy_qualifiers is not None:
-        policy_qualifiers = [_serialize_policy_qualifier(q) for q in pi.policy_qualifiers]
+    if policy_information.policy_qualifiers is not None:
+        policy_qualifiers = [_serialize_policy_qualifier(q) for q in policy_information.policy_qualifiers]
 
     serialized: SerializedPolicyInformation = {
-        "policy_identifier": pi.policy_identifier.dotted_string,
+        "policy_identifier": policy_information.policy_identifier.dotted_string,
         "policy_qualifiers": policy_qualifiers,
     }
     return serialized
@@ -916,7 +916,9 @@ def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> st
     return render_to_string([template], context={"extension": extension, "x509": x509})
 
 
-def _serialize_extension(value: x509.ExtensionType) -> typing.Any:
+def _serialize_extension(  # pylint: disable=too-many-return-statements
+    value: x509.ExtensionType,
+) -> typing.Any:
     if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
         return None
     if isinstance(value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
