@@ -148,7 +148,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.test_get()
 
     @override_tmpcadir()
-    def test_default_ca_key_does_not_exist(self) -> HttpResponse:
+    def test_default_ca_key_does_not_exist(self) -> None:
         """Do a basic get request (to test CSS etc)."""
         ca_storage.delete(self.ca.private_key_path)
         response = self.client.get(self.add_url)
@@ -162,7 +162,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertIsInstance(bound_field.initial, CertificateAuthority)
 
     @override_tmpcadir(CA_DEFAULT_CA=certs["child"]["serial"])
-    def test_cas_expired(self) -> HttpResponse:
+    def test_cas_expired(self) -> None:
         """Do a basic get request (to test CSS etc)."""
         self.ca.enabled = False
         self.ca.save()

@@ -855,10 +855,12 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
         self._permitted = value
 
     def serialize_value(self) -> SerializedNameConstraints:
-        return {
-            "permitted": self._permitted.serialize(),
-            "excluded": self._excluded.serialize(),
-        }
+        serialized: SerializedNameConstraints = {}
+        if self.permitted:
+            serialized["permitted"] = self._permitted.serialize()
+        if self.excluded:
+            serialized["excluded"] = self._excluded.serialize()
+        return serialized
 
     # Do not use @property for read/write properties where the setter has a different type
     #   https://github.com/python/mypy/issues/3004

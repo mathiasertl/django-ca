@@ -309,6 +309,7 @@ SerializedNameConstraints = TypedDict(
         "permitted": List[str],
         "excluded": List[str],
     },
+    total=False,
 )
 SerializedPolicyConstraints = TypedDict(
     "SerializedPolicyConstraints",

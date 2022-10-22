@@ -27,7 +27,12 @@ from django.utils.safestring import mark_safe
 
 from ...extensions import KEY_TO_EXTENSION, OID_TO_EXTENSION, CRLDistributionPoints, Extension, FreshestCRL
 from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
-from ...extensions.utils import DistributionPoint, extension_as_admin_html, extension_as_text
+from ...extensions.utils import (
+    DistributionPoint,
+    extension_as_admin_html,
+    extension_as_text,
+    serialize_extension,
+)
 from ...models import X509CertMixin
 from ...typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension, TypedDict
 from . import dns, rdn, uri
@@ -280,6 +285,11 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
             for critical in self.critical_values:
                 ext = self.ext(config["expected"], critical=critical)
                 self.assertSerialized(ext, config, critical=critical)
+
+                ext_type = config["extension_type"]
+                cg_ext = x509.Extension(oid=ext_type.oid, critical=critical, value=ext_type)
+                expected_serialized = {"critical": critical, "value": config["expected_serialized"]}
+                self.assertEqual(serialize_extension(cg_ext), expected_serialized)
 
     def test_str(self) -> None:
         """Test str()."""

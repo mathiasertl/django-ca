@@ -57,7 +57,12 @@ from ..extensions import (
     TLSFeature,
 )
 from ..extensions.base import UnrecognizedExtension
-from ..extensions.utils import PolicyInformation, extension_as_admin_html, extension_as_text
+from ..extensions.utils import (
+    PolicyInformation,
+    extension_as_admin_html,
+    extension_as_text,
+    serialize_extension,
+)
 from ..models import X509CertMixin
 from ..typehints import ParsablePolicyInformation
 from ..utils import GeneralNameList
@@ -1099,7 +1104,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             ],
             "expected": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
             "expected_repr": f"permitted=['DNS:{d1}'], excluded=[]",
-            "expected_serialized": {"excluded": [], "permitted": [f"DNS:{d1}"]},
+            "expected_serialized": {"permitted": [f"DNS:{d1}"]},
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
             "text": f"Permitted:\n  * DNS:{d1}",
         },
@@ -1113,7 +1118,7 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
             ],
             "expected": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
             "expected_repr": f"permitted=[], excluded=['DNS:{d1}']",
-            "expected_serialized": {"excluded": [f"DNS:{d1}"], "permitted": []},
+            "expected_serialized": {"excluded": [f"DNS:{d1}"]},
             "extension_type": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
             "text": f"Excluded:\n  * DNS:{d1}",
         },
@@ -1546,6 +1551,8 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         """Test serialization of extension."""
         self.assertEqual(self.ext1.serialize(), self.data1)
         self.assertEqual(self.ext2.serialize(), self.data2)
+        self.assertEqual(serialize_extension(self.cgx1), self.data1)
+        self.assertEqual(serialize_extension(self.cgx2), self.data2)
 
     def test_setitem(self) -> None:
         """Test setting items (e.g. ``ext[0] = ...``)."""
