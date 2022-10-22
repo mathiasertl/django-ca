@@ -61,6 +61,7 @@ from . import ca_settings
 from .acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from .constants import REVOCATION_REASONS, ReasonFlags
 from .extensions import (
+    OID_DEFAULT_CRITICAL,
     OID_TO_EXTENSION,
     AuthorityInformationAccess,
     AuthorityKeyIdentifier,
@@ -865,7 +866,7 @@ class CertificateAuthority(X509CertMixin):
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
             extensions["issuer_alternative_name"] = x509.Extension(
                 oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                critical=False,
+                critical=OID_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
                 value=x509.IssuerAlternativeName(names),
             )
 
@@ -887,14 +888,14 @@ class CertificateAuthority(X509CertMixin):
         if access_descriptions:
             extensions["authority_information_access"] = x509.Extension(
                 oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=False,
+                critical=OID_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
                 value=x509.AuthorityInformationAccess(descriptions=access_descriptions),
             )
         if self.crl_url:
             full_name = [parse_general_name(name) for name in self.crl_url.splitlines()]
             extensions["crl_distribution_points"] = x509.Extension(
                 oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                critical=False,
+                critical=OID_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS],
                 value=x509.CRLDistributionPoints(
                     [
                         x509.DistributionPoint(

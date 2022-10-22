@@ -75,8 +75,10 @@ OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType,
 
 # TODO: Validate completeness of these
 OID_DEFAULT_CRITICAL: typing.Dict[x509.ObjectIdentifier, bool] = {
-    ExtensionOID.ISSUER_ALTERNATIVE_NAME: False,
-    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: False,
+    ExtensionOID.AUTHORITY_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical.
+    ExtensionOID.CRL_DISTRIBUTION_POINTS: False,  # The extension SHOULD be non-critical
+    ExtensionOID.ISSUER_ALTERNATIVE_NAME: False,  # SHOULD mark this extension as non-critical.
+    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: False,  # SHOULD mark the extension as non-critical.
 }
 
 OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
