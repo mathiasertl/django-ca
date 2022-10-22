@@ -671,7 +671,7 @@ def _serialize_policy_qualifier(qualifier: PolicyQualifier) -> SerializedPolicyQ
     if qualifier.explicit_text:
         value["explicit_text"] = qualifier.explicit_text
 
-    if qualifier.notice_reference:
+    if qualifier.notice_reference is not None:
         value["notice_reference"] = {
             "notice_numbers": qualifier.notice_reference.notice_numbers,
         }
@@ -729,8 +729,9 @@ def _distribution_points_serialized(
         point: typehints.SerializedDistributionPoint = {}
         if dpoint.full_name:
             point["full_name"] = [format_general_name(name) for name in dpoint.full_name]
-        elif dpoint.relative_name:
+        elif dpoint.relative_name:  # pragma: no branch  # Distribution Point has only these two
             point["relative_name"] = format_name(dpoint.relative_name)
+
         if dpoint.crl_issuer:
             point["crl_issuer"] = [format_general_name(name) for name in dpoint.crl_issuer]
         if dpoint.reasons:
@@ -899,7 +900,11 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-
         return _tls_feature_as_text(value)
     if isinstance(value, x509.UnrecognizedExtension):
         return bytes_to_hex(value.value)
-    raise TypeError("Unknown extension type.")  # pragma: no cover
+    if isinstance(value, x509.ExtensionType):
+        raise TypeError(
+            f"{value.__class__.__name__} (oid: {value.oid.dotted_string}): Unknown extension type."
+        )
+    raise TypeError(f"{value.__class__.__name__}: Not a cryptography.x509.ExtensionType.")
 
 
 def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
@@ -944,7 +949,11 @@ def _serialize_extension(value: x509.ExtensionType) -> typing.Any:
         return _tls_feature_serialized(value)
     if isinstance(value, x509.UnrecognizedExtension):
         return bytes_to_hex(value.value)
-    raise TypeError(f"Unknown extension type: {value.__class__.__name__}")
+    if isinstance(value, x509.ExtensionType):
+        raise TypeError(
+            f"{value.__class__.__name__} (oid: {value.oid.dotted_string}): Unknown extension type."
+        )
+    raise TypeError(f"{value.__class__.__name__}: Not a cryptography.x509.ExtensionType.")
 
 
 def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> SerializedExtension:

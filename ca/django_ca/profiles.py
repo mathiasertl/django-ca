@@ -343,11 +343,7 @@ class Profile:
             if extension is None:
                 extensions[key] = None
             else:
-                try:
-                    # use new extension method where already available
-                    extensions[key] = serialize_extension(extension.as_extension())
-                except TypeError:
-                    extensions[key] = extension.serialize()
+                extensions[key] = serialize_extension(extension.as_extension())
 
         data: SerializedProfile = {
             "cn_in_san": self.cn_in_san,

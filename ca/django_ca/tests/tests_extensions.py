@@ -511,10 +511,24 @@ class CertificatePoliciesTestCase(
             },
         ],
     }
+    un6: ParsablePolicyInformation = {"policy_identifier": oid, "policy_qualifiers": None}
+    un7: ParsablePolicyInformation = {
+        "policy_identifier": oid,
+        "policy_qualifiers": [
+            {
+                "explicit_text": text5,
+                "notice_reference": {
+                    "notice_numbers": [1],
+                },
+            },
+        ],
+    }
     p1 = PolicyInformation(un1)
     p2 = PolicyInformation(un2)
     p3 = PolicyInformation(un3)
     p4 = PolicyInformation(un4)
+    p6 = PolicyInformation(un6)
+    p7 = PolicyInformation(un7)
 
     xun1 = text1
     xun2 = x509.UserNotice(explicit_text=text2, notice_reference=None)
@@ -526,16 +540,24 @@ class CertificatePoliciesTestCase(
         explicit_text=text5,
         notice_reference=x509.NoticeReference(organization=text6, notice_numbers=[1, 2, 3]),
     )
+    xun7 = x509.UserNotice(
+        explicit_text=text5,
+        notice_reference=x509.NoticeReference(organization=None, notice_numbers=[1]),
+    )
     xpi1 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun1])
     xpi2 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun2])
     xpi3 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun3])
     xpi4 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun4_1, xun4_2])
+    xpi6 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=None)
+    xpi7 = x509.PolicyInformation(policy_identifier=ObjectIdentifier(oid), policy_qualifiers=[xun7])
 
     xcp1 = x509.CertificatePolicies(policies=[xpi1])
     xcp2 = x509.CertificatePolicies(policies=[xpi2])
     xcp3 = x509.CertificatePolicies(policies=[xpi3])
     xcp4 = x509.CertificatePolicies(policies=[xpi4])
     xcp5 = x509.CertificatePolicies(policies=[xpi1, xpi2, xpi4])
+    xcp6 = x509.CertificatePolicies(policies=[xpi6])
+    xcp7 = x509.CertificatePolicies(policies=[xpi7])
 
     test_values = {
         "one": {
@@ -667,6 +689,52 @@ class CertificatePoliciesTestCase(
     * Notice Reference:
       * Organization: {text6}
       * Notice Numbers: [1, 2, 3]""",
+        },
+        "six": {
+            "expected": [p6],
+            "admin_html": """
+<ul>
+  <li>Unknown OID (2.5.29.32.0)
+    <ul>
+    <li>No Policy Qualifiers</li>
+    </ul>
+  </li>
+</ul>""",
+            "expected_repr": "1 policy",
+            "expected_serialized": [un6],
+            "extension_type": xcp6,
+            "text": f"* Policy Identifier: {oid}\n  No Policy Qualifiers",
+            "values": [[un6], [xpi6]],
+        },
+        "seven": {
+            "expected": [p7],
+            "admin_html": f"""<ul>
+  <li>Unknown OID ({oid}):
+    <ul>
+      <li>
+          User Notice:
+          <ul>
+            <li>Explicit Text: {text5}</li>
+            <li>Notice Reference:
+              <ul>
+                  <li>Notice Numbers: [1]</li>
+              </ul>
+            </li>
+          </ul>
+      </li>
+    </ul>
+  </li>
+</ul>""",
+            "expected_repr": "1 policy",
+            "expected_serialized": [un7],
+            "extension_type": xcp7,
+            "text": f"""* Policy Identifier: {oid}
+  Policy Qualifiers:
+  * User Notice:
+    * Explicit Text: {text5}
+    * Notice Reference:
+      * Notice Numbers: [1]""",
+            "values": [[un7], [xpi7]],
         },
     }
 
@@ -1588,27 +1656,25 @@ class UnknownExtensionTestCase(TestCase):
 
     oid = x509.ObjectIdentifier("1.2.1")
     value = x509.UnrecognizedExtension(oid=oid, value=b"unrecognized")
+    ext = x509.Extension(
+        oid=oid, value=x509.UnrecognizedExtension(oid=oid, value=b"unrecognized"), critical=True
+    )
+    hex_value = "75:6E:72:65:63:6F:67:6E:69:7A:65:64"
 
     def test_basic(self) -> None:
         """Only test basic functionality."""
         oid = x509.ObjectIdentifier("1.2.1")
-        cgext = x509.Extension(
-            oid=oid, value=x509.UnrecognizedExtension(oid=oid, value=b"unrecognized"), critical=True
-        )
-        ext = UnrecognizedExtension(cgext)
+        ext = UnrecognizedExtension(self.ext)
 
         self.assertEqual(ext.name, f"Unsupported extension (OID {oid.dotted_string})")
-        self.assertEqual(ext.as_extension(), cgext)
+        self.assertEqual(ext.as_extension(), self.ext)
         self.assertEqual(
             str(ext), f"<Unsupported extension (OID {oid.dotted_string}): <unprintable>, critical=True>"
         )
 
-        with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
-            ext.serialize_value()
-
     def test_as_text(self) -> None:
         """Test rendering an unrecognized extension as text."""
-        self.assertEqual(extension_as_text(self.value), "75:6E:72:65:63:6F:67:6E:69:7A:65:64")
+        self.assertEqual(extension_as_text(self.value), self.hex_value)
 
     def test_invalid_extension(self) -> None:
         """Test creating from an actually recognized extension."""
@@ -1624,6 +1690,16 @@ class UnknownExtensionTestCase(TestCase):
         """Test that you cannot instantiate this extension from a dict."""
         with self.assertRaisesRegex(TypeError, r"Value must be a x509\.Extension instance$"):
             UnrecognizedExtension({"value": "foo"})  # type: ignore[arg-type]
+
+    def test_serialized(self) -> None:
+        self.assertEqual(
+            serialize_extension(self.ext), {"critical": self.ext.critical, "value": self.hex_value}
+        )
+
+        # Was not allowed in legacy class based extensions
+        ext = UnrecognizedExtension(self.ext)
+        with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
+            ext.serialize_value()
 
     def test_abstract_methods(self) -> None:
         """Test overwritten abstract methods that are of no use in this class."""
@@ -2568,3 +2644,34 @@ DistributionPoint:
                 admin_html = f"<div class='django-ca-extension-value'>{admin_html}</div>"
                 actual = extension_as_admin_html(ext)
                 self.assertInHTML(admin_html, mark_safe(actual), msg_prefix=f"{name}, {oid}: {actual}")
+
+
+class TypeErrorTests(TestCase):
+    dotted_string = "1.2.3"
+    oid = ObjectIdentifier(dotted_string)
+
+    class UnknownExtensionType(x509.ExtensionType):
+        oid = ObjectIdentifier("1.2.3")
+
+    ext_type = UnknownExtensionType()
+    ext = x509.Extension(oid=oid, critical=True, value=b"foo")  # type: ignore[type-var]
+
+    def test_serialize_no_extension(self) -> None:
+        with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
+            serialize_extension(self.ext)  # type: ignore[arg-type]
+
+    def test_no_extension_as_text(self) -> None:
+        with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
+            extension_as_text(b"foo")  # type: ignore[arg-type]
+
+    def test_unknown_extension_type_as_text(self) -> None:
+        with self.assertRaisesRegex(
+            TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
+        ):
+            extension_as_text(self.ext_type)
+
+    def test_serialize_unknown_extension_type(self) -> None:
+        with self.assertRaisesRegex(
+            TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
+        ):
+            serialize_extension(x509.Extension(oid=self.oid, critical=True, value=self.ext_type))

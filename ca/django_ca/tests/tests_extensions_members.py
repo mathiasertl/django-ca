@@ -202,7 +202,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
     def test_append(self) -> None:
         """Test PolicyInformation.append()."""
         self.pi1.append(self.q2)
-        self.pi1.append(self.s3["policy_qualifiers"][0])
+        self.pi1.append(self.s3["policy_qualifiers"][0])  # type: ignore[index]
         self.assertEqual(
             self.pi1,
             PolicyInformation(
@@ -304,24 +304,24 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         self.assertIn(self.q3, self.pi3)
         self.assertIn(self.q4, self.pi4)
         self.assertIn(self.q5, self.pi4)
-        self.assertIn(self.s1["policy_qualifiers"][0], self.pi1)
-        self.assertIn(self.s2["policy_qualifiers"][0], self.pi2)
-        self.assertIn(self.s3["policy_qualifiers"][0], self.pi3)
-        self.assertIn(self.s4["policy_qualifiers"][0], self.pi4)
-        self.assertIn(self.s4["policy_qualifiers"][1], self.pi4)
+        self.assertIn(self.s1["policy_qualifiers"][0], self.pi1)  # type: ignore[index]
+        self.assertIn(self.s2["policy_qualifiers"][0], self.pi2)  # type: ignore[index]
+        self.assertIn(self.s3["policy_qualifiers"][0], self.pi3)  # type: ignore[index]
+        self.assertIn(self.s4["policy_qualifiers"][0], self.pi4)  # type: ignore[index]
+        self.assertIn(self.s4["policy_qualifiers"][1], self.pi4)  # type: ignore[index]
 
         self.assertNotIn(self.q2, self.pi1)
         self.assertNotIn(self.q1, self.pi_empty)
-        self.assertNotIn(self.s1["policy_qualifiers"][0], self.pi2)
-        self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi1)
-        self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi_empty)
+        self.assertNotIn(self.s1["policy_qualifiers"][0], self.pi2)  # type: ignore[index]
+        self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi1)  # type: ignore[index]
+        self.assertNotIn(self.s2["policy_qualifiers"][0], self.pi_empty)  # type: ignore[index]
 
         # Invalid values are always false:
         self.assertNotIn(True, self.pi1)
 
     def test_count(self) -> None:
         """Test PolicyInformation.count()."""
-        self.assertEqual(self.pi1.count(self.s1["policy_qualifiers"][0]), 1)
+        self.assertEqual(self.pi1.count(self.s1["policy_qualifiers"][0]), 1)  # type: ignore[index]
         self.assertEqual(self.pi1.count(self.q1), 1)
         self.assertEqual(self.pi1.count(self.s2), 0)  # type: ignore[arg-type] # full pi is wrong
         self.assertEqual(self.pi1.count(self.q2), 0)
@@ -354,7 +354,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
             ),
         )
 
-        self.pi2.extend([self.s1["policy_qualifiers"][0]])
+        self.pi2.extend([self.s1["policy_qualifiers"][0]])  # type: ignore[index]
         self.assertEqual(
             self.pi2,
             PolicyInformation(
@@ -366,7 +366,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         )
 
         # extend an empty list
-        self.pi_empty.extend([self.s1["policy_qualifiers"][0]])
+        self.pi_empty.extend([self.s1["policy_qualifiers"][0]])  # type: ignore[index]
         self.assertEqual(
             self.pi_empty,
             PolicyInformation(
@@ -379,10 +379,10 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
 
     def test_getitem(self) -> None:
         """Test item getter (e.g. ``x = ext[0]``)."""
-        self.assertEqual(self.pi1[0], self.s1["policy_qualifiers"][0])
-        self.assertEqual(self.pi4[0], self.s4["policy_qualifiers"][0])
-        self.assertEqual(self.pi4[1], self.s4["policy_qualifiers"][1])
-        self.assertEqual(self.pi4[1:], [self.s4["policy_qualifiers"][1]])
+        self.assertEqual(self.pi1[0], self.s1["policy_qualifiers"][0])  # type: ignore[index]
+        self.assertEqual(self.pi4[0], self.s4["policy_qualifiers"][0])  # type: ignore[index]
+        self.assertEqual(self.pi4[1], self.s4["policy_qualifiers"][1])  # type: ignore[index]
+        self.assertEqual(self.pi4[1:], [self.s4["policy_qualifiers"][1]])  # type: ignore[index]
 
         with self.assertRaisesRegex(IndexError, r"^list index out of range$"):
             self.pi_empty[0]  # pylint: disable=pointless-statement
@@ -424,7 +424,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
                 }
             ),
         )
-        self.pi1.insert(1, self.s3["policy_qualifiers"][0])
+        self.pi1.insert(1, self.s3["policy_qualifiers"][0])  # type: ignore[index]
         self.assertEqual(
             self.pi1,
             PolicyInformation(
@@ -474,10 +474,10 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
     def test_pop(self) -> None:
         """Test PolicyInformation.pop()."""
         self.pi_empty.policy_identifier = self.oid
-        self.assertEqual(self.pi1.pop(), self.s1["policy_qualifiers"][0])
+        self.assertEqual(self.pi1.pop(), self.s1["policy_qualifiers"][0])  # type: ignore[index]
         self.assertEqual(self.pi1, self.pi_empty)
 
-        self.assertEqual(self.pi4.pop(1), self.s4["policy_qualifiers"][1])
+        self.assertEqual(self.pi4.pop(1), self.s4["policy_qualifiers"][1])  # type: ignore[index]
         self.assertEqual(
             self.pi4,
             PolicyInformation(
@@ -488,7 +488,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
             ),
         )
 
-        self.assertEqual(self.pi4.pop(), self.s4["policy_qualifiers"][0])
+        self.assertEqual(self.pi4.pop(), self.s4["policy_qualifiers"][0])  # type: ignore[index]
         self.assertEqual(self.pi4, self.pi_empty)
 
         with self.assertRaisesRegex(IndexError, r"^pop from empty list$"):
@@ -500,7 +500,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         self.pi1.remove(self.q1)
         self.assertEqual(self.pi1, self.pi_empty)
 
-        self.pi2.remove(self.s2["policy_qualifiers"][0])
+        self.pi2.remove(self.s2["policy_qualifiers"][0])  # type: ignore[index]
         self.assertEqual(self.pi1, self.pi_empty)
 
         self.pi4.remove(self.q4)
@@ -515,7 +515,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
         )
 
         with self.assertRaisesRegex(ValueError, r"^.*: not in list\.$"):
-            self.pi_empty.remove(self.s3["policy_qualifiers"][0])
+            self.pi_empty.remove(self.s3["policy_qualifiers"][0])  # type: ignore[index]
 
     def _test_repr(self, func: typing.Callable[[typing.Any], str]) -> None:
         self.assertEqual(func(self.pi1), "<PolicyInformation(oid=2.5.29.32.0, qualifiers=['text1'])>")
