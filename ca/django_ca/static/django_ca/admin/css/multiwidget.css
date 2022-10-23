@@ -1,0 +1,9 @@
+.django-ca-multiwidget textarea,
+.django-ca-multiwidget input 
+{
+    display: block;
+}
+
+.django-ca-multiwidget span.labeled-checkbox input {
+    display: inline;
+}

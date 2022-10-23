@@ -79,6 +79,11 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
     css_classes = ("django-ca-multiwidget",)
     template_name = "django_ca/forms/widgets/multiwidget.html"
 
+    class Media:
+        css = {
+            "all": ("django_ca/admin/css/multiwidget.css",),
+        }
+
 
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
     """SelectMultiple field that uses the DjangoCaWidgetMixin."""
