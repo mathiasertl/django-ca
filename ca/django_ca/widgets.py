@@ -24,7 +24,7 @@ from django.forms import widgets
 from django.utils.translation import gettext as _
 
 from . import ca_settings
-from .constants import REVOCATION_REASONS
+from .constants import OID_DEFAULT_CRITICAL, REVOCATION_REASONS
 from .extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
 from .utils import ADMIN_SUBJECT_OIDS, format_general_name
 
@@ -297,7 +297,7 @@ class DistributionPointWidget(ExtensionWidget):
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
-    ) -> typing.Tuple[str, str, str, typing.List[str]]:
+    ) -> typing.Tuple[str, str, str, typing.List[str], bool]:
         full_name = relative_name = crl_issuer = ""
         reasons: typing.List[str] = []
 
@@ -312,7 +312,7 @@ class DistributionPointWidget(ExtensionWidget):
         if dpoint.reasons:
             reasons = [reason.name for reason in dpoint.reasons]
 
-        return dpoint.full_name, relative_name, dpoint.crl_issuer, reasons
+        return dpoint.full_name, relative_name, dpoint.crl_issuer, reasons, value.critical
 
 
 class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an abstract class
@@ -343,7 +343,7 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]
     ) -> typing.Tuple[str, str, bool]:
         if value is None:
-            return ("", "", False)
+            return ("", "", OID_DEFAULT_CRITICAL[self.oid])
 
         ocsp = [
             ad.access_location for ad in value.value if ad.access_method == AuthorityInformationAccessOID.OCSP
@@ -372,7 +372,7 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.ExtendedKeyUsage]]
     ) -> typing.Tuple[typing.List[str], bool]:
         if value is None:
-            return ([], False)
+            return ([], OID_DEFAULT_CRITICAL[self.oid])
         choices = [EXTENDED_KEY_USAGE_NAMES[usage] for usage in value.value]
         return (choices, value.critical)
 
@@ -386,7 +386,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.KeyUsage]]
     ) -> typing.Tuple[typing.List[str], bool]:
         if value is None:
-            return ([], True)
+            return ([], OID_DEFAULT_CRITICAL[self.oid])
         choices = []
 
         # Cannot use a list comprehension here, because cryptography raises ValueError for some attributes
@@ -413,7 +413,7 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.IssuerAlternativeName]]
     ) -> typing.Tuple[str, bool]:
         if value is None:
-            return ("", False)
+            return ("", OID_DEFAULT_CRITICAL[self.oid])
         return (value.value, value.critical)
 
 
@@ -427,7 +427,7 @@ class OCSPNoCheckWidget(ExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.OCSPNoCheck]]
     ) -> typing.Tuple[bool, bool]:
         if value is None:
-            return (False, False)
+            return (False, OID_DEFAULT_CRITICAL[self.oid])
         return (True, value.critical)
 
 
@@ -440,5 +440,5 @@ class TLSFeatureWidget(MultipleChoiceExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.TLSFeature]]
     ) -> typing.Tuple[typing.List[str], bool]:
         if value is None:
-            return ([], False)
+            return ([], OID_DEFAULT_CRITICAL[self.oid])
         return ([feature.name for feature in value.value], value.critical)
