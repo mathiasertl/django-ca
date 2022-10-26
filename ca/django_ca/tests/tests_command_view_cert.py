@@ -33,29 +33,29 @@ output = {
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -69,29 +69,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -105,29 +105,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -141,29 +141,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -177,29 +177,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -213,26 +213,26 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -246,29 +246,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -282,28 +282,28 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -317,28 +317,28 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
     * {extended_key_usage_2}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -352,24 +352,24 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -395,54 +395,54 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
     * {extended_key_usage_2}
     * {extended_key_usage_3}
-FreshestCRL{freshest_crl_critical}:
+Freshest CRL{freshest_crl_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{freshest_crl_0.full_name[0].value}
-InhibitAnyPolicy{inhibit_any_policy_critical}:
+Inhibit anyPolicy{inhibit_any_policy_critical}:
     1
-IssuerAlternativeName{issuer_alternative_name_critical}:
+Issuer Alternative Name{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-NameConstraints{name_constraints_critical}:
+Name Constraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
-OCSPNoCheck{ocsp_no_check_critical}:
+OCSP No Check{ocsp_no_check_critical}:
     Yes
-PolicyConstraints{policy_constraints_critical}:
+Policy Constraints{policy_constraints_critical}:
     * InhibitPolicyMapping: {policy_constraints.inhibit_policy_mapping}
     * RequireExplicitPolicy: {policy_constraints.require_explicit_policy}
 {precert_poison}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
-TLSFeature{tls_feature_critical}:
+TLS Feature{tls_feature_critical}:
     * {tls_feature_0}
     * {tls_feature_1}
 Watchers:
@@ -457,19 +457,19 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     * KeyID: 30
     * Issuer:
       * DNS:{authority_key_identifier.authority_cert_issuer[0].value}
     * Serial: 1
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
@@ -479,33 +479,33 @@ CRLDistributionPoints{crl_distribution_points_critical}:
         * URI:{crl_distribution_points[1].crl_issuer[0].value}
         * URI:{crl_distribution_points[1].crl_issuer[1].value}
       * Reasons: ca_compromise, key_compromise
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
     * {extended_key_usage_2}
     * {extended_key_usage_3}
-IssuerAlternativeName{issuer_alternative_name_critical}:
+Issuer Alternative Name{issuer_alternative_name_critical}:
     * {issuer_alternative_name[0]}
     * {issuer_alternative_name[1]}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-NameConstraints{name_constraints_critical}:
+Name Constraints{name_constraints_critical}:
     Permitted:
       * DNS:{name_constraints.permitted[0].value}
-OCSPNoCheck{ocsp_no_check_critical}:
+OCSP No Check{ocsp_no_check_critical}:
     Yes
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
     * {subject_alternative_name[1]}
     * {subject_alternative_name[2]}
     * {subject_alternative_name[3]}
     * {subject_alternative_name[4]}
     * {subject_alternative_name[5]}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
-TLSFeature{tls_feature_critical}:
+TLS Feature{tls_feature_critical}:
     * {tls_feature_0}
 Watchers:
 Digest:
@@ -577,7 +577,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
-SubjectAlternativeName:
+Subject Alternative Name:
     * {subject_alternative_name_0}
 Watchers:
 Digest:
@@ -604,29 +604,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints (critical):
+Basic Constraints (critical):
     CA:FALSE
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -674,7 +674,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
 Watchers:
 Digest:
@@ -706,7 +706,7 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Revoked
-SubjectAlternativeName:
+Subject Alternative Name:
     * DNS:{cn}
 Watchers:
 Digest:
@@ -766,7 +766,7 @@ HPKP pin: %(hpkp)s
         id1 = "A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10"  # NOQA: E501
         id2 = "EE:4B:BD:B7:75:CE:60:BA:E1:42:69:1F:AB:E1:9E:66:A3:0F:7E:5F:B0:72:D8:83:00:C4:7B:89:7A:A8:FD:CB"  # NOQA: E501
         id3 = "44:94:65:2E:B0:EE:CE:AF:C4:40:07:D8:A8:FE:28:C0:DA:E6:82:BE:D8:CB:31:B5:3F:D3:33:96:B5:B6:81:A8"  # NOQA: E501
-        sct = f"""PrecertificateSignedCertificateTimestamps:
+        sct = f"""Precertificate Signed Certificate Timestamps:
     * Precertificate (v1):
         Timestamp: 2019-03-27 09:13:54.342000
         Log ID: {id1}
@@ -783,33 +783,33 @@ HPKP pin: %(hpkp)s
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints:
+CRL Distribution Points:
     * DistributionPoint:
       * Full Name:
         * URI:http://crl.godaddy.com/gdig2s1-1015.crl
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://certificates.godaddy.com/repository/
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 {sct}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
@@ -859,7 +859,7 @@ SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_46}
     * {subject_alternative_name_47}
     * {subject_alternative_name_48}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -884,7 +884,7 @@ HPKP pin: {hpkp}
         context[
             "id2"
         ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"  # NOQA: E501
-        sct = """PrecertificateSignedCertificateTimestamps{sct_critical}:
+        sct = """Precertificate Signed Certificate Timestamps{sct_critical}:
     * Precertificate ({sct_values[0][version]}):
         Timestamp: {sct_values[0][timestamp]}
         Log ID: {id1}
@@ -900,29 +900,29 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       Policy Qualifiers:
       * {certificate_policies_1[policy_qualifiers][0]}
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 {sct}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
@@ -933,7 +933,7 @@ SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_7}
     * {subject_alternative_name_8}
     * {subject_alternative_name_9}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
@@ -956,32 +956,32 @@ HPKP pin: {hpkp}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints:
+CRL Distribution Points:
     * DistributionPoint:
       * Full Name:
         * URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://secure.comodo.com/CPS
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
 {precert_poison}
-SubjectAlternativeName{subject_alternative_name_critical}:
+Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
@@ -1067,7 +1067,7 @@ SubjectAlternativeName{subject_alternative_name_critical}:
     * {subject_alternative_name_82}
     * {subject_alternative_name_83}
     * {subject_alternative_name_84}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:

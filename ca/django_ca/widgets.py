@@ -295,13 +295,6 @@ class DistributionPointWidget(ExtensionWidget):
         _("Reasons"),
     )
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
-        """Get the context."""
-        # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
-        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
-        print(ctx["widget"]["subwidgets"][4])
-        return ctx
-
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
     ) -> typing.Tuple[str, str, str, typing.List[str]]:

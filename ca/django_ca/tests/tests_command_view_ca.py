@@ -35,14 +35,14 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -66,23 +66,23 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -107,14 +107,14 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -143,14 +143,14 @@ ACMEv2 support:
 * Requires contact: {ca.acme_requires_contact}
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -172,14 +172,14 @@ X509 v3 certificate extensions for signed certificates:
 * HPKP pin: {hpkp}
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -202,12 +202,12 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -230,15 +230,15 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -261,12 +261,12 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -289,12 +289,12 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -317,18 +317,18 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -351,32 +351,32 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -399,25 +399,25 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.geotrust.com/resources/cps
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -440,11 +440,11 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -467,27 +467,27 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://secure.comodo.com/CPS
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -510,29 +510,29 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://www.digicert.com/CPS
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -555,12 +555,12 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -583,25 +583,25 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://www.globalsign.com/repository/
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -624,25 +624,25 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://certs.godaddy.com/repository/
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -665,12 +665,12 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -693,29 +693,29 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://pki.goog/repository/
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -738,33 +738,33 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       Policy Qualifiers:
       * http://cps.root-x1.letsencrypt.org
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-NameConstraints{name_constraints_critical}:
+Name Constraints{name_constraints_critical}:
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -787,30 +787,30 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       No Policy Qualifiers
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       Policy Qualifiers:
       * http://cps.root-x1.letsencrypt.org
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -833,11 +833,11 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.startssl.com/policy.pdf
@@ -849,10 +849,10 @@ CertificatePolicies{certificate_policies_critical}:
         * Notice Reference:
           * Organization: Start Commercial (StartCom) Ltd.
           * Notice Numbers: [1]
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Unknown extension (2.16.840.1.113730.1.1):
     03:02:00:07
@@ -879,27 +879,27 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.startssl.com/policy.pdf
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -922,30 +922,30 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * http://www.startssl.com/policy
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -968,20 +968,20 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * User Notice:
@@ -991,17 +991,17 @@ CertificatePolicies{certificate_policies_critical}:
         * Explicit Text: This TrustID Server Certificate has been issued in
             accordance with IdenTrust's TrustID Certificate Policy found at
             https://secure.identrust.com/certificates/policy/ts/index.html
-ExtendedKeyUsage{extended_key_usage_critical}:
+Extended Key Usage{extended_key_usage_critical}:
     * {extended_key_usage_0}
     * {extended_key_usage_1}
     * {extended_key_usage_2}
     * {extended_key_usage_3}
     * {extended_key_usage_4}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -1024,15 +1024,15 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
@@ -1055,29 +1055,29 @@ ACMEv2 support:
 * Enabled: False
 
 X509 v3 certificate extensions for CA:
-AuthorityInformationAccess{authority_information_access_critical}:
+Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
-AuthorityKeyIdentifier{authority_key_identifier_critical}:
+Authority Key Identifier{authority_key_identifier_critical}:
     {authority_key_identifier_text}
-BasicConstraints{basic_constraints_critical}:
+Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
-CRLDistributionPoints{crl_distribution_points_critical}:
+CRL Distribution Points{crl_distribution_points_critical}:
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
     * DistributionPoint:
       * Full Name:
         * URI:{crl_distribution_points[1].full_name[0].value}
-CertificatePolicies{certificate_policies_critical}:
+Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_0[policy_identifier]}
       Policy Qualifiers:
       * https://www.digicert.com/CPS
-KeyUsage{key_usage_critical}:
+Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
     * {key_usage_2}
-SubjectKeyIdentifier{subject_key_identifier_critical}:
+Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:

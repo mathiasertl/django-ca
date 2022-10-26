@@ -175,7 +175,7 @@ class CertificateAdminViewTestCase(
             text="""
 <div class="form-row field-oid_2_5_29_17">
     <div>
-        <label>SubjectAlternativeName:</label>
+        <label>Subject Alternative Name:</label>
         <div class="readonly">
             <span class="django-ca-extension">
                 <div class="django-ca-extension-value">

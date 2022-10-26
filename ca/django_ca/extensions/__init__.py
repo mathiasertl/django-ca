@@ -26,6 +26,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.utils.translation import gettext_lazy as _
 
+from ..constants import OID_TO_EXTENSION_NAMES
 from .base import Extension
 from .extensions import (
     AuthorityInformationAccess,
@@ -129,11 +130,11 @@ def get_extension_name(oid: x509.ObjectIdentifier) -> str:
     """Function to get the name of an extension from the extensions OID.
 
     >>> get_extension_name(ExtensionOID.BASIC_CONSTRAINTS)
-    'BasicConstraints'
+    'Basic Constraints'
     """
 
-    if oid in OID_TO_EXTENSION:
-        return OID_TO_EXTENSION[oid].name
+    if oid in OID_TO_EXTENSION_NAMES:
+        return OID_TO_EXTENSION_NAMES[oid]
 
     return OID_NAMES.get(oid, f"Unknown extension ({oid.dotted_string})")
 

@@ -14,10 +14,18 @@
 """Some sanitity tests for constants."""
 
 from cryptography import x509
+from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
-from ..constants import ReasonFlags
+from .. import constants
+
+KNOWN_EXTENSION_OIDS = list(
+    filter(
+        lambda attr: isinstance(attr, x509.ObjectIdentifier),
+        [getattr(ExtensionOID, attr) for attr in dir(ExtensionOID)],
+    )
+)
 
 
 class ReasonFlagsTestCase(TestCase):
@@ -26,6 +34,11 @@ class ReasonFlagsTestCase(TestCase):
     def test_completeness(self) -> None:
         """Test that our list completely mirrors the cryptography list."""
         self.assertEqual(
-            list(sorted([(k, v.value) for k, v in ReasonFlags.__members__.items()])),
+            list(sorted([(k, v.value) for k, v in constants.ReasonFlags.__members__.items()])),
             list(sorted([(k, v.value) for k, v in x509.ReasonFlags.__members__.items()])),
         )
+
+
+class ExtensionNamesTestCase(TestCase):
+    def test_completeness(self) -> None:
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_TO_EXTENSION_NAMES.keys())

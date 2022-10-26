@@ -901,7 +901,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         ctx: typing.Dict[str, typing.Any] = {}
         for key, value in certs[name].items():
             if key == "precert_poison":
-                ctx["precert_poison"] = "PrecertPoison (critical):\n    Yes"
+                ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
             elif key == "precertificate_signed_certificate_timestamps_serialized":
                 ctx["sct_critical"] = " (critical)" if value["critical"] else ""
                 ctx["sct_values"] = []
