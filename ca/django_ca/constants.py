@@ -14,6 +14,7 @@
 """Collection of constants used by django-ca."""
 
 import enum
+from collections import defaultdict
 
 from cryptography.x509.oid import ExtensionOID
 
@@ -96,3 +97,75 @@ OID_TO_EXTENSION_NAMES = {
     ExtensionOID.SUBJECT_KEY_IDENTIFIER: "Subject Key Identifier",
     ExtensionOID.TLS_FEATURE: "TLS Feature",  # RFC 7633
 }
+
+# Map Object Identifiers to the default critical values
+OID_DEFAULT_CRITICAL = {
+    ExtensionOID.AUTHORITY_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical.
+    ExtensionOID.AUTHORITY_KEY_IDENTIFIER: False,  # MUST mark this extension as non-critical
+    ExtensionOID.BASIC_CONSTRAINTS: True,  # RFC 5280 is more complex here, True is a good efault
+    ExtensionOID.CERTIFICATE_POLICIES: False,  # RFC 5280 does not say (!)
+    ExtensionOID.CRL_DISTRIBUTION_POINTS: False,  # The extension SHOULD be non-critical
+    ExtensionOID.CRL_NUMBER: False,  # is a non-critical CRL extension
+    ExtensionOID.DELTA_CRL_INDICATOR: True,  # is a critical CRL extension
+    ExtensionOID.EXTENDED_KEY_USAGE: False,  # at issuers discretion, but non-critical in the real world.
+    ExtensionOID.FRESHEST_CRL: False,  # MUST be marked as non-critical
+    ExtensionOID.INHIBIT_ANY_POLICY: True,  # MUST mark this extension as critical
+    ExtensionOID.ISSUER_ALTERNATIVE_NAME: False,  # SHOULD mark this extension as non-critical.
+    ExtensionOID.ISSUING_DISTRIBUTION_POINT: True,  # is a critical CRL extension
+    ExtensionOID.KEY_USAGE: True,  # SHOULD mark this extension as critical.
+    ExtensionOID.NAME_CONSTRAINTS: True,  # MUST mark this extension as critical
+    ExtensionOID.OCSP_NO_CHECK: False,  # RFC 2560: SHOULD be a non-critical
+    ExtensionOID.POLICY_CONSTRAINTS: True,  # MUST mark this extension as critical
+    ExtensionOID.POLICY_MAPPINGS: True,  # SHOULD mark this extension as critical
+    ExtensionOID.PRECERT_POISON: True,  # RFC 6962: "critical poison extension"
+    ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: False,  # RFC 6962 doesn't say
+    ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: False,  # RFC 6962 doesn't say
+    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: False,  # SHOULD mark the extension as non-critical.
+    ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: False,  # MUST mark this extension as non-critical
+    ExtensionOID.SUBJECT_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical
+    ExtensionOID.SUBJECT_KEY_IDENTIFIER: False,  # MUST mark this extension as non-critical
+    ExtensionOID.TLS_FEATURE: False,  # RFC 7633: MUST NOT be marked critical
+}
+
+OID_CRITICAL_HELP = {
+    ExtensionOID.AUTHORITY_INFORMATION_ACCESS: _("MUST be non-critical"),
+    ExtensionOID.AUTHORITY_KEY_IDENTIFIER: _("MUST be non-critical"),
+    ExtensionOID.BASIC_CONSTRAINTS: _("MUST usually be critical, but allows non-critical in some cases"),
+    ExtensionOID.CERTIFICATE_POLICIES: _("may or may not be critical (recommended: non-critical)"),
+    ExtensionOID.CRL_DISTRIBUTION_POINTS: _("SHOULD be non-critical"),
+    ExtensionOID.CRL_NUMBER: _("is non-critical"),
+    ExtensionOID.DELTA_CRL_INDICATOR: _("is critical"),
+    ExtensionOID.EXTENDED_KEY_USAGE: _("MAY, at your discretion, be either critical or non-critical"),
+    ExtensionOID.FRESHEST_CRL: _("MUST be non-critical"),
+    ExtensionOID.INHIBIT_ANY_POLICY: _("MUST be critical"),
+    ExtensionOID.ISSUER_ALTERNATIVE_NAME: _("SHOULD be non-critical"),
+    ExtensionOID.ISSUING_DISTRIBUTION_POINT: _("is critical"),
+    ExtensionOID.KEY_USAGE: _("SHOULD be critical"),
+    ExtensionOID.NAME_CONSTRAINTS: _("MUST be critical"),
+    ExtensionOID.OCSP_NO_CHECK: _("SHOULD be a non-critical"),  # defined in RFC 2560
+    ExtensionOID.POLICY_CONSTRAINTS: _("MUST be critical"),
+    ExtensionOID.POLICY_MAPPINGS: _("SHOULD  be critical"),
+    ExtensionOID.PRECERT_POISON: _("MUST be critical"),  # defined in RFC 6962
+    ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: _(  # defined in RFC 6962
+        "may or may not be critical (recommended: non-critical)"
+    ),
+    ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: _(  # defined in RFC 6962
+        "may or may not be critical (recommended: non-critical)"
+    ),
+    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: _("SHOULD mark this extension as non-critical"),
+    ExtensionOID.SUBJECT_INFORMATION_ACCESS: _("MUST be non-critical"),
+    ExtensionOID.SUBJECT_KEY_IDENTIFIER: _("MUST be non-critical"),
+    ExtensionOID.TLS_FEATURE: _("SHOULD NOT be critical"),  # defined in RFC 7633
+    ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: _("MUST be non-critical"),
+}
+
+OID_RFC_DEFINITION = defaultdict(
+    lambda: 5280,
+    {
+        ExtensionOID.OCSP_NO_CHECK: 2560,
+        ExtensionOID.TLS_FEATURE: 7633,
+        ExtensionOID.PRECERT_POISON: 6962,
+        ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: 6962,
+        ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: 6962,
+    },
+)

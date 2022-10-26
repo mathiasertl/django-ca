@@ -59,9 +59,8 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from .constants import REVOCATION_REASONS, ReasonFlags
+from .constants import OID_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
 from .extensions import (
-    OID_DEFAULT_CRITICAL,
     OID_TO_EXTENSION,
     AuthorityInformationAccess,
     AuthorityKeyIdentifier,

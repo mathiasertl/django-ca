@@ -30,7 +30,8 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...extensions import OID_DEFAULT_CRITICAL, OID_TO_KEY
+from ...constants import OID_DEFAULT_CRITICAL
+from ...extensions import OID_TO_KEY
 from ...models import CertificateAuthority
 from ...tasks import cache_crl, generate_ocsp_key, run_task
 from ...typehints import ParsableKeyType

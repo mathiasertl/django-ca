@@ -39,6 +39,14 @@ class ReasonFlagsTestCase(TestCase):
         )
 
 
-class ExtensionNamesTestCase(TestCase):
-    def test_completeness(self) -> None:
+class ExtensionMappingsTestCase(TestCase):
+    def test_completeness_oid_to_extension_names(self) -> None:
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_TO_EXTENSION_NAMES.keys())
+
+    def test_completeness_oid_default_critical(self) -> None:
+        self.maxDiff = None
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_DEFAULT_CRITICAL.keys())
+
+    def test_completeness_oid_critical_help(self) -> None:
+        self.maxDiff = None
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_CRITICAL_HELP.keys())

@@ -27,7 +27,8 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...extensions import OID_DEFAULT_CRITICAL, OID_TO_KEY, Extension
+from ...constants import OID_DEFAULT_CRITICAL
+from ...extensions import OID_TO_KEY, Extension
 from ...management.base import BaseSignCommand
 from ...models import Certificate, CertificateAuthority, Watcher
 from ...profiles import profiles

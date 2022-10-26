@@ -23,7 +23,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from ..extensions import OID_CRITICAL_HELP, OID_RFC_DEFINITION
+from ..constants import OID_CRITICAL_HELP, OID_RFC_DEFINITION
 from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, key_usage_items, signed_certificate_timestamp_values
 from ..utils import add_colons, bytes_to_hex, format_general_name, format_name, int_to_hex
 

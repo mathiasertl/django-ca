@@ -24,8 +24,6 @@ from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
 from cryptography.x509.oid import ExtensionOID
 
-from django.utils.translation import gettext_lazy as _
-
 from ..constants import OID_TO_EXTENSION_NAMES
 from .base import Extension
 from .extensions import (
@@ -77,37 +75,10 @@ OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType,
 }
 
 
-# TODO: Validate completeness of these
-OID_DEFAULT_CRITICAL: typing.Dict[x509.ObjectIdentifier, bool] = {
-    ExtensionOID.AUTHORITY_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical.
-    ExtensionOID.CRL_DISTRIBUTION_POINTS: False,  # The extension SHOULD be non-critical
-    ExtensionOID.EXTENDED_KEY_USAGE: False,  # at issuers discretion, but non-critical in the real world.
-    ExtensionOID.ISSUER_ALTERNATIVE_NAME: False,  # SHOULD mark this extension as non-critical.
-    ExtensionOID.KEY_USAGE: True,  # SHOULD mark this extension as critical.
-    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: False,  # SHOULD mark the extension as non-critical.
-    ExtensionOID.OCSP_NO_CHECK: False,  # RFC 2560: SHOULD be a non-critical
-    ExtensionOID.TLS_FEATURE: False,  # RFC 7633: MUST NOT be marked critical
-}
-
 OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
     ExtensionOID.ISSUER_ALTERNATIVE_NAME: "issuer_alternative_name",
     ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
 }
-
-OID_CRITICAL_HELP: typing.Dict[x509.ObjectIdentifier, str] = {
-    ExtensionOID.AUTHORITY_INFORMATION_ACCESS: _("MUST be non-critical"),
-    ExtensionOID.CRL_DISTRIBUTION_POINTS: _("SHOULD be non-critical"),
-    ExtensionOID.EXTENDED_KEY_USAGE: _("MAY, at your discretion, be either critical or non-critical"),
-    ExtensionOID.ISSUER_ALTERNATIVE_NAME: _("SHOULD be non-critical"),
-    ExtensionOID.KEY_USAGE: _("SHOULD be non-critical"),
-    ExtensionOID.OCSP_NO_CHECK: _("SHOULD be a non-critical"),  # defined in RFC 2560
-    ExtensionOID.TLS_FEATURE: _("MUST NOT be marked critical"),  # defined in RFC 7633
-}
-
-
-OID_RFC_DEFINITION = defaultdict(
-    lambda: 5280, {ExtensionOID.OCSP_NO_CHECK: 2560, ExtensionOID.TLS_FEATURE: 7633}
-)
 
 
 #: Tuple of extensions that can be set when creating a new certificate

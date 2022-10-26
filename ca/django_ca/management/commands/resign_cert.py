@@ -25,14 +25,8 @@ from cryptography.x509 import NameOID
 from django.core.management.base import CommandError, CommandParser
 
 from ... import ca_settings
-from ...extensions import (
-    OID_DEFAULT_CRITICAL,
-    OID_TO_KEY,
-    ExtendedKeyUsage,
-    KeyUsage,
-    SubjectAlternativeName,
-    TLSFeature,
-)
+from ...constants import OID_DEFAULT_CRITICAL
+from ...extensions import OID_TO_KEY, ExtendedKeyUsage, KeyUsage, SubjectAlternativeName, TLSFeature
 from ...management.actions import CertificateAction
 from ...management.base import BaseSignCommand
 from ...models import Certificate, CertificateAuthority, Watcher

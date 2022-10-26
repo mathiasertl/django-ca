@@ -386,7 +386,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
         self, value: typing.Optional[x509.Extension[x509.KeyUsage]]
     ) -> typing.Tuple[typing.List[str], bool]:
         if value is None:
-            return ([], False)
+            return ([], True)
         choices = []
 
         # Cannot use a list comprehension here, because cryptography raises ValueError for some attributes

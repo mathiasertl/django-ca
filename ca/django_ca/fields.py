@@ -204,7 +204,7 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
     fields: typing.Optional[typing.Tuple[forms.Field, ...]] = None
 
     def __init__(self, **kwargs: typing.Any) -> None:
-        fields = self.get_fields() + (forms.BooleanField(required=False),)
+        fields = self.get_fields() + (forms.BooleanField(required=False, initial=True),)
         kwargs.setdefault("label", get_extension_name(self.extension_type.oid))
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 

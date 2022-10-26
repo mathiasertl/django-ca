@@ -31,8 +31,9 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
+from .constants import OID_DEFAULT_CRITICAL
 from .deprecation import RemovedInDjangoCA123Warning, deprecate_argument, deprecate_type
-from .extensions import OID_DEFAULT_CRITICAL, Extension, IssuerAlternativeName, NameConstraints
+from .extensions import Extension, IssuerAlternativeName, NameConstraints
 from .modelfields import LazyCertificateSigningRequest
 from .openssh import SshHostCaExtension, SshUserCaExtension
 from .profiles import Profile, profiles
