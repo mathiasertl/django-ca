@@ -283,9 +283,9 @@ class DistributionPointWidget(ExtensionWidget):
     """Widgets for extensions that use a DistributionPoint."""
 
     extension_widgets = (
-        GeneralNamesWidget(attrs={"class": "full-name"}),
+        GeneralNamesWidget(attrs={"class": "full-name", "rows": 3}),
         TextInput(attrs={"class": "relative-name"}),
-        GeneralNamesWidget(attrs={"class": "crl-issuer"}),
+        GeneralNamesWidget(attrs={"class": "crl-issuer", "rows": 3}),
         SelectMultiple(choices=REVOCATION_REASONS, attrs={"class": "reasons"}),
     )
     labels = (
@@ -329,7 +329,10 @@ class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an
 class AuthorityInformationAccessWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
 
-    extension_widgets = (Textarea, Textarea)
+    extension_widgets = (
+        GeneralNamesWidget(attrs={"class": "ca-issuers", "rows": 3}),
+        GeneralNamesWidget(attrs={"class": "ocsp", "rows": 3}),
+    )
     labels = (
         _("CA issuers"),
         _("OCSP"),
@@ -342,17 +345,16 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         if value is None:
             return ("", "", False)
 
-        ocsp = []
-        ca_issuers = []
-        for description in value.value:
-            if description.access_method == AuthorityInformationAccessOID.OCSP:
-                ocsp.append(format_general_name(description.access_location))
-            elif description.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
-                ca_issuers.append(format_general_name(description.access_location))
-            else:  # pragma: no cover  # everything that there is to support above
-                log.warning("%s: Received an unknown access method.", description.access_method)
+        ocsp = [
+            ad.access_location for ad in value.value if ad.access_method == AuthorityInformationAccessOID.OCSP
+        ]
+        ca_issuers = [
+            ad.access_location
+            for ad in value.value
+            if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+        ]
 
-        return "\n".join(ca_issuers), "\n".join(ocsp), value.critical
+        return ca_issuers, ocsp, value.critical
 
 
 class CRLDistributionPointsWidget(DistributionPointWidget):
@@ -404,7 +406,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 class IssuerAlternativeNameWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
-    extension_widgets = (widgets.Textarea,)
+    extension_widgets = (GeneralNamesWidget(attrs={"rows": 3}),)
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     def decompress(
@@ -412,8 +414,7 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
     ) -> typing.Tuple[str, bool]:
         if value is None:
             return ("", False)
-        general_names = [format_general_name(name) for name in value.value]
-        return ("\n".join(general_names), value.critical)
+        return (value.value, value.critical)
 
 
 class OCSPNoCheckWidget(ExtensionWidget):

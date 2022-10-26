@@ -147,12 +147,12 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
         field = self.field_class()
         html = field.widget.render(name, None)
         self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget full-name"></textarea>',
+            f'<textarea name="{name}_0" cols="40" rows="3" class="django-ca-widget full-name"></textarea>',
             html,
         )
         self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', html)
         self.assertInHTML(
-            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget crl-issuer"></textarea>',
+            f'<textarea name="{name}_2" cols="40" rows="3" class="django-ca-widget crl-issuer"></textarea>',
             html,
         )
         for choice, text in REVOCATION_REASONS:
@@ -171,7 +171,7 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
             ),
         )
         self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="10" class="django-ca-widget full-name">'
+            f'<textarea name="{name}_0" cols="40" rows="3" class="django-ca-widget full-name">'
             f"DNS:{D1}</textarea>",
             html,
         )
@@ -179,7 +179,7 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
         self.assertInHTML('<option value="key_compromise" selected>Key compromised</option>', html)
         self.assertInHTML('<option value="certificate_hold" selected>On Hold</option>', html)
         self.assertInHTML(
-            f'<textarea name="{name}_2" cols="40" rows="10" class="django-ca-widget crl-issuer">'
+            f'<textarea name="{name}_2" cols="40" rows="3" class="django-ca-widget crl-issuer">'
             f"DNS:{D2}</textarea>",
             html,
         )
