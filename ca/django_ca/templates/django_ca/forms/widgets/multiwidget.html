@@ -1,1 +1,6 @@
-<p {% include "django/forms/widgets/attrs.html" %}>{% include "django/forms/widgets/multiwidget.html" %}</p>
+{% spaceless %}<p {% include "django/forms/widgets/attrs.html" %}>
+{% for widget in widget.subwidgets %}
+    {% if widget.label and not widget.handles_label %}<label for="{{ widget.attrs.id }}">{{ widget.label }}:</label>{% endif %}
+    {% include widget.template_name %}
+{% endfor %}
+</p>{% endspaceless %}

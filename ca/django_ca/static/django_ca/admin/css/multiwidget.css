@@ -1,7 +1,13 @@
+p.django-ca-multiwidget {
+    padding: 0 !important;
+}
 .django-ca-multiwidget textarea,
 .django-ca-multiwidget input 
 {
     display: block;
+}
+.django-ca-multiwidget label {
+    float: initial;
 }
 
 .django-ca-multiwidget span.labeled-checkbox input {

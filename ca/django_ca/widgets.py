@@ -78,11 +78,20 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
 
     css_classes = ("django-ca-multiwidget",)
     template_name = "django_ca/forms/widgets/multiwidget.html"
+    labels: typing.Tuple[typing.Optional[str], ...] = ()
 
     class Media:
         css = {
             "all": ("django_ca/admin/css/multiwidget.css",),
         }
+
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+        """Get the context."""
+        # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
+        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
+        for widget, label in zip(ctx["widget"]["subwidgets"], self.labels):
+            widget["label"] = label
+        return ctx
 
 
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
@@ -113,6 +122,9 @@ class LabeledCheckboxInput(CheckboxInput):
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["wrapper_classes"] = " ".join(self.wrapper_classes)
         ctx["widget"]["label"] = self.label
+
+        # Tell any wrapping widget (like a MultiWidget) that this widget displays its own label.
+        ctx["widget"]["handles_label"] = True
         return ctx
 
     class Media:
@@ -276,6 +288,19 @@ class DistributionPointWidget(ExtensionWidget):
         GeneralNamesWidget(attrs={"class": "crl-issuer"}),
         SelectMultiple(choices=REVOCATION_REASONS, attrs={"class": "reasons"}),
     )
+    labels = (
+        _("Full name"),
+        _("Relative name"),
+        _("CRL issuer"),
+        _("Reasons"),
+    )
+
+    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+        """Get the context."""
+        # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
+        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
+        print(ctx["widget"]["subwidgets"][4])
+        return ctx
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
@@ -312,6 +337,10 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
 
     extension_widgets = (Textarea, Textarea)
+    labels = (
+        _("CA issuers"),
+        _("OCSP"),
+    )
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def decompress(
