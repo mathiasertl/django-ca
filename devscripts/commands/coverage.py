@@ -124,20 +124,20 @@ class Command(TestCommand):
         """Setup pragmas to allow coverage exclusion based on Python/django/cryptography version."""
 
         # exclude python version specific code
-        py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11)]
+        py_versions = [(3, 5), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13)]
         for version in py_versions:
             version_str = ".".join([str(v) for v in version])
             exclude_versions(cov, "py", sys.version_info[:2], version, version_str)
 
         # exclude django-version specific code
-        django_versions = [(2, 2), (3, 0), (3, 1), (4, 0), (4, 1), (4, 2)]
+        django_versions = [(2, 2), (3, 0), (3, 1), (4, 0), (4, 1), (4, 2), (5, 0)]
         for version in django_versions:
             version_str = ".".join([str(v) for v in version])
             exclude_versions(cov, "django", django.VERSION[:2], version, version_str)
 
         # exclude cryptography-version specific code
         this_version = packaging.version.parse(cryptography.__version__).release[:2]
-        cryptography_versions = [(3, 3), (3, 4), (35, 0), (36, 0), (37, 0), (38, 0), (39, 0)]
+        cryptography_versions = [(35, 0), (36, 0), (37, 0), (38, 0), (39, 0), (40, 0), (41, 0), (42, 0)]
         for ver in cryptography_versions:
             version_str = ".".join([str(v) for v in ver])
             exclude_versions(cov, "cryptography", this_version, ver, version_str)

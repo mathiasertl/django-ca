@@ -33,7 +33,7 @@ from .extensions.utils import (
 )
 from .profiles import profile
 from .typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
-from .utils import ADMIN_SUBJECT_OIDS, parse_general_name
+from .utils import ADMIN_SUBJECT_OIDS, parse_general_name, x509_relative_name
 
 if typing.TYPE_CHECKING:
     from .modelfields import LazyCertificateSigningRequest
@@ -179,9 +179,13 @@ class RelativeDistinguishedNameField(forms.CharField):
     ) -> typing.Optional[x509.RelativeDistinguishedName]:
         if not value:
             return None
-        rdns = x509.Name.from_rfc4514_string(value).rdns
-        attributes = [attr for rdn in rdns for attr in rdn]
-        return x509.RelativeDistinguishedName(attributes=attributes)
+
+        if hasattr(x509.Name, "from_rfc4514_string"):  # pragma: only cryptography>=37.0
+            rdns = x509.Name.from_rfc4514_string(value).rdns
+            attributes = [attr for rdn in rdns for attr in rdn]
+            return x509.RelativeDistinguishedName(attributes=attributes)
+
+        return x509_relative_name(value)  # pragma: only cryptography<37
 
 
 class ReasonsField(forms.MultipleChoiceField):
