@@ -458,6 +458,7 @@ qualname_overrides = {
     "BasicConstraintsBase": ":py:data:`django_ca.typehints.BasicConstraintsBase`",
     "Union": "python:typing.Union",
     "Optional": "python:typing.Optional",
+    "ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ExtendedKeyUsageOID": "cg:cryptography.x509.oid.ExtendedKeyUsageOID",
     "cryptography.hazmat.primitives.serialization.base.Encoding": "cg:cryptography.hazmat.primitives.serialization.Encoding",  # NOQA: E501 # black does not allow a newline here

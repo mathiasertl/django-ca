@@ -563,7 +563,6 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
 class ExtendedKeyUsage(
     OrderedSetExtension[x509.ExtendedKeyUsage, Union[x509.ObjectIdentifier, str], str, x509.ObjectIdentifier]
 ):
-    # class ExtendedKeyUsage():
     """Class representing a ExtendedKeyUsage extension."""
 
     key = "extended_key_usage"

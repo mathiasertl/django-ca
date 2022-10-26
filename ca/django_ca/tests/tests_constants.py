@@ -40,13 +40,16 @@ class ReasonFlagsTestCase(TestCase):
 
 
 class ExtensionMappingsTestCase(TestCase):
+    """Test various mappings from ExtensionOIDs to something."""
+
     def test_completeness_oid_to_extension_names(self) -> None:
+        """Test completeness of OID_TO_EXTENSION_NAMES."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_TO_EXTENSION_NAMES.keys())
 
     def test_completeness_oid_default_critical(self) -> None:
-        self.maxDiff = None
+        """Test completeness of OID_DEFAULT_CRITICAL."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_DEFAULT_CRITICAL.keys())
 
     def test_completeness_oid_critical_help(self) -> None:
-        self.maxDiff = None
+        """Test completeness of OID_CRITICAL_HELP."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_CRITICAL_HELP.keys())

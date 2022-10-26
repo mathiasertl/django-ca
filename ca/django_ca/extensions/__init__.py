@@ -17,7 +17,6 @@ The classes in this module wrap cryptography extensions, but allow adding/removi
 in a more pythonic manner and provide access functions."""
 
 import typing
-from collections import defaultdict
 from typing import Any, Dict, Type
 
 from cryptography import x509

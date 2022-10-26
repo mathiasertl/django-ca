@@ -326,10 +326,6 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         for choice, text in self.field_class.choices:
             self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
 
-        html = field.widget.render(name, ([], False))
-        for choice, text in self.field_class.choices:
-            self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
-
     def test_rendering_profiles(self) -> None:
         """Test rendering for all profiles."""
         field = self.field_class()

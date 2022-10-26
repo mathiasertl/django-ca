@@ -88,7 +88,7 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
     def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
-        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
+        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)
         for widget, label in zip(ctx["widget"]["subwidgets"], self.labels):
             widget["label"] = label
         return ctx
@@ -302,7 +302,7 @@ class DistributionPointWidget(ExtensionWidget):
         reasons: typing.List[str] = []
 
         if value is None:
-            return full_name, relative_name, crl_issuer, reasons
+            return full_name, relative_name, crl_issuer, reasons, OID_DEFAULT_CRITICAL[self.oid]
         if len(value.value) > 1:
             raise ValueError("Only one DistributionPoint is supported at this time.")
 
@@ -341,9 +341,9 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]
-    ) -> typing.Tuple[str, str, bool]:
+    ) -> typing.Tuple[typing.List[x509.GeneralName], typing.List[x509.GeneralName], bool]:
         if value is None:
-            return ("", "", OID_DEFAULT_CRITICAL[self.oid])
+            return ([], [], OID_DEFAULT_CRITICAL[self.oid])
 
         ocsp = [
             ad.access_location for ad in value.value if ad.access_method == AuthorityInformationAccessOID.OCSP
@@ -411,10 +411,10 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
 
     def decompress(
         self, value: typing.Optional[x509.Extension[x509.IssuerAlternativeName]]
-    ) -> typing.Tuple[str, bool]:
+    ) -> typing.Tuple[typing.List[x509.GeneralName], bool]:
         if value is None:
-            return ("", OID_DEFAULT_CRITICAL[self.oid])
-        return (value.value, value.critical)
+            return ([], OID_DEFAULT_CRITICAL[self.oid])
+        return (list(value.value), value.critical)
 
 
 class OCSPNoCheckWidget(ExtensionWidget):

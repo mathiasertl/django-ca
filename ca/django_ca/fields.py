@@ -185,7 +185,7 @@ class RelativeDistinguishedNameField(forms.CharField):
             attributes = [attr for rdn in rdns for attr in rdn]
             return x509.RelativeDistinguishedName(attributes=attributes)
 
-        return x509_relative_name(value)  # pragma: only cryptography<37
+        return x509_relative_name(value)  # pragma: only cryptography<37.0
 
 
 class ReasonsField(forms.MultipleChoiceField):
