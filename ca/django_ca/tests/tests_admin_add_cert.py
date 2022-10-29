@@ -1221,10 +1221,6 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                                 "full_name": ["http://crl.profile.example.com"],
                                 "crl_issuer": ["http://crl-issuer.profile.example.com"],
                             },
-                            {
-                                "full_name": ["http://crl2.profile.example.com"],
-                                "crl_issuer": ["http://crl-issuer2.profile.example.com"],
-                            },
                         ],
                     },
                     "extended_key_usage": {
@@ -1269,15 +1265,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
         self.ca.save()
 
-        with self.assertLogs("django_ca") as logcm:
-            response = self.app.get(self.add_url, user=self.user.username)
-        self.assertEqual(
-            logcm.output,
-            [
-                "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
-                "changed in the web interface."
-            ],
-        )
+        response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
         # default value for form field is on import time, so override settings does not change
         # profile field
@@ -1303,25 +1291,10 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                x509.Extension(
-                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                self.crl_distribution_points(
+                    full_name=[uri("http://crl.profile.example.com")],
+                    crl_issuer=[uri("http://crl-issuer.profile.example.com")],
                     critical=True,
-                    value=x509.CRLDistributionPoints(
-                        [
-                            x509.DistributionPoint(
-                                full_name=[uri("http://crl.profile.example.com")],
-                                relative_name=None,
-                                reasons=None,
-                                crl_issuer=[uri("http://crl-issuer.profile.example.com")],
-                            ),
-                            x509.DistributionPoint(
-                                full_name=[uri("http://crl2.profile.example.com")],
-                                relative_name=None,
-                                reasons=None,
-                                crl_issuer=[uri("http://crl-issuer2.profile.example.com")],
-                            ),
-                        ]
-                    ),
                 ),
                 x509.Extension(
                     oid=ExtensionOID.CERTIFICATE_POLICIES,
@@ -1351,5 +1324,109 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 self.subject_alternative_name(dns(cn)),
                 self.subject_key_identifier(cert),
                 self.tls_feature(x509.TLSFeatureType.status_request, critical=True),
+            ],
+        )
+
+    @override_tmpcadir(
+        CA_PROFILES={
+            "everything": {
+                "extensions": {
+                    "crl_distribution_points": {
+                        "critical": True,
+                        "value": [
+                            {
+                                "full_name": ["http://crl.profile.example.com"],
+                                "crl_issuer": ["http://crl-issuer.profile.example.com"],
+                            },
+                            {
+                                "full_name": ["http://crl2.profile.example.com"],
+                                "crl_issuer": ["http://crl-issuer2.profile.example.com"],
+                            },
+                        ],
+                    },
+                    "freshest_crl": {
+                        "critical": True,
+                        "value": [
+                            {
+                                "full_name": ["http://freshest-crl.profile.example.com"],
+                                "crl_issuer": ["http://freshest-crl-issuer.profile.example.com"],
+                            }
+                        ],
+                    },
+                }
+            }
+        },
+        CA_DEFAULT_PROFILE="everything",
+    )
+    def test_multiple_distribution_points(self) -> None:
+        """Create a cert with a full profile, which should mask any CA-specific values.
+
+        This test shows that the values from the profile are prefilled correctly. If they where not, some
+        of the fields would not show up in the signed certificate.
+        """
+        # Make sure that the CA has field values set.
+        cn = "test-only-ca.example.com"
+        self.ca.crl_url = ""
+        self.ca.issuer_url = ""
+        self.ca.ocsp_url = ""
+        self.ca.issuer_alt_name = ""
+        self.ca.save()
+
+        with self.assertLogs("django_ca") as logcm:
+            response = self.app.get(self.add_url, user=self.user.username)
+        self.assertEqual(
+            logcm.output,
+            [
+                "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
+                "changed in the web interface."
+            ],
+        )
+        form = response.forms["certificate_form"]
+        # default value for form field is on import time, so override settings does not change
+        # profile field
+        form["profile"] = "everything"
+        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["subject_5"] = cn
+        response = form.submit()
+        print(type(form), type(response))
+        response = response.follow()
+        print(type(response))
+        self.assertEqual(response.status_code, 200)
+
+        # Check that we get all the extensions from the CA
+        cert = Certificate.objects.get(cn="test-only-ca.example.com")
+        self.maxDiff = None
+        self.assertEqual(
+            cert._sorted_extensions,
+            [
+                cert.ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                x509.Extension(
+                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                    critical=True,
+                    value=x509.CRLDistributionPoints(
+                        [
+                            x509.DistributionPoint(
+                                full_name=[uri("http://crl.profile.example.com")],
+                                relative_name=None,
+                                reasons=None,
+                                crl_issuer=[uri("http://crl-issuer.profile.example.com")],
+                            ),
+                            x509.DistributionPoint(
+                                full_name=[uri("http://crl2.profile.example.com")],
+                                relative_name=None,
+                                reasons=None,
+                                crl_issuer=[uri("http://crl-issuer2.profile.example.com")],
+                            ),
+                        ]
+                    ),
+                ),
+                self.freshest_crl(
+                    [uri("http://freshest-crl.profile.example.com")],
+                    crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
+                    critical=True,
+                ),
+                self.subject_alternative_name(dns(cn)),
+                self.subject_key_identifier(cert),
             ],
         )
