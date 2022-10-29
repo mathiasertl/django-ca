@@ -25,10 +25,14 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.test import TestCase
 
+from django_webtest import WebTestMixin
 from freezegun import freeze_time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
+from webtest import Checkbox, Hidden
+from webtest import Select as WebTestSelect
+from webtest import Submit
 
 from .. import ca_settings
 from ..extensions import (
@@ -48,6 +52,7 @@ from ..typehints import ExtensionTypeTypeVar, ParsableValue, SerializedExtension
 from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
 from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.testcases import SeleniumTestCase
+from .base.utils import uri
 from .tests_admin import CertificateModelAdminTestCaseMixin
 
 
@@ -1100,3 +1105,88 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
                 subject_fields,
                 cn_in_san,
             )
+
+
+@freeze_time(timestamps["everything_valid"])
+class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestMixin, TestCase):
+    """Tests for adding certificates."""
+
+    load_cas = ("root", "child")
+
+    @override_tmpcadir()
+    def test_empty_form_and_empty_cert(self) -> None:
+        """Test submitting an empty form, then filling it with values and submitting it."""
+        response = self.app.get(self.add_url, user=self.user.username)
+        form = response.forms["certificate_form"]
+        for key, field_list in form.fields.items():
+            for field in field_list:
+                if isinstance(field, (Hidden, Submit)):
+                    continue
+                if isinstance(field, Checkbox):
+                    field.checked = False
+                elif isinstance(field, WebTestSelect):
+                    continue  # just annoying to handle
+                else:
+                    field.value = ""
+        response = form.submit()
+        self.assertEqual(response.status_code, 200)
+
+        # Fill in the bare minimum fields
+        form = response.forms["certificate_form"]
+        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["subject_5"] = "test-empty-form.example.com"
+        form["expires"] = (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m-%d")
+
+        # Submit the form
+        response = form.submit().follow()
+        self.assertEqual(response.status_code, 200)
+        cert = Certificate.objects.get(cn="test-empty-form.example.com")
+
+        # Cert has minimal extensions, since we cleared the form  earlier
+        self.assertEqual(
+            cert._sorted_extensions,
+            [
+                cert.ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.subject_key_identifier(cert),
+            ],
+        )
+
+    @override_tmpcadir(CA_PROFILES={"nothing": {}}, CA_DEFAULT_PROFILE="nothing")
+    def test_only_ca_prefill(self) -> None:
+        """Create a cert with an empty profile.
+
+        This test shows that the values from the CA are prefilled correctly. If they where not, some
+        of the fields would not show up in the signed certificate.
+        """
+        # Make sure that the CA has field values set.
+        cn = "test-only-ca.example.com"
+        self.ca.crl_url = "http://crl.test-only-ca.example.com"
+        self.ca.issuer_url = "http://issuer.test-only-ca.example.com"
+        self.ca.ocsp_url = "http://ocsp.test-only-ca.example.com"
+        self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
+        self.ca.save()
+
+        response = self.app.get(self.add_url, user=self.user.username)
+        form = response.forms["certificate_form"]
+        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["subject_5"] = cn
+        response = form.submit().follow()
+        self.assertEqual(response.status_code, 200)
+
+        # Check that we get all the extensions from the CA
+        cert = Certificate.objects.get(cn="test-only-ca.example.com")
+        self.assertEqual(
+            cert._sorted_extensions,
+            [
+                self.authority_information_access(
+                    ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
+                ),
+                cert.ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.crl_distribution_points(full_name=[uri(self.ca.crl_url)]),
+                self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
+                self.subject_alternative_name(x509.DNSName(cn)),
+                self.subject_key_identifier(cert),
+            ],
+        )

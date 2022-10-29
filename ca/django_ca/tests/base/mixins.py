@@ -509,7 +509,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         ca_issuers: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
         ocsp: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        critical: bool = True,
+        critical: bool = False,
     ) -> x509.Extension[x509.AuthorityInformationAccess]:
         """Shortcut for getting a AuthorityInformationAccess extension."""
 
