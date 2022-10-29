@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from cryptography import x509
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.http.response import HttpResponse
@@ -1204,13 +1205,26 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                             "issuers": ["http://profile.issuers.example.com"],
                         },
                     },
+                    "certificate_policies": {
+                        "critical": True,
+                        "value": [
+                            {
+                                "policy_identifier": "2.5.29.32.0",
+                                "policy_qualifiers": ["text1"],
+                            },
+                        ],
+                    },
                     "crl_distribution_points": {
                         "critical": True,
                         "value": [
                             {
                                 "full_name": ["http://crl.profile.example.com"],
                                 "crl_issuer": ["http://crl-issuer.profile.example.com"],
-                            }
+                            },
+                            {
+                                "full_name": ["http://crl2.profile.example.com"],
+                                "crl_issuer": ["http://crl-issuer2.profile.example.com"],
+                            },
                         ],
                     },
                     "extended_key_usage": {
@@ -1255,8 +1269,19 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
         self.ca.save()
 
-        response = self.app.get(self.add_url, user=self.user.username)
+        with self.assertLogs("django_ca") as logcm:
+            response = self.app.get(self.add_url, user=self.user.username)
+        self.assertEqual(
+            logcm.output,
+            [
+                "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
+                "changed in the web interface."
+            ],
+        )
         form = response.forms["certificate_form"]
+        # default value for form field is on import time, so override settings does not change
+        # profile field
+        form["profile"] = "everything"
         form["csr"] = certs["child-cert"]["csr"]["pem"]
         form["subject_5"] = cn
         response = form.submit().follow()
@@ -1264,6 +1289,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
+        self.maxDiff = None
         self.assertEqual(
             cert._sorted_extensions,
             [
@@ -1277,10 +1303,37 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.crl_distribution_points(
-                    full_name=[uri("http://crl.profile.example.com")],
-                    crl_issuer=[uri("http://crl-issuer.profile.example.com")],
+                x509.Extension(
+                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
                     critical=True,
+                    value=x509.CRLDistributionPoints(
+                        [
+                            x509.DistributionPoint(
+                                full_name=[uri("http://crl.profile.example.com")],
+                                relative_name=None,
+                                reasons=None,
+                                crl_issuer=[uri("http://crl-issuer.profile.example.com")],
+                            ),
+                            x509.DistributionPoint(
+                                full_name=[uri("http://crl2.profile.example.com")],
+                                relative_name=None,
+                                reasons=None,
+                                crl_issuer=[uri("http://crl-issuer2.profile.example.com")],
+                            ),
+                        ]
+                    ),
+                ),
+                x509.Extension(
+                    oid=ExtensionOID.CERTIFICATE_POLICIES,
+                    critical=True,
+                    value=x509.CertificatePolicies(
+                        [
+                            x509.PolicyInformation(
+                                policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
+                                policy_qualifiers=["text1"],
+                            )
+                        ]
+                    ),
                 ),
                 self.extended_key_usage(
                     ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True

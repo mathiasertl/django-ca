@@ -308,7 +308,9 @@ class DistributionPointWidget(ExtensionWidget):
         if value is None:
             return full_name, relative_name, crl_issuer, reasons, OID_DEFAULT_CRITICAL[self.oid]
         if len(value.value) > 1:
-            raise ValueError("Only one DistributionPoint is supported at this time.")
+            log.warning(
+                "Received multiple DistributionPoints, only the first can be changed in the web interface."
+            )
 
         dpoint = value.value[0]
         if dpoint.relative_name:

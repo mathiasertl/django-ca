@@ -197,16 +197,31 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
 
     def test_rendering_mutltiple_dps(self) -> None:
         """Test rendering multiple distribution points (It's not supported yet)."""
+        name = "field-name"
         field = self.field_class()
-        dpoint = x509.DistributionPoint(full_name=[DNS1], relative_name=None, reasons=None, crl_issuer=None)
+        dpoint1 = x509.DistributionPoint(full_name=[DNS1], relative_name=None, reasons=None, crl_issuer=None)
+        dpoint2 = x509.DistributionPoint(full_name=[DNS1], relative_name=None, reasons=None, crl_issuer=None)
         ext = x509.Extension(
             oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
             critical=False,
-            value=x509.CRLDistributionPoints([dpoint, dpoint]),
+            value=x509.CRLDistributionPoints([dpoint1, dpoint2]),
         )
 
-        with self.assertRaisesRegex(ValueError, r"^Only one DistributionPoint is supported at this time\.$"):
-            field.widget.render("error", ext)
+        with self.assertLogs("django_ca") as logcm:
+            html = field.widget.render(name, ext)
+
+        self.assertEqual(
+            logcm.output,
+            [
+                "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
+                "changed in the web interface."
+            ],
+        )
+        self.assertInHTML(
+            f'<textarea name="{name}_0" cols="40" rows="3" class="django-ca-widget full-name">'
+            f"DNS:{D1}</textarea>",
+            html,
+        )
 
 
 class GeneralNamesFieldTest(TestCase, FieldTestCaseMixin):

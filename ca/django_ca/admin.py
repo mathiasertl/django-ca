@@ -979,14 +979,38 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             expires = datetime.combine(data["expires"], datetime.min.time())
 
-            extensions: typing.List[x509.Extension[x509.ExtensionType]] = []
+            extensions: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
             san, cn_in_san = data["subject_alternative_name"]
             san = SubjectAlternativeName({"value": [e.strip() for e in san.split(",") if e.strip()]})
             if san:
-                extensions.append(san.as_extension())
+                extensions["subject_alternative_name"] = san.as_extension()
+
+            # Update extensions handled through the form
             for key in CERTIFICATE_EXTENSIONS:
                 if data[key] is not None:
-                    extensions.append(data[key])
+                    extensions[key] = data[key]
+
+            # Update extensions from the profile that cannot (yet) be changed in the web interface
+            for key, ext in profile.extensions.items():
+                # We currently only support the first distribution point, append others from profile
+                if key in ("crl_distribution_points", "freshest_crl") and key in extensions:
+                    profile_ext = ext.extension_type
+                    if len(profile_ext) > 1:
+                        form_ext = extensions[key]
+                        dpoints = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
+                        extensions[key] = x509.Extension(
+                            oid=form_ext.oid, critical=form_ext.critical, value=dpoints
+                        )
+                    continue
+                if key in CERTIFICATE_EXTENSIONS:  # already hanled in form
+                    continue
+                if key == "subject_alternative_name":  # pragma: no cover  # handled above
+                    continue
+                if key == "basic_constraints":  # set by default in profile, so ignore it
+                    continue
+
+                # Add any extension from the profile currently not changable in the web interface
+                extensions[key] = ext.as_extension()
 
             ca: CertificateAuthority = data["ca"]
 
@@ -997,7 +1021,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     subject=data["subject"],
                     algorithm=data["algorithm"],
                     expires=expires,
-                    extensions=extensions,
+                    extensions=extensions.values(),
                     cn_in_san=cn_in_san,
                     password=data["password"],
                 )
