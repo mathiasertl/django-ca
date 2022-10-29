@@ -250,7 +250,11 @@ class SubjectAltNameWidget(CustomMultiWidget):
 class GeneralNamesWidget(Textarea):
     """Widget for a list of :py:class:`~cg:cryptography.x509.GeneralName` instances."""
 
-    def format_value(self, value: typing.Optional[typing.Iterable[x509.GeneralName]]) -> str:
+    def format_value(
+        self, value: typing.Optional[typing.Union[str, typing.Iterable[x509.GeneralName]]]
+    ) -> str:
+        if isinstance(value, str):  # Received during form rendering for a bound form with errors
+            return value
         if not value:
             return ""
         return "\n".join([format_general_name(name) for name in value])
