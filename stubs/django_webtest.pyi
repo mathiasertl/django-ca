@@ -1,21 +1,21 @@
 import typing
 
-
-class Form:
-    def submit(self) -> "DjangoWebtestResponse":
-        ...
+from webtest.forms import Form
+from webtest.response import TestResponse
 
 
-class DjangoWebtestResponse:
+class DjangoWebtestResponse(TestResponse):
+    status_code: int
+
     def follow(self) -> "DjangoWebtestResponse":
         ...
 
     @property
-    def form(self) -> Form:
+    def form(self) -> Form["DjangoWebtestResponse"]:
         ...
 
     @property
-    def forms(self) -> typing.Dict[typing.Union[int, str], Form]:
+    def forms(self) -> typing.Dict[typing.Union[int, str], Form["DjangoWebtestResponse"]]:
         ...
 
 
