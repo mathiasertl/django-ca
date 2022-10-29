@@ -71,6 +71,7 @@ from .models import (
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
+from .typehints import CRLExtensionType
 from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
 
 log = logging.getLogger(__name__)
@@ -994,15 +995,15 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             for key, ext in profile.extensions.items():
                 # We currently only support the first distribution point, append others from profile
                 if key in ("crl_distribution_points", "freshest_crl") and key in extensions:
-                    profile_ext = ext.extension_type
-                    if len(profile_ext) > 1:
-                        form_ext = extensions[key]
+                    profile_ext = ext.extension_type  # type: ignore[union-attr]  # is never None
+                    if len(profile_ext) > 1:  # pragma: no branch  # false positive
+                        form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[key])
                         dpoints = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
                         extensions[key] = x509.Extension(
                             oid=form_ext.oid, critical=form_ext.critical, value=dpoints
                         )
                     continue
-                if key in CERTIFICATE_EXTENSIONS:  # already hanled in form
+                if key in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
                 if key == "subject_alternative_name":  # pragma: no cover  # handled above
                     continue
@@ -1010,7 +1011,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     continue
 
                 # Add any extension from the profile currently not changable in the web interface
-                extensions[key] = ext.as_extension()
+                extensions[key] = ext.as_extension()  # type: ignore[union-attr]  # is never None
 
             ca: CertificateAuthority = data["ca"]
 

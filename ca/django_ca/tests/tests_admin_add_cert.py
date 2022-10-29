@@ -1144,7 +1144,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Cert has minimal extensions, since we cleared the form  earlier
         self.assertEqual(
-            cert._sorted_extensions,
+            cert._sorted_extensions,  # pylint: ignore=protected-access
             [
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
@@ -1177,7 +1177,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
         self.assertEqual(
-            cert._sorted_extensions,
+            cert._sorted_extensions,  # pylint: ignore=protected-access
             [
                 self.authority_information_access(
                     ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
@@ -1277,9 +1277,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
-        self.maxDiff = None
         self.assertEqual(
-            cert._sorted_extensions,
+            cert._sorted_extensions,  # pylint: ignore=protected-access
             [
                 self.authority_information_access(
                     ca_issuers=[uri("http://profile.issuers.example.com")],
@@ -1388,16 +1387,14 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["csr"] = certs["child-cert"]["csr"]["pem"]
         form["subject_5"] = cn
         response = form.submit()
-        print(type(form), type(response))
         response = response.follow()
-        print(type(response))
         self.assertEqual(response.status_code, 200)
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
         self.maxDiff = None
         self.assertEqual(
-            cert._sorted_extensions,
+            cert._sorted_extensions,  # pylint: ignore=protected-access
             [
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),

@@ -64,6 +64,15 @@ django.jQuery(document).ready(function() {
                         field.find('select').val(ext.value);
                     }
                     field.find('select').change();  // so any existing callbacks are called
+                } else if (key === "authority_information_access") {
+                    if (ext.value.issuers) {
+                        field.find('textarea.ca-issuers').val(ext.value.issuers.join("\n"));
+                    }
+                    if (ext.value.ocsp) {
+                        field.find('textarea.ocsp').val(ext.value.ocsp.join("\n"));
+                    }
+                } else {
+                    console.log("Unhandled extension: " + key);
                 }
 
             });

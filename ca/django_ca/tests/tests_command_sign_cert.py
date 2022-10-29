@@ -29,7 +29,6 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..constants import OID_DEFAULT_CRITICAL
 from ..extensions import ExtendedKeyUsage, IssuerAlternativeName, KeyUsage, SubjectAlternativeName, TLSFeature
 from ..models import Certificate, CertificateAuthority
 from ..signals import post_issue_cert, pre_issue_cert

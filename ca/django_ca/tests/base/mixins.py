@@ -769,7 +769,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
         crl_issuer: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
         critical: bool = False,
-    ) -> x509.Extension[x509.CRLDistributionPoints]:
+    ) -> x509.Extension[x509.FreshestCRL]:
         """Shortcut for getting a CRLDistributionPoints extension."""
         dpoint = x509.DistributionPoint(
             full_name=full_name, relative_name=relative_name, reasons=reasons, crl_issuer=crl_issuer
