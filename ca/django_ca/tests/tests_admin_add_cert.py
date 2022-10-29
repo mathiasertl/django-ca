@@ -50,9 +50,8 @@ from ..profiles import Profile, profiles
 from ..signals import post_issue_cert, pre_issue_cert
 from ..typehints import ExtensionTypeTypeVar, ParsableValue, SerializedExtension, SerializedValue
 from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
-from .base import certs, override_settings, override_tmpcadir, timestamps
+from .base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.testcases import SeleniumTestCase
-from .base.utils import uri
 from .tests_admin import CertificateModelAdminTestCaseMixin
 
 
@@ -120,7 +119,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
                 self.key_usage(digital_signature=True, key_agreement=True),
                 self.ocsp_no_check(),
-                self.subject_alternative_name(x509.DNSName(cname)),
+                self.subject_alternative_name(dns(cname)),
                 self.tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
             ],
         )
@@ -383,7 +382,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.csr.pem.strip(), csr)
 
         # Some extensions are not set
-        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName(san), x509.DNSName(cname))])
+        self.assertExtensions(cert, [self.subject_alternative_name(dns(san), dns(cname))])
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -1186,7 +1185,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 self.basic_constraints(),
                 self.crl_distribution_points(full_name=[uri(self.ca.crl_url)]),
                 self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
-                self.subject_alternative_name(x509.DNSName(cn)),
+                self.subject_alternative_name(dns(cn)),
                 self.subject_key_identifier(cert),
             ],
         )

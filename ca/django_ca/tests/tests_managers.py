@@ -36,7 +36,7 @@ from ..models import Certificate, CertificateAuthority
 from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from ..typehints import ParsableExtension
-from .base import certs, override_settings, override_tmpcadir, timestamps
+from .base import certs, dns, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 
@@ -180,7 +180,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Test creating a CA with extra extensions."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         tls_feature = self.tls_feature(x509.TLSFeatureType.status_request)
-        name_constraints = self.name_constraints(permitted=[x509.DNSName(".com")])
+        name_constraints = self.name_constraints(permitted=[dns(".com")])
         extensions: typing.List[x509.Extension[x509.ExtensionType]] = [
             tls_feature,
             self.ocsp_no_check(),
@@ -229,7 +229,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             [
                 self.basic_constraints(ca=True),
                 self.key_usage(crl_sign=True, key_cert_sign=True),
-                self.name_constraints(permitted=[x509.DNSName(".com")], critical=True),
+                self.name_constraints(permitted=[dns(".com")], critical=True),
             ],
         )
 
@@ -244,7 +244,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             [
                 self.basic_constraints(ca=True),
                 self.key_usage(crl_sign=True, key_cert_sign=True),
-                self.name_constraints(permitted=[x509.DNSName(".com")], critical=True),
+                self.name_constraints(permitted=[dns(".com")], critical=True),
             ],
         )
 
@@ -352,7 +352,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(self.ca, self.csr, subject=self.subject)
         self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName(self.hostname))])
+        self.assertExtensions(cert, [self.subject_alternative_name(dns(self.hostname))])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_explicit_profile(self) -> None:
@@ -362,7 +362,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca, self.csr, subject=self.subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
         self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(cert, [self.subject_alternative_name(x509.DNSName(self.hostname))])
+        self.assertExtensions(cert, [self.subject_alternative_name(dns(self.hostname))])
 
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:

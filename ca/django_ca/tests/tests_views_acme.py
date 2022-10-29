@@ -58,7 +58,7 @@ from ..models import (
 )
 from ..tasks import acme_issue_certificate, acme_validate_challenge
 from ..typehints import PrivateKeyTypes
-from .base import CERT_PEM_REGEX, certs, override_tmpcadir, timestamps
+from .base import CERT_PEM_REGEX, certs, dns, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
@@ -1561,7 +1561,7 @@ class AcmeOrderFinalizeViewTestCase(
         self.csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
             .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
@@ -1696,7 +1696,7 @@ class AcmeOrderFinalizeViewTestCase(
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
             .sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
         )
 
@@ -1718,7 +1718,7 @@ class AcmeOrderFinalizeViewTestCase(
                     ]
                 )
             )
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
             .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
@@ -1755,7 +1755,7 @@ class AcmeOrderFinalizeViewTestCase(
                     ]
                 )
             )
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
             .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
@@ -1792,7 +1792,7 @@ class AcmeOrderFinalizeViewTestCase(
                     ]
                 )
             )
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
             .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
@@ -1814,7 +1814,7 @@ class AcmeOrderFinalizeViewTestCase(
                     ]
                 )
             )
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(self.hostname)]), critical=False)
+            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
             .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
@@ -1846,7 +1846,7 @@ class AcmeOrderFinalizeViewTestCase(
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
             .add_extension(
-                x509.SubjectAlternativeName([x509.DNSName(self.hostname), x509.DNSName("example.net")]),
+                x509.SubjectAlternativeName([dns(self.hostname), dns("example.net")]),
                 critical=False,
             )
             .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())

@@ -67,7 +67,7 @@ from ...signals import (
     pre_sign_cert,
 )
 from ...utils import ca_storage, parse_general_name
-from . import certs, timestamps
+from . import certs, timestamps, uri
 from .typehints import DjangoCAModelTypeVar
 
 if typing.TYPE_CHECKING:
@@ -792,7 +792,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> typing.Optional[typing.List[x509.UniformResourceIdentifier]]:
         """Get the IDP full name for `ca`."""
         crl_url = [url.strip() for url in ca.crl_url.split()]
-        return [x509.UniformResourceIdentifier(c) for c in crl_url] or None
+        return [uri(c) for c in crl_url] or None
 
     @property
     def hostname(self) -> str:
@@ -1063,10 +1063,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
-
-    def uri(self, uri: str) -> x509.UniformResourceIdentifier:
-        """Minor shortcast to get a x509.UniformResourceIdentifier."""
-        return x509.UniformResourceIdentifier(uri)
 
     @property
     def usable_cas(self) -> typing.Iterator[typing.Tuple[str, CertificateAuthority]]:

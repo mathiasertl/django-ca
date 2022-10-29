@@ -41,7 +41,7 @@ from ..profiles import Profile, get_profile, profile, profiles
 from ..signals import pre_issue_cert
 from ..subject import Subject
 from ..utils import parse_hash_algorithm
-from .base import certs, override_settings, override_tmpcadir
+from .base import certs, dns, override_settings, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -214,10 +214,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
-            ],
+            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
         )
 
     @override_tmpcadir()
@@ -249,8 +246,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.issuer_alternative_name(x509.UniformResourceIdentifier(ca.issuer_alt_name)),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.issuer_alternative_name(uri(ca.issuer_alt_name)),
+                self.subject_alternative_name(dns(self.hostname)),
             ],
         )
 
@@ -282,7 +279,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 self.subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -306,7 +303,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
             ],
         )
 
@@ -333,7 +330,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 self.subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -364,10 +361,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
-            ],
+            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
         )
 
         # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
@@ -384,10 +378,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
-            ],
+            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
         )
 
         # test that the first SAN is added as CN if we don't have A CN
@@ -403,10 +394,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
-            ],
+            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
         )
 
     @override_tmpcadir()
@@ -440,7 +428,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
                 ski,
             ],
             expect_defaults=False,
@@ -477,7 +465,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             [
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
                 ski,
             ],
             expect_defaults=False,
@@ -510,7 +498,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 self.subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -539,7 +527,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
                 self.ocsp_no_check(),
-                self.subject_alternative_name(x509.DNSName(self.hostname)),
+                self.subject_alternative_name(dns(self.hostname)),
             ],
         )
 

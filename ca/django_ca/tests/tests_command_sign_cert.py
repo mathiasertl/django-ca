@@ -34,7 +34,7 @@ from ..extensions import ExtendedKeyUsage, IssuerAlternativeName, KeyUsage, Subj
 from ..models import Certificate, CertificateAuthority
 from ..signals import post_issue_cert, pre_issue_cert
 from ..utils import ca_storage, x509_name
-from .base import certs, override_settings, override_tmpcadir, timestamps
+from .base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -235,7 +235,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 ca=self.ca,
                 subject=self.subject,
                 cn_in_san=False,
-                alt=x509.SubjectAlternativeName([x509.DNSName("example.com")]),
+                alt=x509.SubjectAlternativeName([dns("example.com")]),
                 stdin=stdin,
             )
         self.assertEqual(pre.call_count, 1)
@@ -300,7 +300,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=x509.SubjectAlternativeName([x509.DNSName(self.hostname)]),
+                alt=x509.SubjectAlternativeName([dns(self.hostname)]),
                 stdin=stdin,
             )
         self.assertEqual(stderr, "")
@@ -331,7 +331,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=x509.SubjectAlternativeName([x509.DNSName(self.hostname)]),
+                alt=x509.SubjectAlternativeName([dns(self.hostname)]),
                 stdin=stdin,
                 subject=subject,
             )
@@ -373,16 +373,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
         self.assertEqual(
             cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
-            x509.Extension(
-                oid=x509.SubjectAlternativeName.oid,
-                critical=OID_DEFAULT_CRITICAL[x509.SubjectAlternativeName.oid],
-                value=x509.SubjectAlternativeName(
-                    [
-                        x509.UniformResourceIdentifier("https://example.net"),
-                        x509.DNSName(self.hostname),
-                    ]
-                ),
-            ),
+            self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
         )
         self.assertEqual(cert.tls_feature, TLSFeature({"value": ["OCSPMustStaple"]}))
         self.assertEqual(
@@ -413,17 +404,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
             cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
-            x509.Extension(
-                oid=x509.SubjectAlternativeName.oid,
-                critical=OID_DEFAULT_CRITICAL[x509.SubjectAlternativeName.oid],
-                value=x509.SubjectAlternativeName(
-                    [
-                        x509.UniformResourceIdentifier("https://example.net"),
-                        x509.DNSName("example.org"),
-                        x509.DNSName(self.hostname),
-                    ]
-                ),
-            ),
+            self.subject_alternative_name(uri("https://example.net"), dns("example.org"), dns(self.hostname)),
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -434,7 +415,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                alt=x509.SubjectAlternativeName([x509.DNSName(self.hostname)]),
+                alt=x509.SubjectAlternativeName([dns(self.hostname)]),
                 stdin=stdin,
             )
 
@@ -474,7 +455,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.cmd(
                 "sign_cert",
                 ca=ca,
-                alt=x509.SubjectAlternativeName([x509.DNSName("example.com")]),
+                alt=x509.SubjectAlternativeName([dns("example.com")]),
                 stdin=stdin,
                 password=password,
             )
@@ -489,7 +470,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.cmd(
                 "sign_cert",
                 ca=ca,
-                alt=x509.SubjectAlternativeName([x509.DNSName("example.com")]),
+                alt=x509.SubjectAlternativeName([dns("example.com")]),
                 stdin=stdin,
                 password=b"wrong",
             )

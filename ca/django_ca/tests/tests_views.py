@@ -15,7 +15,6 @@
 
 import copy
 
-from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -27,7 +26,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..views import CertificateRevocationListView
-from .base import certs, override_settings, override_tmpcadir
+from .base import certs, override_settings, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
 app_name = "django_ca"
@@ -110,7 +109,7 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
     def test_full_scope(self) -> None:
         """Test getting CRL with full scope."""
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+        idp = self.get_idp(full_name=[uri(full_name)])
 
         self.ca.crl_url = full_name
         self.ca.save()
@@ -161,11 +160,7 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
     def test_ca_crl_intermediate(self) -> None:
         """Test getting CRL for an intermediate CA."""
         child = self.cas["child"]
-        full_name = [
-            x509.UniformResourceIdentifier(
-                f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/"
-            )
-        ]
+        full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/")]
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
         self.assertIsNotNone(child.key(password=None))
 

@@ -63,7 +63,7 @@ from ..models import (
     X509CertMixin,
 )
 from ..utils import ca_storage, get_crl_cache_key
-from .base import CERT_PEM_REGEX, certs, override_settings, override_tmpcadir, timestamps
+from .base import CERT_PEM_REGEX, certs, dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
@@ -222,9 +222,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         child = self.cas["child"]
         cert = self.certs["root-cert"]
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+        idp = self.get_idp(full_name=[uri(full_name)])
 
-        crl = ca.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
+        crl = ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca)
 
         ca.crl_url = full_name
@@ -258,14 +258,14 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         child = self.cas["child"]
         cert = self.certs["child-cert"]
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+        idp = self.get_idp(full_name=[uri(full_name)])
 
-        crl = child.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
+        crl = child.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=child)
 
         # Revoke a cert
         cert.revoke()
-        crl = child.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
+        crl = child.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=child)
 
     @override_settings(USE_TZ=True)
@@ -306,11 +306,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_intermediate_ca_crl(self) -> None:
         """Test getting the CRL for an intermediate CA."""
         # Intermediate CAs have a DP in the CRL that has the CA url
-        full_name = [
-            x509.UniformResourceIdentifier(
-                f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{self.ca.serial}/"
-            )
-        ]
+        full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{self.ca.serial}/")]
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
 
         crl = self.ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
@@ -383,12 +379,12 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[x509.UniformResourceIdentifier(value=full_name)])
+        idp = self.get_idp(full_name=[uri(full_name)])
 
         with mock.patch(
             "cryptography.x509.extensions.Extensions.get_extension_for_oid", side_effect=side_effect
         ):
-            crl = self.ca.get_crl(full_name=[self.uri(full_name)]).public_bytes(Encoding.PEM)
+            crl = self.ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         # Note that we still get an AKI because the value comes from the public key in this case
         self.assertCRL(crl, idp=idp, signer=self.ca)
 
@@ -429,9 +425,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
             else:
                 crl_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
-                full_name = [
-                    x509.UniformResourceIdentifier(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
-                ]
+                full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")]
                 ca_idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
 
             self.assertIsNone(cache.get(der_ca_key))
@@ -572,16 +566,11 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             self.ca.extensions_for_certificate,
             {
                 "authority_information_access": self.authority_information_access(
-                    ca_issuers=[x509.UniformResourceIdentifier(self.ca.issuer_url)],
-                    ocsp=[x509.UniformResourceIdentifier(self.ca.ocsp_url)],
-                    critical=False,
+                    ca_issuers=[uri(self.ca.issuer_url)],
+                    ocsp=[uri(self.ca.ocsp_url)],
                 ),
-                "crl_distribution_points": self.crl_distribution_points(
-                    [x509.UniformResourceIdentifier(self.ca.crl_url)]
-                ),
-                "issuer_alternative_name": self.issuer_alternative_name(
-                    x509.UniformResourceIdentifier(self.ca.issuer_alt_name)
-                ),
+                "crl_distribution_points": self.crl_distribution_points([uri(self.ca.crl_url)]),
+                "issuer_alternative_name": self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
             },
         )
 
@@ -630,7 +619,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
                     critical=False,
                     value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
                 ),
-                self.subject_alternative_name(x509.DNSName(cn)),
+                self.subject_alternative_name(dns(cn)),
                 self.basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
@@ -690,7 +679,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(x509.DNSName("example.net"))
+        san = self.subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=False, extensions=[san])
 
@@ -716,7 +705,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(x509.DNSName("example.net"))
+        san = self.subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
 
@@ -729,7 +718,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
                     critical=False,
                     value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
                 ),
-                self.subject_alternative_name(x509.DNSName("example.net"), x509.DNSName(cn)),
+                self.subject_alternative_name(dns("example.net"), dns(cn)),
                 self.basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
@@ -742,7 +731,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(x509.DNSName(cn))
+        san = self.subject_alternative_name(dns(cn))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
 
@@ -768,7 +757,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "foo..bar*"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(x509.DNSName("example.net"))
+        san = self.subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
 
@@ -1028,7 +1017,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
                 [
                     x509.AccessDescription(
                         access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                        access_location=x509.UniformResourceIdentifier("https://example.com"),
+                        access_location=uri("https://example.com"),
                     )
                 ]
             ),
@@ -1044,7 +1033,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
                 [
                     x509.AccessDescription(
                         access_method=AuthorityInformationAccessOID.OCSP,
-                        access_location=x509.UniformResourceIdentifier("https://example.com"),
+                        access_location=uri("https://example.com"),
                     )
                 ]
             ),
@@ -1571,11 +1560,11 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         self.assertEqual(
             SubjectAlternativeName({"value": [self.auth1.subject_alternative_name]}).extension_type,
-            x509.SubjectAlternativeName([x509.DNSName("example.com")]),
+            x509.SubjectAlternativeName([dns("example.com")]),
         )
         self.assertEqual(
             SubjectAlternativeName({"value": [self.auth2.subject_alternative_name]}).extension_type,
-            x509.SubjectAlternativeName([x509.DNSName("example.net")]),
+            x509.SubjectAlternativeName([dns("example.net")]),
         )
 
     def test_get_challenges(self) -> None:

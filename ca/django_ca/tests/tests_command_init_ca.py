@@ -32,7 +32,7 @@ from .. import ca_settings
 from ..extensions import AuthorityInformationAccess, CRLDistributionPoints, NameConstraints
 from ..models import CertificateAuthority
 from ..utils import int_to_hex, x509_name
-from .base import override_settings, override_tmpcadir, timestamps
+from .base import override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -302,7 +302,6 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test creating an ECC CA."""
 
         name = "test_ecc"
-        ian = x509.IssuerAlternativeName([x509.UniformResourceIdentifier("http://ian.ca.example.com")])
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name=name,
@@ -312,7 +311,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 expires=self.expires(720),
                 pathlen=3,
                 issuer_url="http://issuer.ca.example.com",
-                issuer_alt_name=ian,
+                issuer_alt_name=x509.IssuerAlternativeName([uri("http://ian.ca.example.com")]),
                 crl_url=["http://crl.example.com"],
                 ocsp_url="http://ocsp.example.com",
                 ca_issuer_url="http://ca.issuer.ca.example.com",

@@ -27,7 +27,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from ..models import CertificateAuthority, X509CertMixin
-from .base import certs, override_tmpcadir
+from .base import certs, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -292,11 +292,11 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         self.assertIsNone(root.crl_distribution_points)
         self.assertCountEqual(
             [name for dp in child.crl_distribution_points for name in dp.full_name],  # type: ignore
-            [self.uri(f"http://example.com{child_ca_crl}")],
+            [uri(f"http://example.com{child_ca_crl}")],
         )
         self.assertCountEqual(
             [name for dp in grandchild.crl_distribution_points for name in dp.full_name],  # type: ignore
-            [self.uri(f"http://example.com{grandchild_ca_crl}")],
+            [uri(f"http://example.com{grandchild_ca_crl}")],
         )
 
         with self.dumped(root, child, grandchild) as paths, self.crl(root, scope="ca") as (crl_path, crl):
@@ -306,7 +306,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
             with self.crl(child, scope="ca") as (crl2_path, crl2):
                 self.assertFullName(crl, None)
-                self.assertFullName(crl2, [self.uri(f"http://example.com{grandchild_ca_crl}")])
+                self.assertFullName(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
                 self.verify(
                     "-trusted {0} -untrusted {1} -crl_check_all {2}", *paths, crl=[crl_path, crl2_path]
                 )
@@ -315,7 +315,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             # CRLdp extension
             with self.crl(child) as (crl2_path, crl2):
                 self.assertFullName(crl, None)
-                # self.assertFullName(crl2, [self.uri(f"http://example.com{grandchild_ca_crl}")])
+                # self.assertFullName(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
                 self.verify(
                     "-trusted {0} -untrusted {1} -crl_check_all {2}",
                     *paths,
@@ -335,7 +335,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                 # Known but not easily fixable issue: If CA_DEFAULT_HOSTNAME is changed, CRLs will get wrong
                 # full name and validation fails.
                 self.assertFullName(crl, None)
-                # self.assertFullName(crl2, [self.uri(f"http://example.com{grandchild_ca_crl}")])
+                # self.assertFullName(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
                 self.verify(
                     "-trusted {0} -untrusted {1} -crl_check_all {2}",
                     *paths,

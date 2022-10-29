@@ -59,7 +59,7 @@ from ..utils import (
     x509_name,
     x509_relative_name,
 )
-from .base import dns, override_settings, override_tmpcadir
+from .base import dns, override_settings, override_tmpcadir, rdn, uri
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=typing.Type[object])
 
@@ -371,13 +371,12 @@ class RelativeNameTestCase(TestCase):
 
     def test_format(self) -> None:
         """Test formatting..."""
-        rdn = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        self.assertEqual(format_name(rdn), "/CN=example.com")
+        val = rdn([(NameOID.COMMON_NAME, "example.com")])
+        self.assertEqual(format_name(val), "/CN=example.com")
 
     def test_parse(self) -> None:
         """Test parsing..."""
-        expected = x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        self.assertEqual(x509_relative_name("/CN=example.com"), expected)
+        self.assertEqual(x509_relative_name("/CN=example.com"), rdn([(NameOID.COMMON_NAME, "example.com")]))
 
 
 class ValidateEmailTestCase(TestCase):
@@ -506,16 +505,16 @@ class ParseGeneralNameTest(TestCase):
 
     def test_domain(self) -> None:
         """Test parsing a domain."""
-        self.assertEqual(parse_general_name("DNS:example.com"), x509.DNSName("example.com"))
-        self.assertEqual(parse_general_name("DNS:.example.com"), x509.DNSName(".example.com"))
+        self.assertEqual(parse_general_name("DNS:example.com"), dns("example.com"))
+        self.assertEqual(parse_general_name("DNS:.example.com"), dns(".example.com"))
 
-        self.assertEqual(parse_general_name("example.com"), x509.DNSName("example.com"))
-        self.assertEqual(parse_general_name(".example.com"), x509.DNSName(".example.com"))
+        self.assertEqual(parse_general_name("example.com"), dns("example.com"))
+        self.assertEqual(parse_general_name(".example.com"), dns(".example.com"))
 
     def test_wildcard_domain(self) -> None:
         """Test parsing a wildcard domain."""
-        self.assertEqual(parse_general_name("*.example.com"), x509.DNSName("*.example.com"))
-        self.assertEqual(parse_general_name("DNS:*.example.com"), x509.DNSName("*.example.com"))
+        self.assertEqual(parse_general_name("*.example.com"), dns("*.example.com"))
+        self.assertEqual(parse_general_name("DNS:*.example.com"), dns("*.example.com"))
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
@@ -565,8 +564,8 @@ class ParseGeneralNameTest(TestCase):
     def test_uri(self) -> None:
         """Test parsing a URI."""
         url = "https://example.com"
-        self.assertEqual(parse_general_name(url), x509.UniformResourceIdentifier(url))
-        self.assertEqual(parse_general_name(f"uri:{url}"), x509.UniformResourceIdentifier(url))
+        self.assertEqual(parse_general_name(url), uri(url))
+        self.assertEqual(parse_general_name(f"uri:{url}"), uri(url))
 
     def test_rid(self) -> None:
         """Test parsing a Registered ID."""
@@ -615,27 +614,27 @@ class ParseGeneralNameTest(TestCase):
         """Test some unicode domains."""
         self.assertEqual(
             parse_general_name("https://exämple.com/test"),
-            x509.UniformResourceIdentifier("https://xn--exmple-cua.com/test"),
+            uri("https://xn--exmple-cua.com/test"),
         )
         self.assertEqual(
             parse_general_name("https://exämple.com:8000/test"),
-            x509.UniformResourceIdentifier("https://xn--exmple-cua.com:8000/test"),
+            uri("https://xn--exmple-cua.com:8000/test"),
         )
         self.assertEqual(
             parse_general_name("https://exämple.com:8000/test"),
-            x509.UniformResourceIdentifier("https://xn--exmple-cua.com:8000/test"),
+            uri("https://xn--exmple-cua.com:8000/test"),
         )
         self.assertEqual(
             parse_general_name("uri:https://exämple.com:8000/test"),
-            x509.UniformResourceIdentifier("https://xn--exmple-cua.com:8000/test"),
+            uri("https://xn--exmple-cua.com:8000/test"),
         )
 
-        self.assertEqual(parse_general_name("exämple.com"), x509.DNSName("xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name(".exämple.com"), x509.DNSName(".xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("*.exämple.com"), x509.DNSName("*.xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("dns:exämple.com"), x509.DNSName("xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("dns:.exämple.com"), x509.DNSName(".xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("dns:*.exämple.com"), x509.DNSName("*.xn--exmple-cua.com"))
+        self.assertEqual(parse_general_name("exämple.com"), dns("xn--exmple-cua.com"))
+        self.assertEqual(parse_general_name(".exämple.com"), dns(".xn--exmple-cua.com"))
+        self.assertEqual(parse_general_name("*.exämple.com"), dns("*.xn--exmple-cua.com"))
+        self.assertEqual(parse_general_name("dns:exämple.com"), dns("xn--exmple-cua.com"))
+        self.assertEqual(parse_general_name("dns:.exämple.com"), dns(".xn--exmple-cua.com"))
+        self.assertEqual(parse_general_name("dns:*.exämple.com"), dns("*.xn--exmple-cua.com"))
 
     def test_wrong_email(self) -> None:
         """Test using an invalid email."""
@@ -681,7 +680,7 @@ class FormatGeneralNameTest(TestCase):
 
     def test_basic(self) -> None:
         """Some basic tests."""
-        self.assertEqual(format_general_name(x509.DNSName("example.com")), "DNS:example.com")
+        self.assertEqual(format_general_name(dns("example.com")), "DNS:example.com")
         self.assertEqual(
             format_general_name(x509.IPAddress(ipaddress.IPv4Address("127.0.0.1"))), "IP:127.0.0.1"
         )

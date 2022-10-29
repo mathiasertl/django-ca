@@ -28,6 +28,7 @@ from django.test import TestCase
 from .. import ca_settings, fields
 from ..constants import REVOCATION_REASONS
 from ..extensions.utils import KEY_USAGE_NAMES_MAPPING
+from .base import rdn
 from .base.mixins import TestCaseMixin
 
 D1 = "example.com"
@@ -103,9 +104,7 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
                     ),
                     # relative distinguished name
                     ("", f"CN={D1}", "", (), critical): self.crl_distribution_points(
-                        relative_name=x509.RelativeDistinguishedName(
-                            [x509.NameAttribute(NameOID.COMMON_NAME, D1)]
-                        ),
+                        relative_name=rdn([(NameOID.COMMON_NAME, D1)]),
                         critical=critical,
                     ),
                     # crl issuer
@@ -189,10 +188,7 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
         name = "field-name"
         field = self.field_class()
         html = field.widget.render(
-            name,
-            self.crl_distribution_points(
-                relative_name=x509.RelativeDistinguishedName([x509.NameAttribute(NameOID.COMMON_NAME, D1)]),
-            ),
+            name, self.crl_distribution_points(relative_name=rdn([(NameOID.COMMON_NAME, D1)]))
         )
         self.assertInHTML(
             f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget relative-name">',

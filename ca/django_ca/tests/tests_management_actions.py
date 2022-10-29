@@ -34,7 +34,7 @@ from ..constants import ReasonFlags
 from ..extensions import OID_TO_KEY, TLSFeature
 from ..management import actions
 from ..models import Certificate, CertificateAuthority
-from .base import certs, override_settings, override_tmpcadir
+from .base import certs, dns, override_settings, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -97,17 +97,11 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
         self.assertValue(namespace, None)
 
         namespace = self.parser.parse_args(["--alt", "example.com"])
-        self.assertValue(namespace, x509.SubjectAlternativeName([x509.DNSName("example.com")]))
+        self.assertValue(namespace, x509.SubjectAlternativeName([dns("example.com")]))
 
         namespace = self.parser.parse_args(["--alt", "example.com", "--alt", "https://example.net"])
         self.assertValue(
-            namespace,
-            x509.SubjectAlternativeName(
-                [
-                    x509.DNSName("example.com"),
-                    x509.UniformResourceIdentifier("https://example.net"),
-                ]
-            ),
+            namespace, x509.SubjectAlternativeName([dns("example.com"), uri("https://example.net")])
         )
 
 
