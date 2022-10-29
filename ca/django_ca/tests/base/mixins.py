@@ -762,6 +762,22 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             oid=ExtensionOID.EXTENDED_KEY_USAGE, critical=critical, value=x509.ExtendedKeyUsage(usages)
         )
 
+    def freshest_crl(
+        self,
+        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
+        reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        crl_issuer: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        critical: bool = False,
+    ) -> x509.Extension[x509.CRLDistributionPoints]:
+        """Shortcut for getting a CRLDistributionPoints extension."""
+        dpoint = x509.DistributionPoint(
+            full_name=full_name, relative_name=relative_name, reasons=reasons, crl_issuer=crl_issuer
+        )
+        return x509.Extension(
+            oid=ExtensionOID.FRESHEST_CRL, critical=critical, value=x509.FreshestCRL([dpoint])
+        )
+
     def get_idp(
         self,
         full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,

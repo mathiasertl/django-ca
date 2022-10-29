@@ -381,6 +381,12 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
         return (choices, value.critical)
 
 
+class FreshestCRLWidget(DistributionPointWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.FreshestCRL` extension."""
+
+    oid = ExtensionOID.FRESHEST_CRL
+
+
 class KeyUsageWidget(MultipleChoiceExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.KeyUsage` extension."""
 

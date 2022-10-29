@@ -127,6 +127,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
     authority_information_access = fields.AuthorityInformationAccessField()
     crl_distribution_points = fields.CRLDistributionPointField()
+    freshest_crl = fields.FreshestCRLField()
     issuer_alternative_name = fields.IssuerAlternativeNameField()
     key_usage = fields.KeyUsageField(help_text=_("Permitted key usages."))
     extended_key_usage = fields.ExtendedKeyUsageField(

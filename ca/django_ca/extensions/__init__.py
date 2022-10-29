@@ -87,6 +87,7 @@ CERTIFICATE_EXTENSIONS = tuple(
             "authority_information_access",
             "crl_distribution_points",
             "extended_key_usage",
+            "freshest_crl",
             "issuer_alternative_name",
             "key_usage",
             "ocsp_no_check",

@@ -368,6 +368,13 @@ class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage])
         return x509.ExtendedKeyUsage(usages=[_EXTENDED_KEY_USAGE_MAPPING[name] for name in value])
 
 
+class FreshestCRLField(DistributionPointField[x509.CRLDistributionPoints]):
+    """Form field for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
+
+    extension_type = x509.FreshestCRL
+    widget = widgets.CRLDistributionPointsWidget
+
+
 class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
     """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 

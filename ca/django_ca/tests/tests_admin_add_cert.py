@@ -1189,3 +1189,114 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 self.subject_key_identifier(cert),
             ],
         )
+
+    @override_tmpcadir(
+        CA_PROFILES={
+            "everything": {
+                "extensions": {
+                    "authority_information_access": {
+                        "critical": True,  # NOTE: Yes, this is an RFC 5280 violation
+                        "value": {
+                            "ocsp": [
+                                "http://profile.ocsp.example.com",
+                                "http://profile.ocsp-backup.example.com",
+                            ],
+                            "issuers": ["http://profile.issuers.example.com"],
+                        },
+                    },
+                    "crl_distribution_points": {
+                        "critical": True,
+                        "value": [
+                            {
+                                "full_name": ["http://crl.profile.example.com"],
+                                "crl_issuer": ["http://crl-issuer.profile.example.com"],
+                            }
+                        ],
+                    },
+                    "extended_key_usage": {
+                        "critical": True,
+                        "value": ["clientAuth", "serverAuth"],
+                    },
+                    "freshest_crl": {
+                        "critical": True,
+                        "value": [
+                            {
+                                "full_name": ["http://freshest-crl.profile.example.com"],
+                                "crl_issuer": ["http://freshest-crl-issuer.profile.example.com"],
+                            }
+                        ],
+                    },
+                    "issuer_alternative_name": {
+                        "critical": True,
+                        "value": ["http://ian1.example.com", "http://ian2.example.com"],
+                    },
+                    "key_usage": {
+                        "critical": True,
+                        "value": ["key_agreement", "key_cert_sign"],
+                    },
+                    "ocsp_no_check": {"critical": True, "value": True},
+                    "tls_feature": {"critical": True, "value": ["OCSPMustStaple"]},
+                }
+            }
+        },
+        CA_DEFAULT_PROFILE="everything",
+    )
+    def test_full_profile_prefill(self) -> None:
+        """Create a cert with a full profile, which should mask any CA-specific values.
+
+        This test shows that the values from the profile are prefilled correctly. If they where not, some
+        of the fields would not show up in the signed certificate.
+        """
+        # Make sure that the CA has field values set.
+        cn = "test-only-ca.example.com"
+        self.ca.crl_url = "http://crl.test-only-ca.example.com"
+        self.ca.issuer_url = "http://issuer.test-only-ca.example.com"
+        self.ca.ocsp_url = "http://ocsp.test-only-ca.example.com"
+        self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
+        self.ca.save()
+
+        response = self.app.get(self.add_url, user=self.user.username)
+        form = response.forms["certificate_form"]
+        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["subject_5"] = cn
+        response = form.submit().follow()
+        self.assertEqual(response.status_code, 200)
+
+        # Check that we get all the extensions from the CA
+        cert = Certificate.objects.get(cn="test-only-ca.example.com")
+        self.assertEqual(
+            cert._sorted_extensions,
+            [
+                self.authority_information_access(
+                    ca_issuers=[uri("http://profile.issuers.example.com")],
+                    ocsp=[
+                        uri("http://profile.ocsp.example.com"),
+                        uri("http://profile.ocsp-backup.example.com"),
+                    ],
+                    critical=True,
+                ),
+                cert.ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.crl_distribution_points(
+                    full_name=[uri("http://crl.profile.example.com")],
+                    crl_issuer=[uri("http://crl-issuer.profile.example.com")],
+                    critical=True,
+                ),
+                self.extended_key_usage(
+                    ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
+                ),
+                self.freshest_crl(
+                    [uri("http://freshest-crl.profile.example.com")],
+                    crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
+                    critical=True,
+                ),
+                self.issuer_alternative_name(
+                    uri("http://ian1.example.com"), uri("http://ian2.example.com"), critical=True
+                ),
+                self.key_usage(key_agreement=True, key_cert_sign=True),
+                self.ocsp_no_check(critical=True),
+                self.subject_alternative_name(dns(cn)),
+                self.subject_key_identifier(cert),
+                self.tls_feature(x509.TLSFeatureType.status_request, critical=True),
+            ],
+        )
