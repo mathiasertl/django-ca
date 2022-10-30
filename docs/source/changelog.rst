@@ -18,8 +18,32 @@ ChangeLog
      volumes.
 
 * Add support for Django 4.1.
+* New signals :py:class:`~django_ca.signals.pre_sign_cert` and :py:class:`~django_ca.signals.post_sign_cert`
+  that receive the values as passed to the cryptography library.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
 * Ensure that CRLs are regenerated periodically before the cache expires.
+
+Admin interface
+===============
+
+* Almost all extensions used in end entity certificates can now be modified when creating new certificates.
+  The following additional extensions are now modifiable: Authority Information Access, CRL Distribution
+  Points, Freshest CRL, Issuer Alternative Name, OCSP No Check and TLS Feature.
+
+  **Limitations:**
+
+  * The CRL Distribution Points and Freshest CRL can only modify the first distribution point. If the selected
+    profile defines more then one distribution point, they are added after the one from the admin interface.
+  * The Certificate Policies extension cannot yet be modified. If the selected profile defines this extension,
+    it is still added to the certificate.
+
+* The Authority Information Access, CRL Distribution Points and Issuer Alternative Name extensions are
+  prefilled based on information from the default certificate authority. Values may be masked by the default
+  profile.
+* Selecting a certificate authority will automatically update the Authority Information Access, CRL
+  Distribution Points and Issuer Alternative Name extensions based on the configuration.
+* Because the the user can now modify the extensions directly, the ``add_*`` directives for a profile now have
+  no effect when issuing a certificate through the admin interface.
 
 Backwards incompatible changes
 ==============================
@@ -37,6 +61,8 @@ Deprecation notices
 * The ``acme`` extra will be removed in ``django-ca==1.23.0``.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
   removed in ``django-ca==1.23.0``.
+* The ``pre_issuer_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new
+  :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 
 .. _changelog-1.21.0:
 

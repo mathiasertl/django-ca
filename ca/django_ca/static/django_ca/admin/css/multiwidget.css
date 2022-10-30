@@ -12,7 +12,7 @@ p.django-ca-multiwidget {
 
 .django-ca-multiwidget select + .help,
 .django-ca-multiwidget textarea + .help,
-.django-ca-multiwidget input[type=text] + .help 
+.django-ca-multiwidget input[type=text] + .help
 {
     padding-bottom: 3px;  /* Add a little space below the help text for separation */
 }
