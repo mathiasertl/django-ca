@@ -1,10 +1,7 @@
 CACHES:
     default:
-        BACKEND: redis_cache.RedisCache
-        LOCATION: redis://cache:6379
-        OPTIONS:
-            DB: 1
-            PARSER_CLASS: redis.connection.HiredisParser
+        BACKEND: django.core.cache.backends.redis.RedisCache
+        LOCATION: redis://cache:6379/1
 
 DATABASES:
     default:

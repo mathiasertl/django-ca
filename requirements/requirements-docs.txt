@@ -1,9 +1,9 @@
 -r requirements-devscripts.txt
 -r requirements-sphinx.txt
 doc8==0.11.2
-numpydoc==1.4.0
+numpydoc==1.5.0
 sphinx-jinja==2.0.2
 sphinx_rtd_theme==1.0.0
-sphinxcontrib-spelling==7.6.0
+sphinxcontrib-spelling==7.6.2
 toml>=0.10
 tomli==2.0.1
