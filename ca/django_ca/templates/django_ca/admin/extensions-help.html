@@ -1,0 +1,9 @@
+{% load i18n static %}
+
+{% static "admin/img/icon-alert.svg" as alert %}
+<p>{% trans "This section allows you to modify values of individual X.509 extensions." %}</p>
+
+<p><img src="{{ alert }}">{% blocktrans %}Values in this section are updated automatically when you select a certificate
+authority or profile above.{% endblocktrans %}
+
+<p><strong>{% trans "In most cases, you do not need to modify values in this section." %}</strong></p>

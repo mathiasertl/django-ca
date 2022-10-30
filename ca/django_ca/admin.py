@@ -608,7 +608,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         ),
         (
             _("X.509 Extensions"),
-            {"fields": CERTIFICATE_EXTENSIONS},
+            {
+                "fields": CERTIFICATE_EXTENSIONS,
+                "classes": (
+                    "collapse",
+                    "x509-extensions",
+                ),
+            },
         ),
     ]
 
@@ -923,9 +929,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             fieldsets[self.x509_fieldset_index][1]["fields"].remove("oid_2_5_29_17")
 
         if hasattr(request, "_resign_obj"):
-            return self.resign_fieldsets
+            fieldsets = copy.deepcopy(self.resign_fieldsets)
+            fieldsets[1][1]["description"] = render_to_string(["django_ca/admin/extensions-help.html"])
+            return fieldsets
         if obj is None:
-            return self.add_fieldsets
+            fieldsets = copy.deepcopy(self.add_fieldsets)
+            fieldsets[1][1]["description"] = render_to_string(["django_ca/admin/extensions-help.html"])
+            return fieldsets
 
         if obj.revoked is False:
             fieldsets[2][1]["classes"] = [
