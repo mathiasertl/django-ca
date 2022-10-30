@@ -125,16 +125,30 @@ class CreateCertificateBaseForm(CertificateModelForm):
         required=False, help_text=_("If this certificate was automatically generated.")
     )
 
-    authority_information_access = fields.AuthorityInformationAccessField()
-    crl_distribution_points = fields.CRLDistributionPointField()
-    freshest_crl = fields.FreshestCRLField()
-    issuer_alternative_name = fields.IssuerAlternativeNameField()
-    key_usage = fields.KeyUsageField(help_text=_("Permitted key usages."))
-    extended_key_usage = fields.ExtendedKeyUsageField(
-        help_text=_("Purposes for which the certificate public key can be used for.")
+    authority_information_access = fields.AuthorityInformationAccessField(
+        help_text=_("Indicates how to access information and services of the issuer.")
     )
-    ocsp_no_check = fields.OCSPNoCheckField()
-    tls_feature = fields.TLSFeatureField()
+    crl_distribution_points = fields.CRLDistributionPointField(
+        help_text=_("Where to retrieve Certificate Revocation Lists."),
+    )
+    freshest_crl = fields.FreshestCRLField(
+        help_text=_("Where to retrieve Delta CRLs (rarely used, not supported by django-ca).")
+    )
+    issuer_alternative_name = fields.IssuerAlternativeNameField(
+        help_text=_("Additional information about the issuer (rarely used).")
+    )
+    key_usage = fields.KeyUsageField(help_text=_("Defines the purpose of the certificate."))
+    extended_key_usage = fields.ExtendedKeyUsageField(
+        help_text=_("Defines additional purposes of the certificate.")
+    )
+    ocsp_no_check = fields.OCSPNoCheckField(
+        help_text=_(
+            "Indicates that an OCSP client can trust the certificate. Used in OCSP responder certificates."
+        )
+    )
+    tls_feature = fields.TLSFeatureField(
+        help_text=_("Allows enforcing TLS protocol features. Only OCSPMustStaple is commonly used.")
+    )
 
     # Prevent auto-filling the password field. Browsers will otherwise prefill this field with the *users*
     # password, which is usually the wrong password. Especially annoying for CAs without a password, as the

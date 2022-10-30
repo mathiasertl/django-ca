@@ -10,6 +10,17 @@ p.django-ca-multiwidget {
     float: initial;
 }
 
+.django-ca-multiwidget select + .help,
+.django-ca-multiwidget textarea + .help,
+.django-ca-multiwidget input[type=text] + .help 
+{
+    padding-bottom: 3px;  /* Add a little space below the help text for separation */
+}
+
 .django-ca-multiwidget span.labeled-checkbox input {
-    display: inline;
+    display: inline;  /* So that help is **not** displayed in the next line, but next to the label */
+}
+
+.django-ca-multiwidget select {
+    display: block;  /* So that help is displayed in the next line */
 }

@@ -79,6 +79,7 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
     css_classes = ("django-ca-multiwidget",)
     template_name = "django_ca/forms/widgets/multiwidget.html"
     labels: typing.Tuple[typing.Optional[str], ...] = ()
+    help_texts: typing.Tuple[typing.Optional[str], ...] = ()
 
     class Media:
         css = {
@@ -91,6 +92,8 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
         ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)
         for widget, label in zip(ctx["widget"]["subwidgets"], self.labels):
             widget["label"] = label
+        for widget, help_text in zip(ctx["widget"]["subwidgets"], self.help_texts):
+            widget["help_text"] = help_text
         return ctx
 
 
@@ -340,6 +343,10 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         GeneralNamesWidget(attrs={"class": "ca-issuers", "rows": 3}),
         GeneralNamesWidget(attrs={"class": "ocsp", "rows": 3}),
     )
+    help_texts = (
+        _("Location(s) of the CA certificate."),
+        _("Location(s) of the OCSP responder."),
+    )
     labels = (
         _("CA issuers"),
         _("OCSP"),
@@ -367,6 +374,15 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
 class CRLDistributionPointsWidget(DistributionPointWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
 
+    help_texts = (
+        _("Location(s) where to retrieve the CRL."),
+        _(
+            "X.500 Relative name to retrieve the CRL. RFC 5280 does not recommend setting this field. Cannot "
+            "be set together with Full name."
+        ),
+        _("Distinguished name of the issuer of the CRL."),
+        _("Revocation reasons that are included in this CRL, leave empty for all reasons (recommended)."),
+    )
     oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
 
 

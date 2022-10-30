@@ -372,7 +372,7 @@ class FreshestCRLField(DistributionPointField[x509.FreshestCRL]):
     """Form field for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
 
     extension_type = x509.FreshestCRL
-    widget = widgets.CRLDistributionPointsWidget
+    widget = widgets.FreshestCRLWidget
 
 
 class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
