@@ -20,25 +20,6 @@ django.jQuery(document).ready(function() {
             return;
         }
         var extensions = ca_config.extensions;
-
-        if (typeof extensions.issuer_alternative_name !== 'undefined') {
-            var value = extensions.issuer_alternative_name.value.join("\n");
-            django.jQuery('.field-issuer_alternative_name textarea').val(value);
-        }
-        if (typeof extensions.authority_information_access !== 'undefined') {
-            var aia = extensions.authority_information_access;
-            if (typeof aia.value.issuers !== 'undefined') {
-                django.jQuery('textarea#id_authority_information_access_0').val(aia.value.issuers.join('\n'));
-            }
-            if (typeof aia.value.ocsp !== 'undefined') {
-                django.jQuery('textarea#id_authority_information_access_1').val(aia.value.ocsp.join('\n'));
-            }
-        }
-        if (typeof extensions.crl_distribution_points !== 'undefined') {
-            var dpoint = extensions.crl_distribution_points.value[0];
-            if (typeof dpoint.full_name !== 'undefined') {
-                django.jQuery('textarea#id_crl_distribution_points_0').val(dpoint.full_name.join('\n'));
-            }
-        }
+        update_extensions(extensions);
     });
 });

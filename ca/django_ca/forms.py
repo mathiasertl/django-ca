@@ -212,6 +212,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     class Media:
         js = (
             "admin/js/jquery.init.js",
+            "django_ca/admin/js/extensions.js",
             "django_ca/admin/js/ca-details.js",
         )
 

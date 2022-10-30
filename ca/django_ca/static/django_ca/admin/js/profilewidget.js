@@ -44,39 +44,7 @@ django.jQuery(document).ready(function() {
             django.jQuery(cn_in_san).prop('checked', false);
         }
 
-        if (typeof profile.extensions !== 'undefined') {
-            django.jQuery.each(profile.extensions, function(key, ext) {
-                var field = django.jQuery('.form-row.field-' + key);
-                var critical = ext !== null && ext.critical === true;
-
-                // profile serialization will make sure that any not-null extension will have a critical value
-                field.find('.labeled-checkbox.critical input').prop('checked', critical);
-
-                if (key == 'ocsp_no_check') {
-                    field.find('.labeled-checkbox.include input').prop('checked', ext !== null);
-                    field.find('.labeled-checkbox.include input').change();  // so any existing callbacks are called
-
-                // handle "multiple choice" extensions
-                } else if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(key)) {
-                    if (ext == null) {
-                        field.find('select').val([]);
-                    } else {
-                        field.find('select').val(ext.value);
-                    }
-                    field.find('select').change();  // so any existing callbacks are called
-                } else if (key === "authority_information_access") {
-                    if (ext.value.issuers) {
-                        field.find('textarea.ca-issuers').val(ext.value.issuers.join("\n"));
-                    }
-                    if (ext.value.ocsp) {
-                        field.find('textarea.ocsp').val(ext.value.ocsp.join("\n"));
-                    }
-                } else {
-                    console.log("Unhandled extension: " + key);
-                }
-
-            });
-        }
+        update_extensions(profile.extensions);
 
         // update description
         django.jQuery('.field-profile .profile-desc').show();
