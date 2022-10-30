@@ -1144,7 +1144,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Cert has minimal extensions, since we cleared the form  earlier
         self.assertEqual(
-            cert._sorted_extensions,  # pylint: ignore=protected-access
+            cert._sorted_extensions,  # pylint: disable=protected-access
             [
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
@@ -1177,7 +1177,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
         self.assertEqual(
-            cert._sorted_extensions,  # pylint: ignore=protected-access
+            cert._sorted_extensions,  # pylint: disable=protected-access
             [
                 self.authority_information_access(
                     ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
@@ -1278,7 +1278,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
         self.assertEqual(
-            cert._sorted_extensions,  # pylint: ignore=protected-access
+            cert._sorted_extensions,  # pylint: disable=protected-access
             [
                 self.authority_information_access(
                     ca_issuers=[uri("http://profile.issuers.example.com")],
@@ -1392,9 +1392,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
-        self.maxDiff = None
         self.assertEqual(
-            cert._sorted_extensions,  # pylint: ignore=protected-access
+            cert._sorted_extensions,  # pylint: disable=protected-access
             [
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
