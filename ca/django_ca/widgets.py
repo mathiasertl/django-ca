@@ -230,27 +230,6 @@ class SubjectWidget(CustomMultiWidget):
         return [attr_mapping.get(oid, "") for oid in ADMIN_SUBJECT_OIDS]  # type: ignore[misc]
 
 
-class SubjectAltNameWidget(CustomMultiWidget):
-    """Widget for a Subject Alternative Name extension."""
-
-    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None) -> None:
-        _widgets = (widgets.TextInput(), LabeledCheckboxInput(label="Include CommonName"))
-        super().__init__(_widgets, attrs)
-
-    # COVERAGE NOTE: In Django 4.1, decompress is not called if compress() returns a tuple
-    #       https://github.com/django/django/commit/37602e49484a88867f40e9498f86c49c2d1c5d7c
-    def decompress(
-        self, value: typing.Optional[typing.Tuple[str, bool]]
-    ) -> typing.Tuple[str, bool]:  # pragma: no cover
-        # Invoked when resigning a certificate
-        if value:  # pragma: no branch
-            return value
-
-        # Since the value is at least a Tuple[str, bool], the above check is never False.
-        # Keep this here just to be sure.
-        return ("", True)  # pragma: no cover
-
-
 class GeneralNamesWidget(Textarea):
     """Widget for a list of :py:class:`~cg:cryptography.x509.GeneralName` instances."""
 
@@ -458,6 +437,29 @@ class OCSPNoCheckWidget(ExtensionWidget):
         if value is None:
             return (False, OID_DEFAULT_CRITICAL[self.oid])
         return (True, value.critical)
+
+
+class SubjectAlternativeNameWidget(ExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+
+    extension_widgets = (
+        GeneralNamesWidget(attrs={"rows": 3}),
+        LabeledCheckboxInput(label="Include CommonName"),
+    )
+    oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+
+    def decompress(
+        self, value: typing.Optional[typing.Tuple[x509.Extension[x509.SubjectAlternativeName], bool]]
+    ) -> typing.Tuple[typing.List[x509.GeneralName], bool, bool]:
+        if value is None:
+            default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
+            return ([], default_cn_in_san, OID_DEFAULT_CRITICAL[self.oid])
+
+        ext, cn_in_san = value
+        if ext is None:
+            return ([], cn_in_san, OID_DEFAULT_CRITICAL[self.oid])
+
+        return (list(ext.value), cn_in_san, ext.critical)
 
 
 class TLSFeatureWidget(MultipleChoiceExtensionWidget):

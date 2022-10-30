@@ -23,7 +23,7 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from . import widgets
+from . import ca_settings, widgets
 from .constants import REVOCATION_REASONS
 from .extensions import get_extension_name
 from .extensions.utils import (
@@ -31,7 +31,6 @@ from .extensions.utils import (
     EXTENDED_KEY_USAGE_NAMES,
     KEY_USAGE_NAMES,
 )
-from .profiles import profile
 from .typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
 from .utils import ADMIN_SUBJECT_OIDS, parse_general_name, x509_relative_name
 
@@ -121,22 +120,6 @@ class SubjectField(forms.MultiValueField):
         return x509.Name(
             [x509.NameAttribute(oid, value) for oid, value in zip(ADMIN_SUBJECT_OIDS, data_list) if value]
         )
-
-
-class SubjectAltNameField(forms.MultiValueField):
-    """A MultiValueField for a Subject Alternative Name extension."""
-
-    def __init__(self, **kwargs: typing.Any) -> None:
-        fields = (
-            forms.CharField(required=False),
-            forms.BooleanField(required=False),
-        )
-        kwargs.setdefault("widget", widgets.SubjectAltNameWidget)
-        kwargs.setdefault("initial", ["", profile.cn_in_san])
-        super().__init__(fields=fields, require_all_fields=False, **kwargs)
-
-    def compress(self, data_list: typing.Tuple[str, bool]) -> typing.Tuple[str, bool]:
-        return data_list
 
 
 class GeneralNamesField(forms.CharField):
@@ -416,6 +399,39 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
         if value is True:
             return self.extension_type()
         return None
+
+
+class SubjectAlternativeNameField(ExtensionField[x509.SubjectAlternativeName]):
+    """Form field for a :py:class:`~cg:cryptography.x509.SubjectAlternativeName` extension."""
+
+    extension_type = x509.SubjectAlternativeName
+    fields = (
+        GeneralNamesField(required=False),
+        forms.BooleanField(required=False),
+    )
+    widget = widgets.SubjectAlternativeNameWidget
+
+    def compress(  # type: ignore[override]  # this is a special case
+        self, data_list: typing.List[typing.Any]
+    ) -> typing.Tuple[typing.Optional[x509.Extension[ExtensionTypeTypeVar]], bool]:
+        default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
+        if not data_list:  # pragma: no cover
+            return None, default_cn_in_san
+
+        *value, critical = data_list
+        ext_value, cn_in_san = self.get_value(*value)
+        if ext_value is None:
+            return None, cn_in_san
+        ext = x509.Extension(critical=critical, oid=self.extension_type.oid, value=ext_value)
+        # TYPE NOTE: mypy complains about the non-generic type being returned
+        return ext, cn_in_san  # type: ignore[return-value]
+
+    def get_value(  # type: ignore[override]
+        self, names: typing.List[x509.GeneralName], cn_in_san: bool
+    ) -> typing.Tuple[typing.Optional[x509.SubjectAlternativeName], bool]:
+        if not names:
+            return None, cn_in_san
+        return x509.SubjectAlternativeName(general_names=names), cn_in_san
 
 
 class TLSFeatureField(MultipleChoiceExtensionField[x509.TLSFeature]):

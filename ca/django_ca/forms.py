@@ -98,8 +98,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     )
     expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
     subject = fields.SubjectField(label="Subject", required=True)
-    subject_alternative_name = fields.SubjectAltNameField(
-        label="subjectAltName",
+    subject_alternative_name = fields.SubjectAlternativeNameField(
         required=False,
         help_text=_("""Coma-separated list of alternative names for the certificate."""),
     )
@@ -194,7 +193,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         ca: CertificateAuthority = data["ca"]
         password = data.get("password")
         subject = data.get("subject")
-        cn_in_san = typing.cast(typing.Tuple[str, bool], data.get("subject_alternative_name"))[1]
+        subject_alternative_name, cn_in_san = data.get("subject_alternative_name")
 
         # test the password
         try:

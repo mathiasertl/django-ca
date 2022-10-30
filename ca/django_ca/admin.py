@@ -25,6 +25,7 @@ from datetime import date, datetime
 from http import HTTPStatus
 
 from cryptography import x509
+from cryptography.x509.oid import ExtensionOID
 
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
@@ -54,7 +55,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import ReasonFlags
-from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, SubjectAlternativeName, get_extension_name
+from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, get_extension_name
 from .extensions.utils import extension_as_admin_html, serialize_extension
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
@@ -703,11 +704,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # resign the cert, so we add initial data from the original cert
 
             resign_obj = getattr(request, "_resign_obj")
-            san = resign_obj.subject_alternative_name
-            if san is None:
-                san = ("", False)
-            else:
-                san = (",".join(san), False)
+            # pylint: disable-next=protected-access
+            san = resign_obj._x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
             algo = resign_obj.algorithm.__class__.__name__
 
             if resign_obj.profile:
@@ -720,7 +718,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "ca": resign_obj.ca,
                 "profile": profile,
                 "subject": resign_obj.subject,
-                "subject_alternative_name": san,
+                "subject_alternative_name": (san, False),
                 "watchers": resign_obj.watchers.all(),
             }
 
@@ -991,10 +989,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             expires = datetime.combine(data["expires"], datetime.min.time())
 
             extensions: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
-            san, cn_in_san = data["subject_alternative_name"]
-            san = SubjectAlternativeName({"value": [e.strip() for e in san.split(",") if e.strip()]})
-            if san:
-                extensions["subject_alternative_name"] = san.as_extension()
+            subject_alternative_name, cn_in_san = data["subject_alternative_name"]
+            if subject_alternative_name:
+                extensions["subject_alternative_name"] = subject_alternative_name
 
             # Update extensions handled through the form
             for key in CERTIFICATE_EXTENSIONS:
