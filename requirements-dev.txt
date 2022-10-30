@@ -10,7 +10,7 @@ pip>=21.3
 
 tox>=3.24.4
 
-flake8-isort==4.2.0
-termcolor==1.1.0
+flake8-isort==5.0.0
+termcolor==2.1.0
 toml>=0.10.2
 wheel-inspect
