@@ -28,6 +28,7 @@ from django.test import TestCase
 
 from django_webtest import WebTestMixin
 from freezegun import freeze_time
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
@@ -936,6 +937,11 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         cn_in_san: WebElement,
     ) -> None:
         """Clear the form."""
+        try:
+            self.find("fieldset.collapsed h2 a.collapse-toggle").click()
+        except NoSuchElementException:  # fieldset is already shown
+            pass
+
         ku_select.deselect_all()
         eku_select.deselect_all()
         tf_select.deselect_all()
