@@ -54,7 +54,7 @@ from django.utils.translation import gettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
-from .constants import ReasonFlags
+from .constants import OID_DEFAULT_CRITICAL, ReasonFlags
 from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, get_extension_name
 from .extensions.utils import extension_as_admin_html, serialize_extension
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
@@ -706,6 +706,17 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             resign_obj = getattr(request, "_resign_obj")
             # pylint: disable-next=protected-access
             san = resign_obj._x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+            if san is None:
+                san_value = []
+                san_critical = OID_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
+            else:
+                san_value = list(san.value)
+                san_critical = san.critical
+
+            # Since Django 4.1, tuples are no longer passed to a MultiWidgets decompress() method.  We must
+            # thus pass a three-tuple as initial value, each corresponding to the value of one of the widgets.
+            subject_alternative_name = (san_value, False, san_critical)
+
             algo = resign_obj.algorithm.__class__.__name__
 
             if resign_obj.profile:
@@ -718,7 +729,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "ca": resign_obj.ca,
                 "profile": profile,
                 "subject": resign_obj.subject,
-                "subject_alternative_name": (san, False),
+                "subject_alternative_name": subject_alternative_name,
                 "watchers": resign_obj.watchers.all(),
             }
 

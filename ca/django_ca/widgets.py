@@ -448,14 +448,26 @@ class SubjectAlternativeNameWidget(ExtensionWidget):
     )
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
 
+    # COVERAGE NOTE: In Django 4.1, decompress is not called if compress() returns a tuple
+    #       https://github.com/django/django/commit/37602e49484a88867f40e9498f86c49c2d1c5d7c
     def decompress(
-        self, value: typing.Optional[typing.Tuple[x509.Extension[x509.SubjectAlternativeName], bool]]
-    ) -> typing.Tuple[typing.List[x509.GeneralName], bool, bool]:
+        self,
+        value: typing.Optional[
+            typing.Union[
+                typing.Tuple[typing.List[x509.GeneralName], bool, bool],
+                typing.Tuple[x509.Extension[x509.SubjectAlternativeName], bool],
+            ]
+        ],
+    ) -> typing.Tuple[typing.List[x509.GeneralName], bool, bool]:  # pragma: no cover
         if value is None:
             default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
             return ([], default_cn_in_san, OID_DEFAULT_CRITICAL[self.oid])
 
-        ext, cn_in_san = value
+        if len(value) == 3:
+            # TYPE NOTE: mypy does not eleminate two-tuple from union in length check
+            return typing.cast(typing.Tuple[typing.List[x509.GeneralName], bool, bool], value)
+
+        ext, cn_in_san = value  # type: ignore[misc]
         if ext is None:
             return ([], cn_in_san, OID_DEFAULT_CRITICAL[self.oid])
 

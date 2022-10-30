@@ -193,7 +193,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         ca: CertificateAuthority = data["ca"]
         password = data.get("password")
         subject = data.get("subject")
-        subject_alternative_name, cn_in_san = data.get("subject_alternative_name")
+        subject_alternative_name, cn_in_san = data.get("subject_alternative_name", (None, False))
 
         # test the password
         try:

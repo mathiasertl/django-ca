@@ -37,9 +37,9 @@ Admin interface
   * The Certificate Policies extension cannot yet be modified. If the selected profile defines this extension,
     it is still added to the certificate.
 
-* The Authority Information Access, CRL Distribution Points and Issuer Alternative Name extensions are
-  prefilled based on information from the default certificate authority. Values may be masked by the default
-  profile.
+* Initial values for the Authority Information Access, CRL Distribution Points and Issuer Alternative Name
+  extensions are set based on information from the default certificate authority. Values may be masked by the
+  default profile.
 * Selecting a certificate authority will automatically update the Authority Information Access, CRL
   Distribution Points and Issuer Alternative Name extensions based on the configuration.
 * Because the the user can now modify the extensions directly, the ``add_*`` directives for a profile now have
