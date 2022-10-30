@@ -1097,7 +1097,7 @@ class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str]
         return f"[{joined}]"
 
     def serialize_item(self, value: TLSFeatureType) -> str:
-        return value.name
+        return str(value.name)
 
     def parse_value(self, value: Union[TLSFeatureType, str]) -> TLSFeatureType:
         if isinstance(value, TLSFeatureType):
