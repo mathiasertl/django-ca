@@ -88,7 +88,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
     def assertExtensionEqual(  # pylint: disable=invalid-name
         self, first: ExtensionTypeVar, second: ExtensionTypeVar
     ) -> None:
-        """Function to test if an extension is really really equal.
+        """Test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
         """
@@ -213,7 +213,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
                     self.assertEqual(self.ext(config["extension_type"], critical=critical), expected)
 
     def test_init_no_bool_critical(self) -> None:
-        """ "Test creating an extension with a non-bool critical value."""
+        """Test creating an extension with a non-bool critical value."""
         class_name = "example_class"
 
         class _Example:
@@ -395,7 +395,7 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
     repr_tmpl = "<{name}: critical={critical}>"
 
     def assertExtensionEqual(self, first: ExtensionTypeVar, second: ExtensionTypeVar) -> None:
-        """Function to test if an extension is really really equal.
+        """Test if an extension is really really equal.
 
         This function should compare extension internals directly not via the __eq__ function.
         """
@@ -411,7 +411,7 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
         self.assertEqual(ext.serialize(), {"critical": critical})
 
     def test_dummy_functions(self) -> None:
-        """NullExtension implements abstract functions for the value which are in reality unused."""
+        """``NullExtension`` implements abstract functions for the value which are in reality unused."""
         self.assertIsNone(self.ext_class().serialize_value())
         self.assertEqual(self.ext_class().repr_value(), "")
 
@@ -485,7 +485,6 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
         Parameters
         ----------
-
         func : func
             The function to test
         init : set
@@ -791,7 +790,6 @@ class ListExtensionTestMixin(
 
     def test_setitem_typerror(self) -> None:
         """Test setting slices without an iterable."""
-
         ext = self.ext_class({"value": []})
         with self.assertRaisesRegex(TypeError, r"^Can only assign int/item or slice/iterable$"):
             ext[0:1] = 3  # type: ignore[call-overload] # exactly what we're testing here

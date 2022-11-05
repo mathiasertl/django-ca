@@ -44,7 +44,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             "--revoked", default=False, action="store_true", help="Also list revoked certificates."
         )
 
-    def handle(  # type: ignore[override]
+    def handle(
         self,
         ca: typing.Optional[CertificateAuthority],
         expired: bool,

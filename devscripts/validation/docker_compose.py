@@ -257,11 +257,11 @@ def test_tutorial(release):  # pylint: disable=too-many-statements
             errors += _validate_secret_key()
 
             # Test that HTTPS connection and admin interface is working:
-            resp = requests.get("https://localhost/admin/", verify=ca_pub)
+            resp = requests.get("https://localhost/admin/", verify=ca_pub, timeout=10)
             resp.raise_for_status()
 
             # Test static files
-            resp = requests.get("https://localhost/static/admin/css/base.css", verify=ca_pub)
+            resp = requests.get("https://localhost/static/admin/css/base.css", verify=ca_pub, timeout=10)
             resp.raise_for_status()
 
             with tut.run("setup-cas.yaml"):  # Creates initial CAs

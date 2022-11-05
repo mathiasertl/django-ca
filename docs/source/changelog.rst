@@ -22,6 +22,8 @@ ChangeLog
   that receive the values as passed to the cryptography library.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
 * Ensure that CRLs are regenerated periodically before the cache expires.
+* Switch to the Djangos `built in Redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>` in
+  the docker compose setup.
 
 Admin interface
 ===============
@@ -54,6 +56,9 @@ Backwards incompatible changes
 * Drop support for Celery 5.0.
 * Remove the ``--ca-crl`` parameter in ``manage.py dump_crl`` (this was a left
   over and has been marked as deprecated since 1.12.0).
+* Drop ``django-redis-cache`` from the ``redis`` extra, as the project is abandoned. Please switch to the
+  `built in redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>`_ instead. If you still
+  use Django 3.2, please manually install the backend.
 
 Deprecation notices
 ===================

@@ -62,12 +62,10 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
 
     def find(self, selector: str) -> WebElement:
         """Find an element by CSS selector."""
-
         return self.selenium.find_element(by=By.CSS_SELECTOR, value=selector)
 
     def find_by_tag(self, tag: str) -> WebElement:
         """Find an element by its tag (e.g. "body")."""
-
         return self.selenium.find_element(by=By.TAG_NAME, value=tag)
 
     def login(self, username: str = "admin", password: str = "admin") -> None:

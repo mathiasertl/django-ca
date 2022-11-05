@@ -56,6 +56,6 @@ class Command(CertCommandMixin, BaseCommand):
         )
         super().add_arguments(parser)
 
-    def handle(self, cert: Certificate, **options: typing.Any) -> None:  # type: ignore[override]
+    def handle(self, cert: Certificate, **options: typing.Any) -> None:
         cert.watchers.add(*[Watcher.from_addr(addr) for addr in options["add"]])
         cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options["rm"]])

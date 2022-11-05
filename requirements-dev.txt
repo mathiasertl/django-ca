@@ -4,8 +4,7 @@
 -rrequirements/requirements-lint.txt
 -rrequirements/requirements-mypy.txt
 ipython>=7.28.0
-docker==6.0.0
-docker-compose==1.29.2
+docker==6.0.1
 pip>=21.3
 
 tox>=3.24.4

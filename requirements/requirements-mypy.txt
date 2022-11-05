@@ -1,7 +1,7 @@
 -r requirements-sphinx.txt
-mypy==0.971
+mypy==0.982
 django-stubs==1.9.0
-types-docutils==0.19.0
+types-docutils==0.19.1.1
 types-freezegun==1.1.10
 types-jinja2==2.11.9
 types-pyRFC3339==1.1.1

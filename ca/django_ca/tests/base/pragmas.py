@@ -22,7 +22,7 @@ VERSION = sys.version_info[:2]  # e.g. ``(3, 8)`` or ``(3, 9)``
 
 
 # PYLINT NOTE: pragma argument so we can optionally add a print() for testing
-def noop(pragma: str) -> None:  # pylint: disable=unused-argument
+def noop(pragma: str) -> None:  # pylint: disable=unused-argument  # noqa: D401
     """Dummy function called in branches to make sure that coverage detects executed LOCs."""
 
 

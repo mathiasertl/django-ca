@@ -35,6 +35,11 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519, rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
+# Module level imports to enable forward references. See also:
+#
+#   https://peps.python.org/pep-0484/#forward-references
+from . import models
+
 # pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
 # NOTE: Explicit re-export (... import foo as foo) to make classes usable in other modules
 if sys.version_info >= (3, 8):  # pragma: only py>=3.8
@@ -246,6 +251,12 @@ ParsablePolicyConstraints = TypedDict(
 
 
 SerializedNullExtension = TypedDict("SerializedNullExtension", {"critical": bool})
+
+############
+# TypeVars #
+############
+# pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
+X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
 
 
 #####################

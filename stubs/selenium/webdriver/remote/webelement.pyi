@@ -13,7 +13,7 @@ class WebElement:
     def get_attribute(self, name: str) -> typing.Optional[str]:
         ...
 
-    def find_element(self, by: str, value: str) -> WebElementTypeVar:
+    def find_element(self: WebElementTypeVar, by: str, value: str) -> WebElementTypeVar:
         ...
 
     def find_element_by_css_selector(self: WebElementTypeVar, css_selector: str) -> WebElementTypeVar:

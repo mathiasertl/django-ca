@@ -62,7 +62,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(  # type: ignore[override]
+    def handle(
         self,
         serials: typing.Iterable[str],
         profile: typing.Optional[str],

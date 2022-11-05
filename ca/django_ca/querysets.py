@@ -24,7 +24,7 @@ from django.utils import timezone
 
 from . import ca_settings
 from .acme.constants import Status
-from .typehints import Protocol
+from .typehints import Protocol, X509CertMixinTypeVar
 from .utils import sanitize_serial
 
 if not TYPE_CHECKING:
@@ -39,7 +39,6 @@ if not TYPE_CHECKING:
     ) = AcmeOrderQuerySetBase = CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
-    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
 else:  # pragma: no cover  # only used for type checking
     from .models import (
         AcmeAccount,
@@ -61,7 +60,6 @@ else:  # pragma: no cover  # only used for type checking
     CertificateQuerySetBase = models.QuerySet[Certificate]
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet[X509CertMixin])
-    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 
 class QuerySetProtocol(

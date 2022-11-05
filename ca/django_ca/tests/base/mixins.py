@@ -78,8 +78,6 @@ if typing.TYPE_CHECKING:
 else:
     TestCaseProtocol = object
 
-X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
-
 
 class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-methods
     """Mixin providing augmented functionality to all test cases."""
@@ -161,7 +159,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
         is used as namespace.
         """
-
         if hostname is None:
             hostname = settings.ALLOWED_HOSTS[0]
 
@@ -205,7 +202,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         Parameters
         ----------
-
         crl : bytes
             The raw CRL
         expected : list
@@ -254,7 +250,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         Parameters
         ----------
-
         msg : str
             The regex matching the exception message.
         """
@@ -512,7 +507,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         critical: bool = False,
     ) -> x509.Extension[x509.AuthorityInformationAccess]:
         """Shortcut for getting a AuthorityInformationAccess extension."""
-
         access_descriptions = []
         if ca_issuers is not None:  # pragma: no branch
             access_descriptions += [
@@ -698,7 +692,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def cmd_help_text(self, cmd: str) -> str:
         """Get the help message for a given management command.
 
-        Also asserts that stderr is empty and the command exists with status code 0."""
+        Also asserts that stderr is empty and the command exists with status code 0.
+        """
         stdout = io.StringIO()
         stderr = io.StringIO()
         with mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
@@ -863,7 +858,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     @property
     def subject(self) -> x509.Name:
-        """A simple subject that is unique for the test case."""
+        """Subject containing a common name that is unique for the test case."""
         return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
     def subject_alternative_name(
@@ -1009,7 +1004,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def mockSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
         """Context manager to attach a mock to the given signal."""
-
         # This function is only here to create an autospec. From the documentation:
         #
         #   Notice that the function takes a sender argument, along with wildcard keyword arguments
@@ -1049,7 +1043,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                with self.mute_celery(((("foo"), {"key": "bar"}), {})):
                    cache_crls.delay("foo", key="bar")
         """
-
         with mock.patch("celery.app.task.Task.apply_async", spec_set=True) as mocked:
             yield mocked
 
@@ -1138,7 +1131,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
 
     def assertCSS(self, response: HttpResponse, path: str) -> None:  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
-
         if django.VERSION[:2] <= (4, 0):  # pragma: only django<4.1
             css = f'<link href="{static(path)}" type="text/css" media="all" rel="stylesheet" />'
         else:  # pragma: only django>=4.1
@@ -1200,7 +1192,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self, timestamp: typing.Union[str, datetime]
     ) -> typing.Iterator[typing.Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Overridden to force a client login, otherwise the user session is expired."""
-
         with super().freeze_time(timestamp) as frozen:
             self.client.force_login(self.user)
             yield frozen
@@ -1233,7 +1224,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
     def get_changelists(
         self,
     ) -> typing.Iterator[typing.Tuple[typing.Iterable[DjangoCAModel], typing.Dict[str, str]]]:
-        """Generator for possible changelist views.
+        """Generate list of objects for possible changelist views.
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.
         """

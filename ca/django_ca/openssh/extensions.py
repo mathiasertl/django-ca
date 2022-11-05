@@ -29,9 +29,7 @@ else:
 
 
 class SshHostCaType(UnrecognizedExtension):
-    """
-    CA Certs with this extension can sign OpenSSH Host keys.
-    """
+    """CA Certs with this extension can sign OpenSSH Host keys."""
 
     def __init__(self) -> None:
         super().__init__(SSH_HOST_CA, b"OpenSSH Host CA")
@@ -45,9 +43,7 @@ class SshHostCaExtension(SshHostCaExtensionBase):
 
 
 class SshUserCaType(UnrecognizedExtension):
-    """
-    CA Certs with this extension can sign OpenSSH Client / User keys.
-    """
+    """CA Certs with this extension can sign OpenSSH Client / User keys."""
 
     def __init__(self) -> None:
         super().__init__(SSH_USER_CA, b"OpenSSH User CA")

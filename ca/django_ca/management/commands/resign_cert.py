@@ -62,7 +62,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # type: ignore[override]
+    def handle(
         self,
         cert: Certificate,
         ca: typing.Optional[CertificateAuthority],
