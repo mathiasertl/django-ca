@@ -127,13 +127,16 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
 
     def test_default_subject(self) -> None:
         """Test invalid ``CA_DEFAULT_SUBJECT``."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid subject: True$"):
-            with self.settings(CA_DEFAULT_SUBJECT=True):
-                get_default_subject()
+        message = r"^django_ca\.subject\.get_default_subject\(\) will be removed in 1\.23\.0\.$"
+        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
+            with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid subject: True$"):
+                with self.settings(CA_DEFAULT_SUBJECT=True):
+                    get_default_subject()
 
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$"):
-            with self.settings(CA_DEFAULT_SUBJECT=(("XYZ", "error"),)):
-                get_default_subject()
+        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
+            with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$"):
+                with self.settings(CA_DEFAULT_SUBJECT=(("XYZ", "error"),)):
+                    get_default_subject()
 
     def test_subject_as_dict(self) -> None:
         """Test using a dict as subject, which has been deprecated."""

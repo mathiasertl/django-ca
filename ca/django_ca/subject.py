@@ -13,6 +13,7 @@
 
 """Module for handling x509 subjects."""
 
+import warnings
 from collections import abc
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union, cast
 
@@ -21,6 +22,7 @@ from cryptography import x509
 from django.core.exceptions import ImproperlyConfigured
 
 from . import ca_settings
+from .deprecation import RemovedInDjangoCA123Warning
 from .typehints import ParsableSubject
 from .utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, OID_NAME_MAPPINGS, SUBJECT_FIELDS, parse_name_x509
 
@@ -275,7 +277,17 @@ class Subject:
 
 
 def get_default_subject() -> Subject:
-    """Get the default subject as configured by the ``CA_DEFAULT_SUBJECT`` setting."""
+    """Get the default subject as configured by the ``CA_DEFAULT_SUBJECT`` setting.
+
+    .. deprecated:: 1.22.0
+
+       This function will be removed in 1.23.0.
+    """
+
+    warnings.warn(
+        "django_ca.subject.get_default_subject() will be removed in 1.23.0.",
+        category=RemovedInDjangoCA123Warning,
+    )
 
     try:
         return Subject(ca_settings.CA_DEFAULT_SUBJECT)
