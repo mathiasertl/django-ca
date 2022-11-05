@@ -59,6 +59,11 @@ sections = [
     "TEST", "FIRSTPARTY", "LOCALFOLDER",
 ]
 
+[tool.pydocstyle]
+convention = "numpy"
+add-ignore = "D102"
+match = "(?!tests?_).*\\.py"
+
 [tool.pylint.master]
 load-plugins = "pylint_django"
 
