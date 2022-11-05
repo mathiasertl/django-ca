@@ -38,7 +38,7 @@ from .modelfields import LazyCertificateSigningRequest
 from .openssh import SshHostCaExtension, SshUserCaExtension
 from .profiles import Profile, profiles
 from .signals import post_create_ca, post_issue_cert, pre_create_ca
-from .typehints import Expires, ParsableExtension, ParsableKeyType
+from .typehints import Expires, ParsableExtension, ParsableKeyType, X509CertMixinTypeVar
 from .utils import (
     ca_storage,
     format_general_name,
@@ -72,7 +72,6 @@ if TYPE_CHECKING:
     CertificateAuthorityManagerBase = models.Manager[CertificateAuthority]
     CertificateManagerBase = models.Manager[Certificate]
 
-    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", CertificateAuthority, Certificate)
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", CertificateAuthorityQuerySet, CertificateQuerySet)
 else:
     AcmeAccountManagerBase = (
@@ -82,7 +81,6 @@ else:
     ) = (
         AcmeChallengeManagerBase
     ) = AcmeOrderManagerBase = CertificateAuthorityManagerBase = CertificateManagerBase = models.Manager
-    X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar")
     QuerySetTypeVar = TypeVar("QuerySetTypeVar")
 
 

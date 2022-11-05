@@ -78,8 +78,6 @@ if typing.TYPE_CHECKING:
 else:
     TestCaseProtocol = object
 
-X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
-
 
 class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-methods
     """Mixin providing augmented functionality to all test cases."""

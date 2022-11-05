@@ -67,16 +67,14 @@ from .models import (
     Certificate,
     CertificateAuthority,
     Watcher,
-    X509CertMixin,
 )
 from .profiles import profiles
 from .querysets import CertificateQuerySet
 from .signals import post_issue_cert
-from .typehints import CRLExtensionType
+from .typehints import CRLExtensionType, X509CertMixinTypeVar
 from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
 
 log = logging.getLogger(__name__)
-X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound=X509CertMixin)
 
 if typing.TYPE_CHECKING:
     AcmeAccountAdminBase = admin.ModelAdmin[AcmeAccount]

@@ -56,7 +56,7 @@ Backwards incompatible changes
 * Drop support for Celery 5.0.
 * Remove the ``--ca-crl`` parameter in ``manage.py dump_crl`` (this was a left
   over and has been marked as deprecated since 1.12.0).
-* Drop ``django-redis-cache`` from the ``redis`` extra, as the project is abandonend. Please switch to the
+* Drop ``django-redis-cache`` from the ``redis`` extra, as the project is abandoned. Please switch to the
   `built in redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>`_ instead. If you still
   use Django 3.2, please manually install the backend.
 
