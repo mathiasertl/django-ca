@@ -40,7 +40,14 @@ from .extensions.utils import serialize_extension
 from .signals import pre_issue_cert
 from .subject import Subject
 from .typehints import Expires, ParsableHash, SerializedExtension, SerializedProfile
-from .utils import get_cert_builder, parse_expires, parse_general_name, parse_hash_algorithm, split_str
+from .utils import (
+    get_cert_builder,
+    parse_expires,
+    parse_general_name,
+    parse_hash_algorithm,
+    split_str,
+    x509_name,
+)
 
 if TYPE_CHECKING:
     from .models import CertificateAuthority
@@ -85,14 +92,15 @@ class Profile:
             expires = timedelta(days=expires)
         if extensions is None:
             extensions = {}
-
-        # If no subject is passed, use the default subject
         if subject is None:
-            self.subject = Subject(ca_settings.CA_DEFAULT_SUBJECT)
-        elif not isinstance(subject, Subject):  # parse subject to an internal Subject class
-            self.subject = Subject(subject)
-        else:  # pragma: django-ca<=1.24
+            subject = ca_settings.CA_DEFAULT_SUBJECT
+
+        if isinstance(subject, x509.Name):
             self.subject = subject
+        elif isinstance(subject, Subject):  # pragma: django-ca<=1.24
+            self.subject = subject.name
+        else:
+            self.subject = x509_name(subject)
 
         self.algorithm = parse_hash_algorithm(algorithm)
         self.cn_in_san = cn_in_san
@@ -253,7 +261,7 @@ class Profile:
         cert_extensions = typing.cast(typing.Dict[str, ExtensionTypes], deepcopy(self.extensions))
         cert_extensions.update(extensions_update)
         cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
-        cert_subject = deepcopy(self.subject)
+        cert_subject = Subject(self.subject)
 
         # If extensions is a dict, filter any extenions where the value is None
         if isinstance(extensions, dict):

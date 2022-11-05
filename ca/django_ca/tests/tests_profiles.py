@@ -151,7 +151,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         with override_settings(CA_DEFAULT_SUBJECT=default_subject):
             prof = Profile("test")
-        self.assertEqual(prof.subject, Subject(default_subject))
+        self.assertEqual(prof.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")]))
 
     def test_init_expires(self) -> None:
         """Test the expire parameter."""
