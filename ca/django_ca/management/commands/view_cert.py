@@ -54,9 +54,7 @@ class Command(CertCommandMixin, BinaryCommand):
         self.add_format(parser)
         super().add_arguments(parser)
 
-    def handle(  # type: ignore[override]
-        self, cert: Certificate, encoding: Encoding, **options: typing.Any
-    ) -> None:
+    def handle(self, cert: Certificate, encoding: Encoding, **options: typing.Any) -> None:
         self.stdout.write(f"Common Name: {cert.cn}")
 
         # self.stdout.write notBefore/notAfter

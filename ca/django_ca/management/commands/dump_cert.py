@@ -43,7 +43,7 @@ class Command(CertCommandMixin, BinaryCommand):
             "path", nargs="?", default="-", help='Path where to dump the certificate. Use "-" for stdout.'
         )
 
-    def handle(  # type: ignore[override]
+    def handle(
         self, cert: Certificate, bundle: bool, encoding: Encoding, path: str, **options: typing.Any
     ) -> None:
         if bundle and encoding == Encoding.DER:

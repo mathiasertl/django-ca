@@ -70,7 +70,7 @@ class Command(BinaryCommand):
         self.add_password(parser)
         super().add_arguments(parser)
 
-    def handle(  # type: ignore[override]
+    def handle(
         self,
         path: str,
         ca: CertificateAuthority,

@@ -65,7 +65,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
             self.list_children(child, child_indent)
 
-    def handle(self, tree: bool, **options: typing.Any) -> None:  # type: ignore[override]
+    def handle(self, tree: bool, **options: typing.Any) -> None:
         if tree:
             for ca in self.qs(CertificateAuthority.objects.filter(parent__isnull=True)):
                 self.list_ca(ca)

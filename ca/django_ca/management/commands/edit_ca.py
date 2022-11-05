@@ -53,7 +53,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             "--disable", action="store_false", dest="enabled", help="Disable the certificate authority."
         )
 
-    def handle(self, ca: CertificateAuthority, **options: typing.Any) -> None:  # type: ignore[override]
+    def handle(self, ca: CertificateAuthority, **options: typing.Any) -> None:
         if options["issuer_url"] is not None:
             ca.issuer_url = options["issuer_url"]
         if options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]:

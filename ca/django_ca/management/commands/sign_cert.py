@@ -98,7 +98,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(  # type: ignore[override] # pylint: disable=too-many-arguments,too-many-locals
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         ca: CertificateAuthority,
         subject: typing.Optional[x509.Name],

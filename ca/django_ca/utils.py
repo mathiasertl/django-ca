@@ -1169,7 +1169,7 @@ class GeneralNameList(List[x509.GeneralName]):
         """Generate a list of formatted names."""
         return [format_general_name(v) for v in self]
 
-    def __add__(self, value: ParsableGeneralNameList) -> "GeneralNameList":
+    def __add__(self, value: ParsableGeneralNameList) -> "GeneralNameList":  # type: ignore[override]
         # self + other_list
         if not isinstance(value, GeneralNameList):
             value = GeneralNameList(value)
@@ -1188,7 +1188,7 @@ class GeneralNameList(List[x509.GeneralName]):
             other = GeneralNameList(other)
         return list.__eq__(self, other)
 
-    def __iadd__(self, value: ParsableGeneralNameList) -> "GeneralNameList":  # self += value
+    def __iadd__(self, value: ParsableGeneralNameList) -> "GeneralNameList":  # type: ignore[override]
         return list.__iadd__(self, (parse_general_name(v) for v in value))
 
     def __repr__(self) -> str:
