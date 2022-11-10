@@ -25,7 +25,15 @@ from cryptography.x509.oid import NameOID, ObjectIdentifier
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ...extensions import KEY_TO_EXTENSION, OID_TO_EXTENSION, CRLDistributionPoints, Extension, FreshestCRL
+from ...constants import OID_DEFAULT_CRITICAL
+from ...extensions import (
+    KEY_TO_EXTENSION,
+    OID_TO_EXTENSION,
+    CRLDistributionPoints,
+    Extension,
+    FreshestCRL,
+    parse_extension,
+)
 from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
 from ...extensions.utils import (
     DistributionPoint,
@@ -139,6 +147,16 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         if critical is not None:
             val["critical"] = critical
         return self.ext_class(val)
+
+    def test_parse(self) -> None:
+        for config in self.test_values.values():
+            for value in config["values"]:
+                critical = OID_DEFAULT_CRITICAL[self.ext_class.oid]
+                ext = parse_extension(self.ext_class_key, {"value": value, "critical": critical})
+                expected = x509.Extension(
+                    oid=self.ext_class.oid, critical=critical, value=config["extension_type"]
+                )
+                self.assertEqual(ext, expected)
 
     @abc.abstractmethod
     def test_config(self) -> None:

@@ -45,6 +45,7 @@ from .extensions import (
     SubjectKeyIdentifier,
     TLSFeature,
 )
+from .parse import parse_extension
 
 # NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
 KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {
@@ -112,6 +113,7 @@ def get_extension_name(oid: x509.ObjectIdentifier) -> str:
 
 __all__ = [
     "get_extension_name",
+    "parse_extension",
     "Extension",
     "AuthorityInformationAccess",
     "AuthorityKeyIdentifier",

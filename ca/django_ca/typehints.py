@@ -136,8 +136,8 @@ ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
 ParsablePolicyInformation = TypedDict(
     "ParsablePolicyInformation",
     {
-        "policy_identifier": Optional[ParsablePolicyIdentifier],
-        "policy_qualifiers": typing.Optional[Sequence[ParsablePolicyQualifier]],
+        "policy_identifier": ParsablePolicyIdentifier,
+        "policy_qualifiers": Sequence[ParsablePolicyQualifier],
     },
     total=False,
 )
@@ -184,8 +184,6 @@ SerializedValue = TypeVar("SerializedValue")
 IterableItem = TypeVar("IterableItem")
 """TypeVar representing a value contained in an iterable extension."""
 
-ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
-
 if TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
     ExtensionType = x509.Extension[x509.ExtensionType]
@@ -203,48 +201,12 @@ else:
 
 
 BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
-ParsableAuthorityInformationAccess = TypedDict(
-    "ParsableAuthorityInformationAccess",
-    {
-        "ocsp": Optional[ParsableGeneralNameList],
-        "issuers": Optional[ParsableGeneralNameList],
-    },
-)
 ParsableAuthorityKeyIdentifierDict = TypedDict(
     "ParsableAuthorityKeyIdentifierDict",
     {
-        "key_identifier": Optional[bytes],
+        "key_identifier": typing.Optional[bytes],
         "authority_cert_issuer": Iterable[str],
         "authority_cert_serial_number": Optional[int],
-    },
-    total=False,
-)
-ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
-
-
-class ParsableBasicConstraints(BasicConstraintsBase, total=False):
-    """Serialized representation of a BasicConstraints extension.
-
-    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-    has a ``"pathlen"`` value that is either ``None`` or an int.
-    """
-
-    pathlen: Union[int, str]
-
-
-ParsableNameConstraints = TypedDict(
-    "ParsableNameConstraints",
-    {
-        "permitted": ParsableGeneralNameList,
-        "excluded": ParsableGeneralNameList,
-    },
-    total=False,
-)
-ParsablePolicyConstraints = TypedDict(
-    "ParsablePolicyConstraints",
-    {
-        "require_explicit_policy": int,
-        "inhibit_policy_mapping": int,
     },
     total=False,
 )
@@ -358,7 +320,47 @@ SerializedSignedCertificateTimestamp = TypedDict(
 ###################
 # Collect typehints for values that can be parsed back into cryptography values. Typehints in this section
 # start with "Parsable...".
+
+ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
+ParsableAuthorityInformationAccess = TypedDict(
+    "ParsableAuthorityInformationAccess",
+    {
+        "ocsp": Optional[ParsableGeneralNameList],
+        "issuers": Optional[ParsableGeneralNameList],
+    },
+    total=False,
+)
+
+
+class ParsableBasicConstraints(BasicConstraintsBase, total=False):
+    """Serialized representation of a BasicConstraints extension.
+
+    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
+    has a ``"pathlen"`` value that is either ``None`` or an int.
+    """
+
+    pathlen: Union[int, str]
+
+
+ParsableNameConstraints = TypedDict(
+    "ParsableNameConstraints",
+    {
+        "permitted": ParsableGeneralNameList,
+        "excluded": ParsableGeneralNameList,
+    },
+    total=False,
+)
+
+ParsablePolicyConstraints = TypedDict(
+    "ParsablePolicyConstraints",
+    {
+        "require_explicit_policy": int,
+        "inhibit_policy_mapping": int,
+    },
+    total=False,
+)
 ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]
+ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 
 
 #####################
