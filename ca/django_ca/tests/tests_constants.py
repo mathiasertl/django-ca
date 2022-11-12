@@ -44,6 +44,7 @@ class ExtensionMappingsTestCase(TestCase):
     """Test various mappings from ExtensionOIDs to something."""
 
     def test_completeness_extension_keys(self) -> None:
+        """Test completeness of KNOWN_EXTENSION_OIDS constant."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_KEYS.keys())
 
         # Make sure that it matches old extensions class keys

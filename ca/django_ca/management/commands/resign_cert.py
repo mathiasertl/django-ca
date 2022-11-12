@@ -105,14 +105,14 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         kwargs = {
             "algorithm": options["algorithm"],
-            "extensions": {},
+            "extensions": [],
             "password": password,
             "cn_in_san": False,  # we already copy the SAN/CN from the original cert
         }
 
         for ext in [key_usage, ext_key_usage, tls_feature]:
             if ext is not None:
-                kwargs["extensions"][ext.key] = ext
+                kwargs["extensions"].append(ext.as_extension())
 
         if not options[OID_TO_KEY[SubjectAlternativeName.oid]]:
             san = cert._x509_extensions.get(SubjectAlternativeName.oid)  # pylint: disable=protected-access
@@ -122,7 +122,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 critical=OID_DEFAULT_CRITICAL[SubjectAlternativeName.oid],
                 value=options[OID_TO_KEY[SubjectAlternativeName.oid]],
             )
-        kwargs["extensions"][OID_TO_KEY[SubjectAlternativeName.oid]] = san
+        kwargs["extensions"].append(san)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not san:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")

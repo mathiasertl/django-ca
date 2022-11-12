@@ -69,6 +69,13 @@ KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {
     TLSFeature.key: TLSFeature,
 }
 KEY_TO_OID = {key: ext.oid for key, ext in KEY_TO_EXTENSION.items()}
+KEY_TO_OID["crl_number"] = ExtensionOID.CRL_NUMBER
+KEY_TO_OID["delta_crl_indicator"] = ExtensionOID.DELTA_CRL_INDICATOR
+KEY_TO_OID["issuing_distribution_point"] = ExtensionOID.ISSUING_DISTRIBUTION_POINT
+KEY_TO_OID["policy_mappings"] = ExtensionOID.POLICY_MAPPINGS
+KEY_TO_OID["signed_certificate_timestamps"] = ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS
+KEY_TO_OID["subject_directory_attributes"] = ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES
+KEY_TO_OID["subject_information_access"] = ExtensionOID.SUBJECT_INFORMATION_ACCESS
 
 OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType, Any, Any]]] = {
     e.oid: e for e in KEY_TO_EXTENSION.values()

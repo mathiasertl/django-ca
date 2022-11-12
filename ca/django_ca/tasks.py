@@ -23,15 +23,17 @@ from http import HTTPStatus
 
 import requests
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import ExtensionOID
 
 from django.db import transaction
 from django.utils import timezone
 
 from . import ca_settings
 from .acme.validation import validate_dns_01
-from .extensions import SubjectAlternativeName
+from .constants import OID_DEFAULT_CRITICAL
 from .models import (
     AcmeAuthorization,
     AcmeCertificate,
@@ -41,7 +43,7 @@ from .models import (
     CertificateAuthority,
 )
 from .profiles import profiles
-from .utils import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES
+from .utils import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES, parse_general_name
 
 log = logging.getLogger(__name__)
 
@@ -261,10 +263,17 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         log.error("%s: Cannot issue certificate for this order", acme_cert.order)
         return
 
-    subject_alternative_names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
-    log.info("%s: Issuing certificate for %s", acme_cert.order, ",".join(subject_alternative_names))
+    names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
+    log.info("%s: Issuing certificate for %s", acme_cert.order, ",".join(names))
+    subject_alternative_names = x509.SubjectAlternativeName([parse_general_name(name) for name in names])
 
-    extensions = {SubjectAlternativeName.key: SubjectAlternativeName({"value": subject_alternative_names})}
+    extensions = [
+        x509.Extension(
+            oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+            critical=OID_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            value=subject_alternative_names,
+        )
+    ]
 
     profile = profiles["server"]
 
