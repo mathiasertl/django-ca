@@ -136,8 +136,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    @override_tmpcadir()
-    def test_get(self) -> HttpResponse:
+    def _test_get(self) -> HttpResponse:
         """Do a basic get request (to test CSS etc)."""
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -148,10 +147,16 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
         return response
 
-    @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
+    @override_tmpcadir()
+    def test_get(self) -> None:
+        """Do a basic get request (to test CSS etc)."""
+        self._test_get()
+
+    # @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_get_dict(self) -> None:
         """Test get with no profiles and no default subject."""
-        self.test_get()
+        self._test_get()
 
     @override_tmpcadir()
     def test_default_ca_key_does_not_exist(self) -> None:

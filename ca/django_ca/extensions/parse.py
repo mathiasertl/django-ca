@@ -284,7 +284,10 @@ def _parse_tls_feature(value: typing.Iterable[typing.Union[x509.TLSFeatureType, 
         if isinstance(feature, str):
             feature = value_mapping[feature]
         features.append(feature)
-    return x509.TLSFeature(features=sorted(features, key=lambda f: f.name))
+
+    # TYPE NOTE: In Python3.11, mypy thinks f.name is "Literal['status_request']?" instead of str
+    features = sorted(features, key=lambda f: f.name)  # type: ignore[no-any-return]
+    return x509.TLSFeature(features=features)
 
 
 def parse_extension(
