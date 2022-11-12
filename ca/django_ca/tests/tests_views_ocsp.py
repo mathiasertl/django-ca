@@ -466,7 +466,7 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
     def test_no_nonce(self) -> None:
         """Test fetching without a nonce."""
         builder = ocsp.OCSPRequestBuilder()
-        builder = builder.add_certificate(self.cert.pub.loaded, self.cert.ca.pub.loaded, hashes.SHA1())
+        builder = builder.add_certificate(self.cert.pub.loaded, self.cert.ca.pub.loaded, hashes.SHA256())
         data = base64.b64encode(builder.build().public_bytes(serialization.Encoding.DER))
 
         response = self.client.get(reverse("get", kwargs={"data": data.decode("utf-8")}))

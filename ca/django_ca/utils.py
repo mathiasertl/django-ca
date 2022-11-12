@@ -160,7 +160,6 @@ ADMIN_SUBJECT_OIDS = (
 #: Mapping of canonical hash algorithm names to the implementing classes
 HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     # NOTE: shake128, shake256, blake2b and blake2s require a digest size, which is not currently supported
-    hashes.SHA1.name: hashes.SHA1,
     hashes.SHA512_224.name: hashes.SHA512_224,
     hashes.SHA512_256.name: hashes.SHA512_256,
     hashes.SHA224.name: hashes.SHA224,
@@ -173,11 +172,15 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     hashes.SHA3_512.name: hashes.SHA3_512,
     # hashes.SHAKE128.name: hashes.SHAKE128,
     # hashes.SHAKE256.name: hashes.SHAKE256,
-    hashes.MD5.name: hashes.MD5,
     # hashes.BLAKE2b.name: hashes.BLAKE2b,
     # hashes.BLAKE2s.name: hashes.BLAKE2s,
     hashes.SM3.name: hashes.SM3,
 }
+
+if hasattr(hashes, "MD5"):  # pragma: only cryptography<39.0
+    HASH_ALGORITHM_NAMES[hashes.MD5.name] = hashes.MD5
+if hasattr(hashes, "SHA1"):  # pragma: only cryptography<39.0
+    HASH_ALGORITHM_NAMES[hashes.SHA1.name] = hashes.SHA1
 
 #: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes
 ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {

@@ -40,7 +40,7 @@ urlpatterns = [
         r"^adv/(?P<serial>[0-9A-F:]+)/$",
         CertificateRevocationListView.as_view(
             content_type="text/plain",
-            digest=hashes.MD5(),
+            digest=hashes.SHA256(),
             expires=321,
             type=Encoding.PEM,
         ),
@@ -200,7 +200,7 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
         response = self.client.get(reverse("advanced", kwargs={"serial": self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain")
-        self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.MD5())
+        self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.SHA256())
 
     @override_tmpcadir()
     def test_force_idp_inclusion(self) -> None:

@@ -15,6 +15,7 @@
 
 import json
 import typing
+import unittest
 from contextlib import contextmanager
 from datetime import timedelta
 from datetime import timezone as tz
@@ -31,6 +32,7 @@ from requests.utils import parse_header_links
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from cryptography.utils import CryptographyDeprecationWarning
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings
@@ -1689,6 +1691,7 @@ class AcmeOrderFinalizeViewTestCase(
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "CSR signature is not valid.")
 
+    @unittest.skipIf(settings.CRYPTOGRAPHY_VERSION >= (39, 0), "cg>=39 removed MD5/SHA1.")
     @override_tmpcadir()
     def test_csr_bad_algorithm(self) -> None:
         """Test posting a CSR with a bad algorithm."""
@@ -1697,13 +1700,24 @@ class AcmeOrderFinalizeViewTestCase(
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
         )
+        msg = r"^MD5 signatures are deprecated and support for them will be removed in the next version\.$"
+        with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
+            signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
+            resp = self.acme(self.url, self.get_message(signed_csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "md5: Insecure hash algorithm.")
+
+        msg = r"^SHA1 signatures are deprecated and support for them will be removed in the next version\.$"
+        with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
+            signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.SHA1())
+
+        with self.patch("django_ca.acme.views.run_task") as mockcm:
+            resp = self.acme(self.url, self.get_message(signed_csr), kid=self.kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, "sha1: Insecure hash algorithm.")
 
     @override_tmpcadir()
     def test_csr_valid_subject(self) -> None:

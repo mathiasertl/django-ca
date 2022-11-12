@@ -87,7 +87,7 @@ class Command(CertCommandMixin, BinaryCommand):
             self.stdout.write(f"* {watcher}")
 
         self.stdout.write("Digest:")
-        for algorithm in [hashes.MD5(), hashes.SHA1(), hashes.SHA256(), hashes.SHA512()]:
+        for algorithm in [hashes.SHA256(), hashes.SHA512()]:
             self.stdout.write(f"    {algorithm.name}: {cert.get_fingerprint(algorithm)}")
 
         self.stdout.write(f"HPKP pin: {cert.hpkp_pin}")

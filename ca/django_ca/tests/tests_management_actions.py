@@ -225,9 +225,6 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
         args = self.parser.parse_args(["--algo=SHA256"])
         self.assertIsInstance(args.algo, hashes.SHA256)
 
-        args = self.parser.parse_args(["--algo=MD5"])
-        self.assertIsInstance(args.algo, hashes.MD5)
-
         args = self.parser.parse_args(["--algo=SHA512"])
         self.assertIsInstance(args.algo, hashes.SHA512)
 

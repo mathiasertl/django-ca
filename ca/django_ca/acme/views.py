@@ -759,7 +759,14 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             raise AcmeBadCSR(message="CSR signature is not valid.")
 
         # Do not accept MD5 or SHA1 signatures
-        if isinstance(csr.signature_hash_algorithm, (hashes.MD5, hashes.SHA1)):
+        hash_algorithm = csr.signature_hash_algorithm
+        if hasattr(hashes, "MD5") and isinstance(
+            hash_algorithm, hashes.MD5
+        ):  # pragma: only cryptography<39.0
+            raise AcmeBadCSR(message=f"{csr.signature_hash_algorithm.name}: Insecure hash algorithm.")
+        if hasattr(hashes, "SHA1") and isinstance(  # pragma: only cryptography<39.0
+            hash_algorithm, hashes.SHA1
+        ):
             raise AcmeBadCSR(message=f"{csr.signature_hash_algorithm.name}: Insecure hash algorithm.")
 
         # Get list of general names from the authorizations

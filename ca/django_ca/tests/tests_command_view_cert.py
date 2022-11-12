@@ -59,8 +59,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -95,8 +93,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -131,8 +127,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -167,8 +161,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -203,8 +195,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -236,8 +226,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -272,8 +260,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -307,8 +293,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -342,8 +326,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -373,8 +355,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -385,8 +365,6 @@ Valid until: {valid_until_short}
 Status: Valid
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -447,8 +425,6 @@ TLS Feature{tls_feature_critical}:
     * {tls_feature_1}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -509,8 +485,6 @@ TLS Feature{tls_feature_critical}:
     * {tls_feature_0}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -535,8 +509,6 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
             "cn": cert.cn,
             "from": cert.not_before.strftime("%Y-%m-%d %H:%M"),
             "until": cert.not_after.strftime("%Y-%m-%d %H:%M"),
-            "md5": cert.get_fingerprint(hashes.MD5()),
-            "sha1": cert.get_fingerprint(hashes.SHA1()),
             "sha256": cert.get_fingerprint(hashes.SHA256()),
             "sha512": cert.get_fingerprint(hashes.SHA512()),
             "subjectKeyIdentifier": self._get_ski_text(cert.subject_key_identifier),
@@ -558,8 +530,6 @@ Valid until: {valid_until_short}
 Status: {status}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -581,8 +551,6 @@ Subject Alternative Name:
     * {subject_alternative_name_0}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -630,8 +598,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -678,8 +644,6 @@ Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name[0]}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -710,8 +674,6 @@ Subject Alternative Name:
     * DNS:{cn}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -739,8 +701,6 @@ Status: Valid
 Watchers:
 * user@example.com
 Digest:
-    md5: %(md5)s
-    sha1: %(sha1)s
     sha256: %(sha256)s
     sha512: %(sha512)s
 HPKP pin: %(hpkp)s
@@ -863,8 +823,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -937,8 +895,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -1071,8 +1027,6 @@ Subject Key Identifier{subject_key_identifier_critical}:
     {subject_key_identifier_text}
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}
@@ -1091,8 +1045,6 @@ Valid until: {valid_until_short}
 Status: Valid
 Watchers:
 Digest:
-    md5: {md5}
-    sha1: {sha1}
     sha256: {sha256}
     sha512: {sha512}
 HPKP pin: {hpkp}

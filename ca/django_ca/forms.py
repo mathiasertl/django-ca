@@ -115,8 +115,6 @@ class CreateCertificateBaseForm(CertificateModelForm):
         choices=[
             ("SHA512", "SHA-512"),
             ("SHA256", "SHA-256"),
-            ("SHA1", "SHA-1 (insecure!)"),
-            ("MD5", "MD5 (insecure!)"),
         ],
         help_text=_("Algorithm used for signing the certificate. SHA-512 should be fine in most cases."),
     )
