@@ -464,6 +464,8 @@ class Profile:
                 # Passed a cryptography extension (currently happens only via the admin interface)
                 pass
 
+        pass  # pylint: disable=unnecessary-pass  # pass because coverage has a false positive otherwise
+
     def _update_san_from_cn(
         self, cn_in_san: bool, subject: Subject, extensions: Dict[str, x509.Extension[x509.ExtensionType]]
     ) -> None:
