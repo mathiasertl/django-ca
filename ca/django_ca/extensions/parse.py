@@ -20,22 +20,21 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from ..constants import OID_DEFAULT_CRITICAL
 from ..typehints import (
-    ParsableAuthorityKeyIdentifier,
     ParsableAuthorityInformationAccess,
+    ParsableAuthorityKeyIdentifier,
     ParsableBasicConstraints,
     ParsableDistributionPoint,
     ParsableExtension,
     ParsableGeneralNameList,
-    ParsablePolicyInformation,
     ParsableNameConstraints,
     ParsableNoticeReference,
     ParsablePolicyConstraints,
+    ParsablePolicyInformation,
     ParsableSubjectKeyIdentifier,
     ParsableUserNotice,
 )
 from ..utils import hex_to_bytes, parse_general_name, x509_relative_name
 from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, DistributionPoint
-
 
 ##########################################
 # Parsers for sub-elements of extensions #
@@ -291,6 +290,7 @@ def _parse_tls_feature(value: typing.Iterable[typing.Union[x509.TLSFeatureType, 
 def parse_extension(
     key: str, value: typing.Union[x509.Extension[x509.ExtensionType], x509.ExtensionType, ParsableExtension]
 ) -> x509.Extension[x509.ExtensionType]:
+    """Parse a serialized extension into a cryptography object."""
     if isinstance(value, x509.Extension):
         return value
 

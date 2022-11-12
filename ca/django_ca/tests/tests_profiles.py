@@ -80,7 +80,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
 
-class ProfileTestCase(TestCaseMixin, TestCase):
+class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
     """Main tests for the profile class."""
 
     def create_cert(  # type: ignore[override]
@@ -680,7 +680,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Pass an old subject to create_cert, to be removed in 1.24."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        ku = KeyUsage({"value": ["keyAgreement"], "critical": True})
+        ku = KeyUsage({"value": ["keyAgreement"], "critical": True})  # pylint: disable=invalid-name
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
 
         with self.assertRemovedIn124Warning("Passing KeyUsage is deprecated."):

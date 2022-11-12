@@ -883,7 +883,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             return serialize_extension(profile.extensions[extension_class.key])  # type: ignore[arg-type]
         return {"value": default, "critical": extension_class.default_critical}
 
-    def assertProfile(  # pylint: disable=invalid-name
+    def assertProfile(  # pylint: disable=invalid-name,too-many-locals
         self,
         profile_name: str,
         ku_select: Select,

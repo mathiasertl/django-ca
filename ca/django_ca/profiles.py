@@ -68,7 +68,7 @@ class Profile:
 
     .. deprecated:: 1.22.0
 
-       * Passing a ``django_ca.extension.Extension`` is deprecated. The feature will be removed in
+       Passing a ``django_ca.extension.Extension`` is deprecated. The feature will be removed in
        ``django_ca==1.24.0``. Pass a :py:class:`~cg:cryptography.x509.Extension` a serialized version instead.
 
     Instances of this class usually represent profiles defined in :ref:`CA_PROFILES <settings-ca-profiles>`,

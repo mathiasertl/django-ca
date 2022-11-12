@@ -149,6 +149,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         return self.ext_class(val)
 
     def test_parse(self) -> None:
+        """Test parsing a serialized extension."""
         for config in self.test_values.values():
             for value in config["values"]:
                 critical = OID_DEFAULT_CRITICAL[self.ext_class.oid]

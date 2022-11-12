@@ -401,7 +401,6 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # Cast elements of subject to list, since actual data is comming from JSON
         expected_subject = [[k, v] for k, v in ca_settings.CA_DEFAULT_SUBJECT]
 
-        self.maxDiff = None
         self.assertEqual(
             response.json(),
             {
@@ -524,7 +523,6 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     )
     def test_empty_profile(self) -> None:
         """Try fetching a simple profile."""
-        self.maxDiff = None
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
