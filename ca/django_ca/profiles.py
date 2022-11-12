@@ -15,7 +15,6 @@
 
 import typing
 import warnings
-from copy import deepcopy
 from datetime import datetime, timedelta
 from threading import local
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union, cast
@@ -359,10 +358,6 @@ class Profile:
             )
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm)
-
-    def copy(self) -> "Profile":
-        """Create a deep copy of a profile."""
-        return deepcopy(self)
 
     def get_expires(self, expires: Expires) -> datetime:
         """Get expiry for the given expiry timestamp."""

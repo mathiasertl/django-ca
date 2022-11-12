@@ -40,7 +40,6 @@ from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, get_profile, profile, profiles
 from ..signals import pre_issue_cert
 from ..subject import Subject
-from ..utils import parse_hash_algorithm
 from .base import certs, dns, override_settings, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
@@ -90,22 +89,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         cert = Certificate(ca=ca)
         cert.update_certificate(prof.create_cert(ca, *args, **kwargs))
         return cert
-
-    def test_copy(self) -> None:
-        """Test copying a profile."""
-        prof1 = Profile("example")
-        prof2 = prof1.copy()
-        self.assertIsNot(prof1, prof2)
-        self.assertEqual(prof1, prof2)
-        prof2.extensions[SubjectAlternativeName.key] = self.subject_alternative_name(dns("example.com"))
-        self.assertNotEqual(prof1, prof2)
-        self.assertNotIn(SubjectAlternativeName.key, prof1.extensions)
-        self.assertIn(SubjectAlternativeName.key, prof2.extensions)
-
-        # test algorithm b/c cryptography does not compare this properly
-        prof2 = prof1.copy()
-        prof2.algorithm = parse_hash_algorithm("MD5")
-        self.assertNotEqual(prof1, prof2)
 
     def test_eq(self) -> None:
         """Test profile equality."""
