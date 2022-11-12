@@ -178,6 +178,9 @@ CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
 if isinstance(CA_DEFAULT_SUBJECT, dict):
     warnings.warn(_SUBJECT_AS_DICT_MAPPING % "CA_DEFAULT_SUBJECT", category=RemovedInDjangoCA123Warning)
     CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT.items())
+elif isinstance(CA_DEFAULT_SUBJECT, list):
+    CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT)
+
 
 # Add ability just override/add some profiles
 _CA_PROFILE_OVERRIDES = getattr(settings, "CA_PROFILES", {})

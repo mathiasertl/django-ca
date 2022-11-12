@@ -757,14 +757,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
             data["ca"] = ca
-            data["subject"] = profile.subject.name
+            data["subject"] = profile.subject
 
             data.update(ca.extensions_for_certificate)
 
             for key in CERTIFICATE_EXTENSIONS:
                 ext = profile.extensions.get(key)
                 if ext is not None:
-                    data[key] = ext.as_extension()
+                    data[key] = ext
 
         return data
 
@@ -1011,7 +1011,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             for key, ext in profile.extensions.items():
                 # We currently only support the first distribution point, append others from profile
                 if key in ("crl_distribution_points", "freshest_crl") and key in extensions:
-                    profile_ext = ext.extension_type  # type: ignore[union-attr]  # is never None
+                    profile_ext = ext.value  # type: ignore[union-attr]  # is never None
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
                         form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[key])
                         dpoints = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
@@ -1027,7 +1027,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     continue
 
                 # Add any extension from the profile currently not changable in the web interface
-                extensions[key] = ext.as_extension()  # type: ignore[union-attr]  # is never None
+                extensions[key] = ext
 
             ca: CertificateAuthority = data["ca"]
 

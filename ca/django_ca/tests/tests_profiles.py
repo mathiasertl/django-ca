@@ -125,14 +125,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             "test",
             subject=[("C", "AT"), ("CN", self.hostname)],
             extensions={
-                OCSPNoCheck.key: {},
+                "ocsp_no_check": {},
             },
         )
         prof2 = Profile(
             "test",
             subject=[("C", "AT"), ("CN", self.hostname)],
             extensions={
-                OCSPNoCheck.key: OCSPNoCheck(),
+                "ocsp_no_check": self.ocsp_no_check(),
             },
         )
         self.assertEqual(prof1, prof2)
@@ -140,7 +140,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
     def test_init_none_extension(self) -> None:
         """Test profiles that explicitly deactivate an extension."""
         prof = Profile("test", extensions={"ocsp_no_check": None})
-        self.assertEqual(prof.extensions, {"ocsp_no_check": None, "basic_constraints": BasicConstraints()})
+        self.assertEqual(
+            prof.extensions, {"ocsp_no_check": None, "basic_constraints": self.basic_constraints()}
+        )
         self.assertIsNone(prof.serialize()["extensions"]["ocsp_no_check"])
 
     def test_init_no_subject(self) -> None:
@@ -180,7 +182,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             prof.serialize(),
             {
                 "cn_in_san": True,
-                "subject": {"CN": self.hostname},
+                "subject": [("CN", self.hostname)],
                 "description": desc,
                 "extensions": {
                     BasicConstraints.key: {

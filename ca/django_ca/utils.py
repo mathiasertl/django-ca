@@ -47,6 +47,7 @@ from .typehints import (
     ParsableHash,
     ParsableKeyType,
     ParsableName,
+    SerializedName,
     SupportsIndex,
 )
 
@@ -306,6 +307,33 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
 
     values = "/".join([f"{k}={_format_value(v)}" for k, v in items])  # type: ignore[arg-type]
     return f"/{values}"
+
+
+def serialize_name(name: typing.Union[x509.Name, x509.RelativeDistinguishedName]) -> SerializedName:
+    """Serialize a :py:class:`~cg:cryptography.x509.Name`.
+
+    The value also accepts a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
+
+    The returned value is a list of tuples, each consisting of two strings. If an attribute contains
+    ``bytes``, it is converted using :py:func:`~django_ca.utils.bytes_to_hex`.
+
+    Examples::
+
+        >>> serialize_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
+        [('CN', 'example.com')]
+        >>> serialize_name(x509.RelativeDistinguishedName([
+        ...     x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT'),
+        ...     x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
+        ... ]))
+        [('C', 'AT'), ('CN', 'example.com')]
+    """
+    items: SerializedName = []
+    for attr in name:
+        value = attr.value
+        if isinstance(value, bytes):
+            value = bytes_to_hex(value)
+        items.append((OID_NAME_MAPPINGS[attr.oid], value))
+    return items
 
 
 def format_general_name(name: x509.GeneralName) -> str:

@@ -99,12 +99,13 @@ SerializedExtension = TypedDict(
         "value": Any,
     },
 )
+SerializedName = typing.List[typing.Tuple[str, str]]
 SerializedProfile = TypedDict(
     "SerializedProfile",
     {
         "cn_in_san": bool,
         "description": str,
-        "subject": Dict[str, Union[str, List[str]]],
+        "subject": SerializedName,
         "extensions": Dict[str, Any],
     },
 )

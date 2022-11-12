@@ -32,7 +32,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..models import Certificate, CertificateAuthority, Watcher
-from ..subject import Subject
 from ..typehints import PrivateKeyTypes
 from ..utils import OID_NAME_MAPPINGS, x509_name
 from .base import certs, override_tmpcadir, timestamps
@@ -398,8 +397,13 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         enduser_desc = "A certificate for an enduser, allows client authentication, code and email signing."
+
+        # Cast elements of subject to list, since actual data is comming from JSON
+        expected_subject = [[k, v] for k, v in ca_settings.CA_DEFAULT_SUBJECT]
+
+        self.maxDiff = None
         self.assertEqual(
-            json.loads(response.content.decode("utf-8")),
+            response.json(),
             {
                 "client": {
                     "cn_in_san": True,
@@ -418,7 +422,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": ["clientAuth"],
                         },
                     },
-                    "subject": dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+                    "subject": expected_subject,
                 },
                 "enduser": {
                     "cn_in_san": False,
@@ -437,7 +441,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": ["clientAuth", "codeSigning", "emailProtection"],
                         },
                     },
-                    "subject": dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+                    "subject": expected_subject,
                 },
                 "ocsp": {
                     "cn_in_san": False,
@@ -456,7 +460,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": ["OCSPSigning"],
                         },
                     },
-                    "subject": dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+                    "subject": expected_subject,
                 },
                 "server": {
                     "cn_in_san": True,
@@ -475,7 +479,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": ["clientAuth", "serverAuth"],
                         },
                     },
-                    "subject": dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+                    "subject": expected_subject,
                 },
                 "webserver": {
                     "cn_in_san": True,
@@ -494,7 +498,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": ["serverAuth"],
                         },
                     },
-                    "subject": dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+                    "subject": expected_subject,
                 },
             },
         )
@@ -520,10 +524,14 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     )
     def test_empty_profile(self) -> None:
         """Try fetching a simple profile."""
+        self.maxDiff = None
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+
+        # Cast elements of subject to list, since actual data is comming from JSON
+        expected_subject = [[k, v] for k, v in ca_settings.CA_DEFAULT_SUBJECT]
         self.assertEqual(
-            json.loads(response.content.decode("utf-8")),
+            response.json(),
             {
                 "test": {
                     "cn_in_san": True,
@@ -534,7 +542,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": {"ca": False},
                         },
                     },
-                    "subject": dict(Subject(ca_settings.CA_DEFAULT_SUBJECT)),
+                    "subject": expected_subject,
                 },
             },
         )
