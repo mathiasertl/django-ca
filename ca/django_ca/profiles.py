@@ -289,7 +289,7 @@ class Profile:
         if add_issuer_alternative_name is None:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
-        cert_extensions = typing.cast(typing.Dict[str, ExtensionTypes], deepcopy(self.extensions))
+        cert_extensions = self.extensions.copy()
         cert_extensions.update(extensions_update)
         cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
         cert_subject = Subject(self.subject)
