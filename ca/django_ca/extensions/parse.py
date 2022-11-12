@@ -45,10 +45,7 @@ from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, DistributionPoint
 def _parse_pathlen(value: typing.Optional[typing.Union[int, str]]) -> typing.Optional[int]:
     """Parse `value` as path length (either an int, a str of an int or None)."""
     if value is not None:
-        try:
-            return int(value)
-        except ValueError as ex:
-            raise ValueError(f'Could not parse pathlen: "{value}"') from ex
+        return int(value)
     return value
 
 
@@ -66,8 +63,6 @@ def _parse_notice_reference(
 
 
 def _parse_user_notice(value: ParsableUserNotice) -> x509.UserNotice:
-    if isinstance(value, x509.UserNotice):
-        return value
     notice_reference = _parse_notice_reference(value.get("notice_reference"))
     return x509.UserNotice(notice_reference=notice_reference, explicit_text=value.get("explicit_text"))
 
@@ -141,11 +136,9 @@ def _parse_authority_key_identifier(value: ParsableAuthorityKeyIdentifier) -> x5
         if value.get("authority_cert_issuer", []):
             issuer = [parse_general_name(name) for name in value["authority_cert_issuer"]]
 
-        if isinstance(value["authority_cert_serial_number"], int):
-            serial_number = value["authority_cert_serial_number"]
-        elif value.get("authority_cert_serial_number"):
-            # TYPE NOTE: mypy complains that value could be none, but it's checked in the if condition above
-            serial_number = int(value["authority_cert_serial_number"])  # type: ignore[call-overload]
+        serial_number = value.get("authority_cert_serial_number")
+        if serial_number is not None and not isinstance(serial_number, int):
+            serial_number = int(serial_number)
 
     if isinstance(key_id, str):
         key_id = hex_to_bytes(key_id)
@@ -230,7 +223,7 @@ def _parse_extended_key_usage(
     for unparsed in value:
         if isinstance(unparsed, str):
             usages.append(mapping[unparsed])
-        elif isinstance(unparsed, x509.ObjectIdentifier):
+        else:
             usages.append(unparsed)
 
     return x509.ExtendedKeyUsage(usages=sorted(usages, key=lambda u: EXTENDED_KEY_USAGE_NAMES[u]))
@@ -295,11 +288,17 @@ def _parse_tls_feature(value: typing.Iterable[typing.Union[x509.TLSFeatureType, 
     return x509.TLSFeature(features=sorted(features, key=lambda f: f.name))
 
 
-def parse_extension(key: str, value: ParsableExtension) -> x509.Extension[x509.ExtensionType]:
+def parse_extension(
+    key: str, value: typing.Union[x509.Extension[x509.ExtensionType], x509.ExtensionType, ParsableExtension]
+) -> x509.Extension[x509.ExtensionType]:
+    if isinstance(value, x509.Extension):
+        return value
+
     if isinstance(value, x509.ExtensionType):
-        parsed: x509.ExtensionType = value
-    elif key == "authority_key_identifier":
-        parsed = _parse_authority_key_identifier(value["value"])
+        return x509.Extension(oid=value.oid, critical=OID_DEFAULT_CRITICAL[value.oid], value=value)
+
+    if key == "authority_key_identifier":
+        parsed: x509.ExtensionType = _parse_authority_key_identifier(value["value"])
     elif key == "authority_information_access":
         parsed = _parse_authority_information_access(value["value"])
     elif key == "basic_constraints":

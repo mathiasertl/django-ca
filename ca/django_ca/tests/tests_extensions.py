@@ -55,6 +55,7 @@ from ..extensions import (
     SubjectAlternativeName,
     SubjectKeyIdentifier,
     TLSFeature,
+    parse_extension,
 )
 from ..extensions.base import UnrecognizedExtension
 from ..extensions.utils import (
@@ -288,9 +289,7 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
     test_values = {
         "one": {
             "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex1}</span></li></ul>",
-            "values": [
-                hex1,
-            ],
+            "values": [hex1, {"key_identifier": hex1}],
             "expected": b1,
             "expected_repr": f"keyid: {hex1}",
             "expected_serialized": {"key_identifier": hex1},
@@ -326,7 +325,10 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
     </li>
 </ul>""",
             "expected": {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
-            "values": [{"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1}],
+            "values": [
+                {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
+                {"authority_cert_issuer": [dns1], "authority_cert_serial_number": str(s1)},
+            ],
             "expected_repr": f"issuer: ['DNS:{dns1}'], serial: {s1}",
             "expected_serialized": {
                 "authority_cert_issuer": [f"DNS:{dns1}"],
@@ -477,6 +479,10 @@ class CertificatePoliciesTestCase(
         "policy_identifier": oid,
         "policy_qualifiers": [text1],
     }
+    un1_1: ParsablePolicyInformation = {
+        "policy_identifier": x509.ObjectIdentifier(oid),
+        "policy_qualifiers": [text1],
+    }
     un2: ParsablePolicyInformation = {
         "policy_identifier": oid,
         "policy_qualifiers": [
@@ -484,6 +490,10 @@ class CertificatePoliciesTestCase(
                 "explicit_text": text2,
             }
         ],
+    }
+    un2_1: ParsablePolicyInformation = {
+        "policy_identifier": oid,
+        "policy_qualifiers": [x509.UserNotice(explicit_text=text2, notice_reference=None)],
     }
     un3: ParsablePolicyInformation = {
         "policy_identifier": oid,
@@ -496,6 +506,12 @@ class CertificatePoliciesTestCase(
                     ],
                 }
             }
+        ],
+    }
+    un3_1: ParsablePolicyInformation = {
+        "policy_identifier": oid,
+        "policy_qualifiers": [
+            {"notice_reference": x509.NoticeReference(organization=text3, notice_numbers=[1])}
         ],
     }
     un4: ParsablePolicyInformation = {
@@ -562,7 +578,7 @@ class CertificatePoliciesTestCase(
     test_values = {
         "one": {
             "admin_html": "<ul><li>text1</li></ul>",
-            "values": [[un1], [xpi1]],
+            "values": [[un1], [un1_1], [xpi1]],
             "expected": [p1],
             "expected_djca": [p1],
             "expected_repr": "1 policy",
@@ -572,7 +588,7 @@ class CertificatePoliciesTestCase(
         },
         "two": {
             "admin_html": f"<ul><li>User Notice:<ul><li>Explicit Text: {text2}</li></ul></li></ul>",
-            "values": [[un2], [xpi2]],
+            "values": [[un2], [un2_1], [xpi2]],
             "expected": [p2],
             "expected_djca": [p2],
             "expected_repr": "1 policy",
@@ -591,7 +607,7 @@ class CertificatePoliciesTestCase(
             <li>Notice Numbers: [1]</li>
     </ul></li>
 </ul></li></ul>""",
-            "values": [[un3], [xpi3]],
+            "values": [[un3], [un3_1], [xpi3]],
             "expected": [p3],
             "expected_djca": [p3],
             "expected_repr": "1 policy",
@@ -1845,6 +1861,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "admin_html": hex1,
             "values": [
                 x509.SubjectKeyIdentifier(b1),
+                b1,
                 hex1,
             ],
             "expected": b1,
@@ -1857,6 +1874,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "admin_html": hex2,
             "values": [
                 x509.SubjectKeyIdentifier(b2),
+                b2,
                 hex2,
             ],
             "expected": b2,
@@ -1869,6 +1887,7 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
             "admin_html": hex3,
             "values": [
                 x509.SubjectKeyIdentifier(b3),
+                b3,
                 hex3,
             ],
             "expected": b3,
@@ -2663,6 +2682,11 @@ class TypeErrorTests(TestCase):
 
     ext_type = UnknownExtensionType()
     ext = x509.Extension(oid=oid, critical=True, value=b"foo")  # type: ignore[type-var]
+
+    def test_parse_unknown_key(self) -> None:
+        """Test exception for parsing an extension with an unsupported key."""
+        with self.assertRaisesRegex(ValueError, r"^wrong_key: Unknown extension key\.$"):
+            parse_extension("wrong_key", {})
 
     def test_serialize_no_extension(self) -> None:
         """Test serializing an extension that is not an extension type."""

@@ -97,7 +97,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof2 = prof1.copy()
         self.assertIsNot(prof1, prof2)
         self.assertEqual(prof1, prof2)
-        prof2.extensions[SubjectAlternativeName.key] = SubjectAlternativeName({"value": ["example.com"]})
+        prof2.extensions[SubjectAlternativeName.key] = self.subject_alternative_name(dns("example.com"))
         self.assertNotEqual(prof1, prof2)
         self.assertNotIn(SubjectAlternativeName.key, prof1.extensions)
         self.assertIn(SubjectAlternativeName.key, prof2.extensions)
@@ -154,6 +154,12 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         with override_settings(CA_DEFAULT_SUBJECT=default_subject):
             prof = Profile("test")
         self.assertEqual(prof.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")]))
+
+    def test_init_x509_subject(self) -> None:
+        """Test passing a cryptography subject."""
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
+        prof = Profile("test", subject=subject)
+        self.assertEqual(prof.subject, subject)
 
     def test_init_expires(self) -> None:
         """Test the expire parameter."""
@@ -668,6 +674,19 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         with self.assertRemovedIn124Warning(warning):
             prof = Profile(self.id(), subject=Subject({"C": "AT"}))  # type: ignore[arg-type]
+
+    @override_tmpcadir()
+    def test_deprecated_django_ca_extension(self) -> None:
+        """Pass an old subject to create_cert, to be removed in 1.24."""
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        ku = KeyUsage({"value": ["keyAgreement"], "critical": True})
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
+
+        with self.assertRemovedIn124Warning("Passing KeyUsage is deprecated."):
+            prof = Profile(self.id(), extensions={"key_usage": ku})  # type: ignore[dict-item]  # what we test
+            cert = self.create_cert(prof, ca, csr, subject=subject)
+        self.assertEqual(cert.key_usage, ku)
 
 
 class GetProfileTestCase(TestCase):

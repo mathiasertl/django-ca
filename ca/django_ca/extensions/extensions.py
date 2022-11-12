@@ -238,7 +238,10 @@ class AuthorityKeyIdentifier(
         else:
             self.key_identifier = self.parse_keyid(value.get("key_identifier"))
             self.authority_cert_issuer = GeneralNameList(value.get("authority_cert_issuer"))
-            self.authority_cert_serial_number = value.get("authority_cert_serial_number")
+            serial_number = value.get("authority_cert_serial_number")
+            if isinstance(serial_number, str):
+                serial_number = int(serial_number)
+            self.authority_cert_serial_number = serial_number
 
     def from_extension(self, value: x509.AuthorityKeyIdentifier) -> None:
         self.key_identifier = value.key_identifier

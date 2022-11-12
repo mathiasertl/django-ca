@@ -157,6 +157,8 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
                     oid=self.ext_class.oid, critical=critical, value=config["extension_type"]
                 )
                 self.assertEqual(ext, expected)
+                self.assertEqual(parse_extension(self.ext_class_key, ext), ext)
+                self.assertEqual(parse_extension(self.ext_class_key, ext.value), ext)
 
     @abc.abstractmethod
     def test_config(self) -> None:
@@ -1181,10 +1183,16 @@ class CRLDistributionPointsTestCaseBase(
         "crl_issuer": [f"URI:{uri3}"],
         "reasons": ["ca_compromise", "key_compromise"],
     }
+    s5: ParsableDistributionPoint = {
+        "full_name": [f"URI:{uri2}"],
+        "crl_issuer": [f"URI:{uri3}"],
+        "reasons": [x509.ReasonFlags.ca_compromise, x509.ReasonFlags.key_compromise],
+    }
     dp1 = DistributionPoint(s1)
     dp2 = DistributionPoint(s2)
     dp3 = DistributionPoint(s3)
     dp4 = DistributionPoint(s4)
+    dp5 = DistributionPoint(s5)
 
     cg_rdn1 = rdn([(NameOID.COMMON_NAME, "example.com")])
 
@@ -1267,7 +1275,7 @@ class CRLDistributionPointsTestCaseBase(
       <li>CRL Issuer: URI:{self.uri3}</li>
       <li>Reasons: ca_compromise, key_compromise</li>
   </ul>""",
-                "values": [[self.s4], [self.dp4], [self.cg_dp4]],
+                "values": [[self.s4], [self.s5], [self.dp4], [self.dp5], [self.cg_dp4]],
                 "expected": [self.s4],
                 "expected_djca": [self.dp4],
                 "expected_repr": f"[<DistributionPoint: full_name=['URI:{self.uri2}'], "

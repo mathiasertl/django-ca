@@ -138,6 +138,11 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
                 with self.settings(CA_DEFAULT_SUBJECT=(("XYZ", "error"),)):
                     get_default_subject()
 
+    def test_subject_as_list(self) -> None:
+        """Test that a list subject is converted to a tuple."""
+        with self.settings(CA_DEFAULT_SUBJECT=[("CN", "example.com")]):
+            self.assertEqual(ca_settings.CA_DEFAULT_SUBJECT, (("CN", "example.com"),))
+
     def test_subject_as_dict(self) -> None:
         """Test using a dict as subject, which has been deprecated."""
 

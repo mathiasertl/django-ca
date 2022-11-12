@@ -25,6 +25,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, ed448
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID, ObjectIdentifier
 
 import django
@@ -52,6 +53,7 @@ from ..utils import (
     parse_key_curve,
     parse_name_x509,
     read_file,
+    serialize_name,
     split_str,
     validate_email,
     validate_hostname,
@@ -780,6 +782,35 @@ class FormatNameTestCase(TestCase):
         self.assertFormatParse('no single-quote: slash/double"quote')
         self.assertFormatParse('no single-quote but with backslash: slash/double"quote\\backslash')
         self.assertFormatParse("multiple\\\\backslash")
+
+
+class SerializeName(TestCase):
+    """Test the serialize_name function."""
+
+    def test_name(self) -> None:
+        """Test passing a standard Name."""
+        self.assertEqual(
+            serialize_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])),
+            [("CN", "example.com")],
+        )
+        self.assertEqual(
+            serialize_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
+                    ]
+                )
+            ),
+            [("C", "AT"), ("CN", "example.com")],
+        )
+
+    def test_bytes(self) -> None:
+        """Test names with byte values - probably never happens."""
+        name = x509.Name(
+            [x509.NameAttribute(NameOID.X500_UNIQUE_IDENTIFIER, b"example.com", _type=_ASN1Type.BitString)]
+        )
+        self.assertEqual(serialize_name(name), [("x500UniqueIdentifier", "65:78:61:6D:70:6C:65:2E:63:6F:6D")])
 
 
 class Power2TestCase(TestCase):
