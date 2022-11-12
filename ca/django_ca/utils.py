@@ -330,7 +330,7 @@ def serialize_name(name: typing.Union[x509.Name, x509.RelativeDistinguishedName]
     items: SerializedName = []
     for attr in name:
         value = attr.value
-        if isinstance(value, bytes):
+        if isinstance(value, bytes):  # pragma: only cryptography>=37.0
             value = bytes_to_hex(value)
         items.append((OID_NAME_MAPPINGS[attr.oid], value))
     return items
