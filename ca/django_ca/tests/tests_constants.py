@@ -19,6 +19,7 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase
 
 from .. import constants
+from ..extensions import KEY_TO_OID
 
 KNOWN_EXTENSION_OIDS = list(
     filter(
@@ -41,6 +42,13 @@ class ReasonFlagsTestCase(TestCase):
 
 class ExtensionMappingsTestCase(TestCase):
     """Test various mappings from ExtensionOIDs to something."""
+
+    def test_completeness_extension_keys(self) -> None:
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_KEYS.keys())
+
+        # Make sure that it matches old extensions class keys
+        for key, value in constants.EXTENSION_KEYS.items():
+            self.assertEqual(key, KEY_TO_OID[value])
 
     def test_completeness_oid_to_extension_names(self) -> None:
         """Test completeness of OID_TO_EXTENSION_NAMES."""

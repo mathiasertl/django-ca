@@ -98,6 +98,34 @@ OID_TO_EXTENSION_NAMES = {
     ExtensionOID.TLS_FEATURE: "TLS Feature",  # RFC 7633
 }
 
+EXTENSION_KEYS = {
+    ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "authority_information_access",
+    ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
+    ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
+    ExtensionOID.CERTIFICATE_POLICIES: "certificate_policies",
+    ExtensionOID.CRL_DISTRIBUTION_POINTS: "crl_distribution_points",
+    ExtensionOID.CRL_NUMBER: "crl_number",
+    ExtensionOID.DELTA_CRL_INDICATOR: "delta_crl_indicator",
+    ExtensionOID.EXTENDED_KEY_USAGE: "extended_key_usage",
+    ExtensionOID.FRESHEST_CRL: "freshest_crl",
+    ExtensionOID.INHIBIT_ANY_POLICY: "inhibit_any_policy",
+    ExtensionOID.ISSUER_ALTERNATIVE_NAME: "issuer_alternative_name",
+    ExtensionOID.ISSUING_DISTRIBUTION_POINT: "issuing_distribution_point",
+    ExtensionOID.KEY_USAGE: "key_usage",
+    ExtensionOID.NAME_CONSTRAINTS: "name_constraints",
+    ExtensionOID.OCSP_NO_CHECK: "ocsp_no_check",  # RFC 2560 does not really define a spelling
+    ExtensionOID.POLICY_CONSTRAINTS: "policy_constraints",
+    ExtensionOID.POLICY_MAPPINGS: "policy_mappings",
+    ExtensionOID.PRECERT_POISON: "precert_poison",  # RFC 7633
+    ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
+    ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
+    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
+    ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: "subject_directory_attributes",
+    ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
+    ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
+    ExtensionOID.TLS_FEATURE: "tls_feature",  # RFC 7633
+}
+
 # Map Object Identifiers to the default critical values
 OID_DEFAULT_CRITICAL = {
     ExtensionOID.AUTHORITY_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical.
