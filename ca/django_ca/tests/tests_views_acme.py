@@ -1702,7 +1702,10 @@ class AcmeOrderFinalizeViewTestCase(
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
         )
         msg = r"^MD5 signatures are deprecated and support for them will be removed in the next version\.$"
-        with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
+        if settings.CRYPTOGRAPHY_VERSION >= (38, 0):
+            with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
+                signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
+        else:
             signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -1711,7 +1714,10 @@ class AcmeOrderFinalizeViewTestCase(
         self.assertBadCSR(resp, "md5: Insecure hash algorithm.")
 
         msg = r"^SHA1 signatures are deprecated and support for them will be removed in the next version\.$"
-        with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
+        if settings.CRYPTOGRAPHY_VERSION >= (38, 0):
+            with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
+                signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.SHA1())
+        else:
             signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.SHA1())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
