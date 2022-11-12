@@ -177,9 +177,9 @@ HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
     hashes.SM3.name: hashes.SM3,
 }
 
-if hasattr(hashes, "MD5"):  # pragma: only cryptography<39.0
+if hasattr(hashes, "MD5"):  # pragma: cryptography<39.0 branch
     HASH_ALGORITHM_NAMES[hashes.MD5.name] = hashes.MD5
-if hasattr(hashes, "SHA1"):  # pragma: only cryptography<39.0
+if hasattr(hashes, "SHA1"):  # pragma: cryptography<39.0 branch
     HASH_ALGORITHM_NAMES[hashes.SHA1.name] = hashes.SHA1
 
 #: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes

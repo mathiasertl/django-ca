@@ -501,6 +501,15 @@ if hasattr(ExtendedKeyUsageOID, "IPSEC_IKE"):  # pragma: only cryptography>=37.0
 else:  # pragma: only cryptography<37.0
     _ipsec_ike_oid = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.17")
 
+
+# ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY should be statically integrated into EXTENDED_KEY_USAGE_NAMES
+# once support for cryptography<39.0 is dropped.
+if hasattr(ExtendedKeyUsageOID, "CERTIFICATE_TRANSPARENCY"):  # pragma: only cryptography>=38.0
+    _certificate_transparency_oid = ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY
+else:  # pragma: only cryptography<38.0
+    _certificate_transparency_oid = x509.ObjectIdentifier("1.3.6.1.4.1.11129.2.4.4")
+    ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY = _certificate_transparency_oid
+
 EXTENDED_KEY_USAGE_NAMES = {
     ExtendedKeyUsageOID.SERVER_AUTH: "serverAuth",
     ExtendedKeyUsageOID.CLIENT_AUTH: "clientAuth",
@@ -517,6 +526,7 @@ EXTENDED_KEY_USAGE_NAMES = {
     ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
     ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
     _ipsec_ike_oid: "ipsecIKE",
+    _certificate_transparency_oid: "certificateTransparency",
 }
 
 # TODO: rename this to the above

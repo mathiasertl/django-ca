@@ -819,7 +819,7 @@ class CertificateAuthority(X509CertMixin):
         password = password or self.get_password()
         ca_key = self.key(password)
         if isinstance(ca_key, dsa.DSAPrivateKey) and algorithm is None:
-            algorithm = hashes.SHA1()
+            algorithm = hashes.SHA256()
         elif algorithm is not None:
             algorithm = parse_hash_algorithm(algorithm)
 
@@ -1095,7 +1095,7 @@ class CertificateAuthority(X509CertMixin):
         if isinstance(self.key(password), dsa.DSAPrivateKey):
             key_type = "DSA"
         if key_type == "DSA":
-            algorithm = hashes.SHA1()
+            algorithm = hashes.SHA256()
 
         validate_key_parameters(key_size, key_type, ecc_curve)
         expires = parse_expires(expires)

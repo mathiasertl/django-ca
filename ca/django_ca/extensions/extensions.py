@@ -587,6 +587,7 @@ class ExtendedKeyUsage(
         ("emailProtection", "E-mail Protection (S/MIME)"),
         ("timeStamping", "Trusted Timestamping"),
         ("OCSPSigning", "OCSP Signing"),
+        ("certificateTransparency", "Certificate Transparency"),
         ("smartcardLogon", "Smart card logon"),
         ("msKDC", "Kerberos Domain Controller"),
         ("ipsecEndSystem", "IPSec EndSystem"),

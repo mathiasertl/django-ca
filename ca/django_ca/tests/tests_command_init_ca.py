@@ -177,7 +177,7 @@ class InitCATest(TestCaseMixin, TestCase):
                     "init_ca",
                     name,
                     "/CN=args.example.com",
-                    "--algorithm=SHA1",  # hashes.SHA1(),
+                    "--algorithm=SHA256",  # hashes.SHA256(),
                     "--key-type=DSA",
                     "--key-size=1024",
                     "--expires=720",
@@ -212,7 +212,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsInstance(key, dsa.DSAPrivateKey)
         self.assertEqual(key.key_size, 1024)
 
-        self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA1)
+        self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA256)
         self.assertIsInstance(ca.pub.loaded.public_key(), dsa.DSAPublicKey)
         self.assertIsNone(ca.crl_distribution_points)
         self.assertEqual(
@@ -305,7 +305,7 @@ class InitCATest(TestCaseMixin, TestCase):
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name=name,
-                algorithm=hashes.SHA1(),
+                algorithm=hashes.SHA256(),
                 key_type="ECC",
                 key_size=1024,
                 expires=self.expires(720),
