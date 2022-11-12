@@ -1009,9 +1009,15 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             # Update extensions from the profile that cannot (yet) be changed in the web interface
             for key, ext in profile.extensions.items():
+                # If the extension is set to None by the profile, we do not add or modify it
+                if ext is None:  # pragma: no cover
+                    continue
+
                 # We currently only support the first distribution point, append others from profile
                 if key in ("crl_distribution_points", "freshest_crl") and key in extensions:
-                    profile_ext = ext.value  # type: ignore[union-attr]  # is never None
+                    profile_ext = typing.cast(
+                        typing.Union[x509.CRLDistributionPoints, x509.FreshestCRL], ext.value
+                    )
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
                         form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[key])
                         dpoints = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])

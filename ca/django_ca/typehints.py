@@ -138,7 +138,7 @@ ParsablePolicyInformation = TypedDict(
     "ParsablePolicyInformation",
     {
         "policy_identifier": ParsablePolicyIdentifier,
-        "policy_qualifiers": Sequence[ParsablePolicyQualifier],
+        "policy_qualifiers": typing.Optional[Sequence[ParsablePolicyQualifier]],
     },
     total=False,
 )

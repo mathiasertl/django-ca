@@ -45,7 +45,7 @@ from ..extensions import (
     SubjectAlternativeName,
     TLSFeature,
 )
-from ..extensions.utils import ExtendedKeyUsageOID
+from ..extensions.utils import ExtendedKeyUsageOID, serialize_extension
 from ..fields import CertificateSigningRequestField
 from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, profiles
@@ -880,7 +880,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     ) -> SerializedExtension:
         """Get expected value for a given extension for the given profile."""
         if extension_class.key in profile.extensions:
-            return profile.extensions[extension_class.key].serialize()  # type: ignore  # todo
+            return serialize_extension(profile.extensions[extension_class.key])  # type: ignore[arg-type]
         return {"value": default, "critical": extension_class.default_critical}
 
     def assertProfile(  # pylint: disable=invalid-name
@@ -917,13 +917,17 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         self.assertEqual(profile.cn_in_san, cn_in_san.is_selected())
 
         for key, field in subject.items():
+            oid = NAME_OID_MAPPINGS[key]
             value = field.get_attribute("value")
 
             # OIDs that can occur multiple times are stored as list in subject, so we wrap it
+            attrs = [attr.value for attr in profile.subject.get_attributes_for_oid(oid)]
+            if not attrs:
+                attrs = [""]
             if NAME_OID_MAPPINGS[key] in MULTIPLE_OIDS:
-                self.assertEqual([value], profile.subject.get(key, ""))
+                self.assertEqual([value], attrs)
             else:
-                self.assertEqual(value, profile.subject.get(key, ""))
+                self.assertEqual(value, attrs[0])
 
     def clear_form(
         self,

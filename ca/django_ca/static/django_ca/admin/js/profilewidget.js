@@ -33,7 +33,11 @@ django.jQuery(document).ready(function() {
             "CN": django.jQuery('.field-subject #commonname input'),
             "emailAddress": django.jQuery('.field-subject #e-mail input'),
         }, function(key, input) {
-            input.val('' ? typeof subject[key] === 'undefined' : subject[key]);
+            django.jQuery.each(subject, function(index, value) {
+                if (value[0] === key) {
+                    input.val(value[1]);
+                }
+            });
         });
 
         // set wether to include the CommonName in the subjectAltName

@@ -371,7 +371,7 @@ class PolicyInformationTestCase(TestCaseMixin, TestCase):
             self.pi_empty,
             PolicyInformation(
                 {
-                    "policy_identifier": None,
+                    "policy_identifier": None,  # type: ignore[typeddict-item]
                     "policy_qualifiers": [self.q1],
                 }
             ),
