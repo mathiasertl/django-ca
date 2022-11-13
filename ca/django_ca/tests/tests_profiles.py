@@ -542,6 +542,48 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
     @override_tmpcadir()
+    def test_merge_issuer_alternative_name(self) -> None:
+        """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
+        prof = Profile("example", subject=[])
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        # Add CRL url to CA
+        ca.issuer_alt_name = "https://ian.ca.example.com"
+        ca.save()
+
+        added_ian_uri = uri("https://ian.cert.example.com")
+        added_ian = self.issuer_alternative_name(added_ian_uri)
+
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=True,
+                extensions=[added_ian],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+        self.assertExtensions(
+            cert,
+            [
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+                self.subject_alternative_name(dns(self.hostname)),
+                self.issuer_alternative_name(uri(ca.issuer_alt_name), added_ian_uri),
+            ],
+            expect_defaults=False,
+        )
+
+    @override_tmpcadir()
     def test_extensions_dict(self) -> None:
         """Test with a dict for an extension."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])

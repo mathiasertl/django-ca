@@ -32,7 +32,6 @@ from .extensions import (
     OID_TO_KEY,
     AuthorityInformationAccess,
     Extension,
-    IssuerAlternativeName,
     parse_extension,
 )
 from .extensions.utils import serialize_extension
@@ -52,7 +51,6 @@ from .utils import (
     parse_general_name,
     parse_hash_algorithm,
     serialize_name,
-    split_str,
     x509_name,
 )
 
@@ -436,32 +434,42 @@ class Profile:
         self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
     ) -> None:
         """Update the CRLDistributionPoints extension with the endpoint from the Certificate Authority."""
-        if ExtensionOID.CRL_DISTRIBUTION_POINTS not in ca_extensions:
+        oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
+        if oid not in ca_extensions:
             return
 
-        ca_crldp_ext = typing.cast(
-            x509.Extension[x509.CRLDistributionPoints], ca_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS]
-        )
+        ca_crldp_ext = typing.cast(x509.Extension[x509.CRLDistributionPoints], ca_extensions[oid])
 
-        if ExtensionOID.CRL_DISTRIBUTION_POINTS in extensions:
+        if oid in extensions:
             ca_crldp = ca_crldp_ext.value
             ca_name = ca_crldp[0].full_name[0]
 
-            cert_crldp = typing.cast(
-                x509.CRLDistributionPoints, extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS].value
-            )
+            cert_crldp = typing.cast(x509.CRLDistributionPoints, extensions[oid].value)
 
             for dpoint in cert_crldp:
                 if dpoint.full_name and ca_name in dpoint.full_name:
                     break
             else:  # loop exits normally, so break not reached --> dpoint not in existing extension
-                extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
-                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                    critical=extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS].critical,
-                    value=x509.CRLDistributionPoints(list(ca_crldp) + list(cert_crldp)),
-                )
+                ext_value = x509.CRLDistributionPoints(list(ca_crldp) + list(cert_crldp))
+                extensions[oid] = x509.Extension(oid=oid, critical=extensions[oid].critical, value=ext_value)
         else:
             extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = ca_crldp_ext
+
+    def _update_issuer_alternative_name(
+        self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
+    ) -> None:
+        oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
+        if oid not in ca_extensions:
+            return
+
+        if oid in extensions:
+            ca_ian = typing.cast(x509.IssuerAlternativeName, ca_extensions[oid].value)
+            cert_ian = typing.cast(x509.IssuerAlternativeName, extensions[oid].value)
+            ext_value = x509.IssuerAlternativeName(list(ca_ian) + list(cert_ian))
+
+            extensions[oid] = x509.Extension(oid=oid, critical=extensions[oid].critical, value=ext_value)
+        else:
+            extensions[oid] = ca_extensions[oid]
 
     def _update_from_ca(
         self,
@@ -505,14 +513,8 @@ class Profile:
             elif isinstance(aia, x509.Extension):  # pragma: no cover
                 pass
 
-        if add_issuer_alternative_name is not False and ca.issuer_alt_name:
-            ian = extensions.get(ExtensionOID.ISSUER_ALTERNATIVE_NAME, IssuerAlternativeName())
-            if isinstance(ian, IssuerAlternativeName):
-                ian.extend(split_str(ca.issuer_alt_name, ","))
-                extensions[IssuerAlternativeName.key] = ian  # type: ignore
-            elif isinstance(ian, x509.Extension):  # pragma: no cover
-                # Passed a cryptography extension (currently happens only via the admin interface)
-                pass
+        if add_issuer_alternative_name is not False:
+            self._update_issuer_alternative_name(extensions, ca_extensions)
 
         pass  # pylint: disable=unnecessary-pass  # pass because coverage has a false positive otherwise
 
