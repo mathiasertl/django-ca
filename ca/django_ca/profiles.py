@@ -182,9 +182,65 @@ class Profile:
     def __str__(self) -> str:
         return repr(self)
 
+    def _get_extensions(
+        self, extensions: typing.Optional[typing.Iterable[x509.Extension[x509.ExtensionType]]]
+    ) -> typing.Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
+        extensions_msg = "Passing a django_ca.extensions.Extension instance deprecated."
+
+        if extensions is None:
+            # NOTE: Remove typing.Optional from dict values once support for dicts is removed
+            extensions_update: typing.Dict[
+                x509.ObjectIdentifier, typing.Optional[x509.Extension[x509.ExtensionType]]
+            ] = {}
+        elif isinstance(extensions, dict):
+            warnings.warn(
+                "Passing a dict for extensions is deprecated.", RemovedInDjangoCA124Warning, stacklevel=2
+            )
+            extensions_update = {}
+
+            # Convert deprecated django_ca.extensions.Extension class
+            for key, ext in extensions.items():
+                if isinstance(ext, Extension):
+                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
+                    converted_extension = ext.as_extension()
+
+                    if KEY_TO_OID[key] != converted_extension.oid:
+                        expected = KEY_TO_EXTENSION[key]
+                        raise ValueError(f"extensions[{key}] is not of type {expected.__name__}")
+
+                    extensions_update[converted_extension.oid] = converted_extension
+                elif isinstance(ext, x509.Extension):
+                    if KEY_TO_OID[key] != ext.oid:
+                        raise ValueError(f"extensions[{key}] is not of expected type")
+
+                    extensions_update[ext.oid] = ext
+                elif ext is None:
+                    extensions_update[KEY_TO_OID[key]] = None
+                else:
+                    raise ValueError(f"{ext}: Must be a cryptography.x509.Extension instance or None")
+
+        else:  # should be a list
+            extensions_update = {}
+
+            # Convert deprecated django_ca.extensions.Extension class
+            for ext_item in extensions:
+                if isinstance(ext_item, x509.Extension):
+                    extensions_update[ext_item.oid] = ext_item
+                else:
+                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
+                    extensions_update[ext_item.oid] = ext_item.as_extension()
+
+        cert_extensions = self.extensions.copy()
+        cert_extensions.update(extensions_update)
+
+        # NOTE: this line is no longer necessary once support for passing dicts is dropped, as values can no
+        # longer be None.
+        filtered_cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
+        return filtered_cert_extensions
+
     @deprecate_type("subject", (dict, str, Subject), RemovedInDjangoCA124Warning)
     @deprecate_type("extensions", dict, RemovedInDjangoCA124Warning)
-    def create_cert(  # pylint: disable=too-many-branches,too-many-statements
+    def create_cert(  # pylint: disable=too-many-arguments
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -269,53 +325,6 @@ class Profile:
         cryptography.x509.Certificate
             The signed certificate.
         """
-        # pylint: disable=too-many-locals,too-many-arguments
-
-        extensions_msg = "Passing a django_ca.extensions.Extension instance deprecated."
-
-        # Compute default values
-        if extensions is None:
-            # NOTE: Remove typing.Optional from dict values once support for dicts is removed
-            extensions_update: typing.Dict[
-                x509.ObjectIdentifier, typing.Optional[x509.Extension[x509.ExtensionType]]
-            ] = {}
-        elif isinstance(extensions, dict):
-            warnings.warn(
-                "Passing a dict for extensions is deprecated.", RemovedInDjangoCA124Warning, stacklevel=2
-            )
-            extensions_update = {}
-
-            # Convert deprecated django_ca.extensions.Extension class
-            for key, ext in extensions.items():
-                if isinstance(ext, Extension):
-                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
-                    converted_extension = ext.as_extension()
-
-                    if KEY_TO_OID[key] != converted_extension.oid:
-                        expected = KEY_TO_EXTENSION[key]
-                        raise ValueError(f"extensions[{key}] is not of type {expected.__name__}")
-
-                    extensions_update[converted_extension.oid] = converted_extension
-                elif isinstance(ext, x509.Extension):
-                    if KEY_TO_OID[key] != ext.oid:
-                        raise ValueError(f"extensions[{key}] is not of expected type")
-
-                    extensions_update[ext.oid] = ext
-                elif ext is None:
-                    extensions_update[KEY_TO_OID[key]] = None
-                else:
-                    raise ValueError(f"{ext}: Must be a cryptography.x509.Extension instance or None")
-
-        else:  # should be a list
-            extensions_update = {}
-
-            # Convert deprecated django_ca.extensions.Extension class
-            for ext_item in extensions:
-                if isinstance(ext_item, x509.Extension):
-                    extensions_update[ext_item.oid] = ext_item
-                else:
-                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
-                    extensions_update[ext_item.oid] = ext_item.as_extension()
 
         # Get overrides values from profile if not passed as parameter
         if cn_in_san is None:
@@ -329,18 +338,13 @@ class Profile:
         if add_issuer_alternative_name is None:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
-        cert_extensions = self.extensions.copy()
-        cert_extensions.update(extensions_update)
-
-        # NOTE: this line is no longer necessary once support for passing dicts is dropped, as values can no
-        # longer be None.
-        filtered_cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
-
         cert_subject = Subject(self.subject)
+
+        cert_extensions = self._get_extensions(extensions)
 
         self._update_from_ca(
             ca,
-            filtered_cert_extensions,
+            cert_extensions,
             add_crl_url=add_crl_url,
             add_ocsp_url=add_ocsp_url,
             add_issuer_url=add_issuer_url,
@@ -360,11 +364,9 @@ class Profile:
         expires = self.get_expires(expires)
 
         # Finally, update SAN with the current CN, if set and requested
-        self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=filtered_cert_extensions)
+        self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
 
-        if not converted_subject.get("CN") and not extensions_update.get(
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-        ):
+        if not converted_subject.get("CN") and not cert_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
         pre_issue_cert.send(
@@ -374,7 +376,7 @@ class Profile:
             expires=expires,
             algorithm=algorithm,
             subject=cert_subject,
-            extensions=filtered_cert_extensions,
+            extensions=cert_extensions,
             password=password,
         )
 
@@ -384,14 +386,14 @@ class Profile:
         builder = builder.issuer_name(ca.subject)
         builder = builder.subject_name(cert_subject.name)
 
-        for _key, extension in filtered_cert_extensions.items():
+        for _key, extension in cert_extensions.items():
             if isinstance(extension, x509.Extension):
                 builder = builder.add_extension(extension.value, critical=extension.critical)
             else:  # isinstance(extension, Extension):
                 builder = builder.add_extension(*extension.for_builder())
 
         # Add the SubjectKeyIdentifier
-        if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in filtered_cert_extensions:
+        if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in cert_extensions:
             builder = builder.add_extension(
                 x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False
             )
