@@ -168,7 +168,7 @@ values. To update the default subject for the (predefined) ``enduser`` profile::
        },
    }
 
-Note that django-ca also replaces the while ``extensions`` value. That means you cannot update one extension
+Note that django-ca also replaces the whole ``extensions`` value. That means you cannot update one extension
 from the profile, you'll have to specify all extensions.
 
 ****************

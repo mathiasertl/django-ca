@@ -30,7 +30,6 @@ from ..extensions import (
     CRLDistributionPoints,
     IssuerAlternativeName,
     NameConstraints,
-    SubjectAlternativeName,
 )
 from ..models import Certificate, CertificateAuthority
 from ..profiles import profiles
@@ -371,9 +370,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
 
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with self.assertRaisesRegex(ValueError, msg), self.assertCreateCertSignals(False, False):
-            Certificate.objects.create_cert(
-                self.ca, self.csr, subject=subject, extensions=[SubjectAlternativeName()]
-            )
+            Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
 
     @override_tmpcadir(CA_PROFILES={k: None for k in ca_settings.CA_PROFILES})
     def test_no_profile(self) -> None:

@@ -13,6 +13,7 @@
 
 """Test Django model classes."""
 
+import ipaddress
 import os
 import re
 import typing
@@ -62,7 +63,7 @@ from ..models import (
     Watcher,
     X509CertMixin,
 )
-from ..utils import ca_storage, get_crl_cache_key
+from ..utils import ca_storage, get_crl_cache_key, x509_name
 from .base import CERT_PEM_REGEX, certs, dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
 
@@ -876,11 +877,11 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             certs["child-cert"]["csr"]["parsed"],
             subject=self.subject,
             extensions=[
-                SubjectAlternativeName(
-                    {
-                        "value": ["dirname:/C=AT/CN=example.com", "email:user@example.com", "fd00::1"],
-                    }
-                )
+                self.subject_alternative_name(
+                    x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
+                    x509.RFC822Name("user@example.com"),
+                    x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
+                ),
             ],
         )
 

@@ -269,6 +269,8 @@ class Profile:
         """
         # pylint: disable=too-many-locals,too-many-arguments
 
+        extensions_msg = "Passing a django_ca.extensions.Extension instance deprecated."
+
         # Compute default values
         if extensions is None:
             extensions_update: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
@@ -281,6 +283,7 @@ class Profile:
             # Convert deprecated django_ca.extensions.Extension class
             for key, ext in extensions_update.items():
                 if isinstance(ext, Extension):
+                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
                     extensions_update[key] = ext.as_extension()
                     if EXTENSION_KEYS[extensions_update[key].oid] != key:
                         expected = KEY_TO_EXTENSION[key]
@@ -294,6 +297,7 @@ class Profile:
                     key = EXTENSION_KEYS[ext_item.oid]
                     extensions_update[key] = ext_item
                 else:
+                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
                     key = EXTENSION_KEYS[ext_item.oid]
                     extensions_update[key] = ext_item.as_extension()
 

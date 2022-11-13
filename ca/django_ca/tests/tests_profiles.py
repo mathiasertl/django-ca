@@ -35,7 +35,6 @@ from ..extensions import (
     IssuerAlternativeName,
     KeyUsage,
     OCSPNoCheck,
-    SubjectAlternativeName,
     SubjectKeyIdentifier,
 )
 from ..models import Certificate, CertificateAuthority
@@ -237,7 +236,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 subject=x509.Name([country_name]),
                 algorithm=hashes.SHA256(),
                 expires=timedelta(days=30),
-                extensions=[SubjectAlternativeName({"value": [self.hostname]})],
+                extensions=[self.subject_alternative_name(dns(self.hostname))],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.cn, self.hostname)
@@ -372,7 +371,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 csr,
                 subject=self.subject,
                 cn_in_san=True,
-                extensions=[SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})],
+                extensions=[self.subject_alternative_name(dns(self.hostname))],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -384,11 +383,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         # test that the first SAN is added as CN if we don't have A CN
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                cn_in_san=True,
-                extensions=[SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})],
+                prof, ca, csr, cn_in_san=True, extensions=[self.subject_alternative_name(dns(self.hostname))]
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -543,15 +538,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         csr = certs["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
-        msg = r"^Passing a dict for extensions is deprecated\.$"
-        with self.mockSignal(pre_issue_cert) as pre, self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
+        with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
-                extensions={"ocsp_no_check": self.ocsp_no_check()},
+                extensions=[self.ocsp_no_check()],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, self.subject)
@@ -719,9 +713,17 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ku = KeyUsage({"value": ["keyAgreement"], "critical": True})  # pylint: disable=invalid-name
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
 
-        with self.assertRemovedIn124Warning("Passing KeyUsage is deprecated."):
+        with self.assertRemovedIn124Warning(r"^Passing KeyUsage is deprecated\.$"):
             prof = Profile(self.id(), extensions={"key_usage": ku})  # type: ignore[dict-item]  # what we test
             cert = self.create_cert(prof, ca, csr, subject=subject)
+        self.assertEqual(cert.key_usage, ku)
+
+        # pass an old extension to the create_cert() function
+        prof2 = Profile(self.id())
+        with self.assertRemovedIn124Warning(
+            r"^Passing a django_ca\.extensions\.Extension instance deprecated\.$"
+        ):
+            cert = self.create_cert(prof2, ca, csr, subject=subject, extensions=[ku])
         self.assertEqual(cert.key_usage, ku)
 
 
