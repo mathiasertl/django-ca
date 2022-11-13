@@ -857,13 +857,15 @@ class CertificateAuthority(X509CertMixin):
                 cache.set(cache_key, encoded_crl, cache_expires)
 
     @property
-    def extensions_for_certificate(self) -> typing.Dict[str, x509.Extension[x509.ExtensionType]]:
+    def extensions_for_certificate(
+        self,
+    ) -> typing.Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
         """Get a list of extensions to use for the certificate."""
 
-        extensions: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
+        extensions: typing.Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
         if self.issuer_alt_name:
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
-            extensions["issuer_alternative_name"] = x509.Extension(
+            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = x509.Extension(
                 oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
                 critical=OID_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
                 value=x509.IssuerAlternativeName(names),
@@ -885,14 +887,14 @@ class CertificateAuthority(X509CertMixin):
                 for name in ocsp
             ]
         if access_descriptions:
-            extensions["authority_information_access"] = x509.Extension(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
                 oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
                 critical=OID_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
                 value=x509.AuthorityInformationAccess(descriptions=access_descriptions),
             )
         if self.crl_url:
             full_name = [parse_general_name(name) for name in self.crl_url.splitlines()]
-            extensions["crl_distribution_points"] = x509.Extension(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
                 oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
                 critical=OID_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS],
                 value=x509.CRLDistributionPoints(

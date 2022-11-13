@@ -566,12 +566,14 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertEqual(
             self.ca.extensions_for_certificate,
             {
-                "authority_information_access": self.authority_information_access(
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS: self.authority_information_access(
                     ca_issuers=[uri(self.ca.issuer_url)],
                     ocsp=[uri(self.ca.ocsp_url)],
                 ),
-                "crl_distribution_points": self.crl_distribution_points([uri(self.ca.crl_url)]),
-                "issuer_alternative_name": self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
+                ExtensionOID.CRL_DISTRIBUTION_POINTS: self.crl_distribution_points([uri(self.ca.crl_url)]),
+                ExtensionOID.ISSUER_ALTERNATIVE_NAME: self.issuer_alternative_name(
+                    uri(self.ca.issuer_alt_name)
+                ),
             },
         )
 

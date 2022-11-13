@@ -652,9 +652,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             if ca.key_exists is False:
                 continue
 
-            extensions = {}
-            for key, ext in ca.extensions_for_certificate.items():
-                extensions[key] = serialize_extension(ext)
+            extensions = {
+                OID_TO_KEY[oid]: serialize_extension(ext)
+                for oid, ext in ca.extensions_for_certificate.items()
+            }
 
             data[ca.pk] = {"extensions": extensions, "name": ca.name}
 
@@ -759,7 +760,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             data["ca"] = ca
             data["subject"] = profile.subject
 
-            data.update(ca.extensions_for_certificate)
+            data.update({OID_TO_KEY[oid]: ext for oid, ext in ca.extensions_for_certificate.items()})
 
             for key in CERTIFICATE_EXTENSIONS:
                 ext = profile.extensions.get(KEY_TO_OID[key])
