@@ -16,19 +16,7 @@
 import sys
 import typing
 from datetime import datetime, timedelta
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -63,7 +51,9 @@ class SupportsLessThan(Protocol):
         ...
 
 
-CRLExtensionTypeTypeVar = TypeVar("CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL)
+CRLExtensionTypeTypeVar = typing.TypeVar(
+    "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL
+)
 
 PrivateKeyTypes = Union[
     dsa.DSAPrivateKey,
@@ -72,7 +62,7 @@ PrivateKeyTypes = Union[
     ed25519.Ed25519PrivateKey,
 ]
 
-ParsableName = typing.Union[str, typing.Iterable[typing.Tuple[str, str]]]
+ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
@@ -80,8 +70,8 @@ ParsableKeyType = Literal["RSA", "DSA", "ECC", "EdDSA", "Ed448"]
 ParsableSubject = Union[
     str,
     # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001
-    Mapping[x509.ObjectIdentifier, Union[str, Iterable[str]]],
-    Mapping[str, Union[str, Iterable[str]]],
+    typing.Mapping[x509.ObjectIdentifier, Union[str, Iterable[str]]],
+    typing.Mapping[str, Union[str, Iterable[str]]],
     x509.Name,
     Iterable[Tuple[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]]],
 ]
@@ -99,7 +89,7 @@ SerializedExtension = TypedDict(
         "value": Any,
     },
 )
-SerializedName = typing.List[typing.Tuple[str, str]]
+SerializedName = List[Tuple[str, str]]
 SerializedProfile = TypedDict(
     "SerializedProfile",
     {
@@ -126,7 +116,7 @@ ParsableDistributionPoint = TypedDict(
     "ParsableDistributionPoint",
     {
         "full_name": Optional[ParsableGeneralNameList],
-        "relative_name": typing.Union[str, x509.RelativeDistinguishedName],
+        "relative_name": Union[str, x509.RelativeDistinguishedName],
         "crl_issuer": ParsableGeneralNameList,
         "reasons": Iterable[Union[str, x509.ReasonFlags]],
     },
@@ -138,20 +128,20 @@ ParsablePolicyInformation = TypedDict(
     "ParsablePolicyInformation",
     {
         "policy_identifier": ParsablePolicyIdentifier,
-        "policy_qualifiers": typing.Optional[Sequence[ParsablePolicyQualifier]],
+        "policy_qualifiers": Optional[typing.Sequence[ParsablePolicyQualifier]],
     },
     total=False,
 )
 
 PolicyQualifier = Union[str, x509.UserNotice]
 
-ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
+ExtensionTypeTypeVar = typing.TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
-AlternativeNameTypeVar = TypeVar(
+AlternativeNameTypeVar = typing.TypeVar(
     "AlternativeNameTypeVar", x509.IssuerAlternativeName, x509.SubjectAlternativeName
 )
-SignedCertificateTimestampsBaseTypeVar = TypeVar(
+SignedCertificateTimestampsBaseTypeVar = typing.TypeVar(
     "SignedCertificateTimestampsBaseTypeVar",
     x509.SignedCertificateTimestamps,
     x509.PrecertificateSignedCertificateTimestamps,
@@ -167,25 +157,25 @@ ParsableExtension = TypedDict(
     },
     total=False,
 )
-ParsableItem = TypeVar("ParsableItem")
+ParsableItem = typing.TypeVar("ParsableItem")
 """TypeVar representing a parsable list item."""
 
-ParsableValue = TypeVar("ParsableValue")
+ParsableValue = typing.TypeVar("ParsableValue")
 """A value that can be parsed to a valid extension."""
 
-SerializedItem = TypeVar("SerializedItem")
+SerializedItem = typing.TypeVar("SerializedItem")
 """TypeVar representing a serialized item for an iterable extension."""
 
-SerializedSortableItem = TypeVar("SerializedSortableItem", bound=SupportsLessThan)
+SerializedSortableItem = typing.TypeVar("SerializedSortableItem", bound=SupportsLessThan)
 """TypeVar representing a serialized item that can be sorted  (for OrderedSetExtension)."""
 
-SerializedValue = TypeVar("SerializedValue")
+SerializedValue = typing.TypeVar("SerializedValue")
 """TypeVar representing a serialized value for an extension."""
 
-IterableItem = TypeVar("IterableItem")
+IterableItem = typing.TypeVar("IterableItem")
 """TypeVar representing a value contained in an iterable extension."""
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
     ExtensionType = x509.Extension[x509.ExtensionType]
     SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
@@ -205,7 +195,7 @@ BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
 ParsableAuthorityKeyIdentifierDict = TypedDict(
     "ParsableAuthorityKeyIdentifierDict",
     {
-        "key_identifier": typing.Optional[bytes],
+        "key_identifier": Optional[bytes],
         "authority_cert_issuer": Iterable[str],
         "authority_cert_serial_number": Optional[int],
     },
@@ -216,10 +206,10 @@ ParsableAuthorityKeyIdentifierDict = TypedDict(
 SerializedNullExtension = TypedDict("SerializedNullExtension", {"critical": bool})
 
 ############
-# TypeVars #
+# typing.TypeVars #
 ############
 # pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
-X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
+X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
 
 
 #####################
@@ -370,8 +360,8 @@ ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 # Collect Union[] typehints that occur multiple times, e.g. multiple x509.ExtensionType classes that behave
 # the same way. Typehints in this section are named "...Type".
 
-CRLExtensionType = typing.Union[x509.FreshestCRL, x509.CRLDistributionPoints]
-InformationAccessExtensionType = typing.Union[x509.AuthorityInformationAccess, x509.SubjectInformationAccess]
-SignedCertificateTimestampType = typing.Union[
+CRLExtensionType = Union[x509.FreshestCRL, x509.CRLDistributionPoints]
+InformationAccessExtensionType = Union[x509.AuthorityInformationAccess, x509.SubjectInformationAccess]
+SignedCertificateTimestampType = Union[
     x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps
 ]

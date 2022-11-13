@@ -27,7 +27,7 @@ import typing
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from datetime import timezone as tz
-from typing import Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import josepy as jose
 from acme import challenges, messages
@@ -437,7 +437,7 @@ class X509CertMixin(DjangoCAModel):
         return self.pub.loaded.issuer
 
     @property
-    def jwk(self) -> typing.Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
+    def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
         """Get a JOSE JWK public key for this certificate."""
 
         pkey = self.pub.loaded.public_key()
@@ -512,7 +512,7 @@ class X509CertMixin(DjangoCAModel):
     def extensions(
         self,
     ) -> List[
-        typing.Union[
+        Union[
             Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue],
             "x509.Extension[x509.ExtensionType]",
         ]
@@ -859,10 +859,10 @@ class CertificateAuthority(X509CertMixin):
     @property
     def extensions_for_certificate(
         self,
-    ) -> typing.Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
+    ) -> Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
         """Get a list of extensions to use for the certificate."""
 
-        extensions: typing.Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
+        extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
         if self.issuer_alt_name:
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
             extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = x509.Extension(
@@ -912,9 +912,9 @@ class CertificateAuthority(X509CertMixin):
         self,
         csr: x509.CertificateSigningRequest,
         subject: x509.Name,
-        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
-        expires: typing.Optional[datetime] = None,
-        extensions: typing.Optional[typing.Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        algorithm: Optional[hashes.HashAlgorithm] = None,
+        expires: Optional[datetime] = None,
+        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
         cn_in_san: bool = True,
         password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
@@ -985,7 +985,7 @@ class CertificateAuthority(X509CertMixin):
         # Add CommonNames to the SubjectAlternativeName extension if cn_in_san == True
         common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         san = typing.cast(
-            typing.Optional[x509.Extension[x509.SubjectAlternativeName]],
+            Optional[x509.Extension[x509.SubjectAlternativeName]],
             exts.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
         )
         if cn_in_san is True:
@@ -1144,7 +1144,7 @@ class CertificateAuthority(X509CertMixin):
 
     def get_authority_information_access_extension(
         self,
-    ) -> typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]:
+    ) -> Optional[x509.Extension[x509.AuthorityInformationAccess]]:
         """Get the AuthorityInformationAccess extension to use in certificates signed by this CA."""
         # TODO: this function is not used outside of the test suite
         if not self.issuer_url and not self.ocsp_url:
@@ -1212,13 +1212,13 @@ class CertificateAuthority(X509CertMixin):
     def get_crl(
         self,
         expires: int = 86400,
-        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
+        algorithm: Optional[hashes.HashAlgorithm] = None,
         password: Optional[Union[str, bytes]] = None,
         scope: Optional[Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,
-        full_name: Optional[typing.Iterable[x509.GeneralName]] = None,
+        full_name: Optional[Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,
-        include_issuing_distribution_point: typing.Optional[bool] = None,
+        include_issuing_distribution_point: Optional[bool] = None,
     ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
 
@@ -1476,7 +1476,7 @@ class Certificate(X509CertMixin):
     def bundle(self) -> List[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
 
-        return [cast(X509CertMixin, self)] + cast(List[X509CertMixin], self.ca.bundle)
+        return [typing.cast(X509CertMixin, self)] + typing.cast(List[X509CertMixin], self.ca.bundle)
 
     @property
     def root(self) -> CertificateAuthority:

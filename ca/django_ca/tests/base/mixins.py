@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from unittest import mock
 from urllib.parse import quote
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
@@ -82,12 +83,12 @@ else:
 class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-methods
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: typing.Union[str, typing.Tuple[str, ...]] = tuple()
-    load_certs: typing.Union[str, typing.Tuple[str, ...]] = tuple()
+    load_cas: Union[str, Tuple[str, ...]] = tuple()
+    load_certs: Union[str, Tuple[str, ...]] = tuple()
     default_ca = "child"
     default_cert = "child-cert"
-    cas: typing.Dict[str, CertificateAuthority] = {}
-    certs: typing.Dict[str, Certificate] = {}
+    cas: Dict[str, CertificateAuthority] = {}
+    certs: Dict[str, Certificate] = {}
 
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^Could not decrypt private key - bad password\?$"
@@ -117,7 +118,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
             self.cert = self.certs[self.default_cert]
 
-    def load_named_cas(self, cas: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
+    def load_named_cas(self, cas: Union[str, Tuple[str, ...]]) -> Tuple[str, ...]:
         """Load CAs by the given name."""
         if cas == "__all__":
             cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
@@ -134,7 +135,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.cas[name] = self.load_ca(name)
         return cas
 
-    def load_named_certs(self, names: typing.Union[str, typing.Tuple[str, ...]]) -> typing.Tuple[str, ...]:
+    def load_named_certs(self, names: Union[str, Tuple[str, ...]]) -> Tuple[str, ...]:
         """Load certs by the given name."""
         if names == "__all__":
             names = tuple(k for k, v in certs.items() if v.get("type") == "cert")
@@ -153,7 +154,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
         return names
 
-    def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
+    def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
         """Build an absolute uri for the given request.
 
         The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
@@ -189,13 +190,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         # pylint: disable=invalid-name
         self,
         crl: bytes,
-        expected: typing.Optional[typing.Sequence[X509CertMixin]] = None,
-        signer: typing.Optional[CertificateAuthority] = None,
+        expected: Optional[typing.Sequence[X509CertMixin]] = None,
+        signer: Optional[CertificateAuthority] = None,
         expires: int = 86400,
-        algorithm: typing.Optional[hashes.HashAlgorithm] = None,
+        algorithm: Optional[hashes.HashAlgorithm] = None,
         encoding: Encoding = Encoding.PEM,
-        idp: typing.Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
-        extensions: typing.Optional[typing.List["x509.Extension[x509.ExtensionType]"]] = None,
+        idp: Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
+        extensions: Optional[List["x509.Extension[x509.ExtensionType]"]] = None,
         crl_number: int = 0,
     ) -> None:
         """Test the given CRL.
@@ -259,7 +260,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertCreateCASignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+    ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
             try:
@@ -271,7 +272,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertSignCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+    ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_sign_cert) as post_sig:
             try:
@@ -283,7 +284,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertCreateCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+    ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_issue_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
             try:
@@ -308,9 +309,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def assertExtensions(  # pylint: disable=invalid-name
         self,
-        cert: typing.Union[X509CertMixin, x509.Certificate],
-        extensions: typing.Iterable[x509.Extension[x509.ExtensionType]],
-        signer: typing.Optional[CertificateAuthority] = None,
+        cert: Union[X509CertMixin, x509.Certificate],
+        extensions: Iterable[x509.Extension[x509.ExtensionType]],
+        signer: Optional[CertificateAuthority] = None,
         expect_defaults: bool = True,
     ) -> None:
         """Assert that `cert` has the given extensions."""
@@ -383,7 +384,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(cert.issuer, issuer.subject)
 
     def assertMessages(  # pylint: disable=invalid-name
-        self, response: HttpResponse, expected: typing.List[str]
+        self, response: HttpResponse, expected: List[str]
     ) -> None:
         """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
@@ -410,7 +411,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
 
     def assertPrivateKey(  # pylint: disable=invalid-name
-        self, ca: CertificateAuthority, password: typing.Optional[typing.Union[str, bytes]] = None
+        self, ca: CertificateAuthority, password: Optional[Union[str, bytes]] = None
     ) -> None:
         """Assert some basic properties for a private key."""
         key = ca.key(password)
@@ -442,7 +443,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
 
     def assertRevoked(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, reason: typing.Optional[str] = None
+        self, cert: X509CertMixin, reason: Optional[str] = None
     ) -> None:
         """Assert that the certificate is now revoked."""
         if isinstance(cert, CertificateAuthority):
@@ -459,8 +460,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def assertSignature(  # pylint: disable=invalid-name
         self,
-        chain: typing.Iterable[CertificateAuthority],
-        cert: typing.Union[Certificate, CertificateAuthority],
+        chain: Iterable[CertificateAuthority],
+        cert: Union[Certificate, CertificateAuthority],
     ) -> None:
         """Assert that `cert` is properly signed by `chain`.
 
@@ -493,7 +494,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard
-        self, errors: typing.Dict[str, typing.List[str]]
+        self, errors: Dict[str, List[str]]
     ) -> typing.Iterator[None]:
         """Context manager to assert that a ValidationError is thrown."""
         with self.assertRaises(ValidationError) as cmex:
@@ -502,8 +503,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def authority_information_access(
         self,
-        ca_issuers: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        ocsp: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        ca_issuers: Optional[Iterable[x509.GeneralName]] = None,
+        ocsp: Optional[Iterable[x509.GeneralName]] = None,
         critical: bool = False,
     ) -> x509.Extension[x509.AuthorityInformationAccess]:
         """Shortcut for getting a AuthorityInformationAccess extension."""
@@ -525,7 +526,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=critical, value=value)
 
     def basic_constraints(
-        self, ca: bool = False, path_length: typing.Optional[int] = None, critical: bool = True
+        self, ca: bool = False, path_length: Optional[int] = None, critical: bool = True
     ) -> x509.Extension[x509.BasicConstraints]:
         """Shortcut for getting a BasicConstraints extension."""
         return x509.Extension(
@@ -535,55 +536,53 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
 
     @property
-    def ca_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
+    def ca_certs(self) -> typing.Iterator[Tuple[str, Certificate]]:
         """Yield loaded certificates for each certificate authority."""
         for name, cert in self.certs.items():
             if name in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]:
                 yield name, cert
 
     @typing.overload
-    def cmd(
-        self, *args: typing.Any, stdout: io.BytesIO, stderr: io.BytesIO, **kwargs: typing.Any
-    ) -> typing.Tuple[bytes, bytes]:
+    def cmd(self, *args: Any, stdout: io.BytesIO, stderr: io.BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]:
         ...
 
     @typing.overload
     def cmd(
         self,
-        *args: typing.Any,
+        *args: Any,
         stdout: io.BytesIO,
-        stderr: typing.Optional[io.StringIO] = None,
-        **kwargs: typing.Any,
-    ) -> typing.Tuple[bytes, str]:
+        stderr: Optional[io.StringIO] = None,
+        **kwargs: Any,
+    ) -> Tuple[bytes, str]:
         ...
 
     @typing.overload
     def cmd(
         self,
-        *args: typing.Any,
-        stdout: typing.Optional[io.StringIO] = None,
+        *args: Any,
+        stdout: Optional[io.StringIO] = None,
         stderr: io.BytesIO,
-        **kwargs: typing.Any,
-    ) -> typing.Tuple[str, bytes]:
+        **kwargs: Any,
+    ) -> Tuple[str, bytes]:
         ...
 
     @typing.overload
     def cmd(
         self,
-        *args: typing.Any,
-        stdout: typing.Optional[io.StringIO] = None,
-        stderr: typing.Optional[io.StringIO] = None,
-        **kwargs: typing.Any,
-    ) -> typing.Tuple[str, str]:
+        *args: Any,
+        stdout: Optional[io.StringIO] = None,
+        stderr: Optional[io.StringIO] = None,
+        **kwargs: Any,
+    ) -> Tuple[str, str]:
         ...
 
     def cmd(
         self,
-        *args: typing.Any,
-        stdout: typing.Optional[typing.Union[io.StringIO, io.BytesIO]] = None,
-        stderr: typing.Optional[typing.Union[io.StringIO, io.BytesIO]] = None,
-        **kwargs: typing.Any,
-    ) -> typing.Tuple[typing.Union[str, bytes], typing.Union[str, bytes]]:
+        *args: Any,
+        stdout: Optional[Union[io.StringIO, io.BytesIO]] = None,
+        stderr: Optional[Union[io.StringIO, io.BytesIO]] = None,
+        **kwargs: Any,
+    ) -> Tuple[Union[str, bytes], Union[str, bytes]]:
         """Call to a manage.py command using call_command."""
         if stdout is None:
             stdout = io.StringIO()
@@ -609,10 +608,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         cmd: typing.Sequence[str],
         *,
-        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
-        stdout: typing.Optional[io.StringIO] = None,
-        stderr: typing.Optional[io.StringIO] = None,
-    ) -> typing.Tuple[str, str]:
+        stdin: Optional[Union[io.StringIO, bytes]] = None,
+        stdout: Optional[io.StringIO] = None,
+        stderr: Optional[io.StringIO] = None,
+    ) -> Tuple[str, str]:
         ...
 
     @typing.overload
@@ -620,10 +619,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         cmd: typing.Sequence[str],
         *,
-        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
+        stdin: Optional[Union[io.StringIO, bytes]] = None,
         stdout: io.BytesIO,
-        stderr: typing.Optional[io.StringIO] = None,
-    ) -> typing.Tuple[bytes, str]:
+        stderr: Optional[io.StringIO] = None,
+    ) -> Tuple[bytes, str]:
         ...
 
     @typing.overload
@@ -631,10 +630,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         cmd: typing.Sequence[str],
         *,
-        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
-        stdout: typing.Optional[io.StringIO] = None,
+        stdin: Optional[Union[io.StringIO, bytes]] = None,
+        stdout: Optional[io.StringIO] = None,
         stderr: io.BytesIO,
-    ) -> typing.Tuple[str, bytes]:
+    ) -> Tuple[str, bytes]:
         ...
 
     @typing.overload
@@ -642,19 +641,19 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         cmd: typing.Sequence[str],
         *,
-        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
+        stdin: Optional[Union[io.StringIO, bytes]] = None,
         stdout: io.BytesIO,
         stderr: io.BytesIO,
-    ) -> typing.Tuple[bytes, bytes]:
+    ) -> Tuple[bytes, bytes]:
         ...
 
     def cmd_e2e(
         self,
         cmd: typing.Sequence[str],
-        stdin: typing.Optional[typing.Union[io.StringIO, bytes]] = None,
-        stdout: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
-        stderr: typing.Optional[typing.Union[io.BytesIO, io.StringIO]] = None,
-    ) -> typing.Tuple[typing.Union[str, bytes], typing.Union[str, bytes]]:
+        stdin: Optional[Union[io.StringIO, bytes]] = None,
+        stdout: Optional[Union[io.BytesIO, io.StringIO]] = None,
+        stderr: Optional[Union[io.BytesIO, io.StringIO]] = None,
+    ) -> Tuple[Union[str, bytes], Union[str, bytes]]:
         """Call a management command the way manage.py does.
 
         Unlike call_command, this method also tests the argparse configuration of the called command.
@@ -709,8 +708,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cls,
         ca: CertificateAuthority,
         csr: x509.CertificateSigningRequest,
-        subject: typing.Optional[x509.Name],
-        **kwargs: typing.Any,
+        subject: Optional[x509.Name],
+        **kwargs: Any,
     ) -> Certificate:
         """Create a certificate with the given data."""
         cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
@@ -719,10 +718,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def crl_distribution_points(
         self,
-        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
-        reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
-        crl_issuer: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        full_name: Optional[Iterable[x509.GeneralName]] = None,
+        relative_name: Optional[x509.RelativeDistinguishedName] = None,
+        reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
         critical: bool = False,
     ) -> x509.Extension[x509.CRLDistributionPoints]:
         """Shortcut for getting a CRLDistributionPoints extension."""
@@ -736,7 +735,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
 
     @property
-    def crl_profiles(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
+    def crl_profiles(self) -> Dict[str, Dict[str, Any]]:
         """Return a list of CRL profiles."""
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
         for config in profiles.values():
@@ -759,10 +758,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def freshest_crl(
         self,
-        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
-        reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
-        crl_issuer: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        full_name: Optional[Iterable[x509.GeneralName]] = None,
+        relative_name: Optional[x509.RelativeDistinguishedName] = None,
+        reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
         critical: bool = False,
     ) -> x509.Extension[x509.FreshestCRL]:
         """Shortcut for getting a CRLDistributionPoints extension."""
@@ -775,13 +774,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def get_idp(
         self,
-        full_name: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        full_name: Optional[Iterable[x509.GeneralName]] = None,
         indirect_crl: bool = False,
         only_contains_attribute_certs: bool = False,
         only_contains_ca_certs: bool = False,
         only_contains_user_certs: bool = False,
-        only_some_reasons: typing.Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
-        relative_name: typing.Optional[x509.RelativeDistinguishedName] = None,
+        only_some_reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        relative_name: Optional[x509.RelativeDistinguishedName] = None,
     ) -> "x509.Extension[x509.IssuingDistributionPoint]":
         """Get an IssuingDistributionPoint extension."""
         return x509.Extension(
@@ -798,9 +797,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             critical=True,
         )
 
-    def get_idp_full_name(
-        self, ca: CertificateAuthority
-    ) -> typing.Optional[typing.List[x509.UniformResourceIdentifier]]:
+    def get_idp_full_name(self, ca: CertificateAuthority) -> Optional[List[x509.UniformResourceIdentifier]]:
         """Get the IDP full name for `ca`."""
         crl_url = [url.strip() for url in ca.crl_url.split()]
         return [uri(c) for c in crl_url] or None
@@ -837,8 +834,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def name_constraints(
         self,
-        permitted: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        excluded: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        permitted: Optional[Iterable[x509.GeneralName]] = None,
+        excluded: Optional[Iterable[x509.GeneralName]] = None,
         critical: bool = False,
     ) -> x509.Extension[x509.NameConstraints]:
         """Shortcut for getting a NameConstraints extension."""
@@ -892,8 +889,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     @contextmanager
     def freeze_time(
-        self, timestamp: typing.Union[str, datetime]
-    ) -> typing.Iterator[typing.Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
+        self, timestamp: Union[str, datetime]
+    ) -> typing.Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
@@ -905,11 +902,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with freeze_time(timestamp) as frozen:
             yield frozen
 
-    def get_cert_context(  # pylint: disable=too-many-branches
-        self, name: str
-    ) -> typing.Dict[str, typing.Any]:
+    def get_cert_context(self, name: str) -> Dict[str, Any]:  # pylint: disable=too-many-branches
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
-        ctx: typing.Dict[str, typing.Any] = {}
+        ctx: Dict[str, Any] = {}
         for key, value in certs[name].items():
             if key == "precert_poison":
                 ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
@@ -964,10 +959,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def load_ca(
         cls,
         name: str,
-        parsed: typing.Optional[x509.Certificate] = None,
+        parsed: Optional[x509.Certificate] = None,
         enabled: bool = True,
-        parent: typing.Optional[CertificateAuthority] = None,
-        **kwargs: typing.Any,
+        parent: Optional[CertificateAuthority] = None,
+        **kwargs: Any,
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
         path = f"{name}.key"
@@ -1010,7 +1005,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         #   (**kwargs); all signal handlers must take these arguments.
         #
         # https://docs.djangoproject.com/en/dev/topics/signals/#connecting-to-specific-signals
-        def callback(sender: models.Model, **kwargs: typing.Any) -> None:  # pragma: no cover
+        def callback(sender: models.Model, **kwargs: Any) -> None:  # pragma: no cover
             # pylint: disable=unused-argument
             pass
 
@@ -1022,7 +1017,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             signal.disconnect(signal_mock)
 
     @contextmanager
-    def mute_celery(self, *calls: typing.Any) -> typing.Iterator[mock.MagicMock]:
+    def mute_celery(self, *calls: Any) -> typing.Iterator[mock.MagicMock]:
         """Context manager to mock celery invocations.
 
         This context manager mocks ``celery.app.task.Task.apply_async``, the final function in celery before
@@ -1058,30 +1053,30 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(expected, actual)
 
     @contextmanager
-    def patch(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[mock.MagicMock]:
+    def patch(self, *args: Any, **kwargs: Any) -> typing.Iterator[mock.MagicMock]:
         """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with mock.patch(*args, **kwargs) as mocked:
             yield mocked
 
     @contextmanager
-    def patch_object(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Iterator[typing.Any]:
+    def patch_object(self, *args: Any, **kwargs: Any) -> typing.Iterator[Any]:
         """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with mock.patch.object(*args, **kwargs) as mocked:
             yield mocked
 
-    def reverse(self, name: str, *args: typing.Any, **kwargs: typing.Any) -> str:
+    def reverse(self, name: str, *args: Any, **kwargs: Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
 
     @property
-    def usable_cas(self) -> typing.Iterator[typing.Tuple[str, CertificateAuthority]]:
+    def usable_cas(self) -> typing.Iterator[Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
         for name, ca in self.cas.items():
             if certs[name]["key_filename"]:
                 yield name, ca
 
     @property
-    def usable_certs(self) -> typing.Iterator[typing.Tuple[str, Certificate]]:
+    def usable_certs(self) -> typing.Iterator[Tuple[str, Certificate]]:
         """Yield loaded generated certificates."""
         for name, cert in self.certs.items():
             if certs[name]["cat"] == "generated":
@@ -1094,14 +1089,14 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     model: typing.Type[DjangoCAModelTypeVar]
     """Model must be configured for TestCase instances using this mixin."""
 
-    media_css: typing.Tuple[str, ...] = tuple()
+    media_css: Tuple[str, ...] = tuple()
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
     view_name: str
     """The name of the view being tested."""
 
     # TODO: we should get rid of this, it's ugly
-    obj: typing.Optional[DjangoCAModel]
+    obj: Optional[DjangoCAModel]
 
     def setUp(self) -> None:
         super().setUp()
@@ -1115,7 +1110,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         return typing.cast(str, self.model.admin_add_url)  # type hinting for @classproperty doesn't work
 
     def assertBundle(  # pylint: disable=invalid-name
-        self, cert: DjangoCAModelTypeVar, expected: typing.Iterable[X509CertMixin], filename: str
+        self, cert: DjangoCAModelTypeVar, expected: Iterable[X509CertMixin], filename: str
     ) -> None:
         """Assert that the bundle for the given certificate matches the expected chain and filename."""
         url = self.get_url(cert)
@@ -1164,14 +1159,14 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
             self.assertCSS(response, css)
 
     def assertRequiresLogin(  # pylint: disable=invalid-name
-        self, response: HttpResponse, **kwargs: typing.Any
+        self, response: HttpResponse, **kwargs: Any
     ) -> None:
         """Assert that the given response is a redirect to the login page."""
         path = reverse("admin:login")
         qs = quote(response.wsgi_request.get_full_path())
         self.assertRedirects(response, f"{path}?next={qs}", **kwargs)
 
-    def change_url(self, obj: typing.Optional[DjangoCAModel] = None) -> str:
+    def change_url(self, obj: Optional[DjangoCAModel] = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
         return obj.admin_change_url  # type: ignore[union-attr]
@@ -1189,24 +1184,24 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
 
     @contextmanager
     def freeze_time(
-        self, timestamp: typing.Union[str, datetime]
-    ) -> typing.Iterator[typing.Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
+        self, timestamp: Union[str, datetime]
+    ) -> typing.Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Overridden to force a client login, otherwise the user session is expired."""
         with super().freeze_time(timestamp) as frozen:
             self.client.force_login(self.user)
             yield frozen
 
-    def get_changelist_view(self, data: typing.Optional[typing.Dict[str, str]] = None) -> HttpResponse:
+    def get_changelist_view(self, data: Optional[Dict[str, str]] = None) -> HttpResponse:
         """Get the response to a changelist view for the given model."""
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
-        self, obj: DjangoCAModelTypeVar, data: typing.Optional[typing.Dict[str, str]] = None
+        self, obj: DjangoCAModelTypeVar, data: Optional[Dict[str, str]] = None
     ) -> HttpResponse:
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
 
-    def get_objects(self) -> typing.Iterable[DjangoCAModelTypeVar]:
+    def get_objects(self) -> Iterable[DjangoCAModelTypeVar]:
         """Get list of objects for defined for this test."""
         return self.model.objects.all()
 
@@ -1223,7 +1218,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
     def get_changelists(
         self,
-    ) -> typing.Iterator[typing.Tuple[typing.Iterable[DjangoCAModel], typing.Dict[str, str]]]:
+    ) -> typing.Iterator[Tuple[Iterable[DjangoCAModel], Dict[str, str]]]:
         """Generate list of objects for possible changelist views.
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.
