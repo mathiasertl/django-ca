@@ -451,6 +451,97 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
     @override_tmpcadir()
+    def test_add_dpoint_to_existing_crldp_extension(self) -> None:
+        """Pass a custom distribution point when creating the cert."""
+        prof = Profile("example", subject=[])
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        # Add CRL url to CA
+        ca.crl_url = "https://crl.ca.example.com"
+        ca.save()
+
+        added_crldp = self.crl_distribution_points([uri("https://crl.cert.example.com")])
+
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_crl_url=True,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                extensions=[added_crldp],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+        ca_dpoint = x509.DistributionPoint(
+            full_name=[uri(ca.crl_url)], relative_name=None, reasons=None, crl_issuer=None
+        )
+        expected_crldp = x509.Extension(
+            oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            critical=False,
+            value=x509.CRLDistributionPoints([ca_dpoint, added_crldp.value[0]]),
+        )
+
+        self.assertExtensions(
+            cert,
+            [
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+                self.subject_alternative_name(dns(self.hostname)),
+                expected_crldp,
+            ],
+            expect_defaults=False,
+        )
+
+    @override_tmpcadir()
+    def test_add_dpoint_with_ca_crldp(self) -> None:
+        """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
+        prof = Profile("example", subject=[])
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        # Add CRL url to CA
+        ca.crl_url = "https://crl.ca.example.com"
+        ca.save()
+
+        added_crldp = self.crl_distribution_points([uri(ca.crl_url)])
+
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_crl_url=True,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                extensions=[added_crldp],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+        self.assertExtensions(
+            cert,
+            [
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+                self.subject_alternative_name(dns(self.hostname)),
+                added_crldp,
+            ],
+            expect_defaults=False,
+        )
+
+    @override_tmpcadir()
     def test_extensions_dict(self) -> None:
         """Test with a dict for an extension."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])

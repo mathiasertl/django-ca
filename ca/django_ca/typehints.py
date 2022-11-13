@@ -205,8 +205,13 @@ ParsableAuthorityKeyIdentifierDict = TypedDict(
 
 SerializedNullExtension = TypedDict("SerializedNullExtension", {"critical": bool})
 
+################
+# Type aliases #
+################
+ExtensionMapping = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
+
 ############
-# typing.TypeVars #
+# TypeVars #
 ############
 # pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")

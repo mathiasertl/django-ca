@@ -31,7 +31,6 @@ from .extensions import (
     KEY_TO_OID,
     OID_TO_KEY,
     AuthorityInformationAccess,
-    CRLDistributionPoints,
     Extension,
     IssuerAlternativeName,
     parse_extension,
@@ -39,7 +38,14 @@ from .extensions import (
 from .extensions.utils import serialize_extension
 from .signals import pre_issue_cert
 from .subject import Subject
-from .typehints import Expires, ParsableExtension, ParsableHash, SerializedExtension, SerializedProfile
+from .typehints import (
+    Expires,
+    ExtensionMapping,
+    ParsableExtension,
+    ParsableHash,
+    SerializedExtension,
+    SerializedProfile,
+)
 from .utils import (
     get_cert_builder,
     parse_expires,
@@ -52,8 +58,6 @@ from .utils import (
 
 if typing.TYPE_CHECKING:
     from .models import CertificateAuthority
-
-ExtensionTypes = Union[x509.Extension[x509.ExtensionType], Extension[Any, Any, Any]]
 
 
 class Profile:
@@ -184,7 +188,7 @@ class Profile:
 
     def _get_extensions(
         self, extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]]
-    ) -> Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
+    ) -> ExtensionMapping:
         extensions_msg = "Passing a django_ca.extensions.Extension instance deprecated."
 
         if extensions is None:
@@ -428,10 +432,41 @@ class Profile:
 
         return data
 
+    def _update_crl_distribution_points(
+        self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
+    ) -> None:
+        """Update the CRLDistributionPoints extension with the endpoint from the Certificate Authority."""
+        if ExtensionOID.CRL_DISTRIBUTION_POINTS not in ca_extensions:
+            return
+
+        ca_crldp_ext = typing.cast(
+            x509.Extension[x509.CRLDistributionPoints], ca_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+        )
+
+        if ExtensionOID.CRL_DISTRIBUTION_POINTS in extensions:
+            ca_crldp = ca_crldp_ext.value
+            ca_name = ca_crldp[0].full_name[0]
+
+            cert_crldp = typing.cast(
+                x509.CRLDistributionPoints, extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS].value
+            )
+
+            for dpoint in cert_crldp:
+                if dpoint.full_name and ca_name in dpoint.full_name:
+                    break
+            else:  # loop exits normally, so break not reached --> dpoint not in existing extension
+                extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
+                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                    critical=extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS].critical,
+                    value=x509.CRLDistributionPoints(list(ca_crldp) + list(cert_crldp)),
+                )
+        else:
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = ca_crldp_ext
+
     def _update_from_ca(
         self,
         ca: "CertificateAuthority",
-        extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]],
+        extensions: ExtensionMapping,
         add_crl_url: bool,
         add_ocsp_url: bool,
         add_issuer_url: bool,
@@ -446,16 +481,11 @@ class Profile:
 
         """
 
+        ca_extensions = ca.extensions_for_certificate
         extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = ca.get_authority_key_identifier_extension()
 
-        if add_crl_url is not False and ca.crl_url:
-            crldp = extensions.setdefault(
-                ExtensionOID.CRL_DISTRIBUTION_POINTS, CRLDistributionPoints()  # type: ignore[arg-type]
-            )
-            if isinstance(crldp, CRLDistributionPoints):
-                crldp.append({"full_name": [url.strip() for url in ca.crl_url.split()]})
-            elif isinstance(crldp, x509.Extension):  # pragma: no cover
-                pass
+        if add_crl_url is not False:
+            self._update_crl_distribution_points(extensions, ca_extensions)
 
         if add_ocsp_url is not False and ca.ocsp_url:
             aia = extensions.setdefault(
@@ -486,12 +516,7 @@ class Profile:
 
         pass  # pylint: disable=unnecessary-pass  # pass because coverage has a false positive otherwise
 
-    def _update_san_from_cn(
-        self,
-        cn_in_san: bool,
-        subject: Subject,
-        extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]],
-    ) -> None:
+    def _update_san_from_cn(self, cn_in_san: bool, subject: Subject, extensions: ExtensionMapping) -> None:
         if subject.get("CN") and cn_in_san is True:
             try:
                 common_name = parse_general_name(typing.cast(str, subject["CN"]))
