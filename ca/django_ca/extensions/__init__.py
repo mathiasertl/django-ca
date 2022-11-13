@@ -16,7 +16,6 @@
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-import typing
 from typing import Any, Dict, Type
 
 from cryptography import x509
@@ -81,11 +80,7 @@ OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType,
     e.oid: e for e in KEY_TO_EXTENSION.values()
 }
 
-
-OID_TO_KEY: typing.Dict[x509.ObjectIdentifier, str] = {
-    ExtensionOID.ISSUER_ALTERNATIVE_NAME: "issuer_alternative_name",
-    ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
-}
+OID_TO_KEY = {v: k for k, v in KEY_TO_OID.items()}
 
 
 #: Tuple of extensions that can be set when creating a new certificate

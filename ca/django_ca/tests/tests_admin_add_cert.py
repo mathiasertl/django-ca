@@ -37,20 +37,14 @@ from webtest import Select as WebTestSelect
 from webtest import Submit
 
 from .. import ca_settings
-from ..extensions import (
-    BasicConstraints,
-    ExtendedKeyUsage,
-    Extension,
-    KeyUsage,
-    SubjectAlternativeName,
-    TLSFeature,
-)
+from ..constants import OID_DEFAULT_CRITICAL
+from ..extensions import BasicConstraints, ExtendedKeyUsage, KeyUsage, SubjectAlternativeName
 from ..extensions.utils import ExtendedKeyUsageOID, serialize_extension
 from ..fields import CertificateSigningRequestField
 from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, profiles
 from ..signals import post_issue_cert, pre_issue_cert
-from ..typehints import ExtensionTypeTypeVar, ParsableValue, SerializedExtension, SerializedValue
+from ..typehints import SerializedExtension
 from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
 from .base import certs, dns, override_tmpcadir, timestamps, uri
 from .base.testcases import SeleniumTestCase
@@ -878,15 +872,12 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     load_cas = "__usable__"
 
     def get_expected(
-        self,
-        profile: Profile,
-        extension_class: typing.Type[Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue]],
-        default: typing.Any = None,
+        self, profile: Profile, oid: x509.ObjectIdentifier, default: typing.Any = None
     ) -> SerializedExtension:
         """Get expected value for a given extension for the given profile."""
-        if extension_class.key in profile.extensions:
-            return serialize_extension(profile.extensions[extension_class.key])  # type: ignore[arg-type]
-        return {"value": default, "critical": extension_class.default_critical}
+        if oid in profile.extensions:
+            return serialize_extension(profile.extensions[oid])  # type: ignore[arg-type]
+        return {"value": default, "critical": OID_DEFAULT_CRITICAL[oid]}
 
     def assertProfile(  # pylint: disable=invalid-name,too-many-locals
         self,
@@ -904,18 +895,18 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
 
         profile = profiles[profile_name]
 
-        ku_expected = self.get_expected(profile, KeyUsage, [])
+        ku_expected = self.get_expected(profile, ExtensionOID.KEY_USAGE, [])
         ku_selected = [o.get_attribute("value") for o in ku_select.all_selected_options]
         self.assertCountEqual(ku_expected["value"], ku_selected)
         self.assertEqual(ku_expected["critical"], ku_critical.is_selected())
 
-        eku_expected = self.get_expected(profile, ExtendedKeyUsage, [])
+        eku_expected = self.get_expected(profile, ExtensionOID.EXTENDED_KEY_USAGE, [])
         eku_selected = [o.get_attribute("value") for o in eku_select.all_selected_options]
         self.assertCountEqual(eku_expected["value"], eku_selected)
         self.assertEqual(eku_expected["critical"], eku_critical.is_selected())
 
         tf_selected = [o.get_attribute("value") for o in tf_select.all_selected_options]
-        tf_expected = self.get_expected(profile, TLSFeature, [])
+        tf_expected = self.get_expected(profile, ExtensionOID.TLS_FEATURE, [])
         self.assertCountEqual(tf_expected.get("value", []), tf_selected)
         self.assertEqual(tf_expected.get("critical", False), tf_critical.is_selected())
 
@@ -1167,6 +1158,38 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
             ],
         )
 
+    @override_tmpcadir(
+        CA_PROFILES={
+            "webserver": {
+                "extensions": {"subject_alternative_name": {"value": ["example.com"]}, "ocsp_no_check": None}
+            }
+        },
+    )
+    def test_none_extension_and_subject_alternative_name_extension(self) -> None:
+        """Test how saving the model behaves when profile has None-extension or SubjectAlternativeName."""
+        response = self.app.get(self.add_url, user=self.user.username)
+        form = response.forms["certificate_form"]
+        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["subject_5"] = self.hostname
+        response = form.submit().follow()
+        self.assertEqual(response.status_code, 200)
+
+        cert = Certificate.objects.get(cn=self.hostname)
+        self.assertEqual(
+            cert._sorted_extensions,  # pylint: disable=protected-access
+            [
+                self.authority_information_access(
+                    ca_issuers=[uri(self.ca.issuer_url)],  # type: ignore[arg-type]
+                    ocsp=[uri(self.ca.ocsp_url)],  # type: ignore[arg-type]
+                ),
+                cert.ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                self.crl_distribution_points(full_name=[uri(self.ca.crl_url)]),
+                self.subject_alternative_name(dns(self.hostname)),
+                self.subject_key_identifier(cert),
+            ],
+        )
+
     @override_tmpcadir(CA_PROFILES={"nothing": {}}, CA_DEFAULT_PROFILE="nothing")
     def test_only_ca_prefill(self) -> None:
         """Create a cert with an empty profile.
@@ -1292,6 +1315,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
+        self.assertEqual(cert.profile, "everything")
         self.assertEqual(
             cert._sorted_extensions,  # pylint: disable=protected-access
             [
@@ -1407,6 +1431,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
+        self.assertEqual(cert.profile, "everything")
         self.assertEqual(
             cert._sorted_extensions,  # pylint: disable=protected-access
             [

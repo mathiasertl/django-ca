@@ -24,16 +24,16 @@ from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import ExtensionOID
 
 from . import ca_settings
-from .constants import EXTENSION_KEYS, OID_DEFAULT_CRITICAL
+from .constants import OID_DEFAULT_CRITICAL
 from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
 from .extensions import (
     KEY_TO_EXTENSION,
+    KEY_TO_OID,
+    OID_TO_KEY,
     AuthorityInformationAccess,
     CRLDistributionPoints,
     Extension,
     IssuerAlternativeName,
-    SubjectAlternativeName,
-    SubjectKeyIdentifier,
     parse_extension,
 )
 from .extensions.utils import serialize_extension
@@ -79,7 +79,7 @@ class Profile:
     """
 
     # pylint: disable=too-many-instance-attributes
-    extensions: Dict[str, typing.Optional[x509.Extension[x509.ExtensionType]]]
+    extensions: Dict[x509.ObjectIdentifier, typing.Optional[x509.Extension[x509.ExtensionType]]]
 
     @deprecate_type("subject", (dict, Subject), RemovedInDjangoCA124Warning)
     def __init__(
@@ -132,22 +132,24 @@ class Profile:
         # cast extensions to their respective classes
         for key, extension in extensions.items():
             if isinstance(extension, x509.Extension):
-                self.extensions[key] = extension
+                self.extensions[extension.oid] = extension
             elif isinstance(extension, Extension):
                 warnings.warn(
                     f"Passing {extension.__class__.__name__} is deprecated.",
                     RemovedInDjangoCA124Warning,
                     stacklevel=2,
                 )
-                self.extensions[key] = extension.as_extension()
+                self.extensions[extension.oid] = extension.as_extension()
             elif extension is None:
-                self.extensions[key] = None
+                # None value explicitly deactivates/unsets an extension in the admin interface
+                self.extensions[KEY_TO_OID[key]] = None
             else:
-                self.extensions[key] = parse_extension(key, extension)
+                parsed_extension = parse_extension(key, extension)
+                self.extensions[parsed_extension.oid] = parsed_extension
 
         # set some sane extension defaults
         self.extensions.setdefault(
-            "basic_constraints",
+            ExtensionOID.BASIC_CONSTRAINTS,
             x509.Extension(
                 oid=ExtensionOID.BASIC_CONSTRAINTS,
                 critical=OID_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
@@ -182,7 +184,7 @@ class Profile:
 
     @deprecate_type("subject", (dict, str, Subject), RemovedInDjangoCA124Warning)
     @deprecate_type("extensions", dict, RemovedInDjangoCA124Warning)
-    def create_cert(  # pylint: disable=too-many-branches
+    def create_cert(  # pylint: disable=too-many-branches,too-many-statements
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -273,33 +275,47 @@ class Profile:
 
         # Compute default values
         if extensions is None:
-            extensions_update: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
+            # NOTE: Remove typing.Optional from dict values once support for dicts is removed
+            extensions_update: typing.Dict[
+                x509.ObjectIdentifier, typing.Optional[x509.Extension[x509.ExtensionType]]
+            ] = {}
         elif isinstance(extensions, dict):
             warnings.warn(
                 "Passing a dict for extensions is deprecated.", RemovedInDjangoCA124Warning, stacklevel=2
             )
-            extensions_update = extensions
+            extensions_update = {}
 
             # Convert deprecated django_ca.extensions.Extension class
-            for key, ext in extensions_update.items():
+            for key, ext in extensions.items():
                 if isinstance(ext, Extension):
                     warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
-                    extensions_update[key] = ext.as_extension()
-                    if EXTENSION_KEYS[extensions_update[key].oid] != key:
+                    converted_extension = ext.as_extension()
+
+                    if KEY_TO_OID[key] != converted_extension.oid:
                         expected = KEY_TO_EXTENSION[key]
                         raise ValueError(f"extensions[{key}] is not of type {expected.__name__}")
+
+                    extensions_update[converted_extension.oid] = converted_extension
+                elif isinstance(ext, x509.Extension):
+                    if KEY_TO_OID[key] != ext.oid:
+                        raise ValueError(f"extensions[{key}] is not of expected type")
+
+                    extensions_update[ext.oid] = ext
+                elif ext is None:
+                    extensions_update[KEY_TO_OID[key]] = None
+                else:
+                    raise ValueError(f"{ext}: Must be a cryptography.x509.Extension instance or None")
+
         else:  # should be a list
             extensions_update = {}
 
             # Convert deprecated django_ca.extensions.Extension class
             for ext_item in extensions:
                 if isinstance(ext_item, x509.Extension):
-                    key = EXTENSION_KEYS[ext_item.oid]
-                    extensions_update[key] = ext_item
+                    extensions_update[ext_item.oid] = ext_item
                 else:
                     warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
-                    key = EXTENSION_KEYS[ext_item.oid]
-                    extensions_update[key] = ext_item.as_extension()
+                    extensions_update[ext_item.oid] = ext_item.as_extension()
 
         # Get overrides values from profile if not passed as parameter
         if cn_in_san is None:
@@ -346,9 +362,8 @@ class Profile:
         # Finally, update SAN with the current CN, if set and requested
         self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=filtered_cert_extensions)
 
-        if not converted_subject.get("CN") and (
-            SubjectAlternativeName.key not in extensions_update
-            or not cast(SubjectAlternativeName, extensions_update[SubjectAlternativeName.key]).value
+        if not converted_subject.get("CN") and not extensions_update.get(
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
@@ -376,7 +391,7 @@ class Profile:
                 builder = builder.add_extension(*extension.for_builder())
 
         # Add the SubjectKeyIdentifier
-        if SubjectKeyIdentifier.key not in filtered_cert_extensions:
+        if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in filtered_cert_extensions:
             builder = builder.add_extension(
                 x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False
             )
@@ -399,9 +414,10 @@ class Profile:
 
         for key, extension in self.extensions.items():
             if extension is None:
-                extensions[key] = None
+                # None value explicitly deactivates/unsets an extension in the admin interface
+                extensions[OID_TO_KEY[key]] = None
             else:
-                extensions[key] = serialize_extension(extension)
+                extensions[OID_TO_KEY[key]] = serialize_extension(extension)
 
         data: SerializedProfile = {
             "cn_in_san": self.cn_in_san,
@@ -415,7 +431,7 @@ class Profile:
     def _update_from_ca(
         self,
         ca: "CertificateAuthority",
-        extensions: Dict[str, x509.Extension[x509.ExtensionType]],
+        extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]],
         add_crl_url: bool,
         add_ocsp_url: bool,
         add_issuer_url: bool,
@@ -430,12 +446,12 @@ class Profile:
 
         """
 
-        extensions[
-            EXTENSION_KEYS[ExtensionOID.AUTHORITY_KEY_IDENTIFIER]
-        ] = ca.get_authority_key_identifier_extension()
+        extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = ca.get_authority_key_identifier_extension()
 
         if add_crl_url is not False and ca.crl_url:
-            crldp = extensions.setdefault(CRLDistributionPoints.key, CRLDistributionPoints())  # type: ignore
+            crldp = extensions.setdefault(
+                ExtensionOID.CRL_DISTRIBUTION_POINTS, CRLDistributionPoints()  # type: ignore[arg-type]
+            )
             if isinstance(crldp, CRLDistributionPoints):
                 crldp.append({"full_name": [url.strip() for url in ca.crl_url.split()]})
             elif isinstance(crldp, x509.Extension):  # pragma: no cover
@@ -443,7 +459,7 @@ class Profile:
 
         if add_ocsp_url is not False and ca.ocsp_url:
             aia = extensions.setdefault(
-                AuthorityInformationAccess.key, AuthorityInformationAccess()  # type: ignore
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS, AuthorityInformationAccess()  # type: ignore[arg-type]  # NOQA: E501
             )
             if isinstance(aia, AuthorityInformationAccess):
                 aia.ocsp.append(parse_general_name(ca.ocsp_url))
@@ -452,7 +468,7 @@ class Profile:
 
         if add_issuer_url is not False and ca.issuer_url:
             aia = extensions.setdefault(
-                AuthorityInformationAccess.key, AuthorityInformationAccess()  # type: ignore
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS, AuthorityInformationAccess()  # type: ignore[arg-type]  # NOQA: E501
             )
             if isinstance(aia, AuthorityInformationAccess):
                 aia.issuers.append(parse_general_name(ca.issuer_url))
@@ -460,7 +476,7 @@ class Profile:
                 pass
 
         if add_issuer_alternative_name is not False and ca.issuer_alt_name:
-            ian = extensions.get(IssuerAlternativeName.key, IssuerAlternativeName())
+            ian = extensions.get(ExtensionOID.ISSUER_ALTERNATIVE_NAME, IssuerAlternativeName())
             if isinstance(ian, IssuerAlternativeName):
                 ian.extend(split_str(ca.issuer_alt_name, ","))
                 extensions[IssuerAlternativeName.key] = ian  # type: ignore
@@ -471,7 +487,10 @@ class Profile:
         pass  # pylint: disable=unnecessary-pass  # pass because coverage has a false positive otherwise
 
     def _update_san_from_cn(
-        self, cn_in_san: bool, subject: Subject, extensions: Dict[str, x509.Extension[x509.ExtensionType]]
+        self,
+        cn_in_san: bool,
+        subject: Subject,
+        extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]],
     ) -> None:
         if subject.get("CN") and cn_in_san is True:
             try:
@@ -481,28 +500,29 @@ class Profile:
                     f"{subject['CN']}: Could not parse CommonName as subjectAlternativeName."
                 ) from e
 
-            if SubjectAlternativeName.key in extensions:
+            if ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
                 san_ext = typing.cast(
-                    x509.Extension[x509.SubjectAlternativeName], extensions[SubjectAlternativeName.key]
+                    x509.Extension[x509.SubjectAlternativeName],
+                    extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
                 )
 
                 if common_name not in san_ext.value:
-                    extensions[SubjectAlternativeName.key] = x509.Extension(
+                    extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
                         oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                         critical=san_ext.critical,
                         value=x509.SubjectAlternativeName(list(san_ext.value) + [common_name]),
                     )
 
             else:
-                extensions[SubjectAlternativeName.key] = x509.Extension(
+                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
                     oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                     critical=False,
                     value=x509.SubjectAlternativeName([common_name]),
                 )
 
-        elif not subject.get("CN") and SubjectAlternativeName.key in extensions:
+        elif not subject.get("CN") and ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
             san_ext = cast(
-                x509.Extension[x509.SubjectAlternativeName], extensions[SubjectAlternativeName.key]
+                x509.Extension[x509.SubjectAlternativeName], extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
             )
             cn_from_san = next(
                 (

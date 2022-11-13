@@ -55,7 +55,7 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import OID_DEFAULT_CRITICAL, ReasonFlags
-from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, get_extension_name
+from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, OID_TO_KEY, get_extension_name
 from .extensions.utils import extension_as_admin_html, serialize_extension
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
@@ -762,7 +762,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             data.update(ca.extensions_for_certificate)
 
             for key in CERTIFICATE_EXTENSIONS:
-                ext = profile.extensions.get(key)
+                ext = profile.extensions.get(KEY_TO_OID[key])
                 if ext is not None:
                     data[key] = ext
 
@@ -997,43 +997,49 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             expires = datetime.combine(data["expires"], datetime.min.time())
 
-            extensions: typing.Dict[str, x509.Extension[x509.ExtensionType]] = {}
+            # Set Subject Alternative Name from form
+            extensions: typing.Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
             subject_alternative_name, cn_in_san = data["subject_alternative_name"]
             if subject_alternative_name:
-                extensions["subject_alternative_name"] = subject_alternative_name
+                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = subject_alternative_name
 
             # Update extensions handled through the form
             for key in CERTIFICATE_EXTENSIONS:
                 if data[key] is not None:
-                    extensions[key] = data[key]
+                    extensions[KEY_TO_OID[key]] = data[key]
 
             # Update extensions from the profile that cannot (yet) be changed in the web interface
-            for key, ext in profile.extensions.items():
+            for oid, ext in profile.extensions.items():
                 # If the extension is set to None by the profile, we do not add or modify it
-                if ext is None:  # pragma: no cover
+                # (A none value means that the extension is unset if the profile is selected by the user)
+                if ext is None:
                     continue
 
                 # We currently only support the first distribution point, append others from profile
-                if key in ("crl_distribution_points", "freshest_crl") and key in extensions:
+                if (
+                    oid in (ExtensionOID.CRL_DISTRIBUTION_POINTS, ExtensionOID.FRESHEST_CRL)
+                    and oid in extensions
+                ):
                     profile_ext = typing.cast(
                         typing.Union[x509.CRLDistributionPoints, x509.FreshestCRL], ext.value
                     )
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
-                        form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[key])
+                        form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[oid])
                         dpoints = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
-                        extensions[key] = x509.Extension(
+                        extensions[oid] = x509.Extension(
                             oid=form_ext.oid, critical=form_ext.critical, value=dpoints
                         )
                     continue
-                if key in CERTIFICATE_EXTENSIONS:  # already handled in form
+
+                if OID_TO_KEY[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
-                if key == "subject_alternative_name":  # pragma: no cover  # handled above
+                if oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME:  # already handled above
                     continue
-                if key == "basic_constraints":  # set by default in profile, so ignore it
+                if oid == ExtensionOID.BASIC_CONSTRAINTS:  # set by default in profile, so ignore it
                     continue
 
                 # Add any extension from the profile currently not changable in the web interface
-                extensions[key] = ext
+                extensions[oid] = ext
 
             ca: CertificateAuthority = data["ca"]
 

@@ -132,7 +132,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test profiles that explicitly deactivate an extension."""
         prof = Profile("test", extensions={"ocsp_no_check": None})
         self.assertEqual(
-            prof.extensions, {"ocsp_no_check": None, "basic_constraints": self.basic_constraints()}
+            prof.extensions,
+            {ExtensionOID.OCSP_NO_CHECK: None, ExtensionOID.BASIC_CONSTRAINTS: self.basic_constraints()},
         )
         self.assertIsNone(prof.serialize()["extensions"]["ocsp_no_check"])
 
@@ -378,6 +379,26 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         self.assertExtensions(
             cert,
             [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
+        )
+
+        # test that cn_in_san=True with a SAN that does NOT yet contain the CN, so it's added
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                cn_in_san=True,
+                extensions=[self.subject_alternative_name(dns(self.hostname + ".added"))],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, subject)
+        self.assertExtensions(
+            cert,
+            [
+                ca.get_authority_key_identifier_extension(),
+                self.subject_alternative_name(dns(self.hostname + ".added"), dns(self.hostname)),
+            ],
         )
 
         # test that the first SAN is added as CN if we don't have A CN
@@ -680,6 +701,24 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions={IssuerAlternativeName.key: ski},
             )
         self.assertEqual(pre.call_count, 0)
+
+        msg = r"^extensions\[issuer_alternative_name\] is not of expected type"
+        with self.mockSignal(
+            pre_issue_cert
+        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(prof, ca, csr, extensions={IssuerAlternativeName.key: self.ocsp_no_check()})
+        self.assertEqual(pre.call_count, 0)
+
+    def test_wrong_extension_type(self) -> None:
+        """Test passing wrong extension types to create_cert()."""
+
+        prof = Profile(self.id(), subject=[])
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        msg = r"^False: Must be a cryptography\.x509\.Extension instance or None$"
+        with self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
+            self.create_cert(prof, ca, csr, extensions={"ocsp_no_check": False})
 
     def test_str(self) -> None:
         """Test str()."""
