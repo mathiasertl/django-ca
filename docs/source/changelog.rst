@@ -17,7 +17,7 @@ ChangeLog
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
-* Add support for Django 4.1.
+* Add support for Python 3.11, Django 4.1 and cryptography 38.0.
 * New signals :py:class:`~django_ca.signals.pre_sign_cert` and :py:class:`~django_ca.signals.post_sign_cert`
   that receive the values as passed to the cryptography library.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
