@@ -37,6 +37,15 @@ check typehints, use :command:`mypy`:
 
    $ mypy ca/django_ca/
 
+The code generally imports the typing module as a whole, with the most common types imported directly to
+increase readability. The following types should be imported directly: ``Any``, ``Dict``, ``Iterable``,
+``List``, ``Optional``, ``Tuple`` and ``Union``.
+
+Thus::
+
+   import typing  # for most (but rarer) types
+   from typing import List, Optional, Any
+
 *********
 Overrides
 *********
