@@ -60,6 +60,7 @@ Backwards incompatible changes
 * Drop support for cryptography 35.0.
 * Drop support for acme 1.23, 1.24, 1.25 and 1.26.
 * Drop support for Celery 5.0.
+* Require django-object-actions 4.0 or higher.
 * Remove the ``--ca-crl`` parameter in ``manage.py dump_crl`` (this was a left
   over and has been marked as deprecated since 1.12.0).
 * Drop ``django-redis-cache`` from the ``redis`` extra, as the project is abandoned. Please switch to the

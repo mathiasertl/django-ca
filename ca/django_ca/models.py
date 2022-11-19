@@ -702,7 +702,7 @@ class X509CertMixin(DjangoCAModel):
         return TLSFeature(ext)
 
 
-class CertificateAuthority(X509CertMixin):
+class CertificateAuthority(X509CertMixin):  # pylint: disable[too-many-instance-attributes]
     """Model representing a x509 Certificate Authority."""
 
     objects: CertificateAuthorityManager = CertificateAuthorityManager.from_queryset(

@@ -18,15 +18,10 @@ import textwrap
 import typing
 
 import jinja2
+import yaml
 from docutils.parsers.rst import directives
 from sphinx.directives.code import CodeBlock  # code-block directive from Sphinx
 from sphinx.util.typing import OptionSpec
-from yaml import load
-
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader  # type: ignore[misc]  # mypy complains about different type
 
 
 class CommandLineTextWrapper(textwrap.TextWrapper):
@@ -191,7 +186,7 @@ class ConsoleIncludeDirective(CodeBlock):
 
         rel_filename, filename = self.env.relfn2path(include)
         with open(filename, encoding="utf-8") as stream:
-            commands = load(stream, Loader=Loader)["commands"]
+            commands = yaml.safe_load(stream)["commands"]
 
         context_name = self.options.get("context")
         if not context_name:

@@ -3,7 +3,7 @@ black==22.10.0
 flake8==5.0.4
 isort==5.10.1
 pylint-django==2.5.3
-pylint==2.15.5
+pylint==2.15.6
 setuptools>=61
 termcolor==2.1.0
 toml

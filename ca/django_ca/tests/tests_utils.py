@@ -99,7 +99,7 @@ class ConstantsTestCase(TestCase):
 
         # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
         #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, misc]
+        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
 
         # filter out hash algorithms that are not supported right now due to them having a digest size as
         # parameter
@@ -121,7 +121,7 @@ class ConstantsTestCase(TestCase):
 
         # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
         #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, misc]
+        subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
         self.assertEqual(len(utils.ELLIPTIC_CURVE_NAMES), len(subclasses))
         self.assertEqual(utils.ELLIPTIC_CURVE_NAMES, {e().name.lower(): e for e in subclasses})
 
