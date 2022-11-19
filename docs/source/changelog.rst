@@ -18,6 +18,8 @@ ChangeLog
      volumes.
 
 * Add support for Python 3.11, Django 4.1 and cryptography 38.0.
+* Support for MD5 and SHA1 hashes is removed, as they are no longer supported in upcoming releases of
+  cryptography.
 * New signals :py:class:`~django_ca.signals.pre_sign_cert` and :py:class:`~django_ca.signals.post_sign_cert`
   that receive the values as passed to the cryptography library.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
