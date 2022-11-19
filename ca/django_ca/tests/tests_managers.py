@@ -53,7 +53,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Assert some basic properties of a CA."""
         parent_ca = parent or ca
         parent_serial = parent_ca.serial
-        parent_ski = parent_ca.subject_key_identifier.value  # type: ignore[union-attr] # always present
         issuer = parent_ca.subject
 
         base_url = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
@@ -67,7 +66,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.issuer_url, f"{base_url}issuer/{parent_serial}.der")
         self.assertEqual(ca.ocsp_url, f"{base_url}ocsp/{ca.serial}/cert/")
         self.assertEqual(ca.issuer_alt_name, "")
-        self.assertEqual(ca.authority_key_identifier.key_identifier, parent_ski)  # type: ignore[union-attr]
+        self.assertAuthorityKeyIdentifier(parent_ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:

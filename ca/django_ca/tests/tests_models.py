@@ -1072,7 +1072,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     ###############################################
     # Test extensions for all loaded certificates #
     ###############################################
-    def test_extensions(self) -> None:
+    def test_extensions(self) -> None:  # pragma: django-ca<1.24  # tests internal extension wrapper classes
         """Test getting extensions."""
         for key, cls in KEY_TO_EXTENSION.items():
             if key == PrecertificateSignedCertificateTimestamps.key:
@@ -1083,9 +1083,17 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
                 continue
 
             for name, ca in self.cas.items():
+                if key not in certs[name]:
+                    continue
+                if isinstance(certs[name].get(key), x509.Extension):
+                    continue
                 self.assertExtension(ca, name, key, cls)
 
             for name, cert in self.certs.items():
+                if key not in certs[name]:
+                    continue
+                if isinstance(certs[name].get(key), x509.Extension):
+                    continue
                 self.assertExtension(cert, name, key, cls)
 
     # @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')

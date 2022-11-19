@@ -346,20 +346,22 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
                 continue
 
             ski = SubjectKeyIdentifier({"value": config["expected"]})
-            ext = self.ext_class(ski)
-            self.assertExtensionEqual(ext, self.ext_class({"value": config["expected"]}))
+            with self.silence_warnings():
+                ext = self.ext_class(ski)
+                self.assertExtensionEqual(ext, self.ext_class({"value": config["expected"]}))
 
     def test_none_value(self) -> None:
         """Test that we can use and pass None as values for GeneralNamesList values."""
-        ext = self.ext_class(
-            {
-                "value": {
-                    "key_identifier": self.b1,
-                    "authority_cert_issuer": None,
-                    "authority_cert_serial_number": None,
+        with self.silence_warnings():
+            ext = self.ext_class(
+                {
+                    "value": {
+                        "key_identifier": self.b1,
+                        "authority_cert_issuer": None,
+                        "authority_cert_serial_number": None,
+                    }
                 }
-            }
-        )
+            )
         self.assertEqual(
             ext.extension_type,
             x509.AuthorityKeyIdentifier(
@@ -1438,8 +1440,6 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
 
 class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase):
     """Test PrecertificateSignedCertificateTimestamps extension."""
-
-    # pylint: disable=too-many-instance-attributes; RO-extension requires implementing everything again
 
     default_ca = "letsencrypt_x3"
     default_cert = "letsencrypt_x3-cert"

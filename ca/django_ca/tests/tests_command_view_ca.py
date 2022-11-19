@@ -36,7 +36,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
@@ -72,7 +72,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -108,7 +108,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
@@ -144,7 +144,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
@@ -173,7 +173,7 @@ X509 v3 certificate extensions for signed certificates:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
@@ -231,7 +231,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
@@ -318,7 +318,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -357,7 +357,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -403,7 +403,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -441,7 +441,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Subject Key Identifier{subject_key_identifier_critical}:
@@ -473,7 +473,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -514,7 +514,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -587,7 +587,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -628,7 +628,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -697,7 +697,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -744,7 +744,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -793,7 +793,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -834,7 +834,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Certificate Policies{certificate_policies_critical}:
@@ -885,7 +885,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -928,7 +928,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -974,7 +974,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -1025,7 +1025,7 @@ ACMEv2 support:
 
 X509 v3 certificate extensions for CA:
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
@@ -1059,7 +1059,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points{crl_distribution_points_critical}:

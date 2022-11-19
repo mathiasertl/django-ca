@@ -24,6 +24,7 @@ import logging
 import random
 import re
 import typing
+import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from datetime import timezone as tz
@@ -93,7 +94,7 @@ from .managers import (
     CertificateManager,
 )
 from .modelfields import CertificateField, CertificateSigningRequestField, LazyCertificate
-from .openssh import SshHostCaExtension, SshUserCaExtension
+from .openssh.extensions import SSH_HOST_CA, SSH_USER_CA
 from .profiles import profiles
 from .querysets import (
     AcmeAccountQuerySet,
@@ -244,7 +245,7 @@ class Watcher(models.Model):
 class X509CertMixin(DjangoCAModel):
     """Mixin class with common attributes for Certificates and Certificate Authorities."""
 
-    # pylint: disable=too-many-instance-attributes,too-many-public-methods
+    # pylint: disable=too-many-public-methods
     # X.509 certificates are complex. Sorry.
 
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
@@ -516,7 +517,7 @@ class X509CertMixin(DjangoCAModel):
             Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue],
             "x509.Extension[x509.ExtensionType]",
         ]
-    ]:
+    ]:  # pragma: no cover
         """List of all extensions for this certificate."""
         exts = []
 
@@ -540,7 +541,7 @@ class X509CertMixin(DjangoCAModel):
         return AuthorityInformationAccess(ext)
 
     @cached_property
-    def authority_key_identifier(self) -> Optional[AuthorityKeyIdentifier]:
+    def authority_key_identifier(self) -> Optional[AuthorityKeyIdentifier]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` extension or ``None`` if not
         present."""
         try:
@@ -1017,7 +1018,9 @@ class CertificateAuthority(X509CertMixin):
                 # else: CommonName already in SubjectAlternativeName
 
         # Convert extensions to legacy classes so that we can send the deprecated signal
-        cert_extensions = [OID_TO_EXTENSION[ext.oid](ext) for ext in extensions]
+        with warnings.catch_warnings():  # disable warnings as constructors raise a warning
+            warnings.simplefilter("ignore")
+            cert_extensions = [OID_TO_EXTENSION[ext.oid](ext) for ext in extensions]
         pre_issue_cert.send(
             sender=self.__class__,
             ca=self,
@@ -1436,10 +1439,10 @@ class CertificateAuthority(X509CertMixin):
     @property
     def is_openssh_ca(self) -> bool:
         """True if this CA is an OpenSSH CA."""
-        if SshHostCaExtension() in self.extensions:
+        if SSH_HOST_CA in self._x509_extensions:
             return True
         # COVERAGE NOTE: currently both extensions are always present
-        return SshUserCaExtension() in self.extensions  # pragma: no cover
+        return SSH_USER_CA in self._x509_extensions  # pragma: no cover
 
     class Meta:
         verbose_name = _("Certificate Authority")

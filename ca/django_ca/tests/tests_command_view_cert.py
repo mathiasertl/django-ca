@@ -39,7 +39,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -73,7 +73,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -107,7 +107,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -141,7 +141,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -175,7 +175,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -209,7 +209,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -240,7 +240,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -274,7 +274,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -307,7 +307,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -338,7 +338,7 @@ Authority Information Access{authority_information_access_critical}:
     CA Issuers:
       * URI:{authority_information_access.issuers[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -379,7 +379,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -439,10 +439,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    * KeyID: 30
-    * Issuer:
-      * DNS:{authority_key_identifier.authority_cert_issuer[0].value}
-    * Serial: 1
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -578,7 +575,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints (critical):
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
@@ -749,7 +746,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points:
@@ -864,7 +861,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Certificate Policies{certificate_policies_critical}:
@@ -918,7 +915,7 @@ Authority Information Access{authority_information_access_critical}:
     OCSP:
       * URI:{authority_information_access.ocsp[0].value}
 Authority Key Identifier{authority_key_identifier_critical}:
-    {authority_key_identifier_text}
+{authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 CRL Distribution Points:

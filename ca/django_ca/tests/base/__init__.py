@@ -32,7 +32,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings
 from django.test.utils import override_settings
 
-from ...extensions import KEY_TO_EXTENSION
+from ...extensions import KEY_TO_EXTENSION, parse_extension
 from ...profiles import profiles
 from ...typehints import PrivateKeyTypes, TypedDict
 from ...utils import add_colons, ca_storage
@@ -324,7 +324,12 @@ for cert_name, cert_data in certs.items():
     for ext_key, ext_cls in KEY_TO_EXTENSION.items():
         if cert_data.get(ext_key):
             cert_data[f"{ext_key}_serialized"] = cert_data[ext_key]
-            cert_data[ext_key] = ext_cls(cert_data[ext_key])
+
+            # Slowly transition to cryptography extensions
+            if ext_key == "authority_key_identifier":
+                cert_data[ext_key] = parse_extension(ext_key, cert_data[ext_key])
+            else:
+                cert_data[ext_key] = ext_cls(cert_data[ext_key])
 
 # Calculate some fixted timestamps that we reuse throughout the tests
 timestamps = {

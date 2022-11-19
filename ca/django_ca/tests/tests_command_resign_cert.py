@@ -19,7 +19,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from cryptography import x509
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
 from django.utils import timezone
@@ -28,7 +28,6 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..extensions import (
-    AuthorityKeyIdentifier,
     BasicConstraints,
     CRLDistributionPoints,
     ExtendedKeyUsage,
@@ -72,12 +71,17 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(old.subject, new.subject)
 
         # assert extensions that should be equal
-        aki = AuthorityKeyIdentifier(new_ca.subject_key_identifier)
-        self.assertEqual(aki, new.authority_key_identifier)
-        self.assertEqual(old.extended_key_usage, new.extended_key_usage)
-        self.assertEqual(old.key_usage, new.key_usage)
-        self.assertEqual(old.subject_alternative_name, new.subject_alternative_name)
-        self.assertEqual(old.tls_feature, new.tls_feature)
+        aki = new_ca.get_authority_key_identifier_extension()
+        # pylint: disable-next=protected-access
+        self.assertEqual(aki, new._x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER])
+        for oid in [
+            ExtensionOID.EXTENDED_KEY_USAGE,
+            ExtensionOID.KEY_USAGE,
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+            ExtensionOID.TLS_FEATURE,
+        ]:
+            # pylint: disable-next=protected-access
+            self.assertEqual(old._x509_extensions.get(oid), new._x509_extensions.get(oid))
 
         # Test extensions that don't come from the old cert but from the signing CA
         self.assertEqual(new.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": False}}))

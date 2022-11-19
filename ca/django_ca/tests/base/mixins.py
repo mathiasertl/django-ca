@@ -17,7 +17,9 @@ import copy
 import io
 import json
 import re
+import textwrap
 import typing
+import warnings
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from http import HTTPStatus
@@ -56,7 +58,7 @@ from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
 from ...extensions import Extension, KeyUsage, TLSFeature
 from ...extensions.base import CRLDistributionPointsBase, IterableExtension
-from ...extensions.utils import KEY_USAGE_NAMES
+from ...extensions.utils import KEY_USAGE_NAMES, extension_as_text
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import (
     post_create_ca,
@@ -173,8 +175,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, issuer: CertificateAuthority, cert: X509CertMixin
     ) -> None:
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
+        actual = typing.cast(
+            x509.AuthorityKeyIdentifier,
+            # pylint: disable-next=protected-access
+            cert._x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value,
+        )
         self.assertEqual(
-            cert.authority_key_identifier.key_identifier,  # type: ignore[union-attr] # aki theoretically None
+            actual.key_identifier,
             issuer.subject_key_identifier.value,  # type: ignore[union-attr] # ski theoretically None
         )
 
@@ -908,6 +915,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: Dict[str, Any] = {}
         for key, value in certs[name].items():
+            if isinstance(value, x509.Extension):
+                if value.critical:
+                    ctx[f"{key}_critical"] = " (critical)"
+                else:
+                    ctx[f"{key}_critical"] = ""
+
+                ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "    ")
+                continue
+
             if key == "precert_poison":
                 ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
             elif key == "precertificate_signed_certificate_timestamps_serialized":
@@ -1069,6 +1085,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def reverse(self, name: str, *args: Any, **kwargs: Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
+
+    @contextmanager
+    def silence_warnings(self) -> typing.Iterator[None]:
+        """Contect manager to hide all warnings."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            yield
 
     @property
     def usable_cas(self) -> typing.Iterator[Tuple[str, CertificateAuthority]]:

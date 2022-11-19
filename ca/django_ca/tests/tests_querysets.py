@@ -310,9 +310,7 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
             self.assertQuerySet(Certificate.objects.valid(), *valid)
 
 
-class AcmeQuerySetTestCase(  # pylint: disable=too-many-instance-attributes
-    QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTestCase
-):
+class AcmeQuerySetTestCase(QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTestCase):
     """Base class for ACME querysets (creates different instances)."""
 
     load_cas = "__usable__"

@@ -363,7 +363,9 @@ class Profile:
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
         # Convert extensions to legacy classes so that we can send the deprecated signal
-        cert_extensions_old = [OID_TO_EXTENSION[ext.oid](ext) for ext in cert_extensions.values()]
+        with warnings.catch_warnings():  # disable warnings as constructors raise a warning
+            warnings.simplefilter("ignore")
+            cert_extensions_old = [OID_TO_EXTENSION[ext.oid](ext) for ext in cert_extensions.values()]
         pre_issue_cert.send(
             sender=self.__class__,
             ca=ca,

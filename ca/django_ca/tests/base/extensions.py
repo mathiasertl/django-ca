@@ -141,12 +141,14 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
             if critical is None:
                 critical = self.ext_class.default_critical
             ext = x509.extensions.Extension(oid=self.ext_class.oid, critical=critical, value=value)
-            return self.ext_class(ext)
+            with self.silence_warnings():
+                return self.ext_class(ext)
 
         val: ParsableExtension = {"value": value}
         if critical is not None:
             val["critical"] = critical
-        return self.ext_class(val)
+        with self.silence_warnings():
+            return self.ext_class(val)
 
     def test_parse(self) -> None:
         """Test parsing a serialized extension."""
@@ -255,16 +257,18 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         class _Example:
             pass
 
-        with self.assertRaisesRegex(ValueError, "^Value is of unsupported type _Example$"):
+        with self.silence_warnings(), self.assertRaisesRegex(
+            ValueError, "^Value is of unsupported type _Example$"
+        ):
             self.ext_class(_Example())  # type: ignore[arg-type] # what we're testing here
 
     def test_ne(self) -> None:
         """Test ``!=`` (not-equal) operator."""
         for config in self.test_values.values():
             if self.force_critical is None:
-                self.assertNotEqual(
-                    self.ext(config["expected"], critical=True), self.ext(config["expected"], critical=False)
-                )
+                first = self.ext(config["expected"], critical=True)
+                second = self.ext(config["expected"], critical=False)
+                self.assertNotEqual(first, second)
 
             for other_config in self.test_values.values():
                 if self.force_critical is None:

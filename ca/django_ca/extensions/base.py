@@ -147,7 +147,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         if not isinstance(self.critical, bool):
             raise ValueError(f"{self.critical}: Invalid critical value passed")
 
-    def deprecate(self):
+    def deprecate(self) -> None:
         cls_path = f"{self.__class__.__module__}.{self.__class__.__name__}"
         warnings.warn(
             f"{cls_path} is deprecated and will be removed in django-ca 1.24.0.",
