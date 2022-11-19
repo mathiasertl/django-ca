@@ -656,6 +656,7 @@ class InhibitAnyPolicy(Extension[x509.InhibitAnyPolicy, int, int]):
         self,
         value: Optional[Union["x509.Extension[x509.InhibitAnyPolicy]", ParsableExtension, int]] = None,
     ) -> None:
+        self.deprecate()
         if isinstance(value, int):
             self.critical = self.default_critical
             self.skip_certs = value
@@ -927,6 +928,7 @@ class PrecertPoison(NullExtension[x509.PrecertPoison]):
     ext_class = x509.PrecertPoison
 
     def __init__(self, value: None = None) -> None:
+        self.deprecate()
         super().__init__(value=value)
 
         if self.critical is not True:
@@ -1019,6 +1021,7 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
             Union["x509.Extension[x509.SubjectKeyIdentifier]", ParsableExtension, x509.SubjectKeyIdentifier]
         ] = None,
     ) -> None:
+        self.deprecate()
         if isinstance(value, x509.SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.value = value.digest

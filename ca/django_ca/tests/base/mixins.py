@@ -180,10 +180,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             # pylint: disable-next=protected-access
             cert._x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value,
         )
-        self.assertEqual(
-            actual.key_identifier,
-            issuer.subject_key_identifier.value,  # type: ignore[union-attr] # ski theoretically None
+        expected = typing.cast(
+            x509.SubjectKeyIdentifier,
+            # pylint: disable-next=protected-access
+            issuer._x509_extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value,
         )
+        self.assertEqual(actual.key_identifier, expected.key_identifier)
 
     def assertBasic(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, algo: typing.Type[hashes.HashAlgorithm] = hashes.SHA256
@@ -915,7 +917,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: Dict[str, Any] = {}
         for key, value in certs[name].items():
-            if isinstance(value, x509.Extension):
+            if key == "precert_poison":
+                ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
+                continue
+            elif isinstance(value, x509.Extension):
                 if value.critical:
                     ctx[f"{key}_critical"] = " (critical)"
                 else:
@@ -924,9 +929,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "    ")
                 continue
 
-            if key == "precert_poison":
-                ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
-            elif key == "precertificate_signed_certificate_timestamps_serialized":
+            if key == "precertificate_signed_certificate_timestamps_serialized":
                 ctx["sct_critical"] = " (critical)" if value["critical"] else ""
                 ctx["sct_values"] = []
                 for val in value["value"]:

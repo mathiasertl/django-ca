@@ -437,8 +437,9 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
 
     def test_dummy_functions(self) -> None:
         """``NullExtension`` implements abstract functions for the value which are in reality unused."""
-        self.assertIsNone(self.ext_class().serialize_value())
-        self.assertEqual(self.ext_class().repr_value(), "")
+        with self.silence_warnings():
+            self.assertIsNone(self.ext_class().serialize_value())
+            self.assertEqual(self.ext_class().repr_value(), "")
 
 
 class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, IterableTypeVar], TestCaseProtocol):

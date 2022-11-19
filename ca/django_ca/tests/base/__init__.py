@@ -326,7 +326,12 @@ for cert_name, cert_data in certs.items():
             cert_data[f"{ext_key}_serialized"] = cert_data[ext_key]
 
             # Slowly transition to cryptography extensions
-            if ext_key == "authority_key_identifier":
+            if ext_key in (
+                "authority_key_identifier",
+                "precert_poison",
+                "inhibit_any_policy",
+                "subject_key_identifier",
+            ):
                 cert_data[ext_key] = parse_extension(ext_key, cert_data[ext_key])
             else:
                 cert_data[ext_key] = ext_cls(cert_data[ext_key])

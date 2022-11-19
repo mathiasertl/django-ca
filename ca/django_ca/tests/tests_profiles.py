@@ -811,7 +811,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca.issuer_alt_name = "https://ian.example.com"
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
-        ski = SubjectKeyIdentifier({"value": b"333333"})
+        with self.silence_warnings():  # this whole test case becomes in valid once dict support is removed
+            ski = SubjectKeyIdentifier({"value": b"333333"})
         prof = Profile("example", subject=[])
 
         msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"

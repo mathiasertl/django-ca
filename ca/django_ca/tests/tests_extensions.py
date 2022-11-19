@@ -33,6 +33,7 @@ from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from ..deprecation import RemovedInDjangoCA124Warning
 from ..extensions import (
     KEY_TO_EXTENSION,
     OID_TO_EXTENSION,
@@ -345,8 +346,8 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestMixin[AuthorityKeyIdentifier],
             if not isinstance(config["expected"], bytes):
                 continue
 
-            ski = SubjectKeyIdentifier({"value": config["expected"]})
             with self.silence_warnings():
+                ski = SubjectKeyIdentifier({"value": config["expected"]})
                 ext = self.ext_class(ski)
                 self.assertExtensionEqual(ext, self.ext_class({"value": config["expected"]}))
 
@@ -917,26 +918,29 @@ class InhibitAnyPolicyTestCase(ExtensionTestMixin[InhibitAnyPolicy], TestCase):
 
     def test_int(self) -> None:
         """Test passing various int values."""
-        ext = InhibitAnyPolicy(0)
-        self.assertEqual(ext.skip_certs, 0)
-        ext = InhibitAnyPolicy(1)
-        self.assertEqual(ext.skip_certs, 1)
+        with self.silence_warnings():
+            ext = InhibitAnyPolicy(0)
+            self.assertEqual(ext.skip_certs, 0)
+            ext = InhibitAnyPolicy(1)
+            self.assertEqual(ext.skip_certs, 1)
 
-        with self.assertRaisesRegex(ValueError, r"-1: must be a positive int$"):
-            InhibitAnyPolicy(-1)
-        with self.assertRaisesRegex(ValueError, r"-1: must be a positive int$"):
-            InhibitAnyPolicy({"value": -1})
+            with self.assertRaisesRegex(ValueError, r"-1: must be a positive int$"):
+                InhibitAnyPolicy(-1)
+            with self.assertRaisesRegex(ValueError, r"-1: must be a positive int$"):
+                InhibitAnyPolicy({"value": -1})
 
     def test_default(self) -> None:
         """Test the default value for the constructor."""
-        self.assertEqual(InhibitAnyPolicy().skip_certs, 0)
+        with self.silence_warnings():
+            self.assertEqual(InhibitAnyPolicy().skip_certs, 0)
 
     def test_no_int(self) -> None:
         """Test passing invalid values."""
-        with self.assertRaisesRegex(ValueError, r"^abc: must be an int$"):
-            InhibitAnyPolicy({"value": "abc"})
-        with self.assertRaisesRegex(ValueError, r"^Value is of unsupported type str$"):
-            InhibitAnyPolicy("abc")  # type: ignore[arg-type]
+        with self.silence_warnings():
+            with self.assertRaisesRegex(ValueError, r"^abc: must be an int$"):
+                InhibitAnyPolicy({"value": "abc"})
+            with self.assertRaisesRegex(ValueError, r"^Value is of unsupported type str$"):
+                InhibitAnyPolicy("abc")  # type: ignore[arg-type]
 
     def test_value(self) -> None:
         """Overwritten because extension has no value."""
@@ -1434,7 +1438,9 @@ class PrecertPoisonTestCase(NullExtensionTestMixin[PrecertPoison], TestCase):
 
     def test_critical(self) -> None:
         """Test the critical property."""
-        with self.assertRaisesRegex(ValueError, r"^PrecertPoison must always be marked as critical$"):
+        with self.silence_warnings(), self.assertRaisesRegex(
+            ValueError, r"^PrecertPoison must always be marked as critical$"
+        ):
             PrecertPoison({"critical": False})  # type: ignore[arg-type]
 
 
@@ -1670,6 +1676,7 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
 class UnknownExtensionTestCase(TestCase):
     """Test UnrecognizedExtension extension."""
 
+    deprecation_msg = r"^django_ca\.extensions\.base\.UnrecognizedExtension is deprecated and will be removed in django-ca 1\.24\.0\.$"  # noqa: E501
     oid = x509.ObjectIdentifier("1.2.1")
     value = x509.UnrecognizedExtension(oid=oid, value=b"unrecognized")
     ext = x509.Extension(
@@ -1680,7 +1687,8 @@ class UnknownExtensionTestCase(TestCase):
     def test_basic(self) -> None:
         """Only test basic functionality."""
         oid = x509.ObjectIdentifier("1.2.1")
-        ext = UnrecognizedExtension(self.ext)
+        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, self.deprecation_msg):
+            ext = UnrecognizedExtension(self.ext)
 
         self.assertEqual(ext.name, f"Unsupported extension (OID {oid.dotted_string})")
         self.assertEqual(ext.as_extension(), self.ext)
@@ -1700,12 +1708,14 @@ class UnknownExtensionTestCase(TestCase):
             value=x509.SubjectAlternativeName([uri("example.com")]),
         )
         with self.assertRaisesRegex(TypeError, r"^Extension value must be a x509\.UnrecognizedExtension$"):
-            UnrecognizedExtension(value)  # type: ignore[arg-type]
+            with self.assertWarnsRegex(RemovedInDjangoCA124Warning, self.deprecation_msg):
+                UnrecognizedExtension(value)  # type: ignore[arg-type]
 
     def test_from_dict(self) -> None:
         """Test that you cannot instantiate this extension from a dict."""
         with self.assertRaisesRegex(TypeError, r"Value must be a x509\.Extension instance$"):
-            UnrecognizedExtension({"value": "foo"})  # type: ignore[arg-type]
+            with self.assertWarnsRegex(RemovedInDjangoCA124Warning, self.deprecation_msg):
+                UnrecognizedExtension({"value": "foo"})  # type: ignore[arg-type]
 
     def test_serialized(self) -> None:
         """Test serializing an unknown extension."""
@@ -1714,7 +1724,8 @@ class UnknownExtensionTestCase(TestCase):
         )
 
         # Was not allowed in legacy class based extensions
-        ext = UnrecognizedExtension(self.ext)
+        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, self.deprecation_msg):
+            ext = UnrecognizedExtension(self.ext)
         with self.assertRaisesRegex(ValueError, r"^Cannot serialize an unrecognized extension$"):
             ext.serialize_value()
 
@@ -1724,7 +1735,8 @@ class UnknownExtensionTestCase(TestCase):
         cgext = x509.Extension(
             oid=oid, value=x509.UnrecognizedExtension(oid=oid, value=b"unrecognized"), critical=True
         )
-        ext = UnrecognizedExtension(cgext)
+        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, self.deprecation_msg):
+            ext = UnrecognizedExtension(cgext)
 
         with self.assertRaises(NotImplementedError):
             ext.from_dict("foo")
@@ -1901,32 +1913,33 @@ class SubjectKeyIdentifierTestCase(ExtensionTestMixin[SubjectKeyIdentifier], Tes
     def test_ski_constructor(self) -> None:
         """Test passing x509.SubjectKeyIdentifier."""
 
-        self.assertEqual(
-            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b1)),
-            SubjectKeyIdentifier({"value": self.hex1}),
-        )
-        self.assertEqual(
-            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b2)),
-            SubjectKeyIdentifier({"value": self.hex2}),
-        )
-        self.assertEqual(
-            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
-            SubjectKeyIdentifier({"value": self.hex3}),
-        )
+        with self.silence_warnings():
+            self.assertEqual(
+                SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b1)),
+                SubjectKeyIdentifier({"value": self.hex1}),
+            )
+            self.assertEqual(
+                SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b2)),
+                SubjectKeyIdentifier({"value": self.hex2}),
+            )
+            self.assertEqual(
+                SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
+                SubjectKeyIdentifier({"value": self.hex3}),
+            )
 
-        # dict also accepts SKI
-        self.assertEqual(
-            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b1)),
-            SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b1)}),
-        )
-        self.assertEqual(
-            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b2)),
-            SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b2)}),
-        )
-        self.assertEqual(
-            SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
-            SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b3)}),
-        )
+            # dict also accepts SKI
+            self.assertEqual(
+                SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b1)),
+                SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b1)}),
+            )
+            self.assertEqual(
+                SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b2)),
+                SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b2)}),
+            )
+            self.assertEqual(
+                SubjectKeyIdentifier(x509.SubjectKeyIdentifier(self.b3)),
+                SubjectKeyIdentifier({"value": x509.SubjectKeyIdentifier(self.b3)}),
+            )
 
 
 class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTestMixin[TLSFeature], TestCase):

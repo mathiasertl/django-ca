@@ -23,7 +23,6 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from ..extensions import SubjectKeyIdentifier
 from ..models import Certificate, Watcher
 from .base import certs, override_settings, override_tmpcadir, timestamps
 from .base.mixins import TestCaseMixin
@@ -56,7 +55,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -90,7 +89,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -124,7 +123,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -158,7 +157,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -192,7 +191,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -223,7 +222,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -257,7 +256,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -290,7 +289,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -323,7 +322,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -352,7 +351,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -419,7 +418,7 @@ Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_1}
     * {subject_alternative_name_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 TLS Feature{tls_feature_critical}:
     * {tls_feature_0}
     * {tls_feature_1}
@@ -477,7 +476,7 @@ Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name[4]}
     * {subject_alternative_name[5]}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 TLS Feature{tls_feature_critical}:
     * {tls_feature_0}
 Watchers:
@@ -496,11 +495,6 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
     load_cas = "__all__"
     load_certs = "__all__"
 
-    def _get_ski_text(self, ski: typing.Optional[SubjectKeyIdentifier]) -> str:
-        if ski is None:
-            return ""
-        return ski.as_text()
-
     def _get_format(self, cert: Certificate) -> typing.Dict[str, str]:
         return {
             "cn": cert.cn,
@@ -508,8 +502,8 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
             "until": cert.not_after.strftime("%Y-%m-%d %H:%M"),
             "sha256": cert.get_fingerprint(hashes.SHA256()),
             "sha512": cert.get_fingerprint(hashes.SHA512()),
-            "subjectKeyIdentifier": self._get_ski_text(cert.subject_key_identifier),
-            "authorityKeyIdentifier": self._get_ski_text(cert.ca.subject_key_identifier),
+            "subjectKeyIdentifier": "",
+            "authorityKeyIdentifier": "",
             "hpkp": cert.hpkp_pin,
         }
 
@@ -592,7 +586,7 @@ Key Usage{key_usage_critical}:
 Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_0}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -817,7 +811,7 @@ Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_47}
     * {subject_alternative_name_48}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -831,6 +825,7 @@ HPKP pin: {hpkp}
     def test_contrib_letsencrypt_jabber_at(self) -> None:
         """Test contrib letsencrypt cert."""
         # pylint: disable=consider-using-f-string
+        self.maxDiff = None
         name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
         context[
@@ -889,7 +884,7 @@ Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_8}
     * {subject_alternative_name_9}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -1021,7 +1016,7 @@ Subject Alternative Name{subject_alternative_name_critical}:
     * {subject_alternative_name_83}
     * {subject_alternative_name_84}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Watchers:
 Digest:
     sha256: {sha256}

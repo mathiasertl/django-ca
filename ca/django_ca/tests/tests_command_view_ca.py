@@ -43,7 +43,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): {crl_url}
@@ -83,7 +83,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): {crl_url}
@@ -115,7 +115,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): {crl_url}
@@ -151,7 +151,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): {crl_url}
@@ -180,7 +180,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): {crl_url}
@@ -208,7 +208,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -239,7 +239,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -267,7 +267,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -295,7 +295,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -329,7 +329,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -377,7 +377,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -418,7 +418,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -445,7 +445,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -488,7 +488,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -533,7 +533,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -561,7 +561,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -602,7 +602,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -643,7 +643,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -671,7 +671,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -716,7 +716,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -765,7 +765,7 @@ Name Constraints{name_constraints_critical}:
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -811,7 +811,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -853,7 +853,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 Unknown extension (2.16.840.1.113730.1.1):
     03:02:00:07
 Unknown extension (2.16.840.1.113730.1.13):
@@ -900,7 +900,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -946,7 +946,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_0}
     * {key_usage_1}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -1002,7 +1002,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -1033,7 +1033,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None
@@ -1078,7 +1078,7 @@ Key Usage{key_usage_critical}:
     * {key_usage_1}
     * {key_usage_2}
 Subject Key Identifier{subject_key_identifier_critical}:
-    {subject_key_identifier_text}
+{subject_key_identifier_text}
 
 X509 v3 certificate extensions for signed certificates:
 * Certificate Revokation List (CRL): None

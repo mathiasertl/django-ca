@@ -270,6 +270,7 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
 
     # pylint: disable-next=unused-argument
     def __init__(self, value: UnrecognizedExtensionType, name: str = "", error: str = ""):
+        self.deprecate()
         if not isinstance(value, x509.Extension):
             raise TypeError("Value must be a x509.Extension instance")
         if not isinstance(value.value, x509.UnrecognizedExtension):

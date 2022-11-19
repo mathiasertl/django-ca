@@ -1047,7 +1047,8 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         """Test getting the authority key identifier."""
         for name, ca in self.cas.items():
             self.assertEqual(
-                ca.get_authority_key_identifier().key_identifier, certs[name]["subject_key_identifier"].value
+                ca.get_authority_key_identifier().key_identifier,
+                certs[name]["subject_key_identifier"].value.key_identifier,
             )
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
@@ -1060,14 +1061,16 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         ):
             self.assertEqual(
                 ca.get_authority_key_identifier().key_identifier,
-                certs["child"]["subject_key_identifier"].value,
+                certs["child"]["subject_key_identifier"].value.key_identifier,
             )
 
     def test_get_authority_key_identifier_extension(self) -> None:
         """Test getting the authority key id extension for CAs."""
         for name, ca in self.cas.items():
             ext = ca.get_authority_key_identifier_extension()
-            self.assertEqual(ext.value.key_identifier, certs[name]["subject_key_identifier"].value)
+            self.assertEqual(
+                ext.value.key_identifier, certs[name]["subject_key_identifier"].value.key_identifier
+            )
 
     ###############################################
     # Test extensions for all loaded certificates #
