@@ -52,7 +52,7 @@ jobs:
           pip install -c constraints.txt -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt
 
       - name: Install program
-        run: python setup.py develop
+        run: pip install -e .
 
       - name: Run tests
         run: |
