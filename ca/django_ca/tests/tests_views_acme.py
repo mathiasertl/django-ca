@@ -1497,6 +1497,11 @@ class AcmeChallengeViewTestCase(
             },
         )
 
+    def test_duplicate_nonce(self) -> None:
+        # wrapped so that the triggered task is not run, which would do an HTTP request
+        with self.patch("django_ca.acme.views.run_task"):
+            super().test_duplicate_nonce()
+
     @override_tmpcadir()
     def test_no_state_change(self) -> None:
         """Test challenge endpoint when no state change is triggered (e.g. already valid)."""
