@@ -872,6 +872,13 @@ class CertificateAuthority(X509CertMixin):
             )
 
         access_descriptions = []
+        # TODO: use get_authority_information_access_extension() but it does not yet split lines
+        if self.ocsp_url:
+            ocsp = [parse_general_name(name) for name in self.ocsp_url.splitlines()]
+            access_descriptions += [
+                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
+                for name in ocsp
+            ]
         if self.issuer_url:
             ca_issuers = [parse_general_name(name) for name in self.issuer_url.splitlines()]
             access_descriptions += [
@@ -879,12 +886,6 @@ class CertificateAuthority(X509CertMixin):
                     access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=name
                 )
                 for name in ca_issuers
-            ]
-        if self.ocsp_url:
-            ocsp = [parse_general_name(name) for name in self.ocsp_url.splitlines()]
-            access_descriptions += [
-                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
-                for name in ocsp
             ]
         if access_descriptions:
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
@@ -1151,18 +1152,18 @@ class CertificateAuthority(X509CertMixin):
             return None
 
         descriptions = []
-        if self.issuer_url:
-            descriptions.append(
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                    access_location=parse_general_name(self.issuer_url),
-                )
-            )
         if self.ocsp_url:
             descriptions.append(
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.OCSP,
                     access_location=parse_general_name(self.ocsp_url),
+                )
+            )
+        if self.issuer_url:
+            descriptions.append(
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                    access_location=parse_general_name(self.issuer_url),
                 )
             )
 

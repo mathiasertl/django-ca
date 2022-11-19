@@ -18,6 +18,7 @@ import typing
 import unittest
 from contextlib import contextmanager
 from datetime import timedelta
+from typing import Any, Dict
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -56,7 +57,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         super().setUp()
         self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
 
-    def get_globs(self) -> typing.Dict[str, typing.Any]:
+    def get_globs(self) -> Dict[str, Any]:
         """Get globals for doctests."""
         return {
             "Profile": Profile,
@@ -91,7 +92,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             yield
 
     def create_cert(  # type: ignore[override]
-        self, prof: Profile, ca: CertificateAuthority, *args: typing.Any, **kwargs: typing.Any
+        self, prof: Profile, ca: CertificateAuthority, *args: Any, **kwargs: Any
     ) -> Certificate:
         """Shortcut to create a cert with the given profile."""
         cert = Certificate(ca=ca)
@@ -579,6 +580,58 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
                 self.subject_alternative_name(dns(self.hostname)),
                 self.issuer_alternative_name(uri(ca.issuer_alt_name), added_ian_uri),
+            ],
+            expect_defaults=False,
+        )
+
+    @override_tmpcadir()
+    def test_merge_authority_information_access_existing_values(self) -> None:
+        """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
+        prof = Profile("example", subject=[])
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        # Add CRL url to CA
+        ca.ocsp_url = "https://ocsp.ca.example.com"
+        ca.issuer_url = "https://issuer.ca.example.com"
+        ca.save()
+
+        cert_issuers = uri("https://issuer.cert.example.com")
+        cert_issuers2 = uri("https://issuer2.cert.example.com")
+        cert_ocsp = uri("https://ocsp.cert.example.com")
+
+        added_aia = self.authority_information_access(
+            ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp]
+        )
+
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_crl_url=False,
+                add_ocsp_url=True,
+                add_issuer_url=True,
+                add_issuer_alternative_name=False,
+                extensions=[added_aia],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+
+        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+        self.assertExtensions(
+            cert,
+            [
+                ca.get_authority_key_identifier_extension(),
+                self.basic_constraints(),
+                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+                self.subject_alternative_name(dns(self.hostname)),
+                self.authority_information_access(
+                    ca_issuers=[uri(ca.issuer_url), cert_issuers, cert_issuers2],
+                    ocsp=[uri(ca.ocsp_url), cert_ocsp],
+                ),
             ],
             expect_defaults=False,
         )

@@ -17,23 +17,16 @@ import typing
 import warnings
 from datetime import datetime, timedelta
 from threading import local
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from . import ca_settings
 from .constants import OID_DEFAULT_CRITICAL
 from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
-from .extensions import (
-    KEY_TO_EXTENSION,
-    KEY_TO_OID,
-    OID_TO_KEY,
-    AuthorityInformationAccess,
-    Extension,
-    parse_extension,
-)
+from .extensions import KEY_TO_EXTENSION, KEY_TO_OID, OID_TO_KEY, Extension, parse_extension
 from .extensions.utils import serialize_extension
 from .signals import pre_issue_cert
 from .subject import Subject
@@ -387,10 +380,7 @@ class Profile:
         builder = builder.subject_name(cert_subject.name)
 
         for _key, extension in cert_extensions.items():
-            if isinstance(extension, x509.Extension):
-                builder = builder.add_extension(extension.value, critical=extension.critical)
-            else:  # isinstance(extension, Extension):
-                builder = builder.add_extension(*extension.for_builder())
+            builder = builder.add_extension(extension.value, critical=extension.critical)
 
         # Add the SubjectKeyIdentifier
         if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in cert_extensions:
@@ -430,6 +420,52 @@ class Profile:
 
         return data
 
+    def _update_authority_information_access(
+        self,
+        extensions: ExtensionMapping,
+        ca_extensions: ExtensionMapping,
+        add_issuer_url: bool,
+        add_ocsp_url: bool,
+    ) -> None:
+        oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+
+        # If there is no extension from the CA there is nothing to merge.
+        if oid not in ca_extensions:
+            return
+        ca_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], ca_extensions[oid])
+        critical = ca_aia_ext.critical
+
+        access_descriptions: List[x509.AccessDescription] = []
+        if add_issuer_url is True:
+            access_descriptions += [
+                ad
+                for ad in ca_aia_ext.value
+                if ad not in access_descriptions
+                and ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+            ]
+        if add_ocsp_url is True:
+            access_descriptions += [
+                ad
+                for ad in ca_aia_ext.value
+                if ad not in access_descriptions and ad.access_method == AuthorityInformationAccessOID.OCSP
+            ]
+
+        # Add ADs from certificate
+        if oid in extensions:
+            cert_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], extensions[oid])
+            access_descriptions += list(cert_aia_ext.value)
+            critical = cert_aia_ext.critical
+
+        # Finally sort by OID so that we have more predictable behavior
+        access_descriptions = sorted(access_descriptions, key=lambda ad: ad.access_method.dotted_string)
+
+        if access_descriptions:
+            extensions[oid] = x509.Extension(
+                oid=oid,
+                critical=critical,
+                value=x509.AuthorityInformationAccess(access_descriptions),
+            )
+
     def _update_crl_distribution_points(
         self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
     ) -> None:
@@ -453,7 +489,7 @@ class Profile:
                 ext_value = x509.CRLDistributionPoints(list(ca_crldp) + list(cert_crldp))
                 extensions[oid] = x509.Extension(oid=oid, critical=extensions[oid].critical, value=ext_value)
         else:
-            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = ca_crldp_ext
+            extensions[oid] = ca_crldp_ext
 
     def _update_issuer_alternative_name(
         self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
@@ -495,28 +531,12 @@ class Profile:
         if add_crl_url is not False:
             self._update_crl_distribution_points(extensions, ca_extensions)
 
-        if add_ocsp_url is not False and ca.ocsp_url:
-            aia = extensions.setdefault(
-                ExtensionOID.AUTHORITY_INFORMATION_ACCESS, AuthorityInformationAccess()  # type: ignore[arg-type]  # NOQA: E501
-            )
-            if isinstance(aia, AuthorityInformationAccess):
-                aia.ocsp.append(parse_general_name(ca.ocsp_url))
-            elif isinstance(aia, x509.Extension):  # pragma: no cover
-                pass
-
-        if add_issuer_url is not False and ca.issuer_url:
-            aia = extensions.setdefault(
-                ExtensionOID.AUTHORITY_INFORMATION_ACCESS, AuthorityInformationAccess()  # type: ignore[arg-type]  # NOQA: E501
-            )
-            if isinstance(aia, AuthorityInformationAccess):
-                aia.issuers.append(parse_general_name(ca.issuer_url))
-            elif isinstance(aia, x509.Extension):  # pragma: no cover
-                pass
+        self._update_authority_information_access(
+            extensions, ca_extensions, add_issuer_url=add_issuer_url, add_ocsp_url=add_ocsp_url
+        )
 
         if add_issuer_alternative_name is not False:
             self._update_issuer_alternative_name(extensions, ca_extensions)
-
-        pass  # pylint: disable=unnecessary-pass  # pass because coverage has a false positive otherwise
 
     def _update_san_from_cn(self, cn_in_san: bool, subject: Subject, extensions: ExtensionMapping) -> None:
         if subject.get("CN") and cn_in_san is True:

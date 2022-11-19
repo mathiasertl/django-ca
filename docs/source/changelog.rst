@@ -47,6 +47,12 @@ Admin interface
 * Because the the user can now modify the extensions directly, the ``add_*`` directives for a profile now have
   no effect when issuing a certificate through the admin interface.
 
+Minor changes
+=============
+
+* Access Descriptions in the Authority Information Access extension will now always order OCSP URLs before CA
+  Issuers, inverting the previous behavior. The order of values does not matter in practice.
+
 Backwards incompatible changes
 ==============================
 

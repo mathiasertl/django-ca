@@ -26,7 +26,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
     load_cas = ("root",)
     issuer = "https://issuer-test.example.org"
     ian = "http://ian-test.example.org"
-    ocsp = "http://ocsp-test.example.org"
+    ocsp_url = "http://ocsp-test.example.org"
     crl = ["http://example.org/crl-test"]
     caa = "caa.example.com"
     website = "https://website.example.com"
@@ -51,7 +51,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
                 self.ca.serial,
                 f"--issuer-url={self.issuer}",
                 f"--issuer-alt-name={self.ian}",
-                f"--ocsp-url={self.ocsp}",
+                f"--ocsp-url={self.ocsp_url}",
                 f"--crl-url={crl}",
                 f"--caa={self.caa}",
                 f"--website={self.website}",
@@ -64,7 +64,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         self.assertEqual(ca.issuer_url, self.issuer)
         self.assertEqual(ca.issuer_alt_name, f"URI:{self.ian}")
-        self.assertEqual(ca.ocsp_url, self.ocsp)
+        self.assertEqual(ca.ocsp_url, self.ocsp_url)
         self.assertEqual(ca.crl_url, "\n".join(self.crl))
         self.assertEqual(ca.caa_identity, self.caa)
         self.assertEqual(ca.website, self.website)

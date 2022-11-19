@@ -21,9 +21,9 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from unittest import mock
 from urllib.parse import quote
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
@@ -509,18 +509,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> x509.Extension[x509.AuthorityInformationAccess]:
         """Shortcut for getting a AuthorityInformationAccess extension."""
         access_descriptions = []
-        if ca_issuers is not None:  # pragma: no branch
-            access_descriptions += [
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=issuer
-                )
-                for issuer in ca_issuers
-            ]
         if ocsp is not None:  # pragma: no branch
-            access_descriptions += [
-                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
-                for name in ocsp
-            ]
+            access_descriptions += [self.ocsp(name) for name in ocsp]
+        if ca_issuers is not None:  # pragma: no branch
+            access_descriptions += [self.ca_issuers(issuer) for issuer in ca_issuers]
         value = x509.AuthorityInformationAccess(access_descriptions)
 
         return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=critical, value=value)
@@ -541,6 +533,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         for name, cert in self.certs.items():
             if name in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]:
                 yield name, cert
+
+    def ca_issuers(self, issuer: x509.GeneralName) -> x509.AccessDescription:
+        """Get a x509.AccessDescription for the given issuer."""
+        return x509.AccessDescription(
+            access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=issuer
+        )
 
     @typing.overload
     def cmd(self, *args: Any, stdout: io.BytesIO, stderr: io.BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]:
@@ -844,6 +842,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             value=x509.NameConstraints(permitted_subtrees=permitted, excluded_subtrees=excluded),
             critical=critical,
         )
+
+    def ocsp(self, ocsp: x509.GeneralName) -> x509.AccessDescription:
+        """Get a x509.AccessDescription for the given issuer."""
+        return x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=ocsp)
 
     def ocsp_no_check(self, critical: bool = False) -> x509.Extension[x509.OCSPNoCheck]:
         """Shortcut for getting a OCSPNoCheck extension."""
