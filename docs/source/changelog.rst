@@ -73,7 +73,7 @@ Deprecation notices
 * The ``acme`` extra will be removed in ``django-ca==1.23.0``.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
   removed in ``django-ca==1.23.0``.
-* The ``pre_issuer_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new
+* The ``pre_issue_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 
 .. _changelog-1.21.0:

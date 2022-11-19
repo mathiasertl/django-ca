@@ -26,9 +26,9 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 from . import ca_settings
 from .constants import OID_DEFAULT_CRITICAL
 from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
-from .extensions import KEY_TO_EXTENSION, KEY_TO_OID, OID_TO_KEY, Extension, parse_extension
+from .extensions import KEY_TO_EXTENSION, KEY_TO_OID, OID_TO_EXTENSION, OID_TO_KEY, Extension, parse_extension
 from .extensions.utils import serialize_extension
-from .signals import pre_issue_cert
+from .signals import pre_issue_cert, pre_sign_cert
 from .subject import Subject
 from .typehints import (
     Expires,
@@ -233,7 +233,7 @@ class Profile:
 
     @deprecate_type("subject", (dict, str, Subject), RemovedInDjangoCA124Warning)
     @deprecate_type("extensions", dict, RemovedInDjangoCA124Warning)
-    def create_cert(  # pylint: disable=too-many-arguments
+    def create_cert(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -362,6 +362,8 @@ class Profile:
         if not converted_subject.get("CN") and not cert_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
+        # Convert extensions to legacy classes so that we can send the deprecated signal
+        cert_extensions_old = [OID_TO_EXTENSION[ext.oid](ext) for ext in cert_extensions.values()]
         pre_issue_cert.send(
             sender=self.__class__,
             ca=ca,
@@ -369,7 +371,18 @@ class Profile:
             expires=expires,
             algorithm=algorithm,
             subject=cert_subject,
-            extensions=cert_extensions,
+            extensions=cert_extensions_old,
+            password=password,
+        )
+
+        pre_sign_cert.send(
+            sender=self.__class__,
+            ca=ca,
+            csr=csr,
+            expires=expires,
+            algorithm=algorithm,
+            subject=cert_subject.name,
+            extensions=extensions,
             password=password,
         )
 
