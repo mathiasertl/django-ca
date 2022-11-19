@@ -18,6 +18,7 @@
 import abc
 import binascii
 import collections.abc
+import warnings
 from typing import (
     Any,
     ClassVar,
@@ -40,6 +41,7 @@ from typing import (
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
 
+from ..deprecation import RemovedInDjangoCA124Warning
 from ..typehints import (
     AlternativeNameTypeVar,
     ExtensionType,
@@ -144,6 +146,14 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
             self.from_other(value)
         if not isinstance(self.critical, bool):
             raise ValueError(f"{self.critical}: Invalid critical value passed")
+
+    def deprecate(self):
+        cls_path = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        warnings.warn(
+            f"{cls_path} is deprecated and will be removed in django-ca 1.24.0.",
+            RemovedInDjangoCA124Warning,
+            stacklevel=2,
+        )
 
     def __eq__(self, other: Any) -> bool:
         return (

@@ -198,6 +198,8 @@ class AuthorityKeyIdentifier(
             Union["x509.Extension[x509.AuthorityKeyIdentifier]", ParsableExtension, "SubjectKeyIdentifier"]
         ] = None,
     ) -> None:
+        # self.deprecate()
+
         if isinstance(value, SubjectKeyIdentifier):
             self.critical = self.default_critical
             self.from_subject_key_identifier(value)
