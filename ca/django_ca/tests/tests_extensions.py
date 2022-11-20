@@ -1475,6 +1475,12 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         self.data1 = certs[self.name1]["precertificate_signed_certificate_timestamps_serialized"]
         self.data2 = certs[self.name2]["precertificate_signed_certificate_timestamps_serialized"]
 
+    def test_parse_extensino(self) -> None:
+        """Test parsing the extension (which fails)."""
+        message = rf"^{self.ext_class_key}: Cannot parse extensions of this type\.$"
+        with self.assertRaisesRegex(ValueError, message):
+            parse_extension(self.ext_class_key, None)
+
     def test_config(self) -> None:
         """Test basic configuration."""
         self.assertTrue(issubclass(self.ext_class, Extension))
@@ -1743,6 +1749,19 @@ class UnknownExtensionTestCase(TestCase):
 
         with self.assertRaises(NotImplementedError):
             ext.from_extension("foo")
+
+
+class SignedCertificateTimestampsTestCase(TestCaseMixin, TestCase):
+    """Test PrecertificateSignedCertificateTimestamps extension."""
+
+    ext_class_key = "signed_certificate_timestamps"
+    ext_class_name = "SignedCertificateTimestamps"
+
+    def test_parse_extensino(self) -> None:
+        """Test parsing the extension (which fails)."""
+        message = rf"^{self.ext_class_key}: Cannot parse extensions of this type\.$"
+        with self.assertRaisesRegex(ValueError, message):
+            parse_extension(self.ext_class_key, None)
 
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):

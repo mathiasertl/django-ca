@@ -334,6 +334,9 @@ def parse_extension(
         parsed = _parse_subject_key_identifier(value["value"])
     elif key == "tls_feature":
         parsed = _parse_tls_feature(value["value"])
+    elif key in ("precertificate_signed_certificate_timestamps", "signed_certificate_timestamps"):
+        # https://github.com/pyca/cryptography/issues/7824
+        raise ValueError(f"{key}: Cannot parse extensions of this type.")
     else:
         raise ValueError(f"{key}: Unknown extension key.")
 
