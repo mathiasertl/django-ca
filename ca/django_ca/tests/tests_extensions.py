@@ -13,11 +13,7 @@
 
 """Test cases for :py:mod:`django_ca.extensions`."""
 
-import doctest
-import os
-import sys
 import typing
-from unittest import TestLoader, TestSuite
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -28,7 +24,6 @@ from cryptography.x509.oid import (
     ObjectIdentifier,
 )
 
-from django.conf import settings
 from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
@@ -78,51 +73,6 @@ from .base.extensions import (
     TestValues,
 )
 from .base.mixins import TestCaseMixin
-
-
-def load_tests(  # pylint: disable=unused-argument
-    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
-) -> TestSuite:
-    """Load doctests."""
-
-    if sys.version_info >= (3, 7):
-        # Older python versions return a different str for classes
-        docs_path = os.path.join(settings.DOC_DIR, "python", "extensions.rst")
-        tests.addTests(
-            doctest.DocFileSuite(
-                docs_path,
-                module_relative=False,
-                globs={
-                    "KEY_TO_EXTENSION": KEY_TO_EXTENSION,
-                    "OID_TO_EXTENSION": OID_TO_EXTENSION,
-                },
-            )
-        )
-
-    tests.addTests(
-        doctest.DocTestSuite(
-            "django_ca.extensions",
-            extraglobs={
-                "ExtensionOID": ExtensionOID,
-            },
-        )
-    )
-    tests.addTests(
-        doctest.DocTestSuite(
-            "django_ca.extensions.base",
-            extraglobs={
-                "ExtendedKeyUsage": ExtendedKeyUsage,
-                "ExtendedKeyUsageOID": ExtendedKeyUsageOID,
-                "ExtensionOID": ExtensionOID,
-                "KeyUsage": KeyUsage,
-                "OCSPNoCheck": OCSPNoCheck,
-                "SubjectAlternativeName": SubjectAlternativeName,
-                "SubjectKeyIdentifier": SubjectKeyIdentifier,
-            },
-        )
-    )
-    tests.addTests(doctest.DocTestSuite("django_ca.extensions.utils"))
-    return tests
 
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformationAccess], TestCase):
@@ -239,7 +189,8 @@ OCSP:
 
     def test_none_value(self) -> None:
         """Test that we can use and pass None as values for GeneralNamesList values."""
-        ext = self.ext_class({"value": {"issuers": None, "ocsp": None}})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = self.ext_class({"value": {"issuers": None, "ocsp": None}})
         self.assertEqual(ext.issuers, [])
         self.assertEqual(ext.ocsp, [])
         self.assertEqual(ext.extension_type, x509.AuthorityInformationAccess(descriptions=[]))
@@ -248,9 +199,10 @@ OCSP:
         """Test issuers and ocsp properties"""
         expected_issuers = GeneralNameList([self.uri1])
         expected_ocsp = GeneralNameList([self.uri2])
-        expected = AuthorityInformationAccess({"value": {"issuers": [self.uri1], "ocsp": [self.uri2]}})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            expected = AuthorityInformationAccess({"value": {"issuers": [self.uri1], "ocsp": [self.uri2]}})
 
-        ext = AuthorityInformationAccess()
+            ext = AuthorityInformationAccess()
         ext.issuers = [self.uri1]
         ext.ocsp = [self.uri2]
         self.assertEqual(ext.issuers, expected_issuers)
@@ -259,7 +211,8 @@ OCSP:
         self.assertIsInstance(ext.ocsp, GeneralNameList)
         self.assertEqual(ext, expected)
 
-        ext = AuthorityInformationAccess()
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = AuthorityInformationAccess()
         ext.issuers = expected_issuers
         ext.ocsp = expected_ocsp
         self.assertEqual(ext.issuers, expected_issuers)
@@ -435,14 +388,15 @@ class BasicConstraintsTestCase(ExtensionTestMixin[BasicConstraints], TestCase):
 
     def test_invalid_pathlen(self) -> None:
         """Test passing an invalid pathlen."""
-        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
-            BasicConstraints({"value": {"ca": True, "pathlen": "foo"}})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foo"$'):
+                BasicConstraints({"value": {"ca": True, "pathlen": "foo"}})
 
-        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: ""$'):
-            BasicConstraints({"value": {"ca": True, "pathlen": ""}})
+            with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: ""$'):
+                BasicConstraints({"value": {"ca": True, "pathlen": ""}})
 
-        with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foobar"$'):
-            BasicConstraints({"value": {"ca": True, "pathlen": "foobar"}})
+            with self.assertRaisesRegex(ValueError, r'^Could not parse pathlen: "foobar"$'):
+                BasicConstraints({"value": {"ca": True, "pathlen": "foobar"}})
 
     def test_value(self) -> None:
         """Overwritten because extension has no value."""
@@ -851,11 +805,12 @@ class ExtendedKeyUsageTestCase(
 
     def test_unknown_values(self) -> None:
         """Test passing unknown values."""
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
-            ExtendedKeyUsage({"value": ["foo"]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
+                ExtendedKeyUsage({"value": ["foo"]})
 
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
-            ExtendedKeyUsage({"value": [True]})
+            with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
+                ExtendedKeyUsage({"value": [True]})
 
     def test_completeness(self) -> None:
         """Test that we support all ExtendedKeyUsageOIDs."""
@@ -1037,9 +992,11 @@ class IssuerAlternativeNameTestCase(
 
     def test_none_value(self) -> None:
         """Test that we can pass a None value for GeneralNameList items."""
-        empty = self.ext_class({"value": None})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            empty = self.ext_class({"value": None})
         self.assertEqual(empty.extension_type, self.ext_class_type([]))
-        self.assertEqual(empty, self.ext_class({"value": []}))
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            self.assertEqual(empty, self.ext_class({"value": []}))
         empty.insert(0, self.value1)
         self.assertEqual(empty.extension_type, self.et1)
 
@@ -1157,20 +1114,24 @@ class KeyUsageTestCase(OrderedSetExtensionTestMixin[KeyUsage], ExtensionTestMixi
 
     def test_auto_add(self) -> None:
         """Test that ``decipher_only`` and ``encipher_only`` automatically add ``key_agreement``."""
-        self.assertEqual(
-            KeyUsage({"value": ["decipher_only"]}), KeyUsage({"value": ["decipher_only", "key_agreement"]})
-        )
-        self.assertEqual(
-            KeyUsage({"value": ["encipher_only"]}), KeyUsage({"value": ["encipher_only", "key_agreement"]})
-        )
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            self.assertEqual(
+                KeyUsage({"value": ["decipher_only"]}),
+                KeyUsage({"value": ["decipher_only", "key_agreement"]}),
+            )
+            self.assertEqual(
+                KeyUsage({"value": ["encipher_only"]}),
+                KeyUsage({"value": ["encipher_only", "key_agreement"]}),
+            )
 
     def test_unknown_values(self) -> None:
         """Test passing unknown values."""
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
-            KeyUsage({"value": ["foo"]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
+                KeyUsage({"value": ["foo"]})
 
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
-            KeyUsage({"value": [True]})
+            with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
+                KeyUsage({"value": [True]})
 
 
 class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
@@ -1230,31 +1191,35 @@ class NameConstraintsTestCase(ExtensionTestMixin[NameConstraints], TestCase):
 
     def test_bool(self) -> None:
         """Test bool(ext)."""
-        self.assertFalse(bool(NameConstraints()))
-        self.assertTrue(bool(NameConstraints({"value": {"permitted": ["example.com"]}})))
-        self.assertTrue(bool(NameConstraints({"value": {"excluded": ["example.com"]}})))
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            self.assertFalse(bool(NameConstraints()))
+            self.assertTrue(bool(NameConstraints({"value": {"permitted": ["example.com"]}})))
+            self.assertTrue(bool(NameConstraints({"value": {"excluded": ["example.com"]}})))
 
     def test_setters(self) -> None:
         """Test items etters."""
-        expected = NameConstraints(
-            {
-                "value": {
-                    "permitted": ["example.com"],
-                    "excluded": ["example.net"],
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            expected = NameConstraints(
+                {
+                    "value": {
+                        "permitted": ["example.com"],
+                        "excluded": ["example.net"],
+                    }
                 }
-            }
-        )
-        ext = NameConstraints()
+            )
+            ext = NameConstraints()
         ext.permitted = ["example.com"]
         ext.excluded = ["example.net"]
         self.assertEqual(ext, expected)
 
-        ext = NameConstraints()
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = NameConstraints()
         ext.permitted = GeneralNameList(["example.com"])
         ext.excluded = GeneralNameList(["example.net"])
         self.assertEqual(ext, expected)
 
-        ext = NameConstraints()
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = NameConstraints()
         ext.permitted += ["example.com"]
         ext.excluded += ["example.net"]
         self.assertExtensionEqual(ext, expected)
@@ -1352,21 +1317,27 @@ class PolicyConstraintsTestCase(ExtensionTestMixin[PolicyConstraints], TestCase)
     def test_init_error(self) -> None:
         """Test constructor errors."""
         with self.assertRaisesRegex(ValueError, r"^abc: inhibit_policy_mapping must be int or None$"):
-            PolicyConstraints({"value": {"inhibit_policy_mapping": "abc"}})
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                PolicyConstraints({"value": {"inhibit_policy_mapping": "abc"}})
         with self.assertRaisesRegex(ValueError, r"^-1: inhibit_policy_mapping must be a positive int$"):
-            PolicyConstraints({"value": {"inhibit_policy_mapping": -1}})
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                PolicyConstraints({"value": {"inhibit_policy_mapping": -1}})
         with self.assertRaisesRegex(ValueError, r"^abc: require_explicit_policy must be int or None$"):
-            PolicyConstraints({"value": {"require_explicit_policy": "abc"}})
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                PolicyConstraints({"value": {"require_explicit_policy": "abc"}})
         with self.assertRaisesRegex(ValueError, r"^-1: require_explicit_policy must be a positive int$"):
-            PolicyConstraints({"value": {"require_explicit_policy": -1}})
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                PolicyConstraints({"value": {"require_explicit_policy": -1}})
 
     def test_properties(self) -> None:
         """Test properties"""
-        pconst = PolicyConstraints()
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            pconst = PolicyConstraints()
         self.assertIsNone(pconst.inhibit_policy_mapping)
         self.assertIsNone(pconst.require_explicit_policy)
 
-        pconst = PolicyConstraints({"value": {"inhibit_policy_mapping": 1, "require_explicit_policy": 2}})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            pconst = PolicyConstraints({"value": {"inhibit_policy_mapping": 1, "require_explicit_policy": 2}})
         self.assertEqual(pconst.inhibit_policy_mapping, 1)
         self.assertEqual(pconst.require_explicit_policy, 2)
 
@@ -1469,8 +1440,9 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         self.cgx2 = cert2.pub.loaded.extensions.get_extension_for_class(
             x509.PrecertificateSignedCertificateTimestamps
         )
-        self.ext1 = PrecertificateSignedCertificateTimestamps(self.cgx1)
-        self.ext2 = PrecertificateSignedCertificateTimestamps(self.cgx2)
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            self.ext1 = PrecertificateSignedCertificateTimestamps(self.cgx1)
+            self.ext2 = PrecertificateSignedCertificateTimestamps(self.cgx2)
         self.exts = [self.ext1, self.ext2]
         self.data1 = certs[self.name1]["precertificate_signed_certificate_timestamps_serialized"]
         self.data2 = certs[self.name2]["precertificate_signed_certificate_timestamps_serialized"]
@@ -1860,16 +1832,20 @@ class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):
         common_name = "example.com"
         dirname = "dirname:/CN=example.net"
 
-        san = SubjectAlternativeName({"value": [common_name]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            san = SubjectAlternativeName({"value": [common_name]})
         self.assertEqual(san.get_common_name(), common_name)
 
-        san = SubjectAlternativeName({"value": [common_name, dirname]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            san = SubjectAlternativeName({"value": [common_name, dirname]})
         self.assertEqual(san.get_common_name(), common_name)
 
-        san = SubjectAlternativeName({"value": [dirname, common_name]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            san = SubjectAlternativeName({"value": [dirname, common_name]})
         self.assertEqual(san.get_common_name(), "example.com")
 
-        san = SubjectAlternativeName({"value": [dirname]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            san = SubjectAlternativeName({"value": [dirname]})
         self.assertIsNone(san.get_common_name())
 
 
@@ -2022,11 +1998,12 @@ class TLSFeatureTestCase(OrderedSetExtensionTestMixin[TLSFeature], ExtensionTest
 
     def test_unknown_values(self) -> None:
         """Test passing unknown values."""
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
-            TLSFeature({"value": ["foo"]})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            with self.assertRaisesRegex(ValueError, r"^Unknown value: foo$"):
+                TLSFeature({"value": ["foo"]})
 
-        with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
-            TLSFeature({"value": [True]})
+            with self.assertRaisesRegex(ValueError, r"^Unknown value: True$"):
+                TLSFeature({"value": [True]})
 
 
 class CertificateExtensionTestCase(TestCaseMixin, TestCase):

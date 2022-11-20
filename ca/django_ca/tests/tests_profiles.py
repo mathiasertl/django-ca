@@ -28,16 +28,9 @@ from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
+from ..constants import EXTENSION_KEYS, OID_DEFAULT_CRITICAL
 from ..deprecation import RemovedInDjangoCA124Warning
-from ..extensions import (
-    AuthorityInformationAccess,
-    BasicConstraints,
-    CRLDistributionPoints,
-    IssuerAlternativeName,
-    KeyUsage,
-    OCSPNoCheck,
-    SubjectKeyIdentifier,
-)
+from ..extensions import KeyUsage, OCSPNoCheck, SubjectKeyIdentifier
 from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, get_profile, profile, profiles
 from ..signals import pre_issue_cert
@@ -174,7 +167,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             description=desc,
             subject=[("CN", self.hostname)],
             extensions={
-                KeyUsage.key: {"value": kusage},
+                EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": kusage},
             },
         )
         self.assertEqual(
@@ -184,13 +177,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 "subject": [("CN", self.hostname)],
                 "description": desc,
                 "extensions": {
-                    BasicConstraints.key: {
+                    EXTENSION_KEYS[ExtensionOID.BASIC_CONSTRAINTS]: {
                         "value": {"ca": False},
-                        "critical": BasicConstraints.default_critical,
+                        "critical": OID_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
                     },
-                    KeyUsage.key: {
+                    EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {
                         "value": kusage,
-                        "critical": KeyUsage.default_critical,
+                        "critical": OID_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
                     },
                 },
             },
@@ -690,7 +683,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_ocsp_url=False,
                 add_issuer_url=False,
                 add_issuer_alternative_name=False,
-                extensions={OCSPNoCheck.key: OCSPNoCheck()},
+                extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: OCSPNoCheck()},
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, self.subject)
@@ -712,7 +705,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         with self.mockSignal(pre_issue_cert) as pre, self.assertDictExtensionWarning():
             cert = self.create_cert(
                 prof,
@@ -723,7 +716,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_ocsp_url=False,
                 add_issuer_url=False,
                 add_issuer_alternative_name=False,
-                extensions={OCSPNoCheck.key: None},
+                extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: None},
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, self.subject)
@@ -744,7 +737,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         with self.mockSignal(pre_issue_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -783,7 +776,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """TEst what happens when the SAN has nothing usable as CN."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", subject=[], extensions={OCSPNoCheck.key: {}})
+        prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = self.subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with self.mockSignal(pre_issue_cert) as pre:
@@ -811,7 +804,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca.issuer_alt_name = "https://ian.example.com"
         ca.save()
         csr = certs["child-cert"]["csr"]["parsed"]
-        with self.silence_warnings():  # this whole test case becomes in valid once dict support is removed
+        with self.assertRemovedExtensionWarning("SubjectKeyIdentifier"):
             ski = SubjectKeyIdentifier({"value": b"333333"})
         prof = Profile("example", subject=[])
 
@@ -826,7 +819,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 subject=self.subject,
                 add_ocsp_url=False,
                 add_issuer_url=True,
-                extensions={AuthorityInformationAccess.key: ski},
+                extensions={EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: ski},
             )
         self.assertEqual(pre.call_count, 0)
 
@@ -840,7 +833,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 csr,
                 subject=self.subject,
                 add_crl_url=True,
-                extensions={CRLDistributionPoints.key: ski},
+                extensions={EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]: ski},
             )
         self.assertEqual(pre.call_count, 0)
 
@@ -854,7 +847,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 csr,
                 subject=self.subject,
                 add_ocsp_url=True,
-                extensions={AuthorityInformationAccess.key: ski},
+                extensions={EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: ski},
             )
         self.assertEqual(pre.call_count, 0)
 
@@ -869,7 +862,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 subject=self.subject,
                 add_ocsp_url=False,
                 add_issuer_url=True,
-                extensions={AuthorityInformationAccess.key: ski},
+                extensions={EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: ski},
             )
         self.assertEqual(pre.call_count, 0)
 
@@ -885,7 +878,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_ocsp_url=False,
                 add_issuer_url=False,
                 add_issuer_alternative_name=True,
-                extensions={IssuerAlternativeName.key: ski},
+                extensions={EXTENSION_KEYS[ExtensionOID.ISSUER_ALTERNATIVE_NAME]: ski},
             )
         self.assertEqual(pre.call_count, 0)
 
@@ -893,7 +886,12 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         with self.mockSignal(
             pre_issue_cert
         ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, extensions={IssuerAlternativeName.key: self.ocsp_no_check()})
+            self.create_cert(
+                prof,
+                ca,
+                csr,
+                extensions={EXTENSION_KEYS[ExtensionOID.ISSUER_ALTERNATIVE_NAME]: self.ocsp_no_check()},
+            )
         self.assertEqual(pre.call_count, 0)
 
     def test_wrong_extension_type(self) -> None:
@@ -936,13 +934,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Pass an old subject to create_cert, to be removed in 1.24."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
-        ku = KeyUsage({"value": ["keyAgreement"], "critical": True})  # pylint: disable=invalid-name
+        with self.assertRemovedExtensionWarning("KeyUsage"):
+            ku = KeyUsage({"value": ["keyAgreement"], "critical": True})  # pylint: disable=invalid-name
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
 
         with self.assertRemovedIn124Warning(r"^Passing KeyUsage is deprecated\.$"):
             prof = Profile(self.id(), extensions={"key_usage": ku})  # type: ignore[dict-item]  # what we test
             cert = self.create_cert(prof, ca, csr, subject=subject)
-        self.assertEqual(cert.key_usage, ku)
+        self.assertEqual(cert.x509_extensions[ExtensionOID.KEY_USAGE], ku.as_extension())
 
         # pass an old extension to the create_cert() function
         prof2 = Profile(self.id())
@@ -950,7 +949,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             r"^Passing a django_ca\.extensions\.Extension instance deprecated\.$"
         ):
             cert = self.create_cert(prof2, ca, csr, subject=subject, extensions=[ku])
-        self.assertEqual(cert.key_usage, ku)
+        self.assertEqual(cert.x509_extensions[ExtensionOID.KEY_USAGE], ku.as_extension())
 
 
 class GetProfileTestCase(TestCase):

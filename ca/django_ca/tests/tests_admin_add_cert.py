@@ -38,7 +38,6 @@ from webtest import Submit
 
 from .. import ca_settings
 from ..constants import OID_DEFAULT_CRITICAL
-from ..extensions import BasicConstraints, ExtendedKeyUsage, KeyUsage, SubjectAlternativeName
 from ..extensions.utils import ExtendedKeyUsageOID, serialize_extension
 from ..fields import CertificateSigningRequestField
 from ..models import Certificate, CertificateAuthority
@@ -486,6 +485,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         "serverAuth",
                     ],
                     "extended_key_usage_1": False,
+                    "crl_distribution_points_0": ca.crl_url,
+                    "crl_distribution_points_1": "",
+                    "crl_distribution_points_2": "",
+                    "crl_distribution_points_3": [],
+                    "crl_distribution_points_4": False,
+                    "authority_information_access_0": ca.issuer_url,
+                    "authority_information_access_1": ca.ocsp_url,
+                    "authority_information_access_2": False,
                     "password": certs["pwd"]["password"].decode("utf-8"),
                 },
             )
@@ -497,12 +504,20 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{cname}"]}))
-        self.assertEqual(cert.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": False}}))
+
         self.assertEqual(
-            cert.key_usage, KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement"]})
+            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(dns(cname)),
         )
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth", "serverAuth"]}))
+        self.maxDiff = None
+        self.assertExtensions(
+            cert,
+            [
+                self.subject_alternative_name(dns(cname)),
+                self.key_usage(digital_signature=True, key_agreement=True),
+                self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+            ],
+        )
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr.pem.strip(), csr)
 

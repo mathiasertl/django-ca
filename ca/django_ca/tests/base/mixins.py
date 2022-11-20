@@ -94,6 +94,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     re_false_password = r"^Could not decrypt private key - bad password\?$"
 
     def setUp(self) -> None:
+        # Add custom equality functions
+        self.addTypeEqualityFunc(x509.ExtendedKeyUsage, self.assertExtendedKeyUsageEqual)
+        self.addTypeEqualityFunc(x509.Extension, self.assertCryptographyExtensionEqual)
+        self.addTypeEqualityFunc(x509.KeyUsage, self.assertKeyUsageEqual)
+        self.addTypeEqualityFunc(x509.TLSFeature, self.assertTLSFeatureEqual)
+
         super().setUp()
         cache.clear()
 
@@ -284,6 +290,63 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
 
+    def assertCryptographyExtensionEqual(
+        self,
+        first: x509.Extension[x509.ExtensionType],
+        second: x509.Extension[x509.ExtensionType],
+        msg: Optional[str] = None,
+    ) -> None:
+        # NOTE: Cryptography in name comes from overriding class in AbstractExtensionTestMixin
+        #       remove once old wrapper classes are removed
+        self.assertEqual(first.oid, second.oid, msg=msg)
+        self.assertEqual(first.critical, second.critical, msg=msg)
+        self.assertEqual(first.value, second.value, msg=msg)
+
+    def assertExtendedKeyUsageEqual(
+        self, first: x509.ExtendedKeyUsage, second: x509.ExtendedKeyUsage, msg: Optional[str] = None
+    ) -> None:
+        self.assertEqual(set(first), set(second), msg=msg)
+
+    def assertKeyUsageEqual(
+        self, first: x509.KeyUsage, second: x509.KeyUsage, msg: Optional[str] = None
+    ) -> None:
+        """Type equality function for x509.KeyUsage."""
+        if first == second:
+            return
+
+        diffs = []
+        for usage in [
+            "content_commitment",
+            "crl_sign",
+            "data_encipherment",
+            "decipher_only",
+            "digital_signature",
+            "encipher_only",
+            "key_agreement",
+            "key_cert_sign",
+            "key_encipherment",
+        ]:
+            try:
+                first_val = getattr(first, usage)
+            except ValueError:
+                first_val = False
+            try:
+                second_val = getattr(second, usage)
+            except ValueError:
+                second_val = False
+
+            if first_val != second_val:
+                diffs.append(f"  * {usage}: {first_val} -> {second_val}")
+
+        if msg is None:
+            msg = "KeyUsage extensions differ:"
+        raise self.failureException(msg + "\n" + "\n".join(diffs))
+
+    def assertTLSFeatureEqual(
+        self, first: x509.TLSFeature, second: x509.TLSFeature, msg: Optional[str] = None
+    ) -> None:
+        self.assertEqual(set(first), set(second), msg=msg)
+
     @contextmanager
     def assertCreateCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
@@ -330,7 +393,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
             pubkey = cert.pub.loaded.public_key()
-            actual = cert.x509_extensions  #
+            actual = cert.x509_extensions
 
             if cert.parent is None:  # root CA
                 signer = cert
@@ -423,6 +486,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)
         ):
             self.assertTrue(key.key_size > 0)
+
+    @contextmanager
+    def assertRemovedExtensionWarning(
+        self, name: str
+    ) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+        """Temporary manager for removed extension wrapper classes."""
+        msg = rf"^django_ca\.extensions\.extensions\.{name} is deprecated and will be removed in django-ca 1\.24\.0\.$"  # NOQA
+        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
+            yield
 
     @contextmanager
     def assertRemovedIn123Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name

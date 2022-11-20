@@ -2,6 +2,10 @@
 ``django_ca.extensions`` - X509 extensions
 ##########################################
 
+.. foo::
+
+   this should still be done
+
 The extension classes provided by **django-ca** act as convenience classes for handling extensions. They
 abstract away the complex API of cryptography and have some advanced data handling functions. As a
 constructor, they always take either a ``dict`` or a cryptography extension::

@@ -21,7 +21,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from cryptography import x509
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase
@@ -29,7 +29,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import ExtendedKeyUsage, IssuerAlternativeName, KeyUsage, SubjectAlternativeName, TLSFeature
+from ..extensions import ExtendedKeyUsage, IssuerAlternativeName, KeyUsage, TLSFeature
 from ..models import Certificate, CertificateAuthority
 from ..signals import post_issue_cert, pre_issue_cert
 from ..utils import ca_storage, x509_name
@@ -64,12 +64,17 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
+        actual = cert.x509_extensions
         self.assertEqual(
-            cert.key_usage,
-            KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}),
+            actual[ExtensionOID.KEY_USAGE],
+            self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
         )
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
-        self.assertEqual(cert.subject_alternative_name, SubjectAlternativeName({"value": [self.hostname]}))
+        self.assertEqual(
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
+        )
+        self.assertEqual(
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
+        )
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
@@ -104,15 +109,19 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             self.assertEqual(cert.pub.loaded.subject, self.subject)
             self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
+            actual = cert.x509_extensions
+
             self.assertEqual(
-                cert.key_usage,
-                KeyUsage(
-                    {"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}
-                ),
+                actual[ExtensionOID.KEY_USAGE],
+                self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
             )
-            self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
             self.assertEqual(
-                cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
+                actual[ExtensionOID.EXTENDED_KEY_USAGE],
+                self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
+            )
+            self.assertEqual(
+                actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+                self.subject_alternative_name(dns(self.hostname)),
             )
             self.assertIssuer(ca, cert)
             self.assertAuthorityKeyIdentifier(ca, cert)
@@ -135,13 +144,16 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, cert.pub.pem)
+        actual = cert.x509_extensions
         self.assertEqual(
-            cert.key_usage,
-            KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}),
+            actual[ExtensionOID.KEY_USAGE],
+            self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
         )
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
         self.assertEqual(
-            cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
+        )
+        self.assertEqual(
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir()
@@ -248,7 +260,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertEqual(
-            cert.subject_alternative_name, SubjectAlternativeName({"value": ["DNS:example.com"]})
+            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(dns("example.com")),
         )
 
     @override_tmpcadir()
@@ -261,7 +274,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 ca=self.ca,
                 subject=self.subject,
                 cn_in_san=False,
-                alt=SubjectAlternativeName(),
                 stdin=stdin,
             )
         self.assertEqual(pre.call_count, 1)
@@ -274,7 +286,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
-        self.assertIsNone(cert.subject_alternative_name)
+        self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, cert.x509_extensions)
 
     @override_tmpcadir(
         CA_DEFAULT_SUBJECT=(
@@ -426,8 +438,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
+        actual = cert.x509_extensions
         self.assertEqual(
-            cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -441,23 +454,18 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         # Giving no password raises a CommandError
         stdin = self.csr_pem.encode()
+        san = self.subject_alternative_name(dns("example.com")).value
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
         ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd("sign_cert", ca=ca, alt=SubjectAlternativeName({"value": ["example.com"]}), stdin=stdin)
+            self.cmd("sign_cert", ca=ca, alt=san, stdin=stdin)
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
 
         # Pass a password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd(
-                "sign_cert",
-                ca=ca,
-                alt=x509.SubjectAlternativeName([dns("example.com")]),
-                stdin=stdin,
-                password=password,
-            )
+            self.cmd("sign_cert", ca=ca, alt=san, stdin=stdin, password=password)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
@@ -466,13 +474,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         with self.assertCommandError(self.re_false_password), self.mockSignal(
             pre_issue_cert
         ) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd(
-                "sign_cert",
-                ca=ca,
-                alt=x509.SubjectAlternativeName([dns("example.com")]),
-                stdin=stdin,
-                password=b"wrong",
-            )
+            self.cmd("sign_cert", ca=ca, alt=san, stdin=stdin, password=b"wrong")
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -517,13 +519,16 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, cert.pub.pem)
+        actual = cert.x509_extensions
         self.assertEqual(
-            cert.key_usage,
-            KeyUsage({"critical": True, "value": ["digitalSignature", "keyAgreement", "keyEncipherment"]}),
+            actual[ExtensionOID.KEY_USAGE],
+            self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
         )
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["serverAuth"]}))
         self.assertEqual(
-            cert.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{self.hostname}"]})
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
+        )
+        self.assertEqual(
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir()

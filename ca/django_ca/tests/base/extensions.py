@@ -18,6 +18,7 @@ import functools
 import json
 import operator
 import typing
+from contextlib import contextmanager
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID, ObjectIdentifier
@@ -452,6 +453,9 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
     if typing.TYPE_CHECKING:
         # pylint: disable=missing-function-docstring,unused-argument
+
+        ext_class_name: str
+
         def ext(
             self, value: typing.Any = None, critical: typing.Optional[bool] = None
         ) -> IterableExtensionTypeVar:
@@ -460,6 +464,12 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
         def assertExtensionEqual(  # pylint: disable=invalid-name
             self, first: IterableExtensionTypeVar, second: IterableExtensionTypeVar
         ) -> None:
+            ...
+
+        @contextmanager
+        def assertRemovedExtensionWarning(
+            self, name: str
+        ) -> typing.Iterator[None]:  # pylint: disable=invalid-name
             ...
 
     def assertIsCopy(
@@ -535,7 +545,8 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
             set_init = init
 
         container = self.container_type(set_init)
-        ext = self.ext_class({"value": init})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = self.ext_class({"value": init})
 
         if update is True:
             orig_id, orig_value_id = id(ext), id(ext.value)
@@ -564,7 +575,8 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
             # Note: Also checked when exception is raised, to make sure that it hasn't changed
             self.assertSameInstance(orig_id, orig_value_id, ext, expected_value=container)
         else:
-            ext_updated = func(ext, value)
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                ext_updated = func(ext, value)
             self.assertEqual(ext.__class__, ext_updated.__class__)
             s_updated = func(container, set_value)  # apply to set
             self.assertIsCopy(ext, ext_updated, s_updated)
@@ -579,7 +591,8 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
     def test_in(self) -> None:
         """Test the ``in`` operator."""
         for config in self.test_values.values():
-            ext = self.ext_class({"value": config["expected"]})
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                ext = self.ext_class({"value": config["expected"]})
             for values in config["values"]:
                 for value in values:
                     self.assertIn(value, ext)
@@ -587,13 +600,16 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
     def test_len(self) -> None:
         """Test len(ext)."""
         for values in self.test_values.values():
-            self.assertEqual(len(self.ext_class({"value": values["expected"]})), len(values["expected"]))
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                ext = self.ext_class({"value": values["expected"]})
+            self.assertEqual(len(ext), len(values["expected"]))
 
     def test_not_in(self) -> None:
         """Test the ``not in`` operator."""
         for config in self.test_values.values():
             for values in config["values"]:
-                ext = self.ext_class({"value": set()})
+                with self.assertRemovedExtensionWarning(self.ext_class_name):
+                    ext = self.ext_class({"value": set()})
 
                 for value in values:
                     self.assertNotIn(value, ext)
@@ -816,7 +832,8 @@ class ListExtensionTestMixin(
 
     def test_setitem_typerror(self) -> None:
         """Test setting slices without an iterable."""
-        ext = self.ext_class({"value": []})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = self.ext_class({"value": []})
         with self.assertRaisesRegex(TypeError, r"^Can only assign int/item or slice/iterable$"):
             ext[0:1] = 3  # type: ignore[call-overload] # exactly what we're testing here
 
@@ -897,99 +914,106 @@ class OrderedSetExtensionTestMixin(
         self, oper: typing.Callable[[typing.Any, typing.Any], typing.Any]
     ) -> None:
         """Assert that a extension relation is equal to that of set()."""
-        self.assertEqual(oper(set(), set()), oper(self.ext_class({"value": set()}), set()))
-        self.assertEqual(
-            oper(set(), set()), oper(self.ext_class({"value": set()}), self.ext_class({"value": set()}))
-        )
-
-        for config in self.test_values.values():
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            self.assertEqual(oper(set(), set()), oper(self.ext_class({"value": set()}), set()))
             self.assertEqual(
-                oper(config["expected"], config["expected"]),
-                oper(self.ext_class({"value": set(config["expected"])}), set(config["expected"])),
-            )
-            self.assertEqual(
-                oper(config["expected"], config["expected"]),
-                oper(
-                    self.ext_class({"value": set(config["expected"])}),
-                    self.ext_class({"value": set(config["expected"])}),
-                ),
+                oper(set(), set()), oper(self.ext_class({"value": set()}), self.ext_class({"value": set()}))
             )
 
-            for second_config in self.test_values.values():
-                intersection_expected = config["expected"] & second_config["expected"]
+            for config in self.test_values.values():
                 self.assertEqual(
-                    oper(config["expected"], intersection_expected),
-                    oper(self.ext_class({"value": set(config["expected"])}), intersection_expected),
+                    oper(config["expected"], config["expected"]),
+                    oper(self.ext_class({"value": set(config["expected"])}), set(config["expected"])),
                 )
                 self.assertEqual(
-                    oper(config["expected"], intersection_expected),
+                    oper(config["expected"], config["expected"]),
                     oper(
                         self.ext_class({"value": set(config["expected"])}),
-                        self.ext_class({"value": intersection_expected}),
-                    ),
-                )
-                self.assertEqual(
-                    oper(config["expected"], intersection_expected),
-                    oper(
-                        self.ext_class({"value": config["expected"]}),
-                        self.ext_class({"value": set(intersection_expected)}),
+                        self.ext_class({"value": set(config["expected"])}),
                     ),
                 )
 
-                union_expected = config["expected"] | second_config["expected"]
-                self.assertEqual(
-                    oper(config["expected"], set(union_expected)),
-                    oper(self.ext_class({"value": set(config["expected"])}), union_expected),
-                )
-                self.assertEqual(
-                    oper(config["expected"], set(union_expected)),
-                    oper(
-                        self.ext_class({"value": set(config["expected"])}),
-                        self.ext_class({"value": set(union_expected)}),
-                    ),
-                )
-                self.assertEqual(
-                    oper(config["expected"], set(union_expected)),
-                    oper(self.ext_class({"value": config["expected"]}), set(union_expected)),
-                )
+                for second_config in self.test_values.values():
+                    intersection_expected = config["expected"] & second_config["expected"]
+                    self.assertEqual(
+                        oper(config["expected"], intersection_expected),
+                        oper(self.ext_class({"value": set(config["expected"])}), intersection_expected),
+                    )
+                    self.assertEqual(
+                        oper(config["expected"], intersection_expected),
+                        oper(
+                            self.ext_class({"value": set(config["expected"])}),
+                            self.ext_class({"value": intersection_expected}),
+                        ),
+                    )
+                    self.assertEqual(
+                        oper(config["expected"], intersection_expected),
+                        oper(
+                            self.ext_class({"value": config["expected"]}),
+                            self.ext_class({"value": set(intersection_expected)}),
+                        ),
+                    )
 
-                symmetric_diff_expected = config["expected"] ^ second_config["expected"]
-                self.assertEqual(
-                    oper(config["expected"], set(symmetric_diff_expected)),
-                    oper(self.ext_class({"value": set(config["expected"])}), set(symmetric_diff_expected)),
-                )
-                self.assertEqual(
-                    oper(config["expected"], set(symmetric_diff_expected)),
-                    oper(
-                        self.ext_class({"value": set(config["expected"])}),
-                        self.ext_class({"value": set(symmetric_diff_expected)}),
-                    ),
-                )
-                self.assertEqual(
-                    oper(set(symmetric_diff_expected), config["expected"]),
-                    oper(
-                        self.ext_class({"value": set(symmetric_diff_expected)}),
-                        self.ext_class({"value": set(config["expected"])}),
-                    ),
-                )
+                    union_expected = config["expected"] | second_config["expected"]
+                    self.assertEqual(
+                        oper(config["expected"], set(union_expected)),
+                        oper(self.ext_class({"value": set(config["expected"])}), union_expected),
+                    )
+                    self.assertEqual(
+                        oper(config["expected"], set(union_expected)),
+                        oper(
+                            self.ext_class({"value": set(config["expected"])}),
+                            self.ext_class({"value": set(union_expected)}),
+                        ),
+                    )
+                    self.assertEqual(
+                        oper(config["expected"], set(union_expected)),
+                        oper(self.ext_class({"value": config["expected"]}), set(union_expected)),
+                    )
+
+                    symmetric_diff_expected = config["expected"] ^ second_config["expected"]
+                    self.assertEqual(
+                        oper(config["expected"], set(symmetric_diff_expected)),
+                        oper(
+                            self.ext_class({"value": set(config["expected"])}), set(symmetric_diff_expected)
+                        ),
+                    )
+                    self.assertEqual(
+                        oper(config["expected"], set(symmetric_diff_expected)),
+                        oper(
+                            self.ext_class({"value": set(config["expected"])}),
+                            self.ext_class({"value": set(symmetric_diff_expected)}),
+                        ),
+                    )
+                    self.assertEqual(
+                        oper(set(symmetric_diff_expected), config["expected"]),
+                        oper(
+                            self.ext_class({"value": set(symmetric_diff_expected)}),
+                            self.ext_class({"value": set(config["expected"])}),
+                        ),
+                    )
 
     def test_add(self) -> None:
         """Test ext.add()."""
         for config in self.test_values.values():
             for values in config["values"]:
-                ext = self.ext_class({"value": set()})
+                with self.assertRemovedExtensionWarning(self.ext_class_name):
+                    ext = self.ext_class({"value": set()})
+
                 for value in values:
                     ext.add(value)
                     self.assertIn(value, ext)
                     # Note: we cannot assert the length, because values might include alias values
 
-                self.assertEqual(ext, self.ext_class({"value": config["expected"]}))
+                with self.assertRemovedExtensionWarning(self.ext_class_name):
+                    self.assertEqual(ext, self.ext_class({"value": config["expected"]}))
 
     def test_copy(self) -> None:
         """Test ext.copy()."""
         for config in self.test_values.values():
-            ext = self.ext_class({"value": config["expected"]})
-            ext_copy = ext.copy()
+            with self.assertRemovedExtensionWarning(self.ext_class_name):
+                ext = self.ext_class({"value": config["expected"]})
+                ext_copy = ext.copy()
             self.assertIsCopy(ext, ext_copy, config["expected"])
 
     def test_difference(self) -> None:
@@ -1020,8 +1044,9 @@ class OrderedSetExtensionTestMixin(
         """Test  ext.discard()."""
         for config in self.test_values.values():
             for values in config["values"]:
-                ext = self.ext_class({"value": config["expected"]})
-                ext_empty = self.ext_class({"value": set()})
+                with self.assertRemovedExtensionWarning(self.ext_class_name):
+                    ext = self.ext_class({"value": config["expected"]})
+                    ext_empty = self.ext_class({"value": set()})
 
                 for i, value in enumerate(values, start=1):
                     self.assertIn(value, ext)
@@ -1090,7 +1115,8 @@ class OrderedSetExtensionTestMixin(
         """Test ext.pop()."""
         for config in self.test_values.values():
             for _values in config["values"]:  # loop so that we pop all values from ext
-                ext = self.ext_class({"value": set(config["expected"])})
+                with self.assertRemovedExtensionWarning(self.ext_class_name):
+                    ext = self.ext_class({"value": set(config["expected"])})
                 self.assertEqual(len(ext), len(config["expected"]))
 
                 while len(ext) > 0:
@@ -1101,7 +1127,8 @@ class OrderedSetExtensionTestMixin(
                     self.assertNotIn(value, ext)
                     self.assertEqual(len(ext) + 1, orig_length)  # length shrunk by one
 
-        ext = self.ext_class({"value": set()})
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = self.ext_class({"value": set()})
         with self.assertRaisesRegex(KeyError, "^'pop from an empty set'$"):
             ext.pop()
 
@@ -1109,7 +1136,8 @@ class OrderedSetExtensionTestMixin(
         """Test ext.remove()."""
         for config in self.test_values.values():
             for values in config["values"]:
-                ext = self.ext_class({"value": set(config["expected"])})
+                with self.assertRemovedExtensionWarning(self.ext_class_name):
+                    ext = self.ext_class({"value": set(config["expected"])})
 
                 for i, value in enumerate(values, start=1):
                     self.assertIsNone(ext.remove(value))
@@ -1299,7 +1327,8 @@ class CRLDistributionPointsTestCaseBase(
 
     def test_none_value(self) -> None:
         """Test that we can pass a None value for GeneralNameList items."""
-        ext = self.ext_class()
+        with self.assertRemovedExtensionWarning(self.ext_class_name):
+            ext = self.ext_class()
         self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[]))
 
         ext.append(DistributionPoint({"full_name": None}))

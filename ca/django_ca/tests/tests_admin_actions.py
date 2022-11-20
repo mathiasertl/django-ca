@@ -18,6 +18,8 @@ from contextlib import contextmanager
 from http import HTTPStatus
 from unittest import mock
 
+from cryptography.x509.oid import ExtensionOID
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.dispatch.dispatcher import Signal
@@ -369,10 +371,12 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertEqual(obj.csr, resigned.csr)
         self.assertEqual(obj.profile, resigned.profile)
         self.assertEqual(obj.cn, resigned.cn)
-        self.assertEqual(obj.extended_key_usage, resigned.extended_key_usage)
-        self.assertEqual(obj.key_usage, resigned.key_usage)
-        self.assertEqual(obj.subject_alternative_name, resigned.subject_alternative_name)
-        self.assertEqual(obj.tls_feature, resigned.tls_feature)
+
+        for oid in [ExtensionOID.EXTENDED_KEY_USAGE, ExtensionOID.TLS_FEATURE]:
+            self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
+
+        for oid in [ExtensionOID.KEY_USAGE, ExtensionOID.SUBJECT_ALTERNATIVE_NAME]:
+            self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
 
         # Some properties are obviously *not* equal
         self.assertNotEqual(obj.pub, resigned.pub)

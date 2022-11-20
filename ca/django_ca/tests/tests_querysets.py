@@ -20,7 +20,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.db import models
 from django.test import TestCase, TransactionTestCase
@@ -28,7 +28,6 @@ from django.test import TestCase, TransactionTestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import BasicConstraints, KeyUsage
 from ..models import (
     AcmeAccount,
     AcmeAuthorization,
@@ -102,14 +101,18 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         # verify X509 properties
         self.assertEqual(
-            ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True, "pathlen": 0}})
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True, path_length=0)
         )
-        self.assertEqual(ca.key_usage, KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}))
-        self.assertIsNone(ca.subject_alternative_name, None)
-
-        self.assertIsNone(ca.extended_key_usage)
-        self.assertIsNone(ca.tls_feature)
-        self.assertIsNone(ca.issuer_alternative_name)
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, key_cert_sign=True)
+        )
+        for oid in [
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+            ExtensionOID.EXTENDED_KEY_USAGE,
+            ExtensionOID.TLS_FEATURE,
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+        ]:
+            self.assertNotIn(oid, ca.x509_extensions)
         self.assertFalse(ca.is_openssh_ca)
 
     @override_tmpcadir()
@@ -119,20 +122,20 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.init(
             name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
         )
-        self.assertEqual(ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True}}))
+        self.assertEqual(ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True))
 
         ca = CertificateAuthority.objects.init(
             pathlen=0, name="2", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
         )
         self.assertEqual(
-            ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True, "pathlen": 0}})
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True, path_length=0)
         )
 
         ca = CertificateAuthority.objects.init(
             pathlen=2, name="3", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
         )
         self.assertEqual(
-            ca.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": True, "pathlen": 2}})
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True, path_length=2)
         )
 
     @override_tmpcadir()
@@ -195,12 +198,18 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.subject, subject)
 
         # verify X509 properties
-        self.assertEqual(ca.key_usage, KeyUsage({"critical": True, "value": ["cRLSign", "keyCertSign"]}))
-        self.assertIsNone(ca.subject_alternative_name, None)
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, key_cert_sign=True)
+        )
 
-        self.assertIsNone(ca.extended_key_usage)
-        self.assertIsNone(ca.tls_feature)
-        self.assertIsNone(ca.issuer_alternative_name)
+        for oid in [
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+            ExtensionOID.EXTENDED_KEY_USAGE,
+            ExtensionOID.TLS_FEATURE,
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+        ]:
+            self.assertNotIn(oid, ca.x509_extensions)
+
         self.assertTrue(ca.is_openssh_ca)
 
     @override_tmpcadir()

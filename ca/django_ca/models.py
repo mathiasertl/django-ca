@@ -1748,6 +1748,13 @@ class AcmeAuthorization(DjangoCAModel):
         return self.order.expires  # so far there is no reason to have a different value here
 
     @property
+    def general_name(self) -> x509.GeneralName:
+        """Get the :py:class:`~cg:cryptography.x509.GeneralName` instance for this instance."""
+        if self.type == AcmeAuthorization.TYPE_DNS:
+            return x509.DNSName(self.value)
+        raise ValueError(f"{self.type}: Unsupported type.")  # pragma: no cover
+
+    @property
     def identifier(self) -> "messages.Identifier":
         """Get ACME identifier for this object.
 

@@ -17,7 +17,7 @@ import typing
 import unittest
 
 from cryptography import x509
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
 
@@ -25,17 +25,12 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA123Warning
-from ..extensions import (
-    AuthorityInformationAccess,
-    CRLDistributionPoints,
-    IssuerAlternativeName,
-    NameConstraints,
-)
+from ..extensions import IssuerAlternativeName, NameConstraints
 from ..models import Certificate, CertificateAuthority
 from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from ..typehints import ParsableExtension
-from .base import certs, dns, override_settings, override_tmpcadir, timestamps
+from .base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -115,22 +110,17 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             child = CertificateAuthority.objects.init(name, subject, parent=ca)
         self.assertProperties(child, name, subject, parent=ca)
+
+        expected_issuers = [uri(f"http://{host}{self.reverse('issuer', serial=ca.serial)}")]
+        expected_ocsp = [uri(f"http://{host}{self.reverse('ocsp-ca-post', serial=ca.serial)}")]
+
         self.assertEqual(
-            child.authority_information_access,
-            AuthorityInformationAccess(
-                {
-                    "value": {
-                        "ocsp": [f"URI:http://{host}{self.reverse('ocsp-ca-post', serial=ca.serial)}"],
-                        "issuers": [f"URI:http://{host}{self.reverse('issuer', serial=ca.serial)}"],
-                    }
-                }
-            ),
+            child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
         )
         self.assertEqual(
-            child.crl_distribution_points,
-            CRLDistributionPoints(
-                {"value": [{"full_name": [f"URI:http://{host}{self.reverse('ca-crl', serial=ca.serial)}"]}]}
-            ),
+            child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri(f"http://{host}{self.reverse('ca-crl', serial=ca.serial)}")]),
         )
 
         name = "grandchild"
@@ -138,25 +128,17 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             grandchild = CertificateAuthority.objects.init(name, subject, parent=child)
         self.assertProperties(grandchild, name, subject, parent=child)
+
+        expected_ocsp = [uri(f"http://{host}{self.reverse('ocsp-ca-post', serial=child.serial)}")]
+        expected_issuers = [uri(f"http://{host}{self.reverse('issuer', serial=child.serial)}")]
         self.assertEqual(
-            grandchild.authority_information_access,
-            AuthorityInformationAccess(
-                {
-                    "value": {
-                        "ocsp": [f"URI:http://{host}{self.reverse('ocsp-ca-post', serial=child.serial)}"],
-                        "issuers": [f"URI:http://{host}{self.reverse('issuer', serial=child.serial)}"],
-                    }
-                }
-            ),
+            grandchild.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
         )
         self.assertEqual(
-            grandchild.crl_distribution_points,
-            CRLDistributionPoints(
-                {
-                    "value": [
-                        {"full_name": [f"URI:http://{host}{self.reverse('ca-crl', serial=child.serial)}"]}
-                    ]
-                }
+            grandchild.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points(
+                [uri(f"http://{host}{self.reverse('ca-crl', serial=child.serial)}")]
             ),
         )
 
@@ -201,7 +183,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_deprecated_extension(self) -> None:
         """Test passing a django_ca.extension.Extension as extra_extensions."""
         name = "deprecated-extension"
-        name_constraints = NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}})
+        with self.assertRemovedExtensionWarning("NameConstraints"):
+            name_constraints = NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}})
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
 
         warning = (
@@ -212,14 +195,14 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 name, subject, extra_extensions=[name_constraints]  # type: ignore[list-item]
             )
 
-        self.assertEqual(ca.name_constraints, name_constraints)
+        self.assertEqual(ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS], name_constraints.as_extension())
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_special_cases(self) -> None:
         """Test a few special cases not covered otherwise."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
         name_constraints: ParsableExtension = {"critical": True, "value": {"permitted": ["DNS:.com"]}}
-        with self.assertCreateCASignals(), self.assertRemovedArgumentIn123Warning("name_constraints"):
+        with self.assertCreateCASignals(), self.silence_warnings():
             ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
         self.assertEqual(ca.subject, subject)
         self.assertExtensions(
@@ -232,7 +215,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         )
 
         # also pass a NameConstraints extension directly
-        with self.assertCreateCASignals(), self.assertRemovedArgumentIn123Warning("name_constraints"):
+        with self.assertCreateCASignals(), self.silence_warnings():
             ca = CertificateAuthority.objects.init(
                 "special2", subject, name_constraints=NameConstraints(name_constraints)
             )
@@ -272,7 +255,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca3.issuer_alt_name, "URI:https://example.com")
 
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ian-as-ext.example.com")])
-        ian = IssuerAlternativeName({"value": ["https://example.net"]})
+        with self.assertRemovedExtensionWarning("IssuerAlternativeName"):
+            ian = IssuerAlternativeName({"value": ["https://example.net"]})
         with self.assertWarnsRegex(
             RemovedInDjangoCA123Warning,
             r"^Passing IssuerAlternativeName for issuer_alt_name is deprecated and will be removed in django ca 1\.23\.$",  # NOQA: E501

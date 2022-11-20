@@ -72,31 +72,8 @@ from .utils import DistributionPoint, extension_as_text
 class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=abc.ABCMeta):
     """Convenience class to handle X509 Extensions.
 
-    The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting::
-
-        >>> KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-        <KeyUsage: ['key_agreement', 'key_encipherment'], critical=True>
-        >>> KeyUsage({'critical': False, 'value': ['key_agreement', 'key_encipherment']})
-        <KeyUsage: ['key_agreement', 'key_encipherment'], critical=False>
-
-    ... but can also use a subclass of :py:class:`~cg:cryptography.x509.ExtensionType`
-    from ``cryptography``::
-
-        >>> from cryptography import x509
-        >>> cg_ext = x509.extensions.Extension(
-        ...    oid=ExtensionOID.EXTENDED_KEY_USAGE,
-        ...    critical=False,
-        ...    value=x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH])
-        ... )
-        >>> ExtendedKeyUsage(cg_ext)
-        <ExtendedKeyUsage: ['serverAuth'], critical=False>
-        >>> ExtendedKeyUsage({'value': ['serverAuth']})
-        <ExtendedKeyUsage: ['serverAuth'], critical=False>
-
-
-    .. versionchanged:: 1.18.0
-
-       This class is now an abstract base class.
+    The value is a ``dict`` as used by the :ref:`CA_PROFILES <settings-ca-profiles>` setting, but can also use
+    a subclass of :py:class:`~cg:cryptography.x509.ExtensionType` from ``cryptography``.
 
     Parameters
     ----------
@@ -131,6 +108,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
     def __init__(
         self, value: Optional[Union["x509.Extension[ExtensionTypeTypeVar]", ParsableExtension]] = None
     ) -> None:
+        self.deprecate()
         if value is None:
             value = {}
 
@@ -152,7 +130,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         warnings.warn(
             f"{cls_path} is deprecated and will be removed in django-ca 1.24.0.",
             RemovedInDjangoCA124Warning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
     def __eq__(self, other: Any) -> bool:
@@ -196,15 +174,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         Implementing classes are expected to implement this function."""
 
     def for_builder(self) -> Tuple[ExtensionTypeTypeVar, bool]:
-        """Return a tuple suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`.
-
-        Example::
-
-            >>> ext = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-            >>> builder = x509.CertificateBuilder()
-            >>> builder.add_extension(*ext.for_builder())  # doctest: +ELLIPSIS
-            <cryptography.x509.base.CertificateBuilder object at ...>
-        """
+        """Return a tuple suitable for a :py:class:`~cg:cryptography.x509.CertificateBuilder`."""
         return self.extension_type, self.critical
 
     @abc.abstractmethod
@@ -239,14 +209,7 @@ class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], m
         Implementing classes are expected to implement this function."""
 
     def serialize(self) -> SerializedExtension:
-        """Serialize this extension to a string in a way that it can be passed to a constructor again.
-
-        For example, this should always be True::
-
-            >>> ku = KeyUsage({'value': ['keyAgreement', 'keyEncipherment']})
-            >>> ku == KeyUsage(ku.serialize())
-            True
-        """
+        """Serialize this extension to a string in a way that it can be passed to a constructor again."""
 
         return {
             "critical": self.critical,
@@ -311,16 +274,7 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
     extension itself carries meaning.
 
     Extensions using this base class will ignore any ``"value"`` key in their dict, only the ``"critical"``
-    key is relevant:
-
-        >>> OCSPNoCheck()
-        <OCSPNoCheck: critical=False>
-        >>> OCSPNoCheck({'critical': True})
-        <OCSPNoCheck: critical=True>
-        >>> OCSPNoCheck({'critical': True})
-        <OCSPNoCheck: critical=True>
-        >>> OCSPNoCheck(x509.extensions.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=True, value=None))
-        <OCSPNoCheck: critical=True>
+    key is relevant.
     """
 
     ext_class: Type[ExtensionTypeTypeVar]
@@ -364,16 +318,7 @@ class IterableExtension(
 ):
     """Base class for iterable extensions.
 
-    Extensions of this class can be used just like any other iterable, e.g.:
-
-        >>> e = KeyUsage({'value': ['cRLSign'], 'critical': True})
-        >>> 'cRLSign' in e
-        True
-        >>> len(e)
-        1
-        >>> for val in e:
-        ...     print(val)
-        crl_sign
+    Extensions of this class can be used just like any other iterable.
     """
 
     value: Collection[IterableItem]
@@ -508,21 +453,9 @@ class OrderedSetExtension(
 ):
     """Base class for extensions that contain a set of values.
 
-    .. versionchanged:: 1.18.0
-
-       This class is now an abstract base class.
-
     For reproducibility, any serialization will always sort the values contained in this extension.
 
-    Extensions derived from this class can be used like a normal set, for example:
-
-        >>> e = KeyUsage({'value': {'cRLSign', }})
-        >>> e.add('keyAgreement')
-        >>> e
-        <KeyUsage: ['crl_sign', 'key_agreement'], critical=True>
-        >>> e -= {'keyAgreement', }
-        >>> e
-        <KeyUsage: ['crl_sign'], critical=True>
+    Extensions derived from this class can be used like a normal set.
     """
 
     # pylint: disable=abstract-method; class is itself a base class
@@ -681,14 +614,7 @@ class AlternativeNameExtension(
 ):
     """Base class for extensions that contain a list of general names.
 
-    This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances::
-
-        >>> san = SubjectAlternativeName({'value': [x509.DNSName('example.com'), 'example.net']})
-        >>> san
-        <SubjectAlternativeName: ['DNS:example.com', 'DNS:example.net'], critical=False>
-        >>> 'example.com' in san, 'DNS:example.com' in san, x509.DNSName('example.com') in san
-        (True, True, True)
-
+    This class also allows you to pass :py:class:`~cg:cryptography.x509.GeneralName` instances.
     """
 
     # pylint: disable=abstract-method; class is itself abstract

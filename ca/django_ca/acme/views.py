@@ -49,7 +49,6 @@ from django.views.generic.base import View
 
 from .. import ca_settings
 from ..constants import REASON_CODES
-from ..extensions import SubjectAlternativeName
 from ..models import (
     AcmeAccount,
     AcmeAuthorization,
@@ -770,11 +769,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
 
         # Get list of general names from the authorizations
-        names_from_order = set(
-            SubjectAlternativeName(
-                {"value": [auth.subject_alternative_name for auth in authorizations]}
-            ).extension_type
-        )
+        names_from_order = set(auth.general_name for auth in authorizations)
 
         # Perform sanity checks on the CSRs subject.
         # NOTE: certbot does *not* set any subject at all
