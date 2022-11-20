@@ -325,19 +325,12 @@ for cert_name, cert_data in certs.items():
         if cert_data.get(ext_key):
             cert_data[f"{ext_key}_serialized"] = cert_data[ext_key]
 
-            # Slowly transition to cryptography extensions
-            if ext_key in (
-                "authority_key_identifier",
-                "extended_key_usage",
-                "inhibit_any_policy",
-                "key_usage",
-                "precert_poison",
-                "subject_key_identifier",
-                "tls_feature",
+            # extensions are not parsable, see also: https://github.com/pyca/cryptography/issues/7824
+            if ext_key not in (
+                "precertificate_signed_certificate_timestamps",
+                "signed_certificate_timestamps",
             ):
                 cert_data[ext_key] = parse_extension(ext_key, cert_data[ext_key])
-            else:
-                cert_data[ext_key] = ext_cls(cert_data[ext_key])
 
 # Calculate some fixed timestamps that we reuse throughout the tests
 timestamps = {

@@ -1479,7 +1479,7 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         """Test parsing the extension (which fails)."""
         message = rf"^{self.ext_class_key}: Cannot parse extensions of this type\.$"
         with self.assertRaisesRegex(ValueError, message):
-            parse_extension(self.ext_class_key, None)
+            parse_extension(self.ext_class_key, {})
 
     def test_config(self) -> None:
         """Test basic configuration."""
@@ -1761,7 +1761,7 @@ class SignedCertificateTimestampsTestCase(TestCaseMixin, TestCase):
         """Test parsing the extension (which fails)."""
         message = rf"^{self.ext_class_key}: Cannot parse extensions of this type\.$"
         with self.assertRaisesRegex(ValueError, message):
-            parse_extension(self.ext_class_key, None)
+            parse_extension(self.ext_class_key, {})
 
 
 class SubjectAlternativeNameTestCase(IssuerAlternativeNameTestCase):

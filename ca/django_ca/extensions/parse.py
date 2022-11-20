@@ -290,7 +290,7 @@ def _parse_tls_feature(value: typing.Iterable[typing.Union[x509.TLSFeatureType, 
     return x509.TLSFeature(features=features)
 
 
-def parse_extension(
+def parse_extension(  # pylint: disable=too-many-branches  # there's just many extensions
     key: str, value: typing.Union[x509.Extension[x509.ExtensionType], x509.ExtensionType, ParsableExtension]
 ) -> x509.Extension[x509.ExtensionType]:
     """Parse a serialized extension into a cryptography object."""

@@ -871,7 +871,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             self.assertEqual(ca.subject_alternative_name, certs[ca.name].get("subject_alternative_name"))
 
         for name, cert in self.certs.items():
-            self.assertEqual(cert.subject_alternative_name, certs[name].get("subject_alternative_name"))
+            self.assertEqual(
+                cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
+                certs[name].get("subject_alternative_name"),
+            )
 
         # Create a cert with some weirder SANs to test that too
         weird_cert = self.create_cert(

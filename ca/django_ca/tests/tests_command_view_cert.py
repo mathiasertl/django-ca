@@ -33,10 +33,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -50,7 +47,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -64,10 +61,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -81,7 +75,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -95,10 +89,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -112,7 +103,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -126,10 +117,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -143,7 +131,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -157,10 +145,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -174,7 +159,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -188,10 +173,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -205,7 +187,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -219,10 +201,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -236,7 +215,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -250,10 +229,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -267,7 +243,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -281,10 +257,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -310,8 +283,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -347,10 +319,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -362,30 +331,22 @@ CRL Distribution Points{crl_distribution_points_critical}:
 Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
 Freshest CRL{freshest_crl_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{freshest_crl_0.full_name[0].value}
+{freshest_crl_text}
 Inhibit anyPolicy{inhibit_any_policy_critical}:
     1
 Issuer Alternative Name{issuer_alternative_name_critical}:
-    * {issuer_alternative_name[0]}
+{issuer_alternative_name_text}
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Name Constraints{name_constraints_critical}:
-    Permitted:
-      * DNS:{name_constraints.permitted[0].value}
-    Excluded:
-      * DNS:{name_constraints.excluded[0].value}
+{name_constraints_text}
 OCSP No Check{ocsp_no_check_critical}:
     Yes
 Policy Constraints{policy_constraints_critical}:
-    * InhibitPolicyMapping: {policy_constraints.inhibit_policy_mapping}
-    * RequireExplicitPolicy: {policy_constraints.require_explicit_policy}
+{policy_constraints_text}
 {precert_poison}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
-    * {subject_alternative_name_1}
-    * {subject_alternative_name_2}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 TLS Feature{tls_feature_critical}:
@@ -401,43 +362,25 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
     CA:FALSE
 CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl_distribution_points[0].full_name[0].value}
-    * DistributionPoint:
-      * Relative Name: /CN=rdn.ca.example.com
-      * CRL Issuer:
-        * URI:{crl_distribution_points[1].crl_issuer[0].value}
-        * URI:{crl_distribution_points[1].crl_issuer[1].value}
-      * Reasons: ca_compromise, key_compromise
+{crl_distribution_points_text}
 Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
 Issuer Alternative Name{issuer_alternative_name_critical}:
-    * {issuer_alternative_name[0]}
-    * {issuer_alternative_name[1]}
+{issuer_alternative_name_text}
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Name Constraints{name_constraints_critical}:
-    Permitted:
-      * DNS:{name_constraints.permitted[0].value}
+{name_constraints_text}
 OCSP No Check{ocsp_no_check_critical}:
     Yes
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name[0]}
-    * {subject_alternative_name[1]}
-    * {subject_alternative_name[2]}
-    * {subject_alternative_name[3]}
-    * {subject_alternative_name[4]}
-    * {subject_alternative_name[5]}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 TLS Feature{tls_feature_critical}:
@@ -502,7 +445,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
 Subject Alternative Name:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -527,10 +470,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: {status}
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints (critical):
@@ -544,7 +484,7 @@ Extended Key Usage{extended_key_usage_critical}:
 Key Usage{key_usage_critical}:
 {key_usage_text}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -592,7 +532,7 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name[0]}
+{subject_alternative_name_text}
 Watchers:
 Digest:
     sha256: {sha256}
@@ -695,79 +635,24 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
-    {basic_constraints_text}
+{basic_constraints_text}
 CRL Distribution Points:
     * DistributionPoint:
       * Full Name:
         * URI:http://crl.godaddy.com/gdig2s1-1015.crl
 Certificate Policies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0[policy_identifier]}
-      Policy Qualifiers:
-      * http://certificates.godaddy.com/repository/
-    * Policy Identifier: {certificate_policies_1[policy_identifier]}
-      No Policy Qualifiers
+{certificate_policies_text}
 Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
 Key Usage{key_usage_critical}:
 {key_usage_text}
 {sct}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
-    * {subject_alternative_name_1}
-    * {subject_alternative_name_2}
-    * {subject_alternative_name_3}
-    * {subject_alternative_name_4}
-    * {subject_alternative_name_5}
-    * {subject_alternative_name_6}
-    * {subject_alternative_name_7}
-    * {subject_alternative_name_8}
-    * {subject_alternative_name_9}
-    * {subject_alternative_name_10}
-    * {subject_alternative_name_11}
-    * {subject_alternative_name_12}
-    * {subject_alternative_name_13}
-    * {subject_alternative_name_14}
-    * {subject_alternative_name_15}
-    * {subject_alternative_name_16}
-    * {subject_alternative_name_17}
-    * {subject_alternative_name_18}
-    * {subject_alternative_name_19}
-    * {subject_alternative_name_20}
-    * {subject_alternative_name_21}
-    * {subject_alternative_name_22}
-    * {subject_alternative_name_23}
-    * {subject_alternative_name_24}
-    * {subject_alternative_name_25}
-    * {subject_alternative_name_26}
-    * {subject_alternative_name_27}
-    * {subject_alternative_name_28}
-    * {subject_alternative_name_29}
-    * {subject_alternative_name_30}
-    * {subject_alternative_name_31}
-    * {subject_alternative_name_32}
-    * {subject_alternative_name_33}
-    * {subject_alternative_name_34}
-    * {subject_alternative_name_35}
-    * {subject_alternative_name_36}
-    * {subject_alternative_name_37}
-    * {subject_alternative_name_38}
-    * {subject_alternative_name_39}
-    * {subject_alternative_name_40}
-    * {subject_alternative_name_41}
-    * {subject_alternative_name_42}
-    * {subject_alternative_name_43}
-    * {subject_alternative_name_44}
-    * {subject_alternative_name_45}
-    * {subject_alternative_name_46}
-    * {subject_alternative_name_47}
-    * {subject_alternative_name_48}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -808,36 +693,20 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
-    {basic_constraints_text}
+{basic_constraints_text}
 Certificate Policies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0[policy_identifier]}
-      No Policy Qualifiers
-    * Policy Identifier: {certificate_policies_1[policy_identifier]}
-      Policy Qualifiers:
-      * {certificate_policies_1[policy_qualifiers][0]}
+{certificate_policies_text}
 Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
 Key Usage{key_usage_critical}:
 {key_usage_text}
 {sct}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
-    * {subject_alternative_name_1}
-    * {subject_alternative_name_2}
-    * {subject_alternative_name_3}
-    * {subject_alternative_name_4}
-    * {subject_alternative_name_5}
-    * {subject_alternative_name_6}
-    * {subject_alternative_name_7}
-    * {subject_alternative_name_8}
-    * {subject_alternative_name_9}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:
@@ -860,115 +729,24 @@ Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid
 Authority Information Access{authority_information_access_critical}:
-    CA Issuers:
-      * URI:{authority_information_access.issuers[0].value}
-    OCSP:
-      * URI:{authority_information_access.ocsp[0].value}
+{authority_information_access_text}
 Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
 Basic Constraints{basic_constraints_critical}:
-    {basic_constraints_text}
+{basic_constraints_text}
 CRL Distribution Points:
     * DistributionPoint:
       * Full Name:
         * URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
 Certificate Policies{certificate_policies_critical}:
-    * Policy Identifier: {certificate_policies_0[policy_identifier]}
-      Policy Qualifiers:
-      * https://secure.comodo.com/CPS
-    * Policy Identifier: {certificate_policies_1[policy_identifier]}
-      No Policy Qualifiers
+{certificate_policies_text}
 Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
 Key Usage{key_usage_critical}:
 {key_usage_text}
 {precert_poison}
 Subject Alternative Name{subject_alternative_name_critical}:
-    * {subject_alternative_name_0}
-    * {subject_alternative_name_1}
-    * {subject_alternative_name_2}
-    * {subject_alternative_name_3}
-    * {subject_alternative_name_4}
-    * {subject_alternative_name_5}
-    * {subject_alternative_name_6}
-    * {subject_alternative_name_7}
-    * {subject_alternative_name_8}
-    * {subject_alternative_name_9}
-    * {subject_alternative_name_10}
-    * {subject_alternative_name_11}
-    * {subject_alternative_name_12}
-    * {subject_alternative_name_13}
-    * {subject_alternative_name_14}
-    * {subject_alternative_name_15}
-    * {subject_alternative_name_16}
-    * {subject_alternative_name_17}
-    * {subject_alternative_name_18}
-    * {subject_alternative_name_19}
-    * {subject_alternative_name_20}
-    * {subject_alternative_name_21}
-    * {subject_alternative_name_22}
-    * {subject_alternative_name_23}
-    * {subject_alternative_name_24}
-    * {subject_alternative_name_25}
-    * {subject_alternative_name_26}
-    * {subject_alternative_name_27}
-    * {subject_alternative_name_28}
-    * {subject_alternative_name_29}
-    * {subject_alternative_name_30}
-    * {subject_alternative_name_31}
-    * {subject_alternative_name_32}
-    * {subject_alternative_name_33}
-    * {subject_alternative_name_34}
-    * {subject_alternative_name_35}
-    * {subject_alternative_name_36}
-    * {subject_alternative_name_37}
-    * {subject_alternative_name_38}
-    * {subject_alternative_name_39}
-    * {subject_alternative_name_40}
-    * {subject_alternative_name_41}
-    * {subject_alternative_name_42}
-    * {subject_alternative_name_43}
-    * {subject_alternative_name_44}
-    * {subject_alternative_name_45}
-    * {subject_alternative_name_46}
-    * {subject_alternative_name_47}
-    * {subject_alternative_name_48}
-    * {subject_alternative_name_49}
-    * {subject_alternative_name_50}
-    * {subject_alternative_name_51}
-    * {subject_alternative_name_52}
-    * {subject_alternative_name_53}
-    * {subject_alternative_name_54}
-    * {subject_alternative_name_55}
-    * {subject_alternative_name_56}
-    * {subject_alternative_name_57}
-    * {subject_alternative_name_58}
-    * {subject_alternative_name_59}
-    * {subject_alternative_name_60}
-    * {subject_alternative_name_61}
-    * {subject_alternative_name_62}
-    * {subject_alternative_name_63}
-    * {subject_alternative_name_64}
-    * {subject_alternative_name_65}
-    * {subject_alternative_name_66}
-    * {subject_alternative_name_67}
-    * {subject_alternative_name_68}
-    * {subject_alternative_name_69}
-    * {subject_alternative_name_70}
-    * {subject_alternative_name_71}
-    * {subject_alternative_name_72}
-    * {subject_alternative_name_73}
-    * {subject_alternative_name_74}
-    * {subject_alternative_name_75}
-    * {subject_alternative_name_76}
-    * {subject_alternative_name_77}
-    * {subject_alternative_name_78}
-    * {subject_alternative_name_79}
-    * {subject_alternative_name_80}
-    * {subject_alternative_name_81}
-    * {subject_alternative_name_82}
-    * {subject_alternative_name_83}
-    * {subject_alternative_name_84}
+{subject_alternative_name_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Watchers:

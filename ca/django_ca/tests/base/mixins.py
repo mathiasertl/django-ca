@@ -56,8 +56,6 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
-from ...extensions import Extension
-from ...extensions.base import CRLDistributionPointsBase, IterableExtension
 from ...extensions.utils import extension_as_text
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import (
@@ -909,25 +907,21 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with freeze_time(timestamp) as frozen:
             yield frozen
 
-    def get_cert_context(self, name: str) -> Dict[str, Any]:  # pylint: disable=too-many-branches
+    def get_cert_context(self, name: str) -> Dict[str, Any]:
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: Dict[str, Any] = {}
         for key, value in certs[name].items():
             # Handle cryptography extensions
             if key == "precert_poison":
                 ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
-                continue
-            if isinstance(value, x509.Extension):
+            elif isinstance(value, x509.Extension):
                 if value.critical:
                     ctx[f"{key}_critical"] = " (critical)"
                 else:
                     ctx[f"{key}_critical"] = ""
 
                 ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "    ")
-                continue
-
-            # Block for old extensions
-            if key == "precertificate_signed_certificate_timestamps_serialized":
+            elif key == "precertificate_signed_certificate_timestamps_serialized":
                 ctx["sct_critical"] = " (critical)" if value["critical"] else ""
                 ctx["sct_values"] = []
                 for val in value["value"]:
@@ -937,22 +931,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             elif key == "pathlen":
                 ctx[key] = value
                 ctx[f"{key}_text"] = "unlimited" if value is None else value
-            elif isinstance(value, Extension):
-                ctx[key] = value
-
-                if isinstance(value, CRLDistributionPointsBase):
-                    for i, ext_value in enumerate(value.value):
-                        ctx[f"{key}_{i}"] = ext_value
-                elif isinstance(value, IterableExtension):
-                    for i, ext_value in enumerate(value.serialize_value()):
-                        ctx[f"{key}_{i}"] = ext_value
-                else:
-                    ctx[f"{key}_text"] = value.as_text()
-
-                if value.critical:
-                    ctx[f"{key}_critical"] = " (critical)"
-                else:
-                    ctx[f"{key}_critical"] = ""
             else:
                 ctx[key] = value
 

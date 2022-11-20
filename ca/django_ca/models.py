@@ -578,7 +578,7 @@ class X509CertMixin(DjangoCAModel):
         return CRLDistributionPoints(ext)
 
     @cached_property
-    def certificate_policies(self) -> Optional[CertificatePolicies]:
+    def certificate_policies(self) -> Optional[CertificatePolicies]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.CertificatePolicies` extension or ``None`` if not present."""
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.CertificatePolicies)
