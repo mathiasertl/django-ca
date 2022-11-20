@@ -40,8 +40,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -80,8 +79,7 @@ CRL Distribution Points{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -112,8 +110,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -148,8 +145,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -177,8 +173,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -205,8 +200,7 @@ X509 v3 certificate extensions for CA:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -235,9 +229,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -264,8 +256,7 @@ X509 v3 certificate extensions for CA:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -292,8 +283,7 @@ X509 v3 certificate extensions for CA:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -326,8 +316,7 @@ CRL Distribution Points{crl_distribution_points_critical}:
       * Full Name:
         * URI:{crl_distribution_points[0].full_name[0].value}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -370,12 +359,9 @@ Certificate Policies{certificate_policies_critical}:
     * Policy Identifier: {certificate_policies_1[policy_identifier]}
       No Policy Qualifiers
 Extended Key Usage{extended_key_usage_critical}:
-    * {extended_key_usage_0}
-    * {extended_key_usage_1}
+{extended_key_usage_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -415,8 +401,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://www.geotrust.com/resources/cps
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -485,8 +470,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * https://secure.comodo.com/CPS
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -526,12 +510,9 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * https://www.digicert.com/CPS
 Extended Key Usage{extended_key_usage_critical}:
-    * {extended_key_usage_0}
-    * {extended_key_usage_1}
+{extended_key_usage_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -558,8 +539,7 @@ X509 v3 certificate extensions for CA:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -599,8 +579,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * https://www.globalsign.com/repository/
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -640,8 +619,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * https://certs.godaddy.com/repository/
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -668,8 +646,7 @@ X509 v3 certificate extensions for CA:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -709,12 +686,9 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * https://pki.goog/repository/
 Extended Key Usage{extended_key_usage_critical}:
-    * {extended_key_usage_0}
-    * {extended_key_usage_1}
+{extended_key_usage_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -758,9 +732,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://cps.root-x1.letsencrypt.org
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Name Constraints{name_constraints_critical}:
     Excluded:
       * DNS:{name_constraints.excluded[0].value}
@@ -807,9 +779,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://cps.root-x1.letsencrypt.org
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -850,8 +820,7 @@ Certificate Policies{certificate_policies_critical}:
           * Organization: Start Commercial (StartCom) Ltd.
           * Notice Numbers: [1]
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 Unknown extension (2.16.840.1.113730.1.1):
@@ -897,8 +866,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://www.startssl.com/policy.pdf
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -940,11 +908,9 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * http://www.startssl.com/policy
 Extended Key Usage{extended_key_usage_critical}:
-    * {extended_key_usage_0}
-    * {extended_key_usage_1}
+{extended_key_usage_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -992,15 +958,9 @@ Certificate Policies{certificate_policies_critical}:
             accordance with IdenTrust's TrustID Certificate Policy found at
             https://secure.identrust.com/certificates/policy/ts/index.html
 Extended Key Usage{extended_key_usage_critical}:
-    * {extended_key_usage_0}
-    * {extended_key_usage_1}
-    * {extended_key_usage_2}
-    * {extended_key_usage_3}
-    * {extended_key_usage_4}
+{extended_key_usage_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -1029,9 +989,7 @@ Authority Key Identifier{authority_key_identifier_critical}:
 Basic Constraints{basic_constraints_critical}:
     {basic_constraints_text}
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -1074,9 +1032,7 @@ Certificate Policies{certificate_policies_critical}:
       Policy Qualifiers:
       * https://www.digicert.com/CPS
 Key Usage{key_usage_critical}:
-    * {key_usage_0}
-    * {key_usage_1}
-    * {key_usage_2}
+{key_usage_text}
 Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -1134,7 +1090,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertMultiLineEqual(stdout, expected["root-acme-disabled"].format(**data))
 
     @override_tmpcadir()
-    def test_no_implemented(self) -> None:
+    def test_no_no_private_key(self) -> None:
         """Test viewing when we have no private key."""
 
         def side_effect(cls: typing.Any) -> None:

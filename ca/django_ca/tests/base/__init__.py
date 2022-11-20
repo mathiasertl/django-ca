@@ -328,15 +328,18 @@ for cert_name, cert_data in certs.items():
             # Slowly transition to cryptography extensions
             if ext_key in (
                 "authority_key_identifier",
-                "precert_poison",
+                "extended_key_usage",
                 "inhibit_any_policy",
+                "key_usage",
+                "precert_poison",
                 "subject_key_identifier",
+                "tls_feature",
             ):
                 cert_data[ext_key] = parse_extension(ext_key, cert_data[ext_key])
             else:
                 cert_data[ext_key] = ext_cls(cert_data[ext_key])
 
-# Calculate some fixted timestamps that we reuse throughout the tests
+# Calculate some fixed timestamps that we reuse throughout the tests
 timestamps = {
     "base": datetime.strptime(_fixture_data["timestamp"], "%Y-%m-%d %H:%M:%S"),
 }

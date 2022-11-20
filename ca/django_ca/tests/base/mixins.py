@@ -56,9 +56,9 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
-from ...extensions import Extension, KeyUsage, TLSFeature
+from ...extensions import Extension
 from ...extensions.base import CRLDistributionPointsBase, IterableExtension
-from ...extensions.utils import KEY_USAGE_NAMES, extension_as_text
+from ...extensions.utils import extension_as_text
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import (
     post_create_ca,
@@ -943,15 +943,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 if isinstance(value, CRLDistributionPointsBase):
                     for i, ext_value in enumerate(value.value):
                         ctx[f"{key}_{i}"] = ext_value
-                elif isinstance(value, TLSFeature):
-                    features = [TLSFeature.CRYPTOGRAPHY_MAPPING[val] for val in value]
-                    feature_names = [TLSFeature.SERIALIZER_MAPPING[feature] for feature in features]
-                    for i, val in enumerate(sorted(feature_names)):
-                        ctx[f"{key}_{i}"] = val
-                elif isinstance(value, KeyUsage):
-                    values = [KEY_USAGE_NAMES[ext_value] for ext_value in value.serialize_value()]
-                    for i, ku_value in enumerate(sorted(values)):
-                        ctx[f"{key}_{i}"] = ku_value
                 elif isinstance(value, IterableExtension):
                     for i, ext_value in enumerate(value.serialize_value()):
                         ctx[f"{key}_{i}"] = ext_value
