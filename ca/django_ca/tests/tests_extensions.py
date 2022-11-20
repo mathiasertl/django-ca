@@ -2661,7 +2661,7 @@ DistributionPoint:
         """Test output of CAs"""
 
         for name, ca in self.cas.items():
-            for oid, ext in ca._x509_extensions.items():  # pylint: disable=protected-access
+            for oid, ext in ca.x509_extensions.items():
                 admin_html = self.admin_html[name][oid]
                 admin_html = f"<div class='django-ca-extension-value'>{admin_html}</div>"
                 actual = extension_as_admin_html(ext)
@@ -2671,7 +2671,7 @@ DistributionPoint:
         """Test output of CAs"""
 
         for name, cert in self.certs.items():
-            for oid, ext in cert._x509_extensions.items():  # pylint: disable=protected-access
+            for oid, ext in cert.x509_extensions.items():
                 self.assertIn(oid, self.admin_html[name], name)
                 admin_html = self.admin_html[name][oid]
                 admin_html = f"<div class='django-ca-extension-value'>{admin_html}</div>"

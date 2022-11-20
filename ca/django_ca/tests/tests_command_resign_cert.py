@@ -72,16 +72,14 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         # assert extensions that should be equal
         aki = new_ca.get_authority_key_identifier_extension()
-        # pylint: disable-next=protected-access
-        self.assertEqual(aki, new._x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER])
+        self.assertEqual(aki, new.x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER])
         for oid in [
             ExtensionOID.EXTENDED_KEY_USAGE,
             ExtensionOID.KEY_USAGE,
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
             ExtensionOID.TLS_FEATURE,
         ]:
-            # pylint: disable-next=protected-access
-            self.assertEqual(old._x509_extensions.get(oid), new._x509_extensions.get(oid))
+            self.assertEqual(old.x509_extensions.get(oid), new.x509_extensions.get(oid))
 
         # Test extensions that don't come from the old cert but from the signing CA
         self.assertEqual(new.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": False}}))

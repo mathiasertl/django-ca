@@ -176,14 +176,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> None:
         """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
         actual = typing.cast(
-            x509.AuthorityKeyIdentifier,
-            # pylint: disable-next=protected-access
-            cert._x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value,
+            x509.AuthorityKeyIdentifier, cert.x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
         )
         expected = typing.cast(
-            x509.SubjectKeyIdentifier,
-            # pylint: disable-next=protected-access
-            issuer._x509_extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value,
+            x509.SubjectKeyIdentifier, issuer.x509_extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
         )
         self.assertEqual(actual.key_identifier, expected.key_identifier)
 
@@ -332,11 +328,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         if isinstance(cert, Certificate):
             pubkey = cert.pub.loaded.public_key()
-            actual = cert._x509_extensions  # pylint: disable=protected-access
+            actual = cert.x509_extensions
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
             pubkey = cert.pub.loaded.public_key()
-            actual = cert._x509_extensions  # pylint: disable=protected-access
+            actual = cert.x509_extensions  #
 
             if cert.parent is None:  # root CA
                 signer = cert
@@ -917,10 +913,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: Dict[str, Any] = {}
         for key, value in certs[name].items():
+            # Handle cryptography extensions
             if key == "precert_poison":
                 ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
                 continue
-            elif isinstance(value, x509.Extension):
+            if isinstance(value, x509.Extension):
                 if value.critical:
                     ctx[f"{key}_critical"] = " (critical)"
                 else:
@@ -929,6 +926,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "    ")
                 continue
 
+            # Block for old extensions
             if key == "precertificate_signed_certificate_timestamps_serialized":
                 ctx["sct_critical"] = " (critical)" if value["critical"] else ""
                 ctx["sct_values"] = []

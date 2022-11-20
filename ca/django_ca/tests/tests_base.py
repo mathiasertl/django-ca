@@ -40,7 +40,6 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_assert_extensions(self) -> None:
         """Test some basic extension properties."""
-        # pylint: disable=protected-access  # until we can move the property to public
         self.load_named_cas("__usable__")
         self.load_named_certs("__usable__")
 
@@ -59,8 +58,8 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         ca = self.cas[cert_key]
 
         root_extensions = [
-            ca._x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
-            ca._x509_extensions[ExtensionOID.KEY_USAGE],
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
+            ca.x509_extensions[ExtensionOID.KEY_USAGE],
         ]
         self.assertExtensions(ca, root_extensions)
 
@@ -68,10 +67,10 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         ca = self.cas[cert_key]
 
         root_extensions = [
-            ca._x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            ca._x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
-            ca._x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            ca._x509_extensions[ExtensionOID.KEY_USAGE],
+            ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
+            ca.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            ca.x509_extensions[ExtensionOID.KEY_USAGE],
         ]
         self.assertExtensions(ca, root_extensions)
 

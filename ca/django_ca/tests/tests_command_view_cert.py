@@ -825,7 +825,6 @@ HPKP pin: {hpkp}
     def test_contrib_letsencrypt_jabber_at(self) -> None:
         """Test contrib letsencrypt cert."""
         # pylint: disable=consider-using-f-string
-        self.maxDiff = None
         name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
         context[

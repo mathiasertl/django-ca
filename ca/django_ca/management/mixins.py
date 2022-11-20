@@ -123,7 +123,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
     def print_extensions(self, cert: X509CertMixin) -> None:
         """Print all extensions for the given certificate."""
-        for ext in cert._sorted_extensions:  # pylint: disable=protected-access
+        for ext in cert.sorted_extensions:
             self.print_extension(ext)
 
     def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:

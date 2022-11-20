@@ -256,8 +256,7 @@ class CertificateMixin(
     def output_template(self, obj: X509CertMixinTypeVar, oid: x509.ObjectIdentifier) -> str:
         """Render extension for the given object."""
 
-        # PYLINT NOTE: use internal property until we can deprecate extensions
-        ext = obj._x509_extensions.get(oid)  # pylint: disable=protected-access
+        ext = obj.x509_extensions.get(oid)
 
         if ext is None:
             # SubjectAlternativeName is displayed unconditionally in the main section, so a certificate
@@ -288,7 +287,7 @@ class CertificateMixin(
             return fieldsets
 
         fieldsets = copy.deepcopy(fieldsets)
-        for ext in obj._sorted_extensions:  # pylint: disable=protected-access
+        for ext in obj.sorted_extensions:
             field = self.get_oid_name(ext.oid)
             fieldsets[self.x509_fieldset_index][1]["fields"].append(field)
         return fieldsets
@@ -310,8 +309,7 @@ class CertificateMixin(
             # We can only change the date when the certificate was compromised if it's actually revoked.
             fields.append("compromised")
 
-        # pylint: disable-next=protected-access
-        extension_fields = [self.get_oid_name(oid) for oid in obj._x509_extensions]
+        extension_fields = [self.get_oid_name(oid) for oid in obj.x509_extensions]
         return list(fields) + extension_fields
 
     class Media:  # pylint: disable=missing-class-docstring
@@ -703,8 +701,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # resign the cert, so we add initial data from the original cert
 
             resign_obj = getattr(request, "_resign_obj")
-            # pylint: disable-next=protected-access
-            san = resign_obj._x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+            san = resign_obj.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
             if san is None:
                 san_value = []
                 san_critical = OID_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
@@ -733,7 +730,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             }
 
             # Add values from editable extensions
-            extensions = resign_obj._x509_extensions  # pylint: disable=protected-access
+            extensions = resign_obj.x509_extensions
             for key in CERTIFICATE_EXTENSIONS:
                 data[key] = extensions.get(KEY_TO_OID[key])
         else:

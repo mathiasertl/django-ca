@@ -500,14 +500,22 @@ class X509CertMixin(DjangoCAModel):
     ###################
 
     @cached_property
-    def _x509_extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
+    def x509_extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
+        """All extensions of this certificate in a `dict`.
+
+        The key is the OID for the respective extension, allowing easy to look up a particular extension.
+        """
         return {e.oid: e for e in self.pub.loaded.extensions}
 
     @cached_property
-    def _sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
+    def sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
+        """List of extensions sorted by their human readable name.
+
+        This property is used for display purposes, where a reproducible output is desired.
+        """
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
-        return list(sorted(self._x509_extensions.values(), key=lambda e: get_extension_name(e.oid)))
+        return list(sorted(self.x509_extensions.values(), key=lambda e: get_extension_name(e.oid)))
 
     @cached_property
     def extensions(
@@ -521,7 +529,7 @@ class X509CertMixin(DjangoCAModel):
         """List of all extensions for this certificate."""
         exts = []
 
-        for ext in self._sorted_extensions:
+        for ext in self.sorted_extensions:
             if ext.oid in OID_TO_EXTENSION:
                 exts.append(getattr(self, OID_TO_EXTENSION[ext.oid].key))
 
@@ -1439,10 +1447,10 @@ class CertificateAuthority(X509CertMixin):
     @property
     def is_openssh_ca(self) -> bool:
         """True if this CA is an OpenSSH CA."""
-        if SSH_HOST_CA in self._x509_extensions:
+        if SSH_HOST_CA in self.x509_extensions:
             return True
         # COVERAGE NOTE: currently both extensions are always present
-        return SSH_USER_CA in self._x509_extensions  # pragma: no cover
+        return SSH_USER_CA in self.x509_extensions  # pragma: no cover
 
     class Meta:
         verbose_name = _("Certificate Authority")

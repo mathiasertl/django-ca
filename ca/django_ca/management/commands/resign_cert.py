@@ -115,7 +115,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 kwargs["extensions"].append(ext.as_extension())
 
         if not options[OID_TO_KEY[SubjectAlternativeName.oid]]:
-            san = cert._x509_extensions.get(SubjectAlternativeName.oid)  # pylint: disable=protected-access
+            san = cert.x509_extensions.get(SubjectAlternativeName.oid)
         else:
             san = x509.Extension(
                 oid=SubjectAlternativeName.oid,

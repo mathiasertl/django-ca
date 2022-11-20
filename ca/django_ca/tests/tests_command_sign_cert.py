@@ -371,7 +371,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.key_usage, KeyUsage({"critical": True, "value": ["keyCertSign"]}))
         self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
         self.assertEqual(
-            cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
+            cert.x509_extensions[x509.SubjectAlternativeName.oid],
             self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
         )
         self.assertEqual(cert.tls_feature, TLSFeature({"value": ["OCSPMustStaple"]}))
@@ -402,7 +402,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
-            cert._x509_extensions[x509.SubjectAlternativeName.oid],  # pylint: disable=protected-access
+            cert.x509_extensions[x509.SubjectAlternativeName.oid],
             self.subject_alternative_name(uri("https://example.net"), dns("example.org"), dns(self.hostname)),
         )
 
