@@ -31,7 +31,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from django.test import TestCase
 
 from ..constants import ReasonFlags
-from ..extensions import OID_TO_KEY, TLSFeature
+from ..extensions import OID_TO_KEY
 from ..management import actions
 from ..models import Certificate, CertificateAuthority
 from .base import certs, dns, override_settings, override_tmpcadir, uri
@@ -201,34 +201,55 @@ class NameActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
 
-class OrderedSetExtensionActionTestCase(ParserTestCaseMixin, TestCase):
-    """Test OrderedSetExtensionAction."""
+class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test TLSFeatureAction."""
 
     def setUp(self) -> None:
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("-e", action=actions.OrderedSetExtensionAction, extension=TLSFeature)
+        self.parser.add_argument("-f", action=actions.TLSFeatureAction)
 
     def test_basic(self) -> None:
-        """Test basic functionality of action."""
-        args = self.parser.parse_args(["-e=OCSPMustStaple"])
-        self.assertEqual(args.tls_feature, TLSFeature({"critical": False, "value": ["OCSPMustStaple"]}))
-
-        args = self.parser.parse_args(["-e=critical,OCSPMustStaple"])
-        self.assertEqual(args.tls_feature, TLSFeature({"critical": True, "value": ["OCSPMustStaple"]}))
-
-        args = self.parser.parse_args(["-e=critical,OCSPMustStaple,MultipleCertStatusRequest"])
+        namespace = self.parser.parse_args(["-f", "OCSPMustStaple"])
         self.assertEqual(
-            args.tls_feature,
-            TLSFeature({"critical": True, "value": ["OCSPMustStaple", "MultipleCertStatusRequest"]}),
+            self.tls_feature(x509.TLSFeatureType.status_request, critical=False), namespace.tls_feature
+        )
+
+        namespace = self.parser.parse_args(["-f", "critical,OCSPMustStaple"])
+        self.assertEqual(
+            self.tls_feature(x509.TLSFeatureType.status_request, critical=True), namespace.tls_feature
+        )
+
+        namespace = self.parser.parse_args(["-f", "MultipleCertStatusRequest"])
+        self.assertEqual(
+            self.tls_feature(x509.TLSFeatureType.status_request_v2, critical=False), namespace.tls_feature
+        )
+
+        namespace = self.parser.parse_args(["-f", "critical,MultipleCertStatusRequest"])
+        self.assertEqual(
+            self.tls_feature(x509.TLSFeatureType.status_request_v2, critical=True), namespace.tls_feature
+        )
+
+        namespace = self.parser.parse_args(["-f", "OCSPMustStaple,MultipleCertStatusRequest"])
+        self.assertEqual(
+            self.tls_feature(
+                x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2, critical=False
+            ),
+            namespace.tls_feature,
+        )
+
+        namespace = self.parser.parse_args(["-f", "critical,OCSPMustStaple,MultipleCertStatusRequest"])
+        self.assertEqual(
+            self.tls_feature(
+                x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2, critical=True
+            ),
+            namespace.tls_feature,
         )
 
     def test_error(self) -> None:
-        """Test false option values."""
         self.assertParserError(
-            ["-e=foobar"],
-            "usage: {script} [-h] [-e TLS_FEATURE]\n"
-            "{script}: error: Invalid extension value: foobar: Unknown value: foobar\n",
+            ["-f", "FOO"],
+            "usage: dev.py [-h] [-f TLS_FEATURE]\ndev.py: error: Unknown TLSFeature: FOO\n",
         )
 
 

@@ -124,11 +124,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # get extensions based on profiles
         extensions: typing.List[x509.Extension[x509.ExtensionType]] = []
 
-        for ext in self.sign_extensions:
-            if options[ext.key]:
-                extensions.append(options[ext.key].as_extension())
-        for cg_ext in self.cg_sign_extensions:
-            ext_key = OID_TO_KEY[cg_ext.oid]
+        for ext_type in self.sign_extensions:
+            ext_key = OID_TO_KEY[ext_type.oid]
             if options[ext_key]:
                 extensions.append(options[ext_key])
 

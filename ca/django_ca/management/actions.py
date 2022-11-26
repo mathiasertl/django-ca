@@ -30,7 +30,7 @@ from django.core.validators import URLValidator
 from .. import ca_settings
 from ..constants import OID_DEFAULT_CRITICAL, ReasonFlags
 from ..extensions import OID_TO_KEY
-from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES_MAPPING
+from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES_MAPPING, TLS_FEATURE_NAME_MAPPING
 from ..models import Certificate, CertificateAuthority
 from ..typehints import AlternativeNameExtensionType
 from ..utils import (
@@ -39,7 +39,6 @@ from ..utils import (
     parse_general_name,
     parse_hash_algorithm,
     parse_key_curve,
-    split_str,
     x509_name,
 )
 
@@ -354,55 +353,6 @@ class URLAction(SingleValueAction[str]):
 ##########################
 
 
-class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method
-    """Base class for extension actions.
-
-    Actions using this class as a base class **have** to pass an extra ``extension`` kwarg with a subclass of
-    :py:class:`~django_ca.extensions.Extension`.
-
-    The namespace target will always be the extension key regardless of any option string, note how the
-    extension is stored in ``key_usage`` and not in ``--ext``, as you would normally expect:
-
-    """
-
-    def __init__(self, **kwargs: typing.Any) -> None:
-        self.extension = kwargs.pop("extension")
-        kwargs["dest"] = self.extension.key
-        super().__init__(**kwargs)
-
-
-class OrderedSetExtensionAction(ExtensionAction):
-    """Action for AlternativeName extensions, e.g. KeyUsage.
-
-    Arguments using this action expect an extra ``extension`` kwarg with a subclass of
-    :py:class:`~django_ca.extensions.OrderedSetExtension`.
-
-    """
-
-    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: str,
-        option_string: typing.Optional[str] = None,
-    ) -> None:
-        ext = self.extension()
-
-        ext_values = list(split_str(values, ", "))
-        if ext_values[0] == "critical":
-            ext_values = ext_values[1:]
-            ext.critical = True
-        else:
-            ext.critical = False
-
-        try:
-            ext |= ext_values
-        except ValueError as e:
-            parser.error(f"Invalid extension value: {values}: {e}")
-
-        setattr(namespace, self.dest, ext)
-
-
 class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType], metaclass=abc.ABCMeta):
     """Base class for actions that return a cryptography ExtensionType instance."""
 
@@ -546,5 +496,35 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         except ValueError as ex:
             parser.error(str(ex))
 
+        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
+        setattr(namespace, self.dest, extension)
+
+
+class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
+    """Action for parsing a TLSFeature extension."""
+
+    extension_type = x509.TLSFeature
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        ext_values = values.split(",")
+
+        if ext_values[0] == "critical":
+            critical = True
+            ext_values = ext_values[1:]
+        else:
+            critical = False
+
+        try:
+            features = [TLS_FEATURE_NAME_MAPPING[value] for value in ext_values]
+        except KeyError as ex:
+            parser.error(f"Unknown TLSFeature: {ex.args[0]}")
+
+        extension_type = x509.TLSFeature(features=features)
         extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
         setattr(namespace, self.dest, extension)

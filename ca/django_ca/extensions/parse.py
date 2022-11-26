@@ -34,7 +34,7 @@ from ..typehints import (
     ParsableUserNotice,
 )
 from ..utils import hex_to_bytes, parse_general_name, x509_relative_name
-from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, DistributionPoint
+from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, TLS_FEATURE_NAME_MAPPING, DistributionPoint
 
 ##########################################
 # Parsers for sub-elements of extensions #
@@ -270,19 +270,10 @@ def _parse_subject_key_identifier(value: ParsableSubjectKeyIdentifier) -> x509.S
 
 
 def _parse_tls_feature(value: typing.Iterable[typing.Union[x509.TLSFeatureType, str]]) -> x509.TLSFeature:
-    value_mapping = {
-        # https://tools.ietf.org/html/rfc6066.html:
-        "OCSPMustStaple": x509.TLSFeatureType.status_request,
-        "status_request": x509.TLSFeatureType.status_request,
-        # https://tools.ietf.org/html/rfc6961.html (not commonly used):
-        "MultipleCertStatusRequest": x509.TLSFeatureType.status_request_v2,
-        "status_request_v2": x509.TLSFeatureType.status_request_v2,
-    }
-
     features: typing.List[x509.TLSFeatureType] = []
     for feature in value:
         if isinstance(feature, str):
-            feature = value_mapping[feature]
+            feature = TLS_FEATURE_NAME_MAPPING[feature]
         features.append(feature)
 
     # TYPE NOTE: In Python3.11, mypy thinks f.name is "Literal['status_request']?" instead of str

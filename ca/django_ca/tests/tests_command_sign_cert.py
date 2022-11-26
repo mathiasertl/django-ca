@@ -29,7 +29,6 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import ExtendedKeyUsage, IssuerAlternativeName, KeyUsage, TLSFeature
 from ..models import Certificate, CertificateAuthority
 from ..signals import post_issue_cert, pre_issue_cert
 from ..utils import ca_storage, x509_name
@@ -246,7 +245,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 ca=self.ca,
                 subject=self.subject,
                 cn_in_san=False,
-                alt=x509.SubjectAlternativeName([dns("example.com")]),
+                alt=self.subject_alternative_name(dns("example.com")),
                 stdin=stdin,
             )
         self.assertEqual(pre.call_count, 1)
@@ -311,7 +310,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=x509.SubjectAlternativeName([dns(self.hostname)]),
+                alt=self.subject_alternative_name(dns(self.hostname)),
                 stdin=stdin,
             )
         self.assertEqual(stderr, "")
@@ -342,7 +341,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=x509.SubjectAlternativeName([dns(self.hostname)]),
+                alt=self.subject_alternative_name(dns(self.hostname)),
                 stdin=stdin,
                 subject=subject,
             )
@@ -356,7 +355,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_extensions(self) -> None:
         """Test setting extensions for the signed certificate."""
 
-        self.ca.issuer_alt_name = "DNS:ian.example.com"
+        self.ca.issuer_alt_name = "http://ian.example.com"
         self.ca.save()
 
         stdin = self.csr_pem.encode()
@@ -380,15 +379,22 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertSignature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
-        self.assertEqual(cert.key_usage, KeyUsage({"critical": True, "value": ["keyCertSign"]}))
-        self.assertEqual(cert.extended_key_usage, ExtendedKeyUsage({"value": ["clientAuth"]}))
+
+        actual = cert.x509_extensions
+        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
+        self.assertEqual(
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH)
+        )
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
             self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
         )
-        self.assertEqual(cert.tls_feature, TLSFeature({"value": ["OCSPMustStaple"]}))
         self.assertEqual(
-            cert.issuer_alternative_name, IssuerAlternativeName({"value": [self.ca.issuer_alt_name]})
+            actual[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
+        )
+        self.assertEqual(
+            actual[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
         )
 
     @override_tmpcadir()
@@ -426,7 +432,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                alt=x509.SubjectAlternativeName([dns(self.hostname)]),
+                alt=self.subject_alternative_name(dns(self.hostname)),
                 stdin=stdin,
             )
 
@@ -454,7 +460,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         # Giving no password raises a CommandError
         stdin = self.csr_pem.encode()
-        san = self.subject_alternative_name(dns("example.com")).value
+        san = self.subject_alternative_name(dns("example.com"))
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
         ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:

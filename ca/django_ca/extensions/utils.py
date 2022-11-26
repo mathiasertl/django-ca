@@ -562,6 +562,16 @@ KEY_USAGE_NAMES = {
 }
 KEY_USAGE_NAMES_MAPPING = {v: k for k, v in KEY_USAGE_NAMES.items()}
 
+TLS_FEATURE_NAME_MAPPING = {
+    # https://tools.ietf.org/html/rfc6066.html:
+    "OCSPMustStaple": x509.TLSFeatureType.status_request,
+    "status_request": x509.TLSFeatureType.status_request,
+    # https://tools.ietf.org/html/rfc6961.html (not commonly used):
+    "MultipleCertStatusRequest": x509.TLSFeatureType.status_request_v2,
+    "status_request_v2": x509.TLSFeatureType.status_request_v2,
+}
+
+
 LOG_ENTRY_TYPE_MAPPING = {
     LogEntryType.PRE_CERTIFICATE: "precertificate",
     LogEntryType.X509_CERTIFICATE: "x509_certificate",

@@ -21,7 +21,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
 from django.utils import timezone
@@ -29,10 +29,9 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import AuthorityInformationAccess, CRLDistributionPoints, NameConstraints
 from ..models import CertificateAuthority
 from ..utils import int_to_hex, x509_name
-from .base import override_settings, override_tmpcadir, timestamps, uri
+from .base import dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -202,9 +201,15 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPrivateKey(ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
+        actual = ca.x509_extensions
         self.assertEqual(
-            ca.name_constraints,
-            NameConstraints({"value": {"permitted": ["DNS:.com"], "excluded": ["DNS:.net"]}}),
+            actual[ExtensionOID.NAME_CONSTRAINTS],
+            self.name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
+        )
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, actual)
+        self.assertEqual(
+            actual[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(ca_issuers=[uri("http://ca.issuer.ca.example.com")]),
         )
 
         # test the private key
@@ -214,15 +219,6 @@ class InitCATest(TestCaseMixin, TestCase):
 
         self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA256)
         self.assertIsInstance(ca.pub.loaded.public_key(), dsa.DSAPublicKey)
-        self.assertIsNone(ca.crl_distribution_points)
-        self.assertEqual(
-            ca.authority_information_access,
-            AuthorityInformationAccess({"value": {"issuers": ["URI:http://ca.issuer.ca.example.com"]}}),
-        )
-        self.assertEqual(
-            ca.name_constraints,
-            NameConstraints({"value": {"permitted": ["DNS:.com"], "excluded": ["DNS:.net"]}}),
-        )
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.max_pathlen, 3)
         self.assertTrue(ca.allows_intermediate_ca)
@@ -311,7 +307,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 expires=self.expires(720),
                 pathlen=3,
                 issuer_url="http://issuer.ca.example.com",
-                issuer_alt_name=x509.IssuerAlternativeName([uri("http://ian.ca.example.com")]),
+                issuer_alt_name=self.issuer_alternative_name(uri("http://ian.ca.example.com")),
                 crl_url=["http://crl.example.com"],
                 ocsp_url="http://ocsp.example.com",
                 ca_issuer_url="http://ca.issuer.ca.example.com",
@@ -339,7 +335,10 @@ class InitCATest(TestCaseMixin, TestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.name_constraints, NameConstraints({"value": {"permitted": ["DNS:.com"]}}))
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
+            self.name_constraints(permitted=[dns(".com")], critical=True),
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self) -> None:
@@ -356,7 +355,10 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPrivateKey(ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.name_constraints, NameConstraints({"value": {"excluded": ["DNS:.com"]}}))
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
+            self.name_constraints(excluded=[dns(".com")], critical=True),
+        )
 
     @override_settings(USE_TZ=True)
     def test_arguments_with_use_tz(self) -> None:
@@ -478,27 +480,14 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
         self.assertEqual(
-            child.crl_distribution_points,
-            CRLDistributionPoints(
-                {
-                    "value": [
-                        {
-                            "full_name": [ca_crl_url],
-                        }
-                    ]
-                }
-            ),
+            child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri(ca_crl_url)]),
         )
-        issuers = f"URI:http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/issuer/{parent.serial}.der"
+        issuers = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/issuer/{parent.serial}.der"
         self.assertEqual(
-            child.authority_information_access,
-            AuthorityInformationAccess(
-                {
-                    "value": {
-                        "issuers": [issuers],
-                        "ocsp": ["URI:http://ca.ocsp.example.com"],
-                    }
-                }
+            child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri(issuers)], ocsp=[uri("http://ca.ocsp.example.com")]
             ),
         )
 
@@ -739,22 +728,18 @@ class InitCATest(TestCaseMixin, TestCase):
 
         self.assertEqual(ca.issuer_url, f"http://{hostname}/django_ca/issuer/{root.serial}.der")
         self.assertEqual(ca.ocsp_url, f"http://{hostname}/django_ca/ocsp/{ca.serial}/cert/")
-        self.assertEqual(
-            ca.authority_information_access,
-            AuthorityInformationAccess(
-                {
-                    "value": {
-                        "issuers": [f"URI:http://{hostname}/django_ca/issuer/{root.serial}.der"],
-                        "ocsp": [f"URI:http://{hostname}/django_ca/ocsp/{root.serial}/ca/"],
-                    }
-                }
-            ),
-        )
 
         ca_crl_urlpath = self.reverse("ca-crl", serial=root.serial)
         self.assertEqual(
-            ca.crl_distribution_points,
-            CRLDistributionPoints({"value": [{"full_name": [f"http://{hostname}{ca_crl_urlpath}"]}]}),
+            ca.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri(f"http://{hostname}{ca_crl_urlpath}")]),
+        )
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri(f"http://{hostname}/django_ca/issuer/{root.serial}.der")],
+                ocsp=[uri(f"http://{hostname}/django_ca/ocsp/{root.serial}/ca/")],
+            ),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

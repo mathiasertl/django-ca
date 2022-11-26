@@ -30,7 +30,6 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...constants import OID_DEFAULT_CRITICAL
 from ...extensions import OID_TO_KEY
 from ...models import CertificateAuthority
 from ...tasks import cache_crl, generate_ocsp_key, run_task
@@ -226,12 +225,6 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         subject = sort_name(subject)
 
         issuer_alternative_name = options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]
-        if issuer_alternative_name is not None:
-            issuer_alternative_name = x509.Extension(
-                oid=x509.IssuerAlternativeName.oid,
-                critical=OID_DEFAULT_CRITICAL[x509.IssuerAlternativeName.oid],
-                value=issuer_alternative_name,
-            )
 
         kwargs = {}
         for opt in ["path", "default_hostname"]:

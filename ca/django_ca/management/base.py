@@ -27,7 +27,6 @@ from django.core.management.base import CommandError, CommandParser, OutputWrapp
 from django.utils import timezone
 
 from .. import ca_settings
-from ..extensions import ExtendedKeyUsage, KeyUsage, TLSFeature
 from ..models import CertificateAuthority
 from ..profiles import Profile
 from ..utils import NAME_OID_MAPPINGS
@@ -171,13 +170,11 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: typing.Set[typing.Type[typing.Union[TLSFeature, KeyUsage, ExtendedKeyUsage]]] = {
-        TLSFeature,
-    }
-    cg_sign_extensions: typing.Tuple[typing.Type[x509.ExtensionType], ...] = (
+    sign_extensions: typing.Tuple[typing.Type[x509.ExtensionType], ...] = (
         x509.ExtendedKeyUsage,
         x509.KeyUsage,
         x509.SubjectAlternativeName,
+        x509.TLSFeature,
     )
     subject_help = ""  # concrete classes should set this
 
@@ -244,8 +241,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         group.add_argument(
             "--tls-feature",
             metavar="VALUES",
-            action=actions.OrderedSetExtensionAction,
-            extension=TLSFeature,
+            action=actions.TLSFeatureAction,
             help="TLS Feature extensions.",
         )
 
