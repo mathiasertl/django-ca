@@ -14,17 +14,19 @@
 """Test the regenerate_ocsp_keys management command."""
 
 import typing
+from typing import Iterable, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
 from ..models import Certificate, CertificateAuthority
 from ..typehints import PrivateKeyTypes
 from ..utils import add_colons, ca_storage
-from .base import certs, override_tmpcadir
+from .base import certs, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -40,10 +42,10 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def assertKey(  # pylint: disable=invalid-name
         self,
         ca: CertificateAuthority,
-        key_type: typing.Type[PrivateKeyTypes] = RSAPrivateKey,
-        password: typing.Optional[bytes] = None,
-        excludes: typing.Optional[typing.Iterable[int]] = None,
-    ) -> typing.Tuple[PrivateKeyTypes, x509.Certificate]:
+        key_type: Type[PrivateKeyTypes] = RSAPrivateKey,
+        password: Optional[bytes] = None,
+        excludes: Optional[Iterable[int]] = None,
+    ) -> Tuple[PrivateKeyTypes, x509.Certificate]:
         """Assert that they key ispresent and can be read."""
         priv_path = f"ocsp/{ca.serial}.key"
         cert_path = f"ocsp/{ca.serial}.pem"
@@ -67,9 +69,14 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             cert_qs = cert_qs.exclude(pk__in=excludes)
 
         db_cert = cert_qs.get()
-        self.assertIsNotNone(db_cert.authority_information_access)
-        # NOTE: mypy does not see that aia is *not* none due to above check
-        self.assertEqual(db_cert.authority_information_access.ocsp, [])  # type: ignore[union-attr]
+
+        aia = typing.cast(
+            x509.Extension[x509.AuthorityInformationAccess],
+            db_cert.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+        )
+
+        ca_issuers = uri(ca.issuer_url)  # type: ignore[arg-type]  # we always set this
+        self.assertEqual(aia, self.authority_information_access(ca_issuers=[ca_issuers]))
 
         return priv, cert
 

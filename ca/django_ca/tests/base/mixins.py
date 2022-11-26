@@ -55,7 +55,7 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from ... import ca_settings
 from ...constants import ReasonFlags
-from ...deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
+from ...deprecation import RemovedInDjangoCA124Warning
 from ...extensions.utils import extension_as_text
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import (
@@ -313,9 +313,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, first: x509.KeyUsage, second: x509.KeyUsage, msg: Optional[str] = None
     ) -> None:
         """Type equality function for x509.KeyUsage."""
-        if first == second:
-            return
-
         diffs = []
         for usage in [
             "content_commitment",
@@ -337,12 +334,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             except ValueError:
                 second_val = False
 
-            if first_val != second_val:
+            if first_val != second_val:  # pragma: no cover  # would only be run in case of error
                 diffs.append(f"  * {usage}: {first_val} -> {second_val}")
 
         if msg is None:
             msg = "KeyUsage extensions differ:"
-        raise self.failureException(msg + "\n" + "\n".join(diffs))
+        if diffs:  # pragma: no cover  # would only be run in case of error
+            raise self.failureException(msg + "\n" + "\n".join(diffs))
 
     def assertTLSFeatureEqual(  # pylint: disable=invalid-name
         self, first: x509.TLSFeature, second: x509.TLSFeature, msg: Optional[str] = None
@@ -500,24 +498,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
 
     @contextmanager
-    def assertRemovedIn123Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
-        """Assert that a RemovedInDjangoCA123Warning is thrown."""
-        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, msg):
-            yield
-
-    @contextmanager
     def assertRemovedIn124Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
         """Assert that a RemovedInDjangoCA124Warning is thrown."""
         with self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
-            yield
-
-    @contextmanager
-    def assertRemovedArgumentIn123Warning(  # pylint: disable=invalid-name
-        self, argument: str
-    ) -> typing.Iterator[None]:
-        """Assert that a RemovedInDjangoCA123Warning is thrown."""
-        message = rf"^Argument {argument} is deprecated and will be removed in django ca 1\.23\.$"
-        with self.assertRemovedIn123Warning(message):
             yield
 
     def assertRevoked(  # pylint: disable=invalid-name

@@ -45,12 +45,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..constants import ReasonFlags
-from ..extensions import (
-    KEY_TO_EXTENSION,
-    Extension,
-    PrecertificateSignedCertificateTimestamps,
-    SubjectAlternativeName,
-)
+from ..extensions import KEY_TO_EXTENSION, Extension, PrecertificateSignedCertificateTimestamps
 from ..modelfields import LazyCertificate, LazyCertificateSigningRequest
 from ..models import (
     AcmeAccount,
@@ -868,7 +863,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_subject_alternative_name(self) -> None:
         """Test getting the subjectAlternativeName extension."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.subject_alternative_name, certs[ca.name].get("subject_alternative_name"))
+            self.assertEqual(
+                ca.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
+                certs[ca.name].get("subject_alternative_name"),
+            )
 
         for name, cert in self.certs.items():
             self.assertEqual(
@@ -877,30 +875,25 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             )
 
         # Create a cert with some weirder SANs to test that too
+        san = self.subject_alternative_name(
+            x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
+            x509.RFC822Name("user@example.com"),
+            x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
+        )
         weird_cert = self.create_cert(
             self.cas["child"],
             certs["child-cert"]["csr"]["parsed"],
             subject=self.subject,
-            extensions=[
-                self.subject_alternative_name(
-                    x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
-                    x509.RFC822Name("user@example.com"),
-                    x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
-                ),
-            ],
+            extensions=[san],
         )
 
-        expected = SubjectAlternativeName(
-            {
-                "value": [
-                    "dirname:/C=AT/CN=example.com",
-                    "email:user@example.com",
-                    "IP:fd00::1",
-                    f"DNS:{self.hostname}",
-                ]
-            }
+        expected_san = self.subject_alternative_name(
+            x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
+            x509.RFC822Name("user@example.com"),
+            x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
+            dns("tests-models.certificatetests.test-subject-alternative-name.example.com"),
         )
-        self.assertEqual(weird_cert.subject_alternative_name, expected)
+        self.assertEqual(weird_cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], expected_san)
 
     @freeze_time("2019-02-03 15:43:12")
     def test_get_revocation_time(self) -> None:
@@ -1101,17 +1094,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
                 if isinstance(certs[name].get(key), x509.Extension):
                     continue
                 self.assertExtension(cert, name, key, cls)
-
-    # @unittest.skip('Cannot currently instantiate extensions, so no sense in testing this.')
-    def test_precertificate_signed_certificate_timestamps(self) -> None:
-        """Test getting the SCT timestamp extension."""
-        for name, cert in self.certs.items():
-            ext = getattr(cert, PrecertificateSignedCertificateTimestamps.key)
-
-            if PrecertificateSignedCertificateTimestamps.key in certs[name]:
-                self.assertIsInstance(ext, PrecertificateSignedCertificateTimestamps)
-            else:
-                self.assertIsNone(ext)
 
     def test_inconsistent_model_states(self) -> None:
         """Test exceptions raised for an inconsistent model state."""
@@ -1574,15 +1556,6 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         self.assertEqual(self.auth1.subject_alternative_name, "dns:example.com")
         self.assertEqual(self.auth2.subject_alternative_name, "dns:example.net")
-
-        self.assertEqual(
-            SubjectAlternativeName({"value": [self.auth1.subject_alternative_name]}).extension_type,
-            x509.SubjectAlternativeName([dns("example.com")]),
-        )
-        self.assertEqual(
-            SubjectAlternativeName({"value": [self.auth2.subject_alternative_name]}).extension_type,
-            x509.SubjectAlternativeName([dns("example.net")]),
-        )
 
     def test_get_challenges(self) -> None:
         """Test the get_challenges() method."""

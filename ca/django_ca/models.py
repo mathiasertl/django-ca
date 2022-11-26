@@ -539,7 +539,7 @@ class X509CertMixin(DjangoCAModel):
         return exts
 
     @cached_property
-    def authority_information_access(self) -> Optional[AuthorityInformationAccess]:
+    def authority_information_access(self) -> Optional[AuthorityInformationAccess]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension or ``None`` if not
         present."""
         try:
@@ -568,7 +568,7 @@ class X509CertMixin(DjangoCAModel):
         return BasicConstraints(ext)
 
     @cached_property
-    def crl_distribution_points(self) -> Optional[CRLDistributionPoints]:
+    def crl_distribution_points(self) -> Optional[CRLDistributionPoints]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.CRLDistributionPoints` extension or ``None`` if not
         present."""
         try:
@@ -605,7 +605,7 @@ class X509CertMixin(DjangoCAModel):
         return InhibitAnyPolicy(ext)
 
     @cached_property
-    def issuer_alternative_name(self) -> Optional[IssuerAlternativeName]:
+    def issuer_alternative_name(self) -> Optional[IssuerAlternativeName]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.IssuerAlternativeName` extension or ``None`` if not
         present."""
         try:
@@ -624,7 +624,7 @@ class X509CertMixin(DjangoCAModel):
         return PolicyConstraints(ext)
 
     @cached_property
-    def key_usage(self) -> Optional[KeyUsage]:
+    def key_usage(self) -> Optional[KeyUsage]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.KeyUsage` extension or ``None`` if not present."""
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.KeyUsage)
@@ -633,7 +633,7 @@ class X509CertMixin(DjangoCAModel):
         return KeyUsage(ext)
 
     @cached_property
-    def extended_key_usage(self) -> Optional[ExtendedKeyUsage]:
+    def extended_key_usage(self) -> Optional[ExtendedKeyUsage]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.ExtendedKeyUsage` extension or ``None`` if not present."""
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
@@ -671,7 +671,7 @@ class X509CertMixin(DjangoCAModel):
     @cached_property
     def precertificate_signed_certificate_timestamps(
         self,
-    ) -> Optional[PrecertificateSignedCertificateTimestamps]:
+    ) -> Optional[PrecertificateSignedCertificateTimestamps]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension or
         ``None`` if not present."""
         try:
@@ -683,7 +683,7 @@ class X509CertMixin(DjangoCAModel):
         return PrecertificateSignedCertificateTimestamps(ext)
 
     @cached_property
-    def subject_alternative_name(self) -> Optional[SubjectAlternativeName]:
+    def subject_alternative_name(self) -> Optional[SubjectAlternativeName]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.SubjectAlternativeName` extension or ``None`` if not
         present."""
         try:
@@ -702,7 +702,7 @@ class X509CertMixin(DjangoCAModel):
         return SubjectKeyIdentifier(ext)
 
     @cached_property
-    def tls_feature(self) -> Optional[TLSFeature]:
+    def tls_feature(self) -> Optional[TLSFeature]:  # pragma: no cover
         """The :py:class:`~django_ca.extensions.TLSFeature` extension or ``None`` if not present."""
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.TLSFeature)

@@ -20,13 +20,13 @@ import typing
 from datetime import timedelta
 
 from cryptography import x509
-from cryptography.x509 import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
 from ... import ca_settings
-from ...constants import OID_DEFAULT_CRITICAL
-from ...extensions import OID_TO_KEY, ExtendedKeyUsage, KeyUsage, SubjectAlternativeName, TLSFeature
+from ...constants import EXTENSION_KEYS
+from ...extensions import OID_TO_KEY
 from ...management.actions import CertificateAction
 from ...management.base import BaseSignCommand
 from ...models import Certificate, CertificateAuthority, Watcher
@@ -88,20 +88,20 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         if subject is None:
             subject = cert.subject
 
-        if not options[KeyUsage.key]:
-            key_usage = cert.key_usage
+        if not options[EXTENSION_KEYS[ExtensionOID.KEY_USAGE]]:
+            key_usage = cert.x509_extensions.get(ExtensionOID.KEY_USAGE)
         else:
-            key_usage = options[KeyUsage.key]
+            key_usage = options[EXTENSION_KEYS[ExtensionOID.KEY_USAGE]]
 
-        if not options[ExtendedKeyUsage.key]:
-            ext_key_usage = cert.extended_key_usage
+        if not options[EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]]:
+            ext_key_usage = cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE)
         else:
-            ext_key_usage = options[ExtendedKeyUsage.key]
+            ext_key_usage = options[EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]]
 
-        if not options[TLSFeature.key]:
-            tls_feature = cert.tls_feature
+        if not options[EXTENSION_KEYS[ExtensionOID.TLS_FEATURE]]:
+            tls_feature = cert.x509_extensions.get(ExtensionOID.TLS_FEATURE)
         else:
-            tls_feature = options[TLSFeature.key]
+            tls_feature = options[EXTENSION_KEYS[ExtensionOID.TLS_FEATURE]]
 
         kwargs = {
             "algorithm": options["algorithm"],
@@ -112,16 +112,12 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         for ext in [key_usage, ext_key_usage, tls_feature]:
             if ext is not None:
-                kwargs["extensions"].append(ext.as_extension())
+                kwargs["extensions"].append(ext)
 
-        if not options[OID_TO_KEY[SubjectAlternativeName.oid]]:
-            san = cert.x509_extensions.get(SubjectAlternativeName.oid)
+        if not options[OID_TO_KEY[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]:
+            san = cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         else:
-            san = x509.Extension(
-                oid=SubjectAlternativeName.oid,
-                critical=OID_DEFAULT_CRITICAL[SubjectAlternativeName.oid],
-                value=options[OID_TO_KEY[SubjectAlternativeName.oid]],
-            )
+            san = options[OID_TO_KEY[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]
         kwargs["extensions"].append(san)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not san:

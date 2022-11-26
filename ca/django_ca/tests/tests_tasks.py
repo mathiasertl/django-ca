@@ -31,6 +31,7 @@ from requests.packages.urllib3.response import HTTPResponse
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import ExtensionOID
 
 from django.core.cache import cache
 from django.test import TestCase
@@ -40,7 +41,6 @@ import requests_mock
 from freezegun import freeze_time
 
 from .. import ca_settings, tasks
-from ..extensions import SubjectAlternativeName
 from ..models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
 from ..utils import ca_storage, get_crl_cache_key
 from .base import certs, override_settings, override_tmpcadir, timestamps
@@ -532,8 +532,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName({"value": [f"dns:{self.hostname}"]}),
+            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
@@ -557,15 +557,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName(
-                {
-                    "value": [
-                        f"dns:{self.hostname}",
-                        f"dns:{hostname2}",
-                    ]
-                }
-            ),
+            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertIn(self.acme_cert.cert.cn, [self.hostname, hostname2])
@@ -587,8 +580,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.subject_alternative_name,
-            SubjectAlternativeName({"value": [f"dns:{self.hostname}"]}),
+            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)

@@ -115,6 +115,7 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.parser.add_argument("--eku", action=actions.ExtendedKeyUsageAction)
 
     def test_basic(self) -> None:
+        """Test basic functionality of action."""
         namespace = self.parser.parse_args([])
         self.assertIsNone(namespace.extended_key_usage)
 
@@ -138,6 +139,7 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
     def test_error(self) -> None:
+        """Test wrong option values."""
         self.assertParserError(
             ["--eku", "FOO"],
             "usage: dev.py [-h] [--eku EXTENDED_KEY_USAGE]\n"
@@ -154,6 +156,7 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.parser.add_argument("-k", action=actions.KeyUsageAction)
 
     def test_basic(self) -> None:
+        """Test basic functionality of action."""
         namespace = self.parser.parse_args(["-k", "keyCertSign"])
         self.assertEqual(self.key_usage(key_cert_sign=True, critical=False), namespace.key_usage)
 
@@ -167,6 +170,7 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertEqual(self.key_usage(key_cert_sign=True, critical=True), namespace.key_usage)
 
     def test_error(self) -> None:
+        """Test wrong option values."""
         self.assertParserError(
             ["-k", "encipherOnly"],
             "usage: dev.py [-h] [-k KEY_USAGE]\n"
@@ -210,6 +214,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
         self.parser.add_argument("-f", action=actions.TLSFeatureAction)
 
     def test_basic(self) -> None:
+        """Test basic functionality of action."""
         namespace = self.parser.parse_args(["-f", "OCSPMustStaple"])
         self.assertEqual(
             self.tls_feature(x509.TLSFeatureType.status_request, critical=False), namespace.tls_feature
@@ -247,6 +252,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
     def test_error(self) -> None:
+        """Test wrong option values."""
         self.assertParserError(
             ["-f", "FOO"],
             "usage: dev.py [-h] [-f TLS_FEATURE]\ndev.py: error: Unknown TLSFeature: FOO\n",

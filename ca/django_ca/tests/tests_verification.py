@@ -21,7 +21,7 @@ import typing
 from contextlib import contextmanager
 
 from cryptography import x509
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
 from django.urls import reverse
@@ -208,7 +208,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         """Test that CA_DEFAULT_HOSTNAME does not lead to problems."""
 
         ca = self.init_ca("root")
-        self.assertIsNone(ca.crl_distribution_points)  # Root CAs have no CRLDistributionPoints
+        # Root CAs have no CRLDistributionPoints
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
 
         with self.dumped(ca) as paths, self.sign_cert(ca) as cert:
             with self.crl(ca) as (crl_path, crl):  # test global CRL
@@ -237,9 +238,9 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         grandchild = self.init_ca("Grandchild", parent=child)
 
         #  Verify the state of the CAs themself.
-        self.assertIsNone(root.crl_distribution_points)
-        self.assertIsNone(child.crl_distribution_points)
-        self.assertIsNone(grandchild.crl_distribution_points)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.x509_extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, child.x509_extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, grandchild.x509_extensions)
 
         with self.dumped(root, child, grandchild) as paths:
             untrusted = paths[1:]
@@ -288,15 +289,14 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         grandchild_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": child.serial})
 
         #  Verify the state of the CAs themself.
-        # MYPY NOTE: child.crl_distribution_points could theoretically be None = not-iterable
-        self.assertIsNone(root.crl_distribution_points)
-        self.assertCountEqual(
-            [name for dp in child.crl_distribution_points for name in dp.full_name],  # type: ignore
-            [uri(f"http://example.com{child_ca_crl}")],
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.x509_extensions)
+        self.assertEqual(
+            child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri(f"http://example.com{child_ca_crl}")]),
         )
-        self.assertCountEqual(
-            [name for dp in grandchild.crl_distribution_points for name in dp.full_name],  # type: ignore
-            [uri(f"http://example.com{grandchild_ca_crl}")],
+        self.assertEqual(
+            grandchild.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri(f"http://example.com{grandchild_ca_crl}")]),
         )
 
         with self.dumped(root, child, grandchild) as paths, self.crl(root, scope="ca") as (crl_path, crl):

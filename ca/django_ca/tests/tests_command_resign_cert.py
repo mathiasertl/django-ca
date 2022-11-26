@@ -19,7 +19,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.test import TestCase
 from django.utils import timezone
@@ -27,17 +27,9 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import (
-    BasicConstraints,
-    CRLDistributionPoints,
-    ExtendedKeyUsage,
-    KeyUsage,
-    SubjectAlternativeName,
-    TLSFeature,
-)
 from ..models import Certificate, CertificateAuthority, Watcher
 from ..signals import post_issue_cert, pre_issue_cert
-from .base import override_tmpcadir, timestamps
+from .base import dns, override_tmpcadir, timestamps, uri
 from .base.mixins import TestCaseMixin
 
 
@@ -82,17 +74,19 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             self.assertEqual(old.x509_extensions.get(oid), new.x509_extensions.get(oid))
 
         # Test extensions that don't come from the old cert but from the signing CA
-        self.assertEqual(new.basic_constraints, BasicConstraints({"critical": True, "value": {"ca": False}}))
-        self.assertIsNone(new.issuer_alternative_name)  # signing ca does not have this set
+        self.assertEqual(new.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints())
+        self.assertNotIn(
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME, new.x509_extensions
+        )  # signing CA does not have this set
 
         # Some properties come from the ca
         if new_ca.crl_url:
             self.assertEqual(
-                CRLDistributionPoints({"value": [{"full_name": [new_ca.crl_url]}]}),
-                new.crl_distribution_points,
+                new.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+                self.crl_distribution_points([uri(new_ca.crl_url)]),
             )
         else:
-            self.assertIsNone(new.crl_distribution_points)
+            self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, new.x509_extensions)
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -157,16 +151,22 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
+        self.assertEqual(new.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]))
 
         # assert overwritten extensions
-        self.assertEqual(new.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]))
-        self.assertEqual(new.subject_alternative_name, SubjectAlternativeName({"value": [f"DNS:{alt}"]}))
-        self.assertEqual(new.key_usage, KeyUsage({"value": [key_usage], "critical": False}))
+        actual = new.x509_extensions
         self.assertEqual(
-            new.extended_key_usage,
-            ExtendedKeyUsage({"critical": True, "value": ext_key_usage.split(",")[1:]}),
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(alt))
         )
-        self.assertEqual(new.tls_feature, TLSFeature({"critical": True, "value": tls_feature.split(",")[1:]}))
+        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, critical=False))
+        self.assertEqual(
+            actual[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.EMAIL_PROTECTION, critical=True),
+        )
+        self.assertEqual(
+            actual[ExtensionOID.TLS_FEATURE],
+            self.tls_feature(x509.TLSFeatureType.status_request_v2, critical=True),
+        )
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
     @override_tmpcadir(

@@ -15,9 +15,12 @@
 
 import typing
 from io import BytesIO
+from typing import Optional
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
@@ -418,7 +421,11 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
         # pylint: disable=consider-using-f-string
         for key, cert in self.ca_certs:
             stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())
-            if cert.subject_alternative_name is None:
+            san = typing.cast(
+                Optional[x509.Extension[x509.SubjectAlternativeName]],
+                cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
+            )
+            if san is None:
                 self.assertEqual(
                     stdout.decode("utf-8"),
                     """Common Name: {cn}
@@ -435,7 +442,7 @@ HPKP pin: {hpkp}
                         status=status, **self.get_cert_context(key)
                     ),
                 )
-            elif len(cert.subject_alternative_name) != 1:
+            elif len(san.value) != 1:
                 continue  # no need to duplicate this here
             else:
                 self.assertEqual(

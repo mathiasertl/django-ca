@@ -58,7 +58,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             ca.issuer_url = options["issuer_url"]
         if options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]:
             ian = options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]
-            ca.issuer_alt_name = ",".join([format_general_name(name) for name in ian])
+            ca.issuer_alt_name = ",".join([format_general_name(name) for name in ian.value])
         if options["ocsp_url"] is not None:
             ca.ocsp_url = options["ocsp_url"]
         if options["crl_url"] is not None:

@@ -68,23 +68,6 @@ Much like with certificate authorities, creating a new certificate requires a ma
    >>> Certificate.objects.create_cert(ca, csr, subject=x509_name('/CN=example.com'))
    <Certificate: example.com>
 
-***********************
-Subjects and Extensions
-***********************
-
-**django-ca** provides a set of convenience classes to allow you to handle subjects and extensions for
-certificates more easily. These classes are easy to instantiate and provide convenient access methods:
-
-* :py:class:`django_ca.subject.Subject` handles x509 subjects, e.g. as used in a certificate subject.
-* :py:class:`django_ca.extensions` is a module that includes various classes that represent x509 extensions.
-
-Both certificate authorities and certificates have many common extensions available as properties::
-
-   >>> ca.key_usage
-   <KeyUsage: ['crl_sign', 'key_cert_sign'], critical=True>
-   >>> ca.basic_constraints
-   <BasicConstraints: ca=True, pathlen=None, critical=True>
-
 *******
 Signals
 *******
