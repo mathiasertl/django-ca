@@ -17,7 +17,7 @@ ChangeLog
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
-* Add support for Python 3.11, Django 4.1 and cryptography 38.0.
+* Add support for Python 3.11, Django 4.1, cryptography 38.0 and acme 2.0.
 * Support for MD5 and SHA1 hashes is removed, as they are no longer supported in upcoming releases of
   cryptography.
 * New signals :py:class:`~django_ca.signals.pre_sign_cert` and :py:class:`~django_ca.signals.post_sign_cert`
@@ -77,6 +77,8 @@ Deprecation notices
   removed in ``django-ca==1.23.0``.
 * The ``pre_issue_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
+* Extension wrapper classes in ``django_ca.extensions`` are deprecated and will be removed in
+  ``django_ca==1.25.0``.
 
 .. _changelog-1.21.0:
 

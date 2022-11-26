@@ -39,7 +39,7 @@ class NewOrder(messages.ResourceBody):
     .. seealso:: `RFC 8555, section 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`__
     """
 
-    resource_type = messages.NewOrder.resource_type
+    resource_type = "new-order"
 
     identifiers = jose.json_util.Field("identifiers", omitempty=False, decoder=identifiers_decoder)
     not_before = fields.RFC3339Field("notBefore", omitempty=True)
@@ -55,5 +55,5 @@ class CertificateRequest(messages.ResourceBody):
     .. seealso:: `RFC 8555, section 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`__
     """
 
-    resource_type = messages.CertificateRequest.resource_type
+    resource_type = "new-cert"
     csr = jose.json_util.Field("csr", decoder=jose.json_util.decode_csr, encoder=jose.json_util.encode_csr)
