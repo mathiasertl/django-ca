@@ -785,12 +785,12 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
                     raise AcmeBadCSR(message="CommonName was not in order.")
 
         try:
-            names_from_csr: Set[x509.Name] = set(
-                csr.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-            )
+            san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+            names_from_csr: Set[x509.GeneralName] = set(san_ext.value)
         except x509.ExtensionNotFound as ex:
             raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
 
+        print(names_from_order, names_from_csr)
         if names_from_order != names_from_csr:
             raise AcmeBadCSR(message="Names in CSR do not match.")
 
