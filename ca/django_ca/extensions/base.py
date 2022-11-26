@@ -269,9 +269,8 @@ class NullExtension(Extension[ExtensionTypeTypeVar, None, None]):
 
        This class is now an abstract base class.
 
-    Some extensions, like :py:class:`~django_ca.extensions.OCSPNoCheck` or
-    :py:class:`~django_ca.extensions.PrecertPoison` do not encode any information, but the presence of the
-    extension itself carries meaning.
+    Some extensions, like ``django_ca.extensions.OCSPNoCheck`` or ``django_ca.extensions.PrecertPoison`` do
+    not encode any information, but the presence of the extension itself carries meaning.
 
     Extensions using this base class will ignore any ``"value"`` key in their dict, only the ``"critical"``
     key is relevant.
@@ -643,8 +642,8 @@ class CRLDistributionPointsBase(
     Generic[ExtensionTypeTypeVar],
     metaclass=abc.ABCMeta,
 ):
-    """Base class for :py:class:`~django_ca.extensions.CRLDistributionPoints` and
-    :py:class:`~django_ca.extensions.FreshestCRL`.
+    """Base class for ``django_ca.extensions.CRLDistributionPoints`` and
+    ``django_ca.extensions.FreshestCRL``.
     """
 
     def __hash__(self) -> int:

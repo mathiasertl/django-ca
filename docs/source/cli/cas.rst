@@ -86,9 +86,9 @@ CRL URLs
 ========
 
 Certificate Revocation Lists (CRLs) are signed files that contain a list of all revoked certificates.
-Certificates (including those for CAs) can contain pointers to CRLs, usually a single URL, in the
-:py:class:`~django_ca.extensions.CRLDistributionPoints` extension. Clients that support this extension can
-query the URL and refuse to establish a connection if the certificate is revoked.
+Certificates (including those for CAs) can contain pointers to CRLs, usually a single URL, in the CRL
+Distribution Points extension. Clients that support this extension can query the URL and refuse to establish a
+connection if the certificate is revoked.
 
 Since a CRL has to be signed by the issuing CA, root CAs cannot sensibly contain a CRL: You could only revoke
 the root CA with it, and it would have to be signed by the (compromised) root CA.

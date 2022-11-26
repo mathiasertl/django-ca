@@ -353,7 +353,7 @@ class GenericCAIssuersView(View):
     """Generic view that returns a CA public key in DER format.
 
     This view serves the URL named in the ``issuers`` key in the
-    :py:class:`~django_ca.extensions.AuthorityInformationAccess` extension.
+    :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension.
     """
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:

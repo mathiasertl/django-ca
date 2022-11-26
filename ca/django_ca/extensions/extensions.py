@@ -348,7 +348,7 @@ class CRLDistributionPoints(CRLDistributionPointsBase[x509.CRLDistributionPoints
     This extension identifies where a client can retrieve a Certificate Revocation List (CRL).
 
     The value passed to this extension should be a ``list`` of
-    :py:class:`~django_ca.extensions.utils.DistributionPoint` instances. Naturally, you can also pass those in
+    ``django_ca.extensions.utils.DistributionPoint`` instances. Naturally, you can also pass those in
     serialized form::
 
         >>> CRLDistributionPoints({'value': [
@@ -384,7 +384,7 @@ class CertificatePolicies(
     """Class representing a Certificate Policies extension.
 
     The value passed to this extension should be a ``list`` of
-    :py:class:`~django_ca.extensions.utils.PolicyInformation` instances. Naturally, you can also pass those in
+    ``django_ca.extensions.utils.PolicyInformation`` instances. Naturally, you can also pass those in
     serialized form::
 
         >>> CertificatePolicies({'value': [{
@@ -433,7 +433,7 @@ class CertificatePolicies(
 class FreshestCRL(CRLDistributionPointsBase[x509.FreshestCRL]):
     """Class representing a FreshestCRL extension.
 
-    This extension handles identically to the :py:class:`~django_ca.extensions.CRLDistributionPoints`
+    This extension handles identically to the ``django_ca.extensions.CRLDistributionPoints``
     extension::
 
         >>> FreshestCRL({'value': [
@@ -776,7 +776,7 @@ class NameConstraints(Extension[x509.NameConstraints, ParsableNameConstraints, S
 
     Unlike most other extensions, this extension does not accept a string as value, but you can pass a list
     containing the permitted/excluded subtrees as lists. Similar to
-    :py:class:`~django_ca.extensions.SubjectAlternativeName`, you can pass both strings or instances of
+    ``django_ca.extensions.SubjectAlternativeName``, you can pass both strings or instances of
     :py:class:`~cg:cryptography.x509.GeneralName`::
 
         >>> NameConstraints({'value': {
@@ -942,7 +942,7 @@ class PrecertificateSignedCertificateTimestamps(
 
     This class cannot be instantiated by anything but
     :py:class:`cg:cryptography.x509.PrecertificateSignedCertificateTimestamps`. Please see
-    :py:class:`~django_ca.extensions.base.SignedCertificateTimestampsBase` for more information.
+    ``django_ca.extensions.base.SignedCertificateTimestampsBase`` for more information.
     """
 
     # pylint: disable=abstract-method; methods that raise NotImplemented are recognized as abstract
@@ -1054,8 +1054,8 @@ class SubjectKeyIdentifier(Extension[x509.SubjectKeyIdentifier, ParsableSubjectK
 class TLSFeature(OrderedSetExtension[x509.TLSFeature, Union[TLSFeatureType, str], str, TLSFeatureType]):
     """Class representing a TLSFeature extension.
 
-    As a :py:class:`~django_ca.extensions.base.OrderedSetExtension`, this extension handles much like it's
-    other sister extensions::
+    As a ``django_ca.extensions.base.OrderedSetExtension``, this extension handles much like it's other sister
+    extensions::
 
         >>> TLSFeature({'value': ['OCSPMustStaple']})
         <TLSFeature: ['OCSPMustStaple'], critical=False>

@@ -252,9 +252,8 @@ class Profile:
 
         .. deprecated:: 1.22.0
 
-           * Passing a :py:class:`~django_ca.subject.Subject` as `subject` is now deprecated. The feature will
-             be removed in ``django_ca==1.24``. Pass a :py:class:`~cg:cryptography.x509.Name` instance
-             instead.
+           * Passing a ``~django_ca.subject.Subject`` as `subject` is now deprecated. The feature will be
+             removed in ``django_ca==1.24``. Pass a :py:class:`~cg:cryptography.x509.Name` instance instead.
            * Passing a ``dict`` for `extensions` is now deprecated, pass a list instead.
            * Passing ``django_ca.extensions.Extension`` in `extensions is now deprecated, pass regular
              :py:class:`~cg:cryptography.x509.Extension` objects instead.
@@ -288,10 +287,10 @@ class Profile:
             Override when this certificate will expire.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Override the hash algorithm used when signing the certificate.
-        extensions : list or of :py:class:`~django_ca.extensions.base.Extension`
-            List of additional extensions to set for the certificate. Note that values from the CA
-            might update the passed extensions: For example, if you pass an
-            :py:class:`~django_ca.extensions.IssuerAlternativeName` extension, *add_issuer_alternative_name*
+        extensions : list or of :py:class:`~cg:cryptography.x509.Extension`
+            List of additional extensions to set for the certificate. Note that values from the CA might
+            update the passed extensions: For example, if you pass an
+            :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension, *add_issuer_alternative_name*
             is ``True`` and the passed CA has an IssuerAlternativeName set, that value will be appended to the
             extension you pass here.
         cn_in_san : bool, optional

@@ -503,11 +503,11 @@ Deprecation notices
   is required for automated tasks where the private key is required.
 * Add ``CA_CRL_PROFILES`` setting to configure automatically generated CRLs. Note that this setting will
   likely be moved to a more general setting for automatic tasks in future releases.
-* :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` now also supports issuers and serials.
+* ``django_ca.extensions.AuthorityKeyIdentifier`` now also supports issuers and serials.
 * :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
   unchanged, but throws an error if the name isn't a ``str`` otherwise.
 * New class :py:class:`~django_ca.utils.GeneralNameList` for extensions that store a list of general names.
-* Add support for the :py:class:`~django_ca.extensions.FreshestCRL` extension.
+* Add support for the ``django_ca.extensions.FreshestCRL`` extension.
 * Store CA private keys in the ``ca/`` subdirectory by default, the directory can be configured using
   ``manage.py init_ca --path=...``.
 
@@ -587,16 +587,16 @@ Backwards incompatible changes
 * Drop support for idna 2.7.
 * Extensions now always expect a dict or a cryptography extension as a value.  Anything else was unused in
   practice.
-* :py:class:`~django_ca.extensions.KeyUsage`, :py:class:`~django_ca.extensions.ExtendedKeyUsage` and
-  :py:class:`~django_ca.extensions.TLSFeature` now behave like an ordered set and support all operators that a
-  set does.
+* ``django_ca.extensions.KeyUsage``, ``django_ca.extensions.ExtendedKeyUsage`` and
+  ``django_ca.extensions.TLSFeature`` now behave like an ordered set and support all operators that a set
+  does.
 * Running an OCSP responder using ``oscrypto``/``ocspbuilder`` is no longer supported.
 
 Extensions
 ==========
 
-* :py:class:`~django_ca.extensions.KeyUsage` is now marked as critical by default.
-* :py:class:`~django_ca.extensions.ExtendedKeyUsage` now supports the ``anyExtendedKeyUsage`` OID.
+* ``django_ca.extensions.KeyUsage`` is now marked as critical by default.
+* ``django_ca.extensions.ExtendedKeyUsage`` now supports the ``anyExtendedKeyUsage`` OID.
 
 Deprecation notices
 ===================
@@ -649,8 +649,8 @@ Deprecation Notices
 Extensions
 ==========
 
-* Implement the :py:class:`~django_ca.extensions.CRLDistributionPoints` extension and
-  :py:class:`~django_ca.extensions.CertificatePolicies` extension.
+* Implement the ``django_ca.extensions.CRLDistributionPoints`` extension and
+  ``django_ca.extensions.CertificatePolicies`` extension.
 * Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
   very rare and only occur in the "TrustID Server A52" CA.
 * Extensions now consistently serialize to dictionaries.
@@ -716,9 +716,9 @@ CRLs
 * Start using `Django storage backends <https://docs.djangoproject.com/en/2.1/ref/files/storage/>`_ for files
   used by django-ca. This allows you to store files on a shared storage system (e.g. one from `django-storages
   <https://django-storages.readthedocs.io/>`_) to support a redundant setup.
-* Add support for ``PrecertPoison`` and :py:class:`~django_ca.extensions.OCSPNoCheck` extensions.
-* Implement the :py:class:`~django_ca.extensions.PrecertificateSignedCertificateTimestamps` extension,
-  currently can only be used for reading existing certificates.
+* Add support for ``PrecertPoison`` and ``django_ca.extensions.OCSPNoCheck`` extensions.
+* Implement the ``django_ca.extensions.PrecertificateSignedCertificateTimestamps`` extension, currently can
+  only be used for reading existing certificates.
 * Optimize PrecertificateSignedCertificateTimestamps in Django admin view.
 * Make sure that all extensions are always hashable.
 * Switch Docker image to `Alpine Linux 3.9 <https://www.alpinelinux.org/posts/Alpine-3.9.0-released.html>`_.
@@ -794,18 +794,15 @@ Python API
   ``Certificate.objects.init()`` to ``subject_alternative_name`` to be consistent with other extensions.
 * Document how to use the ``name_constraints`` parameter in
   :py:meth:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`
-* Extensions can now always be passed as :py:class:`~django_ca.extensions.base.Extension` subclass or as any
+* Extensions can now always be passed as ``django_ca.extensions.base.Extension`` subclass or as any
   value accepted by the constructor of the specific class.
 * Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
 * :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal is only invoked after all parameters are verified.
-* Implement the
-  :py:class:`~django_ca.extensions.AuthorityInformationAccess`,
-  :py:class:`~django_ca.extensions.BasicConstraints`,
-  :py:class:`~django_ca.extensions.IssuerAlternativeName`,
-  :py:class:`~django_ca.extensions.SubjectAlternativeName` and
-  :py:class:`~django_ca.extensions.NameConstraints` extensions.
+* Implement the ``django_ca.extensions.AuthorityInformationAccess``,
+  ``django_ca.extensions.BasicConstraints``, ``django_ca.extensions.IssuerAlternativeName``,
+  ``django_ca.extensions.SubjectAlternativeName`` and ``django_ca.extensions.NameConstraints`` extensions.
 
 Testing
 =======
@@ -840,7 +837,7 @@ Python API
 ==========
 
 * Add the :doc:`Python API <python/intro>` as a fully supported interface to **django-ca**.
-* New module :py:mod:`django_ca.extensions` to allow easy and consistent handling of X509 extensions.
+* New module ``django_ca.extensions`` to allow easy and consistent handling of X509 extensions.
 * Fully document various member attributes of :py:class:`~django_ca.models.CertificateAuthority` and
   :py:class:`~django_ca.models.Certificate`, as well :py:class:`~django_ca.subject.Subject` and
   as all new Python code.

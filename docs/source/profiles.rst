@@ -118,16 +118,15 @@ Option                          Default   Description
 Configure extensions
 ====================
 
-Many extensions (such as :py:class:`~django_ca.extensions.AuthorityKeyIdentifier` and
-:py:class:`~django_ca.extensions.BasicConstraints`) are added by default since they are required to create a
-useful certificate. Further extensions (such as the :py:class:`~django_ca.extensions.CRLDistributionPoints`
-and :py:class:`~django_ca.extensions.AuthorityInformationAccess`) are added depending on the values for the CA
-you are using and the ``add_{...}_url`` settings described below.
+Many extensions (such as the Authority Key Identifier and Basic Constraints extensions) are added by default
+since they are required to create a useful certificate. Further extensions (such as the CRL Distribution
+Points and Authority Information Access) are added depending on the values for the CA you are using and the
+``add_{...}_url`` settings described below.
 
-You can define any extension defined in :ref:`the documentation <extensions>` in a profile. Use the ``key``
-as a dictionary key and a dictionary as a value describing the extension. All extensions use a ``value`` key
-to describe the extension value and an optional ``critical`` value to describe if the extension is marked as
-critical. For example, for the :py:class:`~django_ca.extensions.KeyUsage` extension, use::
+You can define any extension in a profile. Use the ``key`` as a dictionary key and a dictionary as a value
+describing the extension. All extensions use a ``value`` key to describe the extension value and an optional
+``critical`` value to describe if the extension is marked as critical. For example, for the Key Usage
+extension, use::
 
    CA_PROFILES = {
        'example': {
@@ -151,9 +150,8 @@ what you want, but there are some exceptions. For example, a certificate for an 
 include the OCSP URL, as it makes no sense to validate the OCSP responder certificate using the OCSP responder
 itself. The ``ocsp`` profile thus already sets ``add_ocsp_url`` to ``False``.
 
-If your profile defines a :py:class:`~django_ca.extensions.CRLDistributionPoints` or
-:py:class:`~django_ca.extensions.AuthorityInformationAccess`, CRL, OCSP and Issuer URLs from the CA will be
-appended if the ``add_..._url`` setting is ``True``.
+If your profile defines a CRL Distribution Points or Authority Information Access extension, CRL, OCSP and
+Issuer URLs from the CA will be appended if the ``add_..._url`` setting is ``True``.
 
 ***********************
 Update existing profile

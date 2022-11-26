@@ -366,9 +366,6 @@ class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType]
 class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
     """Action for AlternativeName extensions.
 
-    Arguments using this action expect an extra ``extension`` kwarg with a subclass of
-    :py:class:`~django_ca.extensions.AlternativeNameExtension`.
-
     >>> from django_ca.extensions import SubjectAlternativeName
     >>> parser.add_argument('--san', action=AlternativeNameAction,
     ...                     extension_type=x509.SubjectAlternativeName)  # doctest: +ELLIPSIS

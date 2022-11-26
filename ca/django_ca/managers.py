@@ -265,8 +265,7 @@ class CertificateAuthorityManager(
             Override the URLconfigured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
         pathlen : int, optional
-            Value of the path length attribute for the :py:class:`~django_ca.extensions.BasicConstraints`
-            extension.
+            Value of the path length attribute for the Basic Constraints extension.
         issuer_url : str
             URL for the DER/ASN1 formatted certificate that is signing certificates.
         issuer_alt_name : :py:class:`~cg:cryptography.x509.Extension`, optional
@@ -289,7 +288,7 @@ class CertificateAuthorityManager(
             List of general names to add to the permitted names of the NameConstraints extension.
         excluded_subtrees : list of x509.GeneralName, optional
             List of general names to add to the permitted names of the NameConstraints extension.
-        name_constraints : :py:class:`~django_ca.extensions.NameConstraints`
+        name_constraints ``django_ca.extensions.NameConstraints``
             Deprecated in favor of `permitted_subtrees` and `excluded_subtrees`.
         password : bytes or str, optional
             Password to encrypt the private key with.

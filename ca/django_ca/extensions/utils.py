@@ -46,7 +46,7 @@ class DistributionPoint:
     """Class representing a Distribution Point.
 
     This class is used internally by extensions that have a list of Distribution Points, e.g. the :
-    :py:class:`~django_ca.extensions.CRLDistributionPoints` extension. The class accepts either a
+    ``django_ca.extensions.CRLDistributionPoints`` extension. The class accepts either a
     :py:class:`cg:cryptography.x509.DistributionPoint` or a ``dict``. Note that in the latter case, you can
     also pass a list of ``str`` as ``full_name`` or ``crl_issuer``::
 
@@ -184,7 +184,7 @@ class DistributionPoint:
 class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
     """Class representing a PolicyInformation object.
 
-    This class is internally used by the :py:class:`~django_ca.extensions.CertificatePolicies` extension.
+    This class is internally used by the ``django_ca.extensions.CertificatePolicies`` extension.
 
     You can pass a :py:class:`~cg:cryptography.x509.PolicyInformation` instance or a dictionary representing
     that instance::
