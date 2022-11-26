@@ -290,24 +290,26 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
 
-    def assertCryptographyExtensionEqual(
+    def assertCryptographyExtensionEqual(  # pylint: disable=invalid-name
         self,
         first: x509.Extension[x509.ExtensionType],
         second: x509.Extension[x509.ExtensionType],
         msg: Optional[str] = None,
     ) -> None:
+        """Type equality function for x509.Extension."""
         # NOTE: Cryptography in name comes from overriding class in AbstractExtensionTestMixin
         #       remove once old wrapper classes are removed
         self.assertEqual(first.oid, second.oid, msg=msg)
-        self.assertEqual(first.critical, second.critical, msg=msg)
+        self.assertEqual(first.critical, second.critical, msg="critical is unequal.")
         self.assertEqual(first.value, second.value, msg=msg)
 
-    def assertExtendedKeyUsageEqual(
+    def assertExtendedKeyUsageEqual(  # pylint: disable=invalid-name
         self, first: x509.ExtendedKeyUsage, second: x509.ExtendedKeyUsage, msg: Optional[str] = None
     ) -> None:
+        """Type equality function for x509.ExtendedKeyUsage."""
         self.assertEqual(set(first), set(second), msg=msg)
 
-    def assertKeyUsageEqual(
+    def assertKeyUsageEqual(  # pylint: disable=invalid-name
         self, first: x509.KeyUsage, second: x509.KeyUsage, msg: Optional[str] = None
     ) -> None:
         """Type equality function for x509.KeyUsage."""
@@ -342,9 +344,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             msg = "KeyUsage extensions differ:"
         raise self.failureException(msg + "\n" + "\n".join(diffs))
 
-    def assertTLSFeatureEqual(
+    def assertTLSFeatureEqual(  # pylint: disable=invalid-name
         self, first: x509.TLSFeature, second: x509.TLSFeature, msg: Optional[str] = None
     ) -> None:
+        """Type equality function for x509.TLSFeature."""
         self.assertEqual(set(first), set(second), msg=msg)
 
     @contextmanager
@@ -488,9 +491,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertTrue(key.key_size > 0)
 
     @contextmanager
-    def assertRemovedExtensionWarning(
+    def assertRemovedExtensionWarning(  # pylint: disable=invalid-name
         self, name: str
-    ) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    ) -> typing.Iterator[None]:
         """Temporary manager for removed extension wrapper classes."""
         msg = rf"^django_ca\.extensions\.extensions\.{name} is deprecated and will be removed in django-ca 1\.24\.0\.$"  # NOQA
         with self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
@@ -894,6 +897,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def key_usage(self, **usages: bool) -> x509.Extension[x509.KeyUsage]:
         """Shortcut for getting a KeyUsage extension."""
+        critical = usages.pop("critical", True)
         usages.setdefault("content_commitment", False)
         usages.setdefault("crl_sign", False)
         usages.setdefault("data_encipherment", False)
@@ -903,7 +907,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         usages.setdefault("key_agreement", False)
         usages.setdefault("key_cert_sign", False)
         usages.setdefault("key_encipherment", False)
-        return x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=True, value=x509.KeyUsage(**usages))
+        return x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=critical, value=x509.KeyUsage(**usages))
 
     def name_constraints(
         self,

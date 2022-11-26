@@ -28,9 +28,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from .. import ca_settings
-from ..constants import ReasonFlags
+from ..constants import OID_DEFAULT_CRITICAL, ReasonFlags
 from ..extensions import OID_TO_KEY
+from ..extensions.utils import KEY_USAGE_NAMES_MAPPING
 from ..models import Certificate, CertificateAuthority
+from ..typehints import AlternativeNameExtensionType
 from ..utils import (
     is_power2,
     parse_encoding,
@@ -361,12 +363,6 @@ class ExtensionAction(argparse.Action):  # pylint: disable=abstract-method
     The namespace target will always be the extension key regardless of any option string, note how the
     extension is stored in ``key_usage`` and not in ``--ext``, as you would normally expect:
 
-    >>> from django_ca.extensions import KeyUsage
-    >>> parser.add_argument('--ext', action=OrderedSetExtensionAction,
-    ...                     extension=KeyUsage)  # doctest: +ELLIPSIS
-    OrderedSetExtensionAction(...)
-    >>> parser.parse_args(['--ext', 'critical,keyCertSign'])
-    Namespace(key_usage=<KeyUsage: ['key_cert_sign'], critical=True>)
     """
 
     def __init__(self, **kwargs: typing.Any) -> None:
@@ -381,12 +377,6 @@ class OrderedSetExtensionAction(ExtensionAction):
     Arguments using this action expect an extra ``extension`` kwarg with a subclass of
     :py:class:`~django_ca.extensions.OrderedSetExtension`.
 
-    >>> from django_ca.extensions import KeyUsage
-    >>> parser.add_argument('--ext', action=OrderedSetExtensionAction,
-    ...                     extension=KeyUsage)  # doctest: +ELLIPSIS
-    OrderedSetExtensionAction(...)
-    >>> parser.parse_args(['--ext', 'critical,keyCertSign'])
-    Namespace(key_usage=<KeyUsage: ['key_cert_sign'], critical=True>)
     """
 
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
@@ -416,15 +406,14 @@ class OrderedSetExtensionAction(ExtensionAction):
 class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType], metaclass=abc.ABCMeta):
     """Base class for actions that return a cryptography ExtensionType instance."""
 
-    def __init__(self, extension_type: typing.Type[ExtensionType], **kwargs: typing.Any) -> None:
-        self.extension_type = extension_type
-        kwargs["dest"] = OID_TO_KEY[extension_type.oid]
+    extension_type: typing.Type[ExtensionType]
+
+    def __init__(self, **kwargs: typing.Any) -> None:
+        kwargs["dest"] = OID_TO_KEY[self.extension_type.oid]
         super().__init__(**kwargs)
 
 
-class AlternativeNameAction(
-    CryptographyExtensionAction[typing.Union[x509.SubjectAlternativeName, x509.IssuerAlternativeName]]
-):
+class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
     """Action for AlternativeName extensions.
 
     Arguments using this action expect an extra ``extension`` kwarg with a subclass of
@@ -435,9 +424,17 @@ class AlternativeNameAction(
     ...                     extension_type=x509.SubjectAlternativeName)  # doctest: +ELLIPSIS
     AlternativeNameAction(...)
     >>> args = parser.parse_args(['--san', 'https://example.com'])
-    >>> args.subject_alternative_name
-    <SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>
+    >>> args.subject_alternative_name  # doctest: +NORMALIZE_WHITESPACE
+    <Extension(oid=<ObjectIdentifier(oid=2.5.29.17, name=subjectAltName)>,
+               critical=False,
+               value=<SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>)>
     """
+
+    def __init__(
+        self, extension_type: typing.Type[AlternativeNameExtensionType], **kwargs: typing.Any
+    ) -> None:
+        self.extension_type = extension_type
+        super().__init__(**kwargs)
 
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
         self,
@@ -446,12 +443,63 @@ class AlternativeNameAction(
         values: str,
         option_string: typing.Optional[str] = None,
     ) -> None:
-        ext_type = getattr(namespace, self.dest)
-        if ext_type is None:
+        ext = getattr(namespace, self.dest)
+        if ext is None:
             names = []
         else:
-            names = list(ext_type)
+            names = list(ext.value)
 
         names.append(parse_general_name(values))
-        value = self.extension_type(general_names=names)
-        setattr(namespace, self.dest, value)
+        extension_type = self.extension_type(general_names=names)
+        critical = OID_DEFAULT_CRITICAL[self.extension_type.oid]
+        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
+
+        setattr(namespace, self.dest, extension)
+
+
+class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
+    """Action for parsing a KeyUsage extension.
+
+    >>> parser.add_argument('--key-usage', action=KeyUsageAction)  # doctest: +ELLIPSIS
+    KeyUsageAction(...)
+    >>> args = parser.parse_args(['--key-usage', 'keyCertSign'])
+    >>> args.key_usage  # doctest: +NORMALIZE_WHITESPACE
+    <Extension(oid=<ObjectIdentifier(oid=2.5.29.15, name=keyUsage)>,
+               critical=False,
+               value=<KeyUsage(digital_signature=False,
+                               content_commitment=False,
+                               key_encipherment=False,
+                               data_encipherment=False,
+                               key_agreement=False,
+                               key_cert_sign=True,
+                               crl_sign=False,
+                               encipher_only=False,
+                               decipher_only=False)>)>
+
+    """
+
+    extension_type = x509.KeyUsage
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        ext_values = values.split(",")
+
+        if ext_values[0] == "critical":
+            critical = True
+            ext_values = ext_values[1:]
+        else:
+            critical = False
+
+        key_usages = {v: k in ext_values for k, v in KEY_USAGE_NAMES_MAPPING.items()}
+        try:
+            extension_type = x509.KeyUsage(**key_usages)
+        except ValueError as ex:
+            parser.error(str(ex))
+
+        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
+        setattr(namespace, self.dest, extension)

@@ -172,11 +172,13 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
 
     add_extensions_help = ""  # concrete classes should set this
     sign_extensions: typing.Set[typing.Type[typing.Union[TLSFeature, KeyUsage, ExtendedKeyUsage]]] = {
-        KeyUsage,
         ExtendedKeyUsage,
         TLSFeature,
     }
-    cg_sign_extensions: typing.Tuple[typing.Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName,)
+    cg_sign_extensions: typing.Tuple[typing.Type[x509.ExtensionType], ...] = (
+        x509.KeyUsage,
+        x509.SubjectAlternativeName,
+    )
     subject_help = ""  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> None:
@@ -230,8 +232,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         group.add_argument(
             "--key-usage",
             metavar="VALUES",
-            action=actions.OrderedSetExtensionAction,
-            extension=KeyUsage,
+            action=actions.KeyUsageAction,
             help='The keyUsage extension, e.g. "critical,keyCertSign".',
         )
         group.add_argument(

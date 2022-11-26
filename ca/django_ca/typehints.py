@@ -365,6 +365,7 @@ ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 # Collect Union[] typehints that occur multiple times, e.g. multiple x509.ExtensionType classes that behave
 # the same way. Typehints in this section are named "...Type".
 
+AlternativeNameExtensionType = Union[x509.SubjectAlternativeName, x509.IssuerAlternativeName]
 CRLExtensionType = Union[x509.FreshestCRL, x509.CRLDistributionPoints]
 InformationAccessExtensionType = Union[x509.AuthorityInformationAccess, x509.SubjectInformationAccess]
 SignedCertificateTimestampType = Union[

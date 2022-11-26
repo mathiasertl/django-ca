@@ -27,7 +27,6 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...constants import OID_DEFAULT_CRITICAL
 from ...extensions import OID_TO_KEY
 from ...management.base import BaseSignCommand
 from ...models import Certificate, CertificateAuthority, Watcher
@@ -131,10 +130,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         for cg_ext in self.cg_sign_extensions:
             ext_key = OID_TO_KEY[cg_ext.oid]
             if options[ext_key]:
-                ext_type = options[ext_key]
-                extensions.append(
-                    x509.Extension(critical=OID_DEFAULT_CRITICAL[cg_ext.oid], value=ext_type, oid=cg_ext.oid)
-                )
+                extensions.append(options[ext_key])
 
         cname = None
         if subject is not None:

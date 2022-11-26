@@ -467,10 +467,10 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
             ...
 
         @contextmanager
-        def assertRemovedExtensionWarning(
+        def assertRemovedExtensionWarning(  # pylint: disable=invalid-name
             self, name: str
-        ) -> typing.Iterator[None]:  # pylint: disable=invalid-name
-            ...
+        ) -> typing.Iterator[None]:
+            yield
 
     def assertIsCopy(
         # pylint: disable=invalid-name

@@ -88,13 +88,14 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
     ) -> None:
         """Assert a given extension value."""
 
-        self.assertEqual(getattr(namespace, OID_TO_KEY[x509.SubjectAlternativeName.oid]), value)
+        extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)
+        self.assertEqual(getattr(namespace, OID_TO_KEY[x509.SubjectAlternativeName.oid]), extension)
 
     def test_basic(self) -> None:
         """Test basic functionality."""
 
         namespace = self.parser.parse_args([])
-        self.assertValue(namespace, None)
+        self.assertEqual(namespace.subject_alternative_name, None)
 
         namespace = self.parser.parse_args(["--alt", "example.com"])
         self.assertValue(namespace, x509.SubjectAlternativeName([dns("example.com")]))
@@ -102,6 +103,40 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
         namespace = self.parser.parse_args(["--alt", "example.com", "--alt", "https://example.net"])
         self.assertValue(
             namespace, x509.SubjectAlternativeName([dns("example.com"), uri("https://example.net")])
+        )
+
+
+class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test KeyUsageAction."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("-k", dest="key_usage", action=actions.KeyUsageAction)
+
+    def test_basic(self) -> None:
+        namespace = self.parser.parse_args(["-k", "keyCertSign"])
+        self.assertEqual(self.key_usage(key_cert_sign=True, critical=False), namespace.key_usage)
+
+        namespace = self.parser.parse_args(["-k", "critical,keyCertSign"])
+        self.assertEqual(self.key_usage(key_cert_sign=True, critical=True), namespace.key_usage)
+
+        namespace = self.parser.parse_args(["-k", "keyCertSign,KeyAgreement"])
+        self.assertEqual(self.key_usage(key_cert_sign=True, critical=False), namespace.key_usage)
+
+        namespace = self.parser.parse_args(["-k", "critical,keyCertSign,KeyAgreement"])
+        self.assertEqual(self.key_usage(key_cert_sign=True, critical=True), namespace.key_usage)
+
+    def test_error(self) -> None:
+        self.assertParserError(
+            ["-k", "encipherOnly"],
+            "usage: dev.py [-h] [-k KEY_USAGE]\n"
+            "dev.py: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
+        )
+        self.assertParserError(
+            ["-k", "decipherOnly"],
+            "usage: dev.py [-h] [-k KEY_USAGE]\n"
+            "dev.py: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
         )
 
 

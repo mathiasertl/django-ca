@@ -509,7 +509,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             self.subject_alternative_name(dns(cname)),
         )
-        self.maxDiff = None
         self.assertExtensions(
             cert,
             [
