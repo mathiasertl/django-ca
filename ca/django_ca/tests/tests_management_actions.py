@@ -26,7 +26,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from django.test import TestCase
 
@@ -106,13 +106,52 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
         )
 
 
+class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test ExtendedKeyUsageAction."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--eku", action=actions.ExtendedKeyUsageAction)
+
+    def test_basic(self) -> None:
+        namespace = self.parser.parse_args([])
+        self.assertIsNone(namespace.extended_key_usage)
+
+        namespace = self.parser.parse_args(["--eku", "clientAuth"])
+        self.assertEqual(
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH), namespace.extended_key_usage
+        )
+
+        namespace = self.parser.parse_args(["--eku", "clientAuth,serverAuth"])
+        self.assertEqual(
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+            namespace.extended_key_usage,
+        )
+
+        namespace = self.parser.parse_args(["--eku", "critical,clientAuth,serverAuth"])
+        self.assertEqual(
+            self.extended_key_usage(
+                ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
+            ),
+            namespace.extended_key_usage,
+        )
+
+    def test_error(self) -> None:
+        self.assertParserError(
+            ["--eku", "FOO"],
+            "usage: dev.py [-h] [--eku EXTENDED_KEY_USAGE]\n"
+            "dev.py: error: Unknown ExtendedKeyUsage: FOO\n",
+        )
+
+
 class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     """Test KeyUsageAction."""
 
     def setUp(self) -> None:
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("-k", dest="key_usage", action=actions.KeyUsageAction)
+        self.parser.add_argument("-k", action=actions.KeyUsageAction)
 
     def test_basic(self) -> None:
         namespace = self.parser.parse_args(["-k", "keyCertSign"])

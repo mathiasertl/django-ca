@@ -30,7 +30,7 @@ from django.core.validators import URLValidator
 from .. import ca_settings
 from ..constants import OID_DEFAULT_CRITICAL, ReasonFlags
 from ..extensions import OID_TO_KEY
-from ..extensions.utils import KEY_USAGE_NAMES_MAPPING
+from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES_MAPPING
 from ..models import Certificate, CertificateAuthority
 from ..typehints import AlternativeNameExtensionType
 from ..utils import (
@@ -454,6 +454,51 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
         critical = OID_DEFAULT_CRITICAL[self.extension_type.oid]
         extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
 
+        setattr(namespace, self.dest, extension)
+
+
+class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage]):
+    """Action for parsing an ExtendedKeyUsage extension.
+
+    >>> parser.add_argument('--extended-key-usage', action=ExtendedKeyUsageAction)  # doctest: +ELLIPSIS
+    ExtendedKeyUsageAction(...)
+    >>> args = parser.parse_args(['--extended-key-usage', 'serverAuth,clientAuth'])
+    >>> args.extended_key_usage  # doctest: +NORMALIZE_WHITESPACE
+    <Extension(oid=<ObjectIdentifier(oid=2.5.29.37, name=extendedKeyUsage)>,
+               critical=False,
+               value=<ExtendedKeyUsage([<ObjectIdentifier(oid=1.3.6.1.5.5.7.3.1, name=serverAuth)>,
+                                        <ObjectIdentifier(oid=1.3.6.1.5.5.7.3.2, name=clientAuth)>])>)>
+    """
+
+    extension_type = x509.ExtendedKeyUsage
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: typing.Optional[str] = None,
+    ) -> None:
+        ext_values = values.split(",")
+
+        if ext_values[0] == "critical":
+            critical = True
+            ext_values = ext_values[1:]
+        else:
+            critical = False
+
+        mapping = {v: k for k, v in EXTENDED_KEY_USAGE_NAMES.items()}
+
+        try:
+            usages = [mapping[value] for value in ext_values]
+        except KeyError as ex:
+            parser.error(f"Unknown ExtendedKeyUsage: {ex.args[0]}")
+
+        # Sort to get more predictable output
+        usages = sorted(usages, key=lambda oid: oid.dotted_string)
+
+        extension_type = x509.ExtendedKeyUsage(usages)
+        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
         setattr(namespace, self.dest, extension)
 
 
