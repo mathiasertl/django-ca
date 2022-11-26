@@ -9,6 +9,5 @@ pip>=21.3
 
 tox>=3.27.1
 
-termcolor==2.1.0
 toml>=0.10.2
 wheel-inspect
