@@ -45,6 +45,8 @@ from .extensions import (
     TLSFeature,
 )
 from .parse import parse_extension
+from .serialize import serialize_extension
+from .text import extension_as_text
 
 # NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
 KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {
@@ -114,8 +116,10 @@ def get_extension_name(oid: x509.ObjectIdentifier) -> str:
 
 
 __all__ = [
+    "extension_as_text",
     "get_extension_name",
     "parse_extension",
+    "serialize_extension",
     "Extension",
     "AuthorityInformationAccess",
     "AuthorityKeyIdentifier",

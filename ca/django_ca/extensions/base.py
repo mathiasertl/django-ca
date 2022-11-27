@@ -66,7 +66,8 @@ from ..typehints import (
     UnrecognizedExtensionType,
 )
 from ..utils import GeneralNameList, format_general_name
-from .utils import DistributionPoint, extension_as_text
+from .text import extension_as_text
+from .utils import DistributionPoint
 
 
 class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=abc.ABCMeta):

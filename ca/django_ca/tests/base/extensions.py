@@ -34,14 +34,11 @@ from ...extensions import (
     Extension,
     FreshestCRL,
     parse_extension,
+    serialize_extension,
+    extension_as_text,
 )
 from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
-from ...extensions.utils import (
-    DistributionPoint,
-    extension_as_admin_html,
-    extension_as_text,
-    serialize_extension,
-)
+from ...extensions.utils import DistributionPoint, extension_as_admin_html
 from ...models import X509CertMixin
 from ...typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension, TypedDict
 from . import dns, rdn, uri

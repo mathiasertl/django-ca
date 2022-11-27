@@ -24,8 +24,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from .. import ca_settings
-from ..extensions import get_extension_name
-from ..extensions.utils import extension_as_text
+from ..extensions import extension_as_text, get_extension_name
 from ..models import CertificateAuthority, X509CertMixin
 from ..utils import add_colons
 from . import actions

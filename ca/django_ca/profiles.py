@@ -26,8 +26,15 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 from . import ca_settings
 from .constants import OID_DEFAULT_CRITICAL
 from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
-from .extensions import KEY_TO_EXTENSION, KEY_TO_OID, OID_TO_EXTENSION, OID_TO_KEY, Extension, parse_extension
-from .extensions.utils import serialize_extension
+from .extensions import (
+    KEY_TO_EXTENSION,
+    KEY_TO_OID,
+    OID_TO_EXTENSION,
+    OID_TO_KEY,
+    Extension,
+    parse_extension,
+    serialize_extension,
+)
 from .signals import pre_issue_cert, pre_sign_cert
 from .subject import Subject
 from .typehints import (

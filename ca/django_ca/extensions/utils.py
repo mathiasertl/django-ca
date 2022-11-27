@@ -13,15 +13,12 @@
 
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
-import binascii
-import textwrap
 import typing
-from typing import Any, FrozenSet, Iterable, List, Optional, Set, Union
+from typing import Any, FrozenSet, Iterable, List, Optional, Set, Tuple, Union
 
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
-from cryptography.x509.oid import AuthorityInformationAccessOID
 from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 
 from django.template.loader import render_to_string
@@ -33,7 +30,6 @@ from ..typehints import (
     ParsablePolicyInformation,
     ParsablePolicyQualifier,
     PolicyQualifier,
-    SerializedExtension,
     SerializedPolicyInformation,
     SerializedPolicyQualifier,
     SerializedPolicyQualifiers,
@@ -72,9 +68,9 @@ class DistributionPoint:
         `RFC 5280, section 4.2.1.13 <https://tools.ietf.org/html/rfc5280#section-4.2.1.13>`_
     """
 
-    full_name: Optional[typing.List[x509.GeneralName]] = None
+    full_name: Optional[List[x509.GeneralName]] = None
     relative_name: Optional[x509.RelativeDistinguishedName] = None
-    crl_issuer: Optional[typing.List[x509.GeneralName]] = None
+    crl_issuer: Optional[List[x509.GeneralName]] = None
     reasons: Optional[Set[x509.ReasonFlags]] = None
 
     def __init__(
@@ -297,11 +293,11 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
 
     def __setitem__(
         self,
-        key: typing.Union[int, slice],
-        value: typing.Union[ParsablePolicyQualifier, typing.Iterable[ParsablePolicyQualifier]],
+        key: Union[int, slice],
+        value: Union[ParsablePolicyQualifier, Iterable[ParsablePolicyQualifier]],
     ) -> None:
         """Implement item getter (e.g ``pi[0]`` or ``pi[0:1]``)."""
-        if isinstance(key, slice) and isinstance(value, typing.Iterable):
+        if isinstance(key, slice) and isinstance(value, Iterable):
             qualifiers = [self._parse_policy_qualifier(v) for v in value]
             if self.policy_qualifiers is None:
                 self.policy_qualifiers = []
@@ -578,187 +574,13 @@ LOG_ENTRY_TYPE_MAPPING = {
 }
 
 
-def _authority_information_access_as_text(value: typehints.InformationAccessExtensionType) -> str:
-    lines = []
-    issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
-    ocsp = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.OCSP]
-    if issuers:
-        lines.append("CA Issuers:")
-        lines += [f"  * {format_general_name(ad.access_location)}" for ad in issuers]
-    if ocsp:
-        lines.append("OCSP:")
-        lines += [f"  * {format_general_name(ad.access_location)}" for ad in ocsp]
-    return "\n".join(lines)
+def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
+    """Convert an extension to HTML code suitable for the admin interface."""
+    template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
+    if isinstance(extension.value, x509.UnrecognizedExtension):
+        template = "django_ca/admin/extensions/unrecognized_extension.html"
 
-
-def _authority_information_access_serialized(
-    value: typehints.InformationAccessExtensionType,
-) -> typing.Dict[str, typing.List[str]]:
-    descriptions = {}
-    issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
-    ocsp = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.OCSP]
-    if issuers:
-        descriptions["issuers"] = [format_general_name(ad.access_location) for ad in issuers]
-    if ocsp:
-        descriptions["ocsp"] = [format_general_name(ad.access_location) for ad in ocsp]
-    return descriptions
-
-
-def _authority_key_identifier_as_text(value: x509.AuthorityKeyIdentifier) -> str:
-    lines = []
-    if value.key_identifier:
-        lines.append(f"* KeyID: {bytes_to_hex(value.key_identifier)}")
-    if value.authority_cert_issuer:
-        lines.append("* Issuer:")
-        lines += [f"  * {format_general_name(aci)}" for aci in value.authority_cert_issuer]
-    if value.authority_cert_serial_number is not None:
-        lines.append(f"* Serial: {value.authority_cert_serial_number}")
-    return "\n".join(lines)
-
-
-def _authority_key_identifier_serialized(
-    value: x509.AuthorityKeyIdentifier,
-) -> typehints.SerializedAuthorityKeyIdentifier:
-    serialized: typehints.SerializedAuthorityKeyIdentifier = {}
-    if value.key_identifier:
-        serialized["key_identifier"] = bytes_to_hex(value.key_identifier)
-    if value.authority_cert_serial_number is not None:
-        serialized["authority_cert_serial_number"] = value.authority_cert_serial_number
-    if value.authority_cert_issuer:
-        serialized["authority_cert_issuer"] = [
-            format_general_name(aci) for aci in value.authority_cert_issuer
-        ]
-    return serialized
-
-
-def _basic_constraints_as_text(value: x509.BasicConstraints) -> str:
-    if value.ca is True:
-        text = "CA:TRUE"
-    else:
-        text = "CA:FALSE"
-    if value.path_length is not None:
-        text += f", pathlen:{value.path_length}"
-
-    return text
-
-
-def _basic_constraints_serialized(value: x509.BasicConstraints) -> typehints.SerializedBasicConstraints:
-    serialized: typehints.SerializedBasicConstraints = {"ca": value.ca}
-    if value.ca is True:
-        serialized["pathlen"] = value.path_length
-    return serialized
-
-
-def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
-    lines = []
-
-    # pylint: disable-next=too-many-nested-blocks
-    for policy in value:
-        lines.append(f"* Policy Identifier: {policy.policy_identifier.dotted_string}")
-
-        if policy.policy_qualifiers:
-            lines.append("  Policy Qualifiers:")
-            for qualifier in policy.policy_qualifiers:
-                if isinstance(qualifier, str):
-                    lines += textwrap.wrap(qualifier, 76, initial_indent="  * ", subsequent_indent="    ")
-                else:
-                    lines.append("  * User Notice:")
-                    if qualifier.explicit_text:
-                        lines += textwrap.wrap(
-                            f"Explicit Text: {qualifier.explicit_text}\n",
-                            initial_indent="    * ",
-                            subsequent_indent="        ",
-                            width=76,
-                        )
-                    if qualifier.notice_reference:
-                        lines.append("    * Notice Reference:")
-                        if qualifier.notice_reference.organization:  # pragma: no branch
-                            lines.append(f"      * Organization: {qualifier.notice_reference.organization}")
-                        if qualifier.notice_reference.notice_numbers:
-                            lines.append(
-                                f"      * Notice Numbers: {qualifier.notice_reference.notice_numbers}"
-                            )
-        else:
-            lines.append("  No Policy Qualifiers")
-    return "\n".join(lines)
-
-
-def _serialize_policy_qualifier(qualifier: PolicyQualifier) -> SerializedPolicyQualifier:
-    if isinstance(qualifier, str):
-        return qualifier
-
-    value: SerializedUserNotice = {}
-    if qualifier.explicit_text:
-        value["explicit_text"] = qualifier.explicit_text
-
-    if qualifier.notice_reference is not None:
-        value["notice_reference"] = {
-            "notice_numbers": qualifier.notice_reference.notice_numbers,
-        }
-        if qualifier.notice_reference.organization is not None:
-            value["notice_reference"]["organization"] = qualifier.notice_reference.organization
-    return value
-
-
-def _serialize_policy_information(policy_information: x509.PolicyInformation) -> SerializedPolicyInformation:
-    policy_qualifiers: typing.Optional[SerializedPolicyQualifiers] = None
-    if policy_information.policy_qualifiers is not None:
-        policy_qualifiers = [_serialize_policy_qualifier(q) for q in policy_information.policy_qualifiers]
-
-    serialized: SerializedPolicyInformation = {
-        "policy_identifier": policy_information.policy_identifier.dotted_string,
-        "policy_qualifiers": policy_qualifiers,
-    }
-    return serialized
-
-
-def _certificate_policies_serialized(
-    value: x509.CertificatePolicies,
-) -> typing.List[SerializedPolicyInformation]:
-    return [_serialize_policy_information(pi) for pi in value]
-
-
-def _distribution_points_as_text(value: typehints.CRLExtensionType) -> str:
-    lines = []
-    for dpoint in value:
-        lines.append("* DistributionPoint:")
-
-        if dpoint.full_name:
-            lines.append("  * Full Name:")
-            lines += [f"    * {format_general_name(name)}" for name in dpoint.full_name]
-        elif dpoint.relative_name:
-            lines.append(f"  * Relative Name: {format_name(dpoint.relative_name)}")
-        else:  # pragma: no cover; either full_name or relative_name must be not-None.
-            raise ValueError("Either full_name or relative_name must be not None.")
-
-        if dpoint.crl_issuer:
-            lines.append("  * CRL Issuer:")
-            lines += [f"    * {format_general_name(issuer)}" for issuer in dpoint.crl_issuer]
-        if dpoint.reasons:
-            reasons = ", ".join(sorted([r.name for r in dpoint.reasons]))
-            lines.append(f"  * Reasons: {reasons}")
-    return "\n".join(lines)
-
-
-def _distribution_points_serialized(
-    value: typehints.CRLExtensionType,
-) -> typing.List[typehints.SerializedDistributionPoint]:
-    points: typing.List[typehints.SerializedDistributionPoint] = []
-
-    for dpoint in value:
-        point: typehints.SerializedDistributionPoint = {}
-        if dpoint.full_name:
-            point["full_name"] = [format_general_name(name) for name in dpoint.full_name]
-        elif dpoint.relative_name:  # pragma: no branch  # Distribution Point has only these two
-            point["relative_name"] = format_name(dpoint.relative_name)
-
-        if dpoint.crl_issuer:
-            point["crl_issuer"] = [format_general_name(name) for name in dpoint.crl_issuer]
-        if dpoint.reasons:
-            point["reasons"] = sorted([r.name for r in dpoint.reasons])
-
-        points.append(point)
-    return points
+    return render_to_string([template], context={"extension": extension, "x509": x509})
 
 
 def key_usage_items(value: x509.KeyUsage) -> typing.Iterator[str]:
@@ -772,62 +594,7 @@ def key_usage_items(value: x509.KeyUsage) -> typing.Iterator[str]:
             pass
 
 
-def _key_usage_as_text(value: x509.KeyUsage) -> str:
-    return "\n".join(f"* {name}" for name in sorted(key_usage_items(value)))
-
-
-def _key_usage_serialized(value: x509.KeyUsage) -> typing.List[str]:
-    values: typing.List[str] = []
-    for attr in KEY_USAGE_NAMES:
-        try:
-            if getattr(value, attr):
-                values.append(attr)
-        except ValueError:
-            # x509.KeyUsage raises ValueError on some attributes to ensure consistency
-            pass
-    return sorted(values)
-
-
-def _name_constraints_as_text(value: x509.NameConstraints) -> str:
-    lines = []
-    if value.permitted_subtrees:
-        lines.append("Permitted:")
-        lines += [f"  * {format_general_name(name)}" for name in value.permitted_subtrees]
-    if value.excluded_subtrees:
-        lines.append("Excluded:")
-        lines += [f"  * {format_general_name(name)}" for name in value.excluded_subtrees]
-    return "\n".join(lines)
-
-
-def _name_constraints_serialized(value: x509.NameConstraints) -> typehints.SerializedNameConstraints:
-    serialized: typehints.SerializedNameConstraints = {}
-    if value.permitted_subtrees:
-        serialized["permitted"] = [format_general_name(name) for name in value.permitted_subtrees]
-    if value.excluded_subtrees:
-        serialized["excluded"] = [format_general_name(name) for name in value.excluded_subtrees]
-    return serialized
-
-
-def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
-    lines = []
-    if value.inhibit_policy_mapping is not None:
-        lines.append(f"* InhibitPolicyMapping: {value.inhibit_policy_mapping}")
-    if value.require_explicit_policy is not None:
-        lines.append(f"* RequireExplicitPolicy: {value.require_explicit_policy}")
-
-    return "\n".join(lines)
-
-
-def _policy_constraints_serialized(value: x509.PolicyConstraints) -> typehints.SerializedPolicyConstraints:
-    serialized: typehints.SerializedPolicyConstraints = {}
-    if value.inhibit_policy_mapping is not None:
-        serialized["inhibit_policy_mapping"] = value.inhibit_policy_mapping
-    if value.require_explicit_policy is not None:
-        serialized["require_explicit_policy"] = value.require_explicit_policy
-    return serialized
-
-
-def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> typing.Tuple[str, str, str, str]:
+def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> Tuple[str, str, str, str]:
     """Get values from a SignedCertificateTimestamp as a tuple of strings."""
     if sct.entry_type == LogEntryType.PRE_CERTIFICATE:
         entry_type = "Precertificate"
@@ -836,151 +603,3 @@ def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> typi
     else:  # pragma: no cover  # We support everything that has been specified so far
         entry_type = "unknown"
     return entry_type, sct.version.name, bytes_to_hex(sct.log_id), sct.timestamp.isoformat(" ")
-
-
-def _signed_certificate_timestamps_as_text(value: typehints.SignedCertificateTimestampType) -> str:
-    lines = []
-    for sct in value:
-        entry_type, version, log_id, timestamp = signed_certificate_timestamp_values(sct)
-
-        lines += [
-            f"* {entry_type} ({version}):",
-            f"    Timestamp: {timestamp}",
-            f"    Log ID: {log_id}",
-        ]
-
-    return "\n".join(lines)
-
-
-def _signed_certificate_timestamps_serialized(
-    value: typehints.SignedCertificateTimestampType,
-) -> typing.List[typehints.SerializedSignedCertificateTimestamp]:
-    timeformat = "%Y-%m-%d %H:%M:%S.%f"
-    return [
-        {
-            "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
-            "timestamp": sct.timestamp.strftime(timeformat),
-            "type": LOG_ENTRY_TYPE_MAPPING[sct.entry_type],
-            "version": sct.version.name,
-        }
-        for sct in value
-    ]
-
-
-def _tls_feature_as_text(value: x509.TLSFeature) -> str:
-    lines = []
-    for feature in value:
-        if feature == x509.TLSFeatureType.status_request:
-            lines.append("* OCSPMustStaple")
-        elif feature == x509.TLSFeatureType.status_request_v2:
-            lines.append("* MultipleCertStatusRequest")
-        else:  # pragma: no cover
-            # COVERAGE NOTE: we support all types, so this should never be raised. The descriptive error
-            # message is just here in case a new thing ever comes up.
-            raise ValueError(f"Unknown TLSFeatureType encountered: {feature}")
-    return "\n".join(sorted(lines))
-
-
-def _tls_feature_serialized(value: x509.TLSFeature) -> typing.List[str]:
-    serialized: typing.List[str] = [feature.name for feature in value]
-    return serialized
-
-
-def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-many-return-statements
-    """Return the given extension value as human-readable text."""
-    if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
-        return "Yes"  # no need for extra function
-    if isinstance(value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
-        return _distribution_points_as_text(value)
-    if isinstance(value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
-        return "\n".join(f"* {format_general_name(name)}" for name in value)
-    if isinstance(value, (x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps)):
-        return _signed_certificate_timestamps_as_text(value)
-    if isinstance(value, (x509.AuthorityInformationAccess, x509.SubjectInformationAccess)):
-        return _authority_information_access_as_text(value)
-    if isinstance(value, x509.AuthorityKeyIdentifier):
-        return _authority_key_identifier_as_text(value)
-    if isinstance(value, x509.BasicConstraints):
-        return _basic_constraints_as_text(value)
-    if isinstance(value, x509.CertificatePolicies):
-        return _certificate_policies_as_text(value)
-    if isinstance(value, x509.ExtendedKeyUsage):
-        return "\n".join(sorted(f"* {EXTENDED_KEY_USAGE_NAMES[usage]}" for usage in value))
-    if isinstance(value, x509.InhibitAnyPolicy):
-        return str(value.skip_certs)
-    if isinstance(value, x509.KeyUsage):
-        return _key_usage_as_text(value)
-    if isinstance(value, x509.NameConstraints):
-        return _name_constraints_as_text(value)
-    if isinstance(value, x509.PolicyConstraints):
-        return _policy_constraints_as_text(value)
-    if isinstance(value, x509.SubjectKeyIdentifier):
-        return bytes_to_hex(value.key_identifier)
-    if isinstance(value, x509.TLSFeature):
-        return _tls_feature_as_text(value)
-    if isinstance(value, x509.UnrecognizedExtension):
-        return bytes_to_hex(value.value)
-    if isinstance(value, x509.ExtensionType):
-        raise TypeError(
-            f"{value.__class__.__name__} (oid: {value.oid.dotted_string}): Unknown extension type."
-        )
-    raise TypeError(f"{value.__class__.__name__}: Not a cryptography.x509.ExtensionType.")
-
-
-def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
-    """Convert an extension to HTML code suitable for the admin interface."""
-    template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
-    if isinstance(extension.value, x509.UnrecognizedExtension):
-        template = "django_ca/admin/extensions/unrecognized_extension.html"
-
-    return render_to_string([template], context={"extension": extension, "x509": x509})
-
-
-def _serialize_extension(  # pylint: disable=too-many-return-statements
-    value: x509.ExtensionType,
-) -> typing.Any:
-    if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
-        return None
-    if isinstance(value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
-        return [format_general_name(name) for name in value]
-    if isinstance(value, (x509.AuthorityInformationAccess, x509.SubjectInformationAccess)):
-        return _authority_information_access_serialized(value)
-    if isinstance(value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
-        return _distribution_points_serialized(value)
-    if isinstance(value, (x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps)):
-        return _signed_certificate_timestamps_serialized(value)
-    if isinstance(value, x509.AuthorityKeyIdentifier):
-        return _authority_key_identifier_serialized(value)
-    if isinstance(value, x509.BasicConstraints):
-        return _basic_constraints_serialized(value)
-    if isinstance(value, x509.CertificatePolicies):
-        return _certificate_policies_serialized(value)
-    if isinstance(value, x509.ExtendedKeyUsage):
-        return sorted([EXTENDED_KEY_USAGE_NAMES[usage] for usage in value])
-    if isinstance(value, x509.InhibitAnyPolicy):
-        return value.skip_certs
-    if isinstance(value, x509.KeyUsage):
-        return _key_usage_serialized(value)
-    if isinstance(value, x509.NameConstraints):
-        return _name_constraints_serialized(value)
-    if isinstance(value, x509.PolicyConstraints):
-        return _policy_constraints_serialized(value)
-    if isinstance(value, x509.SubjectKeyIdentifier):
-        return bytes_to_hex(value.key_identifier)
-    if isinstance(value, x509.TLSFeature):
-        return _tls_feature_serialized(value)
-    if isinstance(value, x509.UnrecognizedExtension):
-        return bytes_to_hex(value.value)
-    if isinstance(value, x509.ExtensionType):
-        raise TypeError(
-            f"{value.__class__.__name__} (oid: {value.oid.dotted_string}): Unknown extension type."
-        )
-    raise TypeError(f"{value.__class__.__name__}: Not a cryptography.x509.ExtensionType.")
-
-
-def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> SerializedExtension:
-    """Serialize an extension to a dictionary."""
-
-    value = _serialize_extension(extension.value)
-    serialized: SerializedExtension = {"critical": extension.critical, "value": value}
-    return serialized

@@ -56,7 +56,7 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 from ... import ca_settings
 from ...constants import ReasonFlags
 from ...deprecation import RemovedInDjangoCA124Warning
-from ...extensions.utils import extension_as_text
+from ...extensions import extension_as_text
 from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from ...signals import (
     post_create_ca,

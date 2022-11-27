@@ -55,8 +55,14 @@ from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
 from .constants import OID_DEFAULT_CRITICAL, ReasonFlags
-from .extensions import CERTIFICATE_EXTENSIONS, KEY_TO_OID, OID_TO_KEY, get_extension_name
-from .extensions.utils import extension_as_admin_html, serialize_extension
+from .extensions import (
+    CERTIFICATE_EXTENSIONS,
+    KEY_TO_OID,
+    OID_TO_KEY,
+    get_extension_name,
+    serialize_extension,
+)
+from .extensions.utils import extension_as_admin_html
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
     AcmeAccount,

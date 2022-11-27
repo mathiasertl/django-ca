@@ -51,15 +51,12 @@ from ..extensions import (
     SubjectAlternativeName,
     SubjectKeyIdentifier,
     TLSFeature,
-    parse_extension,
-)
-from ..extensions.base import UnrecognizedExtension
-from ..extensions.utils import (
-    PolicyInformation,
-    extension_as_admin_html,
     extension_as_text,
+    parse_extension,
     serialize_extension,
 )
+from ..extensions.base import UnrecognizedExtension
+from ..extensions.utils import PolicyInformation, extension_as_admin_html
 from ..models import X509CertMixin
 from ..typehints import ParsablePolicyInformation
 from ..utils import GeneralNameList

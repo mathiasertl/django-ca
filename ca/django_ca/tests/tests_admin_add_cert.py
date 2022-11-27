@@ -38,7 +38,8 @@ from webtest import Submit
 
 from .. import ca_settings
 from ..constants import OID_DEFAULT_CRITICAL
-from ..extensions.utils import ExtendedKeyUsageOID, serialize_extension
+from ..extensions import serialize_extension
+from ..extensions.utils import ExtendedKeyUsageOID
 from ..fields import CertificateSigningRequestField
 from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, profiles
