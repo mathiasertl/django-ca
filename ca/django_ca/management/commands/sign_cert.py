@@ -27,7 +27,7 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...extensions import OID_TO_KEY
+from ...constants import EXTENSION_KEYS
 from ...management.base import BaseSignCommand
 from ...models import Certificate, CertificateAuthority, Watcher
 from ...profiles import profiles
@@ -125,7 +125,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         extensions: typing.List[x509.Extension[x509.ExtensionType]] = []
 
         for ext_type in self.sign_extensions:
-            ext_key = OID_TO_KEY[ext_type.oid]
+            ext_key = EXTENSION_KEYS[ext_type.oid]
             if options[ext_key]:
                 extensions.append(options[ext_key])
 

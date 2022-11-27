@@ -19,11 +19,11 @@ from typing import Any, FrozenSet, Iterable, List, Optional, Set, Tuple, Union
 from cryptography import x509
 from cryptography.x509 import ObjectIdentifier
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
-from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 
 from django.template.loader import render_to_string
 
 from .. import typehints
+from ..constants import KEY_USAGE_NAMES
 from ..typehints import (
     ParsableDistributionPoint,
     ParsablePolicyIdentifier,
@@ -473,91 +473,6 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         }
 
 
-class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
-    """Extend the OIDs known to cryptography with what users needed over the years."""
-
-    # Defined in RFC 3280, occurs in TrustID Server A52 CA
-    IPSEC_END_SYSTEM = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.5")
-    IPSEC_TUNNEL = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6")
-    IPSEC_USER = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
-
-    # Used by PKINIT logon on Windows (see  github #46)
-    SMARTCARD_LOGON = x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2")
-    KERBEROS_CONSTRAINED_DELEGATION = x509.ObjectIdentifier("1.3.6.1.5.2.3.5")  # or msKCD
-
-    # mobilee Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
-    MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
-    MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
-
-
-# ExtendedKeyUsageOID.IPSEC_IKE should be statically integrated into EXTENDED_KEY_USAGE_NAMES once support for
-# cryptography<37.0 is dropped.
-if hasattr(ExtendedKeyUsageOID, "IPSEC_IKE"):  # pragma: only cryptography>=37.0
-    _ipsec_ike_oid = ExtendedKeyUsageOID.IPSEC_IKE
-else:  # pragma: only cryptography<37.0
-    _ipsec_ike_oid = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.17")
-
-
-# ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY should be statically integrated into EXTENDED_KEY_USAGE_NAMES
-# once support for cryptography<39.0 is dropped.
-if hasattr(ExtendedKeyUsageOID, "CERTIFICATE_TRANSPARENCY"):  # pragma: only cryptography>=38.0
-    _certificate_transparency_oid = ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY
-else:  # pragma: only cryptography<38.0
-    _certificate_transparency_oid = x509.ObjectIdentifier("1.3.6.1.4.1.11129.2.4.4")
-    ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY = _certificate_transparency_oid
-
-EXTENDED_KEY_USAGE_NAMES = {
-    ExtendedKeyUsageOID.SERVER_AUTH: "serverAuth",
-    ExtendedKeyUsageOID.CLIENT_AUTH: "clientAuth",
-    ExtendedKeyUsageOID.CODE_SIGNING: "codeSigning",
-    ExtendedKeyUsageOID.EMAIL_PROTECTION: "emailProtection",
-    ExtendedKeyUsageOID.TIME_STAMPING: "timeStamping",
-    ExtendedKeyUsageOID.OCSP_SIGNING: "OCSPSigning",
-    ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "anyExtendedKeyUsage",
-    ExtendedKeyUsageOID.SMARTCARD_LOGON: "smartcardLogon",
-    ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION: "msKDC",
-    ExtendedKeyUsageOID.IPSEC_END_SYSTEM: "ipsecEndSystem",
-    ExtendedKeyUsageOID.IPSEC_TUNNEL: "ipsecTunnel",
-    ExtendedKeyUsageOID.IPSEC_USER: "ipsecUser",
-    ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
-    ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
-    _ipsec_ike_oid: "ipsecIKE",
-    _certificate_transparency_oid: "certificateTransparency",
-}
-
-# TODO: rename this to the above
-# TOOD: validate completeness in unit test
-EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = {
-    ExtendedKeyUsageOID.SERVER_AUTH: "SSL/TLS Web Server Authentication",
-    ExtendedKeyUsageOID.CLIENT_AUTH: "SSL/TLS Web Client Authentication",
-    ExtendedKeyUsageOID.CODE_SIGNING: "Code signing",
-    ExtendedKeyUsageOID.EMAIL_PROTECTION: "E-mail Protection (S/MIME)",
-    ExtendedKeyUsageOID.TIME_STAMPING: "Trusted Timestamping",
-    ExtendedKeyUsageOID.OCSP_SIGNING: "OCSP Signing",
-    ExtendedKeyUsageOID.SMARTCARD_LOGON: "Smart card logon",
-    ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION: "Kerberos Domain Controller",
-    ExtendedKeyUsageOID.IPSEC_END_SYSTEM: "IPSec EndSystem",
-    _ipsec_ike_oid: "IPSec Internet Key Exchange",
-    ExtendedKeyUsageOID.IPSEC_TUNNEL: "IPSec Tunnel",
-    ExtendedKeyUsageOID.IPSEC_USER: "IPSec User",
-    ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
-    ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
-    ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "Any Extended Key Usage",
-}
-
-KEY_USAGE_NAMES = {
-    "crl_sign": "cRLSign",
-    "data_encipherment": "dataEncipherment",
-    "decipher_only": "decipherOnly",
-    "digital_signature": "digitalSignature",
-    "encipher_only": "encipherOnly",
-    "key_agreement": "keyAgreement",
-    "key_cert_sign": "keyCertSign",
-    "key_encipherment": "keyEncipherment",
-    "content_commitment": "nonRepudiation",  # http://marc.info/?t=107176106300005&r=1&w=2
-}
-KEY_USAGE_NAMES_MAPPING = {v: k for k, v in KEY_USAGE_NAMES.items()}
-
 TLS_FEATURE_NAME_MAPPING = {
     # https://tools.ietf.org/html/rfc6066.html:
     "OCSPMustStaple": x509.TLSFeatureType.status_request,
@@ -565,12 +480,6 @@ TLS_FEATURE_NAME_MAPPING = {
     # https://tools.ietf.org/html/rfc6961.html (not commonly used):
     "MultipleCertStatusRequest": x509.TLSFeatureType.status_request_v2,
     "status_request_v2": x509.TLSFeatureType.status_request_v2,
-}
-
-
-LOG_ENTRY_TYPE_MAPPING = {
-    LogEntryType.PRE_CERTIFICATE: "precertificate",
-    LogEntryType.X509_CERTIFICATE: "x509_certificate",
 }
 
 

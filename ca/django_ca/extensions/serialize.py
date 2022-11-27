@@ -19,8 +19,8 @@ from typing import Any, Dict, List, Optional
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-
 from .. import typehints
+from ..constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, LOG_ENTRY_TYPE_KEYS
 from ..typehints import (
     PolicyQualifier,
     SerializedExtension,
@@ -30,7 +30,6 @@ from ..typehints import (
     SerializedUserNotice,
 )
 from ..utils import bytes_to_hex, format_general_name, format_name
-from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, LOG_ENTRY_TYPE_MAPPING
 
 
 def _authority_information_access_serialized(
@@ -160,7 +159,7 @@ def _signed_certificate_timestamps_serialized(
         {
             "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
             "timestamp": sct.timestamp.strftime(timeformat),
-            "type": LOG_ENTRY_TYPE_MAPPING[sct.entry_type],
+            "type": LOG_ENTRY_TYPE_KEYS[sct.entry_type],
             "version": sct.version.name,
         }
         for sct in value

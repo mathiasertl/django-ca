@@ -30,7 +30,7 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from ... import ca_settings
-from ...extensions import OID_TO_KEY
+from ...constants import EXTENSION_KEYS
 from ...models import CertificateAuthority
 from ...tasks import cache_crl, generate_ocsp_key, run_task
 from ...typehints import ParsableKeyType
@@ -224,7 +224,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
 
         subject = sort_name(subject)
 
-        issuer_alternative_name = options[OID_TO_KEY[x509.IssuerAlternativeName.oid]]
+        issuer_alternative_name = options[EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]
 
         kwargs = {}
         for opt in ["path", "default_hostname"]:

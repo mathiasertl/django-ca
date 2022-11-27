@@ -24,13 +24,13 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings, widgets
-from .constants import REVOCATION_REASONS
-from .extensions import get_extension_name
-from .extensions.utils import (
+from .constants import (
     EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES,
     EXTENDED_KEY_USAGE_NAMES,
     KEY_USAGE_NAMES,
+    REVOCATION_REASONS,
 )
+from .extensions import get_extension_name
 from .typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
 from .utils import ADMIN_SUBJECT_OIDS, parse_general_name, x509_relative_name
 
@@ -42,7 +42,6 @@ _EXTENDED_KEY_USAGE_CHOICES = sorted(
     key=lambda t: t[1],
 )
 _EXTENDED_KEY_USAGE_MAPPING = {serialized: oid for oid, serialized in EXTENDED_KEY_USAGE_NAMES.items()}
-_KEY_USAGE_MAPPING = {v: k for k, v in KEY_USAGE_NAMES.items()}
 
 
 class CertificateSigningRequestField(forms.CharField):

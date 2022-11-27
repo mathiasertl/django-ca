@@ -28,9 +28,14 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from .. import ca_settings
-from ..constants import OID_DEFAULT_CRITICAL, ReasonFlags
-from ..extensions import OID_TO_KEY
-from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES_MAPPING, TLS_FEATURE_NAME_MAPPING
+from ..constants import (
+    EXTENDED_KEY_USAGE_NAMES,
+    EXTENSION_DEFAULT_CRITICAL,
+    EXTENSION_KEYS,
+    KEY_USAGE_NAMES,
+    ReasonFlags,
+)
+from ..extensions.utils import TLS_FEATURE_NAME_MAPPING
 from ..models import Certificate, CertificateAuthority
 from ..typehints import AlternativeNameExtensionType
 from ..utils import (
@@ -359,7 +364,7 @@ class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType]
     extension_type: typing.Type[ExtensionType]
 
     def __init__(self, **kwargs: typing.Any) -> None:
-        kwargs["dest"] = OID_TO_KEY[self.extension_type.oid]
+        kwargs["dest"] = EXTENSION_KEYS[self.extension_type.oid]
         super().__init__(**kwargs)
 
 
@@ -398,7 +403,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
 
         names.append(parse_general_name(values))
         extension_type = self.extension_type(general_names=names)
-        critical = OID_DEFAULT_CRITICAL[self.extension_type.oid]
+        critical = EXTENSION_DEFAULT_CRITICAL[self.extension_type.oid]
         extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
 
         setattr(namespace, self.dest, extension)
@@ -487,7 +492,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         else:
             critical = False
 
-        key_usages = {v: k in ext_values for k, v in KEY_USAGE_NAMES_MAPPING.items()}
+        key_usages = {k: v in ext_values for k, v in KEY_USAGE_NAMES.items()}
         try:
             extension_type = x509.KeyUsage(**key_usages)
         except ValueError as ex:

@@ -19,7 +19,6 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase
 
 from .. import constants
-from ..extensions import KEY_TO_OID
 
 KNOWN_EXTENSION_OIDS = list(
     filter(
@@ -47,18 +46,14 @@ class ExtensionMappingsTestCase(TestCase):
         """Test completeness of KNOWN_EXTENSION_OIDS constant."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_KEYS.keys())
 
-        # Make sure that it matches old extensions class keys
-        for key, value in constants.EXTENSION_KEYS.items():
-            self.assertEqual(key, KEY_TO_OID[value])
-
     def test_completeness_oid_to_extension_names(self) -> None:
-        """Test completeness of OID_TO_EXTENSION_NAMES."""
-        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_TO_EXTENSION_NAMES.keys())
+        """Test completeness of EXTENSION_NAMES."""
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_NAMES.keys())
 
     def test_completeness_oid_default_critical(self) -> None:
-        """Test completeness of OID_DEFAULT_CRITICAL."""
-        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_DEFAULT_CRITICAL.keys())
+        """Test completeness of EXTENSION_DEFAULT_CRITICAL."""
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_DEFAULT_CRITICAL.keys())
 
     def test_completeness_oid_critical_help(self) -> None:
-        """Test completeness of OID_CRITICAL_HELP."""
-        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.OID_CRITICAL_HELP.keys())
+        """Test completeness of EXTENSION_CRITICAL_HELP."""
+        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_CRITICAL_HELP.keys())

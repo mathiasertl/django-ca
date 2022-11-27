@@ -26,8 +26,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from .. import ca_settings, fields
-from ..constants import REVOCATION_REASONS
-from ..extensions.utils import KEY_USAGE_NAMES_MAPPING
+from ..constants import KEY_USAGE_NAMES, REVOCATION_REASONS
 from .base import rdn
 from .base.mixins import TestCaseMixin
 
@@ -341,9 +340,11 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         """Test rendering for all profiles."""
         field = self.field_class()
 
+        key_usage_choices = {v: k for k, v in KEY_USAGE_NAMES.items()}
+
         for profile_name, profile in ca_settings.CA_PROFILES.items():
             choices = profile["extensions"]["key_usage"]["value"]
-            choices = [KEY_USAGE_NAMES_MAPPING[choice] for choice in choices]
+            choices = [key_usage_choices[choice] for choice in choices]
 
             ext = self.key_usage(**{choice: True for choice in choices})
             html = field.widget.render("unused", ext)

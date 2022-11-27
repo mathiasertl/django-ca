@@ -19,8 +19,9 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from .. import typehints
+from ..constants import EXTENDED_KEY_USAGE_NAMES
 from ..utils import bytes_to_hex, format_general_name, format_name
-from .utils import EXTENDED_KEY_USAGE_NAMES, key_usage_items, signed_certificate_timestamp_values
+from .utils import key_usage_items, signed_certificate_timestamp_values
 
 
 def _authority_information_access_as_text(value: typehints.InformationAccessExtensionType) -> str:

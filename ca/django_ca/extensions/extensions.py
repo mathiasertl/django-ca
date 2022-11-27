@@ -22,6 +22,7 @@ from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
+from ..constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
 from ..typehints import (
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
@@ -49,7 +50,7 @@ from .base import (
     OrderedSetExtension,
     SignedCertificateTimestampsBase,
 )
-from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, PolicyInformation
+from .utils import PolicyInformation
 
 # Placeholder until we fill in something good
 ParsableValueDummy = str

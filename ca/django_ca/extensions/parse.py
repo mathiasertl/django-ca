@@ -18,7 +18,7 @@ import typing
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from ..constants import OID_DEFAULT_CRITICAL
+from ..constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES
 from ..typehints import (
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
@@ -34,7 +34,7 @@ from ..typehints import (
     ParsableUserNotice,
 )
 from ..utils import hex_to_bytes, parse_general_name, x509_relative_name
-from .utils import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, TLS_FEATURE_NAME_MAPPING, DistributionPoint
+from .utils import TLS_FEATURE_NAME_MAPPING, DistributionPoint
 
 ##########################################
 # Parsers for sub-elements of extensions #
@@ -289,7 +289,7 @@ def parse_extension(  # pylint: disable=too-many-branches  # there's just many e
         return value
 
     if isinstance(value, x509.ExtensionType):
-        return x509.Extension(oid=value.oid, critical=OID_DEFAULT_CRITICAL[value.oid], value=value)
+        return x509.Extension(oid=value.oid, critical=EXTENSION_DEFAULT_CRITICAL[value.oid], value=value)
 
     if key == "authority_key_identifier":
         parsed: x509.ExtensionType = _parse_authority_key_identifier(value["value"])
@@ -331,5 +331,5 @@ def parse_extension(  # pylint: disable=too-many-branches  # there's just many e
     else:
         raise ValueError(f"{key}: Unknown extension key.")
 
-    critical = value.get("critical", OID_DEFAULT_CRITICAL[parsed.oid])
+    critical = value.get("critical", EXTENSION_DEFAULT_CRITICAL[parsed.oid])
     return x509.Extension(oid=parsed.oid, critical=critical, value=parsed)

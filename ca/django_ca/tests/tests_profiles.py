@@ -28,7 +28,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from .. import ca_settings
-from ..constants import EXTENSION_KEYS, OID_DEFAULT_CRITICAL
+from ..constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
 from ..deprecation import RemovedInDjangoCA124Warning
 from ..extensions import KeyUsage, OCSPNoCheck, SubjectKeyIdentifier
 from ..models import Certificate, CertificateAuthority
@@ -179,11 +179,11 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 "extensions": {
                     EXTENSION_KEYS[ExtensionOID.BASIC_CONSTRAINTS]: {
                         "value": {"ca": False},
-                        "critical": OID_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
+                        "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
                     },
                     EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {
                         "value": kusage,
-                        "critical": OID_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
+                        "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
                     },
                 },
             },

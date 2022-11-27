@@ -30,8 +30,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from django.test import TestCase
 
-from ..constants import ReasonFlags
-from ..extensions import OID_TO_KEY
+from ..constants import EXTENSION_KEYS, ReasonFlags
 from ..management import actions
 from ..models import Certificate, CertificateAuthority
 from .base import certs, dns, override_settings, override_tmpcadir, uri
@@ -89,7 +88,7 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
         """Assert a given extension value."""
 
         extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)
-        self.assertEqual(getattr(namespace, OID_TO_KEY[x509.SubjectAlternativeName.oid]), extension)
+        self.assertEqual(getattr(namespace, EXTENSION_KEYS[x509.SubjectAlternativeName.oid]), extension)
 
     def test_basic(self) -> None:
         """Test basic functionality."""

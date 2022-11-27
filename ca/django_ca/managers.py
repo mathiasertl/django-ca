@@ -31,7 +31,7 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
-from .constants import OID_DEFAULT_CRITICAL
+from .constants import EXTENSION_DEFAULT_CRITICAL
 from .deprecation import RemovedInDjangoCA123Warning, deprecate_argument, deprecate_type
 from .extensions import Extension, IssuerAlternativeName, NameConstraints
 from .modelfields import LazyCertificateSigningRequest
@@ -359,7 +359,7 @@ class CertificateAuthorityManager(
         if isinstance(issuer_alt_name, str):
             issuer_alt_name = x509.Extension(
                 oid=x509.IssuerAlternativeName.oid,
-                critical=OID_DEFAULT_CRITICAL[x509.IssuerAlternativeName.oid],
+                critical=EXTENSION_DEFAULT_CRITICAL[x509.IssuerAlternativeName.oid],
                 value=x509.IssuerAlternativeName(general_names=[parse_general_name(issuer_alt_name)]),
             )
         elif isinstance(issuer_alt_name, IssuerAlternativeName):

@@ -33,7 +33,7 @@ from django.utils import timezone
 
 from . import ca_settings
 from .acme.validation import validate_dns_01
-from .constants import OID_DEFAULT_CRITICAL
+from .constants import EXTENSION_DEFAULT_CRITICAL
 from .models import (
     AcmeAuthorization,
     AcmeCertificate,
@@ -270,7 +270,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
     extensions = [
         x509.Extension(
             oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-            critical=OID_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             value=subject_alternative_names,
         )
     ]

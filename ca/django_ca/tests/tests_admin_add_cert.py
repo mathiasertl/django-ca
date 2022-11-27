@@ -37,9 +37,8 @@ from webtest import Select as WebTestSelect
 from webtest import Submit
 
 from .. import ca_settings
-from ..constants import OID_DEFAULT_CRITICAL
+from ..constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from ..extensions import serialize_extension
-from ..extensions.utils import ExtendedKeyUsageOID
 from ..fields import CertificateSigningRequestField
 from ..models import Certificate, CertificateAuthority
 from ..profiles import Profile, profiles
@@ -892,7 +891,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         """Get expected value for a given extension for the given profile."""
         if oid in profile.extensions:
             return serialize_extension(profile.extensions[oid])  # type: ignore[arg-type]
-        return {"value": default, "critical": OID_DEFAULT_CRITICAL[oid]}
+        return {"value": default, "critical": EXTENSION_DEFAULT_CRITICAL[oid]}
 
     def assertProfile(  # pylint: disable=invalid-name,too-many-locals
         self,

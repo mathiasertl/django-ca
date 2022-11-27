@@ -241,7 +241,7 @@ ACMEv2 settings
 CA_ENABLE_ACME
    Default: ``True``
 
-   Set to ``False`` to disable all ACME functionality. 
+   Set to ``False`` to disable all ACME functionality.
 
    Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
    either via the admin interface or via :doc:`the command-line interface </cli/cas>`.

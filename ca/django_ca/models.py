@@ -60,7 +60,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import ca_settings
 from .acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from .constants import OID_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
+from .constants import EXTENSION_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
 from .extensions import (
     OID_TO_EXTENSION,
     AuthorityInformationAccess,
@@ -984,7 +984,7 @@ class CertificateAuthority(X509CertMixin):
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
             extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = x509.Extension(
                 oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                critical=OID_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
                 value=x509.IssuerAlternativeName(names),
             )
 
@@ -1007,14 +1007,14 @@ class CertificateAuthority(X509CertMixin):
         if access_descriptions:
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
                 oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=OID_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
                 value=x509.AuthorityInformationAccess(descriptions=access_descriptions),
             )
         if self.crl_url:
             full_name = [parse_general_name(name) for name in self.crl_url.splitlines()]
             extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
                 oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                critical=OID_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS],
                 value=x509.CRLDistributionPoints(
                     [
                         x509.DistributionPoint(

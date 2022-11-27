@@ -26,16 +26,16 @@ from cryptography.x509.oid import NameOID, ObjectIdentifier
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ...constants import OID_DEFAULT_CRITICAL
+from ...constants import EXTENSION_DEFAULT_CRITICAL
 from ...extensions import (
     KEY_TO_EXTENSION,
     OID_TO_EXTENSION,
     CRLDistributionPoints,
     Extension,
     FreshestCRL,
+    extension_as_text,
     parse_extension,
     serialize_extension,
-    extension_as_text,
 )
 from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
 from ...extensions.utils import DistributionPoint, extension_as_admin_html
@@ -152,7 +152,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         """Test parsing a serialized extension."""
         for config in self.test_values.values():
             for value in config["values"]:
-                critical = OID_DEFAULT_CRITICAL[self.ext_class.oid]
+                critical = EXTENSION_DEFAULT_CRITICAL[self.ext_class.oid]
                 ext = parse_extension(self.ext_class_key, {"value": value, "critical": critical})
                 expected = x509.Extension(
                     oid=self.ext_class.oid, critical=critical, value=config["extension_type"]

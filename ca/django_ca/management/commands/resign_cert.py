@@ -26,7 +26,6 @@ from django.core.management.base import CommandError, CommandParser
 
 from ... import ca_settings
 from ...constants import EXTENSION_KEYS
-from ...extensions import OID_TO_KEY
 from ...management.actions import CertificateAction
 from ...management.base import BaseSignCommand
 from ...models import Certificate, CertificateAuthority, Watcher
@@ -114,10 +113,10 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             if ext is not None:
                 kwargs["extensions"].append(ext)
 
-        if not options[OID_TO_KEY[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]:
+        if not options[EXTENSION_KEYS[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]:
             san = cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         else:
-            san = options[OID_TO_KEY[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]
+            san = options[EXTENSION_KEYS[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]
         kwargs["extensions"].append(san)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not san:

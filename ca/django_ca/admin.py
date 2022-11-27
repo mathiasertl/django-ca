@@ -54,14 +54,8 @@ from django.utils.translation import gettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from . import ca_settings
-from .constants import OID_DEFAULT_CRITICAL, ReasonFlags
-from .extensions import (
-    CERTIFICATE_EXTENSIONS,
-    KEY_TO_OID,
-    OID_TO_KEY,
-    get_extension_name,
-    serialize_extension,
-)
+from .constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
+from .extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
 from .extensions.utils import extension_as_admin_html
 from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
 from .models import (
@@ -657,7 +651,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 continue
 
             extensions = {
-                OID_TO_KEY[oid]: serialize_extension(ext)
+                EXTENSION_KEYS[oid]: serialize_extension(ext)
                 for oid, ext in ca.extensions_for_certificate.items()
             }
 
@@ -710,7 +704,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             san = resign_obj.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
             if san is None:
                 san_value = []
-                san_critical = OID_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
+                san_critical = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
             else:
                 san_value = list(san.value)
                 san_critical = san.critical
@@ -738,7 +732,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # Add values from editable extensions
             extensions = resign_obj.x509_extensions
             for key in CERTIFICATE_EXTENSIONS:
-                data[key] = extensions.get(KEY_TO_OID[key])
+                data[key] = extensions.get(EXTENSION_KEY_OIDS[key])
         else:
             # Form for a completely new certificate
 
@@ -763,10 +757,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             data["ca"] = ca
             data["subject"] = profile.subject
 
-            data.update({OID_TO_KEY[oid]: ext for oid, ext in ca.extensions_for_certificate.items()})
+            data.update({EXTENSION_KEYS[oid]: ext for oid, ext in ca.extensions_for_certificate.items()})
 
             for key in CERTIFICATE_EXTENSIONS:
-                ext = profile.extensions.get(KEY_TO_OID[key])
+                ext = profile.extensions.get(EXTENSION_KEY_OIDS[key])
                 if ext is not None:
                     data[key] = ext
 
@@ -1010,7 +1004,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # Update extensions handled through the form
             for key in CERTIFICATE_EXTENSIONS:
                 if data[key] is not None:
-                    extensions[KEY_TO_OID[key]] = data[key]
+                    extensions[EXTENSION_KEY_OIDS[key]] = data[key]
 
             # Update extensions from the profile that cannot (yet) be changed in the web interface
             for oid, ext in profile.extensions.items():
@@ -1035,7 +1029,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                         )
                     continue
 
-                if OID_TO_KEY[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
+                if EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
                 if oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME:  # already handled above
                     continue

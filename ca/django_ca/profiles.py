@@ -24,17 +24,9 @@ from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from . import ca_settings
-from .constants import OID_DEFAULT_CRITICAL
+from .constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
 from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
-from .extensions import (
-    KEY_TO_EXTENSION,
-    KEY_TO_OID,
-    OID_TO_EXTENSION,
-    OID_TO_KEY,
-    Extension,
-    parse_extension,
-    serialize_extension,
-)
+from .extensions import KEY_TO_EXTENSION, OID_TO_EXTENSION, Extension, parse_extension, serialize_extension
 from .signals import pre_issue_cert, pre_sign_cert
 from .subject import Subject
 from .typehints import (
@@ -144,7 +136,7 @@ class Profile:
                 self.extensions[extension.oid] = extension.as_extension()
             elif extension is None:
                 # None value explicitly deactivates/unsets an extension in the admin interface
-                self.extensions[KEY_TO_OID[key]] = None
+                self.extensions[EXTENSION_KEY_OIDS[key]] = None
             else:
                 parsed_extension = parse_extension(key, extension)
                 self.extensions[parsed_extension.oid] = parsed_extension
@@ -154,7 +146,7 @@ class Profile:
             ExtensionOID.BASIC_CONSTRAINTS,
             x509.Extension(
                 oid=ExtensionOID.BASIC_CONSTRAINTS,
-                critical=OID_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
+                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
                 value=x509.BasicConstraints(ca=False, path_length=None),
             ),
         )
@@ -203,19 +195,19 @@ class Profile:
                 if isinstance(ext, Extension):
                     warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
                     converted_extension = ext.as_extension()
+                    expected = KEY_TO_EXTENSION[key]
 
-                    if KEY_TO_OID[key] != converted_extension.oid:
-                        expected = KEY_TO_EXTENSION[key]
+                    if expected.oid != converted_extension.oid:
                         raise ValueError(f"extensions[{key}] is not of type {expected.__name__}")
 
                     extensions_update[converted_extension.oid] = converted_extension
                 elif isinstance(ext, x509.Extension):
-                    if KEY_TO_OID[key] != ext.oid:
+                    if EXTENSION_KEY_OIDS[key] != ext.oid:
                         raise ValueError(f"extensions[{key}] is not of expected type")
 
                     extensions_update[ext.oid] = ext
                 elif ext is None:
-                    extensions_update[KEY_TO_OID[key]] = None
+                    extensions_update[EXTENSION_KEY_OIDS[key]] = None
                 else:
                     raise ValueError(f"{ext}: Must be a cryptography.x509.Extension instance or None")
 
@@ -440,9 +432,9 @@ class Profile:
         for key, extension in self.extensions.items():
             if extension is None:
                 # None value explicitly deactivates/unsets an extension in the admin interface
-                extensions[OID_TO_KEY[key]] = None
+                extensions[EXTENSION_KEYS[key]] = None
             else:
-                extensions[OID_TO_KEY[key]] = serialize_extension(extension)
+                extensions[EXTENSION_KEYS[key]] = serialize_extension(extension)
 
         data: SerializedProfile = {
             "cn_in_san": self.cn_in_san,

@@ -23,8 +23,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from ..constants import OID_CRITICAL_HELP, OID_RFC_DEFINITION
-from ..extensions.utils import EXTENDED_KEY_USAGE_NAMES, key_usage_items, signed_certificate_timestamp_values
+from ..constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_CRITICAL_HELP, EXTENSION_RFC_DEFINITION
+from ..extensions.utils import key_usage_items, signed_certificate_timestamp_values
 from ..utils import add_colons, bytes_to_hex, format_general_name, format_name, int_to_hex
 
 register = template.Library()
@@ -39,8 +39,8 @@ register.filter("signed_certificate_timestamp_values", signed_certificate_timest
 def critical_help(dotted_string: str) -> str:
     """Return help text informing the user if the extension should be marked as critical or not."""
     oid = x509.ObjectIdentifier(dotted_string)
-    rfc = OID_RFC_DEFINITION[oid]
-    help_text = OID_CRITICAL_HELP.get(oid, "")
+    rfc = EXTENSION_RFC_DEFINITION[oid]
+    help_text = EXTENSION_CRITICAL_HELP.get(oid, "")
 
     return _("RFC %(rfc)s says this extension %(help_text)s.") % {"help_text": help_text, "rfc": rfc}
 
