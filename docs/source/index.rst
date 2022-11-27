@@ -49,7 +49,6 @@ Welcome to django-ca's documentation!
    python/profiles
    python/models
    python/views
-   python/subject
    python/utils
    python/constants
    python/acme_messages

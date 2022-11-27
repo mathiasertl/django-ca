@@ -330,7 +330,13 @@ class Profile:
         if add_issuer_alternative_name is None:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
-        cert_subject = Subject(self.subject)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="django_ca.subject.Subject will be removed in 1.24.0.",
+                category=RemovedInDjangoCA124Warning,
+            )
+            cert_subject = Subject(self.subject)
 
         cert_extensions = self._get_extensions(extensions)
 
@@ -344,7 +350,13 @@ class Profile:
         )
 
         if not isinstance(subject, Subject):
-            converted_subject = Subject(subject)  # NOTE: also accepts None
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="django_ca.subject.Subject will be removed in 1.24.0.",
+                    category=RemovedInDjangoCA124Warning,
+                )
+                converted_subject = Subject(subject)  # NOTE: also accepts None
         else:  # pragma: only django_ca<=1.24
             converted_subject = subject
         cert_subject.update(converted_subject)

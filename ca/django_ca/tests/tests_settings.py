@@ -20,7 +20,6 @@ from django.test import TestCase
 
 from .. import ca_settings
 from ..deprecation import RemovedInDjangoCA123Warning
-from ..subject import get_default_subject
 from .base.mixins import TestCaseMixin
 
 
@@ -125,19 +124,6 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
                 pass
 
-    def test_default_subject(self) -> None:
-        """Test invalid ``CA_DEFAULT_SUBJECT``."""
-        message = r"^django_ca\.subject\.get_default_subject\(\) will be removed in 1\.23\.0\.$"
-        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
-            with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid subject: True$"):
-                with self.settings(CA_DEFAULT_SUBJECT=True):
-                    get_default_subject()
-
-        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
-            with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Invalid OID: XYZ$"):
-                with self.settings(CA_DEFAULT_SUBJECT=(("XYZ", "error"),)):
-                    get_default_subject()
-
     def test_subject_as_list(self) -> None:
         """Test that a list subject is converted to a tuple."""
         with self.settings(CA_DEFAULT_SUBJECT=[("CN", "example.com")]):
@@ -151,13 +137,13 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         )
         with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
             with self.settings(CA_DEFAULT_SUBJECT={"CN": "as-dict"}):
-                get_default_subject()
+                self.assertEqual(ca_settings.CA_DEFAULT_SUBJECT, (("CN", "as-dict"),))
 
         message = r"^ocsp: Profile subject as a dict wil be removed in django-ca==1.23. Please use a tuple instead.$"  # NOQA[E501]
         with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
             profiles = {"ocsp": {"subject": {"CN": "as-dict"}}}
             with self.settings(CA_PROFILES=profiles):
-                get_default_subject()
+                pass
 
     def test_use_celery(self) -> None:
         """Test that CA_USE_CELERY=True and a missing Celery installation throws an error."""

@@ -22,13 +22,17 @@ from cryptography import x509
 from django.core.exceptions import ImproperlyConfigured
 
 from . import ca_settings
-from .deprecation import RemovedInDjangoCA123Warning
+from .deprecation import RemovedInDjangoCA123Warning, RemovedInDjangoCA124Warning
 from .typehints import ParsableSubject
 from .utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, OID_NAME_MAPPINGS, SUBJECT_FIELDS, parse_name_x509
 
 
 class Subject:
     """Convenience class to handle X509 Subjects.
+
+    .. deprecated:: 1.22.0
+
+       This class is deprecated and will be removed in ``django-ca==1.24.0``.
 
     This class accepts a variety of values and intelligently parses them:
 
@@ -57,6 +61,9 @@ class Subject:
     _data: Dict[x509.ObjectIdentifier, List[str]]
 
     def __init__(self, subject: Optional[ParsableSubject] = None) -> None:
+        warnings.warn(
+            "django_ca.subject.Subject will be removed in 1.24.0.", category=RemovedInDjangoCA124Warning
+        )
         self._data = {}
 
         iterable: Iterable[
@@ -276,7 +283,7 @@ class Subject:
         return x509.Name([x509.NameAttribute(k, v) for k, v in self.fields])
 
 
-def get_default_subject() -> Subject:
+def get_default_subject() -> Subject:  # pragma: no cover
     """Get the default subject as configured by the ``CA_DEFAULT_SUBJECT`` setting.
 
     .. deprecated:: 1.22.0

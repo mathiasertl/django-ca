@@ -799,7 +799,7 @@ Python API
 * Extensions can now always be passed as ``django_ca.extensions.base.Extension`` subclass or as any
   value accepted by the constructor of the specific class.
 * Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
-* :py:class:`~django_ca.subject.Subject` now implements every ``dict`` method.
+* ``django_ca.subject.Subject`` now implements every ``dict`` method.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.
 * The :py:func:`~django_ca.signals.pre_issue_cert` signal is only invoked after all parameters are verified.
 * Implement the ``django_ca.extensions.AuthorityInformationAccess``,
@@ -841,8 +841,7 @@ Python API
 * Add the :doc:`Python API <python/intro>` as a fully supported interface to **django-ca**.
 * New module ``django_ca.extensions`` to allow easy and consistent handling of X509 extensions.
 * Fully document various member attributes of :py:class:`~django_ca.models.CertificateAuthority` and
-  :py:class:`~django_ca.models.Certificate`, as well :py:class:`~django_ca.subject.Subject` and
-  as all new Python code.
+  :py:class:`~django_ca.models.Certificate`, as well ``django_ca.subject.Subject`` and as all new Python code.
 * The parameters for functions in :py:class:`~django_ca.managers.CertificateManager` and
   :py:meth:`~django_ca.managers.CertificateAuthorityManager.init` were cleaned up for consistent naming and so
   that a user no longer needs to use classes from the cryptography library. Parameters are now optional if
