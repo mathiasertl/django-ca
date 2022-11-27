@@ -236,19 +236,12 @@ CA_USE_CELERY
 ACMEv2 settings
 ===============
 
-.. WARNING::
-
-   ACMEv2 functionality is still in development and is disabled by default. You have to set
-   ``CA_ENABLE_ACME=True`` to enable the feature. ACMEv2 will be enabled by default starting with
-   ``django-ca==1.22.0``.
-
 .. _settings-acme-enable-acme:
 
 CA_ENABLE_ACME
-   Default: ``False``
+   Default: ``True``
 
-   Set to ``True`` to enable ACME functionality. If set to ``False`` (the default), all ACME functionality is
-   disabled.
+   Set to ``False`` to disable all ACME functionality. 
 
    Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
    either via the admin interface or via :doc:`the command-line interface </cli/cas>`.

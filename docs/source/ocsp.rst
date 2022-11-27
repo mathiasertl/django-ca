@@ -14,8 +14,18 @@ Configure OCSP with django-ca
 If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` and setup the
 web server under that URL, you do not have to configure anything to run an OCSP responder.
 
-To run the responder you only need to create OCSP responder keys/certificates using a :command:`manage.py`
-command:
+OCSP with docker compose
+========================
+
+If you use the :doc:`docker compose <quickstart_docker_compose>`, the setup already provides OCSP services
+for all issued certificates.
+
+OCSP with other setups
+======================
+
+If your setup does *not* run with a Celery task broker, you need to automatically regenerate the OCSP
+certificates e.g. once a day. To regenerate them, you only need to keys/certificates using a
+:command:`manage.py` command:
 
 .. code-block:: console
 
@@ -38,7 +48,10 @@ Manual setup
 ************
 
 **django-ca** provides the generic view :py:class:`~django_ca.views.OCSPView` for an OCSP service for your
-certificate authorities. The setup involves:
+certificate authorities. This allows for special OCSP services with "unusual" settings, but is
+usually not needed, the default setup should do just fine.
+
+The setup involves:
 
 #. :ref:`Creating a responder certificate <create-ocsp-cert>`
 #. :ref:`Configure generic views <ocsp-generic-views>`

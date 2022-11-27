@@ -70,7 +70,6 @@ Miscellaneous :command:`manage.py` subcommands:
 Command                   Description
 ========================= ===============================================================
 ``dump_crl``              Write the certificate revocation list (CRL), see :doc:`/crl`.
-``dump_ocsp_index``       Write an OCSP index file, see :doc:`/ocsp`.
 ========================= ===============================================================
 
 .. _names_on_cli:

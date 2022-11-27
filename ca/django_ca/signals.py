@@ -80,10 +80,19 @@ Parameters
 ----------
 
 ca : :py:class:`~django_ca.models.CertificateAuthority`
-    The Certificate Authority used to sign the certificate
-**kwargs
-    The remaining keyword arguments are the parameters passed to
-    :py:meth:`~django_ca.models.CertificateAuthority.sign`, with defaults set as noted in the documentation.
+    The certificate authority used to sign the certificate
+csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
+    The certificate signing request used for the certificate.
+expires : datetime
+    When the certificate will expire.
+algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`
+    The algorithm used for signing the certificate.
+subject : :class:`~cg:cryptography.x509.Name`
+    The subject for the certificate.
+extensions : list of :py:class:`~cg:cryptography.x509.Extension`
+    The extensions that will be added to the certificate.
+password : str or bytes, optional
+    The password used for accessing the private key of the certificate authority.
 """
 
 

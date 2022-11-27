@@ -77,8 +77,10 @@ Deprecation notices
   removed in ``django-ca==1.23.0``.
 * The ``pre_issue_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
+* The subject wrapper class ``django_ca.subject.Subject`` is deprecated and will be removed in
+  ``django-ca==1.24.0``.
 * Extension wrapper classes in ``django_ca.extensions`` are deprecated and will be removed in
-  ``django_ca==1.25.0``.
+  ``django_ca==1.24.0``.
 
 .. _changelog-1.21.0:
 

@@ -16,8 +16,6 @@ standard ACME clients.
 Configuration
 *************
 
-To enable ACME support, simply set ``CA_ENABLE_ACME=True`` in your settings.
-
 There are some more settings for ACMEv2 support, please see :ref:`settings-acme` for more information.
 
 You must enable ACME for each CA individually, either in the admin interface or via the ``edit_ca`` management
@@ -26,11 +24,9 @@ command.
 Enable ACMEv2 for a CA
 ======================
 
-Additionally to setting ``CA_ENABLE_ACME=True``, a CA can only be used for issuing certificates via ACMEv2 if
-explicitly enabled.
-
-You have to enable the feature for every CA individually. You an do so either in the admin interface or via
-the command line when creating a CA or editing it:
+A CA can only be used for issuing certificates via ACMEv2 if explicitly enabled.  You have to enable the
+feature for every CA individually. You an do so either in the admin interface or via the command line when
+creating a CA or editing it:
 
 .. code-block:: console
 
@@ -41,9 +37,6 @@ the command line when creating a CA or editing it:
 *****************
 Known limitations
 *****************
-
-ACMEv2 support is preliminary, known to be incomplete and may contain critical bugs. But at least basic
-certificate issuance is working.
 
 The following things are known to not yet work:
 
