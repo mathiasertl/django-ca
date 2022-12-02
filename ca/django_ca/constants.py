@@ -43,11 +43,11 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
 
     # ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY was added in cryptography==39.0
     # once support for cryptography<39.0 is dropped.
-    if not hasattr(_ExtendedKeyUsageOID, "CERTIFICATE_TRANSPARENCY"):  # pragma: only cryptography<38.0
+    if not hasattr(_ExtendedKeyUsageOID, "CERTIFICATE_TRANSPARENCY"):  # pragma: cryptography<38.0 branch
         CERTIFICATE_TRANSPARENCY = x509.ObjectIdentifier("1.3.6.1.4.1.11129.2.4.4")
 
     # ExtendedKeyUsageOID.IPSEC_IKE was added in cryptography==37.0.0.
-    if not hasattr(_ExtendedKeyUsageOID, "IPSEC_IKE"):  # pragma: only cryptography<37.0
+    if not hasattr(_ExtendedKeyUsageOID, "IPSEC_IKE"):  # pragma: cryptography<37.0 branch
         IPSEC_IKE = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.17")
 
 

@@ -42,10 +42,16 @@ def minor_to_major(version: str) -> str:
 def get_project_config():
     """Get project configuration from pyproject.toml."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
-    import toml  # pylint: disable=import-outside-toplevel
+    try:
+        import tomllib  # pylint: disable=import-outside-toplevel
 
-    with open(PYPROJECT_PATH, encoding="utf-8") as stream:
-        full_config = toml.load(stream)
+        with open(PYPROJECT_PATH, "rb") as stream:
+            full_config = tomllib.load(stream)
+    except ImportError:
+        import toml  # pylint: disable=import-outside-toplevel
+
+        with open(PYPROJECT_PATH, encoding="utf-8") as stream:
+            full_config = toml.load(stream)
 
     cfg = full_config["django-ca"]["release"]
     cfg["python-map"] = {minor_to_major(pyver): pyver for pyver in cfg["python"]}
