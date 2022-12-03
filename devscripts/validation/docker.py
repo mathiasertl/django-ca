@@ -113,6 +113,7 @@ def validate_docker_image(release, docker_tag):
     context = {
         "backend_host": "backend",
         "ca_default_hostname": "localhost",
+        "docker_tag": docker_tag,
         "frontend_host": "frontend",
         "network": "django-ca",
         "nginx_host": "nginx",

@@ -59,7 +59,7 @@ ChangeLog
 
 *******************
 {release} ({date.today().strftime('%Y-%m-%d')})
-*******************""".splitlines(
+*******************\n""".splitlines(
             keepends=True
         )
         if changelog_header != expected:
@@ -99,7 +99,7 @@ ChangeLog
         """Validate state of various config files."""
         state = importlib.import_module("devscripts.validation.state")
         with redirect_output() as stream:
-            errors = state.validate()
+            errors = state.validate_main()
 
         if errors == 0:
             ok("State validated.")

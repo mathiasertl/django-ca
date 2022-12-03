@@ -415,6 +415,7 @@ jinja_contexts = {
     "quickstart-with-docker": {
         "backend_host": "backend",
         "ca_default_hostname": _ca_default_hostname,
+        "docker_tag": "mathiasertl/django-ca",
         "frontend_host": "frontend",
         "network": "django-ca",
         "nginx_host": "nginx",

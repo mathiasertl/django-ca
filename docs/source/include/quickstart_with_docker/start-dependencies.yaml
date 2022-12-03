@@ -6,6 +6,8 @@ commands:
       clean:
           - docker kill {{ postgres_host }}
           - docker rm -f {{ postgres_host }}
+      #waitfor:
+      #    - command: docker exec -it backend nc -z {{ postgres_host }}:5432
     - command: docker run --name {{ redis_host }} --network={{ network }} -d redis
       clean:
           - docker kill {{ redis_host }}

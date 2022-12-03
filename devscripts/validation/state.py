@@ -252,8 +252,8 @@ def check_readme(project_config):
     return errors
 
 
-def validate():
-    """Main function."""
+def validate_main() -> int:
+    """Main validation function, not calling sys.exit()."""
     project_config = config.get_project_config()
 
     total_errors = check(check_github_actions_tests, project_config)
@@ -262,6 +262,13 @@ def validate():
     total_errors += check(check_test_settings, project_config)
     total_errors += check(check_intro, project_config)
     total_errors += check(check_readme, project_config)
+
+    return total_errors
+
+
+def validate():
+    """Main function."""
+    total_errors = validate_main()
     if total_errors:
         print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
         sys.exit(1)

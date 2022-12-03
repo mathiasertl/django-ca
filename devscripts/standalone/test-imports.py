@@ -156,7 +156,8 @@ else:
 if "celery" in args.extra:
     from django_ca import tasks
 if "redis" in args.extra:
-    import redis_cache
+    import hiredis
+    import redis
 if "mysql" in args.extra:
     import MySQLdb
 if "postgres" in args.extra:

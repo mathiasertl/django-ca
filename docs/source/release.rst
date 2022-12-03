@@ -83,7 +83,7 @@ Create a release
 
 Create a release with::
 
-   $ devscripts/release.py $version
+   $ ./dev.py release $version
 
 The release script will:
 
