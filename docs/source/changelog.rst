@@ -59,6 +59,7 @@ Backwards incompatible changes
 ==============================
 
 * The docker-compose setup requires at least docker-compose 1.27.0.
+* The docker-compose setup now uses Redis 7.
 * Drop support for cryptography 35.0.
 * Drop support for acme 1.23, 1.24, 1.25 and 1.26.
 * Drop support for Celery 5.0.
@@ -68,6 +69,8 @@ Backwards incompatible changes
 * Drop ``django-redis-cache`` from the ``redis`` extra, as the project is abandoned. Please switch to the
   `built in redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>`_ instead. If you still
   use Django 3.2, please manually install the backend.
+* ``ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION`` was removed, use the identical
+  ``ExtendedKeyUsageOID.KERBEROS_PKINIT_KDC`` instead.
 
 Deprecation notices
 ===================

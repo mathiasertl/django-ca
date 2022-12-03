@@ -17,7 +17,7 @@ Run these steps when you begin to create a new release:
   * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.
   * Add a deprecation notice for versions no longer supported upstream.
 
-* Run :command:`devscripts/validate-state.py` and fix any errors.
+* Run :command:`./dev.py validate state` and fix any errors.
 
 docker-compose
 ==============

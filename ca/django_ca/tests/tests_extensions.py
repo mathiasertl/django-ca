@@ -25,7 +25,7 @@ from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ..constants import ExtensionOID
+from ..constants import ExtensionOID  # type: ignore[attr-defined]
 from ..deprecation import RemovedInDjangoCA124Warning
 from ..extensions import (
     KEY_TO_EXTENSION,

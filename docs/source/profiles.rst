@@ -126,7 +126,7 @@ Points and Authority Information Access) are added depending on the values for t
 You can define any extension in a profile with a dictionary.
 
 Use the ``key`` from :py:attr:`~django_ca.constants.EXTENSION_KEYS` as a dictionary key and a dictionary as a
-value describing the extension. 
+value describing the extension.
 
 The dictionary has an optional ``critical`` key. If it is not defined, the critical value will come from
 :py:attr:`~django_ca.constants.EXTENSION_DEFAULT_CRITICAL`.
@@ -166,8 +166,8 @@ value for this extension (profiles are only used to fill the form, not when actu
 Certificate Policies
 ====================
 
-.. note:: 
-   
+.. note::
+
    Configuring a Certificate Policies extension in a profile is currently the `only` way to add this extension
    to a certificate.
 
