@@ -227,7 +227,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                     crl=[crl_path],
                     cert=cert,
                     code=2,
-                    stderr="Different CRL scope",
+                    stderr="[dD]ifferent CRL scope",
                 )
 
     @override_tmpcadir(CA_DEFAULT_HOSTNAME="")
@@ -321,7 +321,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                     *paths,
                     crl=[crl_path, crl2_path],
                     code=2,
-                    stderr="Different CRL scope",
+                    stderr="[dD]ifferent CRL scope",
                 )
 
             # Changing the default hostname setting should not change the validation result
@@ -341,7 +341,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                     *paths,
                     crl=[crl_path, crl2_path],
                     code=2,
-                    stderr="Different CRL scope",
+                    stderr="[dD]ifferent CRL scope",
                 )
 
             # Again, global CRLs do not validate
@@ -358,5 +358,5 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                     *paths,
                     crl=[crl_path, crl2_path],
                     code=2,
-                    stderr="Different CRL scope",
+                    stderr="[dD]ifferent CRL scope",
                 )

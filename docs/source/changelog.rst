@@ -17,7 +17,7 @@ ChangeLog
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
-* Add support for Python 3.11, Django 4.1, cryptography 38.0 and acme 2.0.
+* Add support for Python 3.11, Alpine 3.17, Django 4.1, cryptography 38.0 and acme 2.0.
 * Support for MD5 and SHA1 hashes is removed, as they are no longer supported in upcoming releases of
   cryptography.
 * New signals :py:class:`~django_ca.signals.pre_sign_cert` and :py:class:`~django_ca.signals.post_sign_cert`
@@ -52,6 +52,7 @@ Admin interface
 Minor changes
 =============
 
+* The Docker image is now based on ``python:3.11-alpine3.17``.
 * Access Descriptions in the Authority Information Access extension will now always order OCSP URLs before CA
   Issuers, inverting the previous behavior. The order of values does not matter in practice.
 
@@ -75,7 +76,12 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
-* The ``acme`` extra will be removed in ``django-ca==1.23.0``.
+* This is the last release to support for Python 3.7.
+* This is the last release to support Django 4.0.
+* This is the last release to support cryptography 36.0.
+* This is the last release to support acme 1.29.0.
+* This is the last release to support Alpine 3.14 and 3.15.
+* The ``acme`` extra will be removed in in the next release.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
   removed in ``django-ca==1.23.0``.
 * The ``pre_issue_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new

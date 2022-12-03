@@ -90,10 +90,8 @@ class Command(DevCommand):
                             break
 
                 if proc.returncode == 0:
-                    ok_str = f"# {image} passed. #"
-
                     # pylint: disable-next=consider-using-f-string  # just more convenient
-                    ok("%s\n%s\n%s\n\n" % ("#" * len(ok_str), ok_str, "#" * len(ok_str)))
+                    ok(f"{image} passed.")
                     docker_runs.append({"image": image, "success": True, "error": ""})
                 else:
                     failed_str = f"# {image} failed: return code {proc.returncode}. #"
@@ -116,7 +114,7 @@ class Command(DevCommand):
                     sys.exit(1)
             finally:
                 if not args.keep_image:
-                    self.run(["docker", "image", "rm", tag], check=False)
+                    self.run("docker", "image", "rm", tag, check=False)
 
         print("\nSummary of test runs:")
         for run in docker_runs:

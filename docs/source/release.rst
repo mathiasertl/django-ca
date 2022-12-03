@@ -18,6 +18,7 @@ Run these steps when you begin to create a new release:
   * Add a deprecation notice for versions no longer supported upstream.
 
 * Run :command:`./dev.py validate state` and fix any errors.
+* Update version in ``ca/django_ca/__init__.py``.
 
 docker-compose
 ==============

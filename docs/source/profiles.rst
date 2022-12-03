@@ -160,8 +160,9 @@ names as described in :ref:`names_on_cli`.  Example::
 It is unusual to specify this extension in a profile, as the values should come from the certificate
 authority. If you do specify it, it will be merged with values from the certificate authority if you create a
 certificate from the command line or via ACMEv2 (unless the profile specifies ``add_ocsp_url=False`` and/or
-``add_issuer_url=False``). If you create a certificate via the admin interface, selecting the profile will set the
-value for this extension (profiles are only used to fill the form, not when actually signing the certificate).
+``add_issuer_url=False``). If you create a certificate via the admin interface, selecting the profile will set
+the value for this extension (profiles are only used to fill the form, not when actually signing the
+certificate).
 
 Certificate Policies
 ====================
