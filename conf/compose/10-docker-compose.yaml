@@ -1,7 +1,9 @@
 CACHES:
     default:
         BACKEND: django.core.cache.backends.redis.RedisCache
-        LOCATION: redis://cache:6379/1
+        LOCATION: redis://cache:6379
+        OPTIONS:
+            db: "1"
 
 DATABASES:
     default:
