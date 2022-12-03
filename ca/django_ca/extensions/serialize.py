@@ -214,7 +214,11 @@ def _serialize_extension(  # pylint: disable=too-many-return-statements
 
 
 def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> SerializedExtension:
-    """Serialize an extension to a dictionary."""
+    """Serialize an extension to a dictionary.
+
+    This is the inverse of :py:func:`~django_ca.extensions.parse_extension` and is used to serialize
+    extension information for API calls in the admin interface.
+    """
 
     value = _serialize_extension(extension.value)
     serialized: SerializedExtension = {"critical": extension.critical, "value": value}

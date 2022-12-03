@@ -13,21 +13,19 @@
 
 """Test cases for :py:mod:`django_ca.extensions`."""
 
+import doctest
 import typing
+from unittest import TestLoader, TestSuite
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
-from cryptography.x509.oid import (
-    AuthorityInformationAccessOID,
-    ExtendedKeyUsageOID,
-    ExtensionOID,
-    ObjectIdentifier,
-)
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID, ObjectIdentifier
 
 from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from ..constants import ExtensionOID
 from ..deprecation import RemovedInDjangoCA124Warning
 from ..extensions import (
     KEY_TO_EXTENSION,
@@ -70,6 +68,16 @@ from .base.extensions import (
     TestValues,
 )
 from .base.mixins import TestCaseMixin
+
+
+def load_tests(  # pylint: disable=unused-argument
+    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+) -> TestSuite:
+    """Load doctests."""
+    globs = {"ExtensionOID": ExtensionOID}
+    tests.addTests(doctest.DocTestSuite("django_ca.extensions.parse", extraglobs=globs))
+    tests.addTests(doctest.DocTestSuite("django_ca.extensions", extraglobs=globs))
+    return tests
 
 
 class AuthorityInformationAccessTestCase(ExtensionTestMixin[AuthorityInformationAccess], TestCase):

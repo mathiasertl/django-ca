@@ -123,10 +123,17 @@ since they are required to create a useful certificate. Further extensions (such
 Points and Authority Information Access) are added depending on the values for the CA you are using and the
 ``add_{...}_url`` settings described below.
 
-You can define any extension in a profile. Use the ``key`` as a dictionary key and a dictionary as a value
-describing the extension. All extensions use a ``value`` key to describe the extension value and an optional
-``critical`` value to describe if the extension is marked as critical. For example, for the Key Usage
-extension, use::
+You can define any extension in a profile with a dictionary.
+
+Use the ``key`` from :py:attr:`~django_ca.constants.EXTENSION_KEYS` as a dictionary key and a dictionary as a
+value describing the extension. 
+
+The dictionary has an optional ``critical`` key. If it is not defined, the critical value will come from
+:py:attr:`~django_ca.constants.EXTENSION_DEFAULT_CRITICAL`.
+
+All extensions use a ``value`` key to describe the extension value. It is usually a ``dict`` for convenience,
+but can also be a |Extension| or |ExtensionType| for convenience (or special cases). For example, for the Key
+Usage extension, use::
 
    CA_PROFILES = {
        'example': {
@@ -139,6 +146,123 @@ extension, use::
            },
        },
    }
+
+Find how to specify the ``value`` key for the most important extensions below.
+
+Authority Information Access
+============================
+
+The ``value`` is a ``dict`` with two optional keys: ``ocsp`` and ``issuers``. Both are a list of general
+names as described in :ref:`names_on_cli`.  Example::
+
+   {'ocsp': 'URI:http://ocsp.example.com'}
+
+It is unusual to specify this extension in a profile, as the values should come from the certificate
+authority. If you do specify it, it will be merged with values from the certificate authority if you create a
+certificate from the command line or via ACMEv2 (unless the profile specifies ``add_ocsp_url=False`` and/or
+``add_issuer_url=False``). If you create a certificate via the admin interface, selecting the profile will set the
+value for this extension (profiles are only used to fill the form, not when actually signing the certificate).
+
+Certificate Policies
+====================
+
+.. note:: 
+   
+   Configuring a Certificate Policies extension in a profile is currently the `only` way to add this extension
+   to a certificate.
+
+The ``value`` is a list of dicts describing the policy information. Each dict has the mandatory
+``policy_identifier`` key that names an Object Identifier as dotted string. The ``policy_qualifiers`` object
+is optional and a list of policy qualifiers.
+
+A ``policy_qualifiers`` item is either a string, or a dict describing a user notice. A user notice is a dict
+with the optional ``explicit_text`` key with a string value and the optional ``notice_reference`` key
+describing a notice reference. A ``notice_reference`` is a dict with the optional ``organization`` key as a
+string, and the ``notice_numbers`` key as a list of integers.
+
+Example::
+
+   [
+      {"policy_identifier": "1.1.1"},
+      {
+         "policy_identifier": "1.3.3",
+         "policy_qualifiers": [
+             "A policy qualifier as a string",
+             {
+                 "explicit_text": "An explicit text",
+                 "notice_reference": {
+                     "organization": "some org",
+                     "notice_numbers": [1, 2, 3],
+                 }
+             },
+         ],
+      },
+   ]
+
+CRL Distribution Points
+=======================
+
+The ``value`` is a list of dicts describing distribution points. Each distribution point has either a
+``full_name`` or a ``relative_name`` key (they are mutually exclusive). ``full_name`` is a list of names as
+described in :ref:`names_on_cli`, ``relative_name`` is a string with a relative name, e.g.
+``/CN=example.com``. A distribution point may also have a list of names in ``crl_issuers`` and a list of
+reasons in ``reasons`` as named in :py:class:`~cg:cryptography.x509.ReasonFlags`.
+
+Please note that in practice, the extension typically `only` uses a single ``full_name`` entry, all other
+values are not used::
+
+   [{'full_name': ['URI:http://crl.example.com']}]
+
+Here is a full example::
+
+   [
+      {
+         'full_name': ['URI:http://crl1.example.com', 'URI:http://crl2.example.com'],
+         'crl_issuer': ['URI:http://crl-issuer.example.com'],
+         'reasons': ['key_compromise'],
+      }
+   ]
+
+It is unusual to specify this extension in a profile, as the values should come from the certificate
+authority. If you do specify it, it will be merged with values from the certificate authority if you create a
+certificate from the command line or via ACMEv2 (unless the profile specifies ``add_crl_url=False``).
+If you create a certificate via the admin interface, selecting the profile will set the value for this
+extension (profiles are only used to fill the form, not when actually signing the certificate).
+
+Extended Key Usage
+==================
+
+The ``value`` is a list of extended key usages as defined in `RFC 5280, section 4.2.1.12
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_. Example::
+
+   ["serverAuth", "clientAuth"]
+
+Freshest CRL
+============
+
+The syntax is the same as for the CRL Distribution Points extension.
+
+Key Usage
+=========
+
+The ``value`` is a list of key usages as defined in `RFC 5280, section 4.2.1.3
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_. Example::
+
+   ["digitalSignature", "keyEncipherment"]
+
+OCSP No Check
+=============
+
+The ``value`` is optional, as the extension has no value (besides being present).
+
+TLS Feature
+===========
+
+The ``value`` is a list of features as defined in `RFC 7633
+<https://datatracker.ietf.org/doc/html/rfc7633.html` (so ``status_request`` and ``status_request_v2``). For
+convenience, ``OCSPMustStaple`` and ``MultipleCertStatusRequest`` is also supported. Example::
+
+   ["OCSPMustStaple"]
 
 
 The ``add_..._url`` settings

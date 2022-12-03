@@ -95,6 +95,9 @@ def get_extension_name(oid: x509.ObjectIdentifier) -> str:
 
     >>> get_extension_name(ExtensionOID.BASIC_CONSTRAINTS)
     'Basic Constraints'
+    >>> get_extension_name(x509.ObjectIdentifier("1.2.3"))
+    'Unknown extension (1.2.3)'
+
     """
 
     if oid in EXTENSION_NAMES:

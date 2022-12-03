@@ -372,6 +372,8 @@ intersphinx_mapping = {
 
 rst_epilog = f"""
 .. |minimum-python| replace:: {CONFIG['python-major'][0]}
+.. |Extension| replace:: :py:class:`~cg:cryptography.x509.Extension`
+.. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
 """
 
 html_theme = "sphinx_rtd_theme"

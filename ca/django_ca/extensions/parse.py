@@ -284,7 +284,27 @@ def _parse_tls_feature(value: typing.Iterable[typing.Union[x509.TLSFeatureType, 
 def parse_extension(  # pylint: disable=too-many-branches  # there's just many extensions
     key: str, value: typing.Union[x509.Extension[x509.ExtensionType], x509.ExtensionType, ParsableExtension]
 ) -> x509.Extension[x509.ExtensionType]:
-    """Parse a serialized extension into a cryptography object."""
+    """Parse a serialized extension into a cryptography object.
+
+    This function is used by :doc:`profiles` to parse configured extensions into standard cryptography
+    extensions. If you need to parse a similar object, use this function.
+
+    The `value` is usually a ``dict`` as described in profiles but for convenience, may also be a
+    :py:class:`~cg:cryptography.x509.Extension`, in which case the extension is returned unchanged. If you
+    pass a :py:class:`~cg:cryptography.x509.ExtensionType`, an extension with the default critical value is
+    returned.
+
+    >>> parse_extension("key_usage", {'critical': True, 'value': ['keyCertSign']})  # doctest: +ELLIPSIS
+    <Extension(..., critical=True, value=<KeyUsage(... key_cert_sign=True, ...)>)>
+
+    Parameters
+    ----------
+    key : str
+        The `key` is the extension key used in the dictionary to name the extension, it must match one of the
+        keys in :py:data:`~django_ca.constants.EXTENSION_KEYS`.
+    value : dict, |ExtensionType| or |Extension|
+        The value that describes the extension. See :doc:`/profiles` for more information.
+    """
     if isinstance(value, x509.Extension):
         return value
 
