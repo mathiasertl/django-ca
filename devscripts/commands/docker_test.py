@@ -43,12 +43,19 @@ class Command(DevCommand):
             "--fail-fast", action="store_true", default=False, help="Stop if any docker process fails."
         )
         parser.add_argument("--keep-image", action="store_true", default=False, help="Do not remove images.")
+        parser.add_argument("-l", "--list", action="store_true", help="List images and exit.")
 
-    def handle(self, args):
+    def handle(self, args):  # pylint: disable=too-many-branches
         docker_runs = []
 
         project_config = config.get_project_config()
         images = args.images or project_config["docker"]["alpine-images"]
+
+        if args.list:
+            for image in images:
+                print(image)
+            return
+
         for image in images:
             info(f"### Testing {image} ###")
             tag = f"django-ca-test-{image}"
@@ -90,7 +97,6 @@ class Command(DevCommand):
                             break
 
                 if proc.returncode == 0:
-                    # pylint: disable-next=consider-using-f-string  # just more convenient
                     ok(f"{image} passed.")
                     docker_runs.append({"image": image, "success": True, "error": ""})
                 else:

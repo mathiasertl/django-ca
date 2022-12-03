@@ -80,10 +80,13 @@ def get_project_config():
     )
     for pyver in reversed(cfg["python-major"]):
         for alpver in reversed(cfg["alpine"]):
+            image_name = f"python:{pyver}-alpine{alpver}"
+
             # Skip images that are just no longer built upstream
-            if (pyver, alpver) in [("3.10", "3.12")]:
+            if image_name in cfg["docker-image-blacklist"]:
                 continue
 
-            if f"python:{pyver}-alpine{alpver}" not in _alpine_images:
-                _alpine_images.append(f"python:{pyver}-alpine{alpver}")
+            if image_name not in _alpine_images:
+                _alpine_images.append(image_name)
+
     return cfg
