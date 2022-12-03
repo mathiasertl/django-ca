@@ -26,6 +26,12 @@ KNOWN_EXTENSION_OIDS = list(
         [getattr(ExtensionOID, attr) for attr in dir(ExtensionOID)],
     )
 )
+KNOWN_EXTENDED_KEY_USAGE_OIDS = list(
+    filter(
+        lambda attr: isinstance(attr, x509.ObjectIdentifier),
+        [getattr(constants.ExtendedKeyUsageOID, attr) for attr in dir(constants.ExtendedKeyUsageOID)],
+    )
+)
 
 
 class ReasonFlagsTestCase(TestCase):
@@ -39,21 +45,35 @@ class ReasonFlagsTestCase(TestCase):
         )
 
 
-class ExtensionMappingsTestCase(TestCase):
-    """Test various mappings from ExtensionOIDs to something."""
+class CompletenessTestCase(TestCase):
+    """Test for completeness of various constants."""
 
-    def test_completeness_extension_keys(self) -> None:
+    def test_extended_key_usage_oids(self) -> None:
+        """Test ExtendedKeyUsageOID for duplicates."""
+        self.assertCountEqual(KNOWN_EXTENDED_KEY_USAGE_OIDS, list(set(KNOWN_EXTENDED_KEY_USAGE_OIDS)))
+
+    def test_extended_key_usage_names(self) -> None:
+        """Test completeness of EXTENDED_KEY_USAGE_NAMES constant."""
+        self.assertCountEqual(KNOWN_EXTENDED_KEY_USAGE_OIDS, constants.EXTENDED_KEY_USAGE_NAMES.keys())
+
+    def test_extended_key_usage_human_readable_names(self) -> None:
+        """Test completeness of EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES constant."""
+        self.assertCountEqual(
+            KNOWN_EXTENDED_KEY_USAGE_OIDS, constants.EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES.keys()
+        )
+
+    def test_extension_keys(self) -> None:
         """Test completeness of KNOWN_EXTENSION_OIDS constant."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_KEYS.keys())
 
-    def test_completeness_oid_to_extension_names(self) -> None:
+    def test_oid_to_extension_names(self) -> None:
         """Test completeness of EXTENSION_NAMES."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_NAMES.keys())
 
-    def test_completeness_oid_default_critical(self) -> None:
+    def test_oid_default_critical(self) -> None:
         """Test completeness of EXTENSION_DEFAULT_CRITICAL."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_DEFAULT_CRITICAL.keys())
 
-    def test_completeness_oid_critical_help(self) -> None:
+    def test_oid_critical_help(self) -> None:
         """Test completeness of EXTENSION_CRITICAL_HELP."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_CRITICAL_HELP.keys())

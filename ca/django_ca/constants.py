@@ -35,7 +35,6 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
 
     # Used by PKINIT logon on Windows (see  github #46)
     SMARTCARD_LOGON = x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2")
-    KERBEROS_CONSTRAINED_DELEGATION = x509.ObjectIdentifier("1.3.6.1.5.2.3.5")  # or msKCD
 
     # mobilee Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
     MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
@@ -63,7 +62,7 @@ EXTENDED_KEY_USAGE_NAMES = MappingProxyType(
         ExtendedKeyUsageOID.IPSEC_IKE: "ipsecIKE",
         ExtendedKeyUsageOID.IPSEC_TUNNEL: "ipsecTunnel",
         ExtendedKeyUsageOID.IPSEC_USER: "ipsecUser",
-        ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION: "msKDC",
+        ExtendedKeyUsageOID.KERBEROS_PKINIT_KDC: "msKDC",
         ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
         ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
         ExtendedKeyUsageOID.OCSP_SIGNING: "OCSPSigning",
@@ -73,7 +72,6 @@ EXTENDED_KEY_USAGE_NAMES = MappingProxyType(
     }
 )
 
-# TOOD: validate completeness in unit test
 #: Map of ExtendedKeyUsageOIDs to human readable names.
 EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = MappingProxyType(
     {
@@ -86,7 +84,7 @@ EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = MappingProxyType(
         ExtendedKeyUsageOID.IPSEC_IKE: "IPSec Internet Key Exchange",
         ExtendedKeyUsageOID.IPSEC_TUNNEL: "IPSec Tunnel",
         ExtendedKeyUsageOID.IPSEC_USER: "IPSec User",
-        ExtendedKeyUsageOID.KERBEROS_CONSTRAINED_DELEGATION: "Kerberos Domain Controller",
+        ExtendedKeyUsageOID.KERBEROS_PKINIT_KDC: "Kerberos Domain Controller",
         ExtendedKeyUsageOID.MDL_DOCUMENT_SIGNER: "mdlDS",
         ExtendedKeyUsageOID.MDL_JWS_CERTIFICATE: "mdlJWS",
         ExtendedKeyUsageOID.OCSP_SIGNING: "OCSP Signing",
