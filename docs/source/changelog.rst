@@ -57,6 +57,7 @@ ACMEv2 support
 * An ACME account is now considered usable if it never agreed to the terms of service *and* the certificate
   authority does not define any terms of service. Certain versions of certbot (at least version 1.31.0) never
   ask the user to agree to the terms of service if there are none to agree to.
+* Allow clients to agree to the terms of service when updating the account.
 
 Minor changes
 =============

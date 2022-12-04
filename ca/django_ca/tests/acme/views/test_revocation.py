@@ -14,6 +14,7 @@
 """Test ACME certificate revocation."""
 
 import typing
+import unittest
 from http import HTTPStatus
 
 import acme
@@ -213,15 +214,23 @@ class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationView
         resp = self.acme(self.url, self.message, cert=cert)
         self.assertUnauthorized(resp, "Request signed by the wrong certificate.")
 
+    @unittest.skip("Not applicable.")
+    def test_tos_not_agreed_account(self) -> None:
+        """Not applicable: Certificate-signed revocation requests do not require a valid account."""
+
+    @unittest.skip("Not applicable.")
     def test_deactivated_account(self) -> None:
         """Not applicable: Certificate-signed revocation requests do not require a valid account."""
 
+    @unittest.skip("Not applicable.")
     def test_unknown_account(self) -> None:
         """Not applicable: Certificate-signed revocation requests do not require a valid account."""
 
+    @unittest.skip("Not applicable.")
     def test_unusable_account(self) -> None:
         """Not applicable: Certificate-signed revocation requests do not require a valid account."""
 
+    @unittest.skip("Not applicable.")
     def test_jwk_and_kid(self) -> None:
         """Already tested in the immediate base class and does not make sense here: The test sets KID to a
         value, but the point of the whole class is to have *no* KID."""

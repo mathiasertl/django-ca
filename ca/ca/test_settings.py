@@ -230,7 +230,7 @@ NEWEST_DJANGO_VERSION = (4, 1)
 
 # Determine if we're running on the respective newest versions
 _parsed_cg_version = packaging.version.parse(cryptography.__version__).release
-CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]  # type: ignore[index]
+CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]
 NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
 NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION

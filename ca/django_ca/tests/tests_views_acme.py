@@ -692,7 +692,19 @@ class AcmeWithAccountViewTestCaseMixin(
         """Test request with a deactivated account."""
         self.main_account.status = AcmeAccount.STATUS_DEACTIVATED
         self.main_account.save()
-        self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), "Account not usable.")
+        response = self.acme(self.url, self.message, kid=self.kid)
+        self.assertUnauthorized(response, "Account has been deactivated.")
+
+    @override_tmpcadir()
+    def test_tos_not_agreed_account(self) -> None:
+        """Test request with a deactivated account."""
+        self.main_account.ca.terms_of_service = "http://tos.example.com"
+        self.main_account.ca.save()
+
+        self.main_account.terms_of_service_agreed = False
+        self.main_account.save()
+        response = self.acme(self.url, self.message, kid=self.kid)
+        self.assertUnauthorized(response, "Account did not agree to the terms of service.")
 
     @override_tmpcadir()
     def test_unknown_account(self) -> None:
@@ -972,6 +984,39 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
         self.assertEqual(AcmeAccount.objects.count(), 0)
 
     @override_tmpcadir()
+    def test_no_tos_agreed_flag(self) -> None:
+        """Test not sending the terms_of_service_agreed flag."""
+
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+        message = self.get_message(contact=(self.contact,))
+        self.assertIsNone(message.terms_of_service_agreed)  # type: ignore[union-attr]
+        with self.mock_slug() as slug:
+            resp = self.acme(self.url, message)
+        self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
+        self.assertAcmeResponse(resp)
+
+        # Get first AcmeAccount - which must be the one we just created
+        acc = AcmeAccount.objects.get(slug=slug)
+        self.assertEqual(acc.status, AcmeAccount.STATUS_VALID)
+        self.assertEqual(acc.ca, self.ca)
+        self.assertEqual(acc.contact, self.contact)
+        self.assertFalse(acc.terms_of_service_agreed)
+        self.assertEqual(acc.pem, self.PEM)
+
+        # Test the response body
+        self.assertEqual(
+            resp["location"], self.absolute_uri(":acme-account", serial=self.ca.serial, slug=acc.slug)
+        )
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [self.contact],
+                "orders": self.absolute_uri(":acme-account-orders", serial=self.ca.serial, slug=acc.slug),
+                "status": "valid",
+            },
+        )
+
+    @override_tmpcadir()
     def test_only_existing_does_not_exist(self) -> None:
         """Test making an only_existing request for an account that does not exist."""
 
@@ -1017,6 +1062,10 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
     def url(self) -> str:
         """Get URL for the standard auth object."""
         return self.get_url(serial=self.ca.serial, slug=self.account_slug)
+
+    @unittest.skip("Not applicable.")
+    def test_tos_not_agreed_account(self) -> None:
+        """Skipped here because clients can agree to the TOS in an update, so not having agreed is okay."""
 
     def test_deactivation(self) -> None:
         """Test basic account deactivation."""
@@ -1120,10 +1169,36 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
         self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
         self.assertEqual(self.account.status, AcmeAccount.STATUS_DEACTIVATED)
 
+    def test_agree_tos(self) -> None:
+        """Test updating the agreement to the terms of service."""
+
+        self.account.terms_of_service_agreed = False
+        self.account.save()
+
+        message = self.get_message(terms_of_service_agreed=True)
+        resp = self.acme(self.url, message, kid=self.kid)
+        self.assertEqual(
+            resp.json(),
+            {
+                "contact": [self.ACCOUNT_ONE_CONTACT],
+                "orders": self.absolute_uri(
+                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
+                ),
+                "status": AcmeAccount.STATUS_VALID,
+            },
+        )
+
+        self.account.refresh_from_db()
+
+        self.assertTrue(self.account.terms_of_service_agreed)
+        self.assertTrue(self.account.usable)
+        self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
+        self.assertEqual(self.account.status, AcmeAccount.STATUS_VALID)
+
     def test_malformed(self) -> None:
         """Test updating something we cannot update."""
 
-        message = self.get_message(terms_of_service_agreed=True)
+        message = self.get_message()
         resp = self.acme(self.url, message, kid=self.kid)
         self.assertMalformed(resp, "Only contact information can be updated.")
         self.account.refresh_from_db()
@@ -1881,6 +1956,30 @@ class AcmeOrderFinalizeViewTestCase(
             resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "Names in CSR do not match.")
+
+    @override_tmpcadir()
+    def test_unparsable_csr(self) -> None:
+        """Test passing a completely unparsable CSR."""
+
+        with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
+            "django_ca.acme.views.AcmeOrderFinalizeView.message_cls.encode", side_effect=[b"foo"]
+        ), self.assertLogs():
+            resp = self.acme(self.url, self.message, kid=self.kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, "Unable to parse CSR.")
+
+    @override_tmpcadir()
+    def test_csr_invalid_version(self) -> None:
+        """Test passing a completely unparsable CSR."""
+
+        # It's difficult to create a CSR with an invalid version, so we just mock the parsing function raising
+        # the exception instead.
+        with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
+            "django_ca.acme.views.parse_acme_csr", side_effect=x509.InvalidVersion("foo", 42)
+        ):
+            resp = self.acme(self.url, self.message, kid=self.kid)
+        mockcm.assert_not_called()
+        self.assertBadCSR(resp, "Invalid CSR version.")
 
 
 @freeze_time(timestamps["everything_valid"])

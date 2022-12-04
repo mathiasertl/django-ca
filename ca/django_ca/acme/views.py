@@ -243,6 +243,30 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         either create an object or do not process any object.
         """
 
+    def is_account_usable(self, account: AcmeAccount) -> bool:
+        """Method determining if an account is usable.
+
+        Implementing views may override this function if what makes an account "usable" is different. Notably,
+        the AccountView considers accounts usable even if the terms of service where not agreed, as the user
+        can then agree to the terms of service.
+        """
+        # Check for various conditions that make an account unusable and raise an appropriate exception
+        if account.status == AcmeAccount.STATUS_DEACTIVATED:
+            # NOTE: Account may have other status that makes it unusable, these cases are covered by
+            # account.usable below.
+            raise AcmeUnauthorized(message="Account has been deactivated.")
+        if account.ca.terms_of_service and not account.terms_of_service_agreed:
+            raise AcmeUnauthorized(message="Account did not agree to the terms of service.")
+
+        # COVERAGE NOTE: The check for the CA is already done when selecting the CA, so account.ca.usable
+        # should always be true at this point. Check is left here as an additional precaution.
+        if not account.ca.usable:  # pragma: no cover
+            raise AcmeUnauthorized(message="Certificate Authority is not usable.")
+
+        # This should return True unless the account was revoked by the server, in which case we let the main
+        # function return a generic error message instead.
+        return account.usable
+
     def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
         """Set Link releations headers according to RFC8288.
 
@@ -282,10 +306,13 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
         try:
             response = super().dispatch(request, serial=serial, slug=slug)
-            self.set_link_relations(response)
+        except AcmeException as ex:
+            response = ex.get_response()
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
             response = AcmeResponseError(message="Internal server error")
+
+        self.set_link_relations(response)
 
         # self.log_request()
 
@@ -344,7 +371,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message="Account not found.")
 
-            if account.usable is False:
+            if self.is_account_usable(account) is False:
                 # RFC 855, 7.3.6:
                 #
                 #   If a server receives a POST or POST-as-GET from a deactivated account, it MUST return an
@@ -388,10 +415,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized(message="URL does not match.")
 
-        try:
-            return self.process_acme_request(slug=slug)
-        except AcmeException as e:
-            return e.get_response()
+        return self.process_acme_request(slug=slug)
 
 
 class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
@@ -580,9 +604,27 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
 
 
 class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Registration]):
-    """View showing account details."""
+    """View allowing the update of accounts or receiving current account details."""
 
     message_cls = messages.Registration
+
+    def is_account_usable(self, account: AcmeAccount) -> bool:
+        """Overridden to make accounts usable that have not agreed to the terms of service.
+
+        A client may agree to the terms of service after account creation, then making the account usable for
+        other operations.
+        """
+        if account.status == AcmeAccount.STATUS_DEACTIVATED:
+            # NOTE: Account may have other status that makes it unusable, these cases are covered by
+            # the check if the status is valid below
+            raise AcmeUnauthorized(message="Account has been deactivated.")
+
+        # COVERAGE NOTE: The check for the CA is already done when selecting the CA, so account.ca.usable
+        # should always be true at this point. Check is left here as an additional precaution.
+        if not account.ca.usable:  # pragma: no cover
+            raise AcmeUnauthorized(message="Certificate Authority is not usable.")
+
+        return account.status == AcmeAccount.STATUS_VALID
 
     @transaction.atomic
     def acme_request(self, message: messages.Registration, slug: Optional[str] = None) -> AcmeResponseAccount:
@@ -602,6 +644,9 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
         elif message.contact:
             self.validate_contacts(message)
             account.contact = "\n".join(message.contact)
+            account.save()
+        elif message.terms_of_service_agreed is not None:
+            account.terms_of_service_agreed = message.terms_of_service_agreed
             account.save()
         else:
             raise AcmeMalformed(message="Only contact information can be updated.")
@@ -763,11 +808,11 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         # Note that the CSR received here is not an actual PEM, see AcmeCertificate.parse_csr()
         try:
             csr = parse_acme_csr(message.encode("csr"))
-        except x509.InvalidVersion:
-            raise AcmeBadCSR(message="Invalid CSR version.")
-        except Exception:
+        except x509.InvalidVersion as ex:
+            raise AcmeBadCSR(message="Invalid CSR version.") from ex
+        except Exception as ex:
             log.exception("Error parsing CSR.")
-            raise AcmeBadCSR(message="Unable to parse CSR.")
+            raise AcmeBadCSR(message="Unable to parse CSR.") from ex
 
         if csr.is_signature_valid is False:
             raise AcmeBadCSR(message="CSR signature is not valid.")

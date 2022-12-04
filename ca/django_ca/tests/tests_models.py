@@ -1387,8 +1387,13 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.account1.status = AcmeAccount.STATUS_VALID
         self.assertTrue(self.account1.usable)
 
-        # TOS must be agreed
+        # TOS not agreed, but CA does not have any
         self.account1.terms_of_service_agreed = False
+        self.assertTrue(self.account1.usable)
+
+        # TOS not agreed, but CA does have them, so account is now unusable
+        self.cas["root"].terms_of_service = "http://tos.example.com"
+        self.cas["root"].save()
         self.assertFalse(self.account1.usable)
 
         # Make the account usable again
