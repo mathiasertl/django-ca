@@ -537,11 +537,19 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
         # Make sure that contact addresses are valid
         self.validate_contacts(message)
 
+        # certbot/acme 1.31.0 does not send this value at all the CA does not have any terms of service.
+        # This issue was not present in 1.29.0 and is no longer present in 2.0.0, but any other client may of
+        # course not send this value.
+        if message.terms_of_service_agreed is None:
+            terms_of_service_agreed = False
+        else:
+            terms_of_service_agreed = message.terms_of_service_agreed
+
         account = AcmeAccount(
             ca=self.ca,
             contact="\n".join(message.contact),
             status=AcmeAccount.STATUS_VALID,
-            terms_of_service_agreed=message.terms_of_service_agreed,
+            terms_of_service_agreed=terms_of_service_agreed,
             thumbprint=thumbprint,
             pem=pem,
         )
