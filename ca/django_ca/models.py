@@ -1686,7 +1686,16 @@ class AcmeAccount(DjangoCAModel):
         An account is usable if the terms of service have been agreed, the status is "valid" and the
         associated CA is usable.
         """
-        return self.terms_of_service_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
+        tos_agreed = self.terms_of_service_agreed
+
+        # If the CA does not have any terms of service, the client does not need to agree to them to be
+        # usable. Some clients (certbot/acme after 1.29.0 and before 2.0.0) never send that they "agree" to
+        # the terms of service if the directory endpoint does send a termsOfService element. The registration
+        # endpoint sets self.terms_of_service_agreed to False in this case.
+        if not self.ca.terms_of_service:
+            tos_agreed = True
+
+        return tos_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
 
 
 class AcmeOrder(DjangoCAModel):
