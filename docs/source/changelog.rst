@@ -49,6 +49,11 @@ Admin interface
 * Because the the user can now modify the extensions directly, the ``add_*`` directives for a profile now have
   no effect when issuing a certificate through the admin interface.
 
+ACMEv2 support
+==============
+
+* Improve error handling when the CSR cannot be parsed.
+
 Minor changes
 =============
 

@@ -753,7 +753,14 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         # The only public attribute or function is the wrapped object. We encode it back to get the regular
         # PEM.
         # Note that the CSR received here is not an actual PEM, see AcmeCertificate.parse_csr()
-        csr = parse_acme_csr(message.encode("csr"))
+        try:
+            csr = parse_acme_csr(message.encode("csr"))
+        except x509.InvalidVersion:
+            raise AcmeBadCSR(message="Invalid CSR version.")
+        except Exception:
+            log.exception("Error parsing CSR.")
+            raise AcmeBadCSR(message="Unable to parse CSR.")
+
         if csr.is_signature_valid is False:
             raise AcmeBadCSR(message="CSR signature is not valid.")
 
