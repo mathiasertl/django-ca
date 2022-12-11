@@ -7,7 +7,7 @@ ChangeLog
 .. _changelog-1.22.0:
 
 *******************
-1.22.0 (2022-12-04)
+1.22.0 (2022-12-11)
 *******************
 
 .. WARNING::
@@ -95,7 +95,7 @@ Deprecation notices
 * This is the last release to support for Python 3.7.
 * This is the last release to support Django 4.0.
 * This is the last release to support cryptography 36.0.
-* This is the last release to support acme 1.27.0, 1.28.0 and 1.29.0.
+* This is the last release to support acme 1.27.0, 1.28.0 and 1.29.0, 1.30.0, 1.31.0 and 2.0.0.
 * This is the last release to support Alpine 3.14 and 3.15.
 * The ``acme`` extra will be removed in in the next release.
 * Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
