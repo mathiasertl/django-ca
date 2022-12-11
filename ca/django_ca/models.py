@@ -317,15 +317,17 @@ class X509CertMixin(DjangoCAModel):
         """Get the revocation time as naive datetime."""
         if self.revoked is False:
             return None
-        if self.revoked_date is None:
+
+        revoked_date = self.revoked_date
+        if revoked_date is None:
             log.warning("Inconsistent model state: revoked=True and revoked_date=None.")
             return None
 
-        if timezone.is_aware(self.revoked_date):
+        if timezone.is_aware(revoked_date):
             # convert datetime object to UTC and make it naive
-            return timezone.make_naive(self.revoked_date, tz.utc)
+            return timezone.make_naive(revoked_date, tz.utc)
 
-        return self.revoked_date
+        return revoked_date.replace(microsecond=0)
 
     def update_certificate(self, value: x509.Certificate) -> None:
         """Update this instance with data from a :py:class:`cg:cryptography.x509.Certificate`.
