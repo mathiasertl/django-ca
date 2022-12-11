@@ -106,6 +106,9 @@ def console_include(path, context):
                 for cmd in reversed(command.get("clean", []))
             ]
 
+            for cmd in command.get("before_command", []):
+                run(shlex.split(env.from_string(cmd).render(**context)))
+
             stdin = command.get("input")
             stdin_file = command.get("input_file")
             if stdin_file is not None:
@@ -124,7 +127,10 @@ def console_include(path, context):
             # If a "waitfor" command is defined, don't run actual command until it succeeds
             _waitfor(command.get("waitfor"), env, context, env=shell_env)
 
-            run(args, capture_output=True, input=stdin, env=shell_env)
+            run(args, capture_output=command.get("capture_output", True), input=stdin, env=shell_env)
+
+            for cmd in command.get("after_command", []):
+                run(shlex.split(env.from_string(cmd).render(**context)))
 
             for clean in reversed(command.get("clean", [])):
                 clean_commands += tmp_clean_commands

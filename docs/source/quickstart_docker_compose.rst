@@ -79,6 +79,7 @@ bundled third-party Docker images.
 ====================================================== ===== =========== =====
 Version                                                Redis PostgreSQL  NGINX
 ====================================================== ===== =========== =====
+:download:`1.22.0 </_files/1.22.0/docker-compose.yml>` 7     12          1.20
 :download:`1.21.0 </_files/1.21.0/docker-compose.yml>` 6     12          1.20
 :download:`1.20.0 </_files/1.20.0/docker-compose.yml>` 6     12          1.20
 :download:`1.19.0 </_files/1.19.0/docker-compose.yml>` 6     12          1.20
