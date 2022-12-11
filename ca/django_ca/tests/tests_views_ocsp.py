@@ -324,9 +324,7 @@ class OCSPViewTestMixin(TestCaseMixin):
                 revocation_reason = cert_status["revocation_reason"]
 
                 self.assertEqual(revocation_reason, cert.revoked_reason)
-                self.assertEqual(
-                    revocation_time, typing.cast(datetime, cert.revoked_date).replace(microsecond=0)
-                )
+                self.assertEqual(revocation_time, cert.get_revocation_time())
 
             # test next_update
             this_update = response["this_update"].native
@@ -384,10 +382,11 @@ class OCSPTestGenericViewWithTZ(OCSPTestGenericView):
     """Generic view tests but with timezone support."""
 
 
-@override_settings(ROOT_URLCONF=__name__)
-@freeze_time("2019-02-03 15:43:12")
-class OCSPTestView(OCSPViewTestMixin, TestCase):
-    """Test OCSPView."""
+class OCSPTestViewMixin(OCSPViewTestMixin):
+    """Mixin defining test cases for OCSPView.
+
+    Why is this a separate mixin: https://github.com/spulec/freezegun/issues/485
+    """
 
     load_cas = "__usable__"
     load_certs = "__usable__"
@@ -688,8 +687,15 @@ class OCSPTestView(OCSPViewTestMixin, TestCase):
         self.assertEqual(ocsp_response["response_status"].native, "internal_error")
 
 
-@override_settings(USE_TZ=True)
-class OCSPWithTZTestView(OCSPTestView):
+@override_settings(ROOT_URLCONF=__name__)
+@freeze_time("2019-02-03 15:43:12")
+class OCSPTestView(OCSPTestViewMixin, TestCase):
+    """Test OCSPView."""
+
+
+@override_settings(ROOT_URLCONF=__name__, USE_TZ=True)
+@freeze_time("2019-02-03 15:43:12")
+class OCSPWithTZTestView(OCSPTestViewMixin, TestCase):
     """Test OCSPView but with timezone support."""
 
 

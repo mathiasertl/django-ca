@@ -20,13 +20,14 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import include, path, re_path, reverse
 
 from freezegun import freeze_time
 
 from .. import ca_settings
 from ..views import CertificateRevocationListView
-from .base import certs, override_settings, override_tmpcadir, uri
+from .base import certs, override_tmpcadir, uri
 from .base.mixins import TestCaseMixin
 
 app_name = "django_ca"
@@ -64,11 +65,11 @@ urlpatterns = [
 ]
 
 
-# CRL code complains about 512 bit keys
-@override_settings(ROOT_URLCONF=__name__, CA_MIN_KEY_SIZE=1024)
-@freeze_time("2019-04-14 12:26:00")
-class GenericCRLViewTests(TestCaseMixin, TestCase):
-    """Test generic CRL view."""
+class GenericCRLViewTestsMixin(TestCaseMixin):
+    """Mixin with test cases for CertificateRevocationListView.
+
+    Why is this a separate mixin: https://github.com/spulec/freezegun/issues/485
+    """
 
     load_cas = (
         "root",
@@ -227,9 +228,16 @@ class GenericCRLViewTests(TestCaseMixin, TestCase):
         self.assertCRL(response.content, encoding=Encoding.DER, expires=600, idp=None)
 
 
-@override_settings(USE_TZ=True)
-class GenericCRLWithTZViewTests(GenericCRLViewTests):
-    """Same but with timezone support."""
+@override_settings(ROOT_URLCONF=__name__)
+@freeze_time("2019-04-14 12:26:00")
+class GenericCRLViewTests(GenericCRLViewTestsMixin, TestCase):
+    """Test CertificateRevocationListView."""
+
+
+@override_settings(ROOT_URLCONF=__name__, USE_TZ=True)
+@freeze_time("2019-04-14 12:26:00")
+class GenericCRLWithTZViewTests(GenericCRLViewTestsMixin, TestCase):
+    """Test CertificateRevocationListView with timezone support."""
 
 
 class GenericCAIssuersViewTests(TestCaseMixin, TestCase):
