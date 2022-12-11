@@ -54,21 +54,22 @@ Checkout the previous version and create a test data::
    $ git checkout $PREVIOUS_VERSION
    $ rm -rf ca/db.sqlite3 ca/files
    $ python ca/manage.py migrate
-   $ devscripts/create-testdata.py
+   $ devscripts/standalone/create-testdata.py
 
 Then checkout the current main branch, run migrations and validate the test data::
 
    $ git checkout main
    $ python ca/manage.py migrate
    $ python ca/manage.py makemigrations --check
-   $ devscripts/validate-testdata.py
+   $ devscripts/standalone/validate-testdata.py
 
-Finally, also make sure that ``devscripts/create-testdata.py`` also works for the current version::
+Finally, also make sure that ``devscripts/standalone/create-testdata.py`` also works for the current version::
 
    $ rm -rf ca/db.sqlite3 ca/files
    $ python ca/manage.py migrate
    $ devscripts/create-testdata.py
-   $ devscripts/validate-testdata.py
+   $ devscripts/standalone/create-testdata.py
+   $ devscripts/standalone/validate-testdata.py
 
 Test admin interface
 ====================

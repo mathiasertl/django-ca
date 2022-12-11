@@ -26,7 +26,7 @@ import os
 import sys
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
 import django
 
@@ -60,14 +60,12 @@ from django_ca.models import CertificateAuthority  # NOQA: E402
 # pylint: enable=wrong-import-position
 
 rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")
-dsa_root = CertificateAuthority.objects.get(name="dsa.example.org")
 ecc_root = CertificateAuthority.objects.get(name="ecc.example.net")
 rsa_child = CertificateAuthority.objects.get(name="child.rsa.example.com")
-dsa_child = CertificateAuthority.objects.get(name="child.dsa.example.org")
 ecc_child = CertificateAuthority.objects.get(name="child.ecc.example.net")
 
 # List of CAs that are usable in the frontend
-frontend_cas = ["child.rsa.example.com", "child.dsa.example.org", "child.ecc.example.net"]
+frontend_cas = ["child.rsa.example.com", "child.ecc.example.net"]
 
 for ca in CertificateAuthority.objects.all():
     if not ca.usable:
@@ -84,10 +82,6 @@ for ca in CertificateAuthority.objects.all():
         # Verify the private key
         if ca.name.endswith("rsa.example.com"):
             if not isinstance(key, rsa.RSAPrivateKey):
-                print(f"{ca}: Private key is not an RSA key.")
-                sys.exit(1)
-        elif ca.name.endswith("dsa.example.org"):
-            if not isinstance(key, dsa.DSAPrivateKey):
                 print(f"{ca}: Private key is not an RSA key.")
                 sys.exit(1)
         elif ca.name.endswith("ecc.example.net"):
