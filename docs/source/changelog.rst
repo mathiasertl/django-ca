@@ -17,6 +17,11 @@ ChangeLog
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
+   **Django app or source users:**
+
+   * Changes in cryptography 38 make it incompatible with common versions of certbot. See
+     :ref:`cryptography_38_warning`.
+
 * Add support for Python 3.11, Alpine 3.17, Django 4.1, cryptography 38.0 and acme 2.0.
 * Support for MD5 and SHA1 hashes is removed, as they are no longer supported in upcoming releases of
   cryptography.
@@ -24,7 +29,7 @@ ChangeLog
   that receive the values as passed to the cryptography library.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
 * Ensure that CRLs are regenerated periodically before the cache expires.
-* Switch to the Djangos `built in Redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>` in
+* Switch to the Djangos `built in Redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>`_ in
   the docker compose setup.
 
 Admin interface
@@ -36,8 +41,9 @@ Admin interface
 
   **Limitations:**
 
-  * The CRL Distribution Points and Freshest CRL can only modify the first distribution point. If the selected
-    profile defines more then one distribution point, they are added after the one from the admin interface.
+  * The CRL Distribution Points and Freshest CRL extensions can only modify the first distribution point. If
+    the selected profile defines more then one distribution point, they are added after the one from the admin
+    interface.
   * The Certificate Policies extension cannot yet be modified. If the selected profile defines this extension,
     it is still added to the certificate.
 

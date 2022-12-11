@@ -27,20 +27,36 @@ Python libraries
 If you're using an older system, the table blow lists what versions of Python, Django and cryptography where
 tested with what release (changes to previous versions in **bold**):
 
-=========== ============== ================== =================== ============= ===================
+=========== ============== ================== =================== ============= ====================
 django-ca   Python         Django             cryptography        Celery        acme
-=========== ============== ================== =================== ============= ===================
-1.22        3.7 - 3.10     3.2 - **4.1**      **36.0** - 37.0     **5.1** - 5.2 **1.27** - **1.29**
+=========== ============== ================== =================== ============= ====================
+1.22        3.7 - **3.11** 3.2 - **4.1**      **36.0** - **38.0** **5.1** - 5.2 **1.27** - **2.1.0**
 1.21        3.7 - 3.10     **3.2** - 4.0      **35.0** - **37.0** 5.0 - 5.2     **1.23** - **1.25**
 1.20        **3.7 - 3.10** **2.2, 3.2 - 4.0** **3.4 - 36.0**      5.0 - **5.2** **1.22**
 1.19        3.6 - **3.10** 2.2, 3.1, 3.2      **3.3 - 35.0**      5.0 - **5.1** 1.20
 1.18        3.6 - 3.9      **2.2, 3.1, 3.2**  **3.0 - 3.4**       **5.0**
 1.17        **3.6 - 3.9**  2.2 - 3.1          **2.8 - 3.3**       **4.3** - 4.4
 1.16        3.5 - 3.8      **2.2** - **3.1**  2.7 - **3.0**       **4.2** - 4.4
-=========== ============== ================== =================== ============= ===================
+=========== ============== ================== =================== ============= ====================
 
 Note that we don't deliberately break support for older versions, we merely stop testing it. You can try your
 luck with older versions.
+
+.. _cryptography_38_warning:
+
+Warning: cryptography version 38
+--------------------------------
+
+While django-ca fully supports cryptography 38, a recent change in cryptography makes it incompatible with
+common versions of certbot (see cryptography issues `7231 <https://github.com/pyca/cryptography/issues/7231>`_
+and `7783 <https://github.com/pyca/cryptography/issues/7783>`_) as well as some other clients.
+
+At time of release, at least the certbot versions found in Debian Stable (bullseye) as well as in Ubuntu 22.04
+LTS and earlier are affected. A bug for Debian has been filed (`#1025891
+<https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1025891>`_) to port the fix.
+
+At time of release, it is recommended you keep using cryptography 37. The tutorials have been updated to
+reflect that.
 
 ************
 Installation
@@ -60,7 +76,10 @@ To install django-ca with one or more extras, use the regular pip syntax:
 
 .. code-block:: console
 
-   user@host:~$ pip install django-ca[acme,celery,redis]
+   user@host:~$ pip install django-ca[acme,celery,redis] "cryptography<38"
+
+We use a ``"cryptography<38"`` to make sure django-ca works with common ACMEv2 clients, see
+:ref:`cryptography_38_warning`.
 
 *********************
 Initial configuration
