@@ -28,7 +28,7 @@ def run(release, image, pip_cache_dir, extra=None):
     """Actually run a given wheel test."""
     docker_pip_cache = "/tmp/cache"
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
-    command = "test-imports.py"
+    command = "devscripts/standalone/test-imports.py"
 
     if extra is not None:
         wheel += f"[{extra}]"

@@ -24,5 +24,6 @@ RUN twine check --strict dist/*
 
 FROM $IMAGE
 WORKDIR /work/
-ADD devscripts/standalone/test-imports.py setup.cfg ./
+ADD setup.cfg ./
+ADD devscripts/standalone/test-imports.py devscripts/standalone/test-imports.py
 COPY --from=build /work/dist/* dist/
