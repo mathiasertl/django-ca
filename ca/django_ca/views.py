@@ -26,6 +26,7 @@ import os
 import typing
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -42,7 +43,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from . import ca_settings
 from .models import Certificate, CertificateAuthority
-from .typehints import Literal, PrivateKeyTypes
+from .typehints import PrivateKeyTypes
 from .utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     type = Encoding.DER
     """Encoding for CRL."""
 
-    scope: typing.Optional[Literal["ca", "user", "attribute"]] = "user"
+    scope: Optional[typing.Literal["ca", "user", "attribute"]] = "user"
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
     include both."""
 
@@ -84,7 +85,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
-    include_issuing_distribution_point: typing.Optional[bool] = None
+    include_issuing_distribution_point: Optional[bool] = None
     """Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension."""
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
@@ -137,7 +138,7 @@ class OCSPView(View):
     """Private key used for signing OCSP responses. A relative path used by :ref:`CA_FILE_STORAGE
     <settings-ca-file-storage>`."""
 
-    responder_cert: typing.Union[x509.Certificate, str] = ""
+    responder_cert: Union[x509.Certificate, str] = ""
     """Public key of the responder.
 
     This may either be:
@@ -223,9 +224,7 @@ class OCSPView(View):
         """Get the certificate authority for the request."""
         return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
 
-    def get_cert(
-        self, ca: CertificateAuthority, serial: str
-    ) -> typing.Union[Certificate, CertificateAuthority]:
+    def get_cert(self, ca: CertificateAuthority, serial: str) -> Union[Certificate, CertificateAuthority]:
         """Get the certificate that was requested in the OCSP request."""
         if self.ca_ocsp is True:
             return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
@@ -327,7 +326,7 @@ class GenericOCSPView(OCSPView):
     auto_ca: CertificateAuthority
 
     def dispatch(  # type: ignore[override]
-        self, request: HttpRequest, serial: str, **kwargs: typing.Any
+        self, request: HttpRequest, serial: str, **kwargs: Any
     ) -> "HttpResponseBase":
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)

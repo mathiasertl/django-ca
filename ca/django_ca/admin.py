@@ -19,7 +19,6 @@
 import copy
 import functools
 import logging
-import sys
 import typing
 from datetime import date, datetime
 from http import HTTPStatus
@@ -107,13 +106,6 @@ else:
 
 FieldSets = typing.List[typing.Tuple[typing.Optional[str], typing.Dict[str, typing.Any]]]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
-
-if sys.version_info >= (3, 8):  # pragma: only py>=3.8
-    from typing import OrderedDict
-
-    OrderedDictType = OrderedDict[str, str]
-else:  # pragma: only py<3.8
-    from collections import OrderedDict as OrderedDictType
 
 
 @admin.register(Watcher)
@@ -204,7 +196,7 @@ class CertificateMixin(
         # pylint: disable=missing-function-docstring,unused-argument; Django standard
         return False
 
-    def get_actions(self, request: HttpRequest) -> OrderedDictType:
+    def get_actions(self, request: HttpRequest) -> typing.OrderedDict[str, str]:
         """Disable the "delete selected" admin action.
 
         Otherwise the action is present even though has_delete_permission is False, it just doesn't

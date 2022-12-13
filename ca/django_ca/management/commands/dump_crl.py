@@ -17,13 +17,13 @@
 """
 
 import typing
+from typing import Any, Optional
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
 
 from ...models import CertificateAuthority
-from ...typehints import Literal
 from ..base import BinaryCommand
 
 
@@ -75,9 +75,9 @@ class Command(BinaryCommand):
         path: str,
         ca: CertificateAuthority,
         encoding: Encoding,
-        scope: typing.Optional[Literal["ca", "user", "attribute"]],
-        include_issuing_distribution_point: typing.Optional[bool],
-        **options: typing.Any
+        scope: Optional[typing.Literal["ca", "user", "attribute"]],
+        include_issuing_distribution_point: Optional[bool],
+        **options: Any
     ) -> None:
         # Catch this case early so that we can give a better error message.
         if include_issuing_distribution_point is True and ca.parent is None and scope is None:

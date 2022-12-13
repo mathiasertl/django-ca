@@ -109,7 +109,6 @@ from .signals import post_revoke_cert, post_sign_cert, pre_issue_cert, pre_revok
 from .typehints import (
     Expires,
     ExtensionTypeTypeVar,
-    Literal,
     ParsableHash,
     ParsableKeyType,
     ParsableValue,
@@ -1315,7 +1314,7 @@ class CertificateAuthority(X509CertMixin):
         )
 
     def get_crl_certs(
-        self, scope: Literal[None, "ca", "user", "attribute"], now: datetime
+        self, scope: typing.Literal[None, "ca", "user", "attribute"], now: datetime
     ) -> Iterable[X509CertMixin]:
         """Get CRLs for the given scope."""
         ca_qs = self.children.filter(expires__gt=now).revoked()
@@ -1336,7 +1335,7 @@ class CertificateAuthority(X509CertMixin):
         expires: int = 86400,
         algorithm: Optional[hashes.HashAlgorithm] = None,
         password: Optional[Union[str, bytes]] = None,
-        scope: Optional[Literal["ca", "user", "attribute"]] = None,
+        scope: Optional[typing.Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,
         full_name: Optional[Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,

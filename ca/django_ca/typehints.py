@@ -13,7 +13,6 @@
 
 """Various type aliases used in throughout django-ca."""
 
-import sys
 import typing
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -28,23 +27,8 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 #   https://peps.python.org/pep-0484/#forward-references
 from . import models
 
-# pylint: disable=useless-import-alias; or mypy won't consider imports as "re-exported"
-# NOTE: Explicit re-export (... import foo as foo) to make classes usable in other modules
-if sys.version_info >= (3, 8):  # pragma: only py>=3.8
-    from typing import Literal as Literal
-    from typing import Protocol as Protocol
-    from typing import SupportsIndex as SupportsIndex
-    from typing import TypedDict as TypedDict
-else:  # pragma: only py<3.8
-    from typing_extensions import Literal as Literal
-    from typing_extensions import Protocol as Protocol
-    from typing_extensions import SupportsIndex as SupportsIndex  # NOQA: F401 # only for re-export
-    from typing_extensions import TypedDict as TypedDict
 
-# pylint: enable=useless-import-alias
-
-
-class SupportsLessThan(Protocol):
+class SupportsLessThan(typing.Protocol):
     """Protocol that specifies <, making something sortable."""
 
     def __lt__(self, __other: Any) -> bool:  # pragma: nocover
@@ -66,7 +50,7 @@ ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
-ParsableKeyType = Literal["RSA", "DSA", "ECC", "EdDSA", "Ed448"]
+ParsableKeyType = typing.Literal["RSA", "DSA", "ECC", "EdDSA", "Ed448"]
 ParsableSubject = Union[
     str,
     # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001
@@ -80,7 +64,7 @@ ParsableSubject = Union[
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
-SerializedExtension = TypedDict(
+SerializedExtension = typing.TypedDict(
     "SerializedExtension",
     {
         "critical": bool,
@@ -90,7 +74,7 @@ SerializedExtension = TypedDict(
     },
 )
 SerializedName = List[Tuple[str, str]]
-SerializedProfile = TypedDict(
+SerializedProfile = typing.TypedDict(
     "SerializedProfile",
     {
         "cn_in_san": bool,
@@ -102,17 +86,17 @@ SerializedProfile = TypedDict(
 
 
 # Looser variants of the above for incoming arguments
-ParsableNoticeReference = TypedDict(
+ParsableNoticeReference = typing.TypedDict(
     "ParsableNoticeReference", {"organization": str, "notice_numbers": Iterable[int]}, total=False
 )
-ParsableUserNotice = TypedDict(
+ParsableUserNotice = typing.TypedDict(
     "ParsableUserNotice",
     {"notice_reference": Union[x509.NoticeReference, ParsableNoticeReference], "explicit_text": str},
     total=False,
 )
 
 # Parsable arguments
-ParsableDistributionPoint = TypedDict(
+ParsableDistributionPoint = typing.TypedDict(
     "ParsableDistributionPoint",
     {
         "full_name": Optional[ParsableGeneralNameList],
@@ -124,7 +108,7 @@ ParsableDistributionPoint = TypedDict(
 )
 ParsablePolicyQualifier = Union[str, x509.UserNotice, ParsableUserNotice]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
-ParsablePolicyInformation = TypedDict(
+ParsablePolicyInformation = typing.TypedDict(
     "ParsablePolicyInformation",
     {
         "policy_identifier": ParsablePolicyIdentifier,
@@ -147,7 +131,7 @@ SignedCertificateTimestampsBaseTypeVar = typing.TypeVar(
     x509.PrecertificateSignedCertificateTimestamps,
 )
 
-ParsableExtension = TypedDict(
+ParsableExtension = typing.TypedDict(
     "ParsableExtension",
     {
         "critical": bool,
@@ -191,8 +175,8 @@ else:
     ) = UnrecognizedExtensionType = PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
 
-BasicConstraintsBase = TypedDict("BasicConstraintsBase", {"ca": bool})
-ParsableAuthorityKeyIdentifierDict = TypedDict(
+BasicConstraintsBase = typing.TypedDict("BasicConstraintsBase", {"ca": bool})
+ParsableAuthorityKeyIdentifierDict = typing.TypedDict(
     "ParsableAuthorityKeyIdentifierDict",
     {
         "key_identifier": Optional[bytes],
@@ -203,7 +187,7 @@ ParsableAuthorityKeyIdentifierDict = TypedDict(
 )
 
 
-SerializedNullExtension = TypedDict("SerializedNullExtension", {"critical": bool})
+SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical": bool})
 
 ################
 # Type aliases #
@@ -222,7 +206,7 @@ X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound="models.X509
 #####################
 # Collect JSON-serializable versions of cryptography values. Typehints in this section start with
 # "Serialized...".
-SerializedAuthorityInformationAccess = TypedDict(
+SerializedAuthorityInformationAccess = typing.TypedDict(
     "SerializedAuthorityInformationAccess",
     {
         "issuers": List[str],
@@ -230,7 +214,7 @@ SerializedAuthorityInformationAccess = TypedDict(
     },
     total=False,
 )
-SerializedAuthorityKeyIdentifier = TypedDict(
+SerializedAuthorityKeyIdentifier = typing.TypedDict(
     "SerializedAuthorityKeyIdentifier",
     {
         "key_identifier": str,
@@ -241,6 +225,7 @@ SerializedAuthorityKeyIdentifier = TypedDict(
 )
 
 
+# pylint: disable-next=inherit-non-class; False positive
 class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
@@ -251,7 +236,7 @@ class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     pathlen: Optional[int]
 
 
-SerializedDistributionPoint = TypedDict(
+SerializedDistributionPoint = typing.TypedDict(
     "SerializedDistributionPoint",
     {
         "full_name": List[str],
@@ -261,7 +246,7 @@ SerializedDistributionPoint = TypedDict(
     },
     total=False,
 )
-SerializedDistributionPoints = TypedDict(
+SerializedDistributionPoints = typing.TypedDict(
     "SerializedDistributionPoints",
     {
         "critical": bool,
@@ -269,7 +254,7 @@ SerializedDistributionPoints = TypedDict(
     },
 )
 
-SerializedNameConstraints = TypedDict(
+SerializedNameConstraints = typing.TypedDict(
     "SerializedNameConstraints",
     {
         "permitted": List[str],
@@ -277,7 +262,7 @@ SerializedNameConstraints = TypedDict(
     },
     total=False,
 )
-SerializedPolicyConstraints = TypedDict(
+SerializedPolicyConstraints = typing.TypedDict(
     "SerializedPolicyConstraints",
     {
         "inhibit_policy_mapping": int,
@@ -287,20 +272,20 @@ SerializedPolicyConstraints = TypedDict(
 )
 
 # PolicyInformation serialization
-SerializedNoticeReference = TypedDict(
+SerializedNoticeReference = typing.TypedDict(
     "SerializedNoticeReference", {"organization": str, "notice_numbers": List[int]}, total=False
 )
-SerializedUserNotice = TypedDict(
+SerializedUserNotice = typing.TypedDict(
     "SerializedUserNotice", {"explicit_text": str, "notice_reference": SerializedNoticeReference}, total=False
 )
 SerializedPolicyQualifier = Union[str, SerializedUserNotice]
 SerializedPolicyQualifiers = List[SerializedPolicyQualifier]
-SerializedPolicyInformation = TypedDict(
+SerializedPolicyInformation = typing.TypedDict(
     "SerializedPolicyInformation",
     {"policy_identifier": str, "policy_qualifiers": Optional[SerializedPolicyQualifiers]},
 )
 
-SerializedSignedCertificateTimestamp = TypedDict(
+SerializedSignedCertificateTimestamp = typing.TypedDict(
     "SerializedSignedCertificateTimestamp",
     {
         "log_id": str,
@@ -318,7 +303,7 @@ SerializedSignedCertificateTimestamp = TypedDict(
 # start with "Parsable...".
 
 ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
-ParsableAuthorityInformationAccess = TypedDict(
+ParsableAuthorityInformationAccess = typing.TypedDict(
     "ParsableAuthorityInformationAccess",
     {
         "ocsp": Optional[ParsableGeneralNameList],
@@ -328,6 +313,7 @@ ParsableAuthorityInformationAccess = TypedDict(
 )
 
 
+# pylint: disable-next=inherit-non-class; False positive
 class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
@@ -338,7 +324,7 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     pathlen: Union[int, str]
 
 
-ParsableNameConstraints = TypedDict(
+ParsableNameConstraints = typing.TypedDict(
     "ParsableNameConstraints",
     {
         "permitted": ParsableGeneralNameList,
@@ -347,7 +333,7 @@ ParsableNameConstraints = TypedDict(
     total=False,
 )
 
-ParsablePolicyConstraints = TypedDict(
+ParsablePolicyConstraints = typing.TypedDict(
     "ParsablePolicyConstraints",
     {
         "require_explicit_policy": int,

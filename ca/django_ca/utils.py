@@ -41,14 +41,12 @@ from django.utils import timezone as tz
 from . import ca_settings
 from .typehints import (
     Expires,
-    Literal,
     ParsableGeneralName,
     ParsableGeneralNameList,
     ParsableHash,
     ParsableKeyType,
     ParsableName,
     SerializedName,
-    SupportsIndex,
 )
 
 # List of possible subject fields, in order
@@ -647,35 +645,45 @@ def validate_key_parameters(
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int], key_type: Literal["DSA"], ecc_curve: typing.Optional[ec.EllipticCurve]
+    key_size: typing.Optional[int],
+    key_type: typing.Literal["DSA"],
+    ecc_curve: typing.Optional[ec.EllipticCurve],
 ) -> dsa.DSAPrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int], key_type: Literal["RSA"], ecc_curve: typing.Optional[ec.EllipticCurve]
+    key_size: typing.Optional[int],
+    key_type: typing.Literal["RSA"],
+    ecc_curve: typing.Optional[ec.EllipticCurve],
 ) -> rsa.RSAPrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int], key_type: Literal["ECC"], ecc_curve: typing.Optional[ec.EllipticCurve]
+    key_size: typing.Optional[int],
+    key_type: typing.Literal["ECC"],
+    ecc_curve: typing.Optional[ec.EllipticCurve],
 ) -> ec.EllipticCurvePrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int], key_type: Literal["EdDSA"], ecc_curve: typing.Optional[ec.EllipticCurve]
+    key_size: typing.Optional[int],
+    key_type: typing.Literal["EdDSA"],
+    ecc_curve: typing.Optional[ec.EllipticCurve],
 ) -> ed25519.Ed25519PrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int], key_type: Literal["Ed448"], ecc_curve: typing.Optional[ec.EllipticCurve]
+    key_size: typing.Optional[int],
+    key_type: typing.Literal["Ed448"],
+    ecc_curve: typing.Optional[ec.EllipticCurve],
 ) -> ed448.Ed448PrivateKey:
     ...
 
@@ -1227,7 +1235,7 @@ class GeneralNameList(List[x509.GeneralName]):
         return f"<GeneralNameList: {names}>"
 
     @typing.overload
-    def __setitem__(self, key: SupportsIndex, value: ParsableGeneralName) -> None:  # pragma: no cover
+    def __setitem__(self, key: typing.SupportsIndex, value: ParsableGeneralName) -> None:  # pragma: no cover
         ...
 
     @typing.overload
@@ -1235,7 +1243,9 @@ class GeneralNameList(List[x509.GeneralName]):
         ...
 
     def __setitem__(
-        self, key: Union[SupportsIndex, slice], value: Union[ParsableGeneralNameList, ParsableGeneralName]
+        self,
+        key: Union[typing.SupportsIndex, slice],
+        value: Union[ParsableGeneralNameList, ParsableGeneralName],
     ) -> None:  # l[0] = 'example.com'
         if isinstance(key, slice) and isinstance(value, abc.Iterable):
             # equivalent to l[0:1] = ['example.com']
@@ -1264,12 +1274,15 @@ class GeneralNameList(List[x509.GeneralName]):
         list.extend(self, (parse_general_name(i) for i in iterable))
 
     def index(
-        self, value: ParsableGeneralName, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize
+        self,
+        value: ParsableGeneralName,
+        start: typing.SupportsIndex = 0,
+        stop: typing.SupportsIndex = sys.maxsize,
     ) -> int:
         """Equivalent to list.index()."""
         return list.index(self, parse_general_name(value), start, stop)
 
-    def insert(self, index: SupportsIndex, value: ParsableGeneralName) -> None:
+    def insert(self, index: typing.SupportsIndex, value: ParsableGeneralName) -> None:
         """Equivalent to list.insert()."""
         list.insert(self, index, parse_general_name(value))
 

@@ -15,7 +15,6 @@
 
 import importlib
 import io
-import sys
 import types
 import typing
 from contextlib import contextmanager
@@ -433,12 +432,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
             # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
             resolve_cm.assert_called_once()
             expected = (f"_acme_challenge.{domain}", "TXT")
-
-            if sys.version_info[0:2] < (3, 8):  # pragma: only py<3.8
-                args, kwargs = list(resolve_cm.call_args_list[0])
-                self.assertEqual(args[:2], expected)
-            else:
-                self.assertEqual(resolve_cm.call_args_list[0].args[:2], expected)
+            self.assertEqual(resolve_cm.call_args_list[0].args[:2], expected)
 
     def test_nxdomain(self) -> None:
         """Test a ACME validation where the domain does not exist."""

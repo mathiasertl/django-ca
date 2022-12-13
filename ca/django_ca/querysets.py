@@ -24,7 +24,7 @@ from django.utils import timezone
 
 from . import ca_settings
 from .acme.constants import Status
-from .typehints import Protocol, X509CertMixinTypeVar
+from .typehints import X509CertMixinTypeVar
 from .utils import sanitize_serial
 
 if not TYPE_CHECKING:
@@ -63,7 +63,7 @@ else:  # pragma: no cover  # only used for type checking
 
 
 class QuerySetProtocol(
-    Protocol[X509CertMixinTypeVar]
+    typing.Protocol[X509CertMixinTypeVar]
 ):  # pragma: nocover; pylint: disable=missing-function-docstring
     """Protocol used for a generic-self in mixins.
 

@@ -19,6 +19,7 @@ import json
 import operator
 import typing
 from contextlib import contextmanager
+from typing import Any, Dict, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID, ObjectIdentifier
@@ -40,7 +41,7 @@ from ...extensions import (
 from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
 from ...extensions.utils import DistributionPoint, extension_as_admin_html
 from ...models import X509CertMixin
-from ...typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension, TypedDict
+from ...typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension
 from . import dns, rdn, uri
 from .mixins import TestCaseMixin, TestCaseProtocol
 
@@ -53,14 +54,14 @@ ListExtensionTypeVar = typing.TypeVar("ListExtensionTypeVar", bound=ListExtensio
 OrderedSetExtensionTypeVar = typing.TypeVar(
     "OrderedSetExtensionTypeVar", bound=OrderedSetExtension  # type: ignore[type-arg]
 )
-_TestValueDict = TypedDict(
+_TestValueDict = typing.TypedDict(
     "_TestValueDict",
     {
         "admin_html": str,
-        "values": typing.List[typing.Any],
-        "expected": typing.Any,
+        "values": List[Any],
+        "expected": Any,
         "expected_repr": str,
-        "expected_serialized": typing.Any,
+        "expected_serialized": Any,
         "extension_type": x509.ExtensionType,
         "text": "str",
     },
@@ -71,14 +72,15 @@ DistributionPointsBaseTypeVar = typing.TypeVar(
 IterableTypeVar = typing.TypeVar("IterableTypeVar", list, set)  # type: ignore[type-arg]
 
 
+# pylint: disable-next=inherit-non-class; False positive
 class TestValueDict(_TestValueDict, total=False):
     """Value used to define generic test cases."""
 
-    expected_djca: typing.Any
+    expected_djca: Any
     expected_bool: bool
 
 
-TestValues = typing.Dict[str, TestValueDict]
+TestValues = Dict[str, TestValueDict]
 
 
 class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin, metaclass=abc.ABCMeta):
@@ -88,7 +90,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
     ext_class_key: str
     ext_class_name: str
     test_values: TestValues
-    force_critical: typing.Optional[bool] = None
+    force_critical: Optional[bool] = None
     repr_tmpl = "<{name}: {value}, critical={critical}>"
 
     def assertExtensionEqual(  # pylint: disable=invalid-name
@@ -103,7 +105,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         self.assertEqual(first, second)
 
     def assertSerialized(  # pylint: disable=invalid-name
-        self, ext: ExtensionTypeVar, config: TestValueDict, critical: typing.Optional[bool] = None
+        self, ext: ExtensionTypeVar, config: TestValueDict, critical: Optional[bool] = None
     ) -> None:
         """Assert that the extension can be serialized as expected."""
         if critical is None:
@@ -130,7 +132,7 @@ class AbstractExtensionTestMixin(typing.Generic[ExtensionTypeVar], TestCaseMixin
         if self.force_critical is not True:
             yield False
 
-    def ext(self, value: typing.Any = None, critical: typing.Optional[bool] = None) -> ExtensionTypeVar:
+    def ext(self, value: Any = None, critical: Optional[bool] = None) -> ExtensionTypeVar:
         """Get an extension instance with the given value."""
         if value is None:
             value = {}
@@ -427,7 +429,7 @@ class NullExtensionTestMixin(ExtensionTestMixin[NullExtensionTypeVar]):
         self.assertEqual(first.critical, second.critical)
 
     def assertSerialized(
-        self, ext: NullExtensionTypeVar, config: typing.Any, critical: typing.Optional[bool] = None
+        self, ext: NullExtensionTypeVar, config: Any, critical: Optional[bool] = None
     ) -> None:
         if critical is None:
             critical = self.ext_class.default_critical
@@ -446,16 +448,14 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
     container_type: typing.Type[IterableTypeVar]
     test_values: TestValues
     ext_class: typing.Type[IterableExtensionTypeVar]
-    invalid_values: typing.List[typing.Any] = []
+    invalid_values: List[Any] = []
 
     if typing.TYPE_CHECKING:
         # pylint: disable=missing-function-docstring,unused-argument
 
         ext_class_name: str
 
-        def ext(
-            self, value: typing.Any = None, critical: typing.Optional[bool] = None
-        ) -> IterableExtensionTypeVar:
+        def ext(self, value: Any = None, critical: Optional[bool] = None) -> IterableExtensionTypeVar:
             ...
 
         def assertExtensionEqual(  # pylint: disable=invalid-name
@@ -472,9 +472,9 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
     def assertIsCopy(
         # pylint: disable=invalid-name
         self,
-        orig: typing.Any,
-        new: typing.Any,
-        expected_value: typing.Any,
+        orig: Any,
+        new: Any,
+        expected_value: Any,
     ) -> None:
         """Assert that `new` is a different instance then `other` and has possibly updated values."""
         self.assertEqual(new.value, expected_value)
@@ -482,7 +482,7 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
         self.assertIsNot(orig.value, new.value)  # value is also different instance
 
     def assertSameInstance(  # pylint: disable=invalid-name
-        self, orig_id: int, orig_value_id: int, new: IterableExtensionTypeVar, expected_value: typing.Any
+        self, orig_id: int, orig_value_id: int, new: IterableExtensionTypeVar, expected_value: Any
     ) -> None:
         """Assert that `new` is still the same instance and has the expected value."""
         self.assertEqual(new.value, expected_value)
@@ -491,14 +491,14 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
     def assertEqualFunction(  # pylint: disable=invalid-name
         self,
-        func: typing.Callable[..., typing.Any],
-        init: typing.Any,
-        value: typing.Any,
+        func: typing.Callable[..., Any],
+        init: Any,
+        value: Any,
         update: bool = True,
         infix: bool = True,
-        set_init: typing.Optional[typing.Set[typing.Any]] = None,
-        set_value: typing.Any = None,
-        raises: typing.Optional[typing.Tuple[typing.Type[Exception], str]] = None,
+        set_init: Optional[typing.Set[Any]] = None,
+        set_value: Any = None,
+        raises: Optional[Tuple[typing.Type[Exception], str]] = None,
     ) -> None:
         """Assert that the given function `func` behaves the same way on a set and on the tested extension.
 
@@ -615,7 +615,7 @@ class IterableExtensionTestMixin(typing.Generic[IterableExtensionTypeVar, Iterab
 
 class ListExtensionTestMixin(
     typing.Generic[ListExtensionTypeVar],
-    IterableExtensionTestMixin[ListExtensionTypeVar, list],  # type: ignore[type-arg] # pragma: py<3.8
+    IterableExtensionTestMixin[ListExtensionTypeVar, list],  # type: ignore[type-arg]
 ):
     """Mixin for testing ListExtension-based extensions."""
 
@@ -836,7 +836,7 @@ class ListExtensionTestMixin(
 
 
 class OrderedSetExtensionTestMixin(
-    IterableExtensionTestMixin[OrderedSetExtensionTypeVar, set],  # type: ignore[type-arg] # pragma: py<3.8
+    IterableExtensionTestMixin[OrderedSetExtensionTypeVar, set],  # type: ignore[type-arg]
     typing.Generic[OrderedSetExtensionTypeVar],
 ):
     """Mixin for OrderedSetExtension based extensions."""
@@ -849,7 +849,7 @@ class OrderedSetExtensionTestMixin(
 
     def assertSingleValueOperator(  # pylint: disable=invalid-name
         self,
-        oper: typing.Callable[[typing.Any, typing.Any], typing.Any],
+        oper: typing.Callable[[Any, Any], Any],
         update: bool = True,
         infix: bool = True,
     ) -> None:
@@ -885,7 +885,7 @@ class OrderedSetExtensionTestMixin(
 
     def assertMultipleValuesOperator(  # pylint: disable=invalid-name
         self,
-        oper: typing.Callable[[typing.Any, typing.Any], typing.Any],
+        oper: typing.Callable[[Any, Any], Any],
         update: bool = True,
         infix: bool = True,
     ) -> None:
@@ -907,9 +907,7 @@ class OrderedSetExtensionTestMixin(
                         oper, init_config["expected"], expected_config, update=update, infix=infix
                     )
 
-    def assertRelation(  # pylint: disable=invalid-name
-        self, oper: typing.Callable[[typing.Any, typing.Any], typing.Any]
-    ) -> None:
+    def assertRelation(self, oper: typing.Callable[[Any, Any], Any]) -> None:  # pylint: disable=invalid-name
         """Assert that a extension relation is equal to that of set()."""
         with self.assertRemovedExtensionWarning(self.ext_class_name):
             self.assertEqual(oper(set(), set()), oper(self.ext_class({"value": set()}), set()))

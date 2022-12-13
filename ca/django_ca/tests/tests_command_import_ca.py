@@ -195,9 +195,6 @@ class ImportCATest(TestCaseMixin, TestCase):
             with mock_cadir(ca_dir), self.assertCommandError(msg):
                 self.cmd("import_ca", name, key_path, pem_path)
 
-            # removing tempdir with these permissions throws an error before python 3.8.
-            os.chmod(tempdir, 0o755)  # pragma: only py<3.8
-
     @override_tmpcadir()
     def test_bogus_pub(self) -> None:
         """Test importing a CA with a bogus public key."""

@@ -34,13 +34,13 @@ from django.test.utils import override_settings
 
 from ...extensions import KEY_TO_EXTENSION, parse_extension
 from ...profiles import profiles
-from ...typehints import PrivateKeyTypes, TypedDict
+from ...typehints import PrivateKeyTypes
 from ...utils import add_colons, ca_storage
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
-KeyDict = TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
-CsrDict = TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest, "der": bytes})
-_PubDict = TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
+KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
+CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest, "der": bytes})
+_PubDict = typing.TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
 
 
 # Regex used by certbot to split PEM-encodied certificate chains/bundles as of 2022-01-23. See also:
@@ -54,6 +54,7 @@ CERT_PEM_REGEX = re.compile(
 )
 
 
+# pylint: disable-next=inherit-non-class; False positive
 class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
     der: bytes
 

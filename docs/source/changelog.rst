@@ -4,6 +4,17 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.23.0:
+
+************
+1.23.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for Python 3.7.
+
 .. _changelog-1.22.0:
 
 *******************
