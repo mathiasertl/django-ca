@@ -24,8 +24,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA123Warning
-from ..extensions import IssuerAlternativeName, NameConstraints
+from ..extensions import NameConstraints
 from ..models import Certificate, CertificateAuthority
 from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet, CertificateQuerySet
@@ -180,24 +179,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(ca, expected)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_deprecated_extension(self) -> None:
-        """Test passing a django_ca.extension.Extension as extra_extensions."""
-        name = "deprecated-extension"
-        with self.assertRemovedExtensionWarning("NameConstraints"):
-            name_constraints = NameConstraints({"critical": True, "value": {"permitted": ["DNS:.com"]}})
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
-
-        warning = (
-            r"Passing a django_ca.extensions.Extension is deprecated and will be removed in django_ca 1\.23\."
-        )
-        with self.assertCreateCASignals(), self.assertWarnsRegex(RemovedInDjangoCA123Warning, warning):
-            ca = CertificateAuthority.objects.init(
-                name, subject, extra_extensions=[name_constraints]  # type: ignore[list-item]
-            )
-
-        self.assertEqual(ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS], name_constraints.as_extension())
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_special_cases(self) -> None:
         """Test a few special cases not covered otherwise."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
@@ -238,32 +219,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 name, subject, extra_extensions=[True]  # type: ignore[list-item]
             )
         self.assertEqual(CertificateAuthority.objects.filter(name=name).count(), 0)
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_deprecation(self) -> None:
-        """Test passing deprecated types to init()."""
-
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ian-as-str.example.com")])
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA123Warning,
-            r"^Passing str for issuer_alt_name is deprecated and will be removed in django ca 1\.23\.$",
-        ):
-            CertificateAuthority.objects.init(
-                "ca4", subject, issuer_alt_name="https://example.com"  # type: ignore[arg-type]
-            )
-        ca3 = CertificateAuthority.objects.get(name="ca4")
-        self.assertEqual(ca3.issuer_alt_name, "URI:https://example.com")
-
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ian-as-ext.example.com")])
-        with self.assertRemovedExtensionWarning("IssuerAlternativeName"):
-            ian = IssuerAlternativeName({"value": ["https://example.net"]})
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA123Warning,
-            r"^Passing IssuerAlternativeName for issuer_alt_name is deprecated and will be removed in django ca 1\.23\.$",  # NOQA: E501
-        ):
-            CertificateAuthority.objects.init("ca5", subject, issuer_alt_name=ian)  # type: ignore[arg-type]
-        ca3 = CertificateAuthority.objects.get(name="ca5")
-        self.assertEqual(ca3.issuer_alt_name, "URI:https://example.net")
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), CA_DEFAULT_CA=certs["child"]["serial"])

@@ -16,7 +16,6 @@
 
 import pathlib
 import typing
-import warnings
 from typing import TYPE_CHECKING, Any, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from cryptography import x509
@@ -31,9 +30,7 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
-from .constants import EXTENSION_DEFAULT_CRITICAL
-from .deprecation import RemovedInDjangoCA123Warning, deprecate_argument, deprecate_type
-from .extensions import Extension, IssuerAlternativeName, NameConstraints
+from .extensions import NameConstraints
 from .modelfields import LazyCertificateSigningRequest
 from .openssh import SshHostCaExtension, SshUserCaExtension
 from .profiles import Profile, profiles
@@ -46,7 +43,6 @@ from .utils import (
     get_cert_builder,
     int_to_hex,
     parse_expires,
-    parse_general_name,
     validate_hostname,
     validate_key_parameters,
 )
@@ -155,13 +151,9 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
         builder: x509.CertificateBuilder,
         extra_extensions: typing.List[typing.Union[x509.Extension[x509.ExtensionType]]],
     ) -> x509.CertificateBuilder:
-        warn = "Passing a django_ca.extensions.Extension is deprecated and will be removed in django_ca 1.23."
         for ext in extra_extensions:
             if isinstance(ext, x509.Extension):
                 builder = builder.add_extension(ext.value, critical=ext.critical)
-            elif isinstance(ext, Extension):
-                warnings.warn(warn, category=RemovedInDjangoCA123Warning, stacklevel=2)
-                builder = builder.add_extension(*ext.for_builder())
             else:
                 raise ValueError(f"Cannot add extension of type {type(ext).__name__}")
         return builder
@@ -196,8 +188,6 @@ class CertificateAuthorityManager(
         def usable(self) -> "CertificateAuthorityQuerySet":
             ...
 
-    @deprecate_argument("name_constraints", RemovedInDjangoCA123Warning)
-    @deprecate_type("issuer_alt_name", (str, IssuerAlternativeName), RemovedInDjangoCA123Warning)
     def init(
         self,
         name: str,
@@ -233,17 +223,6 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
-        .. deprecated:: 1.21.0
-
-           * The `name_constraints` parameter is deprecated and will be removed in ``django_ca==1.23``. Use
-             the `permitted_subtrees` and `excluded_subtrees` parameter instead.
-           * Passing  ``django_ca.extensions.Extension`` instance to `extra_extensions` is now deprecated. The
-             feature will be removed in ``django_ca==1.23``. Pass a ``x509.Extension`` instance instead.
-           * The `issuer_alt_name` now accepts a
-             :py:class:`~cg:cryptography.x509.Extension` with a
-             :py:class:`~cg:cryptography.x509.IssuerAlternativeName` value, passing a `str` or
-             ``django_ca.extensions.IssuerAlternativeName`` is deprecated and will be removed in
-             ``django_ca==1.23``.
 
         Parameters
         ----------
@@ -354,16 +333,6 @@ class CertificateAuthorityManager(
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
             extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
-
-        # Normalize extensions to django_ca.extensions.Extension subclasses
-        if isinstance(issuer_alt_name, str):
-            issuer_alt_name = x509.Extension(
-                oid=x509.IssuerAlternativeName.oid,
-                critical=EXTENSION_DEFAULT_CRITICAL[x509.IssuerAlternativeName.oid],
-                value=x509.IssuerAlternativeName(general_names=[parse_general_name(issuer_alt_name)]),
-            )
-        elif isinstance(issuer_alt_name, IssuerAlternativeName):
-            issuer_alt_name = issuer_alt_name.as_extension()
 
         if crl_url is None:
             crl_url = []

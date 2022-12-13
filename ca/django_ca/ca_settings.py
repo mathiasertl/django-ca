@@ -16,7 +16,6 @@
 import os
 import re
 import typing
-import warnings
 from datetime import timedelta
 
 from cryptography.hazmat.primitives import hashes
@@ -26,8 +25,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import global_settings, settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-
-from .deprecation import RemovedInDjangoCA123Warning
 
 if "CA_DIR" in os.environ:  # pragma: no cover
     CA_DIR = os.path.join(os.environ["CA_DIR"], "files")
@@ -175,10 +172,7 @@ _SUBJECT_AS_DICT_MAPPING = "%s as a dict wil be removed in django-ca==1.23. Plea
 CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
     settings, "CA_DEFAULT_SUBJECT", tuple()
 )
-if isinstance(CA_DEFAULT_SUBJECT, dict):
-    warnings.warn(_SUBJECT_AS_DICT_MAPPING % "CA_DEFAULT_SUBJECT", category=RemovedInDjangoCA123Warning)
-    CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT.items())
-elif isinstance(CA_DEFAULT_SUBJECT, list):
+if isinstance(CA_DEFAULT_SUBJECT, list):
     CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT)
 
 
@@ -188,12 +182,6 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
     if profile is None:
         del CA_PROFILES[name]
         continue
-
-    if isinstance(profile.get("subject"), dict):
-        warnings.warn(
-            _SUBJECT_AS_DICT_MAPPING % f"{name}: Profile subject", category=RemovedInDjangoCA123Warning
-        )
-        profile["subject"] = tuple(profile["subject"].items())
 
     if name in CA_PROFILES:
         CA_PROFILES[name].update(profile)

@@ -21,12 +21,6 @@ from inspect import signature
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
 
-class RemovedInDjangoCA123Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.23."""
-
-    version = "1.23"
-
-
 class RemovedInDjangoCA124Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in django-ca==1.24."""
 
@@ -39,12 +33,18 @@ class RemovedInDjangoCA125Warning(PendingDeprecationWarning):
     version = "1.25"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA123Warning
+class RemovedInDjangoCA126Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==1.25."""
+
+    version = "1.26"
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA124Warning
 
 DeprecationWarningType = typing.Union[
-    typing.Type[RemovedInDjangoCA123Warning],
     typing.Type[RemovedInDjangoCA124Warning],
     typing.Type[RemovedInDjangoCA125Warning],
+    typing.Type[RemovedInDjangoCA126Warning],
 ]
 
 

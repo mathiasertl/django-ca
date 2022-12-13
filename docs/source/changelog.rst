@@ -19,6 +19,7 @@ Backwards incompatible changes
 * Drop support for acme 1.27.0, 1.28.0 and 1.29.0, 1.30.0, 1.31.0 and 2.0.0.
 * Drop support for Alpine 3.14 and 3.15.
 * Remove the ``acme`` extra.
+* :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` must no longer be a dict. Use a list or tuple instead.
 
 .. _changelog-1.22.0:
 
@@ -114,8 +115,6 @@ Deprecation notices
 * This is the last release to support acme 1.27.0, 1.28.0 and 1.29.0, 1.30.0, 1.31.0 and 2.0.0.
 * This is the last release to support Alpine 3.14 and 3.15.
 * The ``acme`` extra will be removed in in the next release.
-* Support for using a dict for the :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` setting will be
-  removed in ``django-ca==1.23.0``.
 * The ``pre_issue_cert`` is deprecated and will be removed in ``django_ca==1.24.0``. Use the new
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 * The subject wrapper class ``django_ca.subject.Subject`` is deprecated and will be removed in

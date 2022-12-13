@@ -21,8 +21,8 @@ from django.test import TestCase
 
 from ..deprecation import (
     DeprecationWarningType,
-    RemovedInDjangoCA123Warning,
     RemovedInDjangoCA124Warning,
+    RemovedInDjangoCA125Warning,
     RemovedInNextVersionWarning,
     deprecate_argument,
 )
@@ -31,17 +31,17 @@ from ..deprecation import (
 class TestDjangoCATestCase(TestCase):
     """Test :py:mod:`django_ca.deprecation`."""
 
-    msg_in_123 = "deprecated in 1.23"
-    msg_in_124 = "deprecated in 1.24"
+    msg_in_124 = "deprecated in 1.25"
+    msg_in_125 = "deprecated in 1.26"
     msg_in_next = "deprecated in next version"
-
-    def deprecated_in_123(self) -> None:
-        """Emit a message about deprecation in 1.23."""
-        warnings.warn(self.msg_in_123, category=RemovedInDjangoCA123Warning)
 
     def deprecated_in_124(self) -> None:
         """Emit a message about deprecation in 1.24."""
         warnings.warn(self.msg_in_124, category=RemovedInDjangoCA124Warning)
+
+    def deprecated_in_125(self) -> None:
+        """Emit a message about deprecation in 1.25."""
+        warnings.warn(self.msg_in_125, category=RemovedInDjangoCA125Warning)
 
     def deprecated_in_next(self) -> None:
         """Emit a message about deprecation in the next version."""
@@ -50,10 +50,10 @@ class TestDjangoCATestCase(TestCase):
     def test_base(self) -> None:
         """Test warning messages."""
 
-        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, rf"^{self.msg_in_123}$"):
-            self.deprecated_in_123()
         with self.assertWarnsRegex(RemovedInDjangoCA124Warning, rf"^{self.msg_in_124}$"):
             self.deprecated_in_124()
+        with self.assertWarnsRegex(RemovedInDjangoCA125Warning, rf"^{self.msg_in_125}$"):
+            self.deprecated_in_125()
         with self.assertWarnsRegex(RemovedInNextVersionWarning, rf"^{self.msg_in_next}$"):
             self.deprecated_in_next()
 

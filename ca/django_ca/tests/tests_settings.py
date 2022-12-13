@@ -19,7 +19,6 @@ from unittest import mock
 from django.test import TestCase
 
 from .. import ca_settings
-from ..deprecation import RemovedInDjangoCA123Warning
 from .base.mixins import TestCaseMixin
 
 
@@ -128,22 +127,6 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         """Test that a list subject is converted to a tuple."""
         with self.settings(CA_DEFAULT_SUBJECT=[("CN", "example.com")]):
             self.assertEqual(ca_settings.CA_DEFAULT_SUBJECT, (("CN", "example.com"),))
-
-    def test_subject_as_dict(self) -> None:
-        """Test using a dict as subject, which has been deprecated."""
-
-        message = (
-            r"^CA_DEFAULT_SUBJECT as a dict wil be removed in django-ca==1.23. Please use a tuple instead.$"
-        )
-        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
-            with self.settings(CA_DEFAULT_SUBJECT={"CN": "as-dict"}):
-                self.assertEqual(ca_settings.CA_DEFAULT_SUBJECT, (("CN", "as-dict"),))
-
-        message = r"^ocsp: Profile subject as a dict wil be removed in django-ca==1.23. Please use a tuple instead.$"  # NOQA[E501]
-        with self.assertWarnsRegex(RemovedInDjangoCA123Warning, message):
-            profiles = {"ocsp": {"subject": {"CN": "as-dict"}}}
-            with self.settings(CA_PROFILES=profiles):
-                pass
 
     def test_use_celery(self) -> None:
         """Test that CA_USE_CELERY=True and a missing Celery installation throws an error."""
