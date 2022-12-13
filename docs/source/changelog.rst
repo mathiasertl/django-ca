@@ -14,6 +14,7 @@ Backwards incompatible changes
 ==============================
 
 * Drop support for Python 3.7.
+* Drop support for Django 4.0.
 
 .. _changelog-1.22.0:
 
