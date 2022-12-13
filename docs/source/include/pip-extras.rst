@@ -2,7 +2,6 @@
 ============== ==============================================================================================
 Extra          Description
 ============== ==============================================================================================
-``acme``       **Deprecated!** Added :doc:`ACMEv2 support </acme>`, which is now always included.
 ``redis``      Adds `Redis <https://redis.io/>`_ support (usable as both cache and Celery message transport).
 ``celery``     Adds `Celery <https://docs.celeryproject.org/>`_ support.
 ``mysql``      Adds MySQL support.
