@@ -11,11 +11,11 @@ python = ["3.8.16", "3.9.16", "3.10.9", "3.11.1"]
 # https://www.djangoproject.com/download/
 django = ["3.2.16", "4.1.4"]
 cryptography = ["37.0.4", "38.0.4"]
-acme = ["1.27.0", "1.28.0", "1.29.0", "2.0.0", "2.1.0"]
+acme = ["2.1.0"]
 josepy = ["1.13.0"]
 
 # https://alpinelinux.org/releases/
-alpine = ["3.14", "3.15", "3.16", "3.17"]
+alpine = ["3.16", "3.17"]
 
 # Blacklist images that are just no longer built
 docker-image-blacklist = [
