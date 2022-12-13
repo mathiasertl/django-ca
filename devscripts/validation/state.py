@@ -116,18 +116,18 @@ def check_tox(project_config):
     # Check that there is a testenv listing all versions
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    # expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-idna{%s}" % (
-    #    ",".join([pyver.replace(".", "") for pyver in CONFIG["python-map"]]),
-    #    ",".join(CONFIG["django-map"]),
-    #    ",".join(CONFIG["cryptography-map"]),
-    #    ",".join(CONFIG["acme-map"]),
-    #    ",".join(CONFIG["idna-map"]),
-    # )
+    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-josepy{%s}" % (
+        ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
+        ",".join(project_config["django-map"]),
+        ",".join(project_config["cryptography-map"]),
+        ",".join(project_config["acme-map"]),
+        ",".join(project_config["josepy-map"]),
+    )
 
     # pylint: enable=consider-using-f-string
     # Check disabled as long as different Django versions support different Python versions
-    # if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
-    #    errors += err(f"Expected envlist item not found: {expected_envlist}")
+    if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
+        errors += err(f"Expected envlist item not found: {expected_envlist}")
 
     # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "acme", "josepy"]:
