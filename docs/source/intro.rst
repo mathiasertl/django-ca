@@ -11,6 +11,6 @@ Features:
 #. Certificate issuance via ACMEv2, command line or web interface.
 #. Management via command line and/or via Djangos admin interface.
 #. Get email notifications about certificates about to expire.
-#. Written in Python 3.8+, Django 3.2+ and cryptography 36.0+.
+#. Written in Python 3.8+, Django 3.2+ and cryptography 37.0+.
 
 Please see https://django-ca.readthedocs.org for the most recent documentation.
