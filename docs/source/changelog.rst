@@ -19,7 +19,8 @@ Backwards incompatible changes
 * Drop support for acme 1.27.0, 1.28.0 and 1.29.0, 1.30.0, 1.31.0 and 2.0.0.
 * Drop support for Alpine 3.14 and 3.15.
 * Remove the ``acme`` extra.
-* :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` must no longer be a dict. Use a list or tuple instead.
+* :ref:`CA_DEFAULT_SUBJECT <settings-ca-default-subject>` must no longer be a dict. Use a list or tuple
+  instead.
 
 .. _changelog-1.22.0:
 

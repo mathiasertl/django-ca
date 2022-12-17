@@ -119,13 +119,14 @@ Release process
 After a release
 ***************
 
+* Update version in ``ca/django_ca/__init__.py``.
 * Update :file:`ca/django_ca/deprecation.py` and remove code marked by such warnings.
 * Search for deprecation comments that could be removed::
 
       $ grep -A 3 -r 'deprecated:' docs/source/ ca/
 
 * Drop support for older software versions in the ``[django-ca.release]`` section of :file:`pyproject.toml`.
-* Run :command:`devscripts/validate-state.py` and fix any errors.
+* Run :command:`./dev.py validate state` and fix any errors.
 * Look for pragmas that indicate that code can be removed due to versions no longer being supported::
 
       $ grep -r '# pragma:' ca/ docs/source/ devscripts/ *.py
