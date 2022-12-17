@@ -17,6 +17,7 @@ import typing
 
 from .console_include import ConsoleIncludeDirective
 from .template_include import TemplateDirective
+from .mapping_table import MappingDocumentor
 
 if typing.TYPE_CHECKING:
     from sphinx.application import Sphinx
@@ -24,6 +25,8 @@ if typing.TYPE_CHECKING:
 
 def setup(app: "Sphinx") -> typing.Dict[str, bool]:
     """Sphinx setup function."""
+    app.add_autodocumenter(MappingDocumentor)
+
     app.add_directive("template-include", TemplateDirective)
     app.add_directive("console-include", ConsoleIncludeDirective)
     return {"parallel_read_safe": True, "parallel_write_safe": True}
