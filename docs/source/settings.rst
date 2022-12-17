@@ -364,7 +364,7 @@ DJANGO_CA_SETTINGS
 
    The setting can also point to a single file, assumed to be a YAML file.
 
-   If not set, the value of the ``CONFIGURATION_DIRECTIVE`` environment variable (see
+   If not set, the value of the ``CONFIGURATION_DIRECTORY`` environment variable (see
    :ref:`settings-global-environment-variables-systemd`) is used as a fallback.
 
 
