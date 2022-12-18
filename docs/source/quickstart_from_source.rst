@@ -162,6 +162,9 @@ setting here as well:
    :caption: /etc/django-ca/10-localsettings.yaml
    :name: /etc/django-ca/10-localsettings.yaml
 
+Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
+for more YAML configuration examples.
+
 .. _systemd-configuration:
 
 SystemD configuration

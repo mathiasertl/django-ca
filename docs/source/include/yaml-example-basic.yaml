@@ -1,0 +1,5 @@
+# Use this hostname in CRL and OCSP URLs:
+CA_DEFAULT_HOSTNAME: ca.example.com
+
+# Certificates should expire after a year by default
+CA_DEFAULT_EXPIRES: 365

@@ -184,6 +184,8 @@ To add a configuration file, first add a volume mapping in your ``docker-compose
    # Set a custom default key size for new certificate authorities
    CA_DEFAULT_KEY_SIZE: 2048
 
+Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
+for more YAML configuration examples.
 
 Configuration using environment variables
 -----------------------------------------

@@ -16,8 +16,8 @@
 import typing
 
 from .console_include import ConsoleIncludeDirective
-from .template_include import TemplateDirective
 from .mapping_table import MappingDocumentor
+from .template_include import TemplateDirective
 
 if typing.TYPE_CHECKING:
     from sphinx.application import Sphinx

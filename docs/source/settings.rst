@@ -14,9 +14,10 @@ If you use django-ca :doc:`as a Django app </quickstart_as_app>`, set settings n
 
 If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart_from_source>`, or
 use :doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`), do *not* update the
-:file:`settings.py` file included with django-ca. Instead, use YAML files that django-ca loads (in
-alphabetical order) from a preconfigured directory. Please see the respective installation instructions for
-how to override settings.
+:file:`settings.py` file included with django-ca. Instead, use `YAML <https://en.wikipedia.org/wiki/YAML>`_
+files that django-ca loads (in alphabetical order) from a preconfigured directory. Please see the respective
+installation instructions for how to override settings, and see :ref:`settings-yaml-configuration` for format
+instructions.
 
 The django-ca project also lets you override simple string-like settings via environment variables. The
 environment variable name is the same as the setting but prefixed with ``DJANGO_CA_``. For example to set the
@@ -142,11 +143,6 @@ CA_DEFAULT_PROFILE
 CA_DEFAULT_SUBJECT
    Default: ``tuple()`` (empty tuple)
 
-   .. versionchanged:: 1.21.0
-
-      This value used to be a ``dict`` until ``django-ca==1.21.0``. Please use a tuple instead. Support for
-      using a ``dict`` will be removed in ``django-ca==1.23.0``.
-
    The default subject to use. The keys of this dictionary are the valid fields in X509 certificate subjects.
    Example::
 
@@ -164,17 +160,17 @@ CA_DEFAULT_SUBJECT
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
 
-   The default digest algorithm used to sign certificates. You may want to use ``"sha256"`` for older (before
-   2010) clients. Note that this setting is also used by the ``init_ca`` command, so if you have any clients
-   that do not understand SHA-512 hashes, you should change this beforehand.
+   The default digest algorithm used to sign certificates.  Note that this setting is also used by the
+   ``init_ca`` command, so if you have any clients that do not understand SHA-512 hashes, you should change
+   this beforehand.
 
 .. _settings-ca-dir:
 
 CA_DIR
    Default: ``"files/"``
 
-   Where the root certificate is stored. The default is a ``files`` directory
-   in the same location as your ``manage.py`` file.
+   Where the root certificate is stored. The default is a ``files`` directory in the same location as your
+   ``manage.py`` file.
 
 .. _settings-ca-file-storage:
 
@@ -415,3 +411,73 @@ CONFIGURATION_DIRECTORY
    If set, django-ca will load YAML configuration files from this directory. The variable is set by the
    `ConfigurationDirectory=
    <https://www.freedesktop.org/software/systemd/man/systemd.exec.html#RuntimeDirectory=>`_ directive.
+
+.. _settings-yaml-configuration:
+
+******************
+YAML configuration
+******************
+
+The Django project you use if you :doc:`install from source </quickstart_from_source>`, use :doc:`Docker
+</docker>` or :doc:`docker-compose </quickstart_docker_compose>` loads YAML files from a directory. This
+enables you to configure django-ca with a normal configuration file format without having to know Python.
+
+.. seealso:: https://en.wikipedia.org/wiki/YAML - Wikipedia has an overview of the YAML syntax.
+
+The individual tutorials give detailed instructions on where you can place these configurations files, this
+section documents how to translate Python settings described above into YAML.
+
+* The file must be a key/value mapping at the top level (as all examples are).
+* Boolean, string and integer values can be used in standard YAML syntax.
+* List or tuple values both map to YAML lists.
+* Dictionaries map to YAML dictionaries.
+
+Warning: unquoted strings
+=========================
+
+A file will fail to load if an unquoted string starts with a character that is also used in the YAML syntax,
+for example with a ``*`` or a ``[``. This is invalid YAML:
+
+.. code-block:: yaml
+
+   # THIS WILL NOT WORK:
+   SECRET_KEY: [random-string-that-happens-to-start-with-a-bracket
+
+Strings must also be quoted if they contain only digits (or resemble a different YAML data type), as they
+would otherwise be loaded as the respective data type:
+
+.. code-block:: yaml
+
+   # WRONG: serial that happens to have only digits would be loaded as integer
+   CA_DEFAULT_CA: 12345
+
+In both cases, the solution is to quote the string:
+
+.. code-block:: yaml
+
+   SECRET_KEY: "[random-string-that-happens-to-start-with-a-bracket"
+   CA_DEFAULT_CA: "12345"
+
+Examples
+========
+
+Basic settings are straight forward:
+
+.. literalinclude:: include/yaml-example-basic.yaml
+   :language: yaml
+
+
+Nested mappings such as the ``DATABASES`` are of course also possible:
+
+.. literalinclude:: include/yaml-example-databases.yaml
+   :language: yaml
+
+Settings that are tuples like `CA_DEFAULT_SUBJECT <settings-ca-default-subject>`_ have to be defined as lists:
+
+.. literalinclude:: include/yaml-example-subject.yaml
+   :language: yaml
+
+The `CA_PROFILES <settings-ca-profiles>`_ setting can also be set using YAML. Here is a verbose example:
+
+.. literalinclude:: include/yaml-example-ca-profiles.yaml
+   :language: yaml

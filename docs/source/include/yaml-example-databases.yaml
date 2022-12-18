@@ -1,0 +1,5 @@
+DATABASES:
+  default:
+    ENGINE: django.db.backends.postgresql_psycopg2
+    HOST: database.int.example.com
+    PORT: 5444
