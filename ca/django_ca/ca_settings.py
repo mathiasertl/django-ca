@@ -17,7 +17,7 @@ import os
 import re
 import typing
 from datetime import timedelta
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -56,7 +56,7 @@ else:
 
 CA_DEFAULT_KEY_SIZE: int = getattr(settings, "CA_DEFAULT_KEY_SIZE", 4096)
 
-CA_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = {
+CA_PROFILES: Dict[str, Dict[str, Any]] = {
     "client": {
         # see: http://security.stackexchange.com/questions/68491/
         "description": _("A certificate for a client."),
@@ -162,7 +162,7 @@ CA_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = {
     },
 }
 
-_CA_CRL_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = {
+_CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = {
     "user": {
         "algorithm": "SHA512",
         "expires": 86400,
@@ -192,9 +192,7 @@ if re.search("[^0-9A-F]", CA_DEFAULT_CA):
     raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
 _SUBJECT_AS_DICT_MAPPING = "%s as a dict wil be removed in django-ca==1.23. Please use a tuple instead."
-CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
-    settings, "CA_DEFAULT_SUBJECT", tuple()
-)
+CA_DEFAULT_SUBJECT: Tuple[Tuple[str, str], ...] = getattr(settings, "CA_DEFAULT_SUBJECT", tuple())
 CA_DEFAULT_SUBJECT = _normalize_subject(CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
 
 # Add ability just override/add some profiles
@@ -231,10 +229,8 @@ CA_NOTIFICATION_DAYS = getattr(
         1,
     ],
 )
-CA_CRL_PROFILES: typing.Dict[str, typing.Dict[str, typing.Any]] = getattr(
-    settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES
-)
-CA_PASSWORDS: typing.Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
+CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
+CA_PASSWORDS: Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
 
 # ACME settings
 CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", False)
@@ -246,7 +242,7 @@ ACME_DEFAULT_CERT_VALIDITY = getattr(settings, "CA_ACME_DEFAULT_CERT_VALIDITY", 
 # Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, "CA_MIN_KEY_SIZE", 2048)
 
-CA_DEFAULT_HOSTNAME: typing.Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
+CA_DEFAULT_HOSTNAME: Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
 
 _CA_DIGEST_ALGORITHM = getattr(settings, "CA_DIGEST_ALGORITHM", "sha512").strip().upper()
 try:
@@ -274,7 +270,7 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
 
 _CA_DEFAULT_ECC_CURVE = getattr(settings, "CA_DEFAULT_ECC_CURVE", "SECP256R1").strip()
 try:
-    CA_DEFAULT_ECC_CURVE: typing.Type[ec.EllipticCurve] = getattr(ec, _CA_DEFAULT_ECC_CURVE)
+    CA_DEFAULT_ECC_CURVE: Type[ec.EllipticCurve] = getattr(ec, _CA_DEFAULT_ECC_CURVE)
     if not issubclass(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
         raise ImproperlyConfigured(f"{_CA_DEFAULT_ECC_CURVE}: Not an EllipticCurve.")
 except AttributeError:
