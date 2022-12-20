@@ -97,6 +97,39 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_PROFILE="foo"):
                 pass
 
+    def test_subject_normalization(self) -> None:
+        """Test that subjects are normalized to tuples of two-tuples."""
+        with self.settings(
+            CA_DEFAULT_SUBJECT=[["C", "AT"], ["O", "example"]],
+            CA_PROFILES={"webserver": {"subject": [["C", "TL"], ["OU", "foobar"]]}},
+        ):
+            self.assertEqual(ca_settings.CA_DEFAULT_SUBJECT, (("C", "AT"), ("O", "example")))
+            self.assertEqual(ca_settings.CA_PROFILES["webserver"]["subject"], (("C", "TL"), ("OU", "foobar")))
+
+    def test_invalid_subjects(self) -> None:
+        """Test checks for invalid subjects."""
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: Value must be a list or tuple\."):
+            with self.settings(CA_DEFAULT_SUBJECT=True):
+                pass
+
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: foo: Items must be a list or tuple\."):
+            with self.settings(CA_DEFAULT_SUBJECT=["foo"]):
+                pass
+
+        with self.assertImproperlyConfigured(
+            r"^CA_DEFAULT_SUBJECT: \['foo'\]: Must be lists/tuples with two items, got 1\."
+        ):
+            with self.settings(CA_DEFAULT_SUBJECT=[["foo"]]):
+                pass
+
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: True: Item keys must be strings\."):
+            with self.settings(CA_DEFAULT_SUBJECT=[[True, "foo"]]):
+                pass
+
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: True: Item values must be strings\."):
+            with self.settings(CA_DEFAULT_SUBJECT=[["foo", True]]):
+                pass
+
     def test_default_ecc_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ECC_CURVE``."""
         with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_ECC_CURVE: foo$"):

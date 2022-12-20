@@ -226,18 +226,6 @@ if not _skip_local_config and yaml is not False:
         if not isinstance(data, dict):
             raise ImproperlyConfigured("%s: File is not a key/value mapping." % _full_path)
 
-        # Convert values into safe values expected by CA_SETTINGS
-        if "CA_DEFAULT_SUBJECT" in data:
-            data["CA_DEFAULT_SUBJECT"] = tuple(tuple(e) for e in data["CA_DEFAULT_SUBJECT"])
-
-        if "CA_PROFILES" in data:
-            for name, profile in data["CA_PROFILES"].items():
-                if profile is None:
-                    continue
-
-                if "subject" in profile:
-                    profile["subject"] = tuple(tuple(e) for e in profile["subject"])
-
         for key, value in data.items():
             globals()[key] = value
 

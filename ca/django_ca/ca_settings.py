@@ -17,6 +17,7 @@ import os
 import re
 import typing
 from datetime import timedelta
+from typing import Any, List, Tuple
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -25,6 +26,28 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import global_settings, settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
+
+
+def _normalize_subject(value: Any, hint: str) -> Tuple[Tuple[str, str], ...]:
+    if not isinstance(value, (tuple, list)):
+        raise ImproperlyConfigured(f"{hint}: Value must be a list or tuple.")
+
+    subject: List[Tuple[str, str]] = []
+    for elem in value:
+        if not isinstance(elem, (tuple, list)):
+            raise ImproperlyConfigured(f"{hint}: {elem}: Items must be a list or tuple.")
+        if len(elem) != 2:
+            raise ImproperlyConfigured(
+                f"{hint}: {elem}: Must be lists/tuples with two items, got {len(elem)}."
+            )
+        if not isinstance(elem[0], str):
+            raise ImproperlyConfigured(f"{hint}: {elem[0]}: Item keys must be strings.")
+        if not isinstance(elem[1], str):
+            raise ImproperlyConfigured(f"{hint}: {elem[1]}: Item values must be strings.")
+
+        subject.append(typing.cast(Tuple[str, str], tuple(elem)))
+    return tuple(subject)
+
 
 if "CA_DIR" in os.environ:  # pragma: no cover
     CA_DIR = os.path.join(os.environ["CA_DIR"], "files")
@@ -172,9 +195,7 @@ _SUBJECT_AS_DICT_MAPPING = "%s as a dict wil be removed in django-ca==1.23. Plea
 CA_DEFAULT_SUBJECT: typing.Tuple[typing.Tuple[str, str], ...] = getattr(
     settings, "CA_DEFAULT_SUBJECT", tuple()
 )
-if isinstance(CA_DEFAULT_SUBJECT, list):
-    CA_DEFAULT_SUBJECT = tuple(CA_DEFAULT_SUBJECT)
-
+CA_DEFAULT_SUBJECT = _normalize_subject(CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
 
 # Add ability just override/add some profiles
 CA_DEFAULT_PROFILE = getattr(settings, "CA_DEFAULT_PROFILE", "webserver")
@@ -193,6 +214,8 @@ for name, profile in _CA_PROFILE_OVERRIDES.items():
 for name, profile in CA_PROFILES.items():
     profile.setdefault("subject", CA_DEFAULT_SUBJECT)
     profile.setdefault("cn_in_san", True)
+
+    profile["subject"] = _normalize_subject(profile["subject"], f"subject in {name} profile")
 
 if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
