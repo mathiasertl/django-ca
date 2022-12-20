@@ -91,6 +91,12 @@ class DefaultCATestCase(TestCase):
 class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
     """Test various invalid configurations."""
 
+    def test_default_profile(self) -> None:
+        """Test the check if the default profile is defined."""
+        with self.assertImproperlyConfigured(r"^foo: CA_DEFAULT_PROFILE is not defined as a profile\.$"):
+            with self.settings(CA_DEFAULT_PROFILE="foo"):
+                pass
+
     def test_default_ecc_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ECC_CURVE``."""
         with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_ECC_CURVE: foo$"):

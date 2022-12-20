@@ -310,21 +310,6 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(ValueError, msg), self.assertCreateCertSignals(False, False):
             Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
 
-    @override_tmpcadir(CA_PROFILES={k: None for k in ca_settings.CA_PROFILES})
-    def test_no_profile(self) -> None:
-        """Test that creating a cert with no profiles throws an error."""
-        subject = "/CN=example.com"
-
-        with self.assertRaisesRegex(KeyError, r"^'webserver'$"), self.assertCreateCertSignals(False, False):
-            Certificate.objects.create_cert(
-                self.ca,
-                self.csr,
-                subject=subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-            )
-
     @override_tmpcadir()
     def test_profile_unsupported_type(self) -> None:
         """Test passing a profile with an unsupported type."""

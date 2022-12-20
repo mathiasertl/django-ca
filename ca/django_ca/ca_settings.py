@@ -177,6 +177,8 @@ if isinstance(CA_DEFAULT_SUBJECT, list):
 
 
 # Add ability just override/add some profiles
+CA_DEFAULT_PROFILE = getattr(settings, "CA_DEFAULT_PROFILE", "webserver")
+
 _CA_PROFILE_OVERRIDES = getattr(settings, "CA_PROFILES", {})
 for name, profile in _CA_PROFILE_OVERRIDES.items():
     if profile is None:
@@ -192,8 +194,10 @@ for name, profile in CA_PROFILES.items():
     profile.setdefault("subject", CA_DEFAULT_SUBJECT)
     profile.setdefault("cn_in_san", True)
 
+if CA_DEFAULT_PROFILE not in CA_PROFILES:
+    raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
+
 CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
-CA_DEFAULT_PROFILE = getattr(settings, "CA_DEFAULT_PROFILE", "webserver")
 CA_NOTIFICATION_DAYS = getattr(
     settings,
     "CA_NOTIFICATION_DAYS",

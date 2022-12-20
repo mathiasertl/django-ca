@@ -519,7 +519,8 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             "test": {
                 "cn_in_san": True,
             },
-        }
+        },
+        CA_DEFAULT_PROFILE="test",
     )
     def test_empty_profile(self) -> None:
         """Try fetching a simple profile."""
