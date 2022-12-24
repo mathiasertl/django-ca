@@ -45,6 +45,7 @@ class Command(DevCommand):
         self.run("isort", "--check-only", "--diff", ".")
         self.run("flake8", ".")
         self.run("black", "--check", ".")
+        self.run("pre-commit", "run", "--all-files")
 
         self.manage("check")
         self.manage("makemigrations", "--check")
