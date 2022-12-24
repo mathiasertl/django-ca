@@ -43,6 +43,11 @@ CANONICAL_PYPI_NAMES = {
     "josepy": "josepy",
 }
 
+TOX_ENV_SHORT_NAMES = {
+    "cryptography": "cg",
+    "django": "dj",
+}
+
 
 def get_expected_version_line(project_config):
     """Get expected string for README and intro.rst."""
@@ -116,7 +121,7 @@ def check_tox(project_config):
     # Check that there is a testenv listing all versions
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_envlist = "py{%s}-django{%s}-cryptography{%s}-acme{%s}-josepy{%s}" % (
+    expected_envlist = "py{%s}-dj{%s}-cg{%s}-acme{%s}-josepy{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
         ",".join(project_config["django-map"]),
         ",".join(project_config["cryptography-map"]),
@@ -132,14 +137,15 @@ def check_tox(project_config):
     # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "acme", "josepy"]:
         # First, check if there are any left over conditional settings for this component
+        short_name = TOX_ENV_SHORT_NAMES.get(component, component)
         errors += simple_diff(
             f"{component} conditional dependencies present",
-            [e for e in tox_env_reqs if e.startswith(component)],
-            [f"{component}{major}" for major in project_config[f"{component}-map"]],
+            [e for e in tox_env_reqs if e.startswith(short_name)],
+            [f"{short_name}{major}" for major in project_config[f"{component}-map"]],
         )
 
         for major, minor in project_config[f"{component}-map"].items():
-            name = f"{component}{major}"
+            name = f"{short_name}{major}"
             try:
                 actual = tox_env_reqs[name]
             except KeyError:
