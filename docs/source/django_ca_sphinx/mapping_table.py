@@ -39,6 +39,7 @@ class MappingDocumentor(DataDocumenter):
 
     @classmethod
     def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
+        """Determine if this documentor can document the given variable."""
         return super().can_document_member(member, membername, isattr, parent) and isinstance(member, Mapping)
 
     def serialize_value(self, value: Any) -> str:
@@ -75,9 +76,6 @@ class MappingDocumentor(DataDocumenter):
             self.add_line(line, source_name)
 
     def add_content(self, more_content: Optional[StringList]) -> None:
-        if more_content is None:
-            more_content = StringList()
-        more_content += StringList(["A line **appended** by automapping."])
+        """Overwritten to add a table of values for a mapping to the description."""
         super().add_content(more_content)
-
         self.add_table()
