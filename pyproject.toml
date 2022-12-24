@@ -35,6 +35,14 @@ exclude_lines = [
     "pragma: no ?cover",
 ]
 
+[tool.coverage.run]
+source = ["django_ca"]
+branch = true
+omit = [
+    "*/migrations/*",
+    "*/tests/tests*",
+]
+
 [tool.doc8]
 max-line-length = 110
 ignore = [

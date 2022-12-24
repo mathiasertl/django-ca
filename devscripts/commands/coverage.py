@@ -155,16 +155,7 @@ class Command(TestCommand):
             report_dir = str(config.DOCS_BUILD_DIR / "coverage")
             data_file = None
 
-        cov = coverage.Coverage(
-            data_file=data_file,
-            cover_pylib=False,
-            branch=True,
-            source=["django_ca"],
-            omit=[
-                "*migrations/*",
-                "*/tests/tests*",
-            ],
-        )
+        cov = coverage.Coverage(data_file=data_file)
 
         self.setup_pragmas(cov)
         cov.start()
