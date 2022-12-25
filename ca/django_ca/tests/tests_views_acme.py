@@ -13,6 +13,7 @@
 
 """Test ACME related views."""
 
+import abc
 import json
 import typing
 import unittest
@@ -279,6 +280,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
             hostname = self.SERVER_NAME
         return super().absolute_uri(name, hostname=hostname, **kwargs)
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyPep8Naming
     def assertAcmeProblem(  # pylint: disable=invalid-name
         self,
         response: HttpResponse,
@@ -289,7 +292,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         link_relations: typing.Optional[typing.Dict[str, str]] = None,
         regex: bool = False,
     ) -> None:
-        """Assert that a HTTP response confirms to an ACME problem report.
+        """Assert that an HTTP response confirms to an ACME problem report.
 
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
         """
@@ -305,6 +308,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
             self.assertEqual(data["detail"], message)
         self.assertIn("Replay-Nonce", response)
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyPep8Naming
     def assertAcmeResponse(  # pylint: disable=invalid-name
         self,
         response: HttpResponse,
@@ -316,6 +321,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
         self.assertLinkRelations(response, ca=ca, **link_relations)
         self.assertEqual(response["Content-Type"], "application/json")
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyPep8Naming
     def assertLinkRelations(  # pylint: disable=invalid-name
         self, response: HttpResponse, ca: typing.Optional[CertificateAuthority] = None, **kwargs: str
     ) -> None:
@@ -330,12 +337,16 @@ class AcmeTestCaseMixin(TestCaseMixin):
         actual = parse_header_links(response["Link"])
         self.assertEqual(expected, actual)
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyPep8Naming
     def assertMalformed(  # pylint: disable=invalid-name
         self, resp: HttpResponse, message: str = "", typ: str = "malformed", **kwargs: typing.Any
     ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyPep8Naming
     def assertUnauthorized(  # pylint: disable=invalid-name
         self, resp: HttpResponse, message: str = AcmeResponseUnauthorized.message, **kwargs: typing.Any
     ) -> None:
@@ -425,6 +436,8 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     message_cls: typing.Type[MessageTypeVar]
     view_name: str
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyAttributeOutsideInit
     def setUp(self) -> None:
         super().setUp()
         self.account_slug = acme_slug()
@@ -435,7 +448,8 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         )
 
     @property
-    def url(self) -> str:  # type: ignore[empty-body]
+    @abc.abstractmethod
+    def url(self) -> str:
         """Property providing a single URL under test."""
 
     def acme(
@@ -530,7 +544,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     @override_tmpcadir()
     def test_duplicate_nonce(self) -> None:
-        """Test sending an nonce twice."""
+        """Test sending a nonce twice."""
         nonce = self.get_nonce()
         self.acme(self.url, self.message, nonce=nonce)
         resp1 = self.acme(self.url, self.message, nonce=nonce)
@@ -652,10 +666,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
 
 class AcmeWithAccountViewTestCaseMixin(
-    AcmeBaseViewTestCaseMixin[MessageTypeVar], typing.Generic[MessageTypeVar]
+    AcmeBaseViewTestCaseMixin[MessageTypeVar], typing.Generic[MessageTypeVar], metaclass=abc.ABCMeta
 ):
     """Mixin that also adds accounts to the database."""
 
+    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
+    # noinspection PyAttributeOutsideInit
     def setUp(self) -> None:
         super().setUp()
         self.account = AcmeAccount.objects.create(
@@ -1663,7 +1679,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
 
     @override_tmpcadir()
     def test_valid_cert(self) -> None:
-        """Test viewing a an order with a valid certificate"""
+        """Test viewing an order with a valid certificate"""
 
         self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
@@ -1688,7 +1704,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
 
     @override_tmpcadir()
     def test_cert_not_yet_issued(self) -> None:
-        """Test viewing a an order where the certificate has not yet been issued.
+        """Test viewing an order where the certificate has not yet been issued.
 
         NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditionas that
         *should* always be true at the same time.
@@ -1716,7 +1732,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
 
     @override_tmpcadir()
     def test_cert_not_yet_valid(self) -> None:
-        """Test viewing a an order where the certificate has not yet valid.
+        """Test viewing an order where the certificate has not yet valid.
 
         NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditionas that
         *should* always be true at the same time.

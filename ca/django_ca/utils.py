@@ -84,7 +84,7 @@ SAN_NAME_MAPPINGS = {
     x509.OtherName: "otherName",
 }
 
-# Human readable names come from RFC 4519 except where noted
+# Human-readable names come from RFC 4519 except where noted
 #: Map OID objects to IDs used in subject strings
 OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
     NameOID.BUSINESS_CATEGORY: "businessCategory",
@@ -202,32 +202,6 @@ ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
     ec.BrainpoolP384R1.name.lower(): ec.BrainpoolP384R1,
     ec.BrainpoolP512R1.name.lower(): ec.BrainpoolP512R1,
 }
-
-
-try:
-    # pylint: disable=unused-import,useless-import-alias
-    #         Import alias is for mypy (explicit re-export)
-    from django.utils.functional import classproperty as classproperty
-except ImportError:  # pragma: no cover
-    # NOTE: Official Django documentation states that this decorator is new in Django 3.1, but in reality
-    #       it is present (but undocumented) in Django 2.2 as well.
-    # Copy of classproperty from django 3.1 for older versions
-    # pylint: disable=invalid-name,missing-function-docstring
-    class classproperty:  # type: ignore
-        """
-        Decorator that converts a method with a single `cls` argument into a property
-        that can be accessed directly from the class.
-        """
-
-        def __init__(self, method=None):  # type: ignore
-            self.fget = method
-
-        def __get__(self, instance, cls=None):  # type: ignore
-            return self.fget(cls)
-
-        def getter(self, method):  # type: ignore
-            self.fget = method
-            return self
 
 
 def make_naive(timestamp: datetime) -> datetime:
@@ -387,7 +361,7 @@ def add_colons(value: str, pad: str = "0") -> str:
     Parameters
     ----------
 
-    s : str
+    value : str
         The string to add colons to
     pad : str, optional
         If not an empty string, pad the string so that the last element always has two characters. The default
@@ -483,8 +457,8 @@ def parse_name_x509(name: ParsableName) -> typing.Tuple[x509.NameAttribute, ...]
 
     The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
     ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
-    on deviations from the format, object identifiers are case-insensitive (e.g. ``cn`` is the same as ``CN``,
-    whitespace at the start and end is stripped and the subject does not have to start with a slash (``/``).
+    on deviations from the format, object identifiers are case-insensitive, whitespace at the start and end is
+    stripped and the subject does not have to start with a slash (``/``).
 
     >>> parse_name_x509('/CN=example.com')
     (<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>,)
@@ -951,10 +925,6 @@ def parse_hash_algorithm(
         Traceback (most recent call last):
             ...
         ValueError: Unknown hash algorithm: Wrong
-        >>> parse_hash_algorithm(object())  # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-            ...
-        ValueError: Unknown type passed: object
 
     Parameters
     ----------
@@ -1087,6 +1057,9 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
     expires : datetime
         Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
         to generate such a value. By default, a value will be generated.
+    serial : int, optional
+        Serial for the certificate. If not passed, a serial will be randomly generated using
+        :py:func:`~cg:cryptography.x509.random_serial_number`.
     """
 
     now = datetime.utcnow().replace(second=0, microsecond=0)
@@ -1301,7 +1274,10 @@ def get_crl_cache_key(
     return f"crl_{serial}_{algorithm.name}_{encoding.name}_{scope}"
 
 
-# NOTE: get_storage_class is typed to Storage (but really returns the subclass FileSystemStorage).
-#       The default kwargs trigger a type error because the default works for the subclass.
 ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)
+
+# NOINSPECTION NOTE: ca_storage_class is typed to the base class (django.core.files.storage.Storage), which
+#   does not accept any arguments. PyCharm thinks you can't pass any argument here, but in reality it's up to
+#   the user.
+# noinspection PyArgumentList
 ca_storage = ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)

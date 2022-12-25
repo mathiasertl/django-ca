@@ -223,8 +223,7 @@ class CertificateMixin(
     def get_actions(self, request: HttpRequest) -> typing.OrderedDict[str, str]:
         """Disable the "delete selected" admin action.
 
-        Otherwise the action is present even though has_delete_permission is False, it just doesn't
-        work.
+        Otherwise, the action is present even though has_delete_permission is False, it just doesn't work.
         """
         actions = super().get_actions(request)
         actions.pop("delete_selected", "")

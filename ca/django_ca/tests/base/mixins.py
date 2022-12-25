@@ -216,6 +216,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             The raw CRL
         expected : list
             List of CAs/certs to be expected in this CRL
+        signer
+        expires
+        algorithm
+        encoding
+        idp
+        extensions
+        crl_number
         """
         expected = expected or []
         signer = signer or self.cas["child"]
@@ -273,7 +280,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
             try:
-                yield (pre_sig, post_sig)
+                yield pre_sig, post_sig
             finally:
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
@@ -285,7 +292,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_sign_cert) as post_sig:
             try:
-                yield (pre_sig, post_sig)
+                yield pre_sig, post_sig
             finally:
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
@@ -355,7 +362,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_issue_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
             try:
-                yield (pre_sig, post_sig)
+                yield pre_sig, post_sig
             finally:
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
@@ -1277,7 +1284,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.
         """
-        yield (self.model.objects.all(), {})
+        yield self.model.objects.all(), {}
 
     def test_model_count(self) -> None:
         """Test that the implementing TestCase actually creates some instances."""

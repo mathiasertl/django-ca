@@ -67,7 +67,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
         parser
         arg : str, optional
-        help : str, optional
+        help_text : str, optional
         allow_disabled : bool, optional
         no_default : bool, optional
         allow_unusable : bool, optional

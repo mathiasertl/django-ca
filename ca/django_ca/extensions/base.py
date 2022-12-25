@@ -232,6 +232,10 @@ class UnrecognizedExtension(Extension[x509.UnrecognizedExtension, None, None]):
     name: str  # type: ignore[misc]
     oid: x509.ObjectIdentifier  # type: ignore[misc]
 
+    # NOINSPECTION NOTE: The class is deprecated anyway, no point in fixing the warnings.
+    # noinspection PyClassVar
+    # noinspection PyMissingConstructor
+    # noinspection PyUnusedLocal
     # pylint: disable-next=unused-argument
     def __init__(self, value: UnrecognizedExtensionType, name: str = "", error: str = ""):
         self.deprecate()
@@ -366,6 +370,7 @@ class IterableExtension(
         return cast(SerializedItem, value)
 
 
+# noinspection PyAbstractClass
 class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedItem, IterableItem]):
     """Base class for extensions with multiple ordered values.
 
@@ -448,6 +453,7 @@ class ListExtension(IterableExtension[ExtensionTypeTypeVar, ParsableItem, Serial
         self.value.remove(self.parse_value(value))
 
 
+# noinspection PyAbstractClass
 class OrderedSetExtension(
     IterableExtension[ExtensionTypeTypeVar, ParsableItem, SerializedSortableItem, IterableItem]
 ):
@@ -608,6 +614,7 @@ class OrderedSetExtension(
             self.value.update(self.parse_iterable(elem))
 
 
+# noinspection PyAbstractClass
 class AlternativeNameExtension(
     ListExtension[AlternativeNameTypeVar, ParsableGeneralName, str, x509.GeneralName],
     Generic[AlternativeNameTypeVar],

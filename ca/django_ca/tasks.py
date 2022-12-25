@@ -20,6 +20,7 @@ import logging
 import typing
 from datetime import timedelta
 from http import HTTPStatus
+from typing import Any, Iterable, List, Optional, Tuple
 
 import requests
 
@@ -47,7 +48,7 @@ from .utils import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES, parse_general_nam
 
 log = logging.getLogger(__name__)
 
-FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
+FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
 
 try:
     from celery import shared_task
@@ -64,7 +65,7 @@ except ImportError:
         return typing.cast("Proxy[FuncTypeVar]", func)
 
 
-def run_task(task: "Proxy[FuncTypeVar]", *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
@@ -75,21 +76,21 @@ def run_task(task: "Proxy[FuncTypeVar]", *args: typing.Any, **kwargs: typing.Any
 
 
 @shared_task
-def cache_crl(serial: str, **kwargs: typing.Any) -> None:
+def cache_crl(serial: str, **kwargs: Any) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
     ca.cache_crls(**kwargs)
 
 
 @shared_task
-def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
+def cache_crls(serials: Optional[Iterable[str]] = None) -> None:
     """Task to cache the CRLs for all CAs."""
     if serials is None:  # pragma: no cover; just to make mypy happy
         serials = []
 
     if not serials:
         serials = typing.cast(
-            typing.Iterable[str], CertificateAuthority.objects.usable().values_list("serial", flat=True)
+            Iterable[str], CertificateAuthority.objects.usable().values_list("serial", flat=True)
         )
 
     for serial in serials:
@@ -99,16 +100,16 @@ def cache_crls(serials: typing.Optional[typing.Iterable[str]] = None) -> None:
 @shared_task
 def generate_ocsp_key(
     serial: str,
-    expires: typing.Optional[int] = None,
-    algorithm: typing.Optional[str] = None,
-    ecc_curve: typing.Optional[str] = None,
-    **kwargs: typing.Any,
-) -> typing.Tuple[str, str, int]:
+    expires: Optional[int] = None,
+    algorithm: Optional[str] = None,
+    ecc_curve: Optional[str] = None,
+    **kwargs: Any,
+) -> Tuple[str, str, int]:
     """Task to generate an OCSP key for the CA named by `serial`."""
 
-    parsed_expires: typing.Optional[timedelta] = None
-    parsed_algorithm: typing.Optional[hashes.HashAlgorithm] = None
-    parsed_curve: typing.Optional[ec.EllipticCurve] = None
+    parsed_expires: Optional[timedelta] = None
+    parsed_algorithm: Optional[hashes.HashAlgorithm] = None
+    parsed_curve: Optional[ec.EllipticCurve] = None
     if expires is not None:
         parsed_expires = timedelta(seconds=expires)
     if algorithm is not None:
@@ -124,7 +125,7 @@ def generate_ocsp_key(
 
 
 @shared_task
-def generate_ocsp_keys(**kwargs: typing.Any) -> typing.List[typing.Tuple[str, str, int]]:
+def generate_ocsp_keys(**kwargs: Any) -> List[Tuple[str, str, int]]:
     """Task to generate an OCSP keys for all usable CAs."""
     keys = []
     for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):

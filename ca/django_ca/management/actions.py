@@ -447,6 +447,8 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
             parser.error(f"Unknown ExtendedKeyUsage: {ex.args[0]}")
 
         # Sort to get more predictable output
+        # NOINSPECTION NOTE: parser.error() above never returns
+        # noinspection PyUnboundLocalVariable
         usages = sorted(usages, key=lambda oid: oid.dotted_string)
 
         extension_type = x509.ExtendedKeyUsage(usages)
@@ -498,6 +500,8 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         except ValueError as ex:
             parser.error(str(ex))
 
+        # NOINSPECTION NOTE: parser.error() above never returns
+        # noinspection PyUnboundLocalVariable
         extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
         setattr(namespace, self.dest, extension)
 
@@ -527,6 +531,8 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         except KeyError as ex:
             parser.error(f"Unknown TLSFeature: {ex.args[0]}")
 
+        # NOINSPECTION NOTE: parser.error() above never returns
+        # noinspection PyUnboundLocalVariable
         extension_type = x509.TLSFeature(features=features)
         extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
         setattr(namespace, self.dest, extension)

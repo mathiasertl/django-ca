@@ -223,6 +223,8 @@ class OCSPViewTestMixin(TestCaseMixin):
             sign_func = asymmetric.dsa_sign
         elif self.ocsp_private_key.algorithm == "ec":
             sign_func = asymmetric.ecdsa_sign
+        else:
+            raise ValueError("Unknown signing algorithm")
 
         return sign_func(self.ocsp_private_key, tbs_request.dump(), algo_str)
 
@@ -402,14 +404,11 @@ class OCSPTestViewMixin(OCSPViewTestMixin):
         """Generic test if the handling function throws any uncought exception."""
 
         exception_str = f"{__name__}.{self.__class__.__name__}.test_raises_exception"
-
-        def effect(data):  # type: ignore[no-untyped-def]
-            raise Exception(exception_str)
+        ex = Exception(exception_str)
 
         data = base64.b64encode(req1).decode("utf-8")
-        with mock.patch(
-            "django_ca.views.OCSPView.process_ocsp_request", side_effect=effect
-        ), self.assertLogs() as logcm:
+        view_path = "django_ca.views.OCSPView.process_ocsp_request"
+        with mock.patch(view_path, side_effect=ex), self.assertLogs() as logcm:
             response = self.client.get(reverse("get", kwargs={"data": data}))
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -419,9 +418,7 @@ class OCSPTestViewMixin(OCSPViewTestMixin):
         self.assertIn(exception_str, logcm.output[0])
 
         # also do a post request
-        with mock.patch(
-            "django_ca.views.OCSPView.process_ocsp_request", side_effect=effect
-        ), self.assertLogs() as logcm:
+        with mock.patch(view_path, side_effect=ex), self.assertLogs() as logcm:
             response = self.client.post(reverse("post"), req1, content_type="application/ocsp-request")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         ocsp_response = asn1crypto.ocsp.OCSPResponse.load(response.content)

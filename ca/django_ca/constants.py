@@ -33,7 +33,7 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     IPSEC_TUNNEL = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6")
     IPSEC_USER = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
 
-    # Used by PKINIT logon on Windows (see  github #46)
+    # Used by PKINIT logon on Windows (see  github#46)
     SMARTCARD_LOGON = x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2")
 
     # mobilee Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
@@ -68,7 +68,7 @@ EXTENDED_KEY_USAGE_NAMES = MappingProxyType(
     }
 )
 
-#: Map of ExtendedKeyUsageOIDs to human readable names.
+#: Map of ExtendedKeyUsageOIDs to human-readable names.
 EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = MappingProxyType(
     {
         ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "Any Extended Key Usage",
@@ -191,7 +191,7 @@ EXTENSION_KEYS = MappingProxyType(
 #: Map of extension keys to ExtensionOIDs (the inverse of EXTENSION_KEYS).
 EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in EXTENSION_KEYS.items()})
 
-#: Map of ExtensionOIDs to human readable names as they appear in the RFC where they are defined.
+#: Map of ExtensionOIDs to human-readable names as they appear in the RFC where they are defined.
 EXTENSION_NAMES = MappingProxyType(
     {
         ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "Authority Information Access",
@@ -261,7 +261,7 @@ LOG_ENTRY_TYPE_KEYS = MappingProxyType(
     }
 )
 
-#: Map of human readable names/serialized values to TLSFeatureTypes.
+#: Map of human-readable names/serialized values to TLSFeatureTypes.
 TLS_FEATURE_NAMES = MappingProxyType(
     {
         # https://tools.ietf.org/html/rfc6066.html:

@@ -88,8 +88,8 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
 class ConsoleIncludeDirective(CodeBlock):
     """A directive to render shell commands from a YAML file with console syntax highlighing.
 
-    django-ca uses this directive to have shell commands for tutorials in the documentation in a machine
-    readable file which then can also be used by release test scripts.
+    django-ca uses this directive to have shell commands for tutorials in the documentation in a
+    machine-readable file which then can also be used by release test scripts.
 
     Usage::
 
@@ -108,13 +108,13 @@ class ConsoleIncludeDirective(CodeBlock):
     context
         Name of the ``jinja2_context`` to use for rendering commands.
     user (default: ``user``)
-        User name to display in the prompt.
+        Username to display in the prompt.
     host (default: ``host``)
         Host name to display in the prompt.
     path (default: ``~``)
         Current working directory to display in th prompt.
     root (default: ``False``)
-        If set, display a ``#`` instead of a ``$`` to indicate that the user is a super user. This is the
+        If set, display a ``#`` instead of a ``$`` to indicate that the user is a superuser. This is the
         default if `user` is set to ``root``.
     line_length (default: ``75``)
         Line length to use, defaults to 75.

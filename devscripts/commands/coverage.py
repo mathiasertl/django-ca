@@ -31,7 +31,8 @@ def exclude_versions(cov, software, current_version, pragma_version, version_str
     """
     Parameters
     ----------
-    sw : str
+    cov : coverage object
+    software : str
     current_version
         The currently used version.
     pragma_version

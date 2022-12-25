@@ -85,11 +85,11 @@ class TypeHintsFilter(Filter):  # type: ignore[misc]
     doesn't link them properly in HTML. This appears to also make them show up as spelling errors.
     """
 
-    typehints = [
+    typehint_names = [
         str(getattr(typehints, tv))
         for tv in dir(typehints)
         if isinstance(getattr(typehints, tv), typing.TypeVar)
     ]
 
     def _skip(self, word: str) -> bool:
-        return word in self.typehints
+        return word in self.typehint_names

@@ -298,11 +298,19 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
+    # NOINSPECTION/TYPE NOTE: It's okay to be more specific here
+    # noinspection PyMethodOverriding
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
     ) -> "HttpResponseBase":
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
+
+        # COVERAGE NOTE: Checking just for safety here.
+        if not isinstance(serial, str):  # pragma: no cover
+            raise ImproperlyConfigured("View expects a str for a serial")
+        if slug is not None and not isinstance(slug, str):  # pragma: no cover
+            raise ImproperlyConfigured("View expects a str for a slug")
 
         try:
             response = super().dispatch(request, serial=serial, slug=slug)
@@ -475,9 +483,15 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
        * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
 
+    # NOINSPECTION/TYPE NOTE: It's okay to be more specific here
+    # noinspection PyMethodOverriding
     def dispatch(self, request: HttpRequest, serial: str) -> "HttpResponseBase":  # type: ignore[override]
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
+
+        # COVERAGE NOTE: Checking just for safety here.
+        if not isinstance(serial, str):  # pragma: no cover
+            raise ImproperlyConfigured("View expects a str for a serial")
 
         response = super().dispatch(request, serial)
         response["replay-nonce"] = self.get_nonce()

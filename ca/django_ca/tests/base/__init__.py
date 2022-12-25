@@ -336,8 +336,8 @@ for cert_name, cert_data in certs.items():
 # Calculate some fixed timestamps that we reuse throughout the tests
 timestamps = {
     "base": datetime.strptime(_fixture_data["timestamp"], "%Y-%m-%d %H:%M:%S"),
+    "before_everything": datetime(1990, 1, 1),
 }
-timestamps["before_everything"] = datetime(1990, 1, 1)
 timestamps["before_cas"] = timestamps["base"] - timedelta(days=1)
 timestamps["before_child"] = timestamps["base"] + timedelta(days=1)
 timestamps["after_child"] = timestamps["base"] + timedelta(days=4)

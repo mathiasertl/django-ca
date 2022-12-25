@@ -1,6 +1,6 @@
 django.jQuery(document).ready(function() {
     var ca_profiles;
-    var profile_url = django.jQuery('meta[name="get-profiles-url"]').attr('value');
+    var profile_url = django.jQuery('meta[name="get-profiles-url"]').attr('content');
     console.log(profile_url);
 
     django.jQuery.get(profile_url).done(function(data) {

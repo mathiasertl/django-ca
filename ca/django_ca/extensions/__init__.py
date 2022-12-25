@@ -124,6 +124,7 @@ __all__ = [
     "KeyUsage",
     "NameConstraints",
     "OCSPNoCheck",
+    "OID_TO_EXTENSION",
     "PolicyConstraints",
     "PrecertPoison",
     "PrecertificateSignedCertificateTimestamps",

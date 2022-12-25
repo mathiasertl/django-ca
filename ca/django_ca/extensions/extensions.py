@@ -558,8 +558,6 @@ class KeyUsage(OrderedSetExtension[x509.KeyUsage, str, str, str]):
             return self.CRYPTOGRAPHY_MAPPING[value]
         except KeyError as ex:
             raise ValueError(f"Unknown value: {value}") from ex
-        # Just a safe-guard to make sure that the function always returns or raises a ValueError
-        raise ValueError(f"Unknown value: {value}")  # pragma: no cover  # function returns/raises before
 
     def serialize_item(self, value: str) -> str:
         return value

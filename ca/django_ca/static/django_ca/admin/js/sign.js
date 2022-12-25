@@ -30,7 +30,7 @@ django.jQuery.ajaxSetup({
 });
 
 django.jQuery(document).ready(function() {
-    var csr_details_url = django.jQuery('meta[name="csr-details-url"]').attr('value');
+    var csr_details_url = django.jQuery('meta[name="csr-details-url"]').attr('content');
     
     django.jQuery('.from-csr-copy').click(function(e) {
         var button = django.jQuery(e.target);

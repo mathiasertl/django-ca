@@ -91,7 +91,7 @@ def check(func, *args, **kwargs):
 
 
 def check_github_actions_tests(project_config):
-    """Check github actions."""
+    """Check GitHub actions."""
     relpath = os.path.join(".github", "workflows", "tests.yml")
     full_path = os.path.join(config.ROOT_DIR, relpath)
     check_path(relpath)
@@ -136,7 +136,7 @@ def check_tox(project_config):
 
     # Check that conditional dependencies are up to date
     for component in ["django", "cryptography", "acme", "josepy"]:
-        # First, check if there are any left over conditional settings for this component
+        # First, check if there are any leftover conditional settings for this component
         short_name = TOX_ENV_SHORT_NAMES.get(component, component)
         errors += simple_diff(
             f"{component} conditional dependencies present",

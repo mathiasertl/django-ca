@@ -11,39 +11,25 @@ from typing import Tuple
 import josepy as jose
 
 from .challenges import Challenge
-from .mixins import ResourceMixin
-
 
 class _Constant(jose.interfaces.JSONDeSerializable, Hashable, metaclass=ABCMeta):
     POSSIBLE_NAMES: Dict[str, "_Constant"]
     name: str
 
-    def __init__(self, name: str) -> None:
-        ...
+    def __init__(self, name: str) -> None: ...
+    def __hash__(self) -> int: ...
 
-    def __hash__(self) -> int:
-        ...
-
-
-class Status(_Constant, metaclass=ABCMeta):
-    ...
-
-
-class IdentifierType(_Constant, metaclass=ABCMeta):
-    ...
-
+class Status(_Constant, metaclass=ABCMeta): ...
+class IdentifierType(_Constant, metaclass=ABCMeta): ...
 
 class Identifier(jose.json_util.JSONObjectWithFields):
     typ: IdentifierType
     value: str
 
-    def __init__(self, typ: IdentifierType, value: str) -> None:
-        ...
-
+    def __init__(self, typ: IdentifierType, value: str) -> None: ...
 
 class ResourceBody(jose.json_util.JSONObjectWithFields):
     resource_type: str
-
 
 class Registration(ResourceBody):
     contact: Tuple[str, ...]
@@ -55,9 +41,7 @@ class Registration(ResourceBody):
     email_prefix: ClassVar[str]
 
     @property
-    def emails(self) -> Tuple[str, ...]:
-        ...
-
+    def emails(self) -> Tuple[str, ...]: ...
 
 class ChallengeBody(ResourceBody):
     def __init__(
@@ -68,29 +52,18 @@ class ChallengeBody(ResourceBody):
         error: Optional[Any] = None,
         _uri: Optional[str] = "",
         _url: Optional[str] = "",
-    ):
-        ...
+    ): ...
 
+class Authorization(ResourceBody): ...
 
-class Authorization(ResourceBody):
-    ...
-
-
-class CertificateRequest(ResourceMixin, jose.json_util.JSONObjectWithFields):
+class CertificateRequest(jose.json_util.JSONObjectWithFields):
     resource_type: str
 
+class Order(ResourceBody): ...
+class NewOrder(Order): ...
 
-class Order(ResourceBody):
-    ...
-
-
-class NewOrder(Order):
-    ...
-
-
-class Revocation(ResourceMixin, jose.json_util.JSONObjectWithFields):
+class Revocation(jose.json_util.JSONObjectWithFields):
     certificate: jose.util.ComparableX509
     reason: int
-
 
 IDENTIFIER_FQDN: IdentifierType

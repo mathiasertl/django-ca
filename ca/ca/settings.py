@@ -275,8 +275,8 @@ def _set_db_setting(name: str, env_name: str, default: Optional[str] = None) -> 
     if os.environ.get(env_name):
         DATABASES["default"][name] = os.environ[env_name]
     elif os.environ.get("%s_FILE" % env_name):
-        with open(os.environ["%s_FILE" % env_name]) as stream:
-            DATABASES["default"][name] = stream.read()
+        with open(os.environ["%s_FILE" % env_name]) as env_stream:
+            DATABASES["default"][name] = env_stream.read()
     elif default is not None:
         DATABASES["default"][name] = default
 

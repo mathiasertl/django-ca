@@ -89,7 +89,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             with open(path, "rb") as stream:
                 crl = x509.load_pem_x509_crl(stream.read())
 
-            yield (path, crl)
+            yield path, crl
 
     @contextmanager
     def dumped(self, *certificates: X509CertMixin) -> typing.Iterator[typing.List[str]]:

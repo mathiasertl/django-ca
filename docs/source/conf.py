@@ -13,11 +13,9 @@
 # serve to show the default.
 
 import os
-import re
 import sys
 
 import sphinx_rtd_theme
-from docutils.nodes import Text as DocutilsText
 from sphinx.addnodes import pending_xref
 from sphinx.application import Sphinx
 
@@ -86,8 +84,6 @@ extensions = [
     "django_ca_sphinx",
 ]
 
-autodoc_typehints = "none"
-
 if spelling is not None:
     from django_ca_sphinx.spelling import URIFilter, MagicWordsFilter, TypeHintsFilter  # isort:skip
 
@@ -117,7 +113,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-ca"
-copyright = "2016 - 2020, Mathias Ertl"
+copyright = "2016 - 2022, Mathias Ertl"
 author = "Mathias Ertl"
 
 import django_ca  # NOQA: E402
@@ -176,7 +172,7 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "alabaster"
+# html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -272,16 +268,7 @@ htmlhelp_basename = "django-cadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
-    # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
-    # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
-    # Latex figure (float) alignment
-    #'figure_align': 'htbp',
-}
+latex_elements = {}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
@@ -368,6 +355,7 @@ intersphinx_mapping = {
         "https://docs.djangoproject.com/en/%s/_objects/" % CONFIG["django-major"][-1],
     ),
     "acme": ("https://acme-python.readthedocs.io/en/stable/", None),
+    "josepy": ("https://josepy.readthedocs.io/en/stable/", None),
 }
 
 rst_epilog = f"""
@@ -448,19 +436,7 @@ jinja_filters = {
     "basename": os.path.basename,
 }
 
-# Make typehints to third-party libraries work in Shpinx:
-#   https://github.com/agronholm/sphinx-autodoc-typehints/issues/38#issuecomment-448517805
-#   See also: https://github.com/sphinx-doc/sphinx/issues/4826
 qualname_overrides = {
-    "ExtensionTypeTypeVar": "cg:cryptography.x509.ExtensionType",
-    "IterableItem": ":py:data:`django_ca.typehints.IterableItem`",
-    "ParsableItem": ":py:data:`django_ca.typehints.ParsableItem`",
-    "ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
-    "SerializedItem": ":py:data:`django_ca.typehints.SerializedItem`",
-    "SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
-    "BasicConstraintsBase": ":py:data:`django_ca.typehints.BasicConstraintsBase`",
-    "Union": "python:typing.Union",
-    "Optional": "python:typing.Optional",
     "ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ExtendedKeyUsageOID": "cg:cryptography.x509.oid.ExtendedKeyUsageOID",
@@ -499,42 +475,41 @@ qualname_overrides = {
     "cryptography.x509.extensions.NoticeReference": "cg:cryptography.x509.NoticeReference",
     "cryptography.x509.general_name.GeneralName": "cg:cryptography.x509.GeneralName",
     "cryptography.x509.name.Name": "cg:cryptography.x509.Name",
+    "cryptography.x509.name.NameAttribute": "cg:cryptography.x509.NameAttribute",
     "cryptography.x509.name.RelativeDistinguishedName": "cg:cryptography.x509.RelativeDistinguishedName",
-    "django_ca.extensions.extensions.AuthorityKeyIdentifier": "django_ca.extensions.AuthorityKeyIdentifier",
-    "django_ca.extensions.extensions.SubjectKeyIdentifier": "django_ca.extensions.SubjectKeyIdentifier",
-    "django_ca.extensions.extensions.IssuerAlternativeName": "django_ca.extensions.IssuerAlternativeName",
-    "django_ca.extensions.extensions.NameConstraints": "django_ca.extensions.NameConstraints",
-    "ExtensionTypeVar": "cg:cryptography.x509.ExtensionType",
-    "Union": "python:typing.Union",
-    "typing.S": "django_ca.extensions.base.S",
-    "django.http.request.HttpRequest": "django:django.http.HttpRequest",
-    "Optional[typing_extensions.Literal['ca', 'user', 'attribute']]": "str",
-    "typing.ExtensionTypeTypeVar": "cg:cryptography.x509.ExtensionType",
-    "typing.ParsableValue": ":py:data:`django_ca.typehints.ParsableValue`",
-    "typing.SerializedValue": ":py:data:`django_ca.typehints.SerializedValue`",
-    "typing_extensions.Literal": "str",
-    "NoneType": "None",
 }
 
-text_overrides = {
-    "ExtensionTypeTypeVar": "ExtensionType",
-    "cryptography.x509.extensions.Extension": "cryptography.x509.Extension",
-    "cryptography.x509.extensions.UserNotice": "cryptography.x509.UserNotice",
-    "cryptography.hazmat._oid.ObjectIdentifier": "cryptography.x509.ObjectIdentifier",
-}
-
-
+# Ignore (not so important) classes where the documented name does not match the documented name.
 nitpick_ignore = [
+    # Unclear why Optional throws an error, but can be removed once resolve_internal_aliases can be removed
     ("py:class", "python:typing.Optional"),
+    # Django documents these under non-canonical path names
+    ("py:class", "django.http.request.HttpRequest"),
+    ("py:class", "django.http.response.HttpResponse"),
 ]
 
 
-def resolve_internal_aliases(app, doctree):
-    """
+# NOINSPECTION NOTE: app is passed by the caller, but we don't need it.
+# noinspection PyUnusedLocal
+def resolve_canonical_names(app, doctree):
+    """Resolve canonical names of types to names that resolve in intersphinx inventories.
+
+    .. NOTE:: This function can be removed if this is merged: https://github.com/pyca/cryptography/pull/7938
+
+    Projects often document functions/classes under a name that is re-exported. For example, cryptography
+    documents "Certificate" under ``cryptography.x509.Certificate``, but it's actually implemented in
+    ``cryptography.x509.base.Certificate`` (and re-exported in x509.py).
+
+    When Sphinx encounters typehints it tries to create links to the types, looking up types from external
+    projects using ``sphinx.ext.intersphinx``. The lookup for such re-exported types failes because Sphinx
+    tries to look up the object in the implemented ("canonical") location.
+
     .. seealso::
 
-        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events
-        * https://stackoverflow.com/a/62301461
+        * https://github.com/sphinx-doc/sphinx/issues/4826 - solves this with the "canonical" directive
+        * https://github.com/pyca/cryptography/pull/7938 - would make this function obsolete
+        * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events - sphinx api docs
+        * https://stackoverflow.com/a/62301461 - source of this hack
 
     """
     pending_xrefs = doctree.traverse(condition=pending_xref)
@@ -542,24 +517,8 @@ def resolve_internal_aliases(app, doctree):
         alias = node.get("reftarget", None)
 
         if alias is not None and alias in qualname_overrides:
-            reftype_match = re.match(r":py:([^:]*):`(.*)`", qualname_overrides[alias])
-            if reftype_match is not None:
-                reftype, target = reftype_match.groups()
-                node["reftype"] = reftype
-                node["reftarget"] = target
-            else:
-                node["reftarget"] = qualname_overrides[alias]
-
-            # In TypeVar cases, this is plain text and not a type, so we wrap it ina literal for common look
-            # if not isinstance(node.children[0], literal):
-            #    node.children = [literal('', '', *node.children, classes=['xref', 'py', 'py-class'])]
-
-        if alias is not None and alias in text_overrides:
-            # this will rewrite the rendered text:
-            # find the text node child
-            text_node = next(iter(node.traverse(lambda n: n.tagname == "#text")))
-            text_node.parent.replace(text_node, DocutilsText(text_overrides[alias], ""))
+            node["reftarget"] = qualname_overrides[alias]
 
 
 def setup(app: Sphinx) -> None:
-    app.connect("doctree-read", resolve_internal_aliases)
+    app.connect("doctree-read", resolve_canonical_names)

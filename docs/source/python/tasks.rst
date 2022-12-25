@@ -4,3 +4,4 @@
 
 .. automodule:: django_ca.tasks
    :members:
+   :exclude-members: run_task

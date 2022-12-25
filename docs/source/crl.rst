@@ -92,7 +92,7 @@ CRLs in a different format in your own URL configuration::
          type=Encoding.PEM,
          digest=hashes.SHA256()
       ), name='custom-crl'),
-  ]
+   ]
 
 
 .. autoclass:: django_ca.views.CertificateRevocationListView

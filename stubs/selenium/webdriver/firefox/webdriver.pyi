@@ -1,5 +1,6 @@
 import typing
 
+from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.firefox.options import Options
@@ -7,7 +8,6 @@ from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from .service import Service
-
 
 class WebDriver(RemoteWebDriver):
     def __init__(
@@ -26,8 +26,5 @@ class WebDriver(RemoteWebDriver):
         desired_capabilities: typing.Optional[typing.Dict[str, str]] = None,
         log_path: typing.Optional[str] = None,
         keep_alive: bool = True,
-    ) -> None:
-        ...
-
-    def find_element(self, by: str, value: str) -> WebElement:
-        ...
+    ) -> None: ...
+    def find_element(self, by: str = By.ID, value: typing.Optional[str] = None) -> WebElement: ...

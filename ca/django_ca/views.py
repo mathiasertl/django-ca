@@ -35,6 +35,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound, OCSPNonce, load_pem_x509_certificate, ocsp
 
 from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse, HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -232,7 +233,7 @@ class OCSPView(View):
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
     def http_response(self, data: bytes, status: int = HTTPStatus.OK) -> HttpResponse:
-        """Get a HTTP OCSP response with given status and data."""
+        """Get an HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type="application/ocsp-response")
 
     def malformed_request(self) -> HttpResponse:
@@ -262,13 +263,16 @@ class OCSPView(View):
             return self.fail()
 
         cert_serial = int_to_hex(ocsp_req.serial_number)
+
+        # NOINSPECTION NOTE: PyCharm wrongly things that second except is already coverted by the first.
+        # noinspection PyExceptClausesOrder
         try:
             cert = self.get_cert(ca, cert_serial)
-        except Certificate.DoesNotExist:
-            log.warning("%s: OCSP request for unknown cert received.", cert_serial)
-            return self.fail()
         except CertificateAuthority.DoesNotExist:
             log.warning("%s: OCSP request for unknown CA received.", cert_serial)
+            return self.fail()
+        except Certificate.DoesNotExist:
+            log.warning("%s: OCSP request for unknown cert received.", cert_serial)
             return self.fail()
 
         # get key/cert for OCSP responder
@@ -316,7 +320,7 @@ class OCSPView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class GenericOCSPView(OCSPView):
-    """View providing auto-configured OCSP functionality.
+    """View providing autoconfigured OCSP functionality.
 
     This view assumes that ``ocsp/$ca_serial.(key|pem)`` point to the private/public key of a responder
     certificate as created by :py:class:`~django_ca.tasks.generate_ocsp_keys`. The ``serial`` URL keyword
@@ -325,6 +329,8 @@ class GenericOCSPView(OCSPView):
 
     auto_ca: CertificateAuthority
 
+    # NOINSPECTION/TYPE NOTE: It's okay to be more specific here
+    # noinspection PyMethodOverriding
     def dispatch(  # type: ignore[override]
         self, request: HttpRequest, serial: str, **kwargs: Any
     ) -> "HttpResponseBase":
@@ -332,6 +338,11 @@ class GenericOCSPView(OCSPView):
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
+
+        # COVERAGE NOTE: Checking just for safety here.
+        if not isinstance(serial, str):  # pragma: no cover
+            raise ImproperlyConfigured("View expects a str for a serial")
+
         self.auto_ca = CertificateAuthority.objects.get(serial=serial)
         return super().dispatch(request, **kwargs)
 

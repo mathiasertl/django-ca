@@ -56,7 +56,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
-        """ "Basic tests for the command."""
+        """Basic tests for the command."""
 
         name = "test_basic"
         with self.assertCreateCASignals() as (pre, post):

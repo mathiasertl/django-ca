@@ -54,7 +54,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, classproperty
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -118,7 +118,6 @@ from .typehints import (
 from .utils import (
     bytes_to_hex,
     ca_storage,
-    classproperty,
     format_name,
     generate_private_key,
     get_cert_builder,
@@ -515,7 +514,7 @@ class X509CertMixin(DjangoCAModel):
 
     @cached_property
     def sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
-        """List of extensions sorted by their human readable name.
+        """List of extensions sorted by their human-readable name.
 
         This property is used for display purposes, where a reproducible output is desired.
         """
@@ -979,12 +978,12 @@ class CertificateAuthority(X509CertMixin):
                 cache_key = get_crl_cache_key(self.serial, algorithm, encoding, scope=scope)
 
                 if expires >= 600:  # pragma: no branch
-                    # for longer expiries we substract a random value so that regular CRL regeneration is
+                    # for longer expiries we subtract a random value so that regular CRL regeneration is
                     # distributed a bit
-                    cache_expires = expires - random.randint(1, 5) * 60
+                    expires = expires - random.randint(1, 5) * 60
 
                 encoded_crl = crl.public_bytes(encoding)
-                cache.set(cache_key, encoded_crl, cache_expires)
+                cache.set(cache_key, encoded_crl, expires)
 
     @property
     def extensions_for_certificate(
@@ -1783,7 +1782,7 @@ class AcmeOrder(DjangoCAModel):
         Parameters
         ----------
         identifiers : list of :py:class:`acme:acme.messages.Identifier`
-            The identifiers for this for this order.
+            The identifiers for this order.
 
         Returns
         -------
@@ -2069,7 +2068,7 @@ class AcmeChallenge(DjangoCAModel):
 
     @property
     def usable(self) -> bool:
-        """Boolean defining if an challenge is "usable", meaning it still can be used in order validation.
+        """Boolean defining if a challenge is "usable", meaning it still can be used in order validation.
 
         A challenge is usable if it is in the "pending" or "invalid status and the authorization is usable.
         """

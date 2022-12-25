@@ -139,5 +139,4 @@ Convert a PEM formatted **private** key to DER::
 
 Convert a PKCS#7 file to PEM (Let's Encrypt CA Issuer field) (see also :manpage:`pkcs7.1ssl`)::
 
-   $ openssl pkcs7 -inform der -in letsencrypt.p7c -print_certs \
-   >   -outform pem -out letsencrypt.pem
+   $ openssl pkcs7 -inform der -in letsencrypt.p7c -print_certs -outform pem -out letsencrypt.pem

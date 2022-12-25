@@ -3,8 +3,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-
 class Display:
+    # noinspection PyDefaultArgument
     def __init__(
         self,
         backend: Optional[str] = None,
@@ -18,11 +18,6 @@ class Display:
         extra_args: List[str] = [],
         manage_global_env: bool = True,
         **kwargs: Any
-    ) -> None:
-        ...
-
-    def start(self) -> "Display":
-        ...
-
-    def stop(self) -> "Display":
-        ...
+    ) -> None: ...
+    def start(self) -> "Display": ...
+    def stop(self) -> "Display": ...

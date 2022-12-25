@@ -1,7 +1,7 @@
 django.jQuery(document).ready(function() {
     var ca_details;
     var ca_details_selector = '.field-ca select'
-    var ca_details_url = django.jQuery('meta[name="ca-details-url"]').attr('value');
+    var ca_details_url = django.jQuery('meta[name="ca-details-url"]').attr('content');
 
     django.jQuery.get(ca_details_url).done(function(data) {
         ca_details = data;

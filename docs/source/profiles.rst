@@ -286,8 +286,9 @@ You can update an existing profile the same way as configuring a new profile. An
 values. To update the default subject for the (predefined) ``enduser`` profile::
 
    CA_PROFILES = {
-       'enduser': {
-           'subject': '/C=AT/L=Vienna/',  # base for the subject when creating a new cert
+       "enduser": {
+           "subject": "/C=AT/L=Vienna/",  # base for the subject when creating a new cert
+
        },
    }
 
@@ -301,5 +302,5 @@ Remove a profile
 You can remove a predefined profile by just setting the value to ``None``::
 
    CA_PROFILES = {
-       'client': None  # we really don't need this one
+       "client": None  # we really don't need this one
    }
