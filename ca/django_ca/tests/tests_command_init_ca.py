@@ -269,7 +269,14 @@ class InitCATest(TestCaseMixin, TestCase):
 
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(
-                ["init_ca", "Test CA", "/CN=acme.example.com", "--acme-enable", "--acme-contact-optional"]
+                [
+                    "init_ca",
+                    "Test CA",
+                    "/CN=acme.example.com",
+                    "--acme-enable",
+                    "--acme-contact-optional",
+                    "--acme-profile=client",
+                ]
             )
         self.assertTrue(pre.called)
         self.assertEqual(out, "")
@@ -280,6 +287,7 @@ class InitCATest(TestCaseMixin, TestCase):
         ca.full_clean()  # assert e.g. max_length in serials
 
         self.assertTrue(ca.acme_enabled)
+        self.assertEqual(ca.acme_profile, "client")
         self.assertFalse(ca.acme_requires_contact)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False)
@@ -292,6 +300,17 @@ class InitCATest(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-contact-optional"])
         self.assertEqual(excm.exception.args, (2,))
+
+        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-profile=client"])
+        self.assertEqual(excm.exception.args, (2,))
+
+    @override_tmpcadir()
+    def test_unknown_acme_profile(self) -> None:
+        """Test naming an unknown profile."""
+
+        with self.assertCommandError(r"^unknown-profile: Profile is not defined\.$"):
+            self.init_ca(name="test", acme_profile="unknown-profile")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ecc(self) -> None:

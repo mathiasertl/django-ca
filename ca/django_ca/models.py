@@ -164,6 +164,11 @@ def acme_token() -> str:
     return get_random_string(64, allowed_chars=BASE64_URL_ALPHABET)
 
 
+def default_profile() -> str:
+    """Return the default profile (used as default for model fields)."""
+    return ca_settings.CA_DEFAULT_PROFILE
+
+
 def validate_past(value: datetime) -> None:
     """Validate that a given datetime is not in the future."""
     if value > timezone.now():
@@ -886,6 +891,13 @@ class CertificateAuthority(X509CertMixin):
         default=False,
         verbose_name=_("Enable ACME"),
         help_text=_("Whether it is possible to use ACME for this CA."),
+    )
+    acme_profile = models.CharField(
+        blank=False,
+        default=default_profile,
+        max_length=32,
+        verbose_name=_("Profile"),
+        help_text=_("Profile used when generating ACME certificates."),
     )
     acme_requires_contact = models.BooleanField(
         default=True,

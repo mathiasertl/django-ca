@@ -56,7 +56,13 @@ from . import ca_settings
 from .constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
 from .extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
 from .extensions.utils import extension_as_admin_html
-from .forms import CreateCertificateForm, ResignCertificateForm, RevokeCertificateForm, X509CertMixinAdminForm
+from .forms import (
+    CertificateAuthorityForm,
+    CreateCertificateForm,
+    ResignCertificateForm,
+    RevokeCertificateForm,
+    X509CertMixinAdminForm,
+)
 from .models import (
     AcmeAccount,
     AcmeAuthorization,
@@ -141,6 +147,9 @@ class CertificateMixin(
                 self.admin_site.admin_view(self.download_bundle_view),
                 name=f"{info}_download_bundle",
             ),
+            path(
+                "ajax/profiles", self.admin_site.admin_view(self.profiles_view), name=self.profiles_view_name
+            ),
         ]
         urls += super().get_urls()
         return urls
@@ -191,6 +200,21 @@ class CertificateMixin(
         """A view that allows the user to download a certificate bundle in PEM format."""
 
         return self._download_response(request, pk, bundle=True)
+
+    @property
+    def profiles_view_name(self) -> str:
+        """URL for the profiles view."""
+        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_profiles"
+
+    def profiles_view(self, request: HttpRequest) -> JsonResponse:
+        """Returns profiles."""
+
+        if not self.has_change_permission(request):
+            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
+            raise PermissionDenied
+
+        data = {name: profiles[name].serialize() for name in ca_settings.CA_PROFILES}
+        return JsonResponse(data)
 
     def has_delete_permission(self, request: HttpRequest, obj: typing.Optional[models.Model] = None) -> bool:
         # pylint: disable=missing-function-docstring,unused-argument; Django standard
@@ -359,6 +383,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             },
         ),
     ]
+    form = CertificateAuthorityForm
     list_display = [
         "enabled",
         "name",
@@ -401,6 +426,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                     {
                         "fields": [
                             "acme_enabled",
+                            "acme_profile",
                             "acme_requires_contact",
                         ],
                     },
@@ -795,21 +821,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         subject = {OID_NAME_MAPPINGS[s.oid]: s.value for s in csr.subject}
         return JsonResponse({"subject": subject})
 
-    @property
-    def profiles_view_name(self) -> str:
-        """URL for the profiles view."""
-        return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_profiles"
-
-    def profiles_view(self, request: HttpRequest) -> JsonResponse:
-        """Returns profiles."""
-
-        if not self.has_change_permission(request):
-            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
-            raise PermissionDenied
-
-        data = {name: profiles[name].serialize() for name in ca_settings.CA_PROFILES}
-        return JsonResponse(data)
-
     def get_urls(self) -> typing.List[URLPattern]:
         # Remove the delete action from the URLs
         urls = super().get_urls()
@@ -821,12 +832,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "ajax/csr-details",
                 self.admin_site.admin_view(self.csr_details_view),
                 name=self.csr_details_view_name,
-            ),
-        )
-        urls.insert(
-            0,
-            path(
-                "ajax/profiles", self.admin_site.admin_view(self.profiles_view), name=self.profiles_view_name
             ),
         )
         urls.insert(

@@ -1,7 +1,7 @@
 django.jQuery(document).ready(function() {
     var ca_profiles;
-    var profile_selector = '.field-profile select'
     var profile_url = django.jQuery('meta[name="get-profiles-url"]').attr('value');
+    console.log(profile_url);
 
     django.jQuery.get(profile_url).done(function(data) {
         ca_profiles = data;
@@ -11,12 +11,12 @@ django.jQuery(document).ready(function() {
     });
 
 
-    // This should be set in the form via intial
+    // This should be set in the form via initial
     //var initial_profile = django.jQuery(profile_selector).val();
 
-    django.jQuery(profile_selector).change(function() {
+    django.jQuery('.profile-widget-wrapper select').change(function() {
         if (this.value == '') {
-            django.jQuery('.field-profile .profile-desc').hide();
+            django.jQuery('.profile-widget-wrapper .profile-desc').hide();
             return;  // do nothing if we don't select a profile
         }
 
@@ -51,7 +51,8 @@ django.jQuery(document).ready(function() {
         update_extensions(profile.extensions);
 
         // update description
-        django.jQuery('.field-profile .profile-desc').show();
-        django.jQuery('.field-profile .profile-desc').text(profile.description);
+        console.log('description', profile.description)
+        django.jQuery('.profile-widget-wrapper .profile-desc').show();
+        django.jQuery('.profile-widget-wrapper .profile-desc').text(profile.description);
     });
 });

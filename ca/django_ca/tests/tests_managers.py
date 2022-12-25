@@ -69,6 +69,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, self.subject)
         self.assertProperties(ca, name, self.subject)
+        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
         ca.key().public_key()  # just access private key to make sure we can load it
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -177,6 +178,26 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             self.key_usage(crl_sign=True, key_cert_sign=True),
         ]
         self.assertExtensions(ca, expected)
+
+    @override_tmpcadir()
+    def test_acme_parameters(self) -> None:
+        """Test parameters for ACMEv2."""
+        name = "acme"
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(
+                name, self.subject, acme_enabled=False, acme_profile="client", acme_requires_contact=False
+            )
+        self.assertProperties(ca, name, self.subject)
+        self.assertFalse(ca.acme_enabled)
+        self.assertEqual(ca.acme_profile, "client")
+        self.assertFalse(ca.acme_requires_contact)
+        ca.key().public_key()  # just access private key to make sure we can load it
+
+    def test_unknown_profile(self) -> None:
+        """Test creating a certificate authority with a profile that doesn't exist."""
+
+        with self.assertRaisesRegex(ValueError, r"^foobar: Profile is not defined\.$"):
+            CertificateAuthority.objects.init("wrong", self.subject, acme_profile="foobar")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_special_cases(self) -> None:

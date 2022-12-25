@@ -202,8 +202,15 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--acme-disable", dest="acme_enabled", action="store_false", help="Disable ACMEv2 support."
         )
 
-        disable_group = group.add_mutually_exclusive_group()
-        disable_group.add_argument(
+        group.add_argument(
+            "--acme-profile",
+            metavar="PROFILE",
+            choices=list(ca_settings.CA_PROFILES),
+            help="Profile used when issuing certificates.",
+        )
+
+        contact_group = group.add_mutually_exclusive_group()
+        contact_group.add_argument(
             "--acme-contact-optional",
             dest="acme_requires_contact",
             action="store_false",
@@ -211,7 +218,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             help="Do not require email address during ACME account registration.",
         )
 
-        disable_group.add_argument(
+        contact_group.add_argument(
             "--acme-contact-required",
             dest="acme_requires_contact",
             action="store_true",

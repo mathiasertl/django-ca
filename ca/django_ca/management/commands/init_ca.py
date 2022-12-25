@@ -237,6 +237,11 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 if options[opt] is not None:
                     kwargs[opt] = options[opt]
 
+            if acme_profile := options["acme_profile"]:
+                if acme_profile not in ca_settings.CA_PROFILES:
+                    raise CommandError(f"{acme_profile}: Profile is not defined.")
+                kwargs["acme_profile"] = acme_profile
+
         try:
             ca = CertificateAuthority.objects.init(
                 name=name,

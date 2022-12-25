@@ -86,6 +86,19 @@ on Wikipedia."""
         }
 
 
+class CertificateAuthorityForm(X509CertMixinAdminForm):
+    """Admin form for :py:class:`django_ca.models.CertificateAuthority`."""
+
+    acme_profile = forms.ChoiceField(
+        label=_("Profile"),
+        required=True,
+        widget=ProfileWidget,
+        help_text=_("Profile used when issuing certificates via ACMEv2."),
+        initial=ca_settings.CA_DEFAULT_PROFILE,
+        choices=_profile_choices,
+    )
+
+
 class CreateCertificateBaseForm(CertificateModelForm):
     """Base class for forms that create a certificate.
 

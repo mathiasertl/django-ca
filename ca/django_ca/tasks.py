@@ -275,7 +275,8 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         )
     ]
 
-    profile = profiles["server"]
+    ca = acme_cert.order.account.ca
+    profile = profiles[ca.acme_profile]
 
     # Honor not_after from the order if set
     if acme_cert.order.not_after:
@@ -287,7 +288,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(
-        acme_cert.order.account.ca, csr=csr, profile=profile, expires=expires, extensions=extensions
+        ca, csr=csr, profile=profile, expires=expires, extensions=extensions
     )
 
     acme_cert.cert = cert

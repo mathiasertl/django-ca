@@ -219,6 +219,7 @@ class CertificateAuthorityManager(
         terms_of_service: str = "",
         acme_enabled: bool = False,
         acme_requires_contact: bool = True,
+        acme_profile: Optional[str] = None,
         openssh_ca: bool = False,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
@@ -295,6 +296,8 @@ class CertificateAuthorityManager(
             URL to the terms of service for the CA.
         acme_enabled : bool, optional
             Set to ``True`` to enable ACME support for this CA.
+        acme_profile : str, optional
+            The profile to use when issuing certificates via ACMEv2. Defaults to the CA_DEFAULT_PROFILE.
         acme_requires_contact : bool, optional
             Set to ``False`` if you do not want to force clients to register with an email address.
         openssh_ca : bool, optional
@@ -342,6 +345,10 @@ class CertificateAuthorityManager(
 
         if default_hostname is None:
             default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
+        if acme_profile is None:
+            acme_profile = ca_settings.CA_DEFAULT_PROFILE
+        elif acme_profile not in ca_settings.CA_PROFILES:
+            raise ValueError(f"{acme_profile}: Profile is not defined.")
 
         # If there is a default hostname, use it to compute some URLs from that
         if isinstance(default_hostname, str) and default_hostname != "":
@@ -401,6 +408,7 @@ class CertificateAuthorityManager(
             website=website,
             terms_of_service=terms_of_service,
             acme_enabled=acme_enabled,
+            acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
         )
 
@@ -476,6 +484,7 @@ class CertificateAuthorityManager(
             website=website,
             terms_of_service=terms_of_service,
             acme_enabled=acme_enabled,
+            acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
         )
         ca.update_certificate(certificate)

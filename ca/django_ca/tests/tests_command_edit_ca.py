@@ -15,6 +15,7 @@
 
 from django.test import TestCase
 
+from .. import ca_settings
 from ..models import CertificateAuthority
 from .base import override_tmpcadir
 from .base.mixins import TestCaseMixin
@@ -98,10 +99,12 @@ class EditCATestCase(TestCaseMixin, TestCase):
         """Test ACME arguments."""
 
         self.assertFalse(self.ca.acme_enabled)  # initial state
+        self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
         self.assertTrue(self.ca.acme_requires_contact)  # initial state
 
-        self.edit_ca("--acme-enable", "--acme-contact-optional")
+        self.edit_ca("--acme-enable", "--acme-contact-optional", "--acme-profile=client")
         self.assertTrue(self.ca.acme_enabled)
+        self.assertEqual(self.ca.acme_profile, "client")
         self.assertFalse(self.ca.acme_requires_contact)
 
         # Try mutually exclusive arguments
@@ -141,6 +144,10 @@ class EditCATestCase(TestCaseMixin, TestCase):
 
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.edit_ca("--acme-contact-optional")
+        self.assertEqual(excm.exception.args, (2,))
+
+        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+            self.edit_ca("--acme-profile=foo")
         self.assertEqual(excm.exception.args, (2,))
 
     @override_tmpcadir()

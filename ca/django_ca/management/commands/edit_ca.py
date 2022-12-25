@@ -16,11 +16,11 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
+from typing import Any
 
 from cryptography import x509
 
-from django.core.management.base import CommandParser
+from django.core.management.base import CommandError, CommandParser
 
 from ... import ca_settings
 from ...constants import EXTENSION_KEYS
@@ -53,7 +53,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             "--disable", action="store_false", dest="enabled", help="Disable the certificate authority."
         )
 
-    def handle(self, ca: CertificateAuthority, **options: typing.Any) -> None:
+    def handle(self, ca: CertificateAuthority, **options: Any) -> None:
         if options["issuer_url"] is not None:
             ca.issuer_url = options["issuer_url"]
         if options[EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]:
@@ -74,10 +74,15 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         if options["tos"] is not None:
             ca.terms_of_service = options["tos"]
 
-        # set options where argparse dest matches Django model field name
+        # Set ACME options
         if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
             for param in ["acme_enabled", "acme_requires_contact"]:
                 if options[param] is not None:
                     setattr(ca, param, options[param])
+
+            if acme_profile := options["acme_profile"]:
+                if acme_profile not in ca_settings.CA_PROFILES:
+                    raise CommandError(f"{acme_profile}: Profile is not defined.")
+                ca.acme_profile = acme_profile
 
         ca.save()

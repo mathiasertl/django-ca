@@ -488,7 +488,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             tasks.acme_issue_certificate(self.acme_cert.pk)
         self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
 
-    def test_unknown_ert(self) -> None:
+    def test_unknown_certificate(self) -> None:
         """Test invoking task with an unknown cert."""
 
         AcmeCertificate.objects.all().delete()
@@ -531,6 +531,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
+        self.assertEqual(self.acme_cert.cert.profile, ca_settings.CA_DEFAULT_PROFILE)
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self) -> None:
@@ -579,6 +580,29 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         )
         self.assertEqual(self.acme_cert.cert.expires, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
+
+    @override_tmpcadir()
+    def test_profile(self) -> None:
+        """Test that setting a different profile also returns the appropriate certificate."""
+        self.ca.acme_profile = "client"
+        self.ca.save()
+
+        with self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.acme_cert.pk)
+
+        self.assertEqual(
+            logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
+        )
+        self.acme_cert.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
+        self.assertEqual(
+            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(x509.DNSName(self.hostname)),
+        )
+        self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertEqual(self.acme_cert.cert.cn, self.hostname)
+        self.assertEqual(self.acme_cert.cert.profile, "client")
 
 
 @freeze_time(timestamps["everything_valid"])
