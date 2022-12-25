@@ -41,6 +41,7 @@ branch = true
 omit = [
     "*/migrations/*",
     "*/tests/tests*",
+    "*/tests/**/test_*",
 ]
 
 [tool.doc8]
