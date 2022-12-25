@@ -11,8 +11,7 @@ ChangeLog
 ************
 
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
-  default is the profile named in :ref:`settings-ca-default-profile`, it was previously hardcoded to use the
-  "server" profile.
+  default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 
 Backwards incompatible changes
 ==============================

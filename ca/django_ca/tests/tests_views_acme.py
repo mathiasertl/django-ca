@@ -42,7 +42,7 @@ from freezegun import freeze_time
 
 from .. import ca_settings
 from ..acme.errors import AcmeUnauthorized
-from ..acme.messages import CertificateRequest, NewOrder
+from ..acme.messages import NewOrder
 from ..acme.responses import AcmeResponseUnauthorized
 from ..models import (
     AcmeAccount,

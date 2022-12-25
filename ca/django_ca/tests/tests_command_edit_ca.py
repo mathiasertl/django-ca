@@ -134,6 +134,17 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(excm.exception.args, (2,))
         self.assertTrue(self.ca.acme_requires_contact)  # state unchanged
 
+    @override_tmpcadir()
+    def test_invalid_acme_profile(self) -> None:
+        """Test setting an invalid ACME profile."""
+        self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+
+        with self.assertCommandError(r"^unknown-profile: Profile is not defined\.$"):
+            self.cmd("edit_ca", self.ca.serial, acme_profile="unknown-profile")
+
+        self.ca.refresh_from_db()
+        self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_acme_disabled(self) -> None:
         """Test ACME arguments do not work when ACME support is disabled."""
