@@ -3,8 +3,8 @@ from typing import Optional
 import josepy as jose
 
 class Header(jose.jws.Header):
-    nonce: typing.Optional[bytes]
-    url: typing.Optional[str]
+    nonce: Optional[bytes]
+    url: Optional[str]
 
 class Signature(jose.jws.Signature):
     combined: Header

@@ -24,11 +24,9 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from .. import ca_settings
-from ..extensions import NameConstraints
 from ..models import Certificate, CertificateAuthority
 from ..profiles import profiles
 from ..querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from ..typehints import ParsableExtension
 from .base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
 from .base.mixins import TestCaseMixin
 
@@ -198,38 +196,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         with self.assertRaisesRegex(ValueError, r"^foobar: Profile is not defined\.$"):
             CertificateAuthority.objects.init("wrong", self.subject, acme_profile="foobar")
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_special_cases(self) -> None:
-        """Test a few special cases not covered otherwise."""
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "special.example.com")])
-        name_constraints: ParsableExtension = {"critical": True, "value": {"permitted": ["DNS:.com"]}}
-        with self.assertCreateCASignals(), self.silence_warnings():
-            ca = CertificateAuthority.objects.init("special", subject, name_constraints=name_constraints)
-        self.assertEqual(ca.subject, subject)
-        self.assertExtensions(
-            ca,
-            [
-                self.basic_constraints(ca=True),
-                self.key_usage(crl_sign=True, key_cert_sign=True),
-                self.name_constraints(permitted=[dns(".com")], critical=True),
-            ],
-        )
-
-        # also pass a NameConstraints extension directly
-        with self.assertCreateCASignals(), self.silence_warnings():
-            ca = CertificateAuthority.objects.init(
-                "special2", subject, name_constraints=NameConstraints(name_constraints)
-            )
-        self.assertEqual(ca.subject, subject)
-        self.assertExtensions(
-            ca,
-            [
-                self.basic_constraints(ca=True),
-                self.key_usage(crl_sign=True, key_cert_sign=True),
-                self.name_constraints(permitted=[dns(".com")], critical=True),
-            ],
-        )
 
     def test_unknown_extension_type(self) -> None:
         """Test that creating a CA with an unknown extension throws an error."""

@@ -25,7 +25,8 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 # Module level imports to enable forward references. See also:
 #
 #   https://peps.python.org/pep-0484/#forward-references
-from . import models
+if typing.TYPE_CHECKING:
+    from . import models
 
 
 class SupportsLessThan(typing.Protocol):

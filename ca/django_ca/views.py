@@ -320,7 +320,7 @@ class OCSPView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class GenericOCSPView(OCSPView):
-    """View providing autoconfigured OCSP functionality.
+    """View providing auto-configured OCSP functionality.
 
     This view assumes that ``ocsp/$ca_serial.(key|pem)`` point to the private/public key of a responder
     certificate as created by :py:class:`~django_ca.tasks.generate_ocsp_keys`. The ``serial`` URL keyword

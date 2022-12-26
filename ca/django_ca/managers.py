@@ -30,12 +30,11 @@ from django.db import models
 from django.urls import reverse
 
 from . import ca_settings
-from .extensions import NameConstraints
 from .modelfields import LazyCertificateSigningRequest
 from .openssh import SshHostCaExtension, SshUserCaExtension
 from .profiles import Profile, profiles
 from .signals import post_create_ca, post_issue_cert, pre_create_ca
-from .typehints import Expires, ParsableExtension, ParsableKeyType, X509CertMixinTypeVar
+from .typehints import Expires, ParsableKeyType, X509CertMixinTypeVar
 from .utils import (
     ca_storage,
     format_general_name,
@@ -204,7 +203,6 @@ class CertificateAuthorityManager(
         ca_issuer_url: Optional[str] = None,
         ca_crl_url: Optional[Sequence[str]] = None,
         ca_ocsp_url: Optional[str] = None,
-        name_constraints: Optional[Union[ParsableExtension, NameConstraints]] = None,
         permitted_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
         excluded_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
         password: Optional[Union[str, bytes]] = None,
@@ -268,8 +266,6 @@ class CertificateAuthorityManager(
             List of general names to add to the permitted names of the NameConstraints extension.
         excluded_subtrees : list of x509.GeneralName, optional
             List of general names to add to the permitted names of the NameConstraints extension.
-        name_constraints ``django_ca.extensions.NameConstraints``
-            Deprecated in favor of `permitted_subtrees` and `excluded_subtrees`.
         password : bytes or str, optional
             Password to encrypt the private key with.
         parent_password : bytes or str, optional
@@ -398,7 +394,6 @@ class CertificateAuthorityManager(
             ca_issuer_url=ca_issuer_url,
             ca_crl_url=ca_crl_url,
             ca_ocsp_url=ca_ocsp_url,
-            name_constraints=name_constraints,
             permitted_subtrees=permitted_subtrees,
             excluded_subtrees=excluded_subtrees,
             password=password,
@@ -454,11 +449,6 @@ class CertificateAuthorityManager(
             builder = builder.add_extension(
                 x509.NameConstraints(permitted_subtrees, excluded_subtrees), critical=True
             )
-        elif name_constraints:
-            if not isinstance(name_constraints, NameConstraints):
-                name_constraints = NameConstraints(name_constraints)
-
-            builder = builder.add_extension(*name_constraints.for_builder())
 
         if extra_extensions:
             builder = self._extra_extensions(builder, extra_extensions)
