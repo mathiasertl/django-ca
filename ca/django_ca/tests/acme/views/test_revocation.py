@@ -26,12 +26,12 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from .... import ca_settings
-from ....constants import ReasonFlags
-from ....models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
-from ....utils import get_cert_builder
-from ...base import certs, override_tmpcadir, timestamps
-from ...tests_views_acme import AcmeWithAccountViewTestCaseMixin
+from django_ca import ca_settings
+from django_ca.constants import ReasonFlags
+from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.tests_views_acme import AcmeWithAccountViewTestCaseMixin
+from django_ca.utils import get_cert_builder
 
 
 @freeze_time(timestamps["everything_valid"])

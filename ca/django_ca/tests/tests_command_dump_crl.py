@@ -28,10 +28,10 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..models import Certificate, CertificateAuthority
-from .base import certs, override_settings, override_tmpcadir, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])

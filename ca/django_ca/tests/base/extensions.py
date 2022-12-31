@@ -27,8 +27,8 @@ from cryptography.x509.oid import NameOID, ObjectIdentifier
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ...constants import EXTENSION_DEFAULT_CRITICAL
-from ...extensions import (
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
+from django_ca.extensions import (
     KEY_TO_EXTENSION,
     OID_TO_EXTENSION,
     CRLDistributionPoints,
@@ -38,12 +38,12 @@ from ...extensions import (
     parse_extension,
     serialize_extension,
 )
-from ...extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
-from ...extensions.utils import DistributionPoint, extension_as_admin_html
-from ...models import X509CertMixin
-from ...typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension
-from . import dns, rdn, uri
-from .mixins import TestCaseMixin, TestCaseProtocol
+from django_ca.extensions.base import IterableExtension, ListExtension, NullExtension, OrderedSetExtension
+from django_ca.extensions.utils import DistributionPoint, extension_as_admin_html
+from django_ca.models import X509CertMixin
+from django_ca.tests.base import dns, rdn, uri
+from django_ca.tests.base.mixins import TestCaseMixin, TestCaseProtocol
+from django_ca.typehints import CRLExtensionTypeTypeVar, ParsableDistributionPoint, ParsableExtension
 
 ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=Extension)  # type: ignore[type-arg]
 NullExtensionTypeVar = typing.TypeVar("NullExtensionTypeVar", bound=NullExtension)  # type: ignore[type-arg]

@@ -21,8 +21,8 @@ from cryptography.x509.oid import NameOID
 
 from django.test import TestCase
 
-from ..deprecation import RemovedInDjangoCA124Warning
-from ..subject import Subject
+from django_ca.deprecation import RemovedInDjangoCA124Warning
+from django_ca.subject import Subject
 
 
 class TestSubject(TestCase):

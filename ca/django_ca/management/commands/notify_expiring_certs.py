@@ -24,8 +24,8 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 
-from ... import ca_settings
-from ...models import Certificate
+from django_ca import ca_settings
+from django_ca.models import Certificate
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring

@@ -25,10 +25,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from .. import ca_settings, fields
-from ..constants import KEY_USAGE_NAMES, REVOCATION_REASONS
-from .base import rdn
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings, fields
+from django_ca.constants import KEY_USAGE_NAMES, REVOCATION_REASONS
+from django_ca.tests.base import rdn
+from django_ca.tests.base.mixins import TestCaseMixin
 
 D1 = "example.com"
 D2 = "example.net"

@@ -19,8 +19,8 @@
 import argparse
 import typing
 
-from ...tasks import cache_crls, run_task
-from ..base import BaseCommand
+from django_ca.management.base import BaseCommand
+from django_ca.tasks import cache_crls, run_task
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring

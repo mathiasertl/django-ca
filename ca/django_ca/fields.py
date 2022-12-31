@@ -23,19 +23,19 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from . import ca_settings, widgets
-from .constants import (
+from django_ca import ca_settings, widgets
+from django_ca.constants import (
     EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES,
     EXTENDED_KEY_USAGE_NAMES,
     KEY_USAGE_NAMES,
     REVOCATION_REASONS,
 )
-from .extensions import get_extension_name
-from .typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
-from .utils import ADMIN_SUBJECT_OIDS, parse_general_name
+from django_ca.extensions import get_extension_name
+from django_ca.typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
+from django_ca.utils import ADMIN_SUBJECT_OIDS, parse_general_name
 
 if typing.TYPE_CHECKING:
-    from .modelfields import LazyCertificateSigningRequest
+    from django_ca.modelfields import LazyCertificateSigningRequest
 
 _EXTENDED_KEY_USAGE_CHOICES = sorted(
     [(EXTENDED_KEY_USAGE_NAMES[oid], name) for oid, name in EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES.items()],

@@ -19,9 +19,15 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union, 
 
 from cryptography import x509
 
-from .deprecation import RemovedInDjangoCA124Warning
-from .typehints import ParsableSubject
-from .utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, OID_NAME_MAPPINGS, SUBJECT_FIELDS, parse_name_x509
+from django_ca.deprecation import RemovedInDjangoCA124Warning
+from django_ca.typehints import ParsableSubject
+from django_ca.utils import (
+    MULTIPLE_OIDS,
+    NAME_OID_MAPPINGS,
+    OID_NAME_MAPPINGS,
+    SUBJECT_FIELDS,
+    parse_name_x509,
+)
 
 
 class Subject:

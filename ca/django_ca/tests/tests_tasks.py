@@ -39,11 +39,11 @@ from django.utils import timezone
 import requests_mock
 from freezegun import freeze_time
 
-from .. import ca_settings, tasks
-from ..models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
-from ..utils import ca_storage, get_crl_cache_key
-from .base import certs, override_settings, override_tmpcadir, timestamps
-from .base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca import ca_settings, tasks
+from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
+from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.utils import ca_storage, get_crl_cache_key
 
 
 class TestBasic(TestCaseMixin, TestCase):

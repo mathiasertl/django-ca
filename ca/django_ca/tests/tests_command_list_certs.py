@@ -20,10 +20,10 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from ..models import Certificate
-from ..utils import add_colons
-from .base import override_settings, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca.models import Certificate
+from django_ca.tests.base import override_settings, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.utils import add_colons
 
 
 class ListCertsTestCase(TestCaseMixin, TestCase):

@@ -23,11 +23,11 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
-from .. import ca_settings
-from ..extensions import extension_as_text, get_extension_name
-from ..models import CertificateAuthority, X509CertMixin
-from ..utils import add_colons
-from . import actions
+from django_ca import ca_settings
+from django_ca.extensions import extension_as_text, get_extension_name
+from django_ca.management import actions
+from django_ca.models import CertificateAuthority, X509CertMixin
+from django_ca.utils import add_colons
 
 if typing.TYPE_CHECKING:
     # When type checking, mixins use BaseCommand as base class for all mixins.

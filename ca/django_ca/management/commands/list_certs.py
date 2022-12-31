@@ -21,9 +21,9 @@ import typing
 from django.core.management.base import CommandParser
 from django.utils import timezone
 
-from ...models import Certificate, CertificateAuthority
-from ...utils import add_colons
-from ..base import BaseCommand
+from django_ca.management.base import BaseCommand
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.utils import add_colons
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring

@@ -43,11 +43,11 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..constants import ReasonFlags
-from ..extensions import KEY_TO_EXTENSION, Extension, PrecertificateSignedCertificateTimestamps
-from ..modelfields import LazyCertificate, LazyCertificateSigningRequest
-from ..models import (
+from django_ca import ca_settings
+from django_ca.constants import ReasonFlags
+from django_ca.extensions import KEY_TO_EXTENSION, Extension, PrecertificateSignedCertificateTimestamps
+from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
+from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
     AcmeCertificate,
@@ -58,9 +58,17 @@ from ..models import (
     Watcher,
     X509CertMixin,
 )
-from ..utils import ca_storage, get_crl_cache_key, x509_name
-from .base import CERT_PEM_REGEX, certs, dns, override_settings, override_tmpcadir, timestamps, uri
-from .base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
+from django_ca.tests.base import (
+    CERT_PEM_REGEX,
+    certs,
+    dns,
+    override_settings,
+    override_tmpcadir,
+    timestamps,
+    uri,
+)
+from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
+from django_ca.utils import ca_storage, get_crl_cache_key, x509_name
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
 

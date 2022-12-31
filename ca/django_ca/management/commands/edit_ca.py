@@ -22,12 +22,12 @@ from cryptography import x509
 
 from django.core.management.base import CommandError, CommandParser
 
-from ... import ca_settings
-from ...constants import EXTENSION_KEYS
-from ...models import CertificateAuthority
-from ...utils import format_general_name
-from ..base import BaseCommand
-from ..mixins import CertificateAuthorityDetailMixin
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_KEYS
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertificateAuthorityDetailMixin
+from django_ca.models import CertificateAuthority
+from django_ca.utils import format_general_name
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):

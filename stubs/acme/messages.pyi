@@ -10,7 +10,7 @@ from typing import Tuple
 
 import josepy as jose
 
-from .challenges import Challenge
+from acme.challenges import Challenge
 
 class _Constant(jose.interfaces.JSONDeSerializable, Hashable, metaclass=ABCMeta):
     POSSIBLE_NAMES: Dict[str, "_Constant"]

@@ -41,8 +41,10 @@ from typing import (
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
 
-from ..deprecation import RemovedInDjangoCA124Warning
-from ..typehints import (
+from django_ca.deprecation import RemovedInDjangoCA124Warning
+from django_ca.extensions.text import extension_as_text
+from django_ca.extensions.utils import DistributionPoint
+from django_ca.typehints import (
     AlternativeNameTypeVar,
     ExtensionType,
     ExtensionTypeTypeVar,
@@ -65,9 +67,7 @@ from ..typehints import (
     SignedCertificateTimestampsBaseTypeVar,
     UnrecognizedExtensionType,
 )
-from ..utils import GeneralNameList, format_general_name
-from .text import extension_as_text
-from .utils import DistributionPoint
+from django_ca.utils import GeneralNameList, format_general_name
 
 
 class Extension(Generic[ExtensionTypeTypeVar, ParsableValue, SerializedValue], metaclass=abc.ABCMeta):

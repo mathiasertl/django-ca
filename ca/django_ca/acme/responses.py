@@ -21,8 +21,8 @@ from acme import messages
 from django.http import HttpRequest, JsonResponse
 from django.urls import reverse
 
-from ..models import AcmeAccount
-from .messages import Order
+from django_ca.acme.messages import Order
+from django_ca.models import AcmeAccount
 
 
 class AcmeResponse(JsonResponse):

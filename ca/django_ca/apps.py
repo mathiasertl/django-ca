@@ -27,4 +27,4 @@ class DjangoCAConfig(AppConfig):  # pylint: disable=missing-class-docstring
 
     def ready(self) -> None:
         # pylint: disable-next=import-outside-toplevel  # that's how checks work
-        from . import checks  # NOQA: F401  # import already registers the checks
+        from django_ca import checks  # NOQA: F401  # import already registers the checks

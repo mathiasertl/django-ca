@@ -26,9 +26,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from ..models import Certificate, Watcher
-from .base import certs, override_settings, override_tmpcadir, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca.models import Certificate, Watcher
+from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
 
 output = {
     "root-cert": """Common Name: {cn}

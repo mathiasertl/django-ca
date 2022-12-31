@@ -23,11 +23,11 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
-from ..models import Certificate, CertificateAuthority
-from ..typehints import PrivateKeyTypes
-from ..utils import add_colons, ca_storage
-from .base import certs, override_tmpcadir, uri
-from .base.mixins import TestCaseMixin
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base import certs, override_tmpcadir, uri
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.typehints import PrivateKeyTypes
+from django_ca.utils import add_colons, ca_storage
 
 
 class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):

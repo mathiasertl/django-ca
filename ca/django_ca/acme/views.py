@@ -47,22 +47,10 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
-from .. import ca_settings
-from ..constants import REASON_CODES
-from ..models import (
-    AcmeAccount,
-    AcmeAuthorization,
-    AcmeCertificate,
-    AcmeChallenge,
-    AcmeOrder,
-    Certificate,
-    CertificateAuthority,
-)
-from ..tasks import acme_issue_certificate, acme_validate_challenge, run_task
-from ..utils import check_name, int_to_hex, make_naive, validate_email
-from .errors import AcmeBadCSR, AcmeException, AcmeForbidden, AcmeMalformed, AcmeUnauthorized
-from .messages import CertificateRequest, NewOrder
-from .responses import (
+from django_ca import ca_settings
+from django_ca.acme.errors import AcmeBadCSR, AcmeException, AcmeForbidden, AcmeMalformed, AcmeUnauthorized
+from django_ca.acme.messages import CertificateRequest, NewOrder
+from django_ca.acme.responses import (
     AcmeResponse,
     AcmeResponseAccount,
     AcmeResponseAccountCreated,
@@ -78,7 +66,19 @@ from .responses import (
     AcmeResponseUnauthorized,
     AcmeResponseUnsupportedMediaType,
 )
-from .utils import parse_acme_csr
+from django_ca.acme.utils import parse_acme_csr
+from django_ca.constants import REASON_CODES
+from django_ca.models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+)
+from django_ca.tasks import acme_issue_certificate, acme_validate_challenge, run_task
+from django_ca.utils import check_name, int_to_hex, make_naive, validate_email
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)

@@ -17,8 +17,8 @@ from http import HTTPStatus
 
 from django.test import Client, TestCase, override_settings
 
-from ..models import CertificateAuthority
-from .base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
+from django_ca.models import CertificateAuthority
+from django_ca.tests.base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
 
 
 class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[CertificateAuthority], TestCase):

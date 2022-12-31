@@ -1,5 +1,3 @@
-from .mocker import Mocker
+from requests_mock.mocker import Mocker
 
-__all__ = (
-    "Mocker",
-)
+__all__ = ("Mocker",)

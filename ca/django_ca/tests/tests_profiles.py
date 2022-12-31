@@ -27,16 +27,16 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.conf import settings
 from django.test import TestCase
 
-from .. import ca_settings
-from ..constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
-from ..deprecation import RemovedInDjangoCA124Warning
-from ..extensions import KeyUsage, OCSPNoCheck, SubjectKeyIdentifier
-from ..models import Certificate, CertificateAuthority
-from ..profiles import Profile, get_profile, profile, profiles
-from ..signals import pre_issue_cert
-from ..subject import Subject
-from .base import certs, dns, override_settings, override_tmpcadir, uri
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
+from django_ca.deprecation import RemovedInDjangoCA124Warning
+from django_ca.extensions import KeyUsage, OCSPNoCheck, SubjectKeyIdentifier
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.profiles import Profile, get_profile, profile, profiles
+from django_ca.signals import pre_issue_cert
+from django_ca.subject import Subject
+from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, uri
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
@@ -64,7 +64,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
     def test_module(self) -> None:
         """Test doctests from main module."""
         # pylint: disable=import-outside-toplevel; we need the top-level module
-        from .. import profiles as profiles_mod
+        from django_ca import profiles as profiles_mod
 
         doctest.testmod(profiles_mod, globs=self.get_globs())
 

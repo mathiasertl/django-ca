@@ -26,11 +26,11 @@ from cryptography.x509.oid import NameOID
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
-from ... import ca_settings
-from ...constants import EXTENSION_KEYS
-from ...management.base import BaseSignCommand
-from ...models import Certificate, CertificateAuthority, Watcher
-from ...profiles import profiles
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_KEYS
+from django_ca.management.base import BaseSignCommand
+from django_ca.models import Certificate, CertificateAuthority, Watcher
+from django_ca.profiles import profiles
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring

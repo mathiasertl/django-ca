@@ -1,5 +1,3 @@
-from .firefox.webdriver import WebDriver as Firefox  # noqa
+from selenium.webdriver.firefox.webdriver import WebDriver as Firefox  # noqa
 
-__all__ = (
-    "Firefox",
-)
+__all__ = ("Firefox",)

@@ -53,12 +53,12 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
-from ... import ca_settings
-from ...constants import ReasonFlags
-from ...deprecation import RemovedInDjangoCA124Warning
-from ...extensions import extension_as_text
-from ...models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
-from ...signals import (
+from django_ca import ca_settings
+from django_ca.constants import ReasonFlags
+from django_ca.deprecation import RemovedInDjangoCA124Warning
+from django_ca.extensions import extension_as_text
+from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
+from django_ca.signals import (
     post_create_ca,
     post_issue_cert,
     post_revoke_cert,
@@ -67,9 +67,9 @@ from ...signals import (
     pre_issue_cert,
     pre_sign_cert,
 )
-from ...utils import ca_storage, parse_general_name
-from . import certs, timestamps, uri
-from .typehints import DjangoCAModelTypeVar
+from django_ca.tests.base import certs, timestamps, uri
+from django_ca.tests.base.typehints import DjangoCAModelTypeVar
+from django_ca.utils import ca_storage, parse_general_name
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods

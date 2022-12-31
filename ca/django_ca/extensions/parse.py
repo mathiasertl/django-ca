@@ -18,8 +18,9 @@ import typing
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from ..constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES
-from ..typehints import (
+from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES
+from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING, DistributionPoint
+from django_ca.typehints import (
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
     ParsableBasicConstraints,
@@ -33,8 +34,7 @@ from ..typehints import (
     ParsableSubjectKeyIdentifier,
     ParsableUserNotice,
 )
-from ..utils import hex_to_bytes, parse_general_name, x509_relative_name
-from .utils import TLS_FEATURE_NAME_MAPPING, DistributionPoint
+from django_ca.utils import hex_to_bytes, parse_general_name, x509_relative_name
 
 ##########################################
 # Parsers for sub-elements of extensions #

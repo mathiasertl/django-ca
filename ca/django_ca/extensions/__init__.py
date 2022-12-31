@@ -21,9 +21,9 @@ from typing import Any, Dict, Type
 from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
 
-from ..constants import EXTENSION_NAMES
-from .base import Extension
-from .extensions import (
+from django_ca.constants import EXTENSION_NAMES
+from django_ca.extensions.base import Extension
+from django_ca.extensions.extensions import (
     AuthorityInformationAccess,
     AuthorityKeyIdentifier,
     BasicConstraints,
@@ -43,9 +43,9 @@ from .extensions import (
     SubjectKeyIdentifier,
     TLSFeature,
 )
-from .parse import parse_extension
-from .serialize import serialize_extension
-from .text import extension_as_text
+from django_ca.extensions.parse import parse_extension
+from django_ca.extensions.serialize import serialize_extension
+from django_ca.extensions.text import extension_as_text
 
 # NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
 KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {

@@ -19,8 +19,8 @@ from django.core.checks import Warning  # pylint: disable=redefined-builtin
 from django.core.checks import Error
 from django.test import TestCase
 
-from .. import checks
-from .base.mixins import TestCaseMixin
+from django_ca import checks
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class SystemChecksTestCase(TestCaseMixin, TestCase):

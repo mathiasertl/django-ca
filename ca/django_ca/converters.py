@@ -19,7 +19,7 @@
 
 from django.urls.converters import SlugConverter
 
-from .utils import sanitize_serial
+from django_ca.utils import sanitize_serial
 
 
 class HexConverter:

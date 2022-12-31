@@ -25,10 +25,10 @@ from django.urls import include, path, re_path, reverse
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..views import CertificateRevocationListView
-from .base import certs, override_tmpcadir, uri
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.tests.base import certs, override_tmpcadir, uri
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.views import CertificateRevocationListView
 
 app_name = "django_ca"
 urlpatterns = [

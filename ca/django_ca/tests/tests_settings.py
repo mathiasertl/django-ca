@@ -18,8 +18,8 @@ from unittest import mock
 
 from django.test import TestCase
 
-from .. import ca_settings
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class SettingsTestCase(TestCase):

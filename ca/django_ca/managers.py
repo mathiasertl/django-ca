@@ -29,13 +29,13 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 
-from . import ca_settings
-from .modelfields import LazyCertificateSigningRequest
-from .openssh import SshHostCaExtension, SshUserCaExtension
-from .profiles import Profile, profiles
-from .signals import post_create_ca, post_issue_cert, pre_create_ca
-from .typehints import Expires, ParsableKeyType, X509CertMixinTypeVar
-from .utils import (
+from django_ca import ca_settings
+from django_ca.modelfields import LazyCertificateSigningRequest
+from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
+from django_ca.profiles import Profile, profiles
+from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca
+from django_ca.typehints import Expires, ParsableKeyType, X509CertMixinTypeVar
+from django_ca.utils import (
     ca_storage,
     format_general_name,
     generate_private_key,
@@ -48,7 +48,7 @@ from .utils import (
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
 if TYPE_CHECKING:
-    from .models import (
+    from django_ca.models import (
         AcmeAccount,
         AcmeAuthorization,
         AcmeCertificate,
@@ -57,7 +57,7 @@ if TYPE_CHECKING:
         Certificate,
         CertificateAuthority,
     )
-    from .querysets import AcmeAccountQuerySet, CertificateAuthorityQuerySet, CertificateQuerySet
+    from django_ca.querysets import AcmeAccountQuerySet, CertificateAuthorityQuerySet, CertificateQuerySet
 
     AcmeAccountManagerBase = models.Manager[AcmeAccount]
     AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]

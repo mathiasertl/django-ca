@@ -28,11 +28,11 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..models import CertificateAuthority
-from ..utils import int_to_hex, x509_name
-from .base import dns, override_settings, override_tmpcadir, timestamps, uri
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.models import CertificateAuthority
+from django_ca.tests.base import dns, override_settings, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.utils import int_to_hex, x509_name
 
 
 class InitCATest(TestCaseMixin, TestCase):

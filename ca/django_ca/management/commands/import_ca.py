@@ -27,12 +27,12 @@ from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from django.core.files.base import ContentFile
 from django.core.management.base import CommandError, CommandParser
 
-from ... import ca_settings
-from ...models import CertificateAuthority
-from ...utils import ca_storage
-from ..actions import PasswordAction
-from ..base import BaseCommand
-from ..mixins import CertificateAuthorityDetailMixin
+from django_ca import ca_settings
+from django_ca.management.actions import PasswordAction
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertificateAuthorityDetailMixin
+from django_ca.models import CertificateAuthority
+from django_ca.utils import ca_storage
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):

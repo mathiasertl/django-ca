@@ -30,13 +30,13 @@ from django.urls import reverse
 from django_webtest import DjangoWebtestResponse, WebTestMixin
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..constants import ReasonFlags
-from ..models import Certificate
-from ..signals import post_issue_cert, post_revoke_cert, pre_issue_cert, pre_revoke_cert
-from .base import override_tmpcadir, timestamps
-from .base.mixins import AdminTestCaseMixin
-from .base.typehints import DjangoCAModelTypeVar
+from django_ca import ca_settings
+from django_ca.constants import ReasonFlags
+from django_ca.models import Certificate
+from django_ca.signals import post_issue_cert, post_revoke_cert, pre_issue_cert, pre_revoke_cert
+from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import AdminTestCaseMixin
+from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 
 
 class AdminActionTestCaseMixin(

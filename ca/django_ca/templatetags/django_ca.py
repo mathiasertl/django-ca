@@ -23,9 +23,9 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from ..constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_CRITICAL_HELP, EXTENSION_RFC_DEFINITION
-from ..extensions.utils import key_usage_items, signed_certificate_timestamp_values
-from ..utils import add_colons, bytes_to_hex, format_general_name, format_name, int_to_hex
+from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_CRITICAL_HELP, EXTENSION_RFC_DEFINITION
+from django_ca.extensions.utils import key_usage_items, signed_certificate_timestamp_values
+from django_ca.utils import add_colons, bytes_to_hex, format_general_name, format_name, int_to_hex
 
 register = template.Library()
 

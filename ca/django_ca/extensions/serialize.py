@@ -19,9 +19,9 @@ from typing import Any, Dict, List, Optional
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from .. import typehints
-from ..constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, LOG_ENTRY_TYPE_KEYS
-from ..typehints import (
+from django_ca import typehints
+from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES, LOG_ENTRY_TYPE_KEYS
+from django_ca.typehints import (
     PolicyQualifier,
     SerializedExtension,
     SerializedPolicyInformation,
@@ -29,7 +29,7 @@ from ..typehints import (
     SerializedPolicyQualifiers,
     SerializedUserNotice,
 )
-from ..utils import bytes_to_hex, format_general_name, format_name
+from django_ca.utils import bytes_to_hex, format_general_name, format_name
 
 
 def _authority_information_access_serialized(

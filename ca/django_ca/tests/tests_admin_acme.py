@@ -18,7 +18,7 @@ import typing
 from django.test import TestCase
 from django.utils import timezone
 
-from ..models import (
+from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
     AcmeCertificate,
@@ -26,9 +26,9 @@ from ..models import (
     AcmeOrder,
     CertificateAuthority,
 )
-from .base import override_tmpcadir
-from .base.mixins import StandardAdminViewTestCaseMixin
-from .base.typehints import DjangoCAModelTypeVar
+from django_ca.tests.base import override_tmpcadir
+from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
+from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 
 PEM1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E

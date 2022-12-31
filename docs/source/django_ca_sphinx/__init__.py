@@ -15,9 +15,9 @@
 
 import typing
 
-from .console_include import ConsoleIncludeDirective
-from .mapping_table import MappingDocumentor
-from .template_include import TemplateDirective
+from django_ca_sphinx.console_include import ConsoleIncludeDirective
+from django_ca_sphinx.mapping_table import MappingDocumentor
+from django_ca_sphinx.template_include import TemplateDirective
 
 if typing.TYPE_CHECKING:
     from sphinx.application import Sphinx

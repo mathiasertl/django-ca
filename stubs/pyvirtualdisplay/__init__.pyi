@@ -1,6 +1,3 @@
-from .display import Display
+from pyvirtualdisplay.display import Display
 
-
-__all__ = (
-    "Display",
-)
+__all__ = ("Display",)

@@ -15,10 +15,10 @@
 
 from django.test import TestCase
 
-from .. import ca_settings
-from ..models import CertificateAuthority
-from .base import override_tmpcadir
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.models import CertificateAuthority
+from django_ca.tests.base import override_tmpcadir
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class EditCATestCase(TestCaseMixin, TestCase):

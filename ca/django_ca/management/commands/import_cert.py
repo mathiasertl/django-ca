@@ -23,8 +23,8 @@ from cryptography import x509
 
 from django.core.management.base import CommandError, CommandParser
 
-from ...models import Certificate, CertificateAuthority
-from ..base import BaseCommand
+from django_ca.management.base import BaseCommand
+from django_ca.models import Certificate, CertificateAuthority
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring

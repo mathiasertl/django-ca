@@ -25,7 +25,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django import forms
 from django.db import models
 
-from .fields import CertificateSigningRequestField as CertificateSigningRequestFormField
+from django_ca.fields import CertificateSigningRequestField as CertificateSigningRequestFormField
 
 DecodableCertificate = typing.Union[str, bytes, x509.Certificate]
 DecodableCertificateSigningRequest = typing.Union[str, bytes, x509.CertificateSigningRequest]

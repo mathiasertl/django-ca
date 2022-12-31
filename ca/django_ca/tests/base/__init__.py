@@ -32,10 +32,10 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings
 from django.test.utils import override_settings
 
-from ...extensions import KEY_TO_EXTENSION, parse_extension
-from ...profiles import profiles
-from ...typehints import PrivateKeyTypes
-from ...utils import add_colons, ca_storage
+from django_ca.extensions import KEY_TO_EXTENSION, parse_extension
+from django_ca.profiles import profiles
+from django_ca.typehints import PrivateKeyTypes
+from django_ca.utils import add_colons, ca_storage
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
 KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})

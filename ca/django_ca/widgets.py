@@ -23,14 +23,14 @@ from django import forms
 from django.forms import widgets
 from django.utils.translation import gettext as _
 
-from . import ca_settings
-from .constants import (
+from django_ca import ca_settings
+from django_ca.constants import (
     EXTENDED_KEY_USAGE_NAMES,
     EXTENSION_DEFAULT_CRITICAL,
     KEY_USAGE_NAMES,
     REVOCATION_REASONS,
 )
-from .utils import ADMIN_SUBJECT_OIDS, format_general_name
+from django_ca.utils import ADMIN_SUBJECT_OIDS, format_general_name
 
 log = logging.getLogger(__name__)
 

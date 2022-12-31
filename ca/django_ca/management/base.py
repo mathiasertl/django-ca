@@ -26,11 +26,11 @@ from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError, CommandParser, OutputWrapper
 from django.utils import timezone
 
-from .. import ca_settings
-from ..models import CertificateAuthority
-from ..profiles import Profile
-from ..utils import NAME_OID_MAPPINGS
-from . import actions, mixins
+from django_ca import ca_settings
+from django_ca.management import actions, mixins
+from django_ca.models import CertificateAuthority
+from django_ca.profiles import Profile
+from django_ca.utils import NAME_OID_MAPPINGS
 
 
 class BinaryOutputWrapper(OutputWrapper):

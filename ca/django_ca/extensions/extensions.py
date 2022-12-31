@@ -22,8 +22,18 @@ from cryptography import x509
 from cryptography.x509 import TLSFeatureType
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from ..constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
-from ..typehints import (
+from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
+from django_ca.extensions.base import (
+    AlternativeNameExtension,
+    CRLDistributionPointsBase,
+    Extension,
+    ListExtension,
+    NullExtension,
+    OrderedSetExtension,
+    SignedCertificateTimestampsBase,
+)
+from django_ca.extensions.utils import PolicyInformation
+from django_ca.typehints import (
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
     ParsableBasicConstraints,
@@ -40,17 +50,7 @@ from ..typehints import (
     SerializedPolicyConstraints,
     SerializedPolicyInformation,
 )
-from ..utils import GeneralNameList, bytes_to_hex, hex_to_bytes
-from .base import (
-    AlternativeNameExtension,
-    CRLDistributionPointsBase,
-    Extension,
-    ListExtension,
-    NullExtension,
-    OrderedSetExtension,
-    SignedCertificateTimestampsBase,
-)
-from .utils import PolicyInformation
+from django_ca.utils import GeneralNameList, bytes_to_hex, hex_to_bytes
 
 # Placeholder until we fill in something good
 ParsableValueDummy = str

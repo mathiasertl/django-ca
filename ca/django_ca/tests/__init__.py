@@ -21,7 +21,7 @@ from typing import Any, Type
 
 from django.test.signals import setting_changed
 
-from .. import ca_settings, profiles
+from django_ca import ca_settings, profiles
 
 
 def reload_ca_settings(  # pylint: disable=unused-argument

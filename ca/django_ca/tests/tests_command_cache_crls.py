@@ -22,9 +22,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from ..utils import get_crl_cache_key
-from .base import override_tmpcadir, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.utils import get_crl_cache_key
 
 
 class CacheCRLsTestCase(TestCaseMixin, TestCase):

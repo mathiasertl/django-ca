@@ -36,18 +36,18 @@ from webtest import Checkbox, Hidden
 from webtest import Select as WebTestSelect
 from webtest import Submit
 
-from .. import ca_settings
-from ..constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
-from ..extensions import serialize_extension
-from ..fields import CertificateSigningRequestField
-from ..models import Certificate, CertificateAuthority
-from ..profiles import Profile, profiles
-from ..signals import post_issue_cert, pre_issue_cert
-from ..typehints import SerializedExtension
-from ..utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
-from .base import certs, dns, override_tmpcadir, timestamps, uri
-from .base.testcases import SeleniumTestCase
-from .tests_admin import CertificateModelAdminTestCaseMixin
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
+from django_ca.extensions import serialize_extension
+from django_ca.fields import CertificateSigningRequestField
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.profiles import Profile, profiles
+from django_ca.signals import post_issue_cert, pre_issue_cert
+from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.testcases import SeleniumTestCase
+from django_ca.tests.tests_admin import CertificateModelAdminTestCaseMixin
+from django_ca.typehints import SerializedExtension
+from django_ca.utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
 
 
 @freeze_time(timestamps["after_child"])

@@ -39,7 +39,7 @@ from cryptography.hazmat.primitives.serialization import (
 )
 from cryptography.x509.oid import NameOID
 
-from . import config
+from devscripts import config
 
 try:
     from yaml import CLoader as Loader

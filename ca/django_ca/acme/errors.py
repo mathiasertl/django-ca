@@ -15,7 +15,7 @@
 
 import typing
 
-from .responses import (
+from django_ca.acme.responses import (
     AcmeResponseBadCSR,
     AcmeResponseError,
     AcmeResponseForbidden,

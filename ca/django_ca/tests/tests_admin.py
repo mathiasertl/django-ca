@@ -30,12 +30,12 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..models import Certificate, CertificateAuthority, Watcher
-from ..typehints import PrivateKeyTypes
-from ..utils import OID_NAME_MAPPINGS, x509_name
-from .base import certs, override_tmpcadir, timestamps
-from .base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
+from django_ca import ca_settings
+from django_ca.models import Certificate, CertificateAuthority, Watcher
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
+from django_ca.typehints import PrivateKeyTypes
+from django_ca.utils import OID_NAME_MAPPINGS, x509_name
 
 User = get_user_model()
 

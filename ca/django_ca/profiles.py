@@ -23,13 +23,19 @@ from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from . import ca_settings
-from .constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
-from .deprecation import RemovedInDjangoCA124Warning, deprecate_type
-from .extensions import KEY_TO_EXTENSION, OID_TO_EXTENSION, Extension, parse_extension, serialize_extension
-from .signals import pre_issue_cert, pre_sign_cert
-from .subject import Subject
-from .typehints import (
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
+from django_ca.deprecation import RemovedInDjangoCA124Warning, deprecate_type
+from django_ca.extensions import (
+    KEY_TO_EXTENSION,
+    OID_TO_EXTENSION,
+    Extension,
+    parse_extension,
+    serialize_extension,
+)
+from django_ca.signals import pre_issue_cert, pre_sign_cert
+from django_ca.subject import Subject
+from django_ca.typehints import (
     Expires,
     ExtensionMapping,
     ParsableExtension,
@@ -37,7 +43,7 @@ from .typehints import (
     SerializedExtension,
     SerializedProfile,
 )
-from .utils import (
+from django_ca.utils import (
     get_cert_builder,
     parse_expires,
     parse_general_name,
@@ -47,7 +53,7 @@ from .utils import (
 )
 
 if typing.TYPE_CHECKING:
-    from .models import CertificateAuthority
+    from django_ca.models import CertificateAuthority
 
 
 class Profile:

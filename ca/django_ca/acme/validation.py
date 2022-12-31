@@ -18,7 +18,7 @@ import logging
 import dns.exception
 from dns import resolver
 
-from ..models import AcmeChallenge
+from django_ca.models import AcmeChallenge
 
 log = logging.getLogger(__name__)
 

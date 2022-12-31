@@ -24,12 +24,12 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from ... import ca_settings
-from ...constants import EXTENSION_KEYS
-from ...management.actions import CertificateAction
-from ...management.base import BaseSignCommand
-from ...models import Certificate, CertificateAuthority, Watcher
-from ...profiles import Profile, profiles
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_KEYS
+from django_ca.management.actions import CertificateAction
+from django_ca.management.base import BaseSignCommand
+from django_ca.models import Certificate, CertificateAuthority, Watcher
+from django_ca.profiles import Profile, profiles
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring

@@ -58,10 +58,10 @@ from django.utils.functional import cached_property, classproperty
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from . import ca_settings
-from .acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from .constants import EXTENSION_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
-from .extensions import (
+from django_ca import ca_settings
+from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
+from django_ca.extensions import (
     OID_TO_EXTENSION,
     AuthorityInformationAccess,
     AuthorityKeyIdentifier,
@@ -83,8 +83,8 @@ from .extensions import (
     TLSFeature,
     get_extension_name,
 )
-from .extensions.base import Extension
-from .managers import (
+from django_ca.extensions.base import Extension
+from django_ca.managers import (
     AcmeAccountManager,
     AcmeAuthorizationManager,
     AcmeCertificateManager,
@@ -93,10 +93,10 @@ from .managers import (
     CertificateAuthorityManager,
     CertificateManager,
 )
-from .modelfields import CertificateField, CertificateSigningRequestField, LazyCertificate
-from .openssh.extensions import SSH_HOST_CA, SSH_USER_CA
-from .profiles import profiles
-from .querysets import (
+from django_ca.modelfields import CertificateField, CertificateSigningRequestField, LazyCertificate
+from django_ca.openssh.extensions import SSH_HOST_CA, SSH_USER_CA
+from django_ca.profiles import profiles
+from django_ca.querysets import (
     AcmeAccountQuerySet,
     AcmeAuthorizationQuerySet,
     AcmeCertificateQuerySet,
@@ -105,8 +105,8 @@ from .querysets import (
     CertificateAuthorityQuerySet,
     CertificateQuerySet,
 )
-from .signals import post_revoke_cert, post_sign_cert, pre_issue_cert, pre_revoke_cert, pre_sign_cert
-from .typehints import (
+from django_ca.signals import post_revoke_cert, post_sign_cert, pre_issue_cert, pre_revoke_cert, pre_sign_cert
+from django_ca.typehints import (
     Expires,
     ExtensionTypeTypeVar,
     ParsableHash,
@@ -115,7 +115,7 @@ from .typehints import (
     PrivateKeyTypes,
     SerializedValue,
 )
-from .utils import (
+from django_ca.utils import (
     bytes_to_hex,
     ca_storage,
     format_name,

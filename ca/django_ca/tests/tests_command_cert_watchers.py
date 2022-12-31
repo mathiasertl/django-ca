@@ -15,7 +15,7 @@
 
 from django.test import TestCase
 
-from .base.mixins import TestCaseMixin
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class CertWatchersTestCase(TestCaseMixin, TestCase):

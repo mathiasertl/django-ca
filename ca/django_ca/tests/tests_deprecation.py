@@ -19,7 +19,7 @@ import warnings
 
 from django.test import TestCase
 
-from ..deprecation import (
+from django_ca.deprecation import (
     DeprecationWarningType,
     RemovedInDjangoCA124Warning,
     RemovedInDjangoCA125Warning,

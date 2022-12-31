@@ -15,6 +15,6 @@
 
 import typing
 
-from ...models import DjangoCAModel
+from django_ca.models import DjangoCAModel
 
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)

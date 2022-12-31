@@ -42,10 +42,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
-from . import ca_settings
-from .models import Certificate, CertificateAuthority
-from .typehints import PrivateKeyTypes
-from .utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
+from django_ca import ca_settings
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.typehints import PrivateKeyTypes
+from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
 

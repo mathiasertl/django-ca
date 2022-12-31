@@ -26,7 +26,7 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 #
 #   https://peps.python.org/pep-0484/#forward-references
 if typing.TYPE_CHECKING:
-    from . import models
+    from django_ca import models
 
 
 class SupportsLessThan(typing.Protocol):

@@ -30,11 +30,11 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from django.test import TestCase
 
-from ..constants import EXTENSION_KEYS, ReasonFlags
-from ..management import actions
-from ..models import Certificate, CertificateAuthority
-from .base import certs, dns, override_settings, override_tmpcadir, uri
-from .base.mixins import TestCaseMixin
+from django_ca.constants import EXTENSION_KEYS, ReasonFlags
+from django_ca.management import actions
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, uri
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 def load_tests(  # pylint: disable=unused-argument

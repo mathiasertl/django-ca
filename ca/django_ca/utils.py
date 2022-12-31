@@ -38,8 +38,8 @@ from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
 from django.utils import timezone as tz
 
-from . import ca_settings
-from .typehints import (
+from django_ca import ca_settings
+from django_ca.typehints import (
     Expires,
     ParsableGeneralName,
     ParsableGeneralNameList,

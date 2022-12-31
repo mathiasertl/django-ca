@@ -17,8 +17,8 @@ import typing
 
 from django.test import TestCase
 
-from .base import override_settings, override_tmpcadir
-from .base.mixins import TestCaseMixin
+from django_ca.tests.base import override_settings, override_tmpcadir
+from django_ca.tests.base.mixins import TestCaseMixin
 
 expected = {
     "ecc": """{name} (enabled):

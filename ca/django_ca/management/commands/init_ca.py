@@ -29,15 +29,21 @@ from cryptography.x509.oid import NameOID
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
-from ... import ca_settings
-from ...constants import EXTENSION_KEYS
-from ...models import CertificateAuthority
-from ...tasks import cache_crl, generate_ocsp_key, run_task
-from ...typehints import ParsableKeyType
-from ...utils import parse_general_name, sort_name
-from ..actions import ExpiresAction, MultipleURLAction, NameAction, PasswordAction, URLAction
-from ..base import BaseCommand
-from ..mixins import CertificateAuthorityDetailMixin
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_KEYS
+from django_ca.management.actions import (
+    ExpiresAction,
+    MultipleURLAction,
+    NameAction,
+    PasswordAction,
+    URLAction,
+)
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertificateAuthorityDetailMixin
+from django_ca.models import CertificateAuthority
+from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
+from django_ca.typehints import ParsableKeyType
+from django_ca.utils import parse_general_name, sort_name
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):

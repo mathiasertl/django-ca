@@ -22,10 +22,10 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from . import ca_settings
-from .acme.constants import Status
-from .typehints import X509CertMixinTypeVar
-from .utils import sanitize_serial
+from django_ca import ca_settings
+from django_ca.acme.constants import Status
+from django_ca.typehints import X509CertMixinTypeVar
+from django_ca.utils import sanitize_serial
 
 if not TYPE_CHECKING:
     # Inverting TYPE_CHECKING check here to make pylint==2.9.3 happy:
@@ -40,7 +40,7 @@ if not TYPE_CHECKING:
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
 else:  # pragma: no cover  # only used for type checking
-    from .models import (
+    from django_ca.models import (
         AcmeAccount,
         AcmeAuthorization,
         AcmeCertificate,

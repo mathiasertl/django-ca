@@ -20,11 +20,11 @@ import typing
 
 from django.core.management.base import CommandError, CommandParser
 
-from ...constants import ReasonFlags
-from ...models import Certificate
-from ..actions import ReasonAction
-from ..base import BaseCommand
-from ..mixins import CertCommandMixin
+from django_ca.constants import ReasonFlags
+from django_ca.management.actions import ReasonAction
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertCommandMixin
+from django_ca.models import Certificate
 
 
 class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-docstring

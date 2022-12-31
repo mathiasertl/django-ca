@@ -35,8 +35,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from .. import ca_settings, utils
-from ..utils import (
+from django_ca import ca_settings, utils
+from django_ca.tests.base import dns, override_settings, override_tmpcadir, rdn, uri
+from django_ca.utils import (
     ELLIPTIC_CURVE_NAMES,
     HASH_ALGORITHM_NAMES,
     OID_NAME_MAPPINGS,
@@ -62,7 +63,6 @@ from ..utils import (
     x509_name,
     x509_relative_name,
 )
-from .base import dns, override_settings, override_tmpcadir, rdn, uri
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=typing.Type[object])
 

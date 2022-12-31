@@ -25,9 +25,9 @@ from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from ..constants import ExtensionOID  # type: ignore[attr-defined]
-from ..deprecation import RemovedInDjangoCA124Warning
-from ..extensions import (
+from django_ca.constants import ExtensionOID  # type: ignore[attr-defined]
+from django_ca.deprecation import RemovedInDjangoCA124Warning
+from django_ca.extensions import (
     KEY_TO_EXTENSION,
     OID_TO_EXTENSION,
     AuthorityInformationAccess,
@@ -53,13 +53,11 @@ from ..extensions import (
     parse_extension,
     serialize_extension,
 )
-from ..extensions.base import UnrecognizedExtension
-from ..extensions.utils import PolicyInformation, extension_as_admin_html
-from ..models import X509CertMixin
-from ..typehints import ParsablePolicyInformation
-from ..utils import GeneralNameList
-from .base import certs, dns, uri
-from .base.extensions import (
+from django_ca.extensions.base import UnrecognizedExtension
+from django_ca.extensions.utils import PolicyInformation, extension_as_admin_html
+from django_ca.models import X509CertMixin
+from django_ca.tests.base import certs, dns, uri
+from django_ca.tests.base.extensions import (
     CRLDistributionPointsTestCaseBase,
     ExtensionTestMixin,
     ListExtensionTestMixin,
@@ -67,7 +65,9 @@ from .base.extensions import (
     OrderedSetExtensionTestMixin,
     TestValues,
 )
-from .base.mixins import TestCaseMixin
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.typehints import ParsablePolicyInformation
+from django_ca.utils import GeneralNameList
 
 
 def load_tests(  # pylint: disable=unused-argument

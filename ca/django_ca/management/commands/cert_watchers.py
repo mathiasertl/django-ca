@@ -20,9 +20,9 @@ import typing
 
 from django.core.management.base import CommandParser
 
-from ...models import Certificate, Watcher
-from ..base import BaseCommand
-from ..mixins import CertCommandMixin
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertCommandMixin
+from django_ca.models import Certificate, Watcher
 
 
 class Command(CertCommandMixin, BaseCommand):

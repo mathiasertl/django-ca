@@ -16,7 +16,7 @@
 from django.conf import settings
 from django.urls import path, register_converter
 
-from . import ca_settings, converters, views
+from django_ca import ca_settings, converters, views
 
 app_name = "django_ca"
 
@@ -49,7 +49,7 @@ urlpatterns = [
 
 
 if ca_settings.CA_ENABLE_ACME:
-    from .acme import views as acme_views
+    from django_ca.acme import views as acme_views
 
     # NOTE: Some functions depend on the fact that ALL ACME urls have a "serial" kwarg
     urlpatterns += [

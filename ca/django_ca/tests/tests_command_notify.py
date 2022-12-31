@@ -20,9 +20,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from ..models import Watcher
-from .base import override_settings, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca.models import Watcher
+from django_ca.tests.base import override_settings, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 @override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])

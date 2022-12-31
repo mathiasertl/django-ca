@@ -20,10 +20,10 @@ import typing
 
 from django.core.management.base import CommandParser
 
-from ... import ca_settings
-from ...models import CertificateAuthority
-from ...utils import add_colons, ca_storage
-from ..base import BaseCommand
+from django_ca import ca_settings
+from django_ca.management.base import BaseCommand
+from django_ca.models import CertificateAuthority
+from django_ca.utils import add_colons, ca_storage
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring

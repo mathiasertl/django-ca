@@ -28,12 +28,12 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..models import Certificate, CertificateAuthority
-from ..signals import post_issue_cert, pre_issue_cert
-from ..utils import ca_storage, x509_name
-from .base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.signals import post_issue_cert, pre_issue_cert
+from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.utils import ca_storage, x509_name
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())

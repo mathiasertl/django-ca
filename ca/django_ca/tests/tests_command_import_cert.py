@@ -22,9 +22,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from ..models import Certificate
-from .base import certs, override_tmpcadir, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca.models import Certificate
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])

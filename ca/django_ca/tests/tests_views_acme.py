@@ -41,11 +41,11 @@ from django.utils.crypto import get_random_string
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..acme.errors import AcmeUnauthorized
-from ..acme.messages import NewOrder
-from ..acme.responses import AcmeResponseUnauthorized
-from ..models import (
+from django_ca import ca_settings
+from django_ca.acme.errors import AcmeUnauthorized
+from django_ca.acme.messages import NewOrder
+from django_ca.acme.responses import AcmeResponseUnauthorized
+from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
     AcmeCertificate,
@@ -54,10 +54,10 @@ from ..models import (
     CertificateAuthority,
     acme_slug,
 )
-from ..tasks import acme_validate_challenge
-from ..typehints import PrivateKeyTypes
-from .base import CERT_PEM_REGEX, certs, override_tmpcadir, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca.tasks import acme_validate_challenge
+from django_ca.tests.base import CERT_PEM_REGEX, certs, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.typehints import PrivateKeyTypes
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 

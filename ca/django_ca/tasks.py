@@ -32,10 +32,10 @@ from cryptography.x509.oid import ExtensionOID
 from django.db import transaction
 from django.utils import timezone
 
-from . import ca_settings
-from .acme.validation import validate_dns_01
-from .constants import EXTENSION_DEFAULT_CRITICAL
-from .models import (
+from django_ca import ca_settings
+from django_ca.acme.validation import validate_dns_01
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
+from django_ca.models import (
     AcmeAuthorization,
     AcmeCertificate,
     AcmeChallenge,
@@ -43,8 +43,8 @@ from .models import (
     Certificate,
     CertificateAuthority,
 )
-from .profiles import profiles
-from .utils import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES, parse_general_name
+from django_ca.profiles import profiles
+from django_ca.utils import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES, parse_general_name
 
 log = logging.getLogger(__name__)
 

@@ -27,18 +27,18 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from .. import ca_settings
-from ..constants import (
+from django_ca import ca_settings
+from django_ca.constants import (
     EXTENDED_KEY_USAGE_NAMES,
     EXTENSION_DEFAULT_CRITICAL,
     EXTENSION_KEYS,
     KEY_USAGE_NAMES,
     ReasonFlags,
 )
-from ..extensions.utils import TLS_FEATURE_NAME_MAPPING
-from ..models import Certificate, CertificateAuthority
-from ..typehints import AlternativeNameExtensionType
-from ..utils import (
+from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.typehints import AlternativeNameExtensionType
+from django_ca.utils import (
     is_power2,
     parse_encoding,
     parse_general_name,

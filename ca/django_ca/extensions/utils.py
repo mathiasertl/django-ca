@@ -22,9 +22,9 @@ from cryptography.x509.certificate_transparency import LogEntryType, SignedCerti
 
 from django.template.loader import render_to_string
 
-from .. import typehints
-from ..constants import KEY_USAGE_NAMES
-from ..typehints import (
+from django_ca import typehints
+from django_ca.constants import KEY_USAGE_NAMES
+from django_ca.typehints import (
     ParsableDistributionPoint,
     ParsablePolicyIdentifier,
     ParsablePolicyInformation,
@@ -35,7 +35,13 @@ from ..typehints import (
     SerializedPolicyQualifiers,
     SerializedUserNotice,
 )
-from ..utils import bytes_to_hex, format_general_name, format_name, parse_general_name, x509_relative_name
+from django_ca.utils import (
+    bytes_to_hex,
+    format_general_name,
+    format_name,
+    parse_general_name,
+    x509_relative_name,
+)
 
 
 class DistributionPoint:

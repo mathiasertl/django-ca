@@ -1,9 +1,7 @@
 import typing
 
-from .local import Proxy
+from celery.local import Proxy
 
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
-
-def shared_task(func: F) -> Proxy[F]:
-    ...
+def shared_task(func: F) -> Proxy[F]: ...

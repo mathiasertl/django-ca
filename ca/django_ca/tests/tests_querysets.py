@@ -27,8 +27,8 @@ from django.test import TestCase, TransactionTestCase
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..models import (
+from django_ca import ca_settings
+from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
     AcmeCertificate,
@@ -37,9 +37,9 @@ from ..models import (
     Certificate,
     CertificateAuthority,
 )
-from ..utils import x509_name
-from .base import override_settings, override_tmpcadir, timestamps
-from .base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.tests.base import override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.utils import x509_name
 
 
 class QuerySetTestCaseMixin(TestCaseMixin):

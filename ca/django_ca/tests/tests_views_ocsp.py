@@ -36,14 +36,14 @@ from django.urls import path, re_path, reverse
 
 from freezegun import freeze_time
 
-from .. import ca_settings
-from ..constants import ReasonFlags
-from ..modelfields import LazyCertificate
-from ..models import Certificate, CertificateAuthority, X509CertMixin
-from ..utils import ca_storage, hex_to_bytes, int_to_hex
-from ..views import OCSPView
-from .base import certs, ocsp_data, override_settings, override_tmpcadir, timestamps
-from .base.mixins import TestCaseMixin
+from django_ca import ca_settings
+from django_ca.constants import ReasonFlags
+from django_ca.modelfields import LazyCertificate
+from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.tests.base import certs, ocsp_data, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.utils import ca_storage, hex_to_bytes, int_to_hex
+from django_ca.views import OCSPView
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \

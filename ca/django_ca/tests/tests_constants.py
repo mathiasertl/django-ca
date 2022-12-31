@@ -18,7 +18,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
-from .. import constants
+from django_ca import constants
 
 KNOWN_EXTENSION_OIDS = list(
     filter(

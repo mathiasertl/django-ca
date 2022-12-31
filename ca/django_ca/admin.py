@@ -52,18 +52,18 @@ from django.utils.translation import gettext_lazy as _
 
 from django_object_actions import DjangoObjectActions
 
-from . import ca_settings
-from .constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
-from .extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
-from .extensions.utils import extension_as_admin_html
-from .forms import (
+from django_ca import ca_settings
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
+from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
+from django_ca.extensions.utils import extension_as_admin_html
+from django_ca.forms import (
     CertificateAuthorityForm,
     CreateCertificateForm,
     ResignCertificateForm,
     RevokeCertificateForm,
     X509CertMixinAdminForm,
 )
-from .models import (
+from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
     AcmeCertificate,
@@ -73,11 +73,11 @@ from .models import (
     CertificateAuthority,
     Watcher,
 )
-from .profiles import profiles
-from .querysets import CertificateQuerySet
-from .signals import post_issue_cert
-from .typehints import CRLExtensionType, X509CertMixinTypeVar
-from .utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
+from django_ca.profiles import profiles
+from django_ca.querysets import CertificateQuerySet
+from django_ca.signals import post_issue_cert
+from django_ca.typehints import CRLExtensionType, X509CertMixinTypeVar
+from django_ca.utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
 
 log = logging.getLogger(__name__)
 

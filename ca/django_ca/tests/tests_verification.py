@@ -26,9 +26,9 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.test import TestCase
 from django.urls import reverse
 
-from ..models import CertificateAuthority, X509CertMixin
-from .base import certs, override_tmpcadir, uri
-from .base.mixins import TestCaseMixin
+from django_ca.models import CertificateAuthority, X509CertMixin
+from django_ca.tests.base import certs, override_tmpcadir, uri
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class CRLValidationTestCase(TestCaseMixin, TestCase):

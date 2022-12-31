@@ -25,9 +25,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandParser
 
-from ...models import Certificate
-from ..base import BinaryCommand
-from ..mixins import CertCommandMixin
+from django_ca.management.base import BinaryCommand
+from django_ca.management.mixins import CertCommandMixin
+from django_ca.models import Certificate
 
 
 class Command(CertCommandMixin, BinaryCommand):

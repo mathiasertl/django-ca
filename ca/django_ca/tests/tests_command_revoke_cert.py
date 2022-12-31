@@ -15,10 +15,10 @@
 
 from django.test import TestCase
 
-from ..constants import ReasonFlags
-from ..models import Certificate
-from ..signals import post_revoke_cert, pre_revoke_cert
-from .base.mixins import TestCaseMixin
+from django_ca.constants import ReasonFlags
+from django_ca.models import Certificate
+from django_ca.signals import post_revoke_cert, pre_revoke_cert
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class RevokeCertTestCase(TestCaseMixin, TestCase):

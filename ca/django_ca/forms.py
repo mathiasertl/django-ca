@@ -25,10 +25,10 @@ from django.forms.models import ModelFormOptions
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from . import ca_settings, fields
-from .models import Certificate, CertificateAuthority, X509CertMixin
-from .utils import parse_general_name
-from .widgets import ProfileWidget
+from django_ca import ca_settings, fields
+from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.utils import parse_general_name
+from django_ca.widgets import ProfileWidget
 
 if typing.TYPE_CHECKING:
     CertificateModelForm = forms.ModelForm[Certificate]
