@@ -48,7 +48,7 @@ class AcmeCertificateRevocationViewTestCase(
     class csr_class(acme.messages.Revocation):  # pylint: disable=invalid-name
         """Class that allows us to send a CSR in the certificate field for testing."""
 
-        certificate = jose.json_util.Field(  # type: ignore[assignment]
+        certificate = jose.json_util.Field(
             "certificate", decoder=jose.json_util.decode_csr, encoder=jose.json_util.encode_csr
         )
 
