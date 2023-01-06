@@ -74,6 +74,28 @@ sections = [
     "TEST", "FIRSTPARTY", "LOCALFOLDER",
 ]
 
+[tool.mypy]
+strict = true
+show_error_codes = true
+mypy_path = "ca/:stubs/:docs/source/"
+exclude = [
+    "migrations/.*\\.py$",
+]
+plugins = [
+    "mypy_django_plugin.main",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "asn1crypto.*",
+    "enchant.tokenize",
+    "requests.packages.urllib3.response",
+]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "ca.test_settings"
+
 [tool.pydocstyle]
 convention = "numpy"
 add-ignore = "D102"
