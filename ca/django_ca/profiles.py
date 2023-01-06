@@ -557,7 +557,12 @@ class Profile:
         """
 
         ca_extensions = ca.extensions_for_certificate
-        extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = ca.get_authority_key_identifier_extension()
+
+        # client can set its own AuthorityKeyIdentifier extension (currently used for the alt-extensions
+        # certificate when creating fixtures).
+        extensions.setdefault(
+            ExtensionOID.AUTHORITY_KEY_IDENTIFIER, ca.get_authority_key_identifier_extension()
+        )
 
         if add_crl_url is not False:
             self._update_crl_distribution_points(extensions, ca_extensions)
