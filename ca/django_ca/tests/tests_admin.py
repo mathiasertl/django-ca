@@ -151,10 +151,9 @@ class CertificateAdminViewTestCase(
 
     def test_revoked(self) -> None:
         """View a revoked certificate (fieldset should be collapsed)."""
-        self.certs["root-cert"].revoke()
-
+        self.obj.revoke()
         response = self.client.get(self.change_url())
-        self.assertChangeResponse(response, obj=self.certs["root-cert"])
+        self.assertChangeResponse(response, obj=self.obj)
 
         self.assertContains(
             response,
@@ -195,20 +194,13 @@ class CertificateAdminViewTestCase(
         creating a new object (=sign a new cert). So we have to test saving a cert that already exists for
         code coverage.
         """
-        cert = self.certs["root-cert"]
-        cert = Certificate.objects.get(serial=cert.serial)
-        watcher = Watcher.objects.create(name="User", mail="user@example.com")
 
-        response = self.client.post(
-            self.change_url(),
-            data={
-                "watchers": [watcher.pk],
-            },
-        )
+        watcher = Watcher.objects.create(name="User", mail="user@example.com")
+        response = self.client.post(self.change_url(), data={"watchers": [watcher.pk]})
 
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, self.changelist_url)
-        self.assertEqual(list(cert.watchers.all()), [watcher])
+        self.assertEqual(list(self.obj.watchers.all()), [watcher])
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
