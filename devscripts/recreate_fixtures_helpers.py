@@ -260,7 +260,7 @@ def _generate_contrib_files(data):
         ca = CertificateAuthority(name=name)
         ca.update_certificate(parsed)
 
-        _update_contrib(parsed, data, ca, name, filename)
+        _update_contrib(parsed, data, ca, name, filename.name)
         data[name]["type"] = "ca"
         data[name]["pathlen"] = ca.pathlen
 
@@ -287,7 +287,7 @@ def _generate_contrib_files(data):
         parsed = x509.load_pem_x509_certificate(pem)
         cert = Certificate()
         cert.update_certificate(parsed)
-        _update_contrib(parsed, data, cert, name, filename)
+        _update_contrib(parsed, data, cert, name, filename.name)
         data[name]["type"] = "cert"
 
         if contrib_ca:
