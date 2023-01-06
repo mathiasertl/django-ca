@@ -321,7 +321,6 @@ class InitCATest(TestCaseMixin, TestCase):
                 name=name,
                 algorithm=hashes.SHA256(),
                 key_type="ECC",
-                key_size=1024,
                 expires=self.expires(720),
                 pathlen=3,
                 issuer_url="http://issuer.ca.example.com",
@@ -336,6 +335,33 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
         self.assertIsInstance(ca.key(None), ec.EllipticCurvePrivateKey)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_dsa_private_key(self) -> None:
+        """Test creating a certificate authority with a DSA private key."""
+
+        name = "test_dsa"
+        with self.assertCreateCASignals() as (pre, post):
+            out, err = self.init_ca(
+                name=name,
+                algorithm=hashes.SHA256(),
+                key_type="DSA",
+                expires=self.expires(720),
+                pathlen=3,
+                issuer_url="http://issuer.ca.example.com",
+                issuer_alt_name=self.issuer_alternative_name(uri("http://ian.ca.example.com")),
+                crl_url=["http://crl.example.com"],
+                ocsp_url="http://ocsp.example.com",
+                ca_issuer_url="http://ca.issuer.ca.example.com",
+            )
+        self.assertTrue(pre.called)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+        ca_key = typing.cast(dsa.DSAPrivateKey, ca.key())
+        self.assertIsInstance(ca_key, dsa.DSAPrivateKey)
+        self.assertEqual(ca_key.key_size, 1024)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self) -> None:

@@ -45,24 +45,18 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
         for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
-            raw_crl = cache.get(key)
-
             if certs[ca.name]["key_type"] == "DSA":
-                self.assertIsNone(raw_crl)
+                hash_algorithm = hashes.SHA256
             else:
-                crl = x509.load_der_x509_crl(cache.get(key))
-                self.assertIsNotNone(crl)
-                self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+                hash_algorithm = hashes.SHA512
 
-            key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
-            raw_crl = cache.get(key)
+            key = get_crl_cache_key(ca.serial, hash_algorithm(), Encoding.DER, "ca")
+            crl = x509.load_der_x509_crl(cache.get(key))
+            self.assertIsInstance(crl.signature_hash_algorithm, hash_algorithm)
 
-            if certs[ca.name]["key_type"] == "DSA":
-                self.assertIsNone(raw_crl)
-            else:
-                crl = x509.load_der_x509_crl(cache.get(key))
-                self.assertIsNotNone(crl)
+            key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.DER, "user")
+            crl = x509.load_der_x509_crl(cache.get(key))
+            self.assertIsInstance(crl.signature_hash_algorithm, hash_algorithm)
 
     @override_tmpcadir()
     def test_serial(self) -> None:
@@ -74,9 +68,8 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
 
         key = get_crl_cache_key(self.ca.serial, hashes.SHA512(), Encoding.DER, "ca")
         crl = x509.load_der_x509_crl(cache.get(key))
-        self.assertIsNotNone(crl)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
 
         key = get_crl_cache_key(self.ca.serial, hashes.SHA512(), Encoding.DER, "user")
         crl = x509.load_der_x509_crl(cache.get(key))
-        self.assertIsNotNone(crl)
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)

@@ -533,10 +533,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test generate_ocsp_key()."""
 
         for name, ca in self.usable_cas:
-            # Generating OCSP keys for DSA-based private keys is no longer supported.
-            if certs[name]["key_type"] == "DSA":
-                continue
-
             with self.generate_ocsp_key(ca) as (key, cert):
                 self.assertIsInstance(key, rsa.RSAPrivateKey)
 
@@ -545,10 +541,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test generate_ocsp_key() with ECC keys."""
 
         for name, ca in self.usable_cas:
-            # Generating OCSP keys for DSA-based private keys is no longer supported.
-            if certs[name]["key_type"] == "DSA":
-                continue
-
             with self.generate_ocsp_key(ca, key_type="ECC") as (key, cert):
                 key = typing.cast(ec.EllipticCurvePrivateKey, key)
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)

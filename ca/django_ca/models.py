@@ -943,17 +943,10 @@ class CertificateAuthority(X509CertMixin):
         .. versionchanged:: 1.22.0
 
            This function now always generates new CRLs.
-
-        .. versionchanged:: 1.23.0
-
-            The function will raise ``ValueError`` for CAs with a DSA private key.
         """
 
         password = password or self.get_password()
         ca_key = self.key(password)
-
-        if isinstance(ca_key, dsa.DSAPrivateKey):
-            raise ValueError("Generating CRLs for DSA keys is not supported.")
 
         if algorithm is not None:
             algorithm = parse_hash_algorithm(algorithm)
@@ -964,7 +957,14 @@ class CertificateAuthority(X509CertMixin):
             if overrides.get("skip"):
                 continue
 
-            algorithm = algorithm or parse_hash_algorithm(overrides.get("algorithm", config.get("algorithm")))
+            if not algorithm:
+                # DSA keys don't work with SHA512, so add an override for SHA256 as default (the user may
+                # specify their own override instead).
+                if isinstance(ca_key, dsa.DSAPrivateKey):
+                    overrides.setdefault("algorithm", hashes.SHA256)
+
+                algorithm = parse_hash_algorithm(overrides.get("algorithm", config.get("algorithm")))
+
             expires = overrides.get("expires", config.get("expires", 86400))
             scope = overrides.get("scope", config.get("scope"))
             full_name = overrides.get("full_name", config.get("full_name"))
@@ -1203,10 +1203,6 @@ class CertificateAuthority(X509CertMixin):
     ) -> Tuple[str, str, "Certificate"]:
         """Generate OCSP keys for this CA.
 
-        .. versionchanged:: 1.23.0
-
-            The function will raise ``ValueError`` for CAs with a DSA private key.
-
         Parameters
         ----------
 
@@ -1234,10 +1230,6 @@ class CertificateAuthority(X509CertMixin):
         """
 
         password = password or self.get_password()
-
-        # Generating OCSP keys for
-        if isinstance(self.key(password), dsa.DSAPrivateKey):
-            raise ValueError("Generating OCSP keys for DSA keys is not supported.")
 
         validate_key_parameters(key_size, key_type, ecc_curve)
         expires = parse_expires(expires)

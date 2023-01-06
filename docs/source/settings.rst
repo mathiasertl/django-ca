@@ -60,17 +60,35 @@ CA_CRL_PROFILES
               'algorithm': 'SHA512',
               'expires': 86400,
               'scope': 'user',
-              'encodings': ['DER', ],
+              'encodings': ["DER", "PEM"],
           },
           'ca': {
               'algorithm': 'SHA512',
               'expires': 86400,
               'scope': 'ca',
-              'encodings': ['DER', ],
+              'encodings': ["DER", "PEM"],
           },
       }
 
-   A set of CRLs to create using automated tasks.
+   A set of CRLs to create using automated tasks. The default value is usually fine.
+
+   You may also specify an ``"OVERRIDES"`` key for a particular profile to specify custom behavior for select
+   certificate authorities named by serial. It can set the same values as a general profile, plus the
+   ``"skip"`` that disables the certificate authority for a particular profile. For example, to disable a
+   profile for one certificate authority and use a non-standard expiry time for the other::
+
+      {
+          "user": {
+               # other values
+               OVERRIDES: {
+                   "00:11:22": {"skip": True},
+                   "33:44:55": {"expires": 3600},
+               }
+          }
+      }
+
+   Note that the hash algorithm will default to ``"SHA256"`` for certificate authorities with DSA keys, unless
+   you specify a different value in the ``"OVERRIDES"`` value described above.
 
 .. _settings-ca-default-ca:
 

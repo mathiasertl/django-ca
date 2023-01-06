@@ -26,7 +26,7 @@ import requests
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa, ec
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import ExtensionOID
 
 from django.db import transaction
@@ -79,12 +79,6 @@ def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
 def cache_crl(serial: str, **kwargs: Any) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
-
-    # Generating CRLs for DSA-based private keys is no longer supported.
-    password = kwargs.get("password", ca.get_password())
-    if isinstance(ca.key(password), dsa.DSAPrivateKey):
-        return
-
     ca.cache_crls(**kwargs)
 
 
@@ -114,9 +108,6 @@ def generate_ocsp_key(
     """Task to generate an OCSP key for the CA named by `serial`."""
 
     ca = CertificateAuthority.objects.get(serial=serial)
-    password = kwargs.get("password", ca.get_password())
-    if isinstance(ca.key(password), dsa.DSAPrivateKey):
-        return
 
     parsed_expires: Optional[timedelta] = None
     parsed_algorithm: Optional[hashes.HashAlgorithm] = None
