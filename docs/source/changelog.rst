@@ -10,6 +10,7 @@ ChangeLog
 1.23.0 (TBR)
 ************
 
+* Add support for cryptography 39.0.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 * The default hash algorithm for certificate authorities with a DSA key pair can now be configured using

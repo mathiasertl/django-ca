@@ -13,7 +13,7 @@
 
 """Test AcmeOrderFinalizeView."""
 
-import unittest
+import os
 from http import HTTPStatus
 from unittest import mock
 
@@ -25,7 +25,6 @@ from OpenSSL.crypto import X509Req
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
-from cryptography.utils import CryptographyDeprecationWarning
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -188,34 +187,20 @@ class AcmeOrderFinalizeViewTestCase(
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "CSR signature is not valid.")
 
-    @unittest.skipIf(settings.CRYPTOGRAPHY_VERSION >= (39, 0), "cg>=39 removed MD5/SHA1.")
     @override_tmpcadir()
     def test_csr_bad_algorithm(self) -> None:
         """Test posting a CSR with a bad algorithm."""
 
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(x509.Name([]))
-            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-        )
-        msg = r"^MD5 signatures are deprecated and support for them will be removed in the next version\.$"
-        if settings.CRYPTOGRAPHY_VERSION >= (38, 0):
-            with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
-                signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
-        else:
-            signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.MD5())
+        with open(os.path.join(settings.FIXTURES_DIR, "md5.csr.pem"), "rb") as stream:
+            signed_csr = x509.load_pem_x509_csr(stream.read())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(signed_csr), kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "md5: Insecure hash algorithm.")
 
-        msg = r"^SHA1 signatures are deprecated and support for them will be removed in the next version\.$"
-        if settings.CRYPTOGRAPHY_VERSION >= (38, 0):
-            with self.assertWarnsRegex(CryptographyDeprecationWarning, msg):
-                signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.SHA1())
-        else:
-            signed_csr = csr.sign(certs["root-cert"]["key"]["parsed"], hashes.SHA1())
+        with open(os.path.join(settings.FIXTURES_DIR, "sha1.csr.pem"), "rb") as stream:
+            signed_csr = x509.load_pem_x509_csr(stream.read())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.get_message(signed_csr), kid=self.kid)

@@ -1319,19 +1319,3 @@ class CRLDistributionPointsTestCaseBase(
   * Reasons: ca_compromise, key_compromise""",
             },
         }
-
-    def test_none_value(self) -> None:
-        """Test that we can pass a None value for GeneralNameList items."""
-        with self.assertRemovedExtensionWarning(self.ext_class_name):
-            ext = self.ext_class()
-        self.assertEqual(ext.extension_type, self.ext_class_type(distribution_points=[]))
-
-        ext.append(DistributionPoint({"full_name": None}))
-        self.assertEqual(
-            ext.extension_type,
-            self.ext_class_type(
-                distribution_points=[
-                    x509.DistributionPoint(full_name=None, relative_name=None, reasons=None, crl_issuer=None)
-                ]
-            ),
-        )
