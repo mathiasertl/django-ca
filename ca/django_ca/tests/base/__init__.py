@@ -186,7 +186,7 @@ certs["cloudflare_1"] = {
     },
     "key_usage": {
         "critical": True,
-        "value": ["digitalSignature"],
+        "value": ["digital_signature"],
     },
     "precert_poison": {"critical": True},
     "subject_alternative_name": {
