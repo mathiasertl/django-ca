@@ -1,8 +1,0 @@
-pyenv:
-    dev: true
-    requirements:
-        - requirements.txt
-        - requirements-dev.txt
-requirements:
-    ignore:
-        - Sphinx
