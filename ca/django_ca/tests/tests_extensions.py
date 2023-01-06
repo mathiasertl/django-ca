@@ -25,7 +25,7 @@ from django.test import TestCase
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
-from django_ca.constants import ExtensionOID  # type: ignore[attr-defined]
+from django_ca.constants import KEY_USAGE_NAMES, ExtensionOID  # type: ignore[attr-defined]
 from django_ca.deprecation import RemovedInDjangoCA124Warning
 from django_ca.extensions import (
     KEY_TO_EXTENSION,
@@ -2595,7 +2595,9 @@ DistributionPoint:
             )
 
         if config.get("key_usage_serialized"):
-            kus = [f"<li>{ku}</li>" for ku in config["key_usage_serialized"]["value"]]
+            kus = sorted(
+                [f"<li>{KEY_USAGE_NAMES[ku]}</li>" for ku in config["key_usage_serialized"]["value"]]
+            )
             self.admin_html[name].setdefault(ExtensionOID.KEY_USAGE, f"<ul>{''.join(kus)}</ul>")
 
         # NOTE: Custom extension class sorts values, but we render them in order as they appear in the
@@ -2658,26 +2660,28 @@ DistributionPoint:
             self.setUpCert(name)
             self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: False")
 
+    def assertAdminHTML(self, name: str, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
+        """Assert that the actual extension HTML is equivalent to the expected HTML."""
+        for oid, ext in cert.x509_extensions.items():
+            self.assertIn(oid, self.admin_html[name], name)
+            admin_html = self.admin_html[name][oid]
+            admin_html = f'\n<div class="django-ca-extension-value">{admin_html}</div>'
+            actual = extension_as_admin_html(ext)
+
+            msg_prefix = f"{name}, {oid}: actual:\n{actual}\n"
+            self.assertInHTML(admin_html, mark_safe(actual), msg_prefix=msg_prefix)
+
     def test_cas_as_html(self) -> None:
         """Test output of CAs"""
 
         for name, ca in self.cas.items():
-            for oid, ext in ca.x509_extensions.items():
-                admin_html = self.admin_html[name][oid]
-                admin_html = f"<div class='django-ca-extension-value'>{admin_html}</div>"
-                actual = extension_as_admin_html(ext)
-                self.assertInHTML(admin_html, mark_safe(actual), msg_prefix=actual)
+            self.assertAdminHTML(name, ca)
 
     def test_certs_as_html(self) -> None:
         """Test output of CAs"""
 
         for name, cert in self.certs.items():
-            for oid, ext in cert.x509_extensions.items():
-                self.assertIn(oid, self.admin_html[name], name)
-                admin_html = self.admin_html[name][oid]
-                admin_html = f"<div class='django-ca-extension-value'>{admin_html}</div>"
-                actual = extension_as_admin_html(ext)
-                self.assertInHTML(admin_html, mark_safe(actual), msg_prefix=f"{name}, {oid}: {actual}")
+            self.assertAdminHTML(name, cert)
 
 
 class TypeErrorTests(TestCase):
