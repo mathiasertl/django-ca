@@ -41,11 +41,6 @@ from cryptography.x509.oid import NameOID
 
 from devscripts import config
 
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-
 
 @contextmanager
 def redirect_output():
@@ -90,7 +85,7 @@ def console_include(path, context):
     env = jinja2.Environment(autoescape=False, undefined=jinja2.StrictUndefined)
 
     with open(os.path.join(config.DOC_TEMPLATES_DIR, path), encoding="utf-8") as stream:
-        commands = yaml.load(stream, Loader=Loader)["commands"]
+        commands = yaml.safe_load(stream)["commands"]
 
     clean_commands = []
     context.setdefault("pwd", os.getcwd())

@@ -456,7 +456,7 @@ def _validate_default_version(path, release):
     if not os.path.exists(path):
         return err(f"{path}: File not found.")
     with open(path, encoding="utf-8") as stream:
-        services = yaml.load(stream, Loader=yaml.Loader)["services"]
+        services = yaml.safe_load(stream)["services"]
 
     errors = 0
     expected_image = f"{config.DOCKER_TAG}:${{DJANGO_CA_VERSION:-{release}}}"
