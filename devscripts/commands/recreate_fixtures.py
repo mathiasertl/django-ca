@@ -61,8 +61,15 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     from django_ca.subject import Subject
 
     # pylint: enable=import-outside-toplevel
-
-    now = datetime.utcnow().replace(second=0, minute=0)
+    # The time-offsets from now from which CAs/certs are valid starts 25 days in the past, with the largest
+    # offset being 20 days. So the latest valid_from of any certs is five days in the past from when you run
+    # this script.
+    #
+    # This is important in tests, as the "everything_valid" timestamp is 23 days after the date computed
+    # below. If you use freezegun in a test and log in in the setUp method (before freezegun freezes time),
+    # the session starts with the current, real time. Django ignores sessions that start in the future, so
+    # tests that use the test client would fail if "everything_valid" is in the future.
+    now = datetime.utcnow().replace(second=0, minute=0) - timedelta(days=25)
 
     manage("migrate", verbosity=0)
 

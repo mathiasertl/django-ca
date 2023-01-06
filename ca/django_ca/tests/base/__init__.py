@@ -343,7 +343,9 @@ timestamps["before_child"] = timestamps["base"] + timedelta(days=1)
 timestamps["after_child"] = timestamps["base"] + timedelta(days=4)
 timestamps["ca_certs_valid"] = timestamps["base"] + timedelta(days=7)
 timestamps["profile_certs_valid"] = timestamps["base"] + timedelta(days=12)
-timestamps["everything_valid"] = timestamps["base"] + timedelta(days=60)
+
+# When creating fixutres, latest valid_from from of any generated cert is 20 days, we need to be after that
+timestamps["everything_valid"] = timestamps["base"] + timedelta(days=23)
 timestamps["cas_expired"] = timestamps["base"] + timedelta(days=731, seconds=3600)
 timestamps["ca_certs_expiring"] = certs["root-cert"]["valid_until"] - timedelta(days=3)
 timestamps["ca_certs_expired"] = certs["root-cert"]["valid_until"] + timedelta(seconds=3600)
