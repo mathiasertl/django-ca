@@ -177,8 +177,7 @@ class InitCATest(TestCaseMixin, TestCase):
                     name,
                     "/CN=args.example.com",
                     "--algorithm=SHA256",  # hashes.SHA256(),
-                    "--key-type=DSA",
-                    "--key-size=1024",
+                    "--key-type=ECC",
                     "--expires=720",
                     "--pathlen=3",
                     "--issuer-url=http://issuer.ca.example.com",
@@ -213,12 +212,12 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
         # test the private key
-        key = typing.cast(RSAPrivateKey, ca.key(None))
-        self.assertIsInstance(key, dsa.DSAPrivateKey)
-        self.assertEqual(key.key_size, 1024)
+        key = typing.cast(ec.EllipticCurvePrivateKey, ca.key(None))
+        self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
+        self.assertEqual(key.key_size, 256)
 
         self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA256)
-        self.assertIsInstance(ca.pub.loaded.public_key(), dsa.DSAPublicKey)
+        self.assertIsInstance(ca.pub.loaded.public_key(), ec.EllipticCurvePublicKey)
         self.assertEqual(ca.pathlen, 3)
         self.assertEqual(ca.max_pathlen, 3)
         self.assertTrue(ca.allows_intermediate_ca)

@@ -105,6 +105,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         "dsa": {
             "type": "ca",
             "algorithm": DSA_ALGORITHM,
+            "key_type": "DSA",
             "password": None,
             "basic_constraints": {"critical": True, "value": {"ca": True, "pathlen": DSA_PATHLEN}},
             "pathlen": DSA_PATHLEN,

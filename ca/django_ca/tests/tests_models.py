@@ -419,7 +419,11 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 "PEM",
             ]
 
-        for _name, ca in self.usable_cas:
+        for name, ca in self.usable_cas:
+            # Caching CRLs for DSA-based private keys is no longer supported.
+            if certs[name]["key_type"] == "DSA":
+                continue
+
             der_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
             pem_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "user")
             der_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
@@ -529,6 +533,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test generate_ocsp_key()."""
 
         for name, ca in self.usable_cas:
+            # Generating OCSP keys for DSA-based private keys is no longer supported.
+            if certs[name]["key_type"] == "DSA":
+                continue
+
             with self.generate_ocsp_key(ca) as (key, cert):
                 self.assertIsInstance(key, rsa.RSAPrivateKey)
 
@@ -537,6 +545,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test generate_ocsp_key() with ECC keys."""
 
         for name, ca in self.usable_cas:
+            # Generating OCSP keys for DSA-based private keys is no longer supported.
+            if certs[name]["key_type"] == "DSA":
+                continue
+
             with self.generate_ocsp_key(ca, key_type="ECC") as (key, cert):
                 key = typing.cast(ec.EllipticCurvePrivateKey, key)
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
@@ -1000,7 +1012,9 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_jwk(self) -> None:
         """Test JWK property."""
         for name, ca in self.cas.items():
-            if certs[name]["key_type"] == "ECC":
+            if certs[name]["key_type"] == "DSA":
+                continue  # josepy does not support loading DSA keys
+            elif certs[name]["key_type"] == "ECC":
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKEC, name)
             else:
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA)

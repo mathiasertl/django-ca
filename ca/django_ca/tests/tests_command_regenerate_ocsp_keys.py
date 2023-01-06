@@ -128,6 +128,10 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.cas["pwd"].delete()
         del self.cas["pwd"]
 
+        # Delete DSA CA, which is not supported anymore
+        self.cas["dsa"].delete()
+        del self.cas["dsa"]
+
         stdout, stderr = self.cmd("regenerate_ocsp_keys")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")

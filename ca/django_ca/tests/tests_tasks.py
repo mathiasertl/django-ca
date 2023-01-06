@@ -89,15 +89,23 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         hash_cls = hashes.SHA512
         enc_cls = Encoding.DER
 
-        for data in self.cas.values():
-            tasks.cache_crl(data.serial)
+        for ca in self.cas.values():
+            tasks.cache_crl(ca.serial)
 
-            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
+            key = get_crl_cache_key(ca.serial, hash_cls(), enc_cls, "ca")
+            raw_crl = cache.get(key)
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertIsNone(raw_crl)
+            else:
+                crl = x509.load_der_x509_crl(raw_crl)
+                self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
-            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "user")
-            crl = x509.load_der_x509_crl(cache.get(key))
+            raw_crl = cache.get(key)
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertIsNone(raw_crl)
+            else:
+                key = get_crl_cache_key(ca.serial, hash_cls(), enc_cls, "user")
+                crl = x509.load_der_x509_crl(raw_crl)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -107,13 +115,21 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         enc_cls = Encoding.DER
         tasks.cache_crls()
 
-        for data in self.cas.values():
-            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
+        for ca in self.cas.values():
+            key = get_crl_cache_key(ca.serial, hash_cls(), enc_cls, "ca")
+            raw_crl = cache.get(key)
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertIsNone(raw_crl)
+            else:
+                crl = x509.load_der_x509_crl(raw_crl)
+                self.assertIsInstance(crl.signature_hash_algorithm, hash_cls)
 
-            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "user")
-            crl = x509.load_der_x509_crl(cache.get(key))
+            key = get_crl_cache_key(ca.serial, hash_cls(), enc_cls, "user")
+            raw_crl = cache.get(key)
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertIsNone(raw_crl)
+            else:
+                crl = x509.load_der_x509_crl(raw_crl)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_expired"])
@@ -155,8 +171,12 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertFalse(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+                self.assertFalse(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+            else:
+                self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+                self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
     def test_all(self) -> None:
@@ -165,9 +185,12 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
         tasks.generate_ocsp_keys()
 
         for ca in self.cas.values():
-            tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertFalse(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+                self.assertFalse(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+            else:
+                self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
+                self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):

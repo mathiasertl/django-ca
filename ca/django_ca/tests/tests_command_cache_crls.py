@@ -22,7 +22,7 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import get_crl_cache_key
 
@@ -46,13 +46,23 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsNotNone(crl)
-            self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+            raw_crl = cache.get(key)
+
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertIsNone(raw_crl)
+            else:
+                crl = x509.load_der_x509_crl(cache.get(key))
+                self.assertIsNotNone(crl)
+                self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
 
             key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsNotNone(crl)
+            raw_crl = cache.get(key)
+
+            if certs[ca.name]["key_type"] == "DSA":
+                self.assertIsNone(raw_crl)
+            else:
+                crl = x509.load_der_x509_crl(cache.get(key))
+                self.assertIsNotNone(crl)
 
     @override_tmpcadir()
     def test_serial(self) -> None:

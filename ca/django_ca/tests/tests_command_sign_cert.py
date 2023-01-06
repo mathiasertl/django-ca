@@ -92,6 +92,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with all usable CAs."""
 
         for name, ca in self.cas.items():
+            # Using a DSA-based CA is no longer supported (and doesn't currently work).
+            if name == "dsa":
+                continue
+
             stdin = self.csr_pem.encode()
 
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:

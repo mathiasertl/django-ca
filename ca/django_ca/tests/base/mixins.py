@@ -527,9 +527,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(cert.revoked_reason, reason)
 
     def assertSignature(  # pylint: disable=invalid-name
-        self,
-        chain: Iterable[CertificateAuthority],
-        cert: Union[Certificate, CertificateAuthority],
+        self, chain: Iterable[CertificateAuthority], cert: Union[Certificate, CertificateAuthority]
     ) -> None:
         """Assert that `cert` is properly signed by `chain`.
 

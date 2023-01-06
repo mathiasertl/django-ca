@@ -943,13 +943,19 @@ class CertificateAuthority(X509CertMixin):
         .. versionchanged:: 1.22.0
 
            This function now always generates new CRLs.
+
+        .. versionchanged:: 1.23.0
+
+            The function will raise ``ValueError`` for CAs with a DSA private key.
         """
 
         password = password or self.get_password()
         ca_key = self.key(password)
-        if isinstance(ca_key, dsa.DSAPrivateKey) and algorithm is None:
-            algorithm = hashes.SHA256()
-        elif algorithm is not None:
+
+        if isinstance(ca_key, dsa.DSAPrivateKey):
+            raise ValueError("Generating CRLs for DSA keys is not supported.")
+
+        if algorithm is not None:
             algorithm = parse_hash_algorithm(algorithm)
 
         for config in ca_settings.CA_CRL_PROFILES.values():
@@ -1197,6 +1203,10 @@ class CertificateAuthority(X509CertMixin):
     ) -> Tuple[str, str, "Certificate"]:
         """Generate OCSP keys for this CA.
 
+        .. versionchanged:: 1.23.0
+
+            The function will raise ``ValueError`` for CAs with a DSA private key.
+
         Parameters
         ----------
 
@@ -1225,11 +1235,9 @@ class CertificateAuthority(X509CertMixin):
 
         password = password or self.get_password()
 
-        # DSA private keys can only sign DSA keys, hash algorithm for DSA keys must be SHA1
+        # Generating OCSP keys for
         if isinstance(self.key(password), dsa.DSAPrivateKey):
-            key_type = "DSA"
-        if key_type == "DSA":
-            algorithm = hashes.SHA256()
+            raise ValueError("Generating OCSP keys for DSA keys is not supported.")
 
         validate_key_parameters(key_size, key_type, ecc_curve)
         expires = parse_expires(expires)

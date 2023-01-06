@@ -18,8 +18,7 @@ import tempfile
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 
 from django.conf import settings
 from django.test import TestCase
@@ -64,11 +63,14 @@ class ImportCATest(TestCaseMixin, TestCase):
             # test the private key
             # NOTE: password is always None since we don't encrypt the stored key with --password
             if data["key_type"] == "ECC":
-                key = typing.cast(EllipticCurvePrivateKey, ca.key())
-                self.assertIsInstance(key, EllipticCurvePrivateKey)
+                key = typing.cast(ec.EllipticCurvePrivateKey, ca.key())
+                self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             elif data["key_type"] == "RSA":
-                key = typing.cast(RSAPrivateKey, ca.key())  # type: ignore[assignment]
-                self.assertIsInstance(key, RSAPrivateKey)
+                key = typing.cast(rsa.RSAPrivateKey, ca.key())  # type: ignore[assignment]
+                self.assertIsInstance(key, rsa.RSAPrivateKey)
+            elif data["key_type"] == "DSA":
+                key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
+                self.assertIsInstance(key, dsa.DSAPrivateKey)
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
 
@@ -107,11 +109,14 @@ class ImportCATest(TestCaseMixin, TestCase):
 
             # test the private key
             if data["key_type"] == "ECC":
-                key = typing.cast(EllipticCurvePrivateKey, ca.key())
-                self.assertIsInstance(key, EllipticCurvePrivateKey)
+                key = typing.cast(ec.EllipticCurvePrivateKey, ca.key())
+                self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             elif data["key_type"] == "RSA":
-                key = typing.cast(RSAPrivateKey, ca.key(None))  # type: ignore[assignment]
-                self.assertIsInstance(key, RSAPrivateKey)
+                key = typing.cast(rsa.RSAPrivateKey, ca.key(None))  # type: ignore[assignment]
+                self.assertIsInstance(key, rsa.RSAPrivateKey)
+            elif data["key_type"] == "DSA":
+                key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
+                self.assertIsInstance(key, dsa.DSAPrivateKey)
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
 
@@ -144,8 +149,8 @@ class ImportCATest(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(TypeError, "^Password was not given but private key is encrypted$"):
             ca.key(None)
 
-        key = typing.cast(RSAPrivateKey, ca.key(password))
-        self.assertIsInstance(key, RSAPrivateKey)
+        key = typing.cast(rsa.RSAPrivateKey, ca.key(password))
+        self.assertIsInstance(key, rsa.RSAPrivateKey)
         self.assertEqual(key.key_size, certs["root"]["key_size"])
         self.assertEqual(ca.serial, certs["root"]["serial"])
 
