@@ -315,7 +315,7 @@ class CertificateAuthorityManager(
             algorithm = None
         elif algorithm is None:
             if key_type == "DSA":
-                algorithm = hashes.SHA256()
+                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
             else:
                 algorithm = ca_settings.CA_DIGEST_ALGORITHM
         expires = parse_expires(expires)

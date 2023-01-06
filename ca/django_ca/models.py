@@ -961,7 +961,7 @@ class CertificateAuthority(X509CertMixin):
                 # DSA keys don't work with SHA512, so add an override for SHA256 as default (the user may
                 # specify their own override instead).
                 if isinstance(ca_key, dsa.DSAPrivateKey):
-                    overrides.setdefault("algorithm", hashes.SHA256)
+                    overrides.setdefault("algorithm", ca_settings.CA_DSA_DIGEST_ALGORITHM)
 
                 algorithm = parse_hash_algorithm(overrides.get("algorithm", config.get("algorithm")))
 
