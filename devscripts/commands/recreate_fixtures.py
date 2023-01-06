@@ -38,7 +38,6 @@ CHILD_PATHLEN = 0
 ECC_PATHLEN = 1
 PWD_PATHLEN = 2
 DSA_PATHLEN = 3
-DSA_ALGORITHM = hashes.SHA1()
 
 
 def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
@@ -104,7 +103,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         },
         "dsa": {
             "type": "ca",
-            "algorithm": DSA_ALGORITHM,
             "key_type": "DSA",
             "password": None,
             "basic_constraints": {"critical": True, "value": {"ca": True, "pathlen": DSA_PATHLEN}},
@@ -122,7 +120,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         "child-cert": {"ca": "child", "delta": timedelta(days=5), "csr": True},
         "ecc-cert": {"ca": "ecc", "delta": timedelta(days=5), "csr": True, "key_type": "ECC"},
         "pwd-cert": {"ca": "pwd", "delta": timedelta(days=5), "csr": True},
-        "dsa-cert": {"ca": "dsa", "delta": timedelta(days=5), "algorithm": DSA_ALGORITHM, "csr": True},
+        "dsa-cert": {"ca": "dsa", "delta": timedelta(days=5), "csr": True},
         "profile-client": {"ca": "child", "delta": timedelta(days=10), "csr": True},
         "profile-server": {"ca": "child", "delta": timedelta(days=10), "csr": True},
         "profile-webserver": {"ca": "child", "delta": timedelta(days=10), "csr": True},
