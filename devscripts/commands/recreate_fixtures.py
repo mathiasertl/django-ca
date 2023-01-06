@@ -417,7 +417,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         fixture_data = {"timestamp": now.strftime(TIMEFORMAT), "certs": data, "ocsp": ocsp_data}
 
     with open(out_path, "w", encoding="utf-8") as stream:
-        json.dump(fixture_data, stream, indent=4, cls=CertificateEncoder)
+        json.dump(fixture_data, stream, indent=4, cls=CertificateEncoder, sort_keys=True)
 
 
 class Command(DevCommand):
