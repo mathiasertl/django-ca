@@ -16,6 +16,7 @@
 import abc
 import typing
 from textwrap import indent
+from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -27,6 +28,7 @@ from django_ca import ca_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.management import actions
 from django_ca.models import CertificateAuthority, X509CertMixin
+from django_ca.typehints import PrivateKeyTypes
 from django_ca.utils import add_colons
 
 if typing.TYPE_CHECKING:
@@ -46,9 +48,9 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         parser.add_argument(
             "--algorithm",
             metavar="{sha512,sha256,...}",
-            default=ca_settings.CA_DIGEST_ALGORITHM,
             action=actions.AlgorithmAction,
-            help="The HashAlgorithm that will be used to generate the signature (default: {default}).",
+            help="The HashAlgorithm that will be used to generate the signature (default: "
+            f"{ca_settings.CA_DIGEST_ALGORITHM}, except for DSA keys, where it is SHA256).",
         )
 
     def add_ca(
@@ -125,10 +127,10 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         for ext in cert.sorted_extensions:
             self.print_extension(ext)
 
-    def test_private_key(self, ca: CertificateAuthority, password: typing.Optional[bytes]) -> None:
+    def test_private_key(self, ca: CertificateAuthority, password: Optional[bytes]) -> PrivateKeyTypes:
         """Test that we can load the private key of a CA."""
         try:
-            ca.key(password)
+            return ca.key(password)
         except Exception as ex:
             raise CommandError(str(ex)) from ex
 
@@ -153,7 +155,7 @@ class CertCommandMixin(_Base, metaclass=abc.ABCMeta):
 class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin to add common arguments to commands that create or update a certificate authority."""
 
-    def add_general_args(self, parser: CommandParser, default: typing.Optional[str] = "") -> None:
+    def add_general_args(self, parser: CommandParser, default: Optional[str] = "") -> None:
         """Add some general arguments.
 
         Parameters

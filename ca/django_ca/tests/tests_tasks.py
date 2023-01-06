@@ -16,10 +16,12 @@
 import importlib
 import io
 import types
-import typing
+
+# import typing
 from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
+from typing import Iterator, Optional, Type, Union
 from unittest import mock
 
 import dns.resolver
@@ -92,7 +94,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
             tasks.cache_crl(ca.serial)
 
             if certs[ca.name]["key_type"] == "DSA":
-                hash_cls = hashes.SHA256
+                hash_cls: Type[hashes.HashAlgorithm] = hashes.SHA256
             else:
                 hash_cls = hashes.SHA512
 
@@ -113,7 +115,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             if certs[ca.name]["key_type"] == "DSA":
-                hash_cls = hashes.SHA256
+                hash_cls: Type[hashes.HashAlgorithm] = hashes.SHA256
             else:
                 hash_cls = hashes.SHA512
 
@@ -231,12 +233,12 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     @contextmanager
     def mock_challenge(
         self,
-        challenge: typing.Optional[AcmeChallenge] = None,
+        challenge: Optional[AcmeChallenge] = None,
         status: int = HTTPStatus.OK,
-        content: typing.Optional[bytes] = None,
+        content: Optional[bytes] = None,
         call_count: int = 1,
-        token: typing.Optional[str] = None,
-    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        token: Optional[str] = None,
+    ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock the client fullfilling the challenge."""
 
         raise NotImplementedError
@@ -355,12 +357,12 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
     @contextmanager
     def mock_challenge(
         self,
-        challenge: typing.Optional[AcmeChallenge] = None,
+        challenge: Optional[AcmeChallenge] = None,
         status: int = HTTPStatus.OK,
-        content: typing.Optional[typing.Union[io.BytesIO, bytes]] = None,
+        content: Optional[Union[io.BytesIO, bytes]] = None,
         call_count: int = 1,
-        token: typing.Optional[str] = None,
-    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        token: Optional[str] = None,
+    ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
         challenge = challenge or self.chall
         auth = challenge.auth
@@ -414,12 +416,12 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     @contextmanager
     def mock_challenge(
         self,
-        challenge: typing.Optional[AcmeChallenge] = None,
+        challenge: Optional[AcmeChallenge] = None,
         status: int = HTTPStatus.OK,
-        content: typing.Optional[bytes] = None,
+        content: Optional[bytes] = None,
         call_count: int = 1,
-        token: typing.Optional[str] = None,
-    ) -> typing.Iterator[requests_mock.mocker.Mocker]:
+        token: Optional[str] = None,
+    ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
 
         dns.resolver.reset_default_resolver()

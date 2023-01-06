@@ -150,6 +150,12 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DIGEST_ALGORITHM="foo"):
                 pass
 
+    def test_dsa_digest_algorithm(self) -> None:
+        """Test invalid ``CA_DSA_DIGEST_ALGORITHM``."""
+        with self.assertImproperlyConfigured(r"^Unkown CA_DSA_DIGEST_ALGORITHM: FOO$"):
+            with self.settings(CA_DSA_DIGEST_ALGORITHM="foo"):
+                pass
+
     def test_default_expires(self) -> None:
         """Test invalid ``CA_DEFAULT_EXPIRES``."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$"):

@@ -17,6 +17,7 @@ import typing
 import unittest
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
@@ -68,6 +69,18 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             ca = CertificateAuthority.objects.init(name, self.subject)
         self.assertProperties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertIsInstance(ca.algorithm, hashes.SHA512)
+        ca.key().public_key()  # just access private key to make sure we can load it
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_dsa_key(self) -> None:
+        """Test creating the most basic possible CA."""
+        name = "dsa-ca"
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, self.subject, key_type="DSA")
+        self.assertProperties(ca, name, self.subject)
+        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertIsInstance(ca.algorithm, hashes.SHA256)
         ca.key().public_key()  # just access private key to make sure we can load it
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

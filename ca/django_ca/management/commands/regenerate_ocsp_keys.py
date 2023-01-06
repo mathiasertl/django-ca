@@ -16,8 +16,8 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
 from datetime import timedelta
+from typing import Any, Iterable, Optional
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -64,16 +64,16 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
     def handle(
         self,
-        serials: typing.Iterable[str],
-        profile: typing.Optional[str],
+        serials: Iterable[str],
+        profile: Optional[str],
         expires: timedelta,
-        algorithm: hashes.HashAlgorithm,
+        algorithm: Optional[hashes.HashAlgorithm],
         ecc_curve: ec.EllipticCurve,
         key_size: int,
         key_type: ParsableKeyType,
-        password: typing.Optional[bytes],
+        password: Optional[bytes],
         quiet: bool,
-        **options: typing.Any,
+        **options: Any,
     ) -> None:
         profile = profile or "ocsp"
 
@@ -102,12 +102,16 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
                 continue
 
+            algorithm_name: Optional[str] = None
+            if algorithm is not None:
+                algorithm_name = algorithm.name
+
             run_task(
                 generate_ocsp_key,
                 ca.serial,
                 profile=profile,
                 expires=expires.total_seconds(),
-                algorithm=algorithm.name,
+                algorithm=algorithm_name,
                 key_size=key_size,
                 key_type=key_type,
                 ecc_curve=ecc_curve.name,

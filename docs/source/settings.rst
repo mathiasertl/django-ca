@@ -178,9 +178,10 @@ CA_DEFAULT_SUBJECT
 CA_DIGEST_ALGORITHM
    Default: ``"sha512"``
 
-   The default digest algorithm used to sign certificates.  Note that this setting is also used by the
-   ``init_ca`` command, so if you have any clients that do not understand SHA-512 hashes, you should change
-   this beforehand.
+   The default signature hash algorithm used to sign certificate authorities, certificates and CRLs.
+
+   Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
+   be configured separately using :ref:`settings-ca-dsa-digest-algorithm`.
 
 .. _settings-ca-dir:
 
@@ -189,6 +190,17 @@ CA_DIR
 
    Where the root certificate is stored. The default is a ``files`` directory in the same location as your
    ``manage.py`` file.
+
+
+.. _settings-ca-dsa-digest-algorithm:
+
+CA_DSA_DIGEST_ALGORITHM
+   Default: ``"sha256"``
+
+   .. versionadded:: 1.23.0
+
+   The default hash algorithm used when signing certificate authorities, certificates and CRLs that involve
+   a certificate authority using a DSA private key pair.
 
 .. _settings-ca-file-storage:
 

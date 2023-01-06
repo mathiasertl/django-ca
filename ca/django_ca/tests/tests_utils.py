@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec, ed448
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID, ObjectIdentifier
@@ -465,6 +465,13 @@ class GeneratePrivateKeyTestCase(TestCase):
 
         ed448_key = generate_private_key(None, "Ed448", None)
         self.assertIsInstance(ed448_key, ed448.Ed448PrivateKey)
+
+    def test_dsa_default_key_size(self) -> None:
+        """Test the default DSA key size."""
+
+        key = generate_private_key(None, "DSA", None)
+        self.assertIsInstance(key, dsa.DSAPrivateKey)
+        self.assertEqual(key.key_size, ca_settings.CA_DEFAULT_KEY_SIZE)
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid key type."""

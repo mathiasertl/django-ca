@@ -13,6 +13,8 @@
 
 """Test the cache_crls management command."""
 
+from typing import Type
+
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -46,7 +48,7 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
 
         for ca in self.cas.values():
             if certs[ca.name]["key_type"] == "DSA":
-                hash_algorithm = hashes.SHA256
+                hash_algorithm: Type[hashes.HashAlgorithm] = hashes.SHA256
             else:
                 hash_algorithm = hashes.SHA512
 
@@ -54,7 +56,7 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
             crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsInstance(crl.signature_hash_algorithm, hash_algorithm)
 
-            key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.DER, "user")
+            key = get_crl_cache_key(ca.serial, hash_algorithm(), Encoding.DER, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsInstance(crl.signature_hash_algorithm, hash_algorithm)
 

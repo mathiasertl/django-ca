@@ -19,6 +19,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.test import TestCase
@@ -38,8 +39,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
     default_cert = "root-cert"
-    load_cas = ("root", "child")
-    load_certs = ("root-cert", "no-extensions")
+    load_cas = ("root", "child", "dsa")
+    load_certs = ("root-cert", "dsa-cert", "no-extensions")
 
     def assertResigned(  # pylint: disable=invalid-name
         self, old: Certificate, new: Certificate, new_ca: typing.Optional[CertificateAuthority] = None
@@ -100,6 +101,35 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
         self.assertEqualExt(self.cert, new)
+        self.assertIsInstance(new.algorithm, hashes.SHA512)
+
+    @override_tmpcadir()
+    def test_dsa_ca_resign(self) -> None:
+        """Resign a certificate from a DSA CA."""
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd("resign_cert", self.certs["dsa-cert"].serial)
+        self.assertEqual(stderr, "")
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(self.certs["dsa-cert"], new)
+        self.assertEqualExt(self.certs["dsa-cert"], new)
+        self.assertIsInstance(new.algorithm, hashes.SHA256)
+
+    @override_tmpcadir()
+    def test_custom_algorityhm(self) -> None:
+        """Test resigning a cert with a new algorithm."""
+        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            stdout, stderr = self.cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
+        self.assertEqual(stderr, "")
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(post.call_count, 1)
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(self.cert, new)
+        self.assertEqualExt(self.cert, new)
+        self.assertIsInstance(new.algorithm, hashes.SHA512)
 
     @override_tmpcadir()
     def test_different_ca(self) -> None:

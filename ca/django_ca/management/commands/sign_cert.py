@@ -17,10 +17,12 @@
 """
 
 import sys
-import typing
 from datetime import timedelta
+from typing import Any, List, Optional
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError, CommandParser
@@ -100,16 +102,17 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
     def handle(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         ca: CertificateAuthority,
-        subject: typing.Optional[x509.Name],
-        expires: typing.Optional[timedelta],
-        watch: typing.List[str],
-        password: typing.Optional[bytes],
+        subject: Optional[x509.Name],
+        expires: Optional[timedelta],
+        watch: List[str],
+        password: Optional[bytes],
         cn_in_san: bool,
         csr_path: str,
         bundle: bool,
-        profile: typing.Optional[str],
-        out: typing.Optional[str],
-        **options: typing.Any,
+        profile: Optional[str],
+        out: Optional[str],
+        algorithm: Optional[hashes.HashAlgorithm],
+        **options: Any,
     ) -> None:
         if ca.expires < timezone.now():
             raise CommandError("Certificate Authority has expired.")
@@ -118,11 +121,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         profile_obj = profiles[profile]
         self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)
 
+        # See if we can work with the private key
+        ca_key = self.test_private_key(ca, password)
+
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # get extensions based on profiles
-        extensions: typing.List[x509.Extension[x509.ExtensionType]] = []
+        extensions: List[x509.Extension[x509.ExtensionType]] = []
 
         for ext_type in self.sign_extensions:
             ext_key = EXTENSION_KEYS[ext_type.oid]
@@ -153,6 +159,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         else:
             csr = x509.load_der_x509_csr(csr_bytes)
 
+        if algorithm is None:
+            if isinstance(ca_key, dsa.DSAPrivateKey):
+                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
+            else:
+                algorithm = ca_settings.CA_DIGEST_ALGORITHM
+
         try:
             cert = Certificate.objects.create_cert(
                 ca,
@@ -163,6 +175,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 extensions=extensions,
                 password=password,
                 subject=subject,
+                algorithm=algorithm,
             )
         except Exception as ex:
             raise CommandError(ex) from ex

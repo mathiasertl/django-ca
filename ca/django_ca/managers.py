@@ -16,12 +16,11 @@
 
 import pathlib
 import typing
-from typing import TYPE_CHECKING, Any, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
@@ -47,7 +46,7 @@ from django_ca.utils import (
 )
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from django_ca.models import (
         AcmeAccount,
         AcmeAuthorization,
@@ -82,7 +81,7 @@ else:
 class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
     """Mixin for model managers."""
 
-    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
         # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
         # and does not know about queryset methods comming from the queryset. We typehint basic queryset
         # methods here, so that mypy knows that returned objects are querysets.
@@ -148,7 +147,7 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
     def _extra_extensions(
         self,
         builder: x509.CertificateBuilder,
-        extra_extensions: typing.List[typing.Union[x509.Extension[x509.ExtensionType]]],
+        extra_extensions: List[Union[x509.Extension[x509.ExtensionType]]],
     ) -> x509.CertificateBuilder:
         for ext in extra_extensions:
             if isinstance(ext, x509.Extension):
@@ -164,7 +163,7 @@ class CertificateAuthorityManager(
 ):
     """Model manager for the CertificateAuthority model."""
 
-    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
         # pylint: disable=missing-function-docstring; just defining stubs here
@@ -192,25 +191,25 @@ class CertificateAuthorityManager(
         name: str,
         subject: x509.Name,
         expires: Expires = None,
-        algorithm: typing.Optional[HashAlgorithm] = None,
+        algorithm: Optional[hashes.HashAlgorithm] = None,
         parent: Optional["CertificateAuthority"] = None,
         default_hostname: Optional[Union[bool, str]] = None,
         pathlen: Optional[int] = None,
         issuer_url: Optional[str] = None,
-        issuer_alt_name: typing.Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
+        issuer_alt_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         crl_url: Optional[Iterable[str]] = None,
         ocsp_url: Optional[str] = None,
         ca_issuer_url: Optional[str] = None,
         ca_crl_url: Optional[Sequence[str]] = None,
         ca_ocsp_url: Optional[str] = None,
-        permitted_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
-        excluded_subtrees: typing.Optional[typing.Iterable[x509.GeneralName]] = None,
+        permitted_subtrees: Optional[Iterable[x509.GeneralName]] = None,
+        excluded_subtrees: Optional[Iterable[x509.GeneralName]] = None,
         password: Optional[Union[str, bytes]] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         ecc_curve: Optional[ec.EllipticCurve] = None,
         key_type: ParsableKeyType = "RSA",
         key_size: Optional[int] = None,
-        extra_extensions: Optional[typing.Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        extra_extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
         path: Union[pathlib.PurePath, str] = "ca",
         caa: str = "",
         website: str = "",
@@ -315,7 +314,10 @@ class CertificateAuthorityManager(
         if openssh_ca:
             algorithm = None
         elif algorithm is None:
-            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+            if key_type == "DSA":
+                algorithm = hashes.SHA256()
+            else:
+                algorithm = ca_settings.CA_DIGEST_ALGORITHM
         expires = parse_expires(expires)
 
         if openssh_ca and parent:
@@ -505,7 +507,7 @@ class CertificateManager(
 ):
     """Model manager for the Certificate model."""
 
-    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
         # pylint: disable=missing-function-docstring; just defining stubs here
@@ -572,7 +574,7 @@ class CertificateManager(
 class AcmeAccountManager(AcmeAccountManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeAccount`."""
 
-    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
         # pylint: disable=missing-function-docstring; just defining stubs here

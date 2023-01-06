@@ -1155,13 +1155,13 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     """The name of the view being tested."""
 
     # TODO: we should get rid of this, it's ugly
-    obj: Optional[DjangoCAModel]
+    obj: DjangoCAModelTypeVar
 
     def setUp(self) -> None:
         super().setUp()
         self.user = self.create_superuser()
         self.client.force_login(self.user)
-        self.obj = self.model.objects.first()  # TODO: get rid of this
+        self.obj = self.model.objects.first()  # type: ignore[assignment] # TODO: get rid of this
 
     @property
     def add_url(self) -> str:
@@ -1228,7 +1228,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     def change_url(self, obj: Optional[DjangoCAModel] = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
-        return obj.admin_change_url  # type: ignore[union-attr]
+        return obj.admin_change_url
 
     @property
     def changelist_url(self) -> str:

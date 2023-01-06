@@ -43,18 +43,49 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         "root",
         "child",
         "pwd",
+        "dsa",
     )
     load_certs = ("root-cert",)
 
     @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Test basic creation of a CRL."""
+    def test_rsa_ca(self) -> None:
+        """Test creating a CRL from a RSA key."""
 
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertEqual(list(crl), [])
+
+    @override_tmpcadir()
+    def test_rsa_ca_with_sha256(self) -> None:
+        """Test creating a CRL from a RSA key with a custom algorithm."""
+
+        stdout, stderr = self.cmd(
+            "dump_crl",
+            ca=self.ca,
+            scope="user",
+            stdout=BytesIO(),
+            stderr=BytesIO(),
+            algorithm=hashes.SHA256(),
+        )
+        self.assertEqual(stderr, b"")
+
+        crl = x509.load_pem_x509_crl(stdout)
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
+        self.assertEqual(list(crl), [])
+
+    @override_tmpcadir()
+    def test_dsa_ca(self) -> None:
+        """Test creating a CRL from a DSA key."""
+
+        ca = self.cas["dsa"]
+        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+
+        crl = x509.load_pem_x509_crl(stdout)
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
         self.assertEqual(list(crl), [])
 
     @override_tmpcadir()

@@ -16,11 +16,13 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
 from datetime import timedelta
+from typing import Any, List, Optional
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
@@ -46,7 +48,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
 
-    def get_profile(self, profile: typing.Optional[str], cert: Certificate) -> Profile:
+    def get_profile(self, profile: Optional[str], cert: Certificate) -> Profile:
         """Get requested profile based on command line and given certificate."""
         if profile is not None:
             return profiles[profile]
@@ -64,16 +66,20 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
     def handle(
         self,
         cert: Certificate,
-        ca: typing.Optional[CertificateAuthority],
-        subject: typing.Optional[x509.Name],
-        expires: typing.Optional[timedelta],
-        watch: typing.List[str],
-        password: typing.Optional[bytes],
-        profile: typing.Optional[str],
-        **options: typing.Any,
+        ca: Optional[CertificateAuthority],
+        subject: Optional[x509.Name],
+        expires: Optional[timedelta],
+        watch: List[str],
+        password: Optional[bytes],
+        profile: Optional[str],
+        algorithm: Optional[hashes.HashAlgorithm],
+        **options: Any,
     ) -> None:
         if not ca:
             ca = cert.ca
+
+        # See if we can work with the private key
+        ca_key = self.test_private_key(ca, password)
 
         profile_obj = self.get_profile(profile, cert)
         self.test_options(ca=ca, password=password, expires=expires, profile=profile_obj, **options)
@@ -87,44 +93,39 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         if subject is None:
             subject = cert.subject
 
-        if not options[EXTENSION_KEYS[ExtensionOID.KEY_USAGE]]:
-            key_usage = cert.x509_extensions.get(ExtensionOID.KEY_USAGE)
-        else:
-            key_usage = options[EXTENSION_KEYS[ExtensionOID.KEY_USAGE]]
+        if algorithm is None:
+            if isinstance(ca_key, dsa.DSAPrivateKey):
+                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
+            else:
+                algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
-        if not options[EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]]:
-            ext_key_usage = cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE)
-        else:
-            ext_key_usage = options[EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]]
+        extensions: List[x509.Extension[x509.ExtensionType]] = []
+        have_san = False
+        for ext_type in self.sign_extensions:
+            if not options[EXTENSION_KEYS[ext_type.oid]]:
+                ext = cert.x509_extensions.get(ext_type.oid)
+            else:
+                ext = options[EXTENSION_KEYS[ext_type.oid]]
 
-        if not options[EXTENSION_KEYS[ExtensionOID.TLS_FEATURE]]:
-            tls_feature = cert.x509_extensions.get(ExtensionOID.TLS_FEATURE)
-        else:
-            tls_feature = options[EXTENSION_KEYS[ExtensionOID.TLS_FEATURE]]
-
-        kwargs = {
-            "algorithm": options["algorithm"],
-            "extensions": [],
-            "password": password,
-            "cn_in_san": False,  # we already copy the SAN/CN from the original cert
-        }
-
-        for ext in [key_usage, ext_key_usage, tls_feature]:
             if ext is not None:
-                kwargs["extensions"].append(ext)
+                if ext_type == x509.SubjectAlternativeName:
+                    have_san = True
+                extensions.append(ext)
 
-        if not options[EXTENSION_KEYS[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]:
-            san = cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-        else:
-            san = options[EXTENSION_KEYS[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]]
-        kwargs["extensions"].append(san)
-
-        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not san:
+        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_san is False:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         try:
             cert = Certificate.objects.create_cert(
-                ca=ca, csr=cert.csr.loaded, profile=profile_obj, expires=expires, subject=subject, **kwargs
+                ca=ca,
+                csr=cert.csr.loaded,
+                profile=profile_obj,
+                expires=expires,
+                subject=subject,
+                algorithm=algorithm,
+                extensions=extensions,
+                password=password,
+                cn_in_san=False,  # we already copy the SAN/CN from the original cert
             )
         except Exception as ex:
             raise CommandError(ex) from ex

@@ -20,6 +20,7 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from datetime import timezone as tz
+from typing import Type
 from unittest import mock
 
 import josepy as jose
@@ -420,14 +421,15 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             ]
 
         for name, ca in self.usable_cas:
-            # Caching CRLs for DSA-based private keys is no longer supported.
             if certs[name]["key_type"] == "DSA":
-                continue
+                hash_algorithm: Type[hashes.HashAlgorithm] = hashes.SHA256
+            else:
+                hash_algorithm = hashes.SHA512
 
-            der_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "user")
-            pem_user_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "user")
-            der_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.DER, "ca")
-            pem_ca_key = get_crl_cache_key(ca.serial, hashes.SHA512(), Encoding.PEM, "ca")
+            der_user_key = get_crl_cache_key(ca.serial, hash_algorithm(), Encoding.DER, "user")
+            pem_user_key = get_crl_cache_key(ca.serial, hash_algorithm(), Encoding.PEM, "user")
+            der_ca_key = get_crl_cache_key(ca.serial, hash_algorithm(), Encoding.DER, "ca")
+            pem_ca_key = get_crl_cache_key(ca.serial, hash_algorithm(), Encoding.PEM, "ca")
             user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
             if ca.parent is None:
                 ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
@@ -446,13 +448,41 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
 
             der_user_crl = cache.get(der_user_key)
             pem_user_crl = cache.get(pem_user_key)
-            self.assertCRL(der_user_crl, idp=user_idp, crl_number=0, encoding=Encoding.DER, signer=ca)
-            self.assertCRL(pem_user_crl, idp=user_idp, crl_number=0, encoding=Encoding.PEM, signer=ca)
+            self.assertCRL(
+                der_user_crl,
+                idp=user_idp,
+                crl_number=0,
+                encoding=Encoding.DER,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
+            self.assertCRL(
+                pem_user_crl,
+                idp=user_idp,
+                crl_number=0,
+                encoding=Encoding.PEM,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
 
             der_ca_crl = cache.get(der_ca_key)
             pem_ca_crl = cache.get(pem_ca_key)
-            self.assertCRL(der_ca_crl, idp=ca_idp, crl_number=0, encoding=Encoding.DER, signer=ca)
-            self.assertCRL(pem_ca_crl, idp=ca_idp, crl_number=0, encoding=Encoding.PEM, signer=ca)
+            self.assertCRL(
+                der_ca_crl,
+                idp=ca_idp,
+                crl_number=0,
+                encoding=Encoding.DER,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
+            self.assertCRL(
+                pem_ca_crl,
+                idp=ca_idp,
+                crl_number=0,
+                encoding=Encoding.PEM,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
 
             # cache again - which will force triggering a new computation
             with self.settings(CA_CRL_PROFILES=crl_profiles):
@@ -461,13 +491,41 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             # Get CRLs from cache - we have a new CRLNumber
             der_user_crl = cache.get(der_user_key)
             pem_user_crl = cache.get(pem_user_key)
-            self.assertCRL(der_user_crl, idp=user_idp, crl_number=1, encoding=Encoding.DER, signer=ca)
-            self.assertCRL(pem_user_crl, idp=user_idp, crl_number=1, encoding=Encoding.PEM, signer=ca)
+            self.assertCRL(
+                der_user_crl,
+                idp=user_idp,
+                crl_number=1,
+                encoding=Encoding.DER,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
+            self.assertCRL(
+                pem_user_crl,
+                idp=user_idp,
+                crl_number=1,
+                encoding=Encoding.PEM,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
 
             der_ca_crl = cache.get(der_ca_key)
             pem_ca_crl = cache.get(pem_ca_key)
-            self.assertCRL(der_ca_crl, idp=ca_idp, crl_number=1, encoding=Encoding.DER, signer=ca)
-            self.assertCRL(pem_ca_crl, idp=ca_idp, crl_number=1, encoding=Encoding.PEM, signer=ca)
+            self.assertCRL(
+                der_ca_crl,
+                idp=ca_idp,
+                crl_number=1,
+                encoding=Encoding.DER,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
+            self.assertCRL(
+                pem_ca_crl,
+                idp=ca_idp,
+                crl_number=1,
+                encoding=Encoding.PEM,
+                signer=ca,
+                algorithm=hash_algorithm(),
+            )
 
             # clear caches and skip generation
             cache.clear()
@@ -1006,7 +1064,8 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, ca in self.cas.items():
             if certs[name]["key_type"] == "DSA":
                 continue  # josepy does not support loading DSA keys
-            elif certs[name]["key_type"] == "ECC":
+
+            if certs[name]["key_type"] == "ECC":
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKEC, name)
             else:
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA)

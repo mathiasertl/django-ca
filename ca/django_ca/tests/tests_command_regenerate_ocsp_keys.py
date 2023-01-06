@@ -97,6 +97,18 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
         self.assertKey(self.cas["root"])
 
+    @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
+    def test_hash_algorithm(self) -> None:
+        """Test the hash algorithm option."""
+        with self.mute_celery():
+            stdout, stderr = self.cmd(
+                "regenerate_ocsp_keys", certs["root"]["serial"], "--algorithm", "sha256"
+            )
+
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertKey(self.cas["root"])
+
     @override_tmpcadir(CA_USE_CELERY=True)
     def test_with_celery(self) -> None:
         """Basic test."""
@@ -107,7 +119,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                     {
                         "profile": "ocsp",
                         "expires": 172800.0,
-                        "algorithm": "sha512",
+                        "algorithm": "sha256",
                         "key_size": 1024,
                         "key_type": "RSA",
                         "ecc_curve": "secp256r1",
@@ -117,7 +129,9 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 {},
             ),
         ):
-            stdout, stderr = self.cmd_e2e(["regenerate_ocsp_keys", certs["root"]["serial"]])
+            stdout, stderr = self.cmd_e2e(
+                ["regenerate_ocsp_keys", certs["root"]["serial"], "--algorithm", "sha256"]
+            )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
@@ -127,10 +141,6 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         # Delete pwd_ca, because it will fail, since we do not give a password
         self.cas["pwd"].delete()
         del self.cas["pwd"]
-
-        # Delete DSA CA, which is not supported anymore
-        self.cas["dsa"].delete()
-        del self.cas["dsa"]
 
         stdout, stderr = self.cmd("regenerate_ocsp_keys")
         self.assertEqual(stdout, "")

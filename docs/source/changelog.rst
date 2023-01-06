@@ -12,6 +12,10 @@ ChangeLog
 
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
+* The default hash algorithm for certificate authorities with a DSA key pair can now be configured using
+  :ref:`settings-ca-dsa-digest-algorithm`.
+* The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
+  CRLs. This is not a new feature, but it is now documented.
 
 Backwards incompatible changes
 ==============================

@@ -245,6 +245,13 @@ except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
     raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
 
+_CA_DSA_DIGEST_ALGORITHM = getattr(settings, "CA_DSA_DIGEST_ALGORITHM", "sha256").strip().upper()
+try:
+    CA_DSA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DSA_DIGEST_ALGORITHM)()
+except AttributeError:
+    # pylint: disable=raise-missing-from; not really useful in this context
+    raise ImproperlyConfigured(f"Unkown CA_DSA_DIGEST_ALGORITHM: {_CA_DSA_DIGEST_ALGORITHM}")
+
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
 if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)

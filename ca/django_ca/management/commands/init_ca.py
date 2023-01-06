@@ -18,8 +18,8 @@
 
 import os
 import pathlib
-import typing
 from datetime import timedelta
+from typing import Any, Iterable, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -179,27 +179,27 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         self,
         name: str,
         subject: x509.Name,
-        parent: typing.Optional[CertificateAuthority],
+        parent: Optional[CertificateAuthority],
         expires: timedelta,
         key_size: int,
         key_type: ParsableKeyType,
-        ecc_curve: typing.Optional[ec.EllipticCurve],
-        algorithm: hashes.HashAlgorithm,
-        pathlen: typing.Optional[int],
-        password: typing.Optional[bytes],
-        parent_password: typing.Optional[bytes],
-        crl_url: typing.List[str],
-        ocsp_url: typing.Optional[str],
-        issuer_url: typing.Optional[str],
-        ca_crl_url: typing.List[str],
-        ca_ocsp_url: typing.Optional[str],
-        ca_issuer_url: typing.Optional[str],
-        permit_name: typing.Optional[typing.Iterable[x509.GeneralName]],
-        exclude_name: typing.Optional[typing.Iterable[x509.GeneralName]],
+        ecc_curve: Optional[ec.EllipticCurve],
+        algorithm: Optional[hashes.HashAlgorithm],
+        pathlen: Optional[int],
+        password: Optional[bytes],
+        parent_password: Optional[bytes],
+        crl_url: List[str],
+        ocsp_url: Optional[str],
+        issuer_url: Optional[str],
+        ca_crl_url: List[str],
+        ca_ocsp_url: Optional[str],
+        ca_issuer_url: Optional[str],
+        permit_name: Optional[Iterable[x509.GeneralName]],
+        exclude_name: Optional[Iterable[x509.GeneralName]],
         caa: str,
         website: str,
         tos: str,
-        **options: typing.Any,
+        **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             # TODO: set permissions

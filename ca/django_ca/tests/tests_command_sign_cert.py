@@ -21,6 +21,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
@@ -92,10 +93,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with all usable CAs."""
 
         for name, ca in self.cas.items():
-            # Using a DSA-based CA is no longer supported (and doesn't currently work).
-            if name == "dsa":
-                continue
-
             stdin = self.csr_pem.encode()
 
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -188,6 +185,16 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         finally:
             if os.path.exists(out_path):
                 os.remove(out_path)
+
+    @override_tmpcadir()
+    def test_with_rsa_with_algorithm(self) -> None:
+        """Test creating a CA with a custom algorithm."""
+        stdin = self.csr_pem.encode()
+        stdout, stderr = self.cmd(
+            "sign_cert", ca=self.ca, subject=self.subject, stdin=stdin, algorithm=hashes.SHA256()
+        )
+        cert = Certificate.objects.get()
+        self.assertIsInstance(cert.algorithm, hashes.SHA256)
 
     @override_tmpcadir()
     def test_subject_sort(self) -> None:
