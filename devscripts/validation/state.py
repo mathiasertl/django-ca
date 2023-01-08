@@ -31,11 +31,6 @@ from devscripts.out import err, ok
 
 # pylint: enable=no-name-in-module
 
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-
 CANONICAL_PYPI_NAMES = {
     "acme": "acme",
     "cryptography": "cryptography",
@@ -96,7 +91,7 @@ def check_github_actions_tests(project_config):
     full_path = os.path.join(config.ROOT_DIR, relpath)
     check_path(relpath)
     with open(full_path, encoding="utf-8") as stream:
-        action_config = yaml.load(stream, Loader=Loader)
+        action_config = yaml.safe_load(stream)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
     errors = simple_diff("Python versions", matrix["python-version"], list(project_config["python-map"]))

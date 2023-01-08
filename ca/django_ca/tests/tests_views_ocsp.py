@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from unittest import mock
 
-import asn1crypto
+import asn1crypto.ocsp
 import asn1crypto.x509
 import ocspbuilder
 from cryptography import x509

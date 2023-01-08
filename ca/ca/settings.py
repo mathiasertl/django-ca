@@ -7,11 +7,6 @@ from django.core.exceptions import ImproperlyConfigured
 
 try:
     import yaml
-
-    try:
-        from yaml import CLoader as Loader
-    except ImportError:
-        from yaml import Loader  # type: ignore
 except ImportError:
     yaml = False
 
@@ -222,7 +217,7 @@ if not _skip_local_config and yaml is not False:
     for _filename, _path in _settings_files:
         _full_path = os.path.join(_path, _filename)
         with open(_full_path) as stream:
-            data = yaml.load(stream, Loader=Loader)
+            data = yaml.safe_load(stream)
         if not isinstance(data, dict):
             raise ImproperlyConfigured("%s: File is not a key/value mapping." % _full_path)
 
