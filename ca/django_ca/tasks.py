@@ -107,7 +107,7 @@ def generate_ocsp_key(
 ) -> Tuple[str, str, int]:
     """Task to generate an OCSP key for the CA named by `serial`."""
 
-    ca = CertificateAuthority.objects.get(serial=serial)
+    ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
 
     parsed_expires: Optional[timedelta] = None
     parsed_algorithm: Optional[hashes.HashAlgorithm] = None

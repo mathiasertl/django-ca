@@ -592,18 +592,25 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
 
         for name, ca in self.usable_cas:
             with self.generate_ocsp_key(ca) as (key, cert):
-                self.assertIsInstance(key, rsa.RSAPrivateKey)
+                self.assertIsInstance(key, type(ca.key()))
 
     @override_tmpcadir(CA_DEFAULT_ECC_CURVE="SECP192R1")
     def test_generate_ocsp_key_ecc(self) -> None:
         """Test generate_ocsp_key() with ECC keys."""
 
-        for name, ca in self.usable_cas:
-            with self.generate_ocsp_key(ca, key_type="ECC") as (key, cert):
-                key = typing.cast(ec.EllipticCurvePrivateKey, key)
-                self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
-                self.assertIsInstance(key.curve, ec.SECP192R1)
+        # ECC key for an ECC based CA should inherit the key
+        with self.generate_ocsp_key(self.cas["ecc"], key_type="ECC") as (key, cert):
+            key = typing.cast(ec.EllipticCurvePrivateKey, key)
+            self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
+            self.assertIsInstance(key.curve, ec.SECP256R1)
 
+        # None ECC key curves inherit curve from default
+        with self.generate_ocsp_key(self.cas["root"], key_type="ECC") as (key, cert):
+            key = typing.cast(ec.EllipticCurvePrivateKey, key)
+            self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
+            self.assertIsInstance(key.curve, ca_settings.CA_DEFAULT_ECC_CURVE)
+
+        for name, ca in self.usable_cas:
             # pass a custom ecc curve
             with self.generate_ocsp_key(ca, key_type="ECC", ecc_curve=ec.BrainpoolP256R1()) as (key, cert):
                 key = typing.cast(ec.EllipticCurvePrivateKey, key)

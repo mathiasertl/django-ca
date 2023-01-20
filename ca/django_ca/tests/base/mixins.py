@@ -110,7 +110,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         # Set `self.ca` as a default certificate authority (if at least one is loaded)
         if len(self.load_cas) == 1:  # only one CA specified, set self.ca for convenience
-            self.ca = self.cas[self.load_cas[0]]
+            self.ca: CertificateAuthority = self.cas[self.load_cas[0]]
         elif self.load_cas:
             if self.default_ca not in self.load_cas:  # pragma: no cover
                 self.fail(f"{self.default_ca}: Not in {self.load_cas}.")

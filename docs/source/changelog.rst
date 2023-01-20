@@ -17,6 +17,8 @@ ChangeLog
   :ref:`settings-ca-dsa-digest-algorithm`.
 * The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
   CRLs. This is not a new feature, but it is now documented.
+* Use ``yaml.safe_load`` to load configuration files to protect against malicious configuration.
+* OCSP keys will use the same signature hash algorithm as their certificate authority by default.
 
 Backwards incompatible changes
 ==============================
