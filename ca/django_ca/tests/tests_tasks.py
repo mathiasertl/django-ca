@@ -424,7 +424,8 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
 
-        dns.resolver.reset_default_resolver()
+        # TYPEHINT NOTE: https://github.com/rthalley/dnspython/pull/889/
+        dns.resolver.reset_default_resolver()  # type: ignore[no-untyped-call]
         challenge = challenge or self.chall
         domain = self.auth.value
         if content is None:

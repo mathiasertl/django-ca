@@ -145,7 +145,9 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
     @contextmanager
     def mock_response(self, domain: str, *responses: typing.Iterable[bytes]) -> typing.Iterator[mock.Mock]:
         """Mock TXT responses for the given domain."""
-        dns.resolver.reset_default_resolver()
+        # TYPEHINT NOTE: https://github.com/rthalley/dnspython/pull/889/
+        dns.resolver.reset_default_resolver()  # type: ignore[no-untyped-call]
+
         txt_responses = [self.to_txt_record(resp) for resp in responses]
 
         with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_mock:
