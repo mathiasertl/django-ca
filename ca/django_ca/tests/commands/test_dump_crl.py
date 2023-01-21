@@ -146,14 +146,28 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
         root = self.cas["root"]
         stdout, stderr = self.cmd("dump_crl", ca=root, scope=None, stdout=BytesIO(), stderr=BytesIO())
-        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)
+        self.assertCRL(
+            stdout,
+            encoding=Encoding.PEM,
+            expires=86400,
+            signer=root,
+            idp=None,
+            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+        )
         self.assertEqual(stderr, b"")
 
         # ... but the child CA should have one
         child = self.cas["child"]
         idp = self.get_idp(full_name=self.get_idp_full_name(child))
         stdout, stderr = self.cmd("dump_crl", ca=child, scope=None, stdout=BytesIO(), stderr=BytesIO())
-        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=child, idp=idp)
+        self.assertCRL(
+            stdout,
+            encoding=Encoding.PEM,
+            expires=86400,
+            signer=child,
+            idp=idp,
+            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+        )
         self.assertEqual(stderr, b"")
 
     @override_tmpcadir()
@@ -187,7 +201,14 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             stdout=BytesIO(),
             stderr=BytesIO(),
         )
-        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=root, idp=None)
+        self.assertCRL(
+            stdout,
+            encoding=Encoding.PEM,
+            expires=86400,
+            signer=root,
+            idp=None,
+            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+        )
         self.assertEqual(stderr, b"")
 
         child = self.cas["child"]  # CRL for child CA would normally include extension
@@ -200,7 +221,14 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             stdout=BytesIO(),
             stderr=BytesIO(),
         )
-        self.assertCRL(stdout, encoding=Encoding.PEM, expires=86400, signer=child, idp=None)
+        self.assertCRL(
+            stdout,
+            encoding=Encoding.PEM,
+            expires=86400,
+            signer=child,
+            idp=None,
+            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+        )
         self.assertEqual(stderr, b"")
 
     @override_tmpcadir()

@@ -27,6 +27,8 @@ from django_ca.tests.base.mixins import TestCaseMixin
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 {ecc[serial_colons]} - {ecc[name]}{ecc_state}
+{ed25519[serial_colons]} - {ed25519[name]}{ed25519_state}
+{ed448[serial_colons]} - {ed448[name]}{ed448_state}
 {pwd[serial_colons]} - {pwd[name]}{pwd_state}
 {root[serial_colons]} - {root[name]}{root_state}
 {child[serial_colons]} - {child[name]}{child_state}
@@ -67,6 +69,8 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 {certs['digicert_sha2']['serial_colons']} - {certs['digicert_sha2']['name']}
 {certs['dsa']['serial_colons']} - {certs['dsa']['name']}
 {certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['ed25519']['serial_colons']} - {certs['ed25519']['name']}
+{certs['ed448']['serial_colons']} - {certs['ed448']['name']}
 {certs['pwd']['serial_colons']} - {certs['pwd']['name']}
 {certs['root']['serial_colons']} - {certs['root']['name']}
 {certs['child']['serial_colons']} - {certs['child']['name']}
@@ -124,6 +128,8 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             stdout,
             f"""{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
 {certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['ed25519']['serial_colons']} - {certs['ed25519']['name']}
+{certs['ed448']['serial_colons']} - {certs['ed448']['name']}
 {certs['pwd']['serial_colons']} - {certs['pwd']['name']}
 {certs['root']['serial_colons']} - {certs['root']['name']}
 └───{certs['child']['serial_colons']} - {certs['child']['name']}
@@ -151,6 +157,8 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             stdout,
             f"""{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
 {certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['ed25519']['serial_colons']} - {certs['ed25519']['name']}
+{certs['ed448']['serial_colons']} - {certs['ed448']['name']}
 {certs['pwd']['serial_colons']} - {certs['pwd']['name']}
 {certs['root']['serial_colons']} - {certs['root']['name']}
 │───ch:il:d3 - child3

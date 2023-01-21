@@ -94,10 +94,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         for name, ca in self.cas.items():
             stdin = self.csr_pem.encode()
+            password = certs[name].get("password")
 
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
                 stdout, stderr = self.cmd(
-                    "sign_cert", ca=ca, subject=self.subject, password=certs[name]["password"], stdin=stdin
+                    "sign_cert", ca=ca, subject=self.subject, password=password, stdin=stdin
                 )
 
             self.assertEqual(stderr, "")

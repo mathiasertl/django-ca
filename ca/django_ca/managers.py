@@ -311,7 +311,7 @@ class CertificateAuthorityManager(
         #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
         validate_key_parameters(key_size, key_type, ecc_curve)
 
-        if openssh_ca:
+        if key_type in ("Ed448", "EdDSA"):
             algorithm = None
         elif algorithm is None:
             if key_type == "DSA":
@@ -322,8 +322,6 @@ class CertificateAuthorityManager(
 
         if openssh_ca and parent:
             raise ValueError("OpenSSH does not support intermediate authorities")
-        if not openssh_ca and key_type == "EdDSA":
-            raise ValueError("EdDSA only supported for OpenSSH authorities")
 
         # Cast extra_extensions to list if set (so that we can extend if necessary)
         if extra_extensions:

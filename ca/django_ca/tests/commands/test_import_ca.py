@@ -18,7 +18,7 @@ import tempfile
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 
 from django.conf import settings
 from django.test import TestCase
@@ -48,7 +48,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         for name, data in cas.items():
             key_path = os.path.join(settings.FIXTURES_DIR, data["key_filename"])
             pem_path = os.path.join(settings.FIXTURES_DIR, data["pub_filename"])
-            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data["password"])
+            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
             self.assertEqual(out, "")
             self.assertEqual(err, "")
@@ -71,10 +71,17 @@ class ImportCATest(TestCaseMixin, TestCase):
             elif data["key_type"] == "DSA":
                 key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
                 self.assertIsInstance(key, dsa.DSAPrivateKey)
+            elif data["key_type"] == "EdDSA":
+                key = typing.cast(ed25519.Ed25519PrivateKey, ca.key())  # type: ignore[assignment]
+                assert isinstance(key, ed25519.Ed25519PrivateKey)
+            elif data["key_type"] == "Ed448":
+                key = typing.cast(ed448.Ed448PrivateKey, ca.key())  # type: ignore[assignment]
+                assert isinstance(key, ed448.Ed448PrivateKey)
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
 
-            self.assertEqual(key.key_size, data["key_size"])
+            if data["key_type"] not in ("EdDSA", "Ed448"):
+                self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
 
     @override_tmpcadir()
@@ -94,7 +101,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         for name, data in cas.items():
             key_path = os.path.join(settings.FIXTURES_DIR, data["key_der_filename"])
             pem_path = os.path.join(settings.FIXTURES_DIR, data["pub_der_filename"])
-            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data["password"])
+            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
             self.assertEqual(out, "")
             self.assertEqual(err, "")
@@ -117,10 +124,17 @@ class ImportCATest(TestCaseMixin, TestCase):
             elif data["key_type"] == "DSA":
                 key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
                 self.assertIsInstance(key, dsa.DSAPrivateKey)
+            elif data["key_type"] == "EdDSA":
+                key = typing.cast(ed25519.Ed25519PrivateKey, ca.key())  # type: ignore[assignment]
+                assert isinstance(key, ed25519.Ed25519PrivateKey)
+            elif data["key_type"] == "Ed448":
+                key = typing.cast(ed448.Ed448PrivateKey, ca.key())  # type: ignore[assignment]
+                assert isinstance(key, ed448.Ed448PrivateKey)
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
 
-            self.assertEqual(key.key_size, data["key_size"])
+            if data["key_type"] not in ("EdDSA", "Ed448"):
+                self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
 
     @override_tmpcadir()

@@ -141,7 +141,7 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         # write private key to file
         pem_as_bytes = key_loaded.private_bytes(
-            encoding=Encoding.PEM, format=PrivateFormat.TraditionalOpenSSL, encryption_algorithm=encryption
+            encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
         )
 
         try:

@@ -58,6 +58,10 @@ DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
 
 
+def genpkey(*args: str):
+    return utils.run(["openssl", "genpkey"] + list(args), stderr=subprocess.DEVNULL)
+
+
 class CertificateEncoder(json.JSONEncoder):
     """Minor class to encode certificate data into json."""
 
@@ -78,11 +82,28 @@ class CertificateEncoder(json.JSONEncoder):
 def _create_key(path, key_type):
     if key_type == "RSA":
         utils.run(["openssl", "genrsa", "-out", path, str(DEFAULT_KEY_SIZE)], stderr=subprocess.DEVNULL)
+    elif key_type == "DSA":
+        genpkey(
+            "-genparam",
+            "-algorithm",
+            "DSA",
+            "-out",
+            path + ".param",
+            "-pkeyopt",
+            "dsa_paramgen_bits:2048",
+            "-pkeyopt",
+            "dsa_paramgen_md:sha256",
+        )
+        genpkey("-paramfile", path + ".param", "-out", path)
     elif key_type == "ECC":
         utils.run(
             ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", path],
             stderr=subprocess.DEVNULL,
         )
+    elif key_type == "EdDSA":
+        genpkey("-algorithm", "ED25519", "-out", path)
+    elif key_type == "Ed448":
+        genpkey("-algorithm", "ED448", "-out", path)
     else:
         raise ValueError(f"Unknown key type: {key_type}")
 
@@ -330,7 +351,7 @@ def create_cas(dest, now, delay, data):
         with freeze_time(freeze_now):
             ca = CertificateAuthority.objects.init(
                 name=data[name]["name"],
-                password=data[name]["password"],
+                password=data[name].get("password"),
                 subject=Subject(data[name]["subject"]).name,
                 expires=datetime.utcnow() + data[name]["expires"],
                 key_type=data[name]["key_type"],
@@ -346,7 +367,7 @@ def create_cas(dest, now, delay, data):
         ca.save()
 
         ca_instances.append(ca)
-        _write_ca(dest, ca, data[name], testserver, password=data[name]["password"])
+        _write_ca(dest, ca, data[name], testserver, password=data[name].get("password"))
 
     # add parent/child relationships
     data["root"]["children"] = [[data["child"]["name"], data["child"]["serial"]]]
@@ -371,7 +392,7 @@ def create_certs(dest, cas, now, delay, data):
         if delay:
             freeze_now += data[name]["delta"]
 
-        pwd = data[data[name]["ca"]]["password"]
+        pwd = data[data[name]["ca"]].get("password")
         subject = Subject(f"/CN={data[name]['cn']}")
         with freeze_time(freeze_now):
             cert = Certificate.objects.create_cert(
@@ -403,7 +424,7 @@ def create_certs(dest, cas, now, delay, data):
         if delay:
             freeze_now += data[name]["delta"]
 
-        pwd = data[ca.name]["password"]
+        pwd = data[ca.name].get("password")
         subject = Subject(f"/CN={data[name]['cn']}")
         with freeze_time(freeze_now):
             cert = Certificate.objects.create_cert(
@@ -434,7 +455,7 @@ def create_special_certs(dest, now, delay, data):
         freeze_now += data[name]["delta"]
     with freeze_time(freeze_now):
         no_ext_now = datetime.utcnow()
-        pwd = data[ca.name]["password"]
+        pwd = data[ca.name].get("password")
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])])
 
         builder = x509.CertificateBuilder()
@@ -465,7 +486,6 @@ def create_special_certs(dest, now, delay, data):
     #       https://github.com/pyca/cryptography/issues/1947)
     name = "all-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    pwd = data[ca.name]["password"]
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
     csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
@@ -478,7 +498,7 @@ def create_special_certs(dest, now, delay, data):
             algorithm=data[name]["algorithm"],
             subject=data[name]["subject"],
             expires=data[name]["expires"],
-            password=pwd,
+            password=data[ca.name].get("password"),
             extensions=data[name]["extensions"],
         )
     data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
@@ -489,7 +509,6 @@ def create_special_certs(dest, now, delay, data):
     name = "alt-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     ca.crl_url = ""
-    pwd = data[ca.name]["password"]
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
     csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
@@ -502,7 +521,7 @@ def create_special_certs(dest, now, delay, data):
             algorithm=data[name]["algorithm"],
             subject=data[name]["subject"],
             expires=data[name]["expires"],
-            password=pwd,
+            password=data[ca.name].get("password"),
             extensions=data[name]["extensions"],
         )
     data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat

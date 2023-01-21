@@ -1103,7 +1103,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             # This implies that the account used to request the certificate may even be revoked or invalid, as
             # long as the private key is used to sign the request. So we don't look at the ACME account at all
             # here.
-            cert = certs.get(serial=serial)
+            cert: Certificate = certs.get(serial=serial)
 
             jwk = cert.jwk
 

@@ -51,6 +51,66 @@ X509 v3 certificate extensions for signed certificates:
 * Issuer Alternative Name: None
 
 {pub[pem]}""",
+    "ed25519": """{name} (enabled):
+* Serial: {serial_colons}
+* Path to private key:
+  {key_path}
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject_str}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
+
+X509 v3 certificate extensions for CA:
+Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+Key Usage{key_usage_critical}:
+{key_usage_text}
+Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
+* Issuer Alternative Name: None
+
+{pub[pem]}""",
+    "ed448": """{name} (enabled):
+* Serial: {serial_colons}
+* Path to private key:
+  {key_path}
+* Is a root CA.
+* Has no children.
+* Distinguished Name: {subject_str}
+* Maximum levels of sub-CAs (pathlen): {pathlen_text}
+* HPKP pin: {hpkp}
+
+ACMEv2 support:
+* Enabled: False
+
+X509 v3 certificate extensions for CA:
+Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+Key Usage{key_usage_critical}:
+{key_usage_text}
+Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+X509 v3 certificate extensions for signed certificates:
+* Certificate Revokation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
+* Issuer Alternative Name: None
+
+{pub[pem]}""",
     "child": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:

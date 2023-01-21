@@ -1266,12 +1266,17 @@ class GeneralNameList(List[x509.GeneralName]):
 
 def get_crl_cache_key(
     serial: str,
-    algorithm: hashes.HashAlgorithm = hashes.SHA512(),
+    algorithm: Optional[hashes.HashAlgorithm] = hashes.SHA512(),
     encoding: Encoding = Encoding.DER,
     scope: Optional[str] = None,
 ) -> str:
     """Get the cache key for a CRL with the given parameters."""
-    return f"crl_{serial}_{algorithm.name}_{encoding.name}_{scope}"
+    if algorithm is None:
+        algorithm_name = "None"
+    else:
+        algorithm_name = algorithm.name
+
+    return f"crl_{serial}_{algorithm_name}_{encoding.name}_{scope}"
 
 
 ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)

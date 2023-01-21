@@ -115,6 +115,62 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 """,
+    "ed25519-cert": """Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+Authority Information Access{authority_information_access_critical}:
+{authority_information_access_text}
+Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+Basic Constraints (critical):
+    CA:FALSE
+CRL Distribution Points{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+Extended Key Usage{extended_key_usage_critical}:
+{extended_key_usage_text}
+Key Usage{key_usage_critical}:
+{key_usage_text}
+Subject Alternative Name{subject_alternative_name_critical}:
+{subject_alternative_name_text}
+Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+Watchers:
+Digest:
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+""",
+    "ed448-cert": """Common Name: {cn}
+Valid from: {valid_from_short}
+Valid until: {valid_until_short}
+Status: Valid
+Authority Information Access{authority_information_access_critical}:
+{authority_information_access_text}
+Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+Basic Constraints (critical):
+    CA:FALSE
+CRL Distribution Points{crl_distribution_points_critical}:
+    * DistributionPoint:
+      * Full Name:
+        * URI:{crl}
+Extended Key Usage{extended_key_usage_critical}:
+{extended_key_usage_text}
+Key Usage{key_usage_critical}:
+{key_usage_text}
+Subject Alternative Name{subject_alternative_name_critical}:
+{subject_alternative_name_text}
+Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+Watchers:
+Digest:
+    sha256: {sha256}
+    sha512: {sha512}
+HPKP pin: {hpkp}
+""",
     "pwd-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}

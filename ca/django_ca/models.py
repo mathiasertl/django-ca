@@ -30,12 +30,13 @@ from datetime import datetime, timedelta
 from datetime import timezone as tz
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
+import josepy
 import josepy as jose
 from acme import challenges, messages
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, rsa, x448, x25519
+from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     PrivateFormat,
@@ -137,7 +138,6 @@ log = logging.getLogger(__name__)
 
 _UNSUPPORTED_PRIVATE_KEY_TYPES = (
     dh.DHPrivateKey,
-    ed448.Ed448PrivateKey,
     x25519.X25519PrivateKey,
     x448.X448PrivateKey,
 )
@@ -444,12 +444,23 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
-        """Get a JOSE JWK public key for this certificate."""
+        """Get a JOSE JWK public key for this certificate.
+
+        .. NOTE::
+
+           josepy (the underlying library) does not currently support loading Ed448 or Ed25519 public keys.
+           This property will raise `ValueError` if called for a public key based on those algorithms. The
+           issue is addressed in `this pull request <https://github.com/certbot/josepy/pull/98>`_.
+        """
 
         pkey = self.pub.loaded.public_key()
-        jwk = jose.jwk.JWK.load(pkey.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
 
-        # JWK.load() may return a private instead, so we rule this out here for type safety. This branch
+        try:
+            jwk = jose.jwk.JWK.load(pkey.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
+        except josepy.Error as ex:
+            raise ValueError(*ex.args) from ex
+
+        # JWK.load() may return a private key instead, so we rule this out here for type safety. This branch
         # should normally not happen.
         if not isinstance(jwk, (jose.jwk.JWKRSA, jose.jwk.JWKEC)):  # pragma: no cover
             raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
@@ -923,7 +934,8 @@ class CertificateAuthority(X509CertMixin):
             except ValueError as ex:
                 # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
                 raise ValueError("Could not decrypt private key - bad password?") from ex
-        if isinstance(self._key, _UNSUPPORTED_PRIVATE_KEY_TYPES):  # pragma: no cover
+
+        if isinstance(self._key, _UNSUPPORTED_PRIVATE_KEY_TYPES):
             raise ValueError("Private key of this type is not supported.")
 
         return self._key
@@ -957,7 +969,9 @@ class CertificateAuthority(X509CertMixin):
             if overrides.get("skip"):
                 continue
 
-            if not algorithm:
+            if isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
+                algorithm = None
+            elif not algorithm:
                 # DSA keys don't work with SHA512, so add an override for SHA256 as default (the user may
                 # specify their own override instead).
                 if isinstance(ca_key, dsa.DSAPrivateKey):
@@ -1249,6 +1263,10 @@ class CertificateAuthority(X509CertMixin):
                 key_type = "DSA"
             elif isinstance(ca_key, ec.EllipticCurvePrivateKey):
                 key_type = "ECC"
+            elif isinstance(ca_key, ed25519.Ed25519PrivateKey):
+                key_type = "EdDSA"
+            elif isinstance(ca_key, ed448.Ed448PrivateKey):
+                key_type = "Ed448"
             else:  # CA is RSA or any other type
                 key_type = "RSA"
 
@@ -1271,10 +1289,17 @@ class CertificateAuthority(X509CertMixin):
         )
         private_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.key")
 
+        if isinstance(private_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
+            csr_sign_algorithm = None
+        elif isinstance(private_key, dsa.DSAPrivateKey):
+            csr_sign_algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
+        else:
+            csr_sign_algorithm = ca_settings.CA_DIGEST_ALGORITHM
+
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(self.pub.loaded.subject)
-            .sign(private_key, hashes.SHA256())
+            .sign(private_key, csr_sign_algorithm)
         )
 
         # TODO: The subject we pass is just a guess - see what public CAs do!?
@@ -1421,8 +1446,6 @@ class CertificateAuthority(X509CertMixin):
         # pylint: disable=too-many-locals; It's not easy to create a CRL. Sorry.
 
         now = now_builder = timezone.now()
-        if algorithm is None:
-            algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
         if timezone.is_aware(now_builder):
             now_builder = timezone.make_naive(now, tz.utc)
@@ -1476,6 +1499,18 @@ class CertificateAuthority(X509CertMixin):
         for cert in self.get_crl_certs(scope, now):
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
+        # load the private key
+        ca_key = self.key(password)
+
+        # determine the signing algorithm
+        if algorithm is None:
+            if isinstance(ca_key, dsa.DSAPrivateKey):
+                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
+            elif isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
+                algorithm = None
+            else:
+                algorithm = ca_settings.CA_DIGEST_ALGORITHM
+
         # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
         if include_issuing_distribution_point is None:
             include_issuing_distribution_point = (
@@ -1516,7 +1551,7 @@ class CertificateAuthority(X509CertMixin):
         self.crl_number = json.dumps(crl_number_data)
         self.save()
 
-        return builder.sign(private_key=self.key(password), algorithm=algorithm)
+        return builder.sign(private_key=ca_key, algorithm=algorithm)
 
     def get_password(self) -> Optional[str]:
         """Get password for the private key from the ``CA_PASSWORDS`` setting."""

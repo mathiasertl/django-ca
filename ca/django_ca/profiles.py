@@ -366,7 +366,7 @@ class Profile:
             converted_subject = subject
         cert_subject.update(converted_subject)
 
-        if algorithm is None:
+        if algorithm is None and ca.algorithm:
             algorithm = self.algorithm
 
         # Make sure that expires is a fixed timestamp

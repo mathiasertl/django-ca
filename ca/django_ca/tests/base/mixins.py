@@ -226,7 +226,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """
         expected = expected or []
         signer = signer or self.cas["child"]
-        algorithm = algorithm or ca_settings.CA_DIGEST_ALGORITHM
         extensions = extensions or []
         expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
 
