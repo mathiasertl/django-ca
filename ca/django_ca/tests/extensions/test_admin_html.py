@@ -1,3 +1,4 @@
+"""Test how extensions look like in the admin interface."""
 import typing
 
 from cryptography import x509

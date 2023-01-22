@@ -164,13 +164,11 @@ CA_PROFILES: Dict[str, Dict[str, Any]] = {
 
 _CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = {
     "user": {
-        "algorithm": "SHA512",
         "expires": 86400,
         "scope": "user",
         "encodings": ["PEM", "DER"],
     },
     "ca": {
-        "algorithm": "SHA512",
         "expires": 86400,
         "scope": "ca",
         "encodings": ["PEM", "DER"],

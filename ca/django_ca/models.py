@@ -26,11 +26,11 @@ import re
 import typing
 import warnings
 from collections import OrderedDict
+from copy import deepcopy
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-import josepy
 import josepy as jose
 from acme import challenges, messages
 
@@ -457,7 +457,7 @@ class X509CertMixin(DjangoCAModel):
 
         try:
             jwk = jose.jwk.JWK.load(pkey.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
-        except josepy.Error as ex:
+        except jose.errors.Error as ex:
             raise ValueError(*ex.args) from ex
 
         # JWK.load() may return a private key instead, so we rule this out here for type safety. This branch
@@ -963,7 +963,8 @@ class CertificateAuthority(X509CertMixin):
         if algorithm is not None:
             algorithm = parse_hash_algorithm(algorithm)
 
-        for config in ca_settings.CA_CRL_PROFILES.values():
+        for config in deepcopy(ca_settings.CA_CRL_PROFILES).values():
+            config.setdefault("algorithm", self.algorithm)
             overrides = config.get("OVERRIDES", {}).get(self.serial, {})
 
             if overrides.get("skip"):
@@ -972,11 +973,6 @@ class CertificateAuthority(X509CertMixin):
             if isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
                 algorithm = None
             elif not algorithm:
-                # DSA keys don't work with SHA512, so add an override for SHA256 as default (the user may
-                # specify their own override instead).
-                if isinstance(ca_key, dsa.DSAPrivateKey):
-                    overrides.setdefault("algorithm", ca_settings.CA_DSA_DIGEST_ALGORITHM)
-
                 algorithm = parse_hash_algorithm(overrides.get("algorithm", config.get("algorithm")))
 
             expires = overrides.get("expires", config.get("expires", 86400))
@@ -1204,7 +1200,7 @@ class CertificateAuthority(X509CertMixin):
 
         return signed_cert
 
-    def generate_ocsp_key(
+    def generate_ocsp_key(  # pylint: disable=too-many-locals
         self,
         profile: str = "ocsp",
         expires: Expires = 3,
@@ -1298,7 +1294,7 @@ class CertificateAuthority(X509CertMixin):
 
         csr = (
             x509.CertificateSigningRequestBuilder()
-            .subject_name(self.pub.loaded.subject)
+            .subject_name(self.subject)
             .sign(private_key, csr_sign_algorithm)
         )
 
@@ -1416,7 +1412,8 @@ class CertificateAuthority(X509CertMixin):
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
         algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            The hash algorithm to use, defaults to :ref:`CA_DIGEST_ALGORITHM <settings-ca-digest-algorithm>`.
+            The hash algorithm used to generate the signature of the CRL. By default, the algorithm used for
+            signing the CA is used. If a value is passed for an Ed25519/Ed448 CA, `ValueError` is raised.
         password : bytes, optional
             Password used to load the private key of the certificate authority. If not passed, the private key
             is assumed to be unencrypted.
@@ -1445,17 +1442,20 @@ class CertificateAuthority(X509CertMixin):
         """
         # pylint: disable=too-many-locals; It's not easy to create a CRL. Sorry.
 
-        now = now_builder = timezone.now()
+        now = timezone.now()
 
-        if timezone.is_aware(now_builder):
-            now_builder = timezone.make_naive(now, tz.utc)
+        if timezone.is_aware(now):
+            now_naive = timezone.make_naive(now, tz.utc)
         else:
-            now_builder = datetime.utcnow()
+            now_naive = now
+
+        if algorithm is None:
+            algorithm = self.algorithm
 
         builder = x509.CertificateRevocationListBuilder()
         builder = builder.issuer_name(self.pub.loaded.subject)
-        builder = builder.last_update(now_builder)
-        builder = builder.next_update(now_builder + timedelta(seconds=expires))
+        builder = builder.last_update(now_naive)
+        builder = builder.next_update(now_naive + timedelta(seconds=expires))
 
         parsed_full_name = None
         if full_name is not None:
@@ -1499,17 +1499,9 @@ class CertificateAuthority(X509CertMixin):
         for cert in self.get_crl_certs(scope, now):
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
-        # load the private key
         ca_key = self.key(password)
-
-        # determine the signing algorithm
-        if algorithm is None:
-            if isinstance(ca_key, dsa.DSAPrivateKey):
-                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            elif isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
-                algorithm = None
-            else:
-                algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        if isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)) and algorithm is not None:
+            raise ValueError(f"{self.name}: algorithm must be None for this CA.")
 
         # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
         if include_issuing_distribution_point is None:

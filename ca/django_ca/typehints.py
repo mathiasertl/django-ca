@@ -19,7 +19,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 # Module level imports to enable forward references. See also:
@@ -40,10 +40,12 @@ CRLExtensionTypeTypeVar = typing.TypeVar(
     "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL
 )
 
+#: Private key types that we support
 PrivateKeyTypes = Union[
     dsa.DSAPrivateKey,
     rsa.RSAPrivateKey,
     ec.EllipticCurvePrivateKey,
+    ed448.Ed448PrivateKey,
     ed25519.Ed25519PrivateKey,
 ]
 

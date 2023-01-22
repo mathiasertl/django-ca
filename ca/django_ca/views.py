@@ -79,7 +79,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     expires = 600
     """CRL expires in this many seconds."""
 
-    digest = hashes.SHA512()
+    digest = None
     """Digest used for generating the CRL."""
 
     # header used in the request
@@ -92,12 +92,17 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         encoding = parse_encoding(request.GET.get("encoding", self.type))
-        cache_key = get_crl_cache_key(serial, algorithm=self.digest, encoding=encoding, scope=self.scope)
+
+        ca = self.get_object()
+
+        hash_algorithm = self.digest
+        if hash_algorithm is None:
+            hash_algorithm = ca.algorithm
+
+        cache_key = get_crl_cache_key(serial, algorithm=hash_algorithm, encoding=encoding, scope=self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
-            ca = self.get_object()
-
             # Catch this case early so that we can give a better error message
             if self.include_issuing_distribution_point is True and ca.parent is None and self.scope is None:
                 raise ValueError(

@@ -30,7 +30,6 @@ from dns.rdtypes.txtbase import TXTBase
 from requests.packages.urllib3.response import HTTPResponse
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
@@ -93,26 +92,19 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         for ca in self.cas.values():
             tasks.cache_crl(ca.serial)
 
-            if certs[ca.name]["key_type"] == "DSA":
-                hash_cls: Optional[hashes.HashAlgorithm] = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            elif certs[ca.name]["key_type"] in ("Ed448", "EdDSA"):
-                hash_cls = None
-            else:
-                hash_cls = ca_settings.CA_DIGEST_ALGORITHM
-
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "ca")
+            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
-            if hash_cls is None:
+            if ca.algorithm is None:
                 self.assertIsNone(crl.signature_hash_algorithm)
             else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(hash_cls))
+                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "user")
+            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
-            if hash_cls is None:
+            if ca.algorithm is None:
                 self.assertIsNone(crl.signature_hash_algorithm)
             else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(hash_cls))
+                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -122,22 +114,15 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         tasks.cache_crls()
 
         for ca in self.cas.values():
-            if certs[ca.name]["key_type"] == "DSA":
-                hash_cls: Optional[hashes.HashAlgorithm] = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            elif certs[ca.name]["key_type"] in ("Ed448", "EdDSA"):
-                hash_cls = None
-            else:
-                hash_cls = ca_settings.CA_DIGEST_ALGORITHM
-
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "ca")
+            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
 
-            if hash_cls is None:
+            if ca.algorithm is None:
                 self.assertIsNone(crl.signature_hash_algorithm)
             else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(hash_cls))
+                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, hash_cls, enc_cls, "user")
+            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
 
     @override_tmpcadir()
@@ -145,12 +130,10 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
     def test_cache_all_crls_expired(self) -> None:
         """Test that nothing is cashed if all CAs are expired."""
 
-        hash_cls = hashes.SHA512
-        enc_cls = Encoding.DER
         tasks.cache_crls()
 
-        for data in self.cas.values():
-            key = get_crl_cache_key(data.serial, hash_cls(), enc_cls, "ca")
+        for ca in self.cas.values():
+            key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "ca")
             self.assertIsNone(cache.get(key))
 
     @override_tmpcadir()

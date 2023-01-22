@@ -91,7 +91,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             encoding=Encoding.DER,
             expires=600,
             idp=idp,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=self.ca.algorithm,
         )
 
         # revoke a certificate
@@ -106,7 +106,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             encoding=Encoding.DER,
             expires=600,
             idp=idp,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=self.ca.algorithm,
         )
 
         # clear the cache and fetch again
@@ -121,7 +121,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             expires=600,
             idp=idp,
             crl_number=1,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=self.ca.algorithm,
         )
 
     @override_tmpcadir()
@@ -141,7 +141,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             encoding=Encoding.DER,
             expires=600,
             idp=idp,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=self.ca.algorithm,
         )
 
         # If scope is None, CRLs for a root CA should *not* include the IssuingDistributionPoint extension:
@@ -154,7 +154,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             expires=600,
             signer=self.cas["root"],
             idp=None,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=self.ca.algorithm,
         )
 
     @override_tmpcadir()
@@ -168,9 +168,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain")
-        self.assertCRL(
-            response.content, expires=600, idp=idp, signer=root, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
 
         child.revoke()
         child.save()
@@ -179,9 +177,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain")
-        self.assertCRL(
-            response.content, expires=600, idp=idp, signer=root, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
 
         # clear the cache and fetch again
         cache.clear()
@@ -195,7 +191,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             idp=idp,
             crl_number=1,
             signer=root,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=root.algorithm,
         )
 
     @override_tmpcadir()
@@ -209,9 +205,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain")
-        self.assertCRL(
-            response.content, expires=600, idp=idp, signer=child, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(response.content, expires=600, idp=idp, signer=child, algorithm=child.algorithm)
 
     @override_tmpcadir()
     def test_password(self) -> None:
@@ -240,7 +234,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             encoding=Encoding.DER,
             idp=idp,
             signer=ca,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=ca.algorithm,
         )
 
     @override_tmpcadir()
@@ -261,11 +255,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pkix-crl")
         self.assertCRL(
-            response.content,
-            encoding=Encoding.DER,
-            expires=600,
-            idp=idp,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            response.content, encoding=Encoding.DER, expires=600, idp=idp, algorithm=self.ca.algorithm
         )
 
         with self.assertRaisesRegex(
@@ -281,11 +271,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pkix-crl")
         self.assertCRL(
-            response.content,
-            encoding=Encoding.DER,
-            expires=600,
-            idp=None,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            response.content, encoding=Encoding.DER, expires=600, idp=None, algorithm=self.ca.algorithm
         )
 
 

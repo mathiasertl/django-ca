@@ -22,7 +22,6 @@ from typing import Any, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa, ed448, ed25519
 from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError, CommandParser
@@ -121,9 +120,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         profile_obj = profiles[profile]
         self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)
 
-        # See if we can work with the private key
-        ca_key = self.test_private_key(ca, password)
-
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
@@ -158,14 +154,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             csr = x509.load_pem_x509_csr(csr_bytes)
         else:
             csr = x509.load_der_x509_csr(csr_bytes)
-
-        if algorithm is None:
-            if isinstance(ca_key, dsa.DSAPrivateKey):
-                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            elif isinstance(ca_key, (ed448.Ed448PrivateKey, ed25519.Ed25519PrivateKey)):
-                algorithm = None
-            else:
-                algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
         try:
             cert = Certificate.objects.create_cert(

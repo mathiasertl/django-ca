@@ -10,7 +10,7 @@ ChangeLog
 1.23.0 (TBR)
 ************
 
-* Add support for cryptography 39.0.
+* Added support for cryptography 39.0.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 * The default hash algorithm for certificate authorities with a DSA key pair can now be configured using
@@ -18,7 +18,8 @@ ChangeLog
 * The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
   CRLs. This is not a new feature, but it is now documented.
 * Use ``yaml.safe_load`` to load configuration files to protect against malicious configuration.
-* OCSP keys will use the same signature hash algorithm as their certificate authority by default.
+* OCSP keys now use the same signature hash algorithm as their certificate authority by default.
+* CRLs are now signed with the same signature hash algorithm as their certificate authority by default.
 
 Backwards incompatible changes
 ==============================

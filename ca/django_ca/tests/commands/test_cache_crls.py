@@ -13,10 +13,7 @@
 
 """Test the cache_crls management command."""
 
-from typing import Optional
-
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
@@ -24,8 +21,7 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base import override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import get_crl_cache_key
 
@@ -48,20 +44,13 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
         for ca in self.cas.values():
-            if certs[ca.name]["key_type"] == "DSA":
-                hash_algorithm: Optional[hashes.HashAlgorithm] = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            elif certs[ca.name]["key_type"] in ("EdDSA", "Ed448"):
-                hash_algorithm = None
-            else:
-                hash_algorithm = ca_settings.CA_DIGEST_ALGORITHM
-
-            key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.DER, "ca")
+            key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsInstance(crl.signature_hash_algorithm, type(hash_algorithm))
+            self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.DER, "user")
+            key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsInstance(crl.signature_hash_algorithm, type(hash_algorithm))
+            self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
     @override_tmpcadir()
     def test_serial(self) -> None:
@@ -71,10 +60,10 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-        key = get_crl_cache_key(self.ca.serial, hashes.SHA512(), Encoding.DER, "ca")
+        key = get_crl_cache_key(self.ca.serial, self.ca.algorithm, Encoding.DER, "ca")
         crl = x509.load_der_x509_crl(cache.get(key))
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
 
-        key = get_crl_cache_key(self.ca.serial, hashes.SHA512(), Encoding.DER, "user")
+        key = get_crl_cache_key(self.ca.serial, self.ca.algorithm, Encoding.DER, "user")
         crl = x509.load_der_x509_crl(cache.get(key))
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))

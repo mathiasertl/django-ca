@@ -20,7 +20,6 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from datetime import timezone as tz
-from typing import Optional
 from unittest import mock
 
 import josepy as jose
@@ -230,26 +229,22 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         idp = self.get_idp(full_name=[uri(full_name)])
 
         crl = ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
 
         ca.crl_url = full_name
         ca.save()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, crl_number=1, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
         # revoke a cert
         cert.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(
-            crl, expected=[cert], crl_number=2, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(crl, expected=[cert], crl_number=2, signer=ca, algorithm=ca.algorithm)
 
         # also revoke a CA
         child.revoke()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(
-            crl, expected=[cert, child], crl_number=3, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(crl, expected=[cert, child], crl_number=3, signer=ca, algorithm=ca.algorithm)
 
         # unrevoke cert (so we have all three combinations)
         cert.revoked = False
@@ -258,9 +253,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         cert.save()
 
         crl = ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(
-            crl, expected=[child], crl_number=4, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(crl, expected=[child], crl_number=4, signer=ca, algorithm=ca.algorithm)
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
@@ -272,19 +265,12 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         idp = self.get_idp(full_name=[uri(full_name)])
 
         crl = child.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=child, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=child, algorithm=child.algorithm)
 
         # Revoke a cert
         cert.revoke()
         crl = child.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
-        self.assertCRL(
-            crl,
-            expected=[cert],
-            idp=idp,
-            crl_number=1,
-            signer=child,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
-        )
+        self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=child, algorithm=child.algorithm)
 
     @override_settings(USE_TZ=True)
     def test_full_crl_tz(self) -> None:
@@ -308,7 +294,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
 
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
 
         # revoke ca and cert, CRL only contains CA
         child_ca = self.cas["child"]
@@ -317,14 +303,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.certs["root-cert"].revoke()
         self.certs["child-cert"].revoke()
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
-        self.assertCRL(
-            crl,
-            expected=[child_ca],
-            idp=idp,
-            crl_number=1,
-            signer=ca,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
-        )
+        self.assertCRL(crl, expected=[child_ca], idp=idp, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -335,7 +314,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
 
         crl = self.ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=self.ca.algorithm)
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
@@ -345,7 +324,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
 
         crl = ca.get_crl(scope="user").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
 
         # revoke ca and cert, CRL only contains cert
         cert = self.certs["root-cert"]
@@ -353,9 +332,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.certs["child-cert"].revoke()
         self.cas["child"].revoke()
         crl = ca.get_crl(scope="user").public_bytes(Encoding.PEM)
-        self.assertCRL(
-            crl, expected=[cert], idp=idp, crl_number=1, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM
-        )
+        self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
@@ -365,14 +342,14 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         idp = self.get_idp(only_contains_attribute_certs=True)
 
         crl = ca.get_crl(scope="attribute").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
 
         # revoke ca and cert, CRL is empty (we don't know attribute certs)
         self.certs["root-cert"].revoke()
         self.certs["child-cert"].revoke()
         self.cas["child"].revoke()
         crl = ca.get_crl(scope="attribute").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, crl_number=1, signer=ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -382,7 +359,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.ca.crl_url = ""
         self.ca.save()
         crl = self.ca.get_crl().public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=None, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=None, algorithm=self.ca.algorithm)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -390,12 +367,12 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test the counter for CRLs."""
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca))
         crl = self.ca.get_crl(counter="test").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, crl_number=0, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, crl_number=0, algorithm=self.ca.algorithm)
         crl = self.ca.get_crl(counter="test").public_bytes(Encoding.PEM)
-        self.assertCRL(crl, idp=idp, crl_number=1, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, crl_number=1, algorithm=self.ca.algorithm)
 
         crl = self.ca.get_crl().public_bytes(Encoding.PEM)  # test with no counter
-        self.assertCRL(crl, idp=idp, crl_number=0, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, crl_number=0, algorithm=self.ca.algorithm)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -413,7 +390,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         ):
             crl = self.ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         # Note that we still get an AKI because the value comes from the public key in this case
-        self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=self.ca.algorithm)
 
     def test_validate_json(self) -> None:
         """Test the json validator."""
@@ -443,17 +420,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             ]
 
         for name, ca in self.usable_cas:
-            if certs[name]["key_type"] == "DSA":
-                hash_algorithm: Optional[hashes.HashAlgorithm] = hashes.SHA256()
-            elif certs[name]["key_type"] in ("Ed448", "EdDSA"):
-                hash_algorithm = None
-            else:
-                hash_algorithm = hashes.SHA512()
-
-            der_user_key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.DER, "user")
-            pem_user_key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.PEM, "user")
-            der_ca_key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.DER, "ca")
-            pem_ca_key = get_crl_cache_key(ca.serial, hash_algorithm, Encoding.PEM, "ca")
+            der_user_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "user")
+            pem_user_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, "user")
+            der_ca_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "ca")
+            pem_ca_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, "ca")
             user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
             if ca.parent is None:
                 ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
@@ -478,7 +448,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=0,
                 encoding=Encoding.DER,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
             self.assertCRL(
                 pem_user_crl,
@@ -486,7 +456,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=0,
                 encoding=Encoding.PEM,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
 
             der_ca_crl = cache.get(der_ca_key)
@@ -497,15 +467,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=0,
                 encoding=Encoding.DER,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
             self.assertCRL(
-                pem_ca_crl,
-                idp=ca_idp,
-                crl_number=0,
-                encoding=Encoding.PEM,
-                signer=ca,
-                algorithm=hash_algorithm,
+                pem_ca_crl, idp=ca_idp, crl_number=0, encoding=Encoding.PEM, signer=ca, algorithm=ca.algorithm
             )
 
             # cache again - which will force triggering a new computation
@@ -521,7 +486,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=1,
                 encoding=Encoding.DER,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
             self.assertCRL(
                 pem_user_crl,
@@ -529,7 +494,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=1,
                 encoding=Encoding.PEM,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
 
             der_ca_crl = cache.get(der_ca_key)
@@ -540,7 +505,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=1,
                 encoding=Encoding.DER,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
             self.assertCRL(
                 pem_ca_crl,
@@ -548,7 +513,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 crl_number=1,
                 encoding=Encoding.PEM,
                 signer=ca,
-                algorithm=hash_algorithm,
+                algorithm=ca.algorithm,
             )
 
             # clear caches and skip generation
@@ -1110,15 +1075,15 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             else:
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKRSA, name)
 
-    def test_jwk_with_unsupported_algorithm(self):
+    def test_jwk_with_unsupported_algorithm(self) -> None:
         """Test the ValueError raised if called with an unsupported algorithm."""
 
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
-            self.certs["ed448-cert"].jwk
+            self.certs["ed448-cert"].jwk  # pylint: disable=pointless-statement
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
-            self.certs["ed25519-cert"].jwk
+            self.certs["ed25519-cert"].jwk  # pylint: disable=pointless-statement
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
-            self.certs["dsa-cert"].jwk
+            self.certs["dsa-cert"].jwk  # pylint: disable=pointless-statement
 
     def test_get_authority_information_access_extension(self) -> None:
         """Test getting the AuthorityInformationAccess extension for a CA."""
