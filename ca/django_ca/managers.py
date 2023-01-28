@@ -42,7 +42,8 @@ from django_ca.utils import (
     int_to_hex,
     parse_expires,
     validate_hostname,
-    validate_key_parameters,
+    validate_private_key_parameters,
+    validate_public_key_parameters,
 )
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
@@ -309,7 +310,6 @@ class CertificateAuthorityManager(
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
-        validate_key_parameters(key_size, key_type, ecc_curve)
 
         if key_type in ("Ed448", "EdDSA"):
             algorithm = None
@@ -318,6 +318,10 @@ class CertificateAuthorityManager(
                 algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
             else:
                 algorithm = ca_settings.CA_DIGEST_ALGORITHM
+
+        validate_private_key_parameters(key_type, key_size, ecc_curve)
+        validate_public_key_parameters(key_type, algorithm)
+
         expires = parse_expires(expires)
 
         if openssh_ca and parent:

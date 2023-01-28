@@ -131,7 +131,8 @@ from django_ca.utils import (
     parse_hash_algorithm,
     read_file,
     split_str,
-    validate_key_parameters,
+    validate_private_key_parameters,
+    validate_public_key_parameters,
 )
 
 log = logging.getLogger(__name__)
@@ -947,6 +948,21 @@ class CertificateAuthority(X509CertMixin):
             return True
         return ca_storage.exists(self.private_key_path)
 
+    @property
+    def key_type(self) -> ParsableKeyType:
+        pub = self.pub.loaded.public_key()
+        if isinstance(pub, dsa.DSAPublicKey):
+            return "DSA"
+        elif isinstance(pub, rsa.RSAPublicKey):
+            return "RSA"
+        elif isinstance(pub, ec.EllipticCurvePublicKey):
+            return "ECC"
+        elif isinstance(pub, ed25519.Ed25519PublicKey):
+            return "EdDSA"
+        elif isinstance(pub, ed448.Ed448PublicKey):
+            return "Ed448"
+        raise ValueError(f"{pub}: Unknown key type.")
+
     def cache_crls(
         self, password: Optional[Union[str, bytes]] = None, algorithm: ParsableHash = None
     ) -> None:
@@ -1255,16 +1271,7 @@ class CertificateAuthority(X509CertMixin):
         ca_key = self.key(password)
 
         if key_type is None:
-            if isinstance(ca_key, dsa.DSAPrivateKey):
-                key_type = "DSA"
-            elif isinstance(ca_key, ec.EllipticCurvePrivateKey):
-                key_type = "ECC"
-            elif isinstance(ca_key, ed25519.Ed25519PrivateKey):
-                key_type = "EdDSA"
-            elif isinstance(ca_key, ed448.Ed448PrivateKey):
-                key_type = "Ed448"
-            else:  # CA is RSA or any other type
-                key_type = "RSA"
+            key_type = self.key_type
 
         if key_type == "DSA" and isinstance(ca_key, dsa.DSAPrivateKey) and key_size is None:
             key_size = ca_key.key_size
@@ -1273,8 +1280,12 @@ class CertificateAuthority(X509CertMixin):
         elif key_type == "ECC" and isinstance(ca_key, ec.EllipticCurvePrivateKey) and ecc_curve is None:
             ecc_curve = ca_key.curve
 
-        # Make sure that parameters are valid
-        validate_key_parameters(key_size, key_type, ecc_curve)
+        # Ensure that parameters used to generate the private key are valid.
+        validate_private_key_parameters(key_type, key_size, ecc_curve)
+
+        # Ensure that parameters used to generate the public key are valid. Note that we have to use the key
+        # type of the **ca** private key (not the OCSP private key), as it is used for signing.
+        validate_public_key_parameters(self.key_type, algorithm)
 
         # generate the private key
         private_key = generate_private_key(key_size, key_type, ecc_curve)

@@ -59,7 +59,7 @@ from django_ca.utils import (
     split_str,
     validate_email,
     validate_hostname,
-    validate_key_parameters,
+    validate_private_key_parameters,
     x509_name,
     x509_relative_name,
 )
@@ -1166,21 +1166,23 @@ class GetCertBuilderTestCase(TestCase):
 
 
 class ValidateKeyParametersTest(TestCase):
-    """Test :py:func:`django_ca.utils.validate_key_parameters`."""
+    """Test :py:func:`django_ca.utils.validate_private_key_parameters`."""
 
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
-            validate_key_parameters(4096, "FOOBAR")  # type: ignore[arg-type]
+            validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[arg-type]
 
         with self.assertRaisesRegex(ValueError, "^4000: Key size must be a power of two$"):
-            validate_key_parameters(4000, "RSA")
+            validate_private_key_parameters("RSA", 4000, None)
 
         with self.assertRaisesRegex(ValueError, "^16: Key size must be least 1024 bits$"):
-            validate_key_parameters(16, "RSA")
+            validate_private_key_parameters("RSA", 16, None)
 
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
-            validate_key_parameters(16, "ECC", "secp192r1")  # type: ignore[arg-type]  # what we're testing
+            validate_private_key_parameters(
+                "ECC", 16, "secp192r1"
+            )  # type: ignore[arg-type]  # what we're testing
 
 
 class SplitStrTestCase(TestCase):

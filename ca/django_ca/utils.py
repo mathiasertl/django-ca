@@ -586,19 +586,17 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     return encoded
 
 
-def validate_key_parameters(
-    key_size: Optional[int] = None,
-    key_type: ParsableKeyType = "RSA",
-    ecc_curve: typing.Optional[ec.EllipticCurve] = None,
+def validate_private_key_parameters(
+    key_type: ParsableKeyType, key_size: Optional[int], ecc_curve: Optional[ec.EllipticCurve]
 ) -> None:
-    """Validate parameters for private key generation and return sanitized values.
+    """Validate parameters for private key generation.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
     generated.
 
-    >>> validate_key_parameters(4096, "RSA", None)
-    >>> validate_key_parameters(4096, "Ed448", None)  # Ed448 does not care about the key size
-    >>> validate_key_parameters(4000, 'RSA', None)
+    >>> validate_private_key_parameters("RSA", 4096, None)
+    >>> validate_private_key_parameters("Ed448", 4096, None)  # Ed448 does not care about the key size
+    >>> validate_private_key_parameters('RSA', 4000, None)
     Traceback (most recent call last):
         ...
     ValueError: 4000: Key size must be a power of two
@@ -615,6 +613,15 @@ def validate_key_parameters(
 
     if key_type == "ECC" and ecc_curve is not None and not isinstance(ecc_curve, ec.EllipticCurve):
         raise ValueError(f"{ecc_curve}: Must be a subclass of ec.EllipticCurve")
+
+
+def validate_public_key_parameters(key_type: ParsableKeyType, algorithm: Optional[hashes.HashAlgorithm]):
+    """Validate parameters for signing"""
+    if key_type in ("RSA", "DSA", "ECC"):
+        if algorithm is None:
+            raise ValueError(f"{key_type} keys require an algorithm for signing.")
+    elif algorithm is not None:
+        raise ValueError(f"{key_type} keys do not allow an algorithm for signing.")
 
 
 @typing.overload
@@ -669,8 +676,8 @@ def generate_private_key(
 ) -> PRIVATE_KEY_TYPES:
     """Generate a private key.
 
-    This function assumes that you called :py:func:`~django_ca.utils.validate_key_parameters` on the input
-    values and does not do any sanity checks on its own.
+    This function assumes that you called :py:func:`~django_ca.utils.validate_private_key_parameters` on the
+    input values and does not do any sanity checks on its own.
 
     Parameters
     ----------
@@ -690,7 +697,7 @@ def generate_private_key(
         A private key of the appropriate type.
     """
     # Make sure that parameters are valid
-    validate_key_parameters(key_size, key_type, ecc_curve)
+    validate_private_key_parameters(key_type, key_size, ecc_curve)
 
     if key_type == "DSA":
         if key_size is None:
@@ -712,8 +719,8 @@ def generate_private_key(
 
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
 
-    # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and validate_key_parameters
-    #                 would raise for any other key types.
+    # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and
+    #   validate_private_key_parameters would raise for any other key types.
     raise ValueError(f"{key_type}: Invalid key type.")  # pragma: no cover
 
 
