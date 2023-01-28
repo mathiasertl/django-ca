@@ -79,6 +79,7 @@ class Profile:
     """
 
     # pylint: disable=too-many-instance-attributes
+    algorithm: Optional[HashAlgorithm] = None
     extensions: Dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]]
 
     @deprecate_type("subject", (dict, Subject), RemovedInDjangoCA124Warning)
@@ -116,7 +117,9 @@ class Profile:
         else:
             self.subject = x509_name(subject)
 
-        self.algorithm = parse_hash_algorithm(algorithm)
+        if algorithm is not None:
+            self.algorithm = parse_hash_algorithm(algorithm)
+
         self.cn_in_san = cn_in_san
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
         self.add_crl_url = add_crl_url
@@ -367,7 +370,10 @@ class Profile:
         cert_subject.update(converted_subject)
 
         if algorithm is None and ca.algorithm:
-            algorithm = self.algorithm
+            if self.algorithm is not None:
+                algorithm = self.algorithm
+            else:
+                algorithm = ca.algorithm
 
         # Make sure that expires is a fixed timestamp
         expires = self.get_expires(expires)

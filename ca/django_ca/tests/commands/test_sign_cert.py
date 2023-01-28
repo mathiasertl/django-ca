@@ -93,7 +93,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test signing with all usable CAs."""
 
         for name, ca in self.cas.items():
-            stdin = self.csr_pem.encode()
+            stdin = certs[f"{name}-cert"]["csr"]["pem"].encode()
+
             password = certs[name].get("password")
 
             with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
@@ -106,7 +107,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
             cert = Certificate.objects.get(ca=ca, cn=self.hostname)
             self.assertPostIssueCert(post, cert)
-            self.assertSignature(reversed(ca.bundle), cert)
+            self.assertSignature(tuple(reversed(ca.bundle)), cert)
             self.assertEqual(cert.pub.loaded.subject, self.subject)
             self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
