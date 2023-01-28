@@ -20,12 +20,10 @@ import typing
 from typing import Any, Optional
 
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings
 from django_ca.management.base import BinaryCommand
 from django_ca.models import CertificateAuthority
 
@@ -89,15 +87,6 @@ class Command(BinaryCommand):
             raise CommandError(
                 "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
             )
-
-        # See if we can work with the private key
-        ca_key = self.test_private_key(ca, password)
-
-        if algorithm is None:
-            if isinstance(ca_key, dsa.DSAPrivateKey):
-                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            else:
-                algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
         kwargs = {
             "expires": options["expires"],
