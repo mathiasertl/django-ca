@@ -30,7 +30,6 @@ from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound, OCSPNonce, load_pem_x509_certificate, ocsp
 
@@ -42,7 +41,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import PrivateKeyTypes
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
@@ -194,7 +193,7 @@ class OCSPView(View):
         loaded_key = serialization.load_pem_private_key(key, None)
 
         # Check that the private key is of a supported type
-        if not isinstance(loaded_key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey, ec.EllipticCurvePrivateKey)):
+        if not isinstance(loaded_key, constants.PRIVATE_KEY_TYPES):
             log.error("%s: Unsupported private key type.", type(loaded_key))
             raise ValueError(f"{type(loaded_key)}: Unsupported private key type.")
 
@@ -300,7 +299,7 @@ class OCSPView(View):
         builder = builder.add_response(
             cert=cert.pub.loaded,
             issuer=ca.pub.loaded,
-            algorithm=hashes.SHA1(),
+            algorithm=hashes.SHA256(),
             cert_status=status,
             this_update=now,
             next_update=expires,
@@ -319,7 +318,7 @@ class OCSPView(View):
         except ExtensionNotFound:
             pass
 
-        response = builder.sign(responder_key, hashes.SHA256())
+        response = builder.sign(responder_key, responder_cert.signature_hash_algorithm)
         return self.http_response(response.public_bytes(Encoding.DER))
 
 

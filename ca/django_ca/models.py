@@ -36,7 +36,7 @@ from acme import challenges, messages
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     PrivateFormat,
@@ -59,7 +59,7 @@ from django.utils.functional import cached_property, classproperty
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
 from django_ca.extensions import (
@@ -136,12 +136,6 @@ from django_ca.utils import (
 )
 
 log = logging.getLogger(__name__)
-
-_UNSUPPORTED_PRIVATE_KEY_TYPES = (
-    dh.DHPrivateKey,
-    x25519.X25519PrivateKey,
-    x448.X448PrivateKey,
-)
 
 
 def acme_slug() -> str:
@@ -936,7 +930,7 @@ class CertificateAuthority(X509CertMixin):
                 # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
                 raise ValueError("Could not decrypt private key - bad password?") from ex
 
-        if isinstance(self._key, _UNSUPPORTED_PRIVATE_KEY_TYPES):
+        if not isinstance(self._key, constants.PRIVATE_KEY_TYPES):
             raise ValueError("Private key of this type is not supported.")
 
         return self._key
@@ -1365,7 +1359,7 @@ class CertificateAuthority(X509CertMixin):
             ski = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
         except x509.ExtensionNotFound as ex:
             public_key = self.pub.loaded.public_key()
-            if isinstance(public_key, _UNSUPPORTED_PRIVATE_KEY_TYPES):  # pragma: no cover
+            if not isinstance(public_key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
                 # COVERAGE NOTE: This does not happen in reality, we never generate keys of this type
                 raise TypeError("Cannot get AuthorityKeyIdentifier from this private key type.") from ex
             # TYPE NOTE: mypy does not currently recognize isinstance() check above

@@ -18,6 +18,7 @@ from collections import defaultdict
 from types import MappingProxyType
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
@@ -259,6 +260,15 @@ LOG_ENTRY_TYPE_KEYS = MappingProxyType(
         LogEntryType.PRE_CERTIFICATE: "precertificate",
         LogEntryType.X509_CERTIFICATE: "x509_certificate",
     }
+)
+
+#: Tuple of supported private key types.
+PRIVATE_KEY_TYPES = (
+    dsa.DSAPrivateKey,
+    ec.EllipticCurvePrivateKey,
+    ed25519.Ed25519PrivateKey,
+    ed448.Ed448PrivateKey,
+    rsa.RSAPrivateKey,
 )
 
 #: Map of human-readable names/serialized values to TLSFeatureTypes.
