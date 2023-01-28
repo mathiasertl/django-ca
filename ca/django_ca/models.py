@@ -1453,12 +1453,11 @@ class CertificateAuthority(X509CertMixin):
         """
         # pylint: disable=too-many-locals; It's not easy to create a CRL. Sorry.
 
-        now = timezone.now()
-
-        if timezone.is_aware(now):
+        if settings.USE_TZ is True:
+            now = timezone.now()
             now_naive = timezone.make_naive(now, tz.utc)
         else:
-            now_naive = now
+            now_naive = now = datetime.utcnow()
 
         if algorithm is None:
             algorithm = self.algorithm
