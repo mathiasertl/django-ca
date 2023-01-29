@@ -94,7 +94,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "type": "ca",
             "basic_constraints": {"critical": True, "value": {"ca": True, "pathlen": ECC_PATHLEN}},
             "pathlen": ECC_PATHLEN,
-            "key_size": 256,  # Value is unused in key generation, but needed for validation
             "key_type": "ECC",
             "max_pathlen": 1,
         },
@@ -387,8 +386,9 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         cert_values["pub_filename"] = f"{cert_name}.pub"
         cert_values["key_der_filename"] = f"{cert_name}.key.der"
         cert_values["pub_der_filename"] = f"{cert_name}.pub.der"
-        cert_values.setdefault("key_size", DEFAULT_KEY_SIZE)
         cert_values.setdefault("key_type", "RSA")
+        if cert_values["key_type"] in ("RSA", "DSA"):
+            cert_values.setdefault("key_size", DEFAULT_KEY_SIZE)
         cert_values.setdefault("delta", timedelta())
         if cert_values.pop("csr", False):
             cert_values["csr_filename"] = f"{cert_name}.csr"

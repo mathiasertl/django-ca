@@ -356,7 +356,7 @@ def create_cas(dest, now, delay, data):
                 subject=Subject(data[name]["subject"]).name,
                 expires=datetime.utcnow() + data[name]["expires"],
                 key_type=data[name]["key_type"],
-                key_size=data[name]["key_size"],
+                key_size=data[name].get("key_size"),
                 algorithm=data[name]["algorithm"],
                 pathlen=data[name]["pathlen"],
                 **kwargs,
