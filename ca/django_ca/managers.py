@@ -319,7 +319,7 @@ class CertificateAuthorityManager(
             else:
                 algorithm = ca_settings.CA_DIGEST_ALGORITHM
 
-        validate_private_key_parameters(key_type, key_size, ecc_curve)
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
         validate_public_key_parameters(key_type, algorithm)
 
         expires = parse_expires(expires)

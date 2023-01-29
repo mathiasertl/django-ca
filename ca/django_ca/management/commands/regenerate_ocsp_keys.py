@@ -30,7 +30,7 @@ from django_ca.management.base import BaseCommand
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_key, run_task
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import add_colons
+from django_ca.utils import add_colons, validate_private_key_parameters
 
 
 class Command(BaseCommand):  # pylint: disable=missing-class-docstring
@@ -54,7 +54,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         self.add_algorithm(parser)
         self.add_key_size(parser)
-        self.add_key_type(parser)
+        self.add_key_type(parser, default=None)
         self.add_ecc_curve(parser)
         self.add_password(parser)
 
@@ -68,9 +68,9 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         profile: Optional[str],
         expires: timedelta,
         algorithm: Optional[hashes.HashAlgorithm],
-        ecc_curve: ec.EllipticCurve,
+        ecc_curve: Optional[ec.EllipticCurve],
         key_size: int,
-        key_type: ParsableKeyType,
+        key_type: Optional[ParsableKeyType],
         password: Optional[bytes],
         quiet: bool,
         **options: Any,
@@ -85,6 +85,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         if not serials:
             serials = CertificateAuthority.objects.all().order_by("serial").values_list("serial", flat=True)
+
+        ecc_curve_name: Optional[str] = None
+        if ecc_curve is not None:
+            ecc_curve_name = ecc_curve.name.lower()
 
         for serial in serials:
             serial = serial.replace(":", "").strip().upper()
@@ -102,6 +106,13 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
                 continue
 
+            if key_type is None:
+                ca_key_type = ca.key_type
+            else:
+                ca_key_type = key_type
+
+            ca_key_size, ca_ecc_curve = validate_private_key_parameters(ca_key_type, key_size, ecc_curve)
+
             algorithm_name: Optional[str] = None
             if algorithm is not None:
                 algorithm_name = algorithm.name
@@ -112,8 +123,8 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 profile=profile,
                 expires=expires.total_seconds(),
                 algorithm=algorithm_name,
-                key_size=key_size,
-                key_type=key_type,
-                ecc_curve=ecc_curve.name,
+                key_size=ca_key_size,
+                key_type=ca_key_type,
+                ecc_curve=ecc_curve_name,
                 password=password,
             )

@@ -17,7 +17,7 @@ import typing
 from typing import Iterable, Optional, Tuple, Type
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric import ec, ed448
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 
@@ -42,7 +42,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def assertKey(  # pylint: disable=invalid-name
         self,
         ca: CertificateAuthority,
-        key_type: Type[PrivateKeyTypes] = RSAPrivateKey,
+        key_type: Type[PrivateKeyTypes] = None,
         password: Optional[bytes] = None,
         excludes: Optional[Iterable[int]] = None,
     ) -> Tuple[PrivateKeyTypes, x509.Certificate]:
@@ -52,6 +52,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
 
         self.assertTrue(ca_storage.exists(priv_path))
         self.assertTrue(ca_storage.exists(cert_path))
+        if key_type is None:
+            key_type = type(ca.key())
 
         with ca_storage.open(priv_path, "rb") as stream:
             priv = stream.read()
@@ -122,7 +124,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "algorithm": "sha256",
                         "key_size": 1024,
                         "key_type": "RSA",
-                        "ecc_curve": "secp256r1",
+                        "ecc_curve": None,
                         "password": None,
                     },
                 ),
@@ -134,6 +136,27 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
+
+    @override_tmpcadir()
+    def test_with_celery_with_ecc_curve(self) -> None:
+        """Test regenerating a key with a manually supplied ECC curve."""
+        stdout, stderr = self.cmd_e2e(
+            ["regenerate_ocsp_keys", certs["ecc"]["serial"], "--ecc-curve", "BrainpoolP256R1"]
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertKey(self.cas["ecc"], key_type=ec.EllipticCurvePrivateKey)
+
+    @override_tmpcadir()
+    def test_with_ed448_with_explicit_key_type(self) -> None:
+        """Test creating an Ed448-based OCSP key for an RSA-based CA."""
+        stdout, stderr = self.cmd_e2e(
+            ["regenerate_ocsp_keys", certs["root"]["serial"], "--key-type", "Ed448"]
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+
+        self.assertKey(self.cas["root"], key_type=ed448.Ed448PrivateKey)
 
     @override_tmpcadir()
     def test_all(self) -> None:

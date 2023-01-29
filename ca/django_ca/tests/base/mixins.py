@@ -1105,7 +1105,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         # Make sure that task was called the right number of times
         self.assertEqual(len(calls), len(mocked.call_args_list))
         for expected, actual in zip(calls, mocked.call_args_list):
-            self.assertEqual(expected, actual)
+            self.assertEqual(expected, actual, actual)
 
     @contextmanager
     def patch(self, *args: Any, **kwargs: Any) -> typing.Iterator[mock.MagicMock]:

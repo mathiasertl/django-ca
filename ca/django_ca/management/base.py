@@ -125,13 +125,11 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def add_ecc_curve(self, parser: CommandParser) -> None:
         """Add --ecc-curve option."""
-        default = ca_settings.CA_DEFAULT_ECC_CURVE()
         parser.add_argument(
             "--ecc-curve",
             metavar="CURVE",
             action=actions.KeyCurveAction,
-            default=default,
-            help=f"Elliptic Curve used for ECC keys (default: {default.name}).",
+            help=f"Elliptic Curve used for ECC keys (default: {ca_settings.CA_DEFAULT_ECC_CURVE.name}).",
         )
 
     def add_key_size(self, parser: CommandParser) -> None:
@@ -139,16 +137,15 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         parser.add_argument(
             "--key-size",
             action=actions.KeySizeAction,
-            default=ca_settings.CA_DEFAULT_KEY_SIZE,
-            help="Key size for the private key (default: %(default)s).",
+            help=f"Key size for RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
         )
 
-    def add_key_type(self, parser: CommandParser) -> None:
+    def add_key_type(self, parser: CommandParser, default: str = "RSA") -> None:
         """Add --key-type option (type of private key - RSA/DSA/ECC/EdDSA)."""
         parser.add_argument(
             "--key-type",
-            choices=["RSA", "DSA", "ECC", "EdDSA"],
-            default="RSA",
+            choices=["RSA", "DSA", "ECC", "EdDSA", "Ed448"],
+            default=default,
             help="Key type for the private key (default: %(default)s).",
         )
 

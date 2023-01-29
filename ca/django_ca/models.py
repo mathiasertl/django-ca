@@ -1268,15 +1268,16 @@ class CertificateAuthority(X509CertMixin):
         if key_type is None:
             key_type = self.key_type
 
-        if key_type == "DSA" and isinstance(ca_key, dsa.DSAPrivateKey) and key_size is None:
-            key_size = ca_key.key_size
-        elif key_type == "RSA" and isinstance(ca_key, rsa.RSAPrivateKey) and key_size is None:
-            key_size = ca_key.key_size
-        elif key_type == "ECC" and isinstance(ca_key, ec.EllipticCurvePrivateKey) and ecc_curve is None:
-            ecc_curve = ca_key.curve
+        # If the requested private key type and the private key type of the CA is identical, use properties
+        # from the CA private key as default
+        if key_type == self.key_type:
+            if key_type in ("DSA", "RSA") and key_size is None:
+                key_size = ca_key.key_size
+            elif key_type == "ECC" and ecc_curve is None:
+                ecc_curve = ca_key.curve
 
         # Ensure that parameters used to generate the private key are valid.
-        validate_private_key_parameters(key_type, key_size, ecc_curve)
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
 
         # Ensure that parameters used to generate the public key are valid. Note that we have to use the key
         # type of the **ca** private key (not the OCSP private key), as it is used for signing.

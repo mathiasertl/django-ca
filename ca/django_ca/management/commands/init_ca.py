@@ -43,7 +43,7 @@ from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import parse_general_name, sort_name
+from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -181,7 +181,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         subject: x509.Name,
         parent: Optional[CertificateAuthority],
         expires: timedelta,
-        key_size: int,
+        key_size: Optional[int],
         key_type: ParsableKeyType,
         ecc_curve: Optional[ec.EllipticCurve],
         algorithm: Optional[hashes.HashAlgorithm],
@@ -204,6 +204,11 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
+
+        try:
+            key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
 
         # In case of CAs, we silently set the expiry date to that of the parent CA if the user specified a
         # number of days that would make the CA expire after the parent CA.
@@ -275,7 +280,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 terms_of_service=tos,
                 **kwargs,
             )
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs

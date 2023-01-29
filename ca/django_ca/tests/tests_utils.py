@@ -1169,10 +1169,40 @@ class GetCertBuilderTestCase(TestCase):
 class ValidatePrivateKeyParametersTest(TestCase):
     """Test :py:func:`django_ca.utils.validate_private_key_parameters`."""
 
+    def test_default_parameters(self) -> None:
+        """Test that default values are returned"""
+        self.assertEqual(
+            (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("RSA", None, None)
+        )
+        self.assertEqual(
+            (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("DSA", None, None)
+        )
+
+        key_size, ecc_curve = validate_private_key_parameters("ECC", None, None)
+        self.assertIsNone(key_size)
+        self.assertIsInstance(ecc_curve, ca_settings.CA_DEFAULT_ECC_CURVE)
+
+        self.assertEqual((None, None), validate_private_key_parameters("EdDSA", None, None))
+        self.assertEqual((None, None), validate_private_key_parameters("Ed448", None, None))
+
+    def test_valid_parameters(self) -> None:
+        """Test valid parameters."""
+        self.assertEqual((8192, None), validate_private_key_parameters("RSA", 8192, None))
+        self.assertEqual((8192, None), validate_private_key_parameters("DSA", 8192, None))
+
+        key_size, ecc_curve = validate_private_key_parameters("ECC", None, ec.BrainpoolP384R1())
+        self.assertIsNone(key_size)
+        self.assertIsInstance(ecc_curve, ec.BrainpoolP384R1)
+
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
+        key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+        ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
             validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[arg-type]
+
+        with self.assertRaisesRegex(ValueError, r"^foo: Key size must be an int\.$"):
+            validate_private_key_parameters("RSA", "foo", None)  # type: ignore[arg-type]
 
         with self.assertRaisesRegex(ValueError, "^4000: Key size must be a power of two$"):
             validate_private_key_parameters("RSA", 4000, None)
@@ -1180,8 +1210,17 @@ class ValidatePrivateKeyParametersTest(TestCase):
         with self.assertRaisesRegex(ValueError, "^16: Key size must be least 1024 bits$"):
             validate_private_key_parameters("RSA", 16, None)
 
+        with self.assertRaisesRegex(ValueError, r"^Key size is not supported for ECC keys\.$"):
+            validate_private_key_parameters("ECC", key_size, ecc_curve)  # type: ignore
+
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
-            validate_private_key_parameters("ECC", 16, "secp192r1")  # type: ignore
+            validate_private_key_parameters("ECC", None, "secp192r1")  # type: ignore
+
+        for key_type in ("Ed448", "EdDSA"):
+            with self.assertRaisesRegex(ValueError, rf"^Key size is not supported for {key_type} keys\.$"):
+                validate_private_key_parameters(key_type, key_size, None)  # type: ignore
+            with self.assertRaisesRegex(ValueError, rf"^ECC curves are not supported for {key_type} keys\.$"):
+                validate_private_key_parameters(key_type, None, ecc_curve)  # type: ignore
 
 
 class ValidatePublicKeyParametersTest(TestCase):

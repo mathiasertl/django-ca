@@ -44,7 +44,8 @@ class InitCATest(TestCaseMixin, TestCase):
         stdout = io.StringIO()
         stderr = io.StringIO()
         name = kwargs.pop("name", "Test CA")
-        kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
+        if kwargs.get("key_type", "RSA") in ("RSA", "DSA"):
+            kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
         return self.cmd(
             "init_ca",
             name,

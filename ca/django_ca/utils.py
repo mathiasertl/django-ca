@@ -21,7 +21,7 @@ import typing
 from collections import abc
 from datetime import datetime, timedelta, timezone
 from ipaddress import ip_address, ip_network
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from urllib.parse import urlparse
 
 import idna
@@ -448,7 +448,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_name_x509(name: ParsableName) -> typing.Tuple[x509.NameAttribute, ...]:
+def parse_name_x509(name: ParsableName) -> Tuple[x509.NameAttribute, ...]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     .. versionchanged:: 1.20.0
@@ -588,14 +588,18 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
 def validate_private_key_parameters(
     key_type: ParsableKeyType, key_size: Optional[int], ecc_curve: Optional[ec.EllipticCurve]
-) -> None:
+) -> Tuple[Optional[int], Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
     generated.
 
     >>> validate_private_key_parameters("RSA", 4096, None)
+    (4096, None)
     >>> validate_private_key_parameters("Ed448", 4096, None)  # Ed448 does not care about the key size
+    Traceback (most recent call last):
+        ...
+    ValueError: Key size is not supported for Ed448 keys.
     >>> validate_private_key_parameters('RSA', 4000, None)
     Traceback (most recent call last):
         ...
@@ -605,14 +609,30 @@ def validate_private_key_parameters(
     if key_type not in constants.PARSABLE_KEY_TYPES:
         raise ValueError(f"{key_type}: Unknown key type")
 
-    if key_type in ("RSA", "DSA") and key_size is not None:
+    if key_type in ("RSA", "DSA"):
+        if key_size is None:
+            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+        if not isinstance(key_size, int):
+            raise ValueError(f"{key_size}: Key size must be an int.")
         if is_power2(key_size) is False:
             raise ValueError(f"{key_size}: Key size must be a power of two")
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
 
-    if key_type == "ECC" and ecc_curve is not None and not isinstance(ecc_curve, ec.EllipticCurve):
-        raise ValueError(f"{ecc_curve}: Must be a subclass of ec.EllipticCurve")
+    if key_type == "ECC":
+        if key_size is not None:
+            raise ValueError(f"Key size is not supported for {key_type} keys.")
+        if ecc_curve is None:
+            ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
+        if not isinstance(ecc_curve, ec.EllipticCurve):
+            raise ValueError(f"{ecc_curve}: Must be a subclass of ec.EllipticCurve")
+
+    if key_type in ("Ed448", "Ed25519", "EdDSA"):
+        if key_size is not None:
+            raise ValueError(f"Key size is not supported for {key_type} keys.")
+        if ecc_curve is not None:
+            raise ValueError(f"ECC curves are not supported for {key_type} keys.")
+    return key_size, ecc_curve
 
 
 def validate_public_key_parameters(
@@ -714,27 +734,18 @@ def generate_private_key(
         A private key of the appropriate type.
     """
     # Make sure that parameters are valid
-    validate_private_key_parameters(key_type, key_size, ecc_curve)
+    key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
 
     if key_type == "DSA":
-        if key_size is None:
-            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-
         return dsa.generate_private_key(key_size=key_size)
+    if key_type == "RSA":
+        return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
     if key_type == "ECC":
-        if ecc_curve is None:
-            ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
-
         return ec.generate_private_key(ecc_curve)
     if key_type == "EdDSA":
         return ed25519.Ed25519PrivateKey.generate()
     if key_type == "Ed448":
         return ed448.Ed448PrivateKey.generate()
-    if key_type == "RSA":
-        if key_size is None:
-            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-
-        return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
 
     # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and
     #   validate_private_key_parameters would raise for any other key types.
