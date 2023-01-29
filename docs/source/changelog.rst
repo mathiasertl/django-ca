@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Added support for cryptography 39.0.
+* Added support for Ed448 and Ed25519 based certificate authorities.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 * The default hash algorithm for certificate authorities with a DSA key pair can now be configured using
@@ -20,6 +21,15 @@ ChangeLog
 * Use ``yaml.safe_load`` to load configuration files to protect against malicious configuration.
 * OCSP keys now use the same signature hash algorithm as their certificate authority by default.
 * CRLs are now signed with the same signature hash algorithm as their certificate authority by default.
+
+Bugfixes
+========
+
+* Fixed timestamps in CRLs if ``USE_TZ=False``. Previously, the local time as UTC was used, so freshly issued
+  CRLs might not yet be valid depending on your systems timezone.
+* Fixed the hash algorithm in OCSP responses. The same algorithm as in the request is now used, previously
+  SHA1 was used (which happens to match the default algorithm used by OpenSSL). Some clients (e.g.
+  :manpage:`openssl ocsp(1SSL)`) cannot determine the status of a certificate if a different hash is used.
 
 Backwards incompatible changes
 ==============================

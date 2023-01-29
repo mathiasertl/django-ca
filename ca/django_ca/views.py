@@ -29,7 +29,7 @@ from http import HTTPStatus
 from typing import Any, Optional, Union
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound, OCSPNonce, load_pem_x509_certificate, ocsp
 
@@ -268,7 +268,7 @@ class OCSPView(View):
 
         cert_serial = int_to_hex(ocsp_req.serial_number)
 
-        # NOINSPECTION NOTE: PyCharm wrongly things that second except is already coverted by the first.
+        # NOINSPECTION NOTE: PyCharm wrongly things that second except is already covered by the first.
         # noinspection PyExceptClausesOrder
         try:
             cert = self.get_cert(ca, cert_serial)
@@ -299,7 +299,9 @@ class OCSPView(View):
         builder = builder.add_response(
             cert=cert.pub.loaded,
             issuer=ca.pub.loaded,
-            algorithm=hashes.SHA256(),
+            # The algorithm used must be the same as in the request, or "openssl ocsp" won't be able to
+            # determine the status
+            algorithm=ocsp_req.hash_algorithm,
             cert_status=status,
             this_update=now,
             next_update=expires,
