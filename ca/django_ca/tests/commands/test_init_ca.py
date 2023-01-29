@@ -55,6 +55,22 @@ class InitCATest(TestCaseMixin, TestCase):
             **kwargs,
         )
 
+    def init_ca_e2e(self, name: str, *args: str, **kwargs: typing.Any) -> CertificateAuthority:
+        with self.assertCreateCASignals() as (pre, post):
+            out, err = self.cmd_e2e(["init_ca", name] + list(args))
+        self.assertTrue(pre.called)
+        self.assertTrue(post.called)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+        self.assertPrivateKey(ca)
+        ca.full_clean()  # assert e.g. max_length in serials
+        self.assertSignature([ca], ca)
+
+        return ca
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
         """Basic tests for the command."""
@@ -107,16 +123,8 @@ class InitCATest(TestCaseMixin, TestCase):
         cname = "subject-sort.example.com"
         name = "test_subject_sort"
         subject = f"/CN={cname}/C=AT"
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(["init_ca", name, subject])
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        self.assertPrivateKey(ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature([ca], ca)
+
+        ca = self.init_ca_e2e(name, subject)
 
         # Assert that common name and that subject is in correct order.
         self.assertEqual(ca.cn, cname)
@@ -137,16 +145,8 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_subject_unsortable"
         given_name = "given-name"
         subject = f"/CN={cname}/C=AT/givenName={given_name}"
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(["init_ca", name, subject])
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        self.assertPrivateKey(ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature([ca], ca)
+
+        ca = self.init_ca_e2e(name, subject)
 
         # Assert that common name and that subject is in correct order.
         self.assertEqual(ca.cn, cname)
@@ -171,36 +171,25 @@ class InitCATest(TestCaseMixin, TestCase):
         caa = f"caa.{hostname}"
         name = "test_arguments"
 
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(
-                [
-                    "init_ca",
-                    name,
-                    "/CN=args.example.com",
-                    "--algorithm=SHA256",  # hashes.SHA256(),
-                    "--key-type=ECC",
-                    "--expires=720",
-                    "--pathlen=3",
-                    "--issuer-url=http://issuer.ca.example.com",
-                    "--issuer-alt-name=http://ian.ca.example.com",
-                    "--crl-url=http://crl.example.com",
-                    "--ocsp-url=http://ocsp.example.com",
-                    "--ca-issuer-url=http://ca.issuer.ca.example.com",
-                    "--permit-name=DNS:.com",
-                    "--exclude-name=DNS:.net",
-                    f"--caa={caa}",
-                    f"--website={website}",
-                    f"--tos={tos}",
-                ]
-            )
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        self.assertPrivateKey(ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature([ca], ca)
+        ca = self.init_ca_e2e(
+            name,
+            "/CN=args.example.com",
+            "--algorithm=SHA256",  # hashes.SHA256(),
+            "--key-type=ECC",
+            "--expires=720",
+            "--pathlen=3",
+            "--issuer-url=http://issuer.ca.example.com",
+            "--issuer-alt-name=http://ian.ca.example.com",
+            "--crl-url=http://crl.example.com",
+            "--ocsp-url=http://ocsp.example.com",
+            "--ca-issuer-url=http://ca.issuer.ca.example.com",
+            "--permit-name=DNS:.com",
+            "--exclude-name=DNS:.net",
+            f"--caa={caa}",
+            f"--website={website}",
+            f"--tos={tos}",
+        )
+
         actual = ca.x509_extensions
         self.assertEqual(
             actual[ExtensionOID.NAME_CONSTRAINTS],
@@ -242,49 +231,22 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_multiple_ians(self) -> None:
         """Test that we can set multiple IssuerAlternativeName values."""
         name = "test_multiple_ians"
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(
-                [
-                    "init_ca",
-                    "--issuer-alt-name=example.com",
-                    "--issuer-alt-name=https://example.com",
-                    name,
-                    f"/CN={name}",
-                ]
-            )
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertPrivateKey(ca)
-        self.assertSignature([ca], ca)
+        ca = self.init_ca_e2e(
+            name, "--issuer-alt-name=example.com", "--issuer-alt-name=https://example.com", f"/CN={name}"
+        )
         self.assertEqual(ca.issuer_alt_name, "DNS:example.com,URI:https://example.com")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
 
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(
-                [
-                    "init_ca",
-                    "Test CA",
-                    "/CN=acme.example.com",
-                    "--acme-enable",
-                    "--acme-contact-optional",
-                    "--acme-profile=client",
-                ]
-            )
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(cn="acme.example.com")
-        self.assertPostCreateCa(post, ca)
-        self.assertPrivateKey(ca)
-        ca.full_clean()  # assert e.g. max_length in serials
+        ca = self.init_ca_e2e(
+            "Test CA",
+            "/CN=acme.example.com",
+            "--acme-enable",
+            "--acme-contact-optional",
+            "--acme-profile=client",
+        )
 
         self.assertTrue(ca.acme_enabled)
         self.assertEqual(ca.acme_profile, "client")
@@ -369,17 +331,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test the NameConstraints extension with 'permitted'."""
 
         name = "test_permitted"
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(["init_ca", "--permit-name", "DNS:.com", name, f"/CN={name}"])
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertPrivateKey(ca)
-        self.assertSignature([ca], ca)
+        ca = self.init_ca_e2e(name, "--permit-name", "DNS:.com", f"/CN={name}")
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
             self.name_constraints(permitted=[dns(".com")], critical=True),
@@ -390,16 +342,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test the NameConstraints extension with 'excluded'."""
 
         name = "test_excluded"
-        with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(["init_ca", "--exclude-name", "DNS:.com", name, f"/CN={name}"])
-        self.assertTrue(pre.called)
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        self.assertPrivateKey(ca)
-        ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature([ca], ca)
+        ca = self.init_ca_e2e(name, "--exclude-name", "DNS:.com", f"/CN={name}")
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
             self.name_constraints(excluded=[dns(".com")], critical=True),
