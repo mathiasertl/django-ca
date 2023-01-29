@@ -53,13 +53,11 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
+        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
     @override_tmpcadir()
-    def test_rsa_ca_with_sha256(self) -> None:
+    def test_rsa_ca_with_sha512(self) -> None:
         """Test creating a CRL from a RSA key with a custom algorithm."""
 
         stdout, stderr = self.cmd(
@@ -68,13 +66,11 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             scope="user",
             stdout=BytesIO(),
             stderr=BytesIO(),
-            algorithm=hashes.SHA256(),
+            algorithm=hashes.SHA512(),
         )
         self.assertEqual(stderr, b"")
-
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
-        self.assertEqual(list(crl), [])
+        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        self.assertCRL(stdout, signer=self.ca, algorithm=hashes.SHA512(), idp=expected_idp)
 
     @override_tmpcadir()
     def test_dsa_ca(self) -> None:
@@ -100,9 +96,9 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
         with open(path, "rb") as stream:
-            crl = x509.load_pem_x509_crl(stream.read())
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
+            crl = stream.read()
+        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        self.assertCRL(crl, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, "test", "crl-test.crl")
@@ -135,9 +131,8 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         )
         self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
+        expected_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+        self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
 
     @override_tmpcadir()
     def test_scope_none(self) -> None:
@@ -152,7 +147,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             expires=86400,
             signer=root,
             idp=None,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=root.algorithm,
         )
         self.assertEqual(stderr, b"")
 
@@ -166,7 +161,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             expires=86400,
             signer=child,
             idp=idp,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=root.algorithm,
         )
         self.assertEqual(stderr, b"")
 
@@ -207,7 +202,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             expires=86400,
             signer=root,
             idp=None,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=root.algorithm,
         )
         self.assertEqual(stderr, b"")
 
@@ -227,7 +222,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             expires=86400,
             signer=child,
             idp=None,
-            algorithm=ca_settings.CA_DIGEST_ALGORITHM,
+            algorithm=child.algorithm,
         )
         self.assertEqual(stderr, b"")
 
@@ -242,10 +237,8 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
+        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
 
     @override_tmpcadir()
     def test_revoked(self) -> None:
@@ -259,7 +252,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
@@ -273,7 +266,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
                 "dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO()
             )
             crl = x509.load_pem_x509_crl(stdout)
-            self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+            self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
             self.assertEqual(len(list(crl)), 1)
             self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
 
@@ -292,7 +285,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 1)
@@ -312,10 +305,8 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
-        self.assertEqual(list(crl), [])
+        expected_idp = self.get_idp(only_contains_ca_certs=True)
+        self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
         # revoke the CA and see if it's there
         child.revoke()
@@ -324,7 +315,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA512)
+        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, child.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)

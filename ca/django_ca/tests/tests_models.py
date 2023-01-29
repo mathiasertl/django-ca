@@ -193,6 +193,14 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             # NOTE: assertLogs() fails if there are *no* log messages, so we cannot test that
             self.assertTrue(ca.key_exists)
 
+    def test_key_type(self) -> None:
+        """Test the key type of CAs."""
+        self.assertEqual(self.cas["root"].key_type, "RSA")
+        self.assertEqual(self.cas["dsa"].key_type, "DSA")
+        self.assertEqual(self.cas["ecc"].key_type, "ECC")
+        self.assertEqual(self.cas["ed25519"].key_type, "EdDSA")
+        self.assertEqual(self.cas["ed448"].key_type, "Ed448")
+
     @override_tmpcadir()
     def test_bundle_as_pem(self) -> None:
         """Test bundles of various CAs."""
@@ -391,6 +399,20 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             crl = self.ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         # Note that we still get an AKI because the value comes from the public key in this case
         self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=self.ca.algorithm)
+
+    @freeze_time(timestamps["everything_valid"])
+    def test_get_crl_with_wrong_algorithm(self) -> None:
+        """Test that we validate the algorithm if passed by the user."""
+        with self.assertRaisesRegex(ValueError, r"^EdDSA keys do not allow an algorithm for signing\.$"):
+            self.cas["ed25519"].get_crl(algorithm=hashes.SHA256())
+        with self.assertRaisesRegex(ValueError, r"^Ed448 keys do not allow an algorithm for signing\.$"):
+            self.cas["ed448"].get_crl(algorithm=hashes.SHA256())
+
+        # This is a bit contrived, as RSA keys would never return None
+        property_mock = mock.PropertyMock(return_value=None)
+        with mock.patch("django_ca.models.CertificateAuthority.algorithm", new_callable=property_mock):
+            with self.assertRaisesRegex(ValueError, r"^RSA keys require an algorithm for signing\.$"):
+                self.cas["root"].get_crl()
 
     def test_validate_json(self) -> None:
         """Test the json validator."""

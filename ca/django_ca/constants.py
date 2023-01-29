@@ -262,6 +262,15 @@ LOG_ENTRY_TYPE_KEYS = MappingProxyType(
     }
 )
 
+#: Tuple of supported public key types.
+PUBLIC_KEY_TYPES = (
+    dsa.DSAPublicKey,
+    ec.EllipticCurvePublicKey,
+    ed25519.Ed25519PublicKey,
+    ed448.Ed448PublicKey,
+    rsa.RSAPublicKey,
+)
+
 #: Tuple of supported private key types.
 PRIVATE_KEY_TYPES = (
     dsa.DSAPrivateKey,
@@ -270,6 +279,7 @@ PRIVATE_KEY_TYPES = (
     ed448.Ed448PrivateKey,
     rsa.RSAPrivateKey,
 )
+PARSABLE_KEY_TYPES = ("RSA", "DSA", "ECC", "EdDSA", "Ed448")
 
 #: Map of human-readable names/serialized values to TLSFeatureTypes.
 TLS_FEATURE_NAMES = MappingProxyType(

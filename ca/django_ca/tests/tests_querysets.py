@@ -167,6 +167,18 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         ca_name = "OpenSSH CA"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "openssh.example.com")])
 
+        # try creating a CA with a parent
+        with self.assertRaisesRegex(ValueError, "OpenSSH does not support intermediate authorities"):
+            CertificateAuthority.objects.init(
+                name=ca_name,
+                key_size=None,
+                key_type="EdDSA",
+                subject=subject,
+                parent=self.ca,
+                openssh_ca=True,
+            )
+            self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
+
         ca = CertificateAuthority.objects.init(
             name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=True
         )

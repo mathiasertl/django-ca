@@ -930,7 +930,7 @@ class CertificateAuthority(X509CertMixin):
                 # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
                 raise ValueError("Could not decrypt private key - bad password?") from ex
 
-        if not isinstance(self._key, constants.PRIVATE_KEY_TYPES):
+        if not isinstance(self._key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
             raise ValueError("Private key of this type is not supported.")
 
         return self._key
@@ -944,18 +944,19 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def key_type(self) -> ParsableKeyType:
+        """The type of key as a string, e.g. "RSA" or "Ed448"."""
         pub = self.pub.loaded.public_key()
         if isinstance(pub, dsa.DSAPublicKey):
             return "DSA"
-        elif isinstance(pub, rsa.RSAPublicKey):
+        if isinstance(pub, rsa.RSAPublicKey):
             return "RSA"
-        elif isinstance(pub, ec.EllipticCurvePublicKey):
+        if isinstance(pub, ec.EllipticCurvePublicKey):
             return "ECC"
-        elif isinstance(pub, ed25519.Ed25519PublicKey):
+        if isinstance(pub, ed25519.Ed25519PublicKey):
             return "EdDSA"
-        elif isinstance(pub, ed448.Ed448PublicKey):
+        if isinstance(pub, ed448.Ed448PublicKey):
             return "Ed448"
-        raise ValueError(f"{pub}: Unknown key type.")
+        raise ValueError(f"{pub}: Unknown key type.")  # pragma: no cover
 
     def cache_crls(
         self, password: Optional[Union[str, bytes]] = None, algorithm: ParsableHash = None
@@ -1359,11 +1360,10 @@ class CertificateAuthority(X509CertMixin):
             ski = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
         except x509.ExtensionNotFound as ex:
             public_key = self.pub.loaded.public_key()
-            if not isinstance(public_key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
+            if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
                 # COVERAGE NOTE: This does not happen in reality, we never generate keys of this type
                 raise TypeError("Cannot get AuthorityKeyIdentifier from this private key type.") from ex
-            # TYPE NOTE: mypy does not currently recognize isinstance() check above
-            return x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)  # type: ignore[arg-type]
+            return x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
         else:
             return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
@@ -1503,9 +1503,8 @@ class CertificateAuthority(X509CertMixin):
         for cert in self.get_crl_certs(scope, now):
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
-        ca_key = self.key(password)
-        if isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)) and algorithm is not None:
-            raise ValueError(f"{self.name}: algorithm must be None for this CA.")
+        # Validate that the user has selected a usable algorithm
+        validate_public_key_parameters(self.key_type, algorithm)
 
         # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
         if include_issuing_distribution_point is None:
@@ -1541,6 +1540,9 @@ class CertificateAuthority(X509CertMixin):
         crl_number_data = json.loads(self.crl_number)
         crl_number = int(crl_number_data["scope"].get(counter, 0))
         builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
+
+        # Load private key (before any permanent changes to the model are made).
+        ca_key = self.key(password)
 
         # increase crl_number for the given scope and save
         crl_number_data["scope"][counter] = crl_number + 1

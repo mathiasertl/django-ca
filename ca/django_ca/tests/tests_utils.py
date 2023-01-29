@@ -60,6 +60,7 @@ from django_ca.utils import (
     validate_email,
     validate_hostname,
     validate_private_key_parameters,
+    validate_public_key_parameters,
     x509_name,
     x509_relative_name,
 )
@@ -1165,7 +1166,7 @@ class GetCertBuilderTestCase(TestCase):
             get_cert_builder("a string")  # type: ignore[arg-type]
 
 
-class ValidateKeyParametersTest(TestCase):
+class ValidatePrivateKeyParametersTest(TestCase):
     """Test :py:func:`django_ca.utils.validate_private_key_parameters`."""
 
     def test_wrong_values(self) -> None:
@@ -1180,9 +1181,36 @@ class ValidateKeyParametersTest(TestCase):
             validate_private_key_parameters("RSA", 16, None)
 
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
-            validate_private_key_parameters(
-                "ECC", 16, "secp192r1"
-            )  # type: ignore[arg-type]  # what we're testing
+            validate_private_key_parameters("ECC", 16, "secp192r1")  # type: ignore
+
+
+class ValidatePublicKeyParametersTest(TestCase):
+    """Test :py:func:`django_ca.utils.validate_public_key_parameters`."""
+
+    def test_valid_parameters(self) -> None:
+        """Test valid parameters."""
+        for key_type in ("RSA", "DSA", "ECC"):
+            for algorithm in (hashes.SHA256(), hashes.SHA512()):
+                validate_public_key_parameters(key_type, algorithm)  # type: ignore[arg-type]
+        for key_type in ("Ed448", "EdDSA"):
+            validate_public_key_parameters(key_type, None)  # type: ignore[arg-type]
+
+    def test_invalid_parameters(self) -> None:
+        """Test invalid parameters."""
+        with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
+            validate_public_key_parameters("FOOBAR", None)  # type: ignore[arg-type]
+        for key_type in ("RSA", "DSA", "ECC"):
+            with self.assertRaisesRegex(ValueError, rf"^{key_type} keys require an algorithm for signing\.$"):
+                validate_public_key_parameters(key_type, None)  # type: ignore[arg-type]
+
+            msg = rf"^{key_type}: algorithm must be an instance of hashes.HashAlgorithm\.$"
+            with self.assertRaisesRegex(ValueError, msg):
+                validate_public_key_parameters(key_type, True)  # type: ignore[arg-type]
+
+        for key_type in ("Ed448", "EdDSA"):
+            msg = rf"^{key_type} keys do not allow an algorithm for signing\.$"
+            with self.assertRaisesRegex(ValueError, msg):
+                validate_public_key_parameters(key_type, hashes.SHA256())  # type: ignore[arg-type]
 
 
 class SplitStrTestCase(TestCase):

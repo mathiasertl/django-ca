@@ -536,6 +536,32 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
     @override_tmpcadir()
+    def test_with_algorithm(self) -> None:
+        """Test a profile that manually overrides the algorithm"""
+
+        root = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        prof = Profile("example", subject=[], algorithm="SHA512")
+
+        # Make sure that algorithm does not match what is the default profile above, so that we can test it
+        self.assertIsInstance(root.algorithm, hashes.SHA256)
+
+        with self.mockSignal(pre_issue_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                root,
+                csr,
+                subject=self.subject,
+                add_crl_url=True,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertIsInstance(cert.algorithm, hashes.SHA512)
+
+    @override_tmpcadir()
     def test_merge_issuer_alternative_name(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
         prof = Profile("example", subject=[])

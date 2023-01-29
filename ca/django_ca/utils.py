@@ -38,7 +38,7 @@ from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
 from django.utils import timezone as tz
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.typehints import (
     Expires,
     ParsableGeneralName,
@@ -602,7 +602,7 @@ def validate_private_key_parameters(
     ValueError: 4000: Key size must be a power of two
     """
 
-    if key_type not in ("RSA", "DSA", "ECC", "EdDSA", "Ed448"):
+    if key_type not in constants.PARSABLE_KEY_TYPES:
         raise ValueError(f"{key_type}: Unknown key type")
 
     if key_type in ("RSA", "DSA") and key_size is not None:
@@ -615,12 +615,29 @@ def validate_private_key_parameters(
         raise ValueError(f"{ecc_curve}: Must be a subclass of ec.EllipticCurve")
 
 
-def validate_public_key_parameters(key_type: ParsableKeyType, algorithm: Optional[hashes.HashAlgorithm]):
-    """Validate parameters for signing"""
+def validate_public_key_parameters(
+    key_type: ParsableKeyType, algorithm: Optional[hashes.HashAlgorithm]
+) -> None:
+    """Validate parameters for signing a certificate.
+
+    This function can be used to fail early if invalid parameters are passed.
+
+    >>> validate_public_key_parameters("RSA", hashes.SHA256())
+    >>> validate_public_key_parameters("Ed448", None)
+    >>> validate_public_key_parameters("Ed448", hashes.SHA256())
+    Traceback (most recent call last):
+        ...
+    ValueError: Ed448 keys do not allow an algorithm for signing.
+    """
+    if key_type not in constants.PARSABLE_KEY_TYPES:
+        raise ValueError(f"{key_type}: Unknown key type")
+
     if key_type in ("RSA", "DSA", "ECC"):
         if algorithm is None:
             raise ValueError(f"{key_type} keys require an algorithm for signing.")
-    elif algorithm is not None:
+        if not isinstance(algorithm, hashes.HashAlgorithm):
+            raise ValueError(f"{key_type}: algorithm must be an instance of hashes.HashAlgorithm.")
+    elif algorithm is not None:  # Ed448 and Ed25519 keys do not allow hash algorithms
         raise ValueError(f"{key_type} keys do not allow an algorithm for signing.")
 
 
