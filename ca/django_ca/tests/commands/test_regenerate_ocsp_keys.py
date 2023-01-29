@@ -42,7 +42,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def assertKey(  # pylint: disable=invalid-name
         self,
         ca: CertificateAuthority,
-        key_type: Type[PrivateKeyTypes] = None,
+        key_type: Optional[Type[PrivateKeyTypes]] = None,
         password: Optional[bytes] = None,
         excludes: Optional[Iterable[int]] = None,
     ) -> Tuple[PrivateKeyTypes, x509.Certificate]:

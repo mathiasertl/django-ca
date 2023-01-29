@@ -1271,9 +1271,9 @@ class CertificateAuthority(X509CertMixin):
         # If the requested private key type and the private key type of the CA is identical, use properties
         # from the CA private key as default
         if key_type == self.key_type:
-            if key_type in ("DSA", "RSA") and key_size is None:
+            if isinstance(ca_key, (dsa.DSAPrivateKey, rsa.RSAPrivateKey)) and key_size is None:
                 key_size = ca_key.key_size
-            elif key_type == "ECC" and ecc_curve is None:
+            elif isinstance(ca_key, ec.EllipticCurvePrivateKey) and ecc_curve is None:
                 ecc_curve = ca_key.curve
 
         # Ensure that parameters used to generate the private key are valid.

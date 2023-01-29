@@ -19,6 +19,7 @@ import io
 import sys
 import typing
 from datetime import datetime, timedelta
+from typing import Any, Optional, Tuple, Type, Union
 
 from cryptography import x509
 
@@ -44,9 +45,9 @@ class BinaryOutputWrapper(OutputWrapper):
 
     def write(  # type: ignore[override]
         self,
-        msg: typing.Union[str, bytes] = b"",
-        style_func: typing.Optional[typing.Callable[..., typing.Any]] = None,
-        ending: typing.Optional[bytes] = None,
+        msg: Union[str, bytes] = b"",
+        style_func: Optional[typing.Callable[..., Any]] = None,
+        ending: Optional[bytes] = None,
     ) -> None:
         if ending is None:
             ending = self.ending
@@ -67,8 +68,8 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        stdout: typing.Optional[io.BytesIO] = None,
-        stderr: typing.Optional[io.BytesIO] = None,
+        stdout: Optional[io.BytesIO] = None,
+        stderr: Optional[io.BytesIO] = None,
         no_color: bool = True,
         force_color: bool = False,
     ) -> None:
@@ -79,7 +80,7 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         # TODO: we set stdout below?!
         self.stderr = BinaryOutputWrapper(stdout or sys.stdout.buffer)
 
-    def execute(self, *args: typing.Any, **options: typing.Any) -> None:
+    def execute(self, *args: Any, **options: Any) -> None:
         if options.get("force_color"):
             raise CommandError("This command does not support color output.")
 
@@ -117,8 +118,8 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         self,
         parser: argparse._ActionsContainer,
         arg: str = "subject",
-        metavar: typing.Optional[str] = None,
-        help_text: typing.Optional[str] = None,
+        metavar: Optional[str] = None,
+        help_text: Optional[str] = None,
     ) -> None:
         """Add subject option."""
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
@@ -140,7 +141,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             help=f"Key size for RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
         )
 
-    def add_key_type(self, parser: CommandParser, default: str = "RSA") -> None:
+    def add_key_type(self, parser: CommandParser, default: Optional[str] = "RSA") -> None:
         """Add --key-type option (type of private key - RSA/DSA/ECC/EdDSA)."""
         parser.add_argument(
             "--key-type",
@@ -167,7 +168,7 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: typing.Tuple[typing.Type[x509.ExtensionType], ...] = (
+    sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (
         x509.ExtendedKeyUsage,
         x509.KeyUsage,
         x509.SubjectAlternativeName,
@@ -245,10 +246,10 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     def test_options(  # pylint: disable=unused-argument
         self,
         ca: CertificateAuthority,
-        expires: typing.Optional[typing.Union[datetime, timedelta]],
-        password: typing.Optional[bytes],
+        expires: Optional[Union[datetime, timedelta]],
+        password: Optional[bytes],
         profile: Profile,
-        **options: typing.Any,
+        **options: Any,
     ) -> None:
         """Additional tests for validity of some options."""
 

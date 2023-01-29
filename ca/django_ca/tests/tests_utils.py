@@ -476,7 +476,7 @@ class GeneratePrivateKeyTestCase(TestCase):
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid key type."""
-        with self.assertRaisesRegex(ValueError, r"^FOO: Unknown key type$"):
+        with self.assertRaisesRegex(ValueError, r"^FOO: Unknown key type\.$"):
             generate_private_key(16, "FOO", None)  # type: ignore[call-overload]
 
 
@@ -1199,10 +1199,10 @@ class ValidatePrivateKeyParametersTest(TestCase):
         key_size = ca_settings.CA_DEFAULT_KEY_SIZE
         ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
-            validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[arg-type]
+            validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[call-overload]
 
         with self.assertRaisesRegex(ValueError, r"^foo: Key size must be an int\.$"):
-            validate_private_key_parameters("RSA", "foo", None)  # type: ignore[arg-type]
+            validate_private_key_parameters("RSA", "foo", None)  # type: ignore[call-overload]
 
         with self.assertRaisesRegex(ValueError, "^4000: Key size must be a power of two$"):
             validate_private_key_parameters("RSA", 4000, None)
@@ -1211,7 +1211,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
             validate_private_key_parameters("RSA", 16, None)
 
         with self.assertRaisesRegex(ValueError, r"^Key size is not supported for ECC keys\.$"):
-            validate_private_key_parameters("ECC", key_size, ecc_curve)  # type: ignore
+            validate_private_key_parameters("ECC", key_size, ecc_curve)
 
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
             validate_private_key_parameters("ECC", None, "secp192r1")  # type: ignore

@@ -586,6 +586,33 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
     return encoded
 
 
+@typing.overload
+def validate_private_key_parameters(
+    key_type: typing.Literal["DSA", "RSA"],
+    key_size: typing.Optional[int],
+    ecc_curve: Optional[ec.EllipticCurve],
+) -> Tuple[int, None]:
+    ...
+
+
+@typing.overload
+def validate_private_key_parameters(
+    key_type: typing.Literal["ECC"],
+    key_size: typing.Optional[int],
+    ecc_curve: Optional[ec.EllipticCurve],
+) -> Tuple[None, ec.EllipticCurve]:
+    ...
+
+
+@typing.overload
+def validate_private_key_parameters(
+    key_type: typing.Literal["Ed448", "EdDSA"],
+    key_size: typing.Optional[int],
+    ecc_curve: Optional[ec.EllipticCurve],
+) -> Tuple[None, None]:
+    ...
+
+
 def validate_private_key_parameters(
     key_type: ParsableKeyType, key_size: Optional[int], ecc_curve: Optional[ec.EllipticCurve]
 ) -> Tuple[Optional[int], Optional[ec.EllipticCurve]]:
@@ -733,23 +760,28 @@ def generate_private_key(
     key
         A private key of the appropriate type.
     """
-    # Make sure that parameters are valid
-    key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
 
+    # NOTE: validate_private_key_parameters() is repetitively moved into the if statements so that mypy
+    #   detects the right types.
     if key_type == "DSA":
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
         return dsa.generate_private_key(key_size=key_size)
     if key_type == "RSA":
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
     if key_type == "ECC":
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
         return ec.generate_private_key(ecc_curve)
     if key_type == "EdDSA":
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
         return ed25519.Ed25519PrivateKey.generate()
     if key_type == "Ed448":
+        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
         return ed448.Ed448PrivateKey.generate()
 
     # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and
     #   validate_private_key_parameters would raise for any other key types.
-    raise ValueError(f"{key_type}: Invalid key type.")  # pragma: no cover
+    raise ValueError(f"{key_type}: Unknown key type.")
 
 
 def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:

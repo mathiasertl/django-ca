@@ -56,6 +56,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
     def init_ca_e2e(self, name: str, *args: str, **kwargs: typing.Any) -> CertificateAuthority:
+        """Run a init_ca command via cmd_e2e()."""
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(["init_ca", name] + list(args))
         self.assertTrue(pre.called)
