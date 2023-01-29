@@ -248,7 +248,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             raise TypeError()  # just to make mypy happy
 
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(parsed_crl.is_signature_valid(public_key))
+
+        # cryptography can not validate signatures of CRLs for non DSA/RSA/EC keys
+        # https://github.com/pyca/cryptography/issues/8156
+        if not isinstance(public_key, (ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)):  # pragma: only cg<40
+            self.assertTrue(parsed_crl.is_signature_valid(public_key))
         self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
         self.assertEqual(parsed_crl.last_update, datetime.utcnow())
         self.assertEqual(parsed_crl.next_update, expires_timestamp)

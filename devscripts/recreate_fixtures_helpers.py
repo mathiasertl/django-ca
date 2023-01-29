@@ -59,6 +59,7 @@ TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def genpkey(*args: str):
+    """Convenience wrapper for the openssl genpkey program."""
     return utils.run(["openssl", "genpkey"] + list(args), stderr=subprocess.DEVNULL)
 
 
