@@ -251,7 +251,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         # cryptography can not validate signatures of CRLs for non DSA/RSA/EC keys
         # https://github.com/pyca/cryptography/issues/8156
-        if not isinstance(public_key, (ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)):  # pragma: only cg<40
+        if settings.CRYPTOGRAPHY_VERSION >= (40, 0) or not isinstance(  # pragma: cryptography<40.0 branch
+            public_key, (ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)
+        ):
             self.assertTrue(parsed_crl.is_signature_valid(public_key))
         self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
         self.assertEqual(parsed_crl.last_update, datetime.utcnow())
