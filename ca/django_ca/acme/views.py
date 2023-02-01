@@ -828,15 +828,15 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             log.exception("Error parsing CSR.")
             raise AcmeBadCSR(message="Unable to parse CSR.") from ex
 
-        if csr.is_signature_valid is False:
-            raise AcmeBadCSR(message="CSR signature is not valid.")
-
         # Do not accept MD5 or SHA1 signatures
         hash_algorithm = csr.signature_hash_algorithm
         if hasattr(hashes, "MD5") and isinstance(hash_algorithm, hashes.MD5):
             raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
         if hasattr(hashes, "SHA1") and isinstance(hash_algorithm, hashes.SHA1):
             raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
+
+        if csr.is_signature_valid is False:
+            raise AcmeBadCSR(message="CSR signature is not valid.")
 
         # Get list of general names from the authorizations
         names_from_order = set(auth.general_name for auth in authorizations)
