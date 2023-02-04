@@ -26,7 +26,7 @@ from django_ca.tests.base import certs, override_settings, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
-{ecc[serial_colons]} - {ecc[name]}{ecc_state}
+{ec[serial_colons]} - {ec[name]}{ec_state}
 {ed25519[serial_colons]} - {ed25519[name]}{ed25519_state}
 {ed448[serial_colons]} - {ed448[name]}{ed448_state}
 {pwd[serial_colons]} - {pwd[name]}{pwd_state}
@@ -68,7 +68,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 {certs['startssl_class2']['serial_colons']} - {certs['startssl_class2']['name']}
 {certs['digicert_sha2']['serial_colons']} - {certs['digicert_sha2']['name']}
 {certs['dsa']['serial_colons']} - {certs['dsa']['name']}
-{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['ec']['serial_colons']} - {certs['ec']['name']}
 {certs['ed25519']['serial_colons']} - {certs['ed25519']['name']}
 {certs['ed448']['serial_colons']} - {certs['ed448']['name']}
 {certs['pwd']['serial_colons']} - {certs['pwd']['name']}
@@ -127,7 +127,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             stdout,
             f"""{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
-{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['ec']['serial_colons']} - {certs['ec']['name']}
 {certs['ed25519']['serial_colons']} - {certs['ed25519']['name']}
 {certs['ed448']['serial_colons']} - {certs['ed448']['name']}
 {certs['pwd']['serial_colons']} - {certs['pwd']['name']}
@@ -156,7 +156,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             stdout,
             f"""{certs['dsa']['serial_colons']} - {certs['dsa']['name']}
-{certs['ecc']['serial_colons']} - {certs['ecc']['name']}
+{certs['ec']['serial_colons']} - {certs['ec']['name']}
 {certs['ed25519']['serial_colons']} - {certs['ed25519']['name']}
 {certs['ed448']['serial_colons']} - {certs['ed448']['name']}
 {certs['pwd']['serial_colons']} - {certs['pwd']['name']}

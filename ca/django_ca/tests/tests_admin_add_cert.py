@@ -57,11 +57,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     load_cas = (
         "root",
         "child",
+        "dsa",
+        "ec",
+        "ed25519",
+        "ed448",
         "pwd",
-        "ecc",
     )
 
-    def add_cert(self, cname: str, ca: CertificateAuthority) -> None:
+    def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA256") -> None:
         """Add certificate based on given name with given CA."""
         csr = certs["root-cert"]["csr"]["pem"]
 
@@ -75,7 +78,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": algorithm,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -204,7 +207,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test to actually add a certificate."""
         self.add_cert("test-child-add.example.com", self.ca)
         self.add_cert("test-root-add.example.com", self.cas["root"])
-        self.add_cert("test-ecc-add.example.com", self.cas["ecc"])
+        self.add_cert("test-dsa-add.example.com", self.cas["dsa"])
+        self.add_cert("test-ec-add.example.com", self.cas["ec"])
+        # self.add_cert("test-ed25519-add.example.com", self.cas["ed25519"], algorithm="")
+        # self.add_cert("test-ed448-add.example.com", self.cas["ed448"], algorithm="")
 
     @override_tmpcadir()
     def test_required_subject(self) -> None:

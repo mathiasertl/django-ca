@@ -125,6 +125,6 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 algorithm=algorithm_name,
                 key_size=ca_key_size,
                 key_type=ca_key_type,
-                ecc_curve=ecc_curve_name,
+                elliptic_curve=ecc_curve_name,
                 password=password,
             )

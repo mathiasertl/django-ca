@@ -145,7 +145,7 @@ certs["cloudflare_1"] = {
     "pub_filename": os.path.join("contrib", "cloudflare_1.pem"),
     "cat": "contrib",
     "type": "cert",
-    "key_type": "ECC",
+    "key_type": "EC",
     "valid_from": "2018-07-18 00:00:00",
     "valid_until": "2019-01-24 23:59:59",
     "ca": "root",

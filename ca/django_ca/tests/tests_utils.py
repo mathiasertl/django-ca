@@ -460,7 +460,7 @@ class GeneratePrivateKeyTestCase(TestCase):
 
     def test_key_types(self) -> None:
         """Test generating various private key types."""
-        ecc_key = generate_private_key(None, "ECC", ec.BrainpoolP256R1())
+        ecc_key = generate_private_key(None, "EC", ec.BrainpoolP256R1())
         self.assertIsInstance(ecc_key, ec.EllipticCurvePrivateKey)
         self.assertIsInstance(ecc_key.curve, ec.BrainpoolP256R1)
 
@@ -1178,11 +1178,11 @@ class ValidatePrivateKeyParametersTest(TestCase):
             (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("DSA", None, None)
         )
 
-        key_size, ecc_curve = validate_private_key_parameters("ECC", None, None)
+        key_size, ecc_curve = validate_private_key_parameters("EC", None, None)
         self.assertIsNone(key_size)
         self.assertIsInstance(ecc_curve, ca_settings.CA_DEFAULT_ECC_CURVE)
 
-        self.assertEqual((None, None), validate_private_key_parameters("EdDSA", None, None))
+        self.assertEqual((None, None), validate_private_key_parameters("Ed25519", None, None))
         self.assertEqual((None, None), validate_private_key_parameters("Ed448", None, None))
 
     def test_valid_parameters(self) -> None:
@@ -1190,7 +1190,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
         self.assertEqual((8192, None), validate_private_key_parameters("RSA", 8192, None))
         self.assertEqual((8192, None), validate_private_key_parameters("DSA", 8192, None))
 
-        key_size, ecc_curve = validate_private_key_parameters("ECC", None, ec.BrainpoolP384R1())
+        key_size, ecc_curve = validate_private_key_parameters("EC", None, ec.BrainpoolP384R1())
         self.assertIsNone(key_size)
         self.assertIsInstance(ecc_curve, ec.BrainpoolP384R1)
 
@@ -1210,16 +1210,18 @@ class ValidatePrivateKeyParametersTest(TestCase):
         with self.assertRaisesRegex(ValueError, "^16: Key size must be least 1024 bits$"):
             validate_private_key_parameters("RSA", 16, None)
 
-        with self.assertRaisesRegex(ValueError, r"^Key size is not supported for ECC keys\.$"):
-            validate_private_key_parameters("ECC", key_size, ecc_curve)
+        with self.assertRaisesRegex(ValueError, r"^Key size is not supported for EC keys\.$"):
+            validate_private_key_parameters("EC", key_size, ecc_curve)
 
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
-            validate_private_key_parameters("ECC", None, "secp192r1")  # type: ignore
+            validate_private_key_parameters("EC", None, "secp192r1")  # type: ignore
 
-        for key_type in ("Ed448", "EdDSA"):
+        for key_type in ("Ed448", "Ed25519"):
             with self.assertRaisesRegex(ValueError, rf"^Key size is not supported for {key_type} keys\.$"):
                 validate_private_key_parameters(key_type, key_size, None)  # type: ignore
-            with self.assertRaisesRegex(ValueError, rf"^ECC curves are not supported for {key_type} keys\.$"):
+            with self.assertRaisesRegex(
+                ValueError, rf"^Elliptic curves are not supported for {key_type} keys\.$"
+            ):
                 validate_private_key_parameters(key_type, None, ecc_curve)  # type: ignore
 
 
@@ -1228,25 +1230,22 @@ class ValidatePublicKeyParametersTest(TestCase):
 
     def test_valid_parameters(self) -> None:
         """Test valid parameters."""
-        for key_type in ("RSA", "DSA", "ECC"):
+        for key_type in ("RSA", "DSA", "EC"):
             for algorithm in (hashes.SHA256(), hashes.SHA512()):
                 validate_public_key_parameters(key_type, algorithm)  # type: ignore[arg-type]
-        for key_type in ("Ed448", "EdDSA"):
+        for key_type in ("Ed448", "Ed25519"):
             validate_public_key_parameters(key_type, None)  # type: ignore[arg-type]
 
     def test_invalid_parameters(self) -> None:
         """Test invalid parameters."""
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
             validate_public_key_parameters("FOOBAR", None)  # type: ignore[arg-type]
-        for key_type in ("RSA", "DSA", "ECC"):
-            with self.assertRaisesRegex(ValueError, rf"^{key_type} keys require an algorithm for signing\.$"):
-                validate_public_key_parameters(key_type, None)  # type: ignore[arg-type]
-
+        for key_type in ("RSA", "DSA", "EC"):
             msg = rf"^{key_type}: algorithm must be an instance of hashes.HashAlgorithm\.$"
             with self.assertRaisesRegex(ValueError, msg):
                 validate_public_key_parameters(key_type, True)  # type: ignore[arg-type]
 
-        for key_type in ("Ed448", "EdDSA"):
+        for key_type in ("Ed448", "Ed25519"):
             msg = rf"^{key_type} keys do not allow an algorithm for signing\.$"
             with self.assertRaisesRegex(ValueError, msg):
                 validate_public_key_parameters(key_type, hashes.SHA256())  # type: ignore[arg-type]

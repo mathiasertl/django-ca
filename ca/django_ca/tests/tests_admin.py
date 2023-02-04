@@ -113,7 +113,7 @@ class CertificateAdminViewTestCase(
             yield [
                 self.certs["root-cert"],
                 self.certs["pwd-cert"],
-                self.certs["ecc-cert"],
+                self.certs["ec-cert"],
                 self.certs["ed25519-cert"],
                 self.certs["ed448-cert"],
                 self.certs["dsa-cert"],

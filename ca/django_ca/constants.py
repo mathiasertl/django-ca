@@ -279,7 +279,7 @@ PRIVATE_KEY_TYPES = (
     ed448.Ed448PrivateKey,
     rsa.RSAPrivateKey,
 )
-PARSABLE_KEY_TYPES = ("RSA", "DSA", "ECC", "EdDSA", "Ed448")
+PARSABLE_KEY_TYPES = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
 
 #: Map of human-readable names/serialized values to TLSFeatureTypes.
 TLS_FEATURE_NAMES = MappingProxyType(

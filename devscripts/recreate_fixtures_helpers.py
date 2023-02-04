@@ -96,12 +96,12 @@ def _create_key(path, key_type):
             "dsa_paramgen_md:sha256",
         )
         genpkey("-paramfile", path + ".param", "-out", path)
-    elif key_type == "ECC":
+    elif key_type == "EC":
         utils.run(
             ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", path],
             stderr=subprocess.DEVNULL,
         )
-    elif key_type == "EdDSA":
+    elif key_type == "Ed25519":
         genpkey("-algorithm", "ED25519", "-out", path)
     elif key_type == "Ed448":
         genpkey("-algorithm", "ED448", "-out", path)
@@ -290,7 +290,7 @@ def _generate_contrib_files(data):
         if isinstance(public_key, rsa.RSAPublicKey):
             data[name]["key_type"] = "RSA"
         elif isinstance(public_key, ec.EllipticCurvePublicKey):
-            data[name]["key_type"] = "ECC"
+            data[name]["key_type"] = "EC"
         else:
             raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
@@ -319,7 +319,7 @@ def _generate_contrib_files(data):
         if isinstance(public_key, rsa.RSAPublicKey):
             data[name]["key_type"] = "RSA"
         elif isinstance(public_key, ec.EllipticCurvePublicKey):
-            data[name]["key_type"] = "ECC"
+            data[name]["key_type"] = "EC"
         else:
             raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
@@ -357,7 +357,7 @@ def create_cas(dest, now, delay, data):
                 expires=datetime.utcnow() + data[name]["expires"],
                 key_type=data[name]["key_type"],
                 key_size=data[name].get("key_size"),
-                algorithm=data[name]["algorithm"],
+                algorithm=data[name].get("algorithm"),
                 pathlen=data[name]["pathlen"],
                 **kwargs,
             )
@@ -496,7 +496,7 @@ def create_special_certs(dest, now, delay, data):
             ca=ca,
             csr=csr,
             profile=profiles["webserver"],
-            algorithm=data[name]["algorithm"],
+            algorithm=data[name].get("algorithm"),
             subject=data[name]["subject"],
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
@@ -519,7 +519,7 @@ def create_special_certs(dest, now, delay, data):
             ca=ca,
             csr=csr,
             profile=profiles["webserver"],
-            algorithm=data[name]["algorithm"],
+            algorithm=data[name].get("algorithm"),
             subject=data[name]["subject"],
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),

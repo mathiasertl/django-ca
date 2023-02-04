@@ -87,7 +87,7 @@ Digest:
     sha512: {sha512}
 HPKP pin: {hpkp}
 """,
-    "ecc-cert": """Common Name: {cn}
+    "ec-cert": """Common Name: {cn}
 Valid from: {valid_from_short}
 Valid until: {valid_until_short}
 Status: Valid

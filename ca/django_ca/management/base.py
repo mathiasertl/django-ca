@@ -142,10 +142,15 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         )
 
     def add_key_type(self, parser: CommandParser, default: Optional[str] = "RSA") -> None:
-        """Add --key-type option (type of private key - RSA/DSA/ECC/EdDSA)."""
+        """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
+        # NOTE: This can be simplified once support for "ECC" and "EdDSA" values is dropped.
+        known_private_key_types = ["RSA", "DSA", "EC", "Ed25519", "Ed448"]  # pragma: only django-ca<1.26
+        metavar = f"{{{','.join(known_private_key_types)}}}"
+
         parser.add_argument(
             "--key-type",
-            choices=["RSA", "DSA", "ECC", "EdDSA", "Ed448"],
+            choices=known_private_key_types + ["ECC", "EdDSA"],
+            metavar=metavar,
             default=default,
             help="Key type for the private key (default: %(default)s).",
         )

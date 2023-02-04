@@ -204,8 +204,8 @@ CA_OCSP_URLS = {
         "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
         "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
     },
-    "ecc": {
-        "ca": _fixture_data["certs"]["ecc"]["serial"],
+    "ec": {
+        "ca": _fixture_data["certs"]["ec"]["serial"],
         "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
         "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
     },

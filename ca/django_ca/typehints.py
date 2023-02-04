@@ -53,7 +53,7 @@ ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
 ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
-ParsableKeyType = typing.Literal["RSA", "DSA", "ECC", "EdDSA", "Ed448"]
+ParsableKeyType = typing.Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[
     str,
     # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001

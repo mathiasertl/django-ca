@@ -590,31 +590,31 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 def validate_private_key_parameters(
     key_type: typing.Literal["DSA", "RSA"],
     key_size: typing.Optional[int],
-    ecc_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> Tuple[int, None]:
     ...
 
 
 @typing.overload
 def validate_private_key_parameters(
-    key_type: typing.Literal["ECC"],
+    key_type: typing.Literal["EC"],
     key_size: typing.Optional[int],
-    ecc_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> Tuple[None, ec.EllipticCurve]:
     ...
 
 
 @typing.overload
 def validate_private_key_parameters(
-    key_type: typing.Literal["Ed448", "EdDSA"],
+    key_type: typing.Literal["Ed448", "Ed25519"],
     key_size: typing.Optional[int],
-    ecc_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> Tuple[None, None]:
     ...
 
 
 def validate_private_key_parameters(
-    key_type: ParsableKeyType, key_size: Optional[int], ecc_curve: Optional[ec.EllipticCurve]
+    key_type: ParsableKeyType, key_size: Optional[int], elliptic_curve: Optional[ec.EllipticCurve]
 ) -> Tuple[Optional[int], Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation.
 
@@ -646,30 +646,31 @@ def validate_private_key_parameters(
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
 
-    if key_type == "ECC":
+    if key_type == "EC":
         if key_size is not None:
             raise ValueError(f"Key size is not supported for {key_type} keys.")
-        if ecc_curve is None:
-            ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
-        if not isinstance(ecc_curve, ec.EllipticCurve):
-            raise ValueError(f"{ecc_curve}: Must be a subclass of ec.EllipticCurve")
+        if elliptic_curve is None:
+            elliptic_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
+        if not isinstance(elliptic_curve, ec.EllipticCurve):
+            raise ValueError(f"{elliptic_curve}: Must be a subclass of ec.EllipticCurve")
 
-    if key_type in ("Ed448", "Ed25519", "EdDSA"):
+    if key_type in ("Ed448", "Ed25519"):
         if key_size is not None:
             raise ValueError(f"Key size is not supported for {key_type} keys.")
-        if ecc_curve is not None:
-            raise ValueError(f"ECC curves are not supported for {key_type} keys.")
-    return key_size, ecc_curve
+        if elliptic_curve is not None:
+            raise ValueError(f"Elliptic curves are not supported for {key_type} keys.")
+    return key_size, elliptic_curve
 
 
 def validate_public_key_parameters(
     key_type: ParsableKeyType, algorithm: Optional[hashes.HashAlgorithm]
-) -> None:
+) -> Optional[hashes.HashAlgorithm]:
     """Validate parameters for signing a certificate.
 
     This function can be used to fail early if invalid parameters are passed.
 
-    >>> validate_public_key_parameters("RSA", hashes.SHA256())
+    >>> validate_public_key_parameters("RSA", hashes.SHA256())  # doctest: +ELLIPSIS
+    <cryptography.hazmat.primitives.hashes.SHA256 object at 0x...>
     >>> validate_public_key_parameters("Ed448", None)
     >>> validate_public_key_parameters("Ed448", hashes.SHA256())
     Traceback (most recent call last):
@@ -679,20 +680,23 @@ def validate_public_key_parameters(
     if key_type not in constants.PARSABLE_KEY_TYPES:
         raise ValueError(f"{key_type}: Unknown key type")
 
-    if key_type in ("RSA", "DSA", "ECC"):
+    if key_type in ("RSA", "DSA", "EC"):
         if algorithm is None:
-            raise ValueError(f"{key_type} keys require an algorithm for signing.")
+            if key_type == "DSA":
+                return ca_settings.CA_DSA_DIGEST_ALGORITHM
+            return ca_settings.CA_DIGEST_ALGORITHM
         if not isinstance(algorithm, hashes.HashAlgorithm):
             raise ValueError(f"{key_type}: algorithm must be an instance of hashes.HashAlgorithm.")
     elif algorithm is not None:  # Ed448 and Ed25519 keys do not allow hash algorithms
         raise ValueError(f"{key_type} keys do not allow an algorithm for signing.")
+    return algorithm
 
 
 @typing.overload
 def generate_private_key(
     key_size: typing.Optional[int],
     key_type: typing.Literal["DSA"],
-    ecc_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: typing.Optional[ec.EllipticCurve],
 ) -> dsa.DSAPrivateKey:
     ...
 
@@ -701,7 +705,7 @@ def generate_private_key(
 def generate_private_key(
     key_size: typing.Optional[int],
     key_type: typing.Literal["RSA"],
-    ecc_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: typing.Optional[ec.EllipticCurve],
 ) -> rsa.RSAPrivateKey:
     ...
 
@@ -709,8 +713,8 @@ def generate_private_key(
 @typing.overload
 def generate_private_key(
     key_size: typing.Optional[int],
-    key_type: typing.Literal["ECC"],
-    ecc_curve: typing.Optional[ec.EllipticCurve],
+    key_type: typing.Literal["EC"],
+    elliptic_curve: typing.Optional[ec.EllipticCurve],
 ) -> ec.EllipticCurvePrivateKey:
     ...
 
@@ -718,8 +722,8 @@ def generate_private_key(
 @typing.overload
 def generate_private_key(
     key_size: typing.Optional[int],
-    key_type: typing.Literal["EdDSA"],
-    ecc_curve: typing.Optional[ec.EllipticCurve],
+    key_type: typing.Literal["Ed25519"],
+    elliptic_curve: typing.Optional[ec.EllipticCurve],
 ) -> ed25519.Ed25519PrivateKey:
     ...
 
@@ -728,7 +732,7 @@ def generate_private_key(
 def generate_private_key(
     key_size: typing.Optional[int],
     key_type: typing.Literal["Ed448"],
-    ecc_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: typing.Optional[ec.EllipticCurve],
 ) -> ed448.Ed448PrivateKey:
     ...
 
@@ -736,7 +740,7 @@ def generate_private_key(
 def generate_private_key(
     key_size: Optional[int],
     key_type: ParsableKeyType,
-    ecc_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> PRIVATE_KEY_TYPES:
     """Generate a private key.
 
@@ -748,10 +752,10 @@ def generate_private_key(
 
     key_size : int
         The size of the private key. The value is  ignored if ``key_type`` is not ``"DSA"`` or ``"RSA"``.
-    key_type : {'RSA', 'DSA', 'ECC', 'EdDSA', 'Ed448'}
+    key_type : {'RSA', 'DSA', 'EC', 'Ed25519', 'Ed448'}
         The type of the private key.
-    ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
-        An elliptic curve to use for ECC keys. This parameter is ignored if ``key_type`` is not ``"ECC"``.
+    elliptic_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
+        An elliptic curve to use for EC keys. This parameter is ignored if ``key_type`` is not ``"EC"``.
         Defaults to the :ref:`CA_DEFAULT_ECC_CURVE <settings-ca-default-ecc-curve>`.
 
     Returns
@@ -764,19 +768,19 @@ def generate_private_key(
     # NOTE: validate_private_key_parameters() is repetitively moved into the if statements so that mypy
     #   detects the right types.
     if key_type == "DSA":
-        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return dsa.generate_private_key(key_size=key_size)
     if key_type == "RSA":
-        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
-    if key_type == "ECC":
-        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
-        return ec.generate_private_key(ecc_curve)
-    if key_type == "EdDSA":
-        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+    if key_type == "EC":
+        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
+        return ec.generate_private_key(elliptic_curve)
+    if key_type == "Ed25519":
+        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return ed25519.Ed25519PrivateKey.generate()
     if key_type == "Ed448":
-        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return ed448.Ed448PrivateKey.generate()
 
     # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and

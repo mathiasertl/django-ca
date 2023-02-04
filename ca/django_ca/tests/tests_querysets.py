@@ -172,7 +172,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             CertificateAuthority.objects.init(
                 name=ca_name,
                 key_size=None,
-                key_type="EdDSA",
+                key_type="Ed25519",
                 subject=subject,
                 parent=self.ca,
                 openssh_ca=True,
@@ -180,7 +180,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
 
         ca = CertificateAuthority.objects.init(
-            name=ca_name, key_size=None, key_type="EdDSA", subject=subject, openssh_ca=True
+            name=ca_name, key_size=None, key_type="Ed25519", subject=subject, openssh_ca=True
         )
 
         self.assertEqual(ca.name, ca_name)
@@ -302,7 +302,7 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
         expired = [
             self.certs["root-cert"],
             self.certs["child-cert"],
-            self.certs["ecc-cert"],
+            self.certs["ec-cert"],
             self.certs["dsa-cert"],
             self.certs["pwd-cert"],
             self.certs["ed448-cert"],

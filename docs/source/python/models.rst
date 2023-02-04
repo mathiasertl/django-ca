@@ -89,8 +89,8 @@ There are some more parameters to configure how the CA will be signed::
    ...   algorithm=hashes.SHA256(),  # SHA512 would be the default
    ...   pathlen=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
-   ...   key_type='ECC',  # create an ECC private key
-   ...   ecc_curve=ec.SECP256R1()  # ECC key curve
+   ...   key_type='EC',  # create a private key using Elliptic Curve cryptography
+   ...   elliptic_curve=ec.SECP256R1()  # Elliptic curve for the key
    ... )
    <CertificateAuthority: props>
 

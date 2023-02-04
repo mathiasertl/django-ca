@@ -18,6 +18,7 @@
 
 import os
 import pathlib
+import warnings
 from datetime import timedelta
 from typing import Any, Iterable, List, Optional
 
@@ -31,6 +32,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_KEYS
+from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.management.actions import (
     ExpiresAction,
     MultipleURLAction,
@@ -43,7 +45,12 @@ from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
+from django_ca.utils import (
+    parse_general_name,
+    sort_name,
+    validate_private_key_parameters,
+    validate_public_key_parameters,
+)
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -205,8 +212,28 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
 
+        # NOTE: When removing this in 1.26.0, don't forget to remove choices in the --key-type action.
+        if key_type == "ECC":  # type: ignore[comparison-overlap]  # that's a deprecated value
+            warnings.warn(
+                "--key-type=ECC is deprecated, use --key-type=EC instead.", RemovedInDjangoCA126Warning
+            )
+            key_type = "EC"
+        if key_type == "EdDSA":  # type: ignore[comparison-overlap]  # that's a deprecated value
+            warnings.warn(
+                "--key-type=EdDSA is deprecated, use --key-type=Ed25519 instead.", RemovedInDjangoCA126Warning
+            )
+            key_type = "Ed25519"
+
+        # Validate private key parameters early so that we can return better feedback to the user.
         try:
             key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+        except ValueError as ex:
+
+            raise CommandError(*ex.args) from ex
+
+        # Validate public key parameters early so that we can return better feedback to the user.
+        try:
+            algorithm = validate_public_key_parameters(key_type, algorithm)
         except ValueError as ex:
             raise CommandError(*ex.args) from ex
 
@@ -272,7 +299,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 excluded_subtrees=exclude_name,
                 password=password,
                 parent_password=parent_password,
-                ecc_curve=ecc_curve,
+                elliptic_curve=ecc_curve,
                 key_type=key_type,
                 key_size=key_size,
                 caa=caa,

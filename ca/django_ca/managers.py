@@ -16,6 +16,7 @@
 
 import pathlib
 import typing
+import warnings
 from typing import Any, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from cryptography import x509
@@ -29,6 +30,7 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings
+from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
@@ -207,7 +209,7 @@ class CertificateAuthorityManager(
         excluded_subtrees: Optional[Iterable[x509.GeneralName]] = None,
         password: Optional[Union[str, bytes]] = None,
         parent_password: Optional[Union[str, bytes]] = None,
-        ecc_curve: Optional[ec.EllipticCurve] = None,
+        elliptic_curve: Optional[ec.EllipticCurve] = None,
         key_type: ParsableKeyType = "RSA",
         key_size: Optional[int] = None,
         extra_extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
@@ -221,6 +223,12 @@ class CertificateAuthorityManager(
         openssh_ca: bool = False,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
+
+        .. versionchanged:: 1.23.0
+
+           * The ``ecc_curve`` parameter has been renamed to ``elliptic_curve``.
+           * Passing ``key_type="EdDSA"`` is deprecated, use ``key_type="Ed25519"`` instead.
+           * Passing ``key_type="ECC"`` is deprecated, use ``key_type="EC"`` instead.
 
 
         Parameters
@@ -270,16 +278,16 @@ class CertificateAuthorityManager(
             Password to encrypt the private key with.
         parent_password : bytes or str, optional
             Password that the private key of the parent CA is encrypted with.
-        ecc_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
-            An elliptic curve to use for ECC keys. This parameter is ignored if ``key_type`` is not ``"ECC"``.
+        elliptic_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
+            An elliptic curve to use for EC keys. This parameter is ignored if ``key_type`` is not ``"EC"``.
             Defaults to the :ref:`CA_DEFAULT_ECC_CURVE <settings-ca-default-ecc-curve>`.
         key_type: str, optional
-            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"``, ``"ECC"``, or
-            ``"EdDSA"`` , with ``"RSA"`` being the default.
+            The type of private key to generate, must be one of ``"RSA"``, ``"DSA"``, ``"EC"``, or
+            ``"Ed25519"`` , with ``"RSA"`` being the default.
         key_size : int, optional
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
             the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if
-            ``key_type="ECC"`` or ``key_type="EdDSA"``.
+            ``key_type="EC"`` or ``key_type="Ed25519"``.
         extra_extensions : list of :py:class:`cg:cryptography.x509.Extension`
             An optional list of additional extensions to add to the certificate.
         path : str or pathlib.PurePath, optional
@@ -311,16 +319,23 @@ class CertificateAuthorityManager(
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
 
-        if key_type in ("Ed448", "EdDSA"):
-            algorithm = None
-        elif algorithm is None:
-            if key_type == "DSA":
-                algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
-            else:
-                algorithm = ca_settings.CA_DIGEST_ALGORITHM
+        if key_type == "ECC":  # type: ignore[comparison-overlap]  # that's a deprecated value
+            warnings.warn(
+                'key_type="ECC" is deprecated, use key_type="EC" instead.',
+                RemovedInDjangoCA126Warning,
+                stacklevel=2,
+            )
+            key_type = "EC"
+        if key_type == "EdDSA":  # type: ignore[comparison-overlap]  # that's a deprecated value
+            warnings.warn(
+                'key_type="EdDSA" key_type is deprecated, use key_type="Ed25519" instead.',
+                RemovedInDjangoCA126Warning,
+                stacklevel=2,
+            )
+            key_type = "Ed25519"
 
-        key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
-        validate_public_key_parameters(key_type, algorithm)
+        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
+        algorithm = validate_public_key_parameters(key_type, algorithm)
 
         expires = parse_expires(expires)
 
@@ -411,7 +426,7 @@ class CertificateAuthorityManager(
             acme_requires_contact=acme_requires_contact,
         )
 
-        private_key = generate_private_key(key_size, key_type, ecc_curve)
+        private_key = generate_private_key(key_size, key_type, elliptic_curve)
         public_key = private_key.public_key()
 
         builder = get_cert_builder(expires, serial=serial)

@@ -46,6 +46,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = kwargs.pop("name", "Test CA")
         if kwargs.get("key_type", "RSA") in ("RSA", "DSA"):
             kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
+
         return self.cmd(
             "init_ca",
             name,
@@ -59,8 +60,6 @@ class InitCATest(TestCaseMixin, TestCase):
         """Run a init_ca command via cmd_e2e()."""
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(["init_ca", name] + list(args))
-        self.assertTrue(pre.called)
-        self.assertTrue(post.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
@@ -79,7 +78,6 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_basic"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name)
-        self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
@@ -176,7 +174,7 @@ class InitCATest(TestCaseMixin, TestCase):
             name,
             "/CN=args.example.com",
             "--algorithm=SHA256",  # hashes.SHA256(),
-            "--key-type=ECC",
+            "--key-type=EC",
             "--expires=720",
             "--pathlen=3",
             "--issuer-url=http://issuer.ca.example.com",
@@ -276,15 +274,15 @@ class InitCATest(TestCaseMixin, TestCase):
             self.init_ca(name="test", acme_profile="unknown-profile")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_ecc(self) -> None:
+    def test_ec(self) -> None:
         """Test creating an ECC CA."""
 
-        name = "test_ecc"
+        name = "test_ec"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name=name,
                 algorithm=hashes.SHA256(),
-                key_type="ECC",
+                key_type="EC",
                 expires=self.expires(720),
                 pathlen=3,
                 issuer_url="http://issuer.ca.example.com",
@@ -293,7 +291,6 @@ class InitCATest(TestCaseMixin, TestCase):
                 ocsp_url="http://ocsp.example.com",
                 ca_issuer_url="http://ca.issuer.ca.example.com",
             )
-        self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -318,7 +315,6 @@ class InitCATest(TestCaseMixin, TestCase):
                 ocsp_url="http://ocsp.example.com",
                 ca_issuer_url="http://ca.issuer.ca.example.com",
             )
-        self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -362,7 +358,6 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_no_pathlen"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name, pathlen=None)
-        self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -383,7 +378,6 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_empty_subject_fields"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd("init_ca", name, f"/L=/CN={self.hostname}")
-        self.assertTrue(pre.called)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -425,7 +419,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="Parent", pathlen=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name="Parent")
         self.assertPostCreateCa(post, parent)
         parent.full_clean()  # assert e.g. max_length in serials
@@ -437,7 +430,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="Second")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
 
         second = CertificateAuthority.objects.get(name="Second")
         self.assertPostCreateCa(post, second)
@@ -455,7 +447,6 @@ class InitCATest(TestCaseMixin, TestCase):
             )
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         child = CertificateAuthority.objects.get(name="Child")
         self.assertPostCreateCa(post, child)
         child.full_clean()  # assert e.g. max_length in serials
@@ -488,7 +479,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="default")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name="default")
         self.assertPostCreateCa(post, parent)
         self.assertPrivateKey(parent)
@@ -501,7 +491,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="pathlen-1", pathlen=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         pathlen_1 = CertificateAuthority.objects.get(name="pathlen-1")
         self.assertPostCreateCa(post, pathlen_1)
         pathlen_1.full_clean()  # assert e.g. max_length in serials
@@ -514,7 +503,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="pathlen-1-none", pathlen=None, parent=pathlen_1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         pathlen_1_none = CertificateAuthority.objects.get(name="pathlen-1-none")
         self.assertPostCreateCa(post, pathlen_1_none)
         pathlen_1_none.full_clean()  # assert e.g. max_length in serials
@@ -535,7 +523,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="pathlen-1-three", pathlen=3, parent=pathlen_1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         pathlen_1_three = CertificateAuthority.objects.get(name="pathlen-1-three")
         self.assertPostCreateCa(post, pathlen_1_three)
         pathlen_1_three.full_clean()  # assert e.g. max_length in serials
@@ -555,7 +542,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="pathlen-none", pathlen=None)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         pathlen_none = CertificateAuthority.objects.get(name="pathlen-none")
         self.assertPostCreateCa(post, pathlen_none)
         pathlen_none.full_clean()  # assert e.g. max_length in serials
@@ -568,7 +554,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="pathlen-none-none", pathlen=None, parent=pathlen_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         pathlen_none_none = CertificateAuthority.objects.get(name="pathlen-none-none")
         self.assertPostCreateCa(post, pathlen_none_none)
         pathlen_none_none.full_clean()  # assert e.g. max_length in serials
@@ -579,7 +564,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="pathlen-none-1", pathlen=1, parent=pathlen_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         pathlen_none_1 = CertificateAuthority.objects.get(name="pathlen-none-1")
         self.assertPostCreateCa(post, pathlen_none_1)
         pathlen_none_1.full_clean()  # assert e.g. max_length in serials
@@ -594,7 +578,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="Parent", pathlen=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name="Parent")
         self.assertPostCreateCa(post, parent)
         parent.full_clean()  # assert e.g. max_length in serials
@@ -606,7 +589,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="Second")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         second = CertificateAuthority.objects.get(name="Second")
         self.assertPostCreateCa(post, second)
         second.full_clean()  # assert e.g. max_length in serials
@@ -618,7 +600,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="Child", parent=parent, expires=expires)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         child = CertificateAuthority.objects.get(name="Child")
         self.assertPostCreateCa(post, child)
         child.full_clean()  # assert e.g. max_length in serials
@@ -641,7 +622,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name="Parent", password=password, pathlen=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         parent = CertificateAuthority.objects.get(name="Parent")
         self.assertPostCreateCa(post, parent)
         parent.full_clean()  # assert e.g. max_length in serials
@@ -684,7 +664,6 @@ class InitCATest(TestCaseMixin, TestCase):
             )
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
 
         child = CertificateAuthority.objects.get(name="Child")
         self.assertPostCreateCa(post, child)
@@ -711,7 +690,6 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name=name, parent=root, default_hostname=hostname)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
 
@@ -740,13 +718,43 @@ class InitCATest(TestCaseMixin, TestCase):
             out, err = self.init_ca(name=name, default_hostname=False)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        self.assertTrue(pre.called)
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
 
         self.assertIsNone(ca.issuer_url)
         self.assertIsNone(ca.ocsp_url)
         self.assertIsNone(ca.authority_information_access)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_deprecated_key_type_names(self) -> None:
+        """Test warnings for deprecated key type names."""
+        name = "ecc-ca"
+        msg = r"^--key-type=ECC is deprecated, use --key-type=EC instead\.$"
+        with self.assertCreateCASignals() as (pre, post), self.assertRemovedIn126Warning(msg):
+            out, err = self.init_ca(name=name, key_type="ECC")
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+        self.assertEqual(ca.key_type, "EC")
+
+        name = "eddsa-ca"
+        msg = r"^--key-type=EdDSA is deprecated, use --key-type=Ed25519 instead\.$"
+        with self.assertCreateCASignals() as (pre, post), self.assertRemovedIn126Warning(msg):
+            out, err = self.init_ca(name=name, key_type="EdDSA")
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        ca = CertificateAuthority.objects.get(name=name)
+        self.assertPostCreateCa(post, ca)
+        self.assertEqual(ca.key_type, "Ed25519")
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_invalid_public_key_parameters(self) -> None:
+        """Test passing invalid public key parameters."""
+
+        msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
+        with self.assertCommandError(msg), self.assertCreateCASignals(False, False):
+            self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm="SHA256")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self) -> None:

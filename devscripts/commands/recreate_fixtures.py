@@ -35,7 +35,7 @@ DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
 ROOT_PATHLEN = None
 CHILD_PATHLEN = 0
-ECC_PATHLEN = 1
+EC_PATHLEN = 1
 PWD_PATHLEN = 2
 DSA_PATHLEN = 3
 
@@ -90,11 +90,11 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "pathlen": CHILD_PATHLEN,
             "max_pathlen": 0,
         },
-        "ecc": {
+        "ec": {
             "type": "ca",
-            "basic_constraints": {"critical": True, "value": {"ca": True, "pathlen": ECC_PATHLEN}},
-            "pathlen": ECC_PATHLEN,
-            "key_type": "ECC",
+            "basic_constraints": {"critical": True, "value": {"ca": True, "pathlen": EC_PATHLEN}},
+            "pathlen": EC_PATHLEN,
+            "key_type": "EC",
             "max_pathlen": 1,
         },
         "dsa": {
@@ -113,19 +113,21 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         },
         "ed25519": {
             "type": "ca",
-            "key_type": "EdDSA",
+            "key_type": "Ed25519",
             "pathlen": 1,
             "max_pathlen": 1,
+            "algorithm": None,
         },
         "ed448": {
             "type": "ca",
             "key_type": "Ed448",
             "pathlen": 1,
             "max_pathlen": 1,
+            "algorithm": None,
         },
         "root-cert": {"ca": "root", "delta": timedelta(days=5), "pathlen": ROOT_PATHLEN, "csr": True},
         "child-cert": {"ca": "child", "delta": timedelta(days=5), "csr": True},
-        "ecc-cert": {"ca": "ecc", "delta": timedelta(days=5), "csr": True, "key_type": "ECC"},
+        "ec-cert": {"ca": "ec", "delta": timedelta(days=5), "csr": True, "key_type": "EC"},
         "pwd-cert": {"ca": "pwd", "delta": timedelta(days=5), "csr": True},
         "dsa-cert": {"ca": "dsa", "delta": timedelta(days=5), "csr": True, "key_type": "DSA"},
         "ed25519-cert": {
@@ -133,7 +135,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "delta": timedelta(days=5),
             "csr": True,
             "algorithm": None,
-            "key_type": "EdDSA",
+            "key_type": "Ed25519",
         },
         "ed448-cert": {
             "ca": "ed448",

@@ -492,8 +492,8 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
-        args = self.parser.parse_args([certs["ecc"]["serial"][:6]])
-        self.assertEqual(args.ca, self.cas["ecc"])
+        args = self.parser.parse_args([certs["ec"]["serial"][:6]])
+        self.assertEqual(args.ca, self.cas["ec"])
 
     def test_missing(self) -> None:
         """Test giving an unknown CA."""

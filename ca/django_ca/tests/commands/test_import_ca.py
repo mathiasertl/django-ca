@@ -62,7 +62,7 @@ class ImportCATest(TestCaseMixin, TestCase):
 
             # test the private key
             # NOTE: password is always None since we don't encrypt the stored key with --password
-            if data["key_type"] == "ECC":
+            if data["key_type"] == "EC":
                 key = typing.cast(ec.EllipticCurvePrivateKey, ca.key())
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             elif data["key_type"] == "RSA":
@@ -71,7 +71,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             elif data["key_type"] == "DSA":
                 key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
                 self.assertIsInstance(key, dsa.DSAPrivateKey)
-            elif data["key_type"] == "EdDSA":
+            elif data["key_type"] == "Ed25519":
                 key = typing.cast(ed25519.Ed25519PrivateKey, ca.key())  # type: ignore[assignment]
                 assert isinstance(key, ed25519.Ed25519PrivateKey)
             elif data["key_type"] == "Ed448":
@@ -80,7 +80,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
 
-            if data["key_type"] not in ("EdDSA", "Ed448"):
+            if data["key_type"] not in ("EC", "Ed25519", "Ed448"):
                 self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
 
@@ -115,7 +115,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
-            if data["key_type"] == "ECC":
+            if data["key_type"] == "EC":
                 key = typing.cast(ec.EllipticCurvePrivateKey, ca.key())
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             elif data["key_type"] == "RSA":
@@ -124,7 +124,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             elif data["key_type"] == "DSA":
                 key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
                 self.assertIsInstance(key, dsa.DSAPrivateKey)
-            elif data["key_type"] == "EdDSA":
+            elif data["key_type"] == "Ed25519":
                 key = typing.cast(ed25519.Ed25519PrivateKey, ca.key())  # type: ignore[assignment]
                 assert isinstance(key, ed25519.Ed25519PrivateKey)
             elif data["key_type"] == "Ed448":
@@ -133,7 +133,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
 
-            if data["key_type"] not in ("EdDSA", "Ed448"):
+            if data["key_type"] not in ("EC", "Ed25519", "Ed448"):
                 self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
 

@@ -1578,7 +1578,7 @@
             "valid_from": "2000-09-30 21:12:19",
             "valid_until": "2021-09-30 14:01:15"
         },
-        "ecc": {
+        "ec": {
             "algorithm": "sha256",
             "authority_key_identifier": {
                 "critical": false,
@@ -1603,10 +1603,10 @@
             "csr_subject_str": "/CN=csr.ecc.example.com",
             "hpkp": "Ozhkk7mdABiY3bj6brhkZVsrvGwMuOu72jf+8zCq6Zg=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/74F33DE65F70525250A01D4A8DFAA24241A4D4.der",
-            "key_der_filename": "ecc.key.der",
-            "key_filename": "ecc.key",
+            "key_der_filename": "ec.key.der",
+            "key_filename": "ec.key",
             "key_size": 256,
-            "key_type": "ECC",
+            "key_type": "EC",
             "key_usage": {
                 "critical": true,
                 "value": [
@@ -1616,11 +1616,11 @@
             },
             "max_pathlen": 1,
             "md5": "D6:D1:73:D9:0A:C2:3D:B5:04:3D:F7:EC:57:07:07:F4",
-            "name": "ecc",
+            "name": "ec",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/74F33DE65F70525250A01D4A8DFAA24241A4D4/cert/",
             "pathlen": 1,
-            "pub_der_filename": "ecc.pub.der",
-            "pub_filename": "ecc.pub",
+            "pub_der_filename": "ec.pub.der",
+            "pub_filename": "ec.pub",
             "serial": "74F33DE65F70525250A01D4A8DFAA24241A4D4",
             "sha1": "CF:31:73:40:29:2B:67:B3:B0:C1:0A:C9:DA:B7:8F:14:EC:D0:57:07",
             "sha256": "BA:2F:30:7A:C4:94:25:B8:25:15:41:09:42:E1:15:E7:F7:67:C9:15:FC:9F:70:8D:54:24:BD:CF:9A:D4:DB:EF",
@@ -1637,7 +1637,7 @@
             "valid_from": "2022-12-28 14:00:00",
             "valid_until": "2023-12-29 14:00:00"
         },
-        "ecc-cert": {
+        "ec-cert": {
             "algorithm": "sha256",
             "authority_information_access": {
                 "critical": false,
@@ -1662,7 +1662,7 @@
                     "ca": false
                 }
             },
-            "ca": "ecc",
+            "ca": "ec",
             "cat": "generated",
             "cn": "ecc-cert.example.com",
             "crl": "http://localhost:8000/django_ca/crl/74F33DE65F70525250A01D4A8DFAA24241A4D4/",
@@ -1692,7 +1692,7 @@
             "key_der_filename": "ecc-cert.key.der",
             "key_filename": "ecc-cert.key",
             "key_size": 2048,
-            "key_type": "ECC",
+            "key_type": "EC",
             "key_usage": {
                 "critical": true,
                 "value": [
@@ -1753,7 +1753,7 @@
             "key_der_filename": "ed25519.key.der",
             "key_filename": "ed25519.key",
             "key_size": 2048,
-            "key_type": "EdDSA",
+            "key_type": "Ed25519",
             "key_usage": {
                 "critical": true,
                 "value": [
@@ -1839,7 +1839,7 @@
             "key_der_filename": "ed25519-cert.key.der",
             "key_filename": "ed25519-cert.key",
             "key_size": 2048,
-            "key_type": "EdDSA",
+            "key_type": "Ed25519",
             "key_usage": {
                 "critical": true,
                 "value": [
@@ -2728,7 +2728,7 @@
             },
             "hpkp": "apUC+pEOtmlitwjvZvGfdxT7TeI0TwBVSLyvmwcanOs=",
             "key_filename": false,
-            "key_type": "ECC",
+            "key_type": "EC",
             "key_usage": {
                 "critical": true,
                 "value": [

@@ -204,6 +204,17 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertFalse(ca.acme_requires_contact)
         ca.key().public_key()  # just access private key to make sure we can load it
 
+    @override_tmpcadir()
+    def test_invalid_public_key_parameters(self) -> None:
+        """Test passing invalid public key parameters."""
+        msg = r'^key_type="ECC" is deprecated, use key_type="EC" instead\.$'
+        with self.assertRemovedIn126Warning(msg):
+            CertificateAuthority.objects.init("ecc-ca", self.subject, key_type="ECC")  # type: ignore
+
+        msg = r'^key_type="EdDSA" key_type is deprecated, use key_type="Ed25519" instead\.$'
+        with self.assertRemovedIn126Warning(msg):
+            CertificateAuthority.objects.init("eddsa-ca", self.subject, key_type="EdDSA")  # type: ignore
+
     def test_unknown_profile(self) -> None:
         """Test creating a certificate authority with a profile that doesn't exist."""
 

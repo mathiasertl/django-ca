@@ -124,7 +124,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "algorithm": "sha256",
                         "key_size": 1024,
                         "key_type": "RSA",
-                        "ecc_curve": None,
+                        "elliptic_curve": None,
                         "password": None,
                     },
                 ),
@@ -138,14 +138,14 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
     @override_tmpcadir()
-    def test_with_celery_with_ecc_curve(self) -> None:
-        """Test regenerating a key with a manually supplied ECC curve."""
+    def test_with_celery_with_elliptic_curve(self) -> None:
+        """Test regenerating a key with a manually supplied Elliptic curve."""
         stdout, stderr = self.cmd_e2e(
-            ["regenerate_ocsp_keys", certs["ecc"]["serial"], "--ecc-curve", "BrainpoolP256R1"]
+            ["regenerate_ocsp_keys", certs["ec"]["serial"], "--ecc-curve", "BrainpoolP256R1"]
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        self.assertKey(self.cas["ecc"], key_type=ec.EllipticCurvePrivateKey)
+        self.assertKey(self.cas["ec"], key_type=ec.EllipticCurvePrivateKey)
 
     @override_tmpcadir()
     def test_with_ed448_with_explicit_key_type(self) -> None:

@@ -12,6 +12,8 @@ ChangeLog
 
 * Added support for cryptography 39.0.
 * Added support for Ed448 and Ed25519 based certificate authorities.
+* Elliptic Curve keys are now consistently referred to as "EC" instead of "ECC".
+* Ed25519 keys are now referred to as such, instead of the old "EdDSA".
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 * The default hash algorithm for certificate authorities with a DSA key pair can now be configured using

@@ -24,8 +24,8 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
         "child": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['child']['pathlen']}",
         },
-        "ecc": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ecc']['pathlen']}",
+        "ec": {
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ec']['pathlen']}",
         },
         "dsa": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['dsa']['pathlen']}",

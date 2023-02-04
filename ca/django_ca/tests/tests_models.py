@@ -197,8 +197,8 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test the key type of CAs."""
         self.assertEqual(self.cas["root"].key_type, "RSA")
         self.assertEqual(self.cas["dsa"].key_type, "DSA")
-        self.assertEqual(self.cas["ecc"].key_type, "ECC")
-        self.assertEqual(self.cas["ed25519"].key_type, "EdDSA")
+        self.assertEqual(self.cas["ec"].key_type, "EC")
+        self.assertEqual(self.cas["ed25519"].key_type, "Ed25519")
         self.assertEqual(self.cas["ed448"].key_type, "Ed448")
 
     @override_tmpcadir()
@@ -206,7 +206,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test bundles of various CAs."""
         self.assertBundle([self.cas["root"]], self.cas["root"])
         self.assertBundle([self.cas["child"], self.cas["root"]], self.cas["child"])
-        self.assertBundle([self.cas["ecc"]], self.cas["ecc"])
+        self.assertBundle([self.cas["ec"]], self.cas["ec"])
+        self.assertBundle([self.cas["ed448"]], self.cas["ed448"])
+        self.assertBundle([self.cas["ed25519"]], self.cas["ed25519"])
 
     @override_tmpcadir()
     def test_key_str_password(self) -> None:
@@ -307,7 +309,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         # revoke ca and cert, CRL only contains CA
         child_ca = self.cas["child"]
         child_ca.revoke()
-        self.cas["ecc"].revoke()
+        self.cas["ec"].revoke()
         self.certs["root-cert"].revoke()
         self.certs["child-cert"].revoke()
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
@@ -403,16 +405,13 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @freeze_time(timestamps["everything_valid"])
     def test_get_crl_with_wrong_algorithm(self) -> None:
         """Test that we validate the algorithm if passed by the user."""
-        with self.assertRaisesRegex(ValueError, r"^EdDSA keys do not allow an algorithm for signing\.$"):
+        # DSA/RSA/EC keys cannot trigger this condition, as the algorithm would default to the one used by
+        # the certificate authority itself.
+
+        with self.assertRaisesRegex(ValueError, r"^Ed25519 keys do not allow an algorithm for signing\.$"):
             self.cas["ed25519"].get_crl(algorithm=hashes.SHA256())
         with self.assertRaisesRegex(ValueError, r"^Ed448 keys do not allow an algorithm for signing\.$"):
             self.cas["ed448"].get_crl(algorithm=hashes.SHA256())
-
-        # This is a bit contrived, as RSA keys would never return None
-        property_mock = mock.PropertyMock(return_value=None)
-        with mock.patch("django_ca.models.CertificateAuthority.algorithm", new_callable=property_mock):
-            with self.assertRaisesRegex(ValueError, r"^RSA keys require an algorithm for signing\.$"):
-                self.cas["root"].get_crl()
 
     def test_validate_json(self) -> None:
         """Test the json validator."""
@@ -594,7 +593,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_allows_intermediate(self) -> None:
         """Test checking if this CA allows intermediate CAs."""
         self.assertTrue(self.cas["root"].allows_intermediate_ca)
-        self.assertTrue(self.cas["ecc"].allows_intermediate_ca)
+        self.assertTrue(self.cas["ec"].allows_intermediate_ca)
         self.assertFalse(self.cas["child"].allows_intermediate_ca)
 
     @override_tmpcadir()
@@ -606,24 +605,27 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 self.assertIsInstance(key, type(ca.key()), name)
 
     @override_tmpcadir(CA_DEFAULT_ECC_CURVE="SECP192R1")
-    def test_generate_ocsp_key_ecc(self) -> None:
-        """Test generate_ocsp_key() with ECC keys."""
+    def test_generate_ocsp_key_ec(self) -> None:
+        """Test generate_ocsp_key() with EC keys."""
 
-        # ECC key for an ECC based CA should inherit the key
-        with self.generate_ocsp_key(self.cas["ecc"], key_type="ECC") as (key, cert):
+        # EC key for an EC based CA should inherit the key
+        with self.generate_ocsp_key(self.cas["ec"], key_type="EC") as (key, cert):
             key = typing.cast(ec.EllipticCurvePrivateKey, key)
             self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             self.assertIsInstance(key.curve, ec.SECP256R1)
 
-        # None ECC key curves inherit curve from default
-        with self.generate_ocsp_key(self.cas["root"], key_type="ECC") as (key, cert):
+        # None EC key curves inherit curve from default
+        with self.generate_ocsp_key(self.cas["root"], key_type="EC") as (key, cert):
             key = typing.cast(ec.EllipticCurvePrivateKey, key)
             self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             self.assertIsInstance(key.curve, ca_settings.CA_DEFAULT_ECC_CURVE)
 
         for name, ca in self.usable_cas:
-            # pass a custom ecc curve
-            with self.generate_ocsp_key(ca, key_type="ECC", ecc_curve=ec.BrainpoolP256R1()) as (key, cert):
+            # pass a custom elliptic curve
+            with self.generate_ocsp_key(ca, key_type="EC", elliptic_curve=ec.BrainpoolP256R1()) as (
+                key,
+                cert,
+            ):
                 key = typing.cast(ec.EllipticCurvePrivateKey, key)
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
                 self.assertIsInstance(key.curve, ec.BrainpoolP256R1)
@@ -913,7 +915,9 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         self.assertBundle(
             [self.certs["child-cert"], self.cas["child"], self.cas["root"]], self.certs["child-cert"]
         )
-        self.assertBundle([self.certs["ecc-cert"], self.cas["ecc"]], self.certs["ecc-cert"])
+        self.assertBundle([self.certs["ec-cert"], self.cas["ec"]], self.certs["ec-cert"])
+        self.assertBundle([self.certs["ed448-cert"], self.cas["ed448"]], self.certs["ed448-cert"])
+        self.assertBundle([self.certs["ed25519-cert"], self.cas["ed25519"]], self.certs["ed25519-cert"])
 
     def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
@@ -1080,19 +1084,23 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_jwk(self) -> None:
         """Test JWK property."""
         for name, ca in self.cas.items():
-            if certs[name]["key_type"] in ("DSA", "Ed448", "EdDSA"):
-                continue  # josepy does not support loading keys of this type
+            # josepy does not support loading DSA/Ed448/Ed25519 keys:
+            #   https://github.com/certbot/josepy/pull/98
+            if certs[name]["key_type"] in ("DSA", "Ed448", "Ed25519"):
+                continue
 
-            if certs[name]["key_type"] == "ECC":
+            if certs[name]["key_type"] == "EC":
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKEC, name)
             else:
-                self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA)
+                self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA, name)
 
         for name, cert in self.certs.items():
-            if certs[name]["key_type"] in ("DSA", "Ed448", "EdDSA"):
-                continue  # josepy does not support loading keys of this type
+            # josepy does not support loading DSA/Ed448/Ed25519 keys:
+            #   https://github.com/certbot/josepy/pull/98
+            if certs[name]["key_type"] in ("DSA", "Ed448", "Ed25519"):
+                continue
 
-            if certs[name]["key_type"] == "ECC":
+            if certs[name]["key_type"] == "EC":
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKEC, name)
             else:
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKRSA, name)

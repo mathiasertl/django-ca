@@ -21,7 +21,7 @@ from django_ca.tests.base import override_settings, override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
 
 expected = {
-    "ecc": """{name} (enabled):
+    "ec": """{name} (enabled):
 * Serial: {serial_colons}
 * Path to private key:
   {key_path}
@@ -995,8 +995,8 @@ X509 v3 certificate extensions for signed certificates:
 }
 
 # Root CAs with no children can always use the same template (since they all use the same extensions)
-expected["dsa"] = expected["ecc"]
-expected["pwd"] = expected["ecc"]
+expected["dsa"] = expected["ec"]
+expected["pwd"] = expected["ec"]
 
 
 class ViewCATestCase(TestCaseMixin, TestCase):
