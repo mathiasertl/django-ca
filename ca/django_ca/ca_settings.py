@@ -267,14 +267,18 @@ if CA_DEFAULT_EXPIRES <= timedelta():
 if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
     raise ImproperlyConfigured(f"CA_DEFAULT_KEY_SIZE cannot be lower then {CA_MIN_KEY_SIZE}")
 
-_CA_DEFAULT_ECC_CURVE = getattr(settings, "CA_DEFAULT_ECC_CURVE", "SECP256R1").strip()
+
+# CA_DEFAULT_ECC_CURVE can be removed in django-ca==1.26.0
+_CA_DEFAULT_ELLIPTIC_CURVE = getattr(
+    settings, "CA_DEFAULT_ELLIPTIC_CURVE", getattr(settings, "CA_DEFAULT_ECC_CURVE", "SECP256R1")
+).strip()
 try:
-    CA_DEFAULT_ECC_CURVE: Type[ec.EllipticCurve] = getattr(ec, _CA_DEFAULT_ECC_CURVE)
-    if not issubclass(CA_DEFAULT_ECC_CURVE, ec.EllipticCurve):
-        raise ImproperlyConfigured(f"{_CA_DEFAULT_ECC_CURVE}: Not an EllipticCurve.")
+    CA_DEFAULT_ELLIPTIC_CURVE: Type[ec.EllipticCurve] = getattr(ec, _CA_DEFAULT_ELLIPTIC_CURVE)
+    if not issubclass(CA_DEFAULT_ELLIPTIC_CURVE, ec.EllipticCurve):
+        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Not an EllipticCurve.")
 except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured(f"Unkown CA_DEFAULT_ECC_CURVE: {_CA_DEFAULT_ECC_CURVE}")
+    raise ImproperlyConfigured(f"Unkown CA_DEFAULT_ELLIPTIC_CURVE: {_CA_DEFAULT_ELLIPTIC_CURVE}")
 
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(

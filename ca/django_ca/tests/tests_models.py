@@ -604,7 +604,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             with self.generate_ocsp_key(ca) as (key, cert):
                 self.assertIsInstance(key, type(ca.key()), name)
 
-    @override_tmpcadir(CA_DEFAULT_ECC_CURVE="SECP192R1")
+    @override_tmpcadir(CA_DEFAULT_ELLIPTIC_CURVE="SECP192R1")
     def test_generate_ocsp_key_ec(self) -> None:
         """Test generate_ocsp_key() with EC keys."""
 
@@ -618,7 +618,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         with self.generate_ocsp_key(self.cas["root"], key_type="EC") as (key, cert):
             key = typing.cast(ec.EllipticCurvePrivateKey, key)
             self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
-            self.assertIsInstance(key.curve, ca_settings.CA_DEFAULT_ECC_CURVE)
+            self.assertIsInstance(key.curve, ca_settings.CA_DEFAULT_ELLIPTIC_CURVE)
 
         for name, ca in self.usable_cas:
             # pass a custom elliptic curve

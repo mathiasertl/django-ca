@@ -27,7 +27,6 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.utils.translation import gettext_lazy as _
 
-
 #: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes
 ELLIPTIC_CURVE_NAMES: MappingProxyType[str, Type[ec.EllipticCurve]] = MappingProxyType(
     {

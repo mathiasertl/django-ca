@@ -131,13 +131,13 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
                 pass
 
     def test_default_ecc_curve(self) -> None:
-        """Test invalid ``CA_DEFAULT_ECC_CURVE``."""
-        with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_ECC_CURVE: foo$"):
-            with self.settings(CA_DEFAULT_ECC_CURVE="foo"):
+        """Test invalid ``CA_DEFAULT_ELLIPTIC_CURVE``."""
+        with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_ELLIPTIC_CURVE: foo$"):
+            with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 
         with self.assertImproperlyConfigured(r"^ECDH: Not an EllipticCurve\.$"):
-            with self.settings(CA_DEFAULT_ECC_CURVE="ECDH"):
+            with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="ECDH"):
                 pass
 
         with self.assertImproperlyConfigured("^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$"):

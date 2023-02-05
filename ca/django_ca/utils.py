@@ -601,7 +601,7 @@ def validate_private_key_parameters(
         if key_size is not None:
             raise ValueError(f"Key size is not supported for {key_type} keys.")
         if elliptic_curve is None:
-            elliptic_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
+            elliptic_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
         if not isinstance(elliptic_curve, ec.EllipticCurve):
             raise ValueError(f"{elliptic_curve}: Must be a subclass of ec.EllipticCurve")
 
@@ -707,7 +707,7 @@ def generate_private_key(
         The type of the private key.
     elliptic_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
         An elliptic curve to use for EC keys. This parameter is ignored if ``key_type`` is not ``"EC"``.
-        Defaults to the :ref:`CA_DEFAULT_ECC_CURVE <settings-ca-default-ecc-curve>`.
+        Defaults to the :ref:`CA_DEFAULT_ELLIPTIC_CURVE <settings-ca-default-elliptic-curve>`.
 
     Returns
     -------

@@ -109,12 +109,17 @@ CA_DEFAULT_CA
    If this setting is *not* set, **django-ca** will select the CA that is currently usable (enabled, currently
    valid, not revoked) and and has an expiry furthest in the future.
 
-.. _settings-ca-default-ecc-curve:
+.. _settings-ca-default-elliptic-curve:
 
-CA_DEFAULT_ECC_CURVE
+CA_DEFAULT_ELLIPTIC_CURVE
    Default: ``"SECP256R1"``
 
-   The default elliptic curve used for generating CA private keys when ECC is used.
+   The default elliptic curve used for generating private keys for certificate authorities or OCSP keys.
+
+   .. versionchanged:: 1.23.0
+
+      This setting used to be called ``CA_DEFAULT_ECC_CURVE``. The old name for the setting can still be used
+      until ``django-ca==1.26.0``.
 
 .. _settings-ca-default-expires:
 

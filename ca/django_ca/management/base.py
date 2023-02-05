@@ -130,7 +130,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             "--ecc-curve",
             metavar="CURVE",
             action=actions.KeyCurveAction,
-            help=f"Elliptic Curve used for ECC keys (default: {ca_settings.CA_DEFAULT_ECC_CURVE.name}).",
+            help=f"Elliptic Curve used for ECC keys (default: {ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name}).",
         )
 
     def add_key_size(self, parser: CommandParser) -> None:

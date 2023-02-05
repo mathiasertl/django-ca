@@ -1131,7 +1131,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
 
         key_size, ecc_curve = validate_private_key_parameters("EC", None, None)
         self.assertIsNone(key_size)
-        self.assertIsInstance(ecc_curve, ca_settings.CA_DEFAULT_ECC_CURVE)
+        self.assertIsInstance(ecc_curve, ca_settings.CA_DEFAULT_ELLIPTIC_CURVE)
 
         self.assertEqual((None, None), validate_private_key_parameters("Ed25519", None, None))
         self.assertEqual((None, None), validate_private_key_parameters("Ed448", None, None))
@@ -1148,7 +1148,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
         key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-        ecc_curve = ca_settings.CA_DEFAULT_ECC_CURVE()
+        ecc_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
             validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[call-overload]
 
