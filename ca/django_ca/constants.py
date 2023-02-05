@@ -28,7 +28,7 @@ from cryptography.x509.oid import ExtensionOID
 from django.utils.translation import gettext_lazy as _
 
 #: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes
-ELLIPTIC_CURVE_NAMES: MappingProxyType[str, Type[ec.EllipticCurve]] = MappingProxyType(
+ELLIPTIC_CURVE_NAMES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
     {
         ec.SECT571R1.name.lower(): ec.SECT571R1,
         ec.SECT409R1.name.lower(): ec.SECT409R1,
@@ -266,7 +266,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 
 
 #: Mapping of hash algorithms to a unique string key identifying it.
-HASH_ALGORITHM_KEYS: MappingProxyType[Type[hashes.HashAlgorithm], str] = MappingProxyType(
+HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
         # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
         hashes.SHA512_224: hashes.SHA512_224.name,
@@ -288,11 +288,11 @@ HASH_ALGORITHM_KEYS: MappingProxyType[Type[hashes.HashAlgorithm], str] = Mapping
 )
 
 #: Mapping of hash algorithm keys to hash algorithms (the inverse of HASH_ALGORITHM_KEYS).
-HASH_ALGORITHM_KEY_TYPES: MappingProxyType[str, Type[hashes.HashAlgorithm]] = MappingProxyType(
+HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
 )
 
-HASH_ALGORITHM_NAMES: MappingProxyType[Type[hashes.HashAlgorithm], str] = MappingProxyType(
+HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
         # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
         hashes.SHA512_224: "SHA-512/224",
