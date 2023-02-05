@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
@@ -42,7 +43,6 @@ from django_ca.extensions import serialize_extension
 from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
-from django_ca.signals import post_issue_cert, pre_issue_cert
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.tests.tests_admin import CertificateModelAdminTestCaseMixin
@@ -64,11 +64,15 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         "pwd",
     )
 
-    def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA256") -> None:
+    def setUp(self) -> None:
+        super().setUp()
+        self.default_expires = self.expires(3).strftime("%Y-%m-%d")
+
+    def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = hashes.SHA256.name) -> None:
         """Add certificate based on given name with given CA."""
         csr = certs["root-cert"]["csr"]["pem"]
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -105,7 +109,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
         self.assertRedirects(response, self.changelist_url)
-        self.assertEqual(pre.call_count, 1)
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
@@ -209,8 +212,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.add_cert("test-root-add.example.com", self.cas["root"])
         self.add_cert("test-dsa-add.example.com", self.cas["dsa"])
         self.add_cert("test-ec-add.example.com", self.cas["ec"])
-        # self.add_cert("test-ed25519-add.example.com", self.cas["ed25519"], algorithm="")
-        # self.add_cert("test-ed448-add.example.com", self.cas["ed448"], algorithm="")
+        self.add_cert("test-ed25519-add.example.com", self.cas["ed25519"], algorithm="")
+        self.add_cert("test-ed448-add.example.com", self.cas["ed448"], algorithm="")
 
     @override_tmpcadir()
     def test_required_subject(self) -> None:
@@ -219,7 +222,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False) as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -228,7 +231,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject_0": "US",
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -245,8 +248,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(response.context["adminform"].form.errors, {"subject": ["Enter a complete value."]})
         self.assertEqual(cert_count, Certificate.objects.all().count())
@@ -258,7 +259,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False) as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -273,7 +274,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_5": "",
                     "subject_6": "",
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -290,8 +291,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(response.context["adminform"].form.errors, {"subject": ["This field is required."]})
         self.assertEqual(cert_count, Certificate.objects.all().count())
@@ -304,7 +303,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False) as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -319,7 +318,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_5": "",
                     "subject_6": "",
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -336,8 +335,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(response.context["adminform"].form.errors, {"subject": ["Enter a complete value."]})
         self.assertEqual(cert_count, Certificate.objects.all().count())
@@ -350,7 +347,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "test-add2.example.com"
         san = "test-san.example.com"
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -361,7 +358,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_5": cname,
                     "subject_alternative_name_0": san,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [],
                     "key_usage_1": False,
@@ -377,7 +374,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "authority_information_access_2": False,
                 },
             )
-        self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cname)
@@ -402,7 +398,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "with-password.example.com"
 
         # first post without password
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False) as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -412,7 +408,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -426,8 +422,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "extended_key_usage_1": False,
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
             response.context["adminform"].form.errors,
@@ -435,7 +429,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # now post with a false password
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False) as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -445,7 +439,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -460,8 +454,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "password": "wrong",
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
             response.context["adminform"].form.errors,
@@ -469,7 +461,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # post with correct password!
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -479,7 +471,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -502,7 +494,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "password": certs["pwd"]["password"].decode("utf-8"),
                 },
             )
-        self.assertEqual(pre.call_count, 1)
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cname)
@@ -542,7 +533,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False) as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -552,7 +543,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -566,8 +557,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "extended_key_usage_1": False,
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
@@ -588,7 +577,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -598,7 +587,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -612,8 +601,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "extended_key_usage_1": False,
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(response.context["adminform"].form.is_valid())
 
@@ -626,50 +613,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
-    def test_wrong_algorithm(self) -> None:
-        """Test selecting an unknown algorithm."""
-        ca = self.cas["root"]
-        csr = certs["pwd-cert"]["csr"]["pem"]
-        cname = "test-add-wrong-algo.example.com"
-
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": ca.pk,
-                    "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
-                    "subject_alternative_name_1": True,
-                    "algorithm": "wrong algo",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
-                    "key_usage_0": [
-                        "digital_signature",
-                        "key_agreement",
-                    ],
-                    "key_usage_1": True,
-                    "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
-                    ],
-                    "extended_key_usage_1": False,
-                },
-            )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"algorithm": ["Select a valid choice. wrong algo is not one of the available choices."]},
-        )
-
-        with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cname)
-
-    @override_tmpcadir()
     def test_expires_in_the_past(self) -> None:
         """Test creating a cert that expires in the past."""
         ca = self.cas["root"]
@@ -677,7 +620,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "test-expires-in-the-past.example.com"
         expires = datetime.now() - timedelta(days=3)
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -687,7 +630,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -701,8 +644,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "extended_key_usage_1": False,
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("Certificate cannot expire in the past.", response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
@@ -723,7 +664,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         correct_expires = ca.expires.strftime("%Y-%m-%d")
         error = f"CA expires on {correct_expires}, certificate must not expire after that."
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -733,7 +674,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -747,8 +688,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "extended_key_usage_1": False,
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(error, response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
@@ -769,7 +708,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -779,7 +718,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,  # cn_in_san
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -795,8 +734,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "tls_feature_1": False,
                 },
             )
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(html.escape(error), response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
@@ -804,6 +741,86 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cname)
+
+    @override_tmpcadir()
+    def test_invalid_signature_hash_algorithm(self) -> None:
+        """Test adding a certificate with an invalid signature hash algorithm."""
+
+        # Test with Ed448 CA
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": certs["ed448-cert"]["csr"]["pem"],
+                    "ca": self.cas["ed448"].pk,
+                    "profile": "webserver",
+                    "subject_5": self.hostname,
+                    "algorithm": hashes.SHA256.name,  # this is what we test
+                    "expires": self.default_expires,
+                },
+            )
+        self.assertFalse(response.context["adminform"].form.is_valid(), response)
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {"algorithm": ["Ed448-based certificate authorities do not use a signature hash algorithm."]},
+        )
+
+        # Test with Ed25519 CA
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": certs["ed25519-cert"]["csr"]["pem"],
+                    "ca": self.cas["ed25519"].pk,
+                    "profile": "webserver",
+                    "subject_5": self.hostname,
+                    "algorithm": hashes.SHA256.name,  # this is what we test
+                    "expires": self.default_expires,
+                },
+            )
+        self.assertFalse(response.context["adminform"].form.is_valid(), response)
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {"algorithm": ["Ed25519-based certificate authorities do not use a signature hash algorithm."]},
+        )
+
+        # Test with DSA CA
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": certs["dsa-cert"]["csr"]["pem"],
+                    "ca": self.cas["dsa"].pk,
+                    "profile": "webserver",
+                    "subject_5": self.hostname,
+                    "algorithm": hashes.SHA512.name,  # this is what we test
+                    "expires": self.default_expires,
+                },
+            )
+        self.assertFalse(response.context["adminform"].form.is_valid(), response)
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {"algorithm": ["DSA-based certificate authorities require a SHA-256 signature hash algorithm."]},
+        )
+
+        # Test with RSA CA
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": certs["root-cert"]["csr"]["pem"],
+                    "ca": self.cas["root"].pk,
+                    "profile": "webserver",
+                    "subject_5": self.hostname,
+                    "algorithm": "",  # this is what we test
+                    "expires": self.default_expires,
+                },
+            )
+        self.assertFalse(response.context["adminform"].form.is_valid(), response)
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {"algorithm": ["RSA-based certificate authorities require a signature hash algorithm."]},
+        )
 
     def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
@@ -813,7 +830,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -823,7 +840,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": "test-add-no-cas.example.com",
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -838,8 +855,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
     def test_add_unusable_cas(self) -> None:
         """Try adding with an unusable CA."""
@@ -850,13 +865,11 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -866,7 +879,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": "test-add.example.com",
                     "subject_alternative_name_1": True,
-                    "algorithm": "SHA256",
+                    "algorithm": hashes.SHA256.name,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -881,8 +894,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
 
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")

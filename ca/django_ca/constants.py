@@ -16,14 +16,42 @@
 import enum
 from collections import defaultdict
 from types import MappingProxyType
+from typing import Type
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
 from cryptography.x509.oid import ExtensionOID
 
 from django.utils.translation import gettext_lazy as _
+
+
+#: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes
+ELLIPTIC_CURVE_NAMES: MappingProxyType[str, Type[ec.EllipticCurve]] = MappingProxyType(
+    {
+        ec.SECT571R1.name.lower(): ec.SECT571R1,
+        ec.SECT409R1.name.lower(): ec.SECT409R1,
+        ec.SECT283R1.name.lower(): ec.SECT283R1,
+        ec.SECT233R1.name.lower(): ec.SECT233R1,
+        ec.SECT163R2.name.lower(): ec.SECT163R2,
+        ec.SECT571K1.name.lower(): ec.SECT571K1,
+        ec.SECT409K1.name.lower(): ec.SECT409K1,
+        ec.SECT283K1.name.lower(): ec.SECT283K1,
+        ec.SECT233K1.name.lower(): ec.SECT233K1,
+        ec.SECT163K1.name.lower(): ec.SECT163K1,
+        ec.SECP521R1.name.lower(): ec.SECP521R1,
+        ec.SECP384R1.name.lower(): ec.SECP384R1,
+        ec.SECP256R1.name.lower(): ec.SECP256R1,
+        ec.SECP256K1.name.lower(): ec.SECP256K1,
+        ec.SECP224R1.name.lower(): ec.SECP224R1,
+        ec.SECP192R1.name.lower(): ec.SECP192R1,
+        ec.BrainpoolP256R1.name.lower(): ec.BrainpoolP256R1,
+        ec.BrainpoolP384R1.name.lower(): ec.BrainpoolP384R1,
+        ec.BrainpoolP512R1.name.lower(): ec.BrainpoolP512R1,
+    }
+)
 
 
 class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
@@ -237,6 +265,54 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
     )
 )
 
+
+#: Mapping of hash algorithms to a unique string key identifying it.
+HASH_ALGORITHM_KEYS: MappingProxyType[Type[hashes.HashAlgorithm], str] = MappingProxyType(
+    {
+        # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
+        hashes.SHA512_224: hashes.SHA512_224.name,
+        hashes.SHA512_256: hashes.SHA512_256.name,
+        hashes.SHA224: hashes.SHA224.name,
+        hashes.SHA256: hashes.SHA256.name,
+        hashes.SHA384: hashes.SHA384.name,
+        hashes.SHA512: hashes.SHA512.name,
+        hashes.SHA3_224: hashes.SHA3_224.name,
+        hashes.SHA3_256: hashes.SHA3_256.name,
+        hashes.SHA3_384: hashes.SHA3_384.name,
+        hashes.SHA3_512: hashes.SHA3_512.name,
+        # hashes.SHAKE128: hashes.SHAKE128.name,
+        # hashes.SHAKE256: hashes.SHAKE256.name,
+        # hashes.BLAKE2b: hashes.BLAKE2b.name,
+        # hashes.BLAKE2s: hashes.BLAKE2s.name,
+        hashes.SM3: hashes.SM3.name,
+    }
+)
+
+#: Mapping of hash algorithm keys to hash algorithms (the inverse of HASH_ALGORITHM_KEYS).
+HASH_ALGORITHM_KEY_TYPES: MappingProxyType[str, Type[hashes.HashAlgorithm]] = MappingProxyType(
+    {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
+)
+
+HASH_ALGORITHM_NAMES: MappingProxyType[Type[hashes.HashAlgorithm], str] = MappingProxyType(
+    {
+        # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
+        hashes.SHA512_224: "SHA-512/224",
+        hashes.SHA512_256: "SHA-512/256",
+        hashes.SHA224: "SHA-224",
+        hashes.SHA256: "SHA-256",
+        hashes.SHA384: "SHA-384",
+        hashes.SHA512: "SHA-512",
+        hashes.SHA3_224: "SHA3/224",
+        hashes.SHA3_256: "SHA3/256",
+        hashes.SHA3_384: "SHA3/384",
+        hashes.SHA3_512: "SHA3/512",
+        # hashes.SHAKE128: hashes.SHAKE128.name,
+        # hashes.SHAKE256: hashes.SHAKE256.name,
+        # hashes.BLAKE2b: hashes.BLAKE2b.name,
+        # hashes.BLAKE2s: hashes.BLAKE2s.name,
+        hashes.SM3: "SM3",
+    }
+)
 
 #: Map of `kwargs` for :py:class:`~cg:cryptography.x509.KeyUsage` to names in RFC 5280.
 KEY_USAGE_NAMES = MappingProxyType(

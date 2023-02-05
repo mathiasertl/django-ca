@@ -1104,8 +1104,10 @@ class CertificateAuthority(X509CertMixin):
         password : str or bytes, optional
             Password for loading the private key of the CA, if any.
         """
-        if algorithm is None:
-            algorithm = ca_settings.CA_DIGEST_ALGORITHM
+
+        # Ensure that parameters used to generate the public key are valid.
+        algorithm = validate_public_key_parameters(self.key_type, algorithm)
+
         if expires is None:
             expires = timezone.now() + ca_settings.CA_DEFAULT_EXPIRES
             expires = expires.replace(second=0, microsecond=0)

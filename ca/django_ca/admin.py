@@ -52,7 +52,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_object_actions import DjangoObjectActions
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
 from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
 from django_ca.extensions.utils import extension_as_admin_html
@@ -730,7 +730,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # thus pass a three-tuple as initial value, each corresponding to the value of one of the widgets.
             subject_alternative_name = (san_value, False, san_critical)
 
-            algo = resign_obj.algorithm.__class__.__name__
+            algo = constants.HASH_ALGORITHM_KEYS[type(resign_obj.algorithm)]
 
             if resign_obj.profile:
                 profile = resign_obj.profile

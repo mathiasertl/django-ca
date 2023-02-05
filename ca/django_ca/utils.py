@@ -155,55 +155,6 @@ ADMIN_SUBJECT_OIDS = (
 )
 
 
-#: Mapping of canonical hash algorithm names to the implementing classes
-HASH_ALGORITHM_NAMES: typing.Dict[str, typing.Type[hashes.HashAlgorithm]] = {
-    # NOTE: shake128, shake256, blake2b and blake2s require a digest size, which is not currently supported
-    hashes.SHA512_224.name: hashes.SHA512_224,
-    hashes.SHA512_256.name: hashes.SHA512_256,
-    hashes.SHA224.name: hashes.SHA224,
-    hashes.SHA256.name: hashes.SHA256,
-    hashes.SHA384.name: hashes.SHA384,
-    hashes.SHA512.name: hashes.SHA512,
-    hashes.SHA3_224.name: hashes.SHA3_224,
-    hashes.SHA3_256.name: hashes.SHA3_256,
-    hashes.SHA3_384.name: hashes.SHA3_384,
-    hashes.SHA3_512.name: hashes.SHA3_512,
-    # hashes.SHAKE128.name: hashes.SHAKE128,
-    # hashes.SHAKE256.name: hashes.SHAKE256,
-    # hashes.BLAKE2b.name: hashes.BLAKE2b,
-    # hashes.BLAKE2s.name: hashes.BLAKE2s,
-    hashes.SM3.name: hashes.SM3,
-}
-
-if hasattr(hashes, "MD5"):  # pragma: cryptography<39.0 branch
-    HASH_ALGORITHM_NAMES[hashes.MD5.name] = hashes.MD5
-if hasattr(hashes, "SHA1"):  # pragma: cryptography<39.0 branch
-    HASH_ALGORITHM_NAMES[hashes.SHA1.name] = hashes.SHA1
-
-#: Mapping of canonical elliptic curve names (lower-cased) to the implementing classes
-ELLIPTIC_CURVE_NAMES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
-    ec.SECT571R1.name.lower(): ec.SECT571R1,
-    ec.SECT409R1.name.lower(): ec.SECT409R1,
-    ec.SECT283R1.name.lower(): ec.SECT283R1,
-    ec.SECT233R1.name.lower(): ec.SECT233R1,
-    ec.SECT163R2.name.lower(): ec.SECT163R2,
-    ec.SECT571K1.name.lower(): ec.SECT571K1,
-    ec.SECT409K1.name.lower(): ec.SECT409K1,
-    ec.SECT283K1.name.lower(): ec.SECT283K1,
-    ec.SECT233K1.name.lower(): ec.SECT233K1,
-    ec.SECT163K1.name.lower(): ec.SECT163K1,
-    ec.SECP521R1.name.lower(): ec.SECP521R1,
-    ec.SECP384R1.name.lower(): ec.SECP384R1,
-    ec.SECP256R1.name.lower(): ec.SECP256R1,
-    ec.SECP256K1.name.lower(): ec.SECP256K1,
-    ec.SECP224R1.name.lower(): ec.SECP224R1,
-    ec.SECP192R1.name.lower(): ec.SECP192R1,
-    ec.BrainpoolP256R1.name.lower(): ec.BrainpoolP256R1,
-    ec.BrainpoolP384R1.name.lower(): ec.BrainpoolP384R1,
-    ec.BrainpoolP512R1.name.lower(): ec.BrainpoolP512R1,
-}
-
-
 def make_naive(timestamp: datetime) -> datetime:
     """Like :py:func:`~django.utils.timezone.make_naive`, but does not return an error if already naive."""
     if tz.is_naive(timestamp) is False:
@@ -1022,8 +973,8 @@ def parse_hash_algorithm(
     if isinstance(value, hashes.HashAlgorithm):
         return value
     if isinstance(value, str):
-        if value in HASH_ALGORITHM_NAMES:
-            return HASH_ALGORITHM_NAMES[value]()
+        if value in constants.HASH_ALGORITHM_KEY_TYPES:
+            return constants.HASH_ALGORITHM_KEY_TYPES[value]()
         try:
             algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
             return algo()
@@ -1114,7 +1065,7 @@ def parse_key_curve(value: str) -> ec.EllipticCurve:
         If the named curve is not supported.
     """
     try:
-        return ELLIPTIC_CURVE_NAMES[value.strip().lower()]()
+        return constants.ELLIPTIC_CURVE_NAMES[value.strip().lower()]()
     except KeyError as ex:
         raise ValueError(f"{value}: Not a known Eliptic Curve") from ex
 

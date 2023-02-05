@@ -35,11 +35,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings, utils
+from django_ca import ca_settings, constants, utils
 from django_ca.tests.base import dns, override_settings, override_tmpcadir, rdn, uri
 from django_ca.utils import (
-    ELLIPTIC_CURVE_NAMES,
-    HASH_ALGORITHM_NAMES,
     OID_NAME_MAPPINGS,
     GeneralNameList,
     bytes_to_hex,
@@ -78,53 +76,6 @@ def load_tests(  # pylint: disable=unused-argument
 
 class ConstantsTestCase(TestCase):
     """Test various constants in the utils module."""
-
-    def get_subclasses(
-        self, cls: typing.Type[SuperclassTypeVar]
-    ) -> typing.Set[typing.Type[SuperclassTypeVar]]:
-        """Recursively get a list of subclasses.
-
-        .. seealso:: https://stackoverflow.com/a/3862957
-        """
-
-        return set(cls.__subclasses__()).union(
-            [s for c in cls.__subclasses__() for s in self.get_subclasses(c)]
-        )
-
-    def test_hash_algorithms(self) -> None:
-        """Test that ``utils.HASH_ALGORITHM_NAMES`` covers all known hash algorithms.
-
-        The point of this test is that it fails if a new cryptography version adds new hash algorithms, thus
-        allowing us to detect if the constant becomes out of date.
-        """
-
-        # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
-        #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
-
-        # filter out hash algorithms that are not supported right now due to them having a digest size as
-        # parameter
-        subclasses = set(
-            sc
-            for sc in subclasses
-            if sc not in [hashes.SHAKE128, hashes.SHAKE256, hashes.BLAKE2b, hashes.BLAKE2s]
-        )
-
-        self.assertEqual(len(utils.HASH_ALGORITHM_NAMES), len(subclasses))
-        self.assertEqual(utils.HASH_ALGORITHM_NAMES, {e.name: e for e in subclasses})
-
-    def test_elliptic_curves(self) -> None:
-        """Test that ``utils.ELLIPTIC_CURVE_NAMES`` covers all known elliptic curves.
-
-        The point of this test is that it fails if a new cryptography version adds new curves, thus allowing
-        us to detect if the constant becomes out of date.
-        """
-
-        # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
-        #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
-        self.assertEqual(len(utils.ELLIPTIC_CURVE_NAMES), len(subclasses))
-        self.assertEqual(utils.ELLIPTIC_CURVE_NAMES, {e().name.lower(): e for e in subclasses})
 
     def test_nameoid_completeness(self) -> None:
         """Test that we support all NameOID instances."""
@@ -719,7 +670,7 @@ class ParseHashAlgorithm(TestCase):
         self.assertIsInstance(parse_hash_algorithm(hashes.SHA512()), hashes.SHA512)
         self.assertIsInstance(parse_hash_algorithm("SHA512"), hashes.SHA512)
 
-        for name, cls in HASH_ALGORITHM_NAMES.items():
+        for cls, name in constants.HASH_ALGORITHM_KEYS.items():
             self.assertIsInstance(parse_hash_algorithm(name), cls)
 
         with self.assertRaisesRegex(ValueError, "^Unknown hash algorithm: foo$"):
@@ -851,7 +802,7 @@ class ParseKeyCurveTestCase(TestCase):
         self.assertIsInstance(parse_key_curve("SECP521R1"), ec.SECP521R1)
         self.assertIsInstance(parse_key_curve("SECP192R1"), ec.SECP192R1)
 
-        for name, cls in ELLIPTIC_CURVE_NAMES.items():
+        for name, cls in constants.ELLIPTIC_CURVE_NAMES.items():
             self.assertIsInstance(parse_key_curve(name), cls)
 
     def test_error(self) -> None:

@@ -32,7 +32,7 @@ from cryptography.x509.oid import ExtensionOID
 from django.db import transaction
 from django.utils import timezone
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.acme.validation import validate_dns_01
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
 from django_ca.models import (
@@ -44,7 +44,7 @@ from django_ca.models import (
     CertificateAuthority,
 )
 from django_ca.profiles import profiles
-from django_ca.utils import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES, parse_general_name
+from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
 
@@ -115,9 +115,9 @@ def generate_ocsp_key(
     if expires is not None:
         parsed_expires = timedelta(seconds=expires)
     if algorithm is not None:
-        parsed_algorithm = HASH_ALGORITHM_NAMES[algorithm]()
+        parsed_algorithm = constants.HASH_ALGORITHM_KEY_TYPES[algorithm]()
     if elliptic_curve is not None:
-        parsed_curve = ELLIPTIC_CURVE_NAMES[elliptic_curve]()
+        parsed_curve = constants.ELLIPTIC_CURVE_NAMES[elliptic_curve]()
 
     private_path, cert_path, cert = ca.generate_ocsp_key(
         expires=parsed_expires, algorithm=parsed_algorithm, elliptic_curve=parsed_curve, **kwargs

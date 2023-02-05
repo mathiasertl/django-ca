@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from http import HTTPStatus
 from unittest import mock
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from django.contrib.auth.models import Permission
@@ -391,7 +392,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             "profile": "webserver",
             "subject_5": self.cert.cn,
             "subject_alternative_name_1": True,
-            "algorithm": "SHA256",
+            "algorithm": hashes.SHA256.name,
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
             "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],
             "key_usage_1": True,
