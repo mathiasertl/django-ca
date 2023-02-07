@@ -53,9 +53,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         parser.add_argument("--quiet", action="store_true", default=False, help="Do not output warnings.")
 
         self.add_algorithm(parser)
-        self.add_key_size(parser)
-        self.add_key_type(parser, default=None)
-        self.add_ecc_curve(parser)
+        private_key_group = parser.add_argument_group("Private key parameters")
+        self.add_key_size(private_key_group)
+        self.add_key_type(private_key_group, default=None)
+        self.add_elliptic_curve(private_key_group)
         self.add_password(parser)
 
         self.add_profile(
@@ -68,7 +69,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         profile: Optional[str],
         expires: timedelta,
         algorithm: Optional[hashes.HashAlgorithm],
-        ecc_curve: Optional[ec.EllipticCurve],
+        elliptic_curve: Optional[ec.EllipticCurve],
         key_size: int,
         key_type: Optional[ParsableKeyType],
         password: Optional[bytes],
@@ -86,9 +87,9 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         if not serials:
             serials = CertificateAuthority.objects.all().order_by("serial").values_list("serial", flat=True)
 
-        ecc_curve_name: Optional[str] = None
-        if ecc_curve is not None:
-            ecc_curve_name = ecc_curve.name.lower()
+        elliptic_curve_name: Optional[str] = None
+        if elliptic_curve is not None:
+            elliptic_curve_name = elliptic_curve.name.lower()
 
         for serial in serials:
             serial = serial.replace(":", "").strip().upper()
@@ -111,7 +112,9 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             else:
                 ca_key_type = key_type
 
-            ca_key_size, ca_ecc_curve = validate_private_key_parameters(ca_key_type, key_size, ecc_curve)
+            ca_key_size, ca_elliptic_curve = validate_private_key_parameters(
+                ca_key_type, key_size, elliptic_curve
+            )
 
             algorithm_name: Optional[str] = None
             if algorithm is not None:
@@ -125,6 +128,6 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 algorithm=algorithm_name,
                 key_size=ca_key_size,
                 key_type=ca_key_type,
-                elliptic_curve=ecc_curve_name,
+                elliptic_curve=elliptic_curve_name,
                 password=password,
             )

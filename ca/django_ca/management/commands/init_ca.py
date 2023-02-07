@@ -62,9 +62,10 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         self.add_general_args(parser)
         self.add_algorithm(parser)
 
-        self.add_key_type(parser)
-        self.add_key_size(parser)
-        self.add_ecc_curve(parser)
+        private_key_group = parser.add_argument_group("Private key parameters")
+        self.add_key_type(private_key_group)
+        self.add_key_size(private_key_group)
+        self.add_elliptic_curve(private_key_group)
 
         parser.add_argument(
             "--expires",
@@ -190,7 +191,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         expires: timedelta,
         key_size: Optional[int],
         key_type: ParsableKeyType,
-        ecc_curve: Optional[ec.EllipticCurve],
+        elliptic_curve: Optional[ec.EllipticCurve],
         algorithm: Optional[hashes.HashAlgorithm],
         pathlen: Optional[int],
         password: Optional[bytes],
@@ -226,7 +227,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
 
         # Validate private key parameters early so that we can return better feedback to the user.
         try:
-            key_size, ecc_curve = validate_private_key_parameters(key_type, key_size, ecc_curve)
+            key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         except ValueError as ex:
 
             raise CommandError(*ex.args) from ex
@@ -299,7 +300,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 excluded_subtrees=exclude_name,
                 password=password,
                 parent_password=parent_password,
-                elliptic_curve=ecc_curve,
+                elliptic_curve=elliptic_curve,
                 key_type=key_type,
                 key_size=key_size,
                 caa=caa,

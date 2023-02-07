@@ -608,7 +608,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def ca_certs(self) -> typing.Iterator[Tuple[str, Certificate]]:
         """Yield loaded certificates for each certificate authority."""
         for name, cert in self.certs.items():
-            if name in ["root-cert", "child-cert", "ecc-cert", "dsa-cert", "pwd-cert"]:
+            if name in [
+                "root-cert",
+                "child-cert",
+                "ec-cert",
+                "dsa-cert",
+                "pwd-cert",
+                "ed448-cert",
+                "ed25519-cert",
+            ]:
                 yield name, cert
 
     def ca_issuers(self, issuer: x509.GeneralName) -> x509.AccessDescription:

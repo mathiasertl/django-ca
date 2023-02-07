@@ -411,9 +411,9 @@ class GeneratePrivateKeyTestCase(TestCase):
 
     def test_key_types(self) -> None:
         """Test generating various private key types."""
-        ecc_key = generate_private_key(None, "EC", ec.BrainpoolP256R1())
-        self.assertIsInstance(ecc_key, ec.EllipticCurvePrivateKey)
-        self.assertIsInstance(ecc_key.curve, ec.BrainpoolP256R1)
+        ec_key = generate_private_key(None, "EC", ec.BrainpoolP256R1())
+        self.assertIsInstance(ec_key, ec.EllipticCurvePrivateKey)
+        self.assertIsInstance(ec_key.curve, ec.BrainpoolP256R1)
 
         ed448_key = generate_private_key(None, "Ed448", None)
         self.assertIsInstance(ed448_key, ed448.Ed448PrivateKey)
@@ -1129,9 +1129,9 @@ class ValidatePrivateKeyParametersTest(TestCase):
             (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("DSA", None, None)
         )
 
-        key_size, ecc_curve = validate_private_key_parameters("EC", None, None)
+        key_size, elliptic_curve = validate_private_key_parameters("EC", None, None)
         self.assertIsNone(key_size)
-        self.assertIsInstance(ecc_curve, ca_settings.CA_DEFAULT_ELLIPTIC_CURVE)
+        self.assertIsInstance(elliptic_curve, ca_settings.CA_DEFAULT_ELLIPTIC_CURVE)
 
         self.assertEqual((None, None), validate_private_key_parameters("Ed25519", None, None))
         self.assertEqual((None, None), validate_private_key_parameters("Ed448", None, None))
@@ -1141,14 +1141,14 @@ class ValidatePrivateKeyParametersTest(TestCase):
         self.assertEqual((8192, None), validate_private_key_parameters("RSA", 8192, None))
         self.assertEqual((8192, None), validate_private_key_parameters("DSA", 8192, None))
 
-        key_size, ecc_curve = validate_private_key_parameters("EC", None, ec.BrainpoolP384R1())
+        key_size, elliptic_curve = validate_private_key_parameters("EC", None, ec.BrainpoolP384R1())
         self.assertIsNone(key_size)
-        self.assertIsInstance(ecc_curve, ec.BrainpoolP384R1)
+        self.assertIsInstance(elliptic_curve, ec.BrainpoolP384R1)
 
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
         key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-        ecc_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+        elliptic_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
             validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[call-overload]
 
@@ -1162,7 +1162,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
             validate_private_key_parameters("RSA", 16, None)
 
         with self.assertRaisesRegex(ValueError, r"^Key size is not supported for EC keys\.$"):
-            validate_private_key_parameters("EC", key_size, ecc_curve)
+            validate_private_key_parameters("EC", key_size, elliptic_curve)
 
         with self.assertRaisesRegex(ValueError, r"^secp192r1: Must be a subclass of ec\.EllipticCurve$"):
             validate_private_key_parameters("EC", None, "secp192r1")  # type: ignore
@@ -1173,7 +1173,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
             with self.assertRaisesRegex(
                 ValueError, rf"^Elliptic curves are not supported for {key_type} keys\.$"
             ):
-                validate_private_key_parameters(key_type, None, ecc_curve)  # type: ignore
+                validate_private_key_parameters(key_type, None, elliptic_curve)  # type: ignore
 
 
 class ValidatePublicKeyParametersTest(TestCase):

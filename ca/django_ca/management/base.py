@@ -124,24 +124,25 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         """Add subject option."""
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
 
-    def add_ecc_curve(self, parser: CommandParser) -> None:
-        """Add --ecc-curve option."""
+    def add_elliptic_curve(self, parser: argparse._ActionsContainer) -> None:
+        """Add --elliptic-curve option."""
         parser.add_argument(
-            "--ecc-curve",
+            "--elliptic-curve",
+            "--ecc-curve",  # Remove in django-ca==1.26.0
             metavar="CURVE",
             action=actions.KeyCurveAction,
-            help=f"Elliptic Curve used for ECC keys (default: {ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name}).",
+            help=f"Elliptic Curve used for EC keys (default: {ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name}).",
         )
 
-    def add_key_size(self, parser: CommandParser) -> None:
+    def add_key_size(self, parser: argparse._ActionsContainer) -> None:
         """Add --key-size option (2048, 4096, ...)."""
         parser.add_argument(
             "--key-size",
             action=actions.KeySizeAction,
-            help=f"Key size for RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
+            help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
         )
 
-    def add_key_type(self, parser: CommandParser, default: Optional[str] = "RSA") -> None:
+    def add_key_type(self, parser: argparse._ActionsContainer, default: Optional[str] = "RSA") -> None:
         """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
         # NOTE: This can be simplified once support for "ECC" and "EdDSA" values is dropped.
         known_private_key_types = ["RSA", "DSA", "EC", "Ed25519", "Ed448"]  # pragma: only django-ca<1.26

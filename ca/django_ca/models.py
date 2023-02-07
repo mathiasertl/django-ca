@@ -1228,8 +1228,9 @@ class CertificateAuthority(X509CertMixin):
 
         .. versionchanged:: 1.23.0
 
-            The `key_type`, `key_size`, `ecc_curve` and `algorithm` parameters now default to what was used in
-            the certificate authority.
+           * The `ecc_curve` option was renamed to ``elliptic_curve``.
+           * The `key_type`, `key_size`, `elliptic_curve` and `algorithm` parameters now default to what was
+             used in the certificate authority.
 
         Parameters
         ----------
