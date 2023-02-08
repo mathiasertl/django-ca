@@ -173,7 +173,7 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = self.init_ca_e2e(
             name,
             "/CN=args.example.com",
-            "--algorithm=SHA256",  # hashes.SHA256(),
+            "--algorithm=SHA-256",  # hashes.SHA256(),
             "--key-type=EC",
             "--expires=720",
             "--pathlen=3",
@@ -754,7 +754,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
         with self.assertCommandError(msg), self.assertCreateCASignals(False, False):
-            self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm="SHA256")
+            self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm="SHA-256")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self) -> None:

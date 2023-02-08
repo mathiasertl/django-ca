@@ -17,6 +17,7 @@ import abc
 import argparse
 import getpass
 import typing
+import warnings
 from datetime import timedelta
 
 from cryptography import x509
@@ -27,7 +28,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.constants import (
     EXTENDED_KEY_USAGE_NAMES,
     EXTENSION_DEFAULT_CRITICAL,
@@ -35,6 +36,7 @@ from django_ca.constants import (
     KEY_USAGE_NAMES,
     ReasonFlags,
 )
+from django_ca.deprecation import RemovedInDjangoCA125Warning
 from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AlternativeNameExtensionType
@@ -86,16 +88,24 @@ class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
 
     >>> parser.add_argument('--algorithm', action=AlgorithmAction)  # doctest: +ELLIPSIS
     AlgorithmAction(...)
-    >>> parser.parse_args(['--algorithm', 'SHA256'])  # doctest: +ELLIPSIS
+    >>> parser.parse_args(['--algorithm', 'SHA-256'])  # doctest: +ELLIPSIS
     Namespace(algorithm=<cryptography.hazmat.primitives.hashes.SHA256 object at ...>)
     """
 
     def parse_value(self, value: str) -> hashes.HashAlgorithm:
         """Parse the value for this action."""
         try:
-            return parse_hash_algorithm(value)
-        except ValueError as e:
-            raise argparse.ArgumentError(self, str(e))
+            return constants.HASH_ALGORITHM_TYPES[value]()
+        except KeyError:
+            try:
+                parsed = parse_hash_algorithm(value)
+                warnings.warn(
+                    f"{value}: Support for non-standard algorithm names will be dropped in django-ca 1.25.0.",
+                    RemovedInDjangoCA125Warning,
+                )
+                return parsed
+            except ValueError as e:
+                raise argparse.ArgumentError(self, str(e))
 
 
 class CertificateAction(SingleValueAction[Certificate]):

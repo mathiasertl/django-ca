@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.management.actions import ExpiresAction
 from django_ca.management.base import BaseCommand
 from django_ca.models import CertificateAuthority
@@ -118,7 +118,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
             algorithm_name: Optional[str] = None
             if algorithm is not None:
-                algorithm_name = algorithm.name
+                algorithm_name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
 
             run_task(
                 generate_ocsp_key,

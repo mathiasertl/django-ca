@@ -312,6 +312,10 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mapp
         hashes.SM3: "SM3",
     }
 )
+#: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
+HASH_ALGORITHM_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = MappingProxyType(
+    {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
+)
 
 #: Map of `kwargs` for :py:class:`~cg:cryptography.x509.KeyUsage` to names in RFC 5280.
 KEY_USAGE_NAMES = MappingProxyType(

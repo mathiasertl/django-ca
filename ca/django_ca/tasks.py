@@ -115,7 +115,7 @@ def generate_ocsp_key(
     if expires is not None:
         parsed_expires = timedelta(seconds=expires)
     if algorithm is not None:
-        parsed_algorithm = constants.HASH_ALGORITHM_KEY_TYPES[algorithm]()
+        parsed_algorithm = constants.HASH_ALGORITHM_TYPES[algorithm]()
     if elliptic_curve is not None:
         parsed_curve = constants.ELLIPTIC_CURVE_NAMES[elliptic_curve]()
 

@@ -104,7 +104,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         """Test the hash algorithm option."""
         with self.mute_celery():
             stdout, stderr = self.cmd(
-                "regenerate_ocsp_keys", certs["root"]["serial"], "--algorithm", "sha256"
+                "regenerate_ocsp_keys", certs["root"]["serial"], "--algorithm", "SHA-256"
             )
 
         self.assertEqual(stdout, "")
@@ -121,7 +121,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                     {
                         "profile": "ocsp",
                         "expires": 172800.0,
-                        "algorithm": "sha256",
+                        "algorithm": "SHA-256",
                         "key_size": 1024,
                         "key_type": "RSA",
                         "elliptic_curve": None,
@@ -132,7 +132,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             ),
         ):
             stdout, stderr = self.cmd_e2e(
-                ["regenerate_ocsp_keys", certs["root"]["serial"], "--algorithm", "sha256"]
+                ["regenerate_ocsp_keys", certs["root"]["serial"], "--algorithm", "SHA-256"]
             )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")

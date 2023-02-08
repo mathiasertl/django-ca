@@ -322,10 +322,10 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        args = self.parser.parse_args(["--algo=SHA256"])
+        args = self.parser.parse_args(["--algo=SHA-256"])
         self.assertIsInstance(args.algo, hashes.SHA256)
 
-        args = self.parser.parse_args(["--algo=SHA512"])
+        args = self.parser.parse_args(["--algo=SHA-512"])
         self.assertIsInstance(args.algo, hashes.SHA512)
 
     def test_error(self) -> None:
