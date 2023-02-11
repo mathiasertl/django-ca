@@ -1065,7 +1065,7 @@ def parse_key_curve(value: str) -> ec.EllipticCurve:
         If the named curve is not supported.
     """
     try:
-        return constants.ELLIPTIC_CURVE_NAMES[value.strip().lower()]()
+        return constants.ELLIPTIC_CURVE_TYPES[value.strip().lower()]()
     except KeyError as ex:
         raise ValueError(f"{value}: Not a known Eliptic Curve") from ex
 

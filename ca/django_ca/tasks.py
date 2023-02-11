@@ -117,7 +117,7 @@ def generate_ocsp_key(
     if algorithm is not None:
         parsed_algorithm = constants.HASH_ALGORITHM_TYPES[algorithm]()
     if elliptic_curve is not None:
-        parsed_curve = constants.ELLIPTIC_CURVE_NAMES[elliptic_curve]()
+        parsed_curve = constants.ELLIPTIC_CURVE_TYPES[elliptic_curve]()
 
     private_path, cert_path, cert = ca.generate_ocsp_key(
         expires=parsed_expires, algorithm=parsed_algorithm, elliptic_curve=parsed_curve, **kwargs

@@ -65,7 +65,7 @@ class CompletenessTestCase(TestCase):
         )
 
     def test_elliptic_curves(self) -> None:
-        """Test that ``utils.ELLIPTIC_CURVE_NAMES`` covers all known elliptic curves.
+        """Test that ``utils.ELLIPTIC_CURVE_TYPES`` covers all known elliptic curves.
 
         The point of this test is that it fails if a new cryptography version adds new curves, thus allowing
         us to detect if the constant becomes out of date.
@@ -74,8 +74,8 @@ class CompletenessTestCase(TestCase):
         # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
         #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
         subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
-        self.assertEqual(len(constants.ELLIPTIC_CURVE_NAMES), len(subclasses))
-        self.assertEqual(constants.ELLIPTIC_CURVE_NAMES, {e().name.lower(): e for e in subclasses})
+        self.assertEqual(len(constants.ELLIPTIC_CURVE_TYPES), len(subclasses))
+        self.assertEqual(constants.ELLIPTIC_CURVE_TYPES, {e().name.lower(): e for e in subclasses})
 
     def test_extended_key_usage_oids(self) -> None:
         """Test ExtendedKeyUsageOID for duplicates."""

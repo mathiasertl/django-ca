@@ -802,7 +802,7 @@ class ParseKeyCurveTestCase(TestCase):
         self.assertIsInstance(parse_key_curve("SECP521R1"), ec.SECP521R1)
         self.assertIsInstance(parse_key_curve("SECP192R1"), ec.SECP192R1)
 
-        for name, cls in constants.ELLIPTIC_CURVE_NAMES.items():
+        for name, cls in constants.ELLIPTIC_CURVE_TYPES.items():
             self.assertIsInstance(parse_key_curve(name), cls)
 
     def test_error(self) -> None:
