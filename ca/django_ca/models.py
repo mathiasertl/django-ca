@@ -1298,7 +1298,7 @@ class CertificateAuthority(X509CertMixin):
         if isinstance(private_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
             csr_sign_algorithm = None
         elif isinstance(private_key, dsa.DSAPrivateKey):
-            csr_sign_algorithm = ca_settings.CA_DSA_DIGEST_ALGORITHM
+            csr_sign_algorithm = ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM
         else:
             csr_sign_algorithm = ca_settings.CA_DIGEST_ALGORITHM
 

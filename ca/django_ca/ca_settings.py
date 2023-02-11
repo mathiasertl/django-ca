@@ -27,6 +27,9 @@ from django.conf import global_settings, settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
+# IMPORTANT: Do **not** import anything but django_ca.constants here, or you risk circular imports.
+from django_ca import constants
+
 
 def _normalize_subject(value: Any, hint: str) -> Tuple[Tuple[str, str], ...]:
     if not isinstance(value, (tuple, list)):
@@ -243,12 +246,12 @@ except AttributeError:
     # pylint: disable=raise-missing-from; not really useful in this context
     raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
 
-_CA_DSA_DIGEST_ALGORITHM = getattr(settings, "CA_DSA_DIGEST_ALGORITHM", "sha256").strip().upper()
+_CA_DSA_SIGNATURE_HASH_ALGORITHM = getattr(settings, "CA_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256")
 try:
-    CA_DSA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DSA_DIGEST_ALGORITHM)()
-except AttributeError:
+    CA_DSA_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[_CA_DSA_SIGNATURE_HASH_ALGORITHM]()
+except KeyError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured(f"Unkown CA_DSA_DIGEST_ALGORITHM: {_CA_DSA_DIGEST_ALGORITHM}")
+    raise ImproperlyConfigured(f"Unkown CA_DSA_SIGNATURE_HASH_ALGORITHM: {_CA_DSA_SIGNATURE_HASH_ALGORITHM}")
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
 if isinstance(CA_DEFAULT_EXPIRES, int):

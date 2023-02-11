@@ -197,15 +197,15 @@ CA_DIR
    ``manage.py`` file.
 
 
-.. _settings-ca-dsa-digest-algorithm:
+.. _settings-ca-dsa-signature-hash-algorithm:
 
-CA_DSA_DIGEST_ALGORITHM
-   Default: ``"sha256"``
+CA_DSA_SIGNATURE_HASH_ALGORITHM
+   Default: ``"SHA-256"``
 
    .. versionadded:: 1.23.0
 
-   The default hash algorithm used when signing certificate authorities, certificates and CRLs that involve
-   a certificate authority using a DSA private key pair.
+   The default hash algorithm for signing public keys of certificate authorities that use a ``DSA`` private
+   key. The setting is also used when signing CRLs of such certificate authorities.
 
 .. _settings-ca-file-storage:
 
