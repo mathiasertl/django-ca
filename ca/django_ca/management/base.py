@@ -130,7 +130,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             "--elliptic-curve",
             "--ecc-curve",  # Remove in django-ca==1.26.0
             metavar="CURVE",
-            action=actions.KeyCurveAction,
+            action=actions.EllipticCurveAction,
             help=f"Elliptic Curve used for EC keys (default: {ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name}).",
         )
 

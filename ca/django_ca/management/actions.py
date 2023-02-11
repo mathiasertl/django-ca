@@ -200,21 +200,27 @@ class FormatAction(SingleValueAction[Encoding]):
             raise argparse.ArgumentError(self, str(e))
 
 
-class KeyCurveAction(SingleValueAction[ec.EllipticCurve]):
-    """Action to parse an ECC curve value.
+class EllipticCurveAction(SingleValueAction[ec.EllipticCurve]):
+    """Action to parse an elliptic curve value.
 
-    >>> parser.add_argument('--curve', action=KeyCurveAction)  # doctest: +ELLIPSIS
-    KeyCurveAction(...)
-    >>> parser.parse_args(['--curve', 'SECP256R1'])  # doctest: +ELLIPSIS
-    Namespace(curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
+    >>> parser.add_argument('--elliptic-curve', action=EllipticCurveAction)  # doctest: +ELLIPSIS
+    EllipticCurveAction(...)
+    >>> parser.parse_args(['--elliptic-curve', 'secp256r1'])  # doctest: +ELLIPSIS
+    Namespace(elliptic_curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
     """
 
     def parse_value(self, value: str) -> ec.EllipticCurve:
         """Parse the value for this action."""
+        msg = f"{value}: Support for non-standard elliptic curve names will be dropped in django-ca 1.25.0."
         try:
-            return parse_key_curve(value)
-        except ValueError as e:
-            raise argparse.ArgumentError(self, str(e))
+            return constants.ELLIPTIC_CURVE_TYPES[value]()
+        except KeyError:
+            try:
+                parsed = parse_key_curve(value)
+                warnings.warn(msg, RemovedInDjangoCA125Warning)
+                return parsed
+            except ValueError as e:
+                raise argparse.ArgumentError(self, str(e))
 
 
 class KeySizeAction(SingleValueAction[int]):

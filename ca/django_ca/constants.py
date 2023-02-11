@@ -27,28 +27,28 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.utils.translation import gettext_lazy as _
 
-#: Mapping of elliptic curve names (lower-cased) to the implementing classes
+#: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
     {
-        ec.SECT571R1.name.lower(): ec.SECT571R1,
-        ec.SECT409R1.name.lower(): ec.SECT409R1,
-        ec.SECT283R1.name.lower(): ec.SECT283R1,
-        ec.SECT233R1.name.lower(): ec.SECT233R1,
-        ec.SECT163R2.name.lower(): ec.SECT163R2,
-        ec.SECT571K1.name.lower(): ec.SECT571K1,
-        ec.SECT409K1.name.lower(): ec.SECT409K1,
-        ec.SECT283K1.name.lower(): ec.SECT283K1,
-        ec.SECT233K1.name.lower(): ec.SECT233K1,
-        ec.SECT163K1.name.lower(): ec.SECT163K1,
-        ec.SECP521R1.name.lower(): ec.SECP521R1,
-        ec.SECP384R1.name.lower(): ec.SECP384R1,
-        ec.SECP256R1.name.lower(): ec.SECP256R1,
-        ec.SECP256K1.name.lower(): ec.SECP256K1,
-        ec.SECP224R1.name.lower(): ec.SECP224R1,
-        ec.SECP192R1.name.lower(): ec.SECP192R1,
-        ec.BrainpoolP256R1.name.lower(): ec.BrainpoolP256R1,
-        ec.BrainpoolP384R1.name.lower(): ec.BrainpoolP384R1,
-        ec.BrainpoolP512R1.name.lower(): ec.BrainpoolP512R1,
+        ec.SECT571R1.name: ec.SECT571R1,
+        ec.SECT409R1.name: ec.SECT409R1,
+        ec.SECT283R1.name: ec.SECT283R1,
+        ec.SECT233R1.name: ec.SECT233R1,
+        ec.SECT163R2.name: ec.SECT163R2,
+        ec.SECT571K1.name: ec.SECT571K1,
+        ec.SECT409K1.name: ec.SECT409K1,
+        ec.SECT283K1.name: ec.SECT283K1,
+        ec.SECT233K1.name: ec.SECT233K1,
+        ec.SECT163K1.name: ec.SECT163K1,
+        ec.SECP521R1.name: ec.SECP521R1,
+        ec.SECP384R1.name: ec.SECP384R1,
+        ec.SECP256R1.name: ec.SECP256R1,
+        ec.SECP256K1.name: ec.SECP256K1,
+        ec.SECP224R1.name: ec.SECP224R1,
+        ec.SECP192R1.name: ec.SECP192R1,
+        ec.BrainpoolP256R1.name: ec.BrainpoolP256R1,
+        ec.BrainpoolP384R1.name: ec.BrainpoolP384R1,
+        ec.BrainpoolP512R1.name: ec.BrainpoolP512R1,
     }
 )
 

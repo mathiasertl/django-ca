@@ -2,7 +2,7 @@
 ``django_ca.constants`` - constants
 ###################################
 
-.. automapping:: django_ca.constants.ELLIPTIC_CURVE_NAMES
+.. automapping:: django_ca.constants.ELLIPTIC_CURVE_TYPES
    :annotation:
 
 .. automapping:: django_ca.constants.EXTENSION_DEFAULT_CRITICAL

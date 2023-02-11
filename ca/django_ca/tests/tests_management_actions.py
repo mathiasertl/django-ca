@@ -287,21 +287,32 @@ class FormatActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
 
-class KeyCurveActionTestCase(ParserTestCaseMixin, TestCase):
-    """Test KeyCurveAction."""
+class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test EllipticCurveAction."""
 
     def setUp(self) -> None:
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("--curve", action=actions.KeyCurveAction)
+        self.parser.add_argument("--curve", action=actions.EllipticCurveAction)
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        args = self.parser.parse_args(["--curve=SECT409K1"])
+        args = self.parser.parse_args(["--curve=sect409k1"])
         self.assertIsInstance(args.curve, ec.SECT409K1)
 
-        args = self.parser.parse_args(["--curve=SECT409R1"])
+        args = self.parser.parse_args(["--curve=sect409r1"])
         self.assertIsInstance(args.curve, ec.SECT409R1)
+
+        args = self.parser.parse_args(["--curve=brainpoolP512r1"])
+        self.assertIsInstance(args.curve, ec.BrainpoolP512R1)
+
+    def test_non_standard_algorithms(self) -> None:
+        """Test parsing of old, non-standard hash algorithm names."""
+
+        msg = r"^SECT409K1: Support for non-standard elliptic curve names will be dropped in django-ca 1\.25\.0\.$"  # noqa: E501
+        with self.assertRemovedIn125Warning(msg):
+            args = self.parser.parse_args(["--curve=SECT409K1"])
+        self.assertIsInstance(args.curve, ec.SECT409K1)
 
     def test_error(self) -> None:
         """Test false option values."""

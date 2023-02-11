@@ -141,7 +141,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_with_celery_with_elliptic_curve(self) -> None:
         """Test regenerating a key with a manually supplied Elliptic curve."""
         stdout, stderr = self.cmd_e2e(
-            ["regenerate_ocsp_keys", certs["ec"]["serial"], "--elliptic-curve", "BrainpoolP256R1"]
+            ["regenerate_ocsp_keys", certs["ec"]["serial"], "--elliptic-curve", "brainpoolP256r1"]
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")

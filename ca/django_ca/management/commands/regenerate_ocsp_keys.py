@@ -89,7 +89,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         elliptic_curve_name: Optional[str] = None
         if elliptic_curve is not None:
-            elliptic_curve_name = elliptic_curve.name.lower()
+            elliptic_curve_name = elliptic_curve.name
 
         for serial in serials:
             serial = serial.replace(":", "").strip().upper()

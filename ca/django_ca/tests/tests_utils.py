@@ -793,7 +793,7 @@ class Power2TestCase(TestCase):
             self.assertFalse(is_power2((2**i) + 1))
 
 
-class ParseKeyCurveTestCase(TestCase):
+class ParseEllipticCurveTestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_key_curve`."""
 
     def test_basic(self) -> None:

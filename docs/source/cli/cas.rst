@@ -92,6 +92,10 @@ When generating an ``EC`` (elliptic curve) private key, you can chose the ellipt
 ``--elliptic-curve`` parameter. The default curve is configured using the
 :ref:`settings-ca-default-elliptic-curve` setting.
 
+The supported elliptic curves are the curves found in the :py:attr:`~django_ca.constants.ELLIPTIC_CURVE_TYPES`
+constant. Please see the `cryptography information on elliptic curves
+<https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/>`_ for more information on each curve.
+
 Hostname
 ========
 
