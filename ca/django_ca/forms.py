@@ -38,11 +38,7 @@ else:
     CertificateModelForm = X509CertMixinModelForm = forms.ModelForm
 
 HASH_ALGORITHM_CHOICES = tuple(
-    [("", "None")]
-    + sorted(
-        [(name, constants.HASH_ALGORITHM_NAMES[cls]) for cls, name in constants.HASH_ALGORITHM_KEYS.items()],
-        key=lambda t: t[1],
-    )
+    [("", "None")] + sorted([(name, name) for name in constants.HASH_ALGORITHM_TYPES], key=lambda t: t[1])
 )
 
 
@@ -134,7 +130,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     algorithm = forms.ChoiceField(
         required=False,
         label=_("Signature hash algorithm"),
-        initial=ca_settings.CA_DIGEST_ALGORITHM.name,
+        initial=constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DIGEST_ALGORITHM)],
         choices=HASH_ALGORITHM_CHOICES,
         help_text=_(
             "SHA-512 is fine for RSA/EC-based certificate authorities, choose None for Ed448/Ed25519-based "
@@ -187,8 +183,8 @@ class CreateCertificateBaseForm(CertificateModelForm):
         ]
 
     def clean_algorithm(self) -> Optional[hashes.HashAlgorithm]:  # pylint: disable=missing-function-docstring
-        if algorithm_key := self.cleaned_data["algorithm"]:
-            return constants.HASH_ALGORITHM_KEY_TYPES[algorithm_key]()
+        if algorithm_name := self.cleaned_data["algorithm"]:
+            return constants.HASH_ALGORITHM_TYPES[algorithm_name]()
         return None  # required by mypy
 
     def clean_expires(self) -> datetime:  # pylint: disable=missing-function-docstring

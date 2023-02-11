@@ -265,7 +265,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 )
 
 
-#: Mapping of hash algorithms to a unique string key identifying it.
+# pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is droped in 1.25.0
 HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
         # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
@@ -287,7 +287,7 @@ HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mappi
     }
 )
 
-#: Mapping of hash algorithm keys to hash algorithms (the inverse of HASH_ALGORITHM_KEYS).
+# pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is droped in 1.25.0
 HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
 )

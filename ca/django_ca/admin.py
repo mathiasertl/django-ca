@@ -730,7 +730,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # thus pass a three-tuple as initial value, each corresponding to the value of one of the widgets.
             subject_alternative_name = (san_value, False, san_critical)
 
-            algo = constants.HASH_ALGORITHM_KEYS[type(resign_obj.algorithm)]
+            if resign_obj.algorithm is None:
+                hash_algorithm_name = ""
+            else:
+                hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(resign_obj.algorithm)]
 
             if resign_obj.profile:
                 profile = resign_obj.profile
@@ -738,7 +741,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 profile = ca_settings.CA_DEFAULT_PROFILE
 
             data = {
-                "algorithm": algo,
+                "algorithm": hash_algorithm_name,
                 "ca": resign_obj.ca,
                 "profile": profile,
                 "subject": resign_obj.subject,

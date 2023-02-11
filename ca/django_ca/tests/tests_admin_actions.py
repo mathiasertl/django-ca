@@ -18,7 +18,6 @@ from contextlib import contextmanager
 from http import HTTPStatus
 from unittest import mock
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from django.contrib.auth.models import Permission
@@ -372,6 +371,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertEqual(obj.csr, resigned.csr)
         self.assertEqual(obj.profile, resigned.profile)
         self.assertEqual(obj.cn, resigned.cn)
+        self.assertEqual(obj.algorithm, resigned.algorithm)
 
         for oid in [ExtensionOID.EXTENDED_KEY_USAGE, ExtensionOID.TLS_FEATURE]:
             self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
@@ -392,7 +392,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             "profile": "webserver",
             "subject_5": self.cert.cn,
             "subject_alternative_name_1": True,
-            "algorithm": hashes.SHA256.name,
+            "algorithm": "SHA-256",
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
             "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],
             "key_usage_1": True,
@@ -461,6 +461,30 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     def test_webtest_no_ext(self) -> None:
         """Resign certificate with **no** extensions."""
         cert = self.load_named_cert("no-extensions")
+        cert.profile = "webserver"
+        cert.save()
+        response = self.app.get(self.get_url(cert), user=self.user.username)
+        form = response.forms["certificate_form"]
+        response = form.submit().follow()
+        self.assertSuccessfulRequest(response, obj=cert)
+
+    @override_tmpcadir()
+    def test_webtest_dsa(self) -> None:
+        """Resign certificate signed with a DSA CA."""
+        self.load_ca("dsa")
+        cert = self.load_named_cert("dsa-cert")
+        cert.profile = "webserver"
+        cert.save()
+        response = self.app.get(self.get_url(cert), user=self.user.username)
+        form = response.forms["certificate_form"]
+        response = form.submit().follow()
+        self.assertSuccessfulRequest(response, obj=cert)
+
+    @override_tmpcadir()
+    def test_webtest_ed448(self) -> None:
+        """Resign certificate signed with a Ed448 CA."""
+        self.load_ca("ed448")
+        cert = self.load_named_cert("ed448-cert")
         cert.profile = "webserver"
         cert.save()
         response = self.app.get(self.get_url(cert), user=self.user.username)

@@ -328,6 +328,14 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
         args = self.parser.parse_args(["--algo=SHA-512"])
         self.assertIsInstance(args.algo, hashes.SHA512)
 
+    def test_non_standard_algorithms(self) -> None:
+        """Test parsing of old, non-standard hash algorithm names."""
+
+        msg = r"^sha256: Support for non-standard algorithm names will be dropped in django-ca 1\.25\.0\.$"
+        with self.assertRemovedIn125Warning(msg):
+            args = self.parser.parse_args(["--algo=sha256"])
+        self.assertIsInstance(args.algo, hashes.SHA256)
+
     def test_error(self) -> None:
         """Test false option values."""
         self.assertParserError(

@@ -20,7 +20,6 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
@@ -68,7 +67,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         super().setUp()
         self.default_expires = self.expires(3).strftime("%Y-%m-%d")
 
-    def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = hashes.SHA256.name) -> None:
+    def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
         """Add certificate based on given name with given CA."""
         csr = certs["root-cert"]["csr"]["pem"]
 
@@ -231,7 +230,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject_0": "US",
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -274,7 +273,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_5": "",
                     "subject_6": "",
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -318,7 +317,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_5": "",
                     "subject_6": "",
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -358,7 +357,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_5": cname,
                     "subject_alternative_name_0": san,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [],
                     "key_usage_1": False,
@@ -408,7 +407,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -439,7 +438,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -471,7 +470,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -543,7 +542,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -587,7 +586,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -630,7 +629,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -674,7 +673,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -718,7 +717,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": cname,
                     "subject_alternative_name_1": True,  # cn_in_san
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -755,7 +754,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["ed448"].pk,
                     "profile": "webserver",
                     "subject_5": self.hostname,
-                    "algorithm": hashes.SHA256.name,  # this is what we test
+                    "algorithm": "SHA-256",  # this is what we test
                     "expires": self.default_expires,
                 },
             )
@@ -774,7 +773,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["ed25519"].pk,
                     "profile": "webserver",
                     "subject_5": self.hostname,
-                    "algorithm": hashes.SHA256.name,  # this is what we test
+                    "algorithm": "SHA-256",  # this is what we test
                     "expires": self.default_expires,
                 },
             )
@@ -793,7 +792,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["dsa"].pk,
                     "profile": "webserver",
                     "subject_5": self.hostname,
-                    "algorithm": hashes.SHA512.name,  # this is what we test
+                    "algorithm": "SHA-512",  # this is what we test
                     "expires": self.default_expires,
                 },
             )
@@ -840,7 +839,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": "test-add-no-cas.example.com",
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
@@ -879,7 +878,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_0": "US",
                     "subject_5": "test-add.example.com",
                     "subject_alternative_name_1": True,
-                    "algorithm": hashes.SHA256.name,
+                    "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
