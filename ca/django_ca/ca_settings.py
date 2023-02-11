@@ -248,9 +248,7 @@ if _CA_DEFAULT_SIGNATURE_HASH_ALGORITHM := getattr(settings, "CA_DEFAULT_SIGNATU
             _CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
         ]()
     except KeyError as ex:
-        raise ImproperlyConfigured(
-            f"Unkown CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: {_CA_DEFAULT_SIGNATURE_HASH_ALGORITHM}"
-        ) from ex
+        raise ImproperlyConfigured(f"{_CA_DEFAULT_SIGNATURE_HASH_ALGORITHM}: Unknown hash algorithm.") from ex
 elif _CA_DIGEST_ALGORITHM := getattr(settings, "CA_DIGEST_ALGORITHM", "").upper():  # pragma: django-ca<1.25.0
     warnings.warn(
         "CA_DIGEST_ALGORITHM is deprecated, please use CA_DEFAULT_SIGNATURE_HASH_ALGORITHM instead. Support "
@@ -263,7 +261,7 @@ elif _CA_DIGEST_ALGORITHM := getattr(settings, "CA_DIGEST_ALGORITHM", "").upper(
         )()
     except AttributeError:
         # pylint: disable=raise-missing-from; not really useful in this context
-        raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
+        raise ImproperlyConfigured(f"{_CA_DIGEST_ALGORITHM}: Unknown hash algorithm.")
 else:
     CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.SHA512()
 
@@ -276,9 +274,7 @@ try:
     ]()
 except KeyError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured(
-        f"Unkown CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: {_CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM}"
-    )
+    raise ImproperlyConfigured(f"{_CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM}: Unknown hash algorithm.")
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
 if isinstance(CA_DEFAULT_EXPIRES, int):
@@ -303,22 +299,27 @@ if _CA_DEFAULT_ELLIPTIC_CURVE := getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", 
     # NOTE: default is in else branch. Move to getattr default once old setting name is dropped
     try:
         CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]
-    except KeyError:
-        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unkown CA_DEFAULT_ELLIPTIC_CURVE.")
+    except KeyError as ex:
+        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unkown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
 elif _CA_DEFAULT_ELLIPTIC_CURVE := getattr(
     settings, "CA_DEFAULT_ECC_CURVE", None
 ):  # pragma: django-ca<1.25.0
+    warnings.warn(
+        "CA_DEFAULT_ECC_CURVE is deprecated, please use CA_DEFAULT_ELLIPTIC_CURVE instead. Support "
+        "for this setting will be removed in django-ca==1.25.0.",
+        deprecation.RemovedInDjangoCA125Warning,
+    )
     try:
         CA_DEFAULT_ELLIPTIC_CURVE: Type[ec.EllipticCurve] = getattr(  # type: ignore[no-redef]
             ec, _CA_DEFAULT_ELLIPTIC_CURVE
         )
         if not issubclass(CA_DEFAULT_ELLIPTIC_CURVE, ec.EllipticCurve):
-            raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Not an EllipticCurve.")
+            raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Not an elliptic curve.")
     except AttributeError:
         # pylint: disable=raise-missing-from; not really useful in this context
-        raise ImproperlyConfigured(f"Unkown CA_DEFAULT_ELLIPTIC_CURVE: {_CA_DEFAULT_ELLIPTIC_CURVE}")
+        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown elliptic curve.")
 else:
-    CA_DEFAULT_ELLIPTIC_CURVE = ec.SECP256R1
+    CA_DEFAULT_ELLIPTIC_CURVE = ec.SECP256R1  # pylint: disable=invalid-name
 
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(

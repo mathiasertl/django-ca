@@ -16,6 +16,9 @@
 from datetime import timedelta
 from unittest import mock
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+
 from django.test import TestCase
 
 from django_ca import ca_settings
@@ -136,9 +139,22 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 
-        # with self.assertImproperlyConfigured(r"^ECDH: Not an EllipticCurve\.$"):
-        #    with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="ECDH"):
-        #        pass
+        warn = r"^CA_DEFAULT_ECC_CURVE is deprecated, please use CA_DEFAULT_ELLIPTIC_CURVE instead. Support for this setting will be removed in django-ca==1\.25\.0\.$"  # noqa: E501
+        with self.assertRemovedIn125Warning(warn):
+            with self.settings(CA_DEFAULT_ECC_CURVE="SECP256R1"):
+                self.assertEqual(ca_settings.CA_DEFAULT_ELLIPTIC_CURVE, ec.SECP256R1)
+
+        with self.assertRemovedIn125Warning(warn), self.assertImproperlyConfigured(
+            r"^ECDH: Not an elliptic curve\.$"
+        ):
+            with self.settings(CA_DEFAULT_ECC_CURVE="ECDH"):
+                pass
+
+        with self.assertRemovedIn125Warning(warn), self.assertImproperlyConfigured(
+            r"^foo: Unknown elliptic curve\.$"
+        ):
+            with self.settings(CA_DEFAULT_ECC_CURVE="foo"):
+                pass
 
     def test_min_default_key_size(self) -> None:
         """Test ``A_DEFAULT_KEY_SIZE``."""
@@ -146,15 +162,29 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass
 
-    def test_digest_algorithm(self) -> None:
+    def test_default_signature_hash_algorithm(self) -> None:
         """Test invalid ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
-        with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: foo$"):
+        with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="SHA-512/256"):
+            self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA512_256)
+
+        with self.assertImproperlyConfigured(r"^foo: Unknown hash algorithm\.$"):
             with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
-    def test_dsa_digest_algorithm(self) -> None:
+        warn = r"^CA_DIGEST_ALGORITHM is deprecated, please use CA_DEFAULT_SIGNATURE_HASH_ALGORITHM instead. Support for this setting will be removed in django-ca==1\.25\.0\.$"  # noqa: E501
+        with self.assertRemovedIn125Warning(warn):
+            with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM=None, CA_DIGEST_ALGORITHM="sha384"):
+                self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA384)
+
+        with self.assertRemovedIn125Warning(warn), self.assertImproperlyConfigured(
+            r"^FOO: Unknown hash algorithm\."
+        ):
+            with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM=None, CA_DIGEST_ALGORITHM="foo"):
+                self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA384)
+
+    def test_default_dsa_signature_hash_algorithm(self) -> None:
         """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
-        with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: foo$"):
+        with self.assertImproperlyConfigured(r"^foo: Unknown hash algorithm\.$"):
             with self.settings(CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
