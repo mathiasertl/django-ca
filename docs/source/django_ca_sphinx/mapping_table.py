@@ -24,6 +24,8 @@ from sphinx.ext.autodoc import DataDocumenter
 from tabulate import tabulate
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 
@@ -48,6 +50,8 @@ class MappingDocumentor(DataDocumenter):
             return f"``{value}``"
         if isinstance(value, str):
             return f'``"{value}"``'
+        if isinstance(value, type) and issubclass(value, (hashes.HashAlgorithm, ec.EllipticCurve)):
+            return f":py:class:`~cg:{value.__module__}.{value.__name__}`"
         if isinstance(value, x509.ObjectIdentifier):
             # First, try to find out if the OID is an ExtensionOID member
             for name in dir(ExtensionOID):

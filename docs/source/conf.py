@@ -437,6 +437,7 @@ jinja_filters = {
 }
 
 qualname_overrides = {
+    "mappingproxy": "python:types.MappingProxyType",
     "ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ExtendedKeyUsageOID": "cg:cryptography.x509.oid.ExtendedKeyUsageOID",

@@ -12,12 +12,8 @@ ChangeLog
 
 * Added support for cryptography 39.0.
 * Added support for Ed448 and Ed25519 based certificate authorities.
-* Elliptic Curve keys are now consistently referred to as "EC" instead of "ECC" and Ed25519 keys are now
-  referred to as "Ed25519" instead of old "EdDSA". This affects the ``--key-type`` parameter of ``manage.py
-  init_ca``.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
-* The ``CA_DEFAULT_ECC_CURVE`` setting was renamed to ``CA_DEFAULT_ELLIPTIC_CURVE``.
 * The default hash algorithm for certificate authorities with a DSA key pair can now be configured using
   :ref:`settings-ca-dsa-digest-algorithm`.
 * The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
@@ -25,6 +21,21 @@ ChangeLog
 * Use ``yaml.safe_load`` to load configuration files to protect against malicious configuration.
 * OCSP keys now use the same signature hash algorithm as their certificate authority by default.
 * CRLs are now signed with the same signature hash algorithm as their certificate authority by default.
+
+Standardization
+===============
+
+A larger effort has been taken to use standard names for various parts of django-ca. Old option values are
+supported for a few more release, please refer to the deprecation notices below for how long they will be
+supported.
+
+* Elliptic Curve keys are now consistently referred to as "EC" instead of "ECC" and Ed25519 keys are now
+  referred to as "Ed25519" instead of "EdDSA". This affects the ``--key-type`` parameter of ``manage.py
+  init_ca`` and other commands that generate private keys.
+* The ``CA_DEFAULT_ECC_CURVE`` setting was renamed to ``CA_DEFAULT_ELLIPTIC_CURVE``.
+* Hash algorithms are are now referred to by their standard name, e.g. "SHA-512" instead of
+  ":spelling:ignore:`sha512`". Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for all
+  supported algorithm names.
 
 Bugfixes
 ========
@@ -38,10 +49,13 @@ Bugfixes
 Deprecation notices
 ===================
 
-* The ``CA_DEFAULT_ECC_CURVE`` setting will be removed in ``django-ca==1.26.0``. Use the
+* Support for the  ``CA_DEFAULT_ECC_CURVE`` setting will be removed in ``django-ca==1.26.0``. Use the
   ``CA_DEFAULT_ELLIPTIC_CURVE`` setting instead.
-* The ``"ECC"`` key type will be removed ``django-ca==1.26.0``. Use ``"EC"`` instead.
-* The ``"EdDSA"`` key type will be removed in ``django-ca==1.26.0``. Use ``"Ed25519"`` instead.
+* Support for using ``ECC`` as key type will be removed ``django-ca==1.26.0``. Use ``EC`` instead.
+* Support for using ``EdDSA`` as key type will be removed in ``django-ca==1.26.0``. Use ``Ed25519`` instead.
+* Support for non-standard hash algorithm names (e.g. ``sha512`` instead of ``SHA-512`` will be removed in
+  ``django-ca==1.25.0``. Use standard hash algorithm names instead (see
+  :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for supported algorithms).
 * The ``pre_issue_cert`` is will be removed in ``django_ca==1.24.0``. Use the new
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 * The subject wrapper class ``django_ca.subject.Subject`` is will be removed in ``django-ca==1.24.0``.

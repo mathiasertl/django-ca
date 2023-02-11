@@ -292,6 +292,8 @@ HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = 
     {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
 )
 
+#: Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
+#: ``--algorithm`` command line parameter.
 HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
         # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported

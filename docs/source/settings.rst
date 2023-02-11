@@ -152,7 +152,7 @@ CA_DEFAULT_HOSTNAME
 CA_DEFAULT_KEY_SIZE
    Default: ``4096``
 
-   The default key size for newly created CAs (not used for CAs based on ECC).
+   The default key size for newly created CAs (not used for CAs based on EC, Ed448 or Ed25519).
 
 .. _settings-ca-default-profile:
 
@@ -181,7 +181,7 @@ CA_DEFAULT_SUBJECT
 .. _settings-ca-digest-algorithm:
 
 CA_DIGEST_ALGORITHM
-   Default: ``"sha512"``
+   Default: ``"SHA-512"``
 
    The default signature hash algorithm used to sign certificate authorities, certificates and CRLs.
 
@@ -225,6 +225,13 @@ CA_FILE_STORAGE_KWARGS
    Default: ``{'location': 'files/', 'file_permissions_mode': 0o600, 'directory_permissions_mode': 0o700}``
 
    Add any arguments to the storage backend configured in :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
+
+.. _settings-ca-min-key-size:
+
+CA_MIN_KEY_SIZE
+   Default: ``2048``
+
+   The minimum key size for newly created CAs (not used for CAs based on EC, Ed448 or Ed25519).
 
 CA_NOTIFICATION_DAYS
    Default: ``[14, 7, 3, 1, ]``

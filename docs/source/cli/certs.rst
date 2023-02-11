@@ -141,6 +141,24 @@ Name           Purpose
 You can add and modify profiles using the :ref:`CA_PROFILES <settings-ca-profiles>` setting. The default
 profile is configured by the :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` setting.
 
+Signature hash algorithms
+=========================
+
+When using a certificate authority based on an RSA and Elliptic Curve (EC) private key, you can override the
+signature hash algorithm used for signing the certificate with the ``--algorithm`` parameter. By default, the
+hash algorithm that was used to sign the certificate authority will be used. See
+:py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for a list of supported hash algorithms.
+
+For example, to sign a certificate using SHA-384:
+
+.. code-block:: console
+
+   $ python manage.py sign_cert --algorithm=SHA-384 ...
+
+Certificate authorities that use an Ed448- or Ed25519-based private key, do not use a hash algorithm when
+signing certificates, so an error will be raised if you pass the ``--algorithm`` option with such certificate
+authorities.
+
 .. _override-extensions:
 
 Override extensions

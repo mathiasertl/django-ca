@@ -40,12 +40,57 @@ parameters.
 Create a new CA
 ***************
 
+There are many options when creating a new certificate authority, but the defaults are carefully chosen to be
+secure. To create a simple setup with a root certificate authority and an intermediate certificate authority
+that has ACMEv2 enabled, simply use:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --pathlen=1 Root /CN=Root
+   $ python manage.py init_ca --parent=Root --acme-enable Intermediate /CN=Intermediate
+
+.. NOTE::
+
+   How you invoke :command:`manage.py` differs depending on how you installed django-ca. Refer to the
+   installation guide you followed for further instructions and complete examples.
+
 You should be very careful when creating a new certificate authority, especially if it is used by a large
 number of clients. If you make a mistake here, it could make your CA unusable and you have to redistribute new
 public keys to all clients, which is usually a lot of work.
 
+
 Please think carefully about how you want to run your CA: Do you want intermediate CAs? Do you want to use
 CRLs and/or run an OCSP responder?
+
+
+Private key parameters
+======================
+
+The private key generated for your certificate authority may vary based on key type, key size and elliptic
+curve used.
+
+Key type
+--------
+
+The type of private key can be configured with the ``--key-type`` parameter. Currently supported values are
+``RSA`` (the default), ``EC`` (for elliptic curve cryptography based keys), ``Ed448``, and ``Ed25519``.
+``DSA`` is also supported but the use is discouraged.
+
+Key size
+--------
+
+For ``RSA`` and ``DSA`` keys, you can specify the size of the private key using the ``--key-size`` option.
+The value must be an integer and a power of two. ``2048`` or ``4096`` are reasonable values.
+
+The default is specified using the :ref:`settings-ca-default-key-size` setting, the minimum value is set by
+the :ref:`settings-ca-min-key-size` setting.
+
+Elliptic curve
+--------------
+
+When generating an ``EC`` (elliptic curve) private key, you can chose the elliptic curve used with the
+``--elliptic-curve`` parameter. The default curve is configured using the
+:ref:`settings-ca-default-elliptic-curve` setting.
 
 Hostname
 ========
@@ -81,6 +126,28 @@ don't want to set the attribute:
 
    # unlimited number of intermediate CAs:
    $ python manage.py init_ca --no-pathlen ...
+
+.. _signature_hash_algorithms:
+
+Signature hash algorithm
+========================
+
+The signature hash algorithm can be configured using the ``--algorithm`` parameter.
+
+For root certificate authorities, the default is configured via the :ref:`settings-ca-digest-algorithm`
+setting for RSA and Elliptic Curve (EC) keys, and via the :ref:`settings-ca-dsa-digest-algorithm` setting for
+DSA keys. Intermediate certificate authorities will use the same hash algorithm as their parent by default.
+
+The supported signature hash algorithms are the hash algorithms in the
+:py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` constant. For example, to use SHA-384 as signature hash
+algorithm:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --algorithm=SHA-384 ...
+
+Ed448 and and Ed25519 keys do not use a signature hash algorithm and an error will be raised if you pass the
+``--algorithm`` option with these key types.
 
 CRL URLs
 ========
