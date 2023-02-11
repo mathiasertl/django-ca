@@ -604,7 +604,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             with self.generate_ocsp_key(ca) as (key, cert):
                 self.assertIsInstance(key, type(ca.key()), name)
 
-    @override_tmpcadir(CA_DEFAULT_ELLIPTIC_CURVE="SECP192R1")
+    @override_tmpcadir(CA_DEFAULT_ELLIPTIC_CURVE="secp192r1")
     def test_generate_ocsp_key_ec(self) -> None:
         """Test generate_ocsp_key() with EC keys."""
 
