@@ -318,7 +318,7 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
         """Test false option values."""
         self.assertParserError(
             ["--curve=foo"],
-            "usage: {script} [-h] [--curve CURVE]\n"
+            "usage: {script} [-h] [--curve {{secp256r1,secp384r1,secp521r1,...}}]\n"
             "{script}: error: argument --curve: foo: Not a known Eliptic Curve\n",
         )
 
@@ -351,7 +351,7 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
         """Test false option values."""
         self.assertParserError(
             ["--algo=foo"],
-            "usage: {script} [-h] [--algo ALGO]\n"
+            "usage: {script} [-h] [--algo {{SHA-512,SHA-256,...}}]\n"
             "{script}: error: argument --algo: Unknown hash algorithm: foo\n",
         )
 

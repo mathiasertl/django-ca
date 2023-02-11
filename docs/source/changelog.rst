@@ -33,7 +33,7 @@ supported.
   referred to as "Ed25519" instead of "EdDSA". This affects the ``--key-type`` parameter of ``manage.py
   init_ca`` and other commands that generate private keys.
 * The ``CA_DEFAULT_ECC_CURVE`` setting was renamed to ``CA_DEFAULT_ELLIPTIC_CURVE``.
-* Hash algorithms are are now referred to by their standard name, e.g. "SHA-512" instead of
+* Hash algorithms are now referred to by their standard name, e.g. "SHA-512" instead of
   ":spelling:ignore:`sha512`". Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for all
   supported algorithm names.
 
@@ -56,6 +56,9 @@ Deprecation notices
 * Support for non-standard hash algorithm names (e.g. ``sha512`` instead of ``SHA-512`` will be removed in
   ``django-ca==1.25.0``. Use standard hash algorithm names instead (see
   :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for supported algorithms).
+* Support for non-standard elliptic curve names (e.g. ``SECP256R1`` instead of ``secp256r1`` will be removed
+  in ``django-ca==1.25.0``. Use standard elliptic curve names instead (see
+  :py:attr:`~django_ca.constants.ELLIPTIC_CURVE_TYPES` for supported curves).
 * The ``pre_issue_cert`` is will be removed in ``django_ca==1.24.0``. Use the new
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 * The subject wrapper class ``django_ca.subject.Subject`` is will be removed in ``django-ca==1.24.0``.

@@ -92,11 +92,18 @@ class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
     Namespace(algorithm=<cryptography.hazmat.primitives.hashes.SHA256 object at ...>)
     """
 
+    def __init__(self, **kwargs: typing.Any) -> None:
+        kwargs.setdefault("metavar", "{SHA-512,SHA-256,...}")
+        # Enable this line once support for non-standard names is dropped
+        # kwargs.setdefault("choices", sorted(constants.HASH_ALGORITHM_TYPES))
+        super().__init__(**kwargs)
+
     def parse_value(self, value: str) -> hashes.HashAlgorithm:
         """Parse the value for this action."""
         try:
             return constants.HASH_ALGORITHM_TYPES[value]()
         except KeyError:
+            # NOTE: when removing, add the choices option above
             try:
                 parsed = parse_hash_algorithm(value)
                 warnings.warn(
@@ -209,12 +216,19 @@ class EllipticCurveAction(SingleValueAction[ec.EllipticCurve]):
     Namespace(elliptic_curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
     """
 
+    def __init__(self, **kwargs: typing.Any) -> None:
+        kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
+        # Enable this line once support for non-standard names is dropped
+        # kwargs.setdefault("choices", list(constants.ELLIPTIC_CURVE_TYPES))
+        super().__init__(**kwargs)
+
     def parse_value(self, value: str) -> ec.EllipticCurve:
         """Parse the value for this action."""
         msg = f"{value}: Support for non-standard elliptic curve names will be dropped in django-ca 1.25.0."
         try:
             return constants.ELLIPTIC_CURVE_TYPES[value]()
         except KeyError:
+            # NOTE: when removing, add the choices option above
             try:
                 parsed = parse_key_curve(value)
                 warnings.warn(msg, RemovedInDjangoCA125Warning)
