@@ -56,4 +56,4 @@ jobs:
             twine check --strict dist/*
 
       - name: Run pylint
-        run: pylint --verbose ca/django_ca/ docs/source/django_ca_sphinx/ devscripts/
+        run: pylint --verbose ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/

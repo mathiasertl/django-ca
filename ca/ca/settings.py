@@ -1,4 +1,17 @@
-# Django settings for ca project.
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
+#
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
+
+"""Default settings for the django-ca Django project."""
 
 import os
 from typing import List, Optional
@@ -197,7 +210,7 @@ SETTINGS_DIRS = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATI
 
 for _path in [os.path.join(BASE_DIR, p) for p in SETTINGS_DIRS.split(":")]:
     if not os.path.exists(_path):
-        raise ImproperlyConfigured("%s: No such file or directory." % _path)
+        raise ImproperlyConfigured(f"{_path}: No such file or directory.")
 
     if os.path.isdir(_path):
         # exclude files that don't end with '.yaml' and any directories
@@ -216,13 +229,15 @@ if os.path.exists(SETTINGS_YAML):
 if not _skip_local_config and yaml is not False:  # type: ignore[comparison-overlap]
     for _filename, _path in _settings_files:
         _full_path = os.path.join(_path, _filename)
-        with open(_full_path) as stream:
+        with open(_full_path, encoding="utf-8") as stream:
             data = yaml.safe_load(stream)
-        if not isinstance(data, dict):
-            raise ImproperlyConfigured("%s: File is not a key/value mapping." % _full_path)
-
-        for key, value in data.items():
-            globals()[key] = value
+        if data is None:
+            pass  # silently ignore empty files
+        elif not isinstance(data, dict):
+            raise ImproperlyConfigured(f"{_full_path}: File is not a key/value mapping.")
+        else:
+            for key, value in data.items():
+                globals()[key] = value
 
 
 def _parse_bool(env_value: str) -> bool:
@@ -257,7 +272,7 @@ if not SECRET_KEY:
         SECRET_KEY_FILE = os.environ.get("DJANGO_CA_SECRET_KEY_FILE", "/var/lib/django-ca/secret_key")
 
     if SECRET_KEY_FILE and os.path.exists(SECRET_KEY_FILE):
-        with open(SECRET_KEY_FILE) as stream:
+        with open(SECRET_KEY_FILE, encoding="utf-8") as stream:
             SECRET_KEY = stream.read()
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
@@ -269,8 +284,8 @@ def _set_db_setting(name: str, env_name: str, default: Optional[str] = None) -> 
 
     if os.environ.get(env_name):
         DATABASES["default"][name] = os.environ[env_name]
-    elif os.environ.get("%s_FILE" % env_name):
-        with open(os.environ["%s_FILE" % env_name]) as env_stream:
+    elif os.environ.get(f"{env_name}_FILE"):
+        with open(os.environ[f"{env_name}_FILE"], encoding="utf-8") as env_stream:
             DATABASES["default"][name] = env_stream.read()
     elif default is not None:
         DATABASES["default"][name] = default

@@ -1,3 +1,16 @@
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
+#
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
+
 """Test settings for the django-ca project."""
 
 import json
@@ -170,7 +183,7 @@ LOGGING = {
 }
 
 # Fixture data used by test cases
-with open(os.path.join(FIXTURES_DIR, "cert-data.json")) as stream:
+with open(os.path.join(FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as stream:
     _fixture_data = json.load(stream)
 
 # Custom settings
@@ -260,8 +273,8 @@ else:
 
 if not os.path.exists(GECKODRIVER_PATH) and not SKIP_SELENIUM_TESTS:
     raise ImproperlyConfigured(
-        "Please download geckodriver to %s: "
-        "https://selenium-python.readthedocs.io/installation.html#drivers" % GECKODRIVER_PATH
+        f"Please download geckodriver to {GECKODRIVER_PATH}: "
+        "https://selenium-python.readthedocs.io/installation.html#drivers"
     )
 
 CA_USE_CELERY = False
