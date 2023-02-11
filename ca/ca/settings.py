@@ -8,7 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 try:
     import yaml
 except ImportError:
-    yaml = False
+    yaml = False  # type: ignore[assignment]
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -213,7 +213,7 @@ _settings_files = sorted(_settings_files)
 if os.path.exists(SETTINGS_YAML):
     _settings_files.append((SETTINGS_YAML, os.path.dirname(SETTINGS_YAML)))
 
-if not _skip_local_config and yaml is not False:
+if not _skip_local_config and yaml is not False:  # type: ignore[comparison-overlap]
     for _filename, _path in _settings_files:
         _full_path = os.path.join(_path, _filename)
         with open(_full_path) as stream:
