@@ -95,7 +95,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         if algorithm is None:
             if isinstance(ca_key, dsa.DSAPrivateKey):
-                algorithm = ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM
+                algorithm = ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
             else:
                 algorithm = ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 

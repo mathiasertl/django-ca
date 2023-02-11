@@ -1092,8 +1092,8 @@ class CertificateAuthority(X509CertMixin):
         subject : :class:`~cg:cryptography.x509.Name`
             Subject for the certificate
         algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used for signing the certificate, defaults to the ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``
-            setting.
+            Hash algorithm used for signing the certificate, defaults to the
+            ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM`` setting.
         expires : datetime, optional
             When the certificate expires. If not provided, the ``CA_DEFAULT_EXPIRES`` setting will be used.
         extensions : list of :py:class:`~cg:cryptography.x509.Extension`, optional
@@ -1299,7 +1299,7 @@ class CertificateAuthority(X509CertMixin):
         if isinstance(private_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
             csr_sign_algorithm = None
         elif isinstance(private_key, dsa.DSAPrivateKey):
-            csr_sign_algorithm = ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM
+            csr_sign_algorithm = ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
         else:
             csr_sign_algorithm = ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 

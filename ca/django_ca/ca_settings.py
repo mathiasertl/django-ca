@@ -266,12 +266,18 @@ elif hasattr(settings, "CA_DIGEST_ALGORITHM"):
 else:
     CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.SHA512()
 
-_CA_DSA_SIGNATURE_HASH_ALGORITHM = getattr(settings, "CA_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256")
+_CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = getattr(
+    settings, "CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256"
+)
 try:
-    CA_DSA_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[_CA_DSA_SIGNATURE_HASH_ALGORITHM]()
+    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[
+        _CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
+    ]()
 except KeyError:
     # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured(f"Unkown CA_DSA_SIGNATURE_HASH_ALGORITHM: {_CA_DSA_SIGNATURE_HASH_ALGORITHM}")
+    raise ImproperlyConfigured(
+        f"Unkown CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: {_CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM}"
+    )
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
 if isinstance(CA_DEFAULT_EXPIRES, int):

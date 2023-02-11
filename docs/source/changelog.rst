@@ -17,7 +17,7 @@ ChangeLog
 * The ``CA_DIGEST_ALGORITHM`` setting is now called :ref:`settings-ca-default-signature-hash-algorithm`.
   Values must be a hash algorithm listed in :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES`.
 * The default hash algorithm for certificate authorities with a DSA private key can now be configured using
-  :ref:`settings-ca-dsa-signature-hash-algorithm`.
+  :ref:`settings-ca-default-dsa-signature-hash-algorithm`.
 * The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
   CRLs. This is not a new feature, but it is now documented.
 * Use ``yaml.safe_load`` to load configuration files to protect against malicious configuration.

@@ -634,7 +634,7 @@ def validate_public_key_parameters(
     if key_type in ("RSA", "DSA", "EC"):
         if algorithm is None:
             if key_type == "DSA":
-                return ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM
+                return ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
             return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
         if not isinstance(algorithm, hashes.HashAlgorithm):
             raise ValueError(f"{key_type}: algorithm must be an instance of hashes.HashAlgorithm.")

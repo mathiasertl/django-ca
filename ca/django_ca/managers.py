@@ -244,7 +244,7 @@ class CertificateAuthorityManager(
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate, defaults to
             :ref:`settings-ca-default-signature-hash-algorithm` for RSA/EC keys, and
-            :ref:`settings-ca-dsa-signature-hash-algorithm` for DSA keys. Passing an algorithm for
+            :ref:`settings-ca-default-dsa-signature-hash-algorithm` for DSA keys. Passing an algorithm for
             Ed448/Ed25519 keys is an error.
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate

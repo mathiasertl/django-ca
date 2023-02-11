@@ -109,6 +109,21 @@ CA_DEFAULT_CA
    If this setting is *not* set, **django-ca** will select the CA that is currently usable (enabled, currently
    valid, not revoked) and and has an expiry furthest in the future.
 
+.. _settings-ca-default-dsa-signature-hash-algorithm:
+
+CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
+   Default: ``"SHA-256"``
+
+   .. versionadded:: 1.23.0
+
+   The default hash algorithm for signing public keys of certificate authorities that use a ``DSA`` private
+   key. The setting is also used when signing CRLs of such certificate authorities.
+
+   Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for valid values for this setting.
+
+   The default hash algorithm for ``RSA`` and ``EC`` certificates can be configured with
+   :ref:`settings-ca-default-signature-hash-algorithm`.
+
 .. _settings-ca-default-elliptic-curve:
 
 CA_DEFAULT_ELLIPTIC_CURVE
@@ -178,7 +193,7 @@ CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
    Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for valid values for this setting.
 
    Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
-   be configured separately using :ref:`settings-ca-dsa-signature-hash-algorithm`.
+   be configured separately using :ref:`settings-ca-default-dsa-signature-hash-algorithm`.
 
 .. _settings-ca-default-subject:
 
@@ -204,22 +219,6 @@ CA_DIR
 
    Where the root certificate is stored. The default is a ``files`` directory in the same location as your
    ``manage.py`` file.
-
-
-.. _settings-ca-dsa-signature-hash-algorithm:
-
-CA_DSA_SIGNATURE_HASH_ALGORITHM
-   Default: ``"SHA-256"``
-
-   .. versionadded:: 1.23.0
-
-   The default hash algorithm for signing public keys of certificate authorities that use a ``DSA`` private
-   key. The setting is also used when signing CRLs of such certificate authorities.
-
-   Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for valid values for this setting.
-
-   The default hash algorithm for ``RSA`` and ``EC`` certificates can be configured with
-   :ref:`settings-ca-default-signature-hash-algorithm`.
 
 .. _settings-ca-file-storage:
 

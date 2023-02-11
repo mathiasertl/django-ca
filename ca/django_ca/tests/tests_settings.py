@@ -151,9 +151,9 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
                 pass
 
     def test_dsa_digest_algorithm(self) -> None:
-        """Test invalid ``CA_DSA_SIGNATURE_HASH_ALGORITHM``."""
-        with self.assertImproperlyConfigured(r"^Unkown CA_DSA_SIGNATURE_HASH_ALGORITHM: foo$"):
-            with self.settings(CA_DSA_SIGNATURE_HASH_ALGORITHM="foo"):
+        """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
+        with self.assertImproperlyConfigured(r"^Unkown CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: foo$"):
+            with self.settings(CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
     def test_default_expires(self) -> None:
