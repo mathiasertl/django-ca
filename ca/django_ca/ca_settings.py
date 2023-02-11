@@ -241,25 +241,26 @@ CA_MIN_KEY_SIZE = getattr(settings, "CA_MIN_KEY_SIZE", 2048)
 
 CA_DEFAULT_HOSTNAME: Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
 
-if hasattr(settings, "CA_DEFAULT_SIGNATURE_HASH_ALGORITHM"):
+if _CA_DEFAULT_SIGNATURE_HASH_ALGORITHM := getattr(settings, "CA_DEFAULT_SIGNATURE_HASH_ALGORITHM", None):
     # NOTE: default is in else branch. Move to getattr default once old setting name is dropped
     try:
         CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[
-            settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
-        ]
+            _CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+        ]()
     except KeyError as ex:
         raise ImproperlyConfigured(
-            f"Unkown CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: {settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM}"
+            f"Unkown CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: {_CA_DEFAULT_SIGNATURE_HASH_ALGORITHM}"
         ) from ex
-elif hasattr(settings, "CA_DIGEST_ALGORITHM"):  # pragma: django-ca<1.25.0
+elif _CA_DIGEST_ALGORITHM := getattr(settings, "CA_DIGEST_ALGORITHM", "").upper():  # pragma: django-ca<1.25.0
     warnings.warn(
         "CA_DIGEST_ALGORITHM is deprecated, please use CA_DEFAULT_SIGNATURE_HASH_ALGORITHM instead. Support "
         "for this setting will be removed in django-ca==1.25.0.",
         deprecation.RemovedInDjangoCA125Warning,
     )
-    _CA_DIGEST_ALGORITHM = settings.CA_DIGEST_ALGORITHM.strip().upper()
     try:
-        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DIGEST_ALGORITHM)()
+        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: hashes.HashAlgorithm = getattr(  # type: ignore[no-redef]
+            hashes, _CA_DIGEST_ALGORITHM
+        )()
     except AttributeError:
         # pylint: disable=raise-missing-from; not really useful in this context
         raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
@@ -298,16 +299,19 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
 
 
 # CA_DEFAULT_ECC_CURVE can be removed in django-ca==1.25.0
-if hasattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE"):
+if _CA_DEFAULT_ELLIPTIC_CURVE := getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", None):
     # NOTE: default is in else branch. Move to getattr default once old setting name is dropped
     try:
-        CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[settings.CA_DEFAULT_ELLIPTIC_CURVE]
+        CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]
     except KeyError:
-        raise ImproperlyConfigured(f"{settings.CA_DEFAULT_ELLIPTIC_CURVE}: Unkown CA_DEFAULT_ELLIPTIC_CURVE.")
-elif hasattr(settings, "CA_DEFAULT_ECC_CURVE"):  # pragma: django-ca<1.25.0
-    _CA_DEFAULT_ELLIPTIC_CURVE = settings.CA_DEFAULT_ECC_CURVE.strip()
+        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unkown CA_DEFAULT_ELLIPTIC_CURVE.")
+elif _CA_DEFAULT_ELLIPTIC_CURVE := getattr(
+    settings, "CA_DEFAULT_ECC_CURVE", None
+):  # pragma: django-ca<1.25.0
     try:
-        CA_DEFAULT_ELLIPTIC_CURVE: Type[ec.EllipticCurve] = getattr(ec, _CA_DEFAULT_ELLIPTIC_CURVE)
+        CA_DEFAULT_ELLIPTIC_CURVE: Type[ec.EllipticCurve] = getattr(  # type: ignore[no-redef]
+            ec, _CA_DEFAULT_ELLIPTIC_CURVE
+        )
         if not issubclass(CA_DEFAULT_ELLIPTIC_CURVE, ec.EllipticCurve):
             raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Not an EllipticCurve.")
     except AttributeError:

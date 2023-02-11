@@ -104,11 +104,11 @@ class Subject:
                 continue
 
             if oid not in self._data:
-                self._data[oid] = [value]
+                self._data[oid] = [value]  # type: ignore
             elif oid not in MULTIPLE_OIDS:
                 raise ValueError(f"{OID_NAME_MAPPINGS[oid]}: Must not occur multiple times")
             else:
-                self._data[oid].append(value)
+                self._data[oid].append(value)  # type: ignore
 
     def __contains__(self, oid: Union[str, x509.ObjectIdentifier]) -> bool:
         if isinstance(oid, str):
