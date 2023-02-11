@@ -126,7 +126,7 @@ class AcmeCertificateRevocationViewTestCase(
         builder = builder.public_key(pkey)
         builder = builder.issuer_name(self.ca.subject)
         builder = builder.subject_name(self.cert.pub.loaded.subject)
-        cert = builder.sign(private_key=self.ca.key(), algorithm=ca_settings.CA_DIGEST_ALGORITHM)
+        cert = builder.sign(private_key=self.ca.key(), algorithm=ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
         message = self.message_cls(certificate=jose.util.ComparableX509(X509.from_cryptography(cert)))
 
         resp = self.acme(self.url, message, kid=self.kid)

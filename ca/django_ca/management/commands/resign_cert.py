@@ -97,7 +97,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             if isinstance(ca_key, dsa.DSAPrivateKey):
                 algorithm = ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM
             else:
-                algorithm = ca_settings.CA_DIGEST_ALGORITHM
+                algorithm = ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 
         extensions: List[x509.Extension[x509.ExtensionType]] = []
         have_san = False

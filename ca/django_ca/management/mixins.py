@@ -45,7 +45,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     def add_algorithm(self, parser: CommandParser) -> None:
         """Add the --algorithm option."""
 
-        default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DIGEST_ALGORITHM)]
+        default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
         dsa_default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM)]
         parser.add_argument(
             "--algorithm",

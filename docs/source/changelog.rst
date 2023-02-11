@@ -14,6 +14,8 @@ ChangeLog
 * Added support for Ed448 and Ed25519 based certificate authorities.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
+* The ``CA_DIGEST_ALGORITHM`` setting is now called :ref:`settings-ca-default-signature-hash-algorithm`.
+  Values must be a hash algorithm listed in :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES`.
 * The default hash algorithm for certificate authorities with a DSA private key can now be configured using
   :ref:`settings-ca-dsa-signature-hash-algorithm`.
 * The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
@@ -49,8 +51,10 @@ Bugfixes
 Deprecation notices
 ===================
 
-* Support for the  ``CA_DEFAULT_ECC_CURVE`` setting will be removed in ``django-ca==1.26.0``. Use the
-  ``CA_DEFAULT_ELLIPTIC_CURVE`` setting instead.
+* Support for the ``CA_DIGEST_ALGORITHM`` setting will be removed in ``django-ca==1.25.0``. Use the
+  :ref:`settings-ca-default-signature-hash-algorithm` setting instead.
+* Support for the  ``CA_DEFAULT_ECC_CURVE`` setting will be removed in ``django-ca==1.25.0``. Use the
+  :ref:`settings-ca-default-elliptic-curve` setting instead.
 * Support for using ``ECC`` as key type will be removed ``django-ca==1.26.0``. Use ``EC`` instead.
 * Support for using ``EdDSA`` as key type will be removed in ``django-ca==1.26.0``. Use ``Ed25519`` instead.
 * Support for non-standard hash algorithm names (e.g. ``sha512`` instead of ``SHA-512`` will be removed in

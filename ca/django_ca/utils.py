@@ -635,7 +635,7 @@ def validate_public_key_parameters(
         if algorithm is None:
             if key_type == "DSA":
                 return ca_settings.CA_DSA_SIGNATURE_HASH_ALGORITHM
-            return ca_settings.CA_DIGEST_ALGORITHM
+            return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
         if not isinstance(algorithm, hashes.HashAlgorithm):
             raise ValueError(f"{key_type}: algorithm must be an instance of hashes.HashAlgorithm.")
     elif algorithm is not None:  # Ed448 and Ed25519 keys do not allow hash algorithms
@@ -926,8 +926,8 @@ def parse_hash_algorithm(
     The most common use case is to pass a str naming a class in
     :py:mod:`~cg:cryptography.hazmat.primitives.hashes`.
 
-    For convenience, passing ``None`` will return the value of :ref:`CA_DIGEST_ALGORITHM
-    <settings-ca-digest-algorithm>`, and passing an
+    For convenience, passing ``None`` will return the value of
+    :ref:`settings-ca-default-signature-hash-algorithm`, and passing an
     :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
     instance unchanged.
 
@@ -967,7 +967,7 @@ def parse_hash_algorithm(
         If an unknown object is passed or if ``value`` does not name a known algorithm.
     """
     if value is None:
-        return ca_settings.CA_DIGEST_ALGORITHM
+        return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
     if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
         return value()
     if isinstance(value, hashes.HashAlgorithm):

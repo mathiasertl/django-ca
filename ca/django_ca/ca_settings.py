@@ -16,6 +16,7 @@
 import os
 import re
 import typing
+import warnings
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple, Type
 
@@ -27,8 +28,9 @@ from django.conf import global_settings, settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
-# IMPORTANT: Do **not** import anything but django_ca.constants here, or you risk circular imports.
-from django_ca import constants
+# IMPORTANT: Do **not** import anything but django_ca.constants/deprecation here, or you risk circular
+# imports.
+from django_ca import constants, deprecation
 
 
 def _normalize_subject(value: Any, hint: str) -> Tuple[Tuple[str, str], ...]:
@@ -239,12 +241,30 @@ CA_MIN_KEY_SIZE = getattr(settings, "CA_MIN_KEY_SIZE", 2048)
 
 CA_DEFAULT_HOSTNAME: Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
 
-_CA_DIGEST_ALGORITHM = getattr(settings, "CA_DIGEST_ALGORITHM", "sha512").strip().upper()
-try:
-    CA_DIGEST_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DIGEST_ALGORITHM)()
-except AttributeError:
-    # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
+if hasattr(settings, "CA_DEFAULT_SIGNATURE_HASH_ALGORITHM"):
+    # NOTE: default is in else branch. Move to getattr default once old setting name is dropped
+    try:
+        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[
+            settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+        ]
+    except KeyError as ex:
+        raise ImproperlyConfigured(
+            f"Unkown CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: {settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM}"
+        ) from ex
+elif hasattr(settings, "CA_DIGEST_ALGORITHM"):
+    warnings.warn(
+        "CA_DIGEST_ALGORITHM is deprecated, please use CA_DEFAULT_SIGNATURE_HASH_ALGORITHM instead. Support "
+        "for this setting will be removed in django-ca==1.25.0.",
+        deprecation.RemovedInDjangoCA125Warning,
+    )
+    _CA_DIGEST_ALGORITHM = settings.CA_DIGEST_ALGORITHM.strip().upper()
+    try:
+        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: hashes.HashAlgorithm = getattr(hashes, _CA_DIGEST_ALGORITHM)()
+    except AttributeError:
+        # pylint: disable=raise-missing-from; not really useful in this context
+        raise ImproperlyConfigured(f"Unkown CA_DIGEST_ALGORITHM: {_CA_DIGEST_ALGORITHM}")
+else:
+    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.SHA512()
 
 _CA_DSA_SIGNATURE_HASH_ALGORITHM = getattr(settings, "CA_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256")
 try:
@@ -271,7 +291,7 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
     raise ImproperlyConfigured(f"CA_DEFAULT_KEY_SIZE cannot be lower then {CA_MIN_KEY_SIZE}")
 
 
-# CA_DEFAULT_ECC_CURVE can be removed in django-ca==1.26.0
+# CA_DEFAULT_ECC_CURVE can be removed in django-ca==1.25.0
 _CA_DEFAULT_ELLIPTIC_CURVE = getattr(
     settings, "CA_DEFAULT_ELLIPTIC_CURVE", getattr(settings, "CA_DEFAULT_ECC_CURVE", "SECP256R1")
 ).strip()

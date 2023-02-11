@@ -18,6 +18,8 @@ import typing
 import warnings
 from inspect import signature
 
+# IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
+
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
 

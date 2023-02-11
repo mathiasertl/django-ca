@@ -161,6 +161,25 @@ CA_DEFAULT_PROFILE
 
    The default profile to use.
 
+.. _settings-ca-default-signature-hash-algorithm:
+
+CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+   Default: ``"SHA-512"``
+
+   .. versionchanged:: 1.23.0
+
+      The setting was called "CA_DIGEST_ALGORITHM" before 1.23.0 and non-standard algorithm names where
+      allowed.  Support for the old setting name and non-standard algorithms will be removed in
+      ``django-ca==1.25.0``.
+
+   The default hash algorithm for signing public keys of certificate authorities that use an ``RSA`` or ``EC``
+   private key. The setting is also used when signing CRLs of such certificate authorities.
+
+   Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for valid values for this setting.
+
+   Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
+   be configured separately using :ref:`settings-ca-dsa-signature-hash-algorithm`.
+
 .. _settings-ca-default-subject:
 
 CA_DEFAULT_SUBJECT
@@ -177,16 +196,6 @@ CA_DEFAULT_SUBJECT
          ("OU", "Example Unit"),
          ("emailAddress", "user@example.com"),
       )
-
-.. _settings-ca-digest-algorithm:
-
-CA_DIGEST_ALGORITHM
-   Default: ``"SHA-512"``
-
-   The default signature hash algorithm used to sign certificate authorities, certificates and CRLs.
-
-   Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
-   be configured separately using :ref:`settings-ca-dsa-digest-algorithm`.
 
 .. _settings-ca-dir:
 
@@ -206,6 +215,11 @@ CA_DSA_SIGNATURE_HASH_ALGORITHM
 
    The default hash algorithm for signing public keys of certificate authorities that use a ``DSA`` private
    key. The setting is also used when signing CRLs of such certificate authorities.
+
+   Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for valid values for this setting.
+
+   The default hash algorithm for ``RSA`` and ``EC`` certificates can be configured with
+   :ref:`settings-ca-default-signature-hash-algorithm`.
 
 .. _settings-ca-file-storage:
 

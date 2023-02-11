@@ -136,11 +136,12 @@ don't want to set the attribute:
 Signature hash algorithm
 ========================
 
-The signature hash algorithm can be configured using the ``--algorithm`` parameter.
+The hash algorithm used for signing the public key can be configured using the ``--algorithm`` parameter.
 
-For root certificate authorities, the default is configured via the :ref:`settings-ca-digest-algorithm`
-setting for RSA and Elliptic Curve (EC) keys, and via the :ref:`settings-ca-dsa-digest-algorithm` setting for
-DSA keys. Intermediate certificate authorities will use the same hash algorithm as their parent by default.
+For root certificate authorities, the default is configured via the
+:ref:`settings-ca-default-signature-hash-algorithm` setting for RSA and Elliptic Curve (EC) keys, and via the
+:ref:`settings-ca-dsa-signature-hash-algorithm` setting for DSA keys. Intermediate certificate authorities
+will use the same hash algorithm as their parent by default.
 
 The supported signature hash algorithms are the hash algorithms in the
 :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` constant. For example, to use SHA-384 as signature hash

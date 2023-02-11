@@ -698,7 +698,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertBasicCert(cert)
         self.assertEqual(cert.not_valid_after, datetime.utcnow() + ca_settings.CA_DEFAULT_EXPIRES)
         self.assertEqual(cert.subject, subject)
-        self.assertIsInstance(cert.signature_hash_algorithm, ca_settings.CA_DIGEST_ALGORITHM.__class__)
+        self.assertIsInstance(
+            cert.signature_hash_algorithm, ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM.__class__
+        )
         self.assertExtensionDict(
             cert,
             [
