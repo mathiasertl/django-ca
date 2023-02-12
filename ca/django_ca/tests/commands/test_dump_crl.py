@@ -39,13 +39,17 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     """Test the dump_crl management command."""
 
     default_ca = "root"
+    default_cert = "root-cert"
     load_cas = (
         "root",
         "child",
         "pwd",
         "dsa",
+        "ec",
+        "ed448",
+        "ed25519",
     )
-    load_certs = ("root-cert",)
+    load_certs = ("root-cert", "ed448-cert")
 
     @override_tmpcadir()
     def test_rsa_ca(self) -> None:
@@ -82,6 +86,42 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         crl = x509.load_pem_x509_crl(stdout)
         self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
+        self.assertEqual(list(crl), [])
+
+    @override_tmpcadir()
+    def test_ec_ca(self) -> None:
+        """Test creating a CRL from a EC key."""
+
+        ca = self.cas["ec"]
+        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+
+        crl = x509.load_pem_x509_crl(stdout)
+        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
+        self.assertEqual(list(crl), [])
+
+    @override_tmpcadir()
+    def test_ed448_ca(self) -> None:
+        """Test creating a CRL from a DSA key."""
+
+        ca = self.cas["ed448"]
+        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+
+        crl = x509.load_pem_x509_crl(stdout)
+        self.assertIsNone(crl.signature_hash_algorithm)
+        self.assertEqual(list(crl), [])
+
+    @override_tmpcadir()
+    def test_ed25519_ca(self) -> None:
+        """Test creating a CRL from a DSA key."""
+
+        ca = self.cas["ed25519"]
+        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        self.assertEqual(stderr, b"")
+
+        crl = x509.load_pem_x509_crl(stdout)
+        self.assertIsNone(crl.signature_hash_algorithm)
         self.assertEqual(list(crl), [])
 
     @override_tmpcadir()
@@ -276,7 +316,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_compromised(self) -> None:
-        """Test creating a CRL with a compromized cert."""
+        """Test creating a CRL with a compromised cert."""
 
         stamp = timezone.now().replace(microsecond=0) - timedelta(10)
         self.cert.revoke(compromised=stamp)
@@ -319,6 +359,15 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(len(list(crl)), 1)
         self.assertEqual(crl[0].serial_number, child.pub.loaded.serial_number)
         self.assertEqual(len(crl[0].extensions), 0)
+
+    def test_invalid_hash_algorithm(self) -> None:
+        """Try creating a CRL with an invalid hash algorithm."""
+
+        with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
+            self.cmd("dump_crl", ca=self.cas["ed448"], algorithm=hashes.SHA512())
+
+        with self.assertCommandError(r"^Ed25519 keys do not allow an algorithm for signing\.$"):
+            self.cmd("dump_crl", ca=self.cas["ed25519"], algorithm=hashes.SHA512())
 
     @override_tmpcadir()
     def test_error(self) -> None:

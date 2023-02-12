@@ -565,18 +565,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertFalse(post.called)
 
     @override_tmpcadir()
-    def test_no_cn_or_san(self) -> None:
-        """Test signing a cert that has neither CN nor SAN."""
-        subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
-        with self.assertCommandError(
-            r"^Must give at least a CN in --subject or one or more --alt arguments\.$"
-        ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
-            self.cmd("sign_cert", ca=self.ca, subject=subject)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
-
-    @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
     def test_revoked_ca(self) -> None:
         """Test signing with a revoked CA."""
         self.ca.revoke()
@@ -589,8 +577,23 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
+    def test_invalid_algorithm(self) -> None:
+        """Test passing an invalid algorithm."""
+        with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
+            self.cmd("sign_cert", ca=self.cas["ed448"], subject=self.subject, algorithm=hashes.SHA512())
+
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    def test_no_cn_or_san(self) -> None:
+        """Test signing a cert that has neither CN nor SAN."""
+        subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
+        with self.assertCommandError(
+            r"^Must give at least a CN in --subject or one or more --alt arguments\.$"
+        ), self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+            self.cmd("sign_cert", ca=self.ca, subject=subject)
+        self.assertFalse(pre.called)
+        self.assertFalse(post.called)
+
+    @override_tmpcadir()
     def test_unusable_ca(self) -> None:
         """Test signing with an unusable CA."""
         path = ca_storage.path(self.ca.private_key_path)

@@ -26,6 +26,7 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca.management.base import BinaryCommand
 from django_ca.models import CertificateAuthority
+from django_ca.utils import validate_public_key_parameters
 
 
 class Command(BinaryCommand):
@@ -80,23 +81,31 @@ class Command(BinaryCommand):
         scope: Optional[typing.Literal["ca", "user", "attribute"]],
         include_issuing_distribution_point: Optional[bool],
         password: Optional[bytes],
+        expires: int,
         **options: Any
     ) -> None:
-        # Catch this case early so that we can give a better error message.
+        if algorithm is None:
+            algorithm = ca.algorithm
+
+        # Validate parameters early so that we can return better feedback to the user.
+        try:
+            validate_public_key_parameters(ca.key_type, algorithm)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
+
         if include_issuing_distribution_point is True and ca.parent is None and scope is None:
             raise CommandError(
                 "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
             )
 
-        kwargs = {
-            "expires": options["expires"],
-            "algorithm": algorithm,
-            "password": password,
-        }
-
+        # Actually create the CRL
         try:
             crl = ca.get_crl(
-                include_issuing_distribution_point=include_issuing_distribution_point, scope=scope, **kwargs
+                include_issuing_distribution_point=include_issuing_distribution_point,
+                scope=scope,
+                algorithm=algorithm,
+                password=password,
+                expires=expires,
             ).public_bytes(encoding)
         except Exception as ex:
             # Note: all parameters are already sanitized by parser actions

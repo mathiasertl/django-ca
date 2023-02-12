@@ -32,6 +32,7 @@ from django_ca.constants import EXTENSION_KEYS
 from django_ca.management.base import BaseSignCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
+from django_ca.utils import validate_public_key_parameters
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -113,10 +114,19 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         algorithm: Optional[hashes.HashAlgorithm],
         **options: Any,
     ) -> None:
+        if algorithm is None:
+            algorithm = ca.algorithm
+
+        # Validate parameters early so that we can return better feedback to the user.
         if ca.expires < timezone.now():
             raise CommandError("Certificate Authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
+        try:
+            algorithm = validate_public_key_parameters(ca.key_type, algorithm)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
+
         profile_obj = profiles[profile]
         self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)
 
