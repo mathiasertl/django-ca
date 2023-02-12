@@ -156,6 +156,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test get with no profiles and no default subject."""
         self._test_get()
 
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    def test_ed448_ca(self) -> None:
+        """Test tet with default hash algorithm as none."""
+        CertificateAuthority.objects.exclude(name="ed448").delete()
+        self._test_get()
+
     @override_tmpcadir()
     def test_default_ca_key_does_not_exist(self) -> None:
         """Do a basic get request (to test CSS etc)."""

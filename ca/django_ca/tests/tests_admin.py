@@ -332,7 +332,9 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response.json()[str(self.ca.pk)],
             {
                 "name": self.ca.name,
-                "signature_hash_algorithm": constants.HASH_ALGORITHM_NAMES[type(self.ca.algorithm)],
+                "signature_hash_algorithm": constants.HASH_ALGORITHM_NAMES[
+                    type(self.ca.algorithm)  # type: ignore[index]
+                ],
                 "extensions": {
                     "authority_information_access": {
                         "critical": False,
@@ -393,7 +395,9 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {
                 "name": self.ca.name,
                 "extensions": {},
-                "signature_hash_algorithm": constants.HASH_ALGORITHM_NAMES[type(self.ca.algorithm)],
+                "signature_hash_algorithm": constants.HASH_ALGORITHM_NAMES[
+                    type(self.ca.algorithm)  # type: ignore[index]
+                ],
             },
         )
 

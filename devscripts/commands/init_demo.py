@@ -36,13 +36,14 @@ class Command(DevCommand):
         )
 
     def path(self, ca_storage, certs, name: str) -> str:
+        """Get a file path."""
         return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
 
     def ok(self, msg=" OK.", **kwargs):  # pylint: disable=invalid-name
         """Just print "OK" in green."""
         print(self.termcolor.colored(msg, "green"), **kwargs)  # pylint: disable=no-member  # from lazy import
 
-    def output_info(self, ca_dir, ca_storage, loaded_cas, certs, base_url):
+    def output_info(self, ca_dir, ca_storage, loaded_cas, certs, base_url):  # pylint: disable=too-many-locals
         """Output demo info to the user."""
         from django.urls import reverse  # pylint: disable=import-outside-toplevel  # see handle() imports
 
