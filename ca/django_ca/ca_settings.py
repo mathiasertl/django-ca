@@ -230,7 +230,7 @@ CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES"
 CA_PASSWORDS: Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
 
 # ACME settings
-CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", False)
+CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", True)
 ACME_ORDER_VALIDITY: timedelta = getattr(settings, "CA_ACME_ORDER_VALIDITY", timedelta(hours=1))
 ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, "CA_ACME_ACCOUNT_REQUIRES_CONTACT", True)
 ACME_MAX_CERT_VALIDITY = getattr(settings, "CA_ACME_MAX_CERT_VALIDITY", timedelta(days=90))

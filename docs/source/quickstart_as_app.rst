@@ -51,9 +51,9 @@ While django-ca fully supports cryptography 38, a recent change in cryptography 
 common versions of certbot (see cryptography issues `7231 <https://github.com/pyca/cryptography/issues/7231>`_
 and `7783 <https://github.com/pyca/cryptography/issues/7783>`_) as well as some other clients.
 
-At time of release, at least the certbot versions found in Debian Stable (bullseye) as well as in Ubuntu 22.04
-LTS and earlier are affected. A bug for Debian has been filed (`#1025891
-<https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1025891>`_) to port the fix.
+At time of release, at least the certbot versions found in Ubuntu 22.04 LTS and earlier are affected. A bug in
+Launchpad has been filed (`#2004073 <https://bugs.launchpad.net/ubuntu/+source/python-acme/+bug/2004073>`_) to
+port the fix.
 
 At time of release, it is recommended you keep using cryptography 37. The tutorials have been updated to
 reflect that.
@@ -68,7 +68,7 @@ For a minimal installation, you can install django-ca via pip:
 
    user@host:~$ pip install django-ca
 
-There are several extras available, ``acme`` and ``celery`` are strongly recommended:
+There are several extras available, the ``celery`` is strongly recommended:
 
 .. include:: /include/pip-extras.rst
 
@@ -76,7 +76,7 @@ To install django-ca with one or more extras, use the regular pip syntax:
 
 .. code-block:: console
 
-   user@host:~$ pip install django-ca[acme,celery,redis] "cryptography<38"
+   user@host:~$ pip install django-ca[celery,redis] "cryptography<38"
 
 We use a ``"cryptography<38"`` to make sure django-ca works with common ACMEv2 clients, see
 :ref:`cryptography_38_warning`.
@@ -101,10 +101,6 @@ Simply add ``django_ca`` to your ``INSTALLED_APPS`` (and if you don't use it alr
 
    # RECOMMENDED: Use Celery as an asynchronous task worker if configured
    CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-
-   # Enable ACMEv2 support (enabled by default starting 1.22.0). Set to False to completely disable ACMEv2
-   # support.
-   CA_ENABLE_ACME = True
 
 Please check out :doc:`/settings` for settings specific to django-ca.
 

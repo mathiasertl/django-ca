@@ -5,13 +5,6 @@ ACMEv2 support
 **django-ca** has preliminary ACMEv2 support that allows you to retrieve certificates via certbot or other
 standard ACME clients.
 
-.. WARNING::
-
-   Support for ACME is still in development and must be explicitly activated. Some features are not yet
-   implemented.  Use this feature only with the necessary caution.
-
-   ACME support will be enabled by default starting with ``django-ca=1.22.0``.
-
 *************
 Configuration
 *************

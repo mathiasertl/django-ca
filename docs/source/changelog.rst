@@ -12,6 +12,7 @@ ChangeLog
 
 * Added support for cryptography 39.0.
 * Added support for Ed448 and Ed25519 based certificate authorities.
+* Enable ACMEv2 support by default. ACMEv2 still needs to be enabled for every CA individually.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 * The ``CA_DIGEST_ALGORITHM`` setting is now called :ref:`settings-ca-default-signature-hash-algorithm`.
