@@ -118,13 +118,20 @@ Get the OCSP responder URL from the certificate (:command:`openssl` cannot get i
 
 Verify a certificate using OCSP::
 
-   $ openssl ocsp -CAfile root.pem -issuer child.pem -cert cert.pem
+   $ openssl ocsp -CAfile root.pem -issuer child.pem -cert cert.pem \
    >     -url http://... -text
    ...
    Response verify OK
    cert.pem: good
            This Update: Dec 28 14:34:28 2020 GMT
            Next Update: Dec 28 15:34:28 2020 GMT
+
+For Let's Encrypt, the following command can be used, with ``full-chain.pem`` being the full certificate
+chain, ``intermediate.pem`` being the cert that directly signed the certificate and ``cert.pem`` being the
+server certificate::
+
+   $ openssl ocsp -CAfile full-chain.pem -issuer intermediate.pem -cert cert.pem -url http://r3.o.lencr.org/ \
+   >  -resp_text -req_text -no_nonce
 
 Conversion
 ==========
