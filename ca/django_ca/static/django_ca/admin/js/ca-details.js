@@ -11,7 +11,7 @@ django.jQuery(document).ready(function() {
     });
 
 
-    // This should be set in the form via intial
+    // This should be set in the form via initial
     //var initial_profile = django.jQuery(profile_selector).val();
 
     django.jQuery(ca_details_selector).change(function() {
@@ -21,5 +21,13 @@ django.jQuery(document).ready(function() {
         }
         var extensions = ca_config.extensions;
         update_extensions(extensions);
+
+        // set the signature hash algorithm
+        var hash_algorithm_select = django.jQuery('select#id_algorithm');
+        if (ca_config.signature_hash_algorithm === null) {
+            hash_algorithm_select.val('');
+        } else {
+            hash_algorithm_select.val(ca_config.signature_hash_algorithm);
+        }
     });
 });
