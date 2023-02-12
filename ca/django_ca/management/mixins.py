@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
-from django_ca import ca_settings, constants
+from django_ca import ca_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.management import actions
 from django_ca.models import CertificateAuthority, X509CertMixin
@@ -42,18 +42,13 @@ else:
 class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin that adds some common functions to BaseCommand subclasses."""
 
-    def add_algorithm(self, parser: CommandParser) -> None:
+    def add_algorithm(self, parser: CommandParser, default_text: str) -> None:
         """Add the --algorithm option."""
-
-        default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
-        dsa_default = constants.HASH_ALGORITHM_NAMES[
-            type(ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
-        ]
+        # Do NOT add an argparse-level default here, as the default depends on what the command does
         parser.add_argument(
             "--algorithm",
             action=actions.AlgorithmAction,
-            help="The hash algorithm used to generate the signature (default: "
-            f"{default} for RSA/EC keys, {dsa_default}) for DSA keys).",
+            help=f"Hash algorithm used to generate the signature (default: {default_text}).",
         )
 
     def add_ca(

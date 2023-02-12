@@ -180,12 +180,12 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         x509.SubjectAlternativeName,
         x509.TLSFeature,
     )
-    subject_help = ""  # concrete classes should set this
+    subject_help: typing.ClassVar  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> None:
         """Add common arguments for signing certificates."""
         self.add_subject_group(parser)
-        self.add_algorithm(parser)
+        self.add_algorithm(parser, default_text="algorithm of the signing CA")
         self.add_ca(parser, no_default=no_default_ca)
         self.add_password(parser)
         self.add_extensions(parser)

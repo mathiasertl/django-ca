@@ -30,8 +30,7 @@ from cryptography.x509.oid import NameOID
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
-from django_ca import ca_settings
-from django_ca.constants import EXTENSION_KEYS
+from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.management.actions import (
     ExpiresAction,
@@ -59,8 +58,13 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     help = "Create a certificate authority."
 
     def add_arguments(self, parser: CommandParser) -> None:
+        default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
+        dsa_default = constants.HASH_ALGORITHM_NAMES[
+            type(ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
+        ]
+
         self.add_general_args(parser)
-        self.add_algorithm(parser)
+        self.add_algorithm(parser, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys")
 
         private_key_group = parser.add_argument_group("Private key parameters")
         self.add_key_type(private_key_group)
@@ -263,7 +267,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
 
         subject = sort_name(subject)
 
-        issuer_alternative_name = options[EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]
+        issuer_alternative_name = options[constants.EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]
 
         kwargs = {}
         for opt in ["path", "default_hostname"]:

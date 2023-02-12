@@ -52,7 +52,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         )
         parser.add_argument("--quiet", action="store_true", default=False, help="Do not output warnings.")
 
-        self.add_algorithm(parser)
+        self.add_algorithm(parser, default_text="algorithm of the signing CA")
         private_key_group = parser.add_argument_group("Private key parameters")
         self.add_key_size(private_key_group)
         self.add_key_type(private_key_group, default=None)

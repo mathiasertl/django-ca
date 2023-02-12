@@ -65,7 +65,7 @@ class Command(BinaryCommand):
             dest="include_issuing_distribution_point",
             help="Force exclusion of an IssuingDistributionPoint extension.",
         )
-        self.add_algorithm(parser)
+        self.add_algorithm(parser, default_text="algorithm of the signing CA")
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
         self.add_password(parser)
