@@ -1092,19 +1092,21 @@ class CertificateAuthority(X509CertMixin):
         subject : :class:`~cg:cryptography.x509.Name`
             Subject for the certificate
         algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used for signing the certificate, defaults to the
-            ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM`` setting.
+            Hash algorithm used for signing the certificate, defaults to the algorithm used in the CA.
         expires : datetime, optional
             When the certificate expires. If not provided, the ``CA_DEFAULT_EXPIRES`` setting will be used.
         extensions : list of :py:class:`~cg:cryptography.x509.Extension`, optional
             List of extensions to add to the certificates. The function will add some extensions unless
-            provided here, see above fore details.
+            provided here, see above for details.
         cn_in_san : bool, optional
             Include common names from the subject in the SubjectAlternativeName extension. ``True`` by
             default.
         password : str or bytes, optional
             Password for loading the private key of the CA, if any.
         """
+
+        if algorithm is None:
+            algorithm = self.algorithm
 
         # Ensure that parameters used to generate the public key are valid.
         algorithm = validate_public_key_parameters(self.key_type, algorithm)
