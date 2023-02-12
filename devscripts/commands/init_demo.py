@@ -35,6 +35,9 @@ class Command(DevCommand):
             "--base-url", metavar="URL", default="http://localhost:8000/", help="Base URL for CRL/OCSP URLs."
         )
 
+    def path(self, ca_storage, certs, name: str) -> str:
+        return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
+
     def ok(self, msg=" OK.", **kwargs):  # pylint: disable=invalid-name
         """Just print "OK" in green."""
         print(self.termcolor.colored(msg, "green"), **kwargs)  # pylint: disable=no-member  # from lazy import
@@ -44,19 +47,15 @@ class Command(DevCommand):
         from django.urls import reverse  # pylint: disable=import-outside-toplevel  # see handle() imports
 
         base_url = base_url.rstrip("/")
-        cwd = os.getcwd()
-        root = os.path.relpath(ca_storage.path(certs["root"]["pub_filename"]), cwd)
-        child = os.path.relpath(ca_storage.path(certs["child"]["pub_filename"]), cwd)
-
-        root_cert = os.path.relpath(ca_storage.path(certs["root-cert"]["pub_filename"]), cwd)
-        child_cert = os.path.relpath(ca_storage.path(certs["child-cert"]["pub_filename"]), cwd)
-        root_serial = loaded_cas["root"].serial[:11]
-        child_serial = loaded_cas["child"].serial[:11]
-
-        ocsp_post_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": certs["child"]["serial"]})
-        ocsp_url = f"{base_url}{ocsp_post_path}"
+        ca_names = ("root", "child", "dsa", "ec", "ed448", "ed25519")
+        cas = [
+            (ca, self.path(ca_storage, certs, ca), self.path(ca_storage, certs, f"{ca}-cert"))
+            for ca in ca_names
+        ]
 
         dump_crl = "python ca/manage.py dump_crl"
+        child_serial = loaded_cas["child"].serial[:11]
+        child_bundle = "child.bundle.pem"
 
         print("")
         print(f"* All certificates are in {bold(ca_dir)}")
@@ -64,15 +63,36 @@ class Command(DevCommand):
         print(f'  * Run "{bold("python ca/manage.py runserver")}"')
         print(f"  * Visit {bold(f'{base_url}/admin/')}")
         print(f"  * User/Password: {bold('user')} / {bold('nopass')}")
+
+        self.ok("* Create child bundle:")
+        print(f"  * {bold(f'python ca/manage.py dump_ca --bundle {child_serial}')} > {child_bundle}")
+
         self.ok("* Create CRLs with:")
-        print(f"  * {bold(f'{dump_crl} -f PEM --ca {root_serial} > root.crl')}")
-        print(f"  * {bold(f'{dump_crl} -f PEM --ca {child_serial} > child.crl')}")
-        self.ok("* Verify with CRL:")
-        print(f"  * {bold(f'openssl verify -CAfile {root} -CRLfile root.crl -crl_check {root_cert}')}")
-        print(f"  * {bold(f'openssl verify -CAfile {root} -crl_download -crl_check {root_cert}')}")
+        for ca, _ca_path, _cert_path in cas:
+            serial = loaded_cas[ca].serial[:11]
+            print(f"  * {bold(f'{dump_crl} -f PEM --ca {serial} > {ca}.crl')}")
+
+        self.ok("* Verify with pre-generated CRL:")
+        for ca, ca_path, cert_path in cas:
+            if ca == "child":
+                ca_path = child_bundle
+            print(f"  * {bold(f'openssl verify -CAfile {ca_path} -CRLfile {ca}.crl -crl_check {cert_path}')}")
+
+        self.ok("* Verify with auto-downloaded CRL:")
+        for ca, ca_path, cert_path in cas:
+            if ca == "child":
+                ca_path = child_bundle
+            print(f"  * {bold(f'openssl verify -CAfile {ca_path} -crl_download -crl_check {cert_path}')}")
+
         self.ok("* Verify certificate with OCSP:")
-        cmd = f"openssl ocsp -CAfile {root} -issuer {child} -cert {child_cert} -url {ocsp_url} -resp_text"
-        print(f"    {bold(cmd)}")
+        for ca, ca_path, cert_path in cas:
+            ocsp_post_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": certs[ca]["serial"]})
+            ocsp_url = f"{base_url}{ocsp_post_path}"
+            if ca == "child":
+                ca_path = child_bundle
+
+            cmd = f"openssl ocsp -CAfile {ca_path} -issuer {ca_path} -cert {cert_path} -url {ocsp_url} -resp_text"  # noqa: E501
+            print(f"  * {bold(cmd)}")
 
     def save_fixture_data(self, ca_settings, fixture_data):
         """Save loaded fixture data to database."""
