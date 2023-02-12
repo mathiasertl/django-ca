@@ -101,7 +101,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
         self.assertEqualExt(self.cert, new)
-        self.assertIsInstance(new.algorithm, hashes.SHA512)
+        self.assertIsInstance(new.algorithm, type(self.cert.algorithm))
 
     @override_tmpcadir()
     def test_dsa_ca_resign(self) -> None:
@@ -287,6 +287,14 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         # signals not called
         self.assertEqual(pre.call_count, 0)
         self.assertEqual(post.call_count, 0)
+
+    @override_tmpcadir()
+    def test_invalid_algorithm(self) -> None:
+        """Test manually specifying an invalid algorithm."""
+
+        ed448_ca = self.load_ca("ed448")
+        with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
+            self.cmd("resign_cert", self.cert.serial, ca=ed448_ca, algorithm=hashes.SHA512())
 
     @override_tmpcadir(
         CA_PROFILES={"server": {"expires": 200}, "webserver": {}},

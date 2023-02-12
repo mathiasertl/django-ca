@@ -21,7 +21,6 @@ from typing import Any, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError, CommandParser
@@ -32,6 +31,7 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
+from django_ca.utils import validate_public_key_parameters
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -75,14 +75,21 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         algorithm: Optional[hashes.HashAlgorithm],
         **options: Any,
     ) -> None:
-        if not ca:
+        if ca is None:
             ca = cert.ca
-
-        # See if we can work with the private key
-        ca_key = self.test_private_key(ca, password)
+        if algorithm is None:
+            algorithm = ca.algorithm
 
         profile_obj = self.get_profile(profile, cert)
         self.test_options(ca=ca, password=password, expires=expires, profile=profile_obj, **options)
+
+        # Validate public key parameters early so that we can return better feedback to the user.  This can
+        # only happen if the user specified --algorithm manually and it does not work with the certificate
+        # authority used.
+        try:
+            algorithm = validate_public_key_parameters(ca.key_type, algorithm)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
 
         # get list of watchers
         if watch:
@@ -92,12 +99,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         if subject is None:
             subject = cert.subject
-
-        if algorithm is None:
-            if isinstance(ca_key, dsa.DSAPrivateKey):
-                algorithm = ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
-            else:
-                algorithm = ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 
         extensions: List[x509.Extension[x509.ExtensionType]] = []
         have_san = False
