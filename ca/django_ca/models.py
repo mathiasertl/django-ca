@@ -342,7 +342,7 @@ class X509CertMixin(DjangoCAModel):
             self.expires = timezone.make_aware(self.expires, timezone=tz.utc)
             self.valid_from = timezone.make_aware(self.valid_from, timezone=tz.utc)
 
-        self.serial = int_to_hex(value.serial_number)
+        self.serial = int_to_hex(value.serial_number)  # upper-cased by int_to_hex()
 
     ##########################
     # Certificate properties #
@@ -976,21 +976,25 @@ class CertificateAuthority(X509CertMixin):
 
         for config in deepcopy(ca_settings.CA_CRL_PROFILES).values():
             config.setdefault("algorithm", self.algorithm)
-            overrides = config.get("OVERRIDES", {}).get(self.serial, {})
 
-            if overrides.get("skip"):
+            # create a copy of the overrides with the serials sanitized so that the user can use a
+            # case-insensitive string and can have colons (":").
+            overrides = {k.replace(":", "").upper(): v for k, v in config.get("OVERRIDES", {}).items()}
+            ca_override = overrides.get(self.serial, {})
+
+            if ca_override.get("skip"):
                 continue
 
             if isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
                 algorithm = None
             elif not algorithm:
-                algorithm = parse_hash_algorithm(overrides.get("algorithm", config.get("algorithm")))
+                algorithm = parse_hash_algorithm(ca_override.get("algorithm", config.get("algorithm")))
 
-            expires = overrides.get("expires", config.get("expires", 86400))
-            scope = overrides.get("scope", config.get("scope"))
-            full_name = overrides.get("full_name", config.get("full_name"))
-            relative_name = overrides.get("relative_name", config.get("relative_name"))
-            encodings = overrides.get("encodings", config.get("encodings", ["DER"]))
+            expires = ca_override.get("expires", config.get("expires", 86400))
+            scope = ca_override.get("scope", config.get("scope"))
+            full_name = ca_override.get("full_name", config.get("full_name"))
+            relative_name = ca_override.get("relative_name", config.get("relative_name"))
+            encodings = ca_override.get("encodings", config.get("encodings", ["DER"]))
             crl = self.get_crl(
                 expires=expires,
                 algorithm=algorithm,
