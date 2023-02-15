@@ -1080,6 +1080,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def mockSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
         """Context manager to attach a mock to the given signal."""
+
         # This function is only here to create an autospec. From the documentation:
         #
         #   Notice that the function takes a sender argument, along with wildcard keyword arguments

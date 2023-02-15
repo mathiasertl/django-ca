@@ -267,7 +267,6 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                     crl4_path,
                     crl4,
                 ), self.crl(grandchild, scope="user") as (crl6_path, crl6):
-
                     self.verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
                     self.verify(
                         "-CAfile {0} -crl_check_all {cert}",

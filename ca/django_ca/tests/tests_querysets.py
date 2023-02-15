@@ -209,17 +209,17 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_key_size(self) -> None:
         """Test key size validation in manager."""
-        kwargs = dict(
-            name="Root CA",
-            key_type="RSA",
-            algorithm="sha256",
-            expires=self.expires(720),
-            parent=None,
-            pathlen=0,
-            subject={
+        kwargs = {
+            "name": "Root CA",
+            "key_type": "RSA",
+            "algorithm": "sha256",
+            "expires": self.expires(720),
+            "parent": None,
+            "pathlen": 0,
+            "subject": {
                 "CN": "ca.example.com",
             },
-        )
+        }
 
         key_size = ca_settings.CA_MIN_KEY_SIZE
 

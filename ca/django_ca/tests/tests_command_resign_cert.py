@@ -281,7 +281,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post, patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
         ), self.assertCommandError(msg_re):
-
             self.cmd("resign_cert", self.cert.serial)
 
         # signals not called

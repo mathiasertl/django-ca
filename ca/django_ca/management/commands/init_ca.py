@@ -233,7 +233,6 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         try:
             key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         except ValueError as ex:
-
             raise CommandError(*ex.args) from ex
 
         # Validate public key parameters early so that we can return better feedback to the user.

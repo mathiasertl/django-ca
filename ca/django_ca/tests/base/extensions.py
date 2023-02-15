@@ -855,7 +855,6 @@ class OrderedSetExtensionTestMixin(
     ) -> None:
         """Test that an operator taking a single value works the same way with sets and this extension."""
         for config in self.test_values.values():
-
             # Apply function to an empty extension
             self.assertEqualFunction(oper, set(), config["expected"], update=update, infix=infix)
 

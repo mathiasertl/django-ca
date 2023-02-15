@@ -1375,8 +1375,7 @@ class CertificateAuthority(X509CertMixin):
                 # COVERAGE NOTE: This does not happen in reality, we never generate keys of this type
                 raise TypeError("Cannot get AuthorityKeyIdentifier from this private key type.") from ex
             return x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
-        else:
-            return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
+        return x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ski.value)
 
     def get_authority_key_identifier_extension(self) -> x509.Extension[x509.AuthorityKeyIdentifier]:
         """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA."""

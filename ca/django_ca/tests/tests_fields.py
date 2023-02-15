@@ -284,7 +284,13 @@ class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):
                 (("serverAuth",), True): self.extended_key_usage(
                     ExtendedKeyUsageOID.SERVER_AUTH, critical=True
                 ),
-                (("clientAuth", "serverAuth",), True): self.extended_key_usage(
+                (
+                    (
+                        "clientAuth",
+                        "serverAuth",
+                    ),
+                    True,
+                ): self.extended_key_usage(
                     ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
                 ),
             },

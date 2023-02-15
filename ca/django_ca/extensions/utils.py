@@ -366,7 +366,6 @@ class PolicyInformation(typing.MutableSequence[PolicyQualifier]):
         self.policy_qualifiers.insert(index, self._parse_policy_qualifier(value))
 
     def _parse_policy_qualifier(self, qualifier: ParsablePolicyQualifier) -> PolicyQualifier:
-
         if isinstance(qualifier, str):
             return qualifier
         if isinstance(qualifier, x509.UserNotice):

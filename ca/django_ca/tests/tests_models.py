@@ -388,6 +388,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @freeze_time(timestamps["everything_valid"])
     def test_no_auth_key_identifier(self) -> None:
         """Test an getting the CRL from a CA with no AuthorityKeyIdentifier."""
+
         # All CAs have a authority key identifier, so we mock that this exception is not present
         def side_effect(cls: typing.Any) -> typing.NoReturn:
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
