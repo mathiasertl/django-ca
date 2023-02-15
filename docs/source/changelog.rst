@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Added support for cryptography 39.0.
+* Added support for amce 2.2.0 and 2.3.0.
 * Added support for Ed448 and Ed25519 based certificate authorities.
 * Enable ACMEv2 support by default. ACMEv2 still needs to be enabled for every CA individually.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
@@ -68,6 +69,7 @@ Deprecation notices
   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 * The subject wrapper class ``django_ca.subject.Subject`` is will be removed in ``django-ca==1.24.0``.
 * Extension wrapper classes in ``django_ca.extensions`` are will be removed in ``django_ca==1.24.0``.
+* This is the last release to support ``acme==2.1.0`` and ``acme==2.2.0``.
 
 Backwards incompatible changes
 ==============================
