@@ -17,7 +17,7 @@ import typing
 from typing import Iterable, Optional, Tuple, Type
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import ec, ed448
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 
@@ -43,8 +43,10 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self,
         ca: CertificateAuthority,
         key_type: Optional[Type[PrivateKeyTypes]] = None,
+        key_size: Optional[int] = 2048,
         password: Optional[bytes] = None,
         excludes: Optional[Iterable[int]] = None,
+        elliptic_curve: Type[ec.EllipticCurve] = ec.SECP256R1,
     ) -> Tuple[PrivateKeyTypes, x509.Certificate]:
         """Assert that they key ispresent and can be read."""
         priv_path = f"ocsp/{ca.serial}.key"
@@ -59,6 +61,10 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             priv = stream.read()
         priv = load_pem_private_key(priv, password)
         self.assertIsInstance(priv, key_type)
+        if isinstance(priv, (dsa.DSAPrivateKey, rsa.RSAPrivateKey)):
+            self.assertEqual(priv.key_size, key_size)
+        if isinstance(priv, ec.EllipticCurvePrivateKey):
+            self.assertIsInstance(priv.curve, elliptic_curve)
 
         with ca_storage.open(cert_path, "rb") as stream:
             cert = stream.read()
@@ -99,6 +105,30 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
         self.assertKey(self.cas["root"])
 
+    @override_tmpcadir(CA_USE_CELERY=False)
+    def test_rsa_with_key_size(self) -> None:
+        """Test creating an RSA key with explicit key size."""
+        with self.mute_celery():
+            stdout, stderr = self.cmd(
+                "regenerate_ocsp_keys", certs["root"]["serial"], key_type="RSA", key_size=4096
+            )
+
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertKey(self.cas["root"], key_size=4096)
+
+    @override_tmpcadir(CA_USE_CELERY=False)
+    def test_ec_with_curve(self) -> None:
+        """Test creating an EC key with explicit elliptic curve."""
+        with self.mute_celery():
+            stdout, stderr = self.cmd(
+                "regenerate_ocsp_keys", certs["ec"]["serial"], elliptic_curve=ec.SECP384R1()
+            )
+
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertKey(self.cas["ec"], elliptic_curve=ec.SECP384R1)
+
     @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
     def test_hash_algorithm(self) -> None:
         """Test the hash algorithm option."""
@@ -122,7 +152,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "profile": "ocsp",
                         "expires": 172800.0,
                         "algorithm": "SHA-256",
-                        "key_size": 1024,
+                        "key_size": None,
                         "key_type": "RSA",
                         "elliptic_curve": None,
                         "password": None,
@@ -136,16 +166,6 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-
-    @override_tmpcadir()
-    def test_with_celery_with_elliptic_curve(self) -> None:
-        """Test regenerating a key with a manually supplied Elliptic curve."""
-        stdout, stderr = self.cmd_e2e(
-            ["regenerate_ocsp_keys", certs["ec"]["serial"], "--elliptic-curve", "brainpoolP256r1"]
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertKey(self.cas["ec"], key_type=ec.EllipticCurvePrivateKey)
 
     @override_tmpcadir()
     def test_with_ed448_with_explicit_key_type(self) -> None:

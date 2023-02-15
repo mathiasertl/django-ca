@@ -142,7 +142,12 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
         )
 
-    def add_key_type(self, parser: argparse._ActionsContainer, default: Optional[str] = "RSA") -> None:
+    def add_key_type(
+        self,
+        parser: argparse._ActionsContainer,
+        default: Optional[str] = "RSA",
+        default_text: str = "%(default)s",
+    ) -> None:
         """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
         # NOTE: This can be simplified once support for "ECC" and "EdDSA" values is dropped.
         known_private_key_types = ["RSA", "DSA", "EC", "Ed25519", "Ed448"]  # pragma: only django-ca<1.26
@@ -153,7 +158,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             choices=known_private_key_types + ["ECC", "EdDSA"],
             metavar=metavar,
             default=default,
-            help="Key type for the private key (default: %(default)s).",
+            help=f"Key type for the private key (default: {default_text}).",
         )
 
     def add_profile(self, parser: CommandParser, help_text: str) -> None:

@@ -54,8 +54,10 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         self.add_algorithm(parser, default_text="algorithm of the signing CA")
         private_key_group = parser.add_argument_group("Private key parameters")
+        self.add_key_type(
+            private_key_group, default=None, default_text="key type of the certificate authority"
+        )
         self.add_key_size(private_key_group)
-        self.add_key_type(private_key_group, default=None)
         self.add_elliptic_curve(private_key_group)
         self.add_password(parser)
 
@@ -69,9 +71,9 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         profile: Optional[str],
         expires: timedelta,
         algorithm: Optional[hashes.HashAlgorithm],
-        elliptic_curve: Optional[ec.EllipticCurve],
-        key_size: int,
         key_type: Optional[ParsableKeyType],
+        key_size: Optional[int],
+        elliptic_curve: Optional[ec.EllipticCurve],
         password: Optional[bytes],
         quiet: bool,
         **options: Any,
@@ -86,10 +88,6 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
         if not serials:
             serials = CertificateAuthority.objects.all().order_by("serial").values_list("serial", flat=True)
-
-        elliptic_curve_name: Optional[str] = None
-        if elliptic_curve is not None:
-            elliptic_curve_name = elliptic_curve.name
 
         for serial in serials:
             serial = serial.replace(":", "").strip().upper()
@@ -107,18 +105,28 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
                 continue
 
-            if key_type is None:
+            # Get private key parameters for this particular private key
+            ca_key_type = key_type
+            if ca_key_type is None:
                 ca_key_type = ca.key_type
-            else:
-                ca_key_type = key_type
 
-            ca_key_size, ca_elliptic_curve = validate_private_key_parameters(
-                ca_key_type, key_size, elliptic_curve
-            )
+            ca_key_size: Optional[int] = None
+            if ca_key_type in ("RSA", "DSA") and key_size is not None:
+                ca_key_size = key_size
+
+            ca_elliptic_curve: Optional[ec.EllipticCurve] = None
+            if ca_key_type == "EC" and elliptic_curve is not None:
+                ca_elliptic_curve = elliptic_curve
+
+            validate_private_key_parameters(ca_key_type, ca_key_size, ca_elliptic_curve)
 
             algorithm_name: Optional[str] = None
             if algorithm is not None:
                 algorithm_name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+
+            elliptic_curve_name: Optional[str] = None
+            if ca_elliptic_curve is not None:
+                elliptic_curve_name = ca_elliptic_curve.name
 
             run_task(
                 generate_ocsp_key,
