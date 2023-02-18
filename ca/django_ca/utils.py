@@ -16,12 +16,10 @@
 import binascii
 import re
 import shlex
-import sys
 import typing
-from collections import abc
 from datetime import datetime, timedelta, timezone
 from ipaddress import ip_address, ip_network
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, Optional, Tuple, Type, Union
 from urllib.parse import urlparse
 
 import idna
@@ -42,7 +40,6 @@ from django_ca import ca_settings, constants
 from django_ca.typehints import (
     Expires,
     ParsableGeneralName,
-    ParsableGeneralNameList,
     ParsableHash,
     ParsableKeyType,
     ParsableName,
@@ -212,7 +209,7 @@ def encode_dns(name: str) -> str:
     return idna.encode(name).decode("utf-8")
 
 
-def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
+def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
     """Convert a x509 name or relative name into the canonical form for distinguished names.
 
     This function does not take care of sorting the subject in any meaningful order.
@@ -235,7 +232,7 @@ def format_name(subject: typing.Union[x509.Name, x509.RelativeDistinguishedName]
     return f"/{values}"
 
 
-def serialize_name(name: typing.Union[x509.Name, x509.RelativeDistinguishedName]) -> SerializedName:
+def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> SerializedName:
     """Serialize a :py:class:`~cg:cryptography.x509.Name`.
 
     The value also accepts a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
@@ -540,7 +537,7 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 @typing.overload
 def validate_private_key_parameters(
     key_type: typing.Literal["DSA", "RSA"],
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
 ) -> Tuple[int, None]:
     ...
@@ -549,7 +546,7 @@ def validate_private_key_parameters(
 @typing.overload
 def validate_private_key_parameters(
     key_type: typing.Literal["EC"],
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
 ) -> Tuple[None, ec.EllipticCurve]:
     ...
@@ -558,7 +555,7 @@ def validate_private_key_parameters(
 @typing.overload
 def validate_private_key_parameters(
     key_type: typing.Literal["Ed448", "Ed25519"],
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
 ) -> Tuple[None, None]:
     ...
@@ -645,45 +642,45 @@ def validate_public_key_parameters(
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     key_type: typing.Literal["DSA"],
-    elliptic_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> dsa.DSAPrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     key_type: typing.Literal["RSA"],
-    elliptic_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> rsa.RSAPrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     key_type: typing.Literal["EC"],
-    elliptic_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> ec.EllipticCurvePrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     key_type: typing.Literal["Ed25519"],
-    elliptic_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> ed25519.Ed25519PrivateKey:
     ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: typing.Optional[int],
+    key_size: Optional[int],
     key_type: typing.Literal["Ed448"],
-    elliptic_curve: typing.Optional[ec.EllipticCurve],
+    elliptic_curve: Optional[ec.EllipticCurve],
 ) -> ed448.Ed448PrivateKey:
     ...
 
@@ -919,7 +916,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
 
 
 def parse_hash_algorithm(
-    value: typing.Union[typing.Type[hashes.HashAlgorithm], ParsableHash] = None
+    value: Union[typing.Type[hashes.HashAlgorithm], ParsableHash] = None
 ) -> hashes.HashAlgorithm:
     """Parse a hash algorithm value.
 
@@ -1167,124 +1164,6 @@ def split_str(val: str, sep: str) -> typing.Iterator[str]:
     lex.whitespace = sep
     lex.whitespace_split = True
     yield from lex
-
-
-class GeneralNameList(List[x509.GeneralName]):
-    """List that holds :py:class:`~cg:cryptography.x509.GeneralName` instances and parses ``str`` when added.
-
-    A ``GeneralNameList`` is a ``list`` subclass that will always only hold
-    :py:class:`~cg:cryptography.x509.GeneralName` instances, but any ``str`` passed to it will be passed to
-    :py:func:`~django_ca.utils.parse_general_name`::
-
-        >>> from cryptography import x509
-        >>> l = GeneralNameList(['example.com'])
-        >>> l += ['DNS:example.net', x509.DNSName('example.org')]
-        >>> print(l)
-        <GeneralNameList: ['DNS:example.com', 'DNS:example.net', 'DNS:example.org']>
-        >>> 'example.com' in l, 'DNS:example.com' in l, x509.DNSName('example.com') in l
-        (True, True, True)
-        >>> l == ['example.com', 'example.net', 'example.org']
-        True
-        >>> l == [x509.DNSName('example.com'), 'example.net', 'DNS:example.org']
-        True
-
-    """
-
-    def __init__(
-        self, iterable: Optional[Union[ParsableGeneralName, ParsableGeneralNameList]] = None
-    ) -> None:
-        if iterable is None:
-            iterable = []
-        if isinstance(iterable, (str, x509.GeneralName)):
-            iterable = [iterable]
-
-        super().__init__(parse_general_name(v) for v in iterable)
-
-    def serialize(self) -> List[str]:
-        """Generate a list of formatted names."""
-        return [format_general_name(v) for v in self]
-
-    def __add__(self, value: ParsableGeneralNameList) -> "GeneralNameList":  # type: ignore[override]
-        # self + other_list
-        if not isinstance(value, GeneralNameList):
-            value = GeneralNameList(value)
-        return GeneralNameList(list(self) + list(value))
-
-    def __contains__(self, value: Any) -> bool:  # value in self
-        try:
-            value = parse_general_name(value)
-        except ValueError:
-            return False
-
-        return list.__contains__(self, value)
-
-    def __eq__(self, other: Any) -> bool:  # value == other
-        if isinstance(other, GeneralNameList) is False and isinstance(other, list) is True:
-            other = GeneralNameList(other)
-        return list.__eq__(self, other)
-
-    def __iadd__(self, value: ParsableGeneralNameList) -> "GeneralNameList":  # type: ignore[override]
-        return list.__iadd__(self, (parse_general_name(v) for v in value))
-
-    def __repr__(self) -> str:
-        names = [format_general_name(v) for v in self]
-        return f"<GeneralNameList: {names}>"
-
-    @typing.overload
-    def __setitem__(self, key: typing.SupportsIndex, value: ParsableGeneralName) -> None:  # pragma: no cover
-        ...
-
-    @typing.overload
-    def __setitem__(self, key: slice, value: ParsableGeneralNameList) -> None:  # pragma: no cover
-        ...
-
-    def __setitem__(
-        self,
-        key: Union[typing.SupportsIndex, slice],
-        value: Union[ParsableGeneralNameList, ParsableGeneralName],
-    ) -> None:  # l[0] = 'example.com'
-        if isinstance(key, slice) and isinstance(value, abc.Iterable):
-            # equivalent to l[0:1] = ['example.com']
-            list.__setitem__(self, key, (parse_general_name(v) for v in value))
-        elif isinstance(key, int) and isinstance(value, (x509.GeneralName, str)):
-            # equivalent to l[0] = 'example.com'
-            list.__setitem__(self, key, parse_general_name(value))
-        else:
-            raise TypeError(f"{key}/{value}: Invalid key/value type.")
-
-    def append(self, value: ParsableGeneralName) -> None:
-        """Equivalent to list.append()."""
-        list.append(self, parse_general_name(value))
-
-    def count(self, value: ParsableGeneralName) -> int:
-        """Equivalent to list.count()."""
-        try:
-            value = parse_general_name(value)
-        except ValueError:
-            return 0
-
-        return list.count(self, value)
-
-    def extend(self, iterable: ParsableGeneralNameList) -> None:
-        """Equivalent to list.extend()."""
-        list.extend(self, (parse_general_name(i) for i in iterable))
-
-    def index(
-        self,
-        value: ParsableGeneralName,
-        start: typing.SupportsIndex = 0,
-        stop: typing.SupportsIndex = sys.maxsize,
-    ) -> int:
-        """Equivalent to list.index()."""
-        return list.index(self, parse_general_name(value), start, stop)
-
-    def insert(self, index: typing.SupportsIndex, value: ParsableGeneralName) -> None:
-        """Equivalent to list.insert()."""
-        list.insert(self, index, parse_general_name(value))
-
-    def remove(self, value: ParsableGeneralName) -> None:
-        """Equivalent to list.remove()."""
-        list.remove(self, parse_general_name(value))
 
 
 def get_crl_cache_key(

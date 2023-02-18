@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Collection of mixin classes for unittest.TestCase subclasses."""
 
@@ -19,7 +19,6 @@ import json
 import re
 import textwrap
 import typing
-import warnings
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from http import HTTPStatus
@@ -68,7 +67,6 @@ from django_ca.signals import (
     post_revoke_cert,
     post_sign_cert,
     pre_create_ca,
-    pre_issue_cert,
     pre_sign_cert,
 )
 from django_ca.tests.base import certs, timestamps, uri
@@ -369,7 +367,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, pre: bool = True, post: bool = True
     ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
-        with self.mockSignal(pre_issue_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
+        with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
             try:
                 yield pre_sig, post_sig
             finally:
@@ -503,15 +501,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)
         ):
             self.assertTrue(key.key_size > 0)
-
-    @contextmanager
-    def assertRemovedExtensionWarning(  # pylint: disable=invalid-name
-        self, name: str
-    ) -> typing.Iterator[None]:
-        """Temporary manager for removed extension wrapper classes."""
-        msg = rf"^django_ca\.extensions\.extensions\.{name} is deprecated and will be removed in django-ca 1\.24\.0\.$"  # NOQA
-        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
-            yield
 
     @contextmanager
     def assertRemovedIn124Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
@@ -1003,7 +992,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def get_cert_context(self, name: str) -> Dict[str, Any]:
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: Dict[str, Any] = {}
-        for key, value in certs[name].items():
+        for key, value in sorted(certs[name].items()):
             # Handle cryptography extensions
             if key == "precert_poison":
                 ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
@@ -1149,13 +1138,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def reverse(self, name: str, *args: Any, **kwargs: Any) -> str:
         """Shortcut to reverse an URI name."""
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
-
-    @contextmanager
-    def silence_warnings(self) -> typing.Iterator[None]:
-        """Contect manager to hide all warnings."""
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            yield
 
     @property
     def usable_cas(self) -> typing.Iterator[Tuple[str, CertificateAuthority]]:

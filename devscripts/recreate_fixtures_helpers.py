@@ -1,17 +1,15 @@
-#!/usr/bin/env python3
-#
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """The recreate-fixtures sub-command recreates the entire test fixture data.
 
@@ -47,8 +45,8 @@ from freezegun import freeze_time
 
 from devscripts import config, utils
 
-from django_ca import ca_settings
-from django_ca.extensions import OID_TO_EXTENSION, Extension
+from django_ca import ca_settings, constants
+from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.subject import Subject
@@ -71,12 +69,8 @@ class CertificateEncoder(json.JSONEncoder):
             return o.name
         if isinstance(o, Path):
             return str(o)
-
-        # Serializing extensions for now depends on django_ca.extension classes
         if isinstance(o, x509.Extension):
-            ext_class = OID_TO_EXTENSION[o.oid]
-            ext = ext_class(o)
-            return ext.serialize()
+            return serialize_extension(o)
         return json.JSONEncoder.default(self, o)
 
 
@@ -129,40 +123,9 @@ def _update_cert_data(cert, data):
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
 
-    aki = cert.authority_key_identifier
-    if aki is not None:
-        data["authority_key_identifier"] = aki.serialize()
-
-    basic_constraints = cert.basic_constraints
-    if basic_constraints:
-        data["basic_constraints"] = basic_constraints.serialize()
-
-    ski = cert.subject_key_identifier
-    if ski is not None:
-        data["subject_key_identifier"] = ski.serialize()
-
-    key_usage = cert.key_usage
-    if key_usage is not None:
-        data["key_usage"] = key_usage.serialize()
-
-    aia = cert.authority_information_access
-    if aia is not None:
-        data["authority_information_access"] = aia.serialize()
-
-    san = cert.subject_alternative_name
-    if san is not None:
-        data["subject_alternative_name"] = san.serialize()
-
-    ian = cert.issuer_alternative_name
-    if ian is not None:
-        data["issuer_alternative_name"] = ian.serialize()
-
-    eku = cert.extended_key_usage
-    if eku is not None:
-        data["extended_key_usage"] = eku.serialize()
-    crldp = cert.crl_distribution_points
-    if crldp is not None:
-        data["crl_distribution_points"] = crldp.serialize()
+    for oid, ext in cert.x509_extensions.items():
+        ext_key = constants.EXTENSION_KEYS[oid]
+        data[ext_key] = serialize_extension(ext)
 
 
 def _write_ca(dest, ca, cert_data, testserver, password=None):
@@ -250,17 +213,13 @@ def _update_contrib(parsed, data, cert, name, filename):
         "sha512": cert.get_fingerprint(hashes.SHA512()),
     }
 
-    for ext in cert.extensions:
-        if isinstance(ext, Extension):
-            key = OID_TO_EXTENSION[ext.oid].key
-            cert_data[key] = ext.serialize()
-        elif isinstance(ext, tuple):
-            print("### get extension tuple!!!")
-            key, value = ext
-            if isinstance(value[1], x509.ObjectIdentifier):
-                # Currently just some old StartSSL extensions for Netscape (!)
-                continue
-            cert_data[key] = value
+    for oid, ext in cert.x509_extensions.items():
+        if isinstance(ext.value, x509.UnrecognizedExtension):
+            # Currently just some old StartSSL extensions for Netscape (!)
+            continue
+
+        ext_key = constants.EXTENSION_KEYS[oid]
+        cert_data[ext_key] = serialize_extension(ext)
 
     try:
         ext = cert.pub.loaded.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value

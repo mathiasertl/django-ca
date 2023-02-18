@@ -33,7 +33,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate
-from django_ca.signals import post_issue_cert, post_revoke_cert, pre_issue_cert, pre_revoke_cert
+from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.tests.base import override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AdminTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
@@ -349,7 +349,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
 
     model = Certificate
     tool = "resign"
-    pre_signal = pre_issue_cert
+    pre_signal = pre_sign_cert
     post_signal = post_issue_cert
 
     def assertFailedRequest(self, response: HttpResponse, obj: typing.Optional[Certificate] = None) -> None:

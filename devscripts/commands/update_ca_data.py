@@ -2,16 +2,16 @@
 #
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Update tables for ca_examples.rst in docs."""
 
@@ -248,7 +248,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
-    from django_ca.extensions import KeyUsage
+    from django_ca import constants
     from django_ca.utils import bytes_to_hex, format_general_name, format_name
 
     # pylint: enable=import-outside-toplevel
@@ -270,7 +270,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
         "aki": [(name_header, "Critical", "Key identifier", "Issuer", "Serial")],
         "basicconstraints": [(name_header, "Critical", "CA", "Path length")],
         "eku": [(name_header, "Critical", "Usages")],
-        "key_usage": [[name_header, "Critical"] + sorted(KeyUsage.CRYPTOGRAPHY_MAPPING.keys())],
+        "key_usage": [[name_header, "Critical"] + sorted(constants.KEY_USAGE_NAMES.values())],
         "ian": [(name_header, "Critical", "Names")],
         "ski": [(name_header, "Critical", "Digest")],
         "certificatepolicies": [(name_header, "Critical", "Policies")],
@@ -387,10 +387,11 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
                     "* ".join([format_general_name(v) for v in value]),
                 ]
             elif isinstance(value, x509.KeyUsage):
+                key_usage_attrs = {v: k for k, v in constants.KEY_USAGE_NAMES.items()}
                 key_usages = []
                 for key in cert_values["key_usage"][0][2:]:
                     try:
-                        key_usages.append("✓" if getattr(value, KeyUsage.CRYPTOGRAPHY_MAPPING[key]) else "✗")
+                        key_usages.append("✓" if getattr(value, key_usage_attrs[key]) else "✗")
                     except ValueError:
                         key_usages.append("✗")
 
@@ -600,7 +601,6 @@ def update_crl_data():  # pylint: disable=too-many-locals
                     optional(value.only_some_reasons, lambda v: ", ".join([f.name for f in v]), "✗"),
                     "✓" if value.indirect_crl else "✗",
                 )
-                print(this_crl_values["crl_idp"])
             elif isinstance(value, x509.AuthorityKeyIdentifier):
                 crl_aci = optional(
                     value.authority_cert_issuer,

@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Django models for the django-ca application.
 
@@ -24,7 +24,6 @@ import logging
 import random
 import re
 import typing
-import warnings
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -62,29 +61,7 @@ from django.utils.translation import gettext_lazy as _
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
-from django_ca.extensions import (
-    OID_TO_EXTENSION,
-    AuthorityInformationAccess,
-    AuthorityKeyIdentifier,
-    BasicConstraints,
-    CertificatePolicies,
-    CRLDistributionPoints,
-    ExtendedKeyUsage,
-    FreshestCRL,
-    InhibitAnyPolicy,
-    IssuerAlternativeName,
-    KeyUsage,
-    NameConstraints,
-    OCSPNoCheck,
-    PolicyConstraints,
-    PrecertificateSignedCertificateTimestamps,
-    PrecertPoison,
-    SubjectAlternativeName,
-    SubjectKeyIdentifier,
-    TLSFeature,
-    get_extension_name,
-)
-from django_ca.extensions.base import Extension
+from django_ca.extensions import get_extension_name
 from django_ca.managers import (
     AcmeAccountManager,
     AcmeAuthorizationManager,
@@ -106,16 +83,8 @@ from django_ca.querysets import (
     CertificateAuthorityQuerySet,
     CertificateQuerySet,
 )
-from django_ca.signals import post_revoke_cert, post_sign_cert, pre_issue_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import (
-    Expires,
-    ExtensionTypeTypeVar,
-    ParsableHash,
-    ParsableKeyType,
-    ParsableValue,
-    PrivateKeyTypes,
-    SerializedValue,
-)
+from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
+from django_ca.typehints import Expires, ParsableHash, ParsableKeyType, PrivateKeyTypes
 from django_ca.utils import (
     bytes_to_hex,
     ca_storage,
@@ -242,9 +211,6 @@ class Watcher(models.Model):
 
 class X509CertMixin(DjangoCAModel):
     """Mixin class with common attributes for Certificates and Certificate Authorities."""
-
-    # pylint: disable=too-many-public-methods
-    # X.509 certificates are complex. Sorry.
 
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = REVOCATION_REASONS
@@ -527,307 +493,6 @@ class X509CertMixin(DjangoCAModel):
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
         return list(sorted(self.x509_extensions.values(), key=lambda e: get_extension_name(e.oid)))
-
-    @cached_property
-    def extensions(
-        self,
-    ) -> List[
-        Union[
-            Extension[ExtensionTypeTypeVar, ParsableValue, SerializedValue],
-            "x509.Extension[x509.ExtensionType]",
-        ]
-    ]:  # pragma: no cover
-        """List of all extensions for this certificate."""
-        exts = []
-
-        for ext in self.sorted_extensions:
-            if ext.oid in OID_TO_EXTENSION:
-                exts.append(getattr(self, OID_TO_EXTENSION[ext.oid].key))
-
-            # extension that does not support new extension framework
-            else:
-                exts.append(ext)
-        return exts
-
-    @cached_property
-    def authority_information_access(self) -> Optional[AuthorityInformationAccess]:  # pragma: no cover
-        """The ``django_ca.extensions.AuthorityInformationAccess`` extension or ``None`` if not
-        present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.AuthorityInformationAccess)
-        except x509.ExtensionNotFound:
-            return None
-        return AuthorityInformationAccess(ext)
-
-    @cached_property
-    def authority_key_identifier(self) -> Optional[AuthorityKeyIdentifier]:  # pragma: no cover
-        """The ``django_ca.extensions.AuthorityKeyIdentifier`` extension or ``None`` if not
-        present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
-        except x509.ExtensionNotFound:
-            return None
-        return AuthorityKeyIdentifier(ext)
-
-    @cached_property
-    def basic_constraints(self) -> Optional[BasicConstraints]:  # pragma: no cover
-        """The ``django_ca.extensions.BasicConstraints`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.BasicConstraints)
-        except x509.ExtensionNotFound:
-            return None
-        return BasicConstraints(ext)
-
-    @cached_property
-    def crl_distribution_points(self) -> Optional[CRLDistributionPoints]:  # pragma: no cover
-        """The ``django_ca.extensions.CRLDistributionPoints`` extension or ``None`` if not
-        present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.CRLDistributionPoints)
-        except x509.ExtensionNotFound:
-            return None
-        return CRLDistributionPoints(ext)
-
-    @cached_property
-    def certificate_policies(self) -> Optional[CertificatePolicies]:  # pragma: no cover
-        """The ``django_ca.extensions.CertificatePolicies`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.CertificatePolicies)
-        except x509.ExtensionNotFound:
-            return None
-        return CertificatePolicies(ext)
-
-    @cached_property
-    def freshest_crl(self) -> Optional[FreshestCRL]:  # pragma: no cover
-        """The ``django_ca.extensions.FreshestCRL`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.FreshestCRL)
-        except x509.ExtensionNotFound:
-            return None
-        return FreshestCRL(ext)
-
-    @cached_property
-    def inhibit_any_policy(self) -> Optional[InhibitAnyPolicy]:  # pragma: no cover
-        """The ``django_ca.extensions.InhibitAnyPolicy`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.InhibitAnyPolicy)
-        except x509.ExtensionNotFound:
-            return None
-        return InhibitAnyPolicy(ext)
-
-    @cached_property
-    def issuer_alternative_name(self) -> Optional[IssuerAlternativeName]:  # pragma: no cover
-        """The ``django_ca.extensions.IssuerAlternativeName`` extension or ``None`` if not
-        present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.IssuerAlternativeName)
-        except x509.ExtensionNotFound:
-            return None
-        return IssuerAlternativeName(ext)
-
-    @cached_property
-    def policy_constraints(self) -> Optional[PolicyConstraints]:  # pragma: no cover
-        """The ``django_ca.extensions.PolicyConstraints`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.PolicyConstraints)
-        except x509.ExtensionNotFound:
-            return None
-        return PolicyConstraints(ext)
-
-    @cached_property
-    def key_usage(self) -> Optional[KeyUsage]:  # pragma: no cover
-        """The ``django_ca.extensions.KeyUsage`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.KeyUsage)
-        except x509.ExtensionNotFound:
-            return None
-        return KeyUsage(ext)
-
-    @cached_property
-    def extended_key_usage(self) -> Optional[ExtendedKeyUsage]:  # pragma: no cover
-        """The ``django_ca.extensions.ExtendedKeyUsage`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
-        except x509.ExtensionNotFound:
-            return None
-        return ExtendedKeyUsage(ext)
-
-    @cached_property
-    def name_constraints(self) -> Optional[NameConstraints]:  # pragma: no cover
-        """The ``django_ca.extensions.NameConstraints`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.NameConstraints)
-        except x509.ExtensionNotFound:
-            return None
-        return NameConstraints(ext)
-
-    @cached_property
-    def ocsp_no_check(self) -> Optional[OCSPNoCheck]:  # pragma: no cover
-        """The ``django_ca.extensions.OCSPNoCheck`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.OCSPNoCheck)
-        except x509.ExtensionNotFound:
-            return None
-        return OCSPNoCheck(ext)
-
-    @cached_property
-    def precert_poison(self) -> Optional[PrecertPoison]:  # pragma: no cover
-        """The ``django_ca.extensions.PrecertPoison`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            self.pub.loaded.extensions.get_extension_for_class(x509.PrecertPoison)
-        except x509.ExtensionNotFound:
-            return None
-        return PrecertPoison()
-
-    @cached_property
-    def precertificate_signed_certificate_timestamps(
-        self,
-    ) -> Optional[PrecertificateSignedCertificateTimestamps]:  # pragma: no cover
-        """The ``django_ca.extensions.PrecertificateSignedCertificateTimestamps`` extension or
-        ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(
-                x509.PrecertificateSignedCertificateTimestamps
-            )
-        except x509.ExtensionNotFound:
-            return None
-        return PrecertificateSignedCertificateTimestamps(ext)
-
-    @cached_property
-    def subject_alternative_name(self) -> Optional[SubjectAlternativeName]:  # pragma: no cover
-        """The ``django_ca.extensions.SubjectAlternativeName`` extension or ``None`` if not
-        present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-        except x509.ExtensionNotFound:
-            return None
-        return SubjectAlternativeName(ext)
-
-    @cached_property
-    def subject_key_identifier(self) -> Optional[SubjectKeyIdentifier]:  # pragma: no cover
-        """The ``django_ca.extensions.SubjectKeyIdentifier`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
-        except x509.ExtensionNotFound:
-            return None
-        return SubjectKeyIdentifier(ext)
-
-    @cached_property
-    def tls_feature(self) -> Optional[TLSFeature]:  # pragma: no cover
-        """The ``django_ca.extensions.TLSFeature`` extension or ``None`` if not present.
-
-        .. deprecated:: 1.22.0
-
-           Extension wrapper classes are deprecated and will be removed in ``django-ca==1.24.0``. Use
-           :py:attr:`~django_ca.models.X509CertMixin.x509_extensions` instead.
-        """
-        try:
-            ext = self.pub.loaded.extensions.get_extension_for_class(x509.TLSFeature)
-        except x509.ExtensionNotFound:
-            return None
-        return TLSFeature(ext)
 
 
 class CertificateAuthority(X509CertMixin):
@@ -1180,21 +845,6 @@ class CertificateAuthority(X509CertMixin):
                     )
                     exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
                 # else: CommonName already in SubjectAlternativeName
-
-        # Convert extensions to legacy classes so that we can send the deprecated signal
-        with warnings.catch_warnings():  # disable warnings as constructors raise a warning
-            warnings.simplefilter("ignore")
-            cert_extensions = [OID_TO_EXTENSION[ext.oid](ext) for ext in extensions]
-        pre_issue_cert.send(
-            sender=self.__class__,
-            ca=self,
-            csr=csr,
-            expires=expires,
-            algorithm=algorithm,
-            subject=subject,
-            extensions=cert_extensions,
-            password=password,
-        )
 
         extensions = exts.values()
         pre_sign_cert.send(

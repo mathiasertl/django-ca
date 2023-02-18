@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Module for handling certificate profiles."""
 
@@ -26,14 +26,8 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
 from django_ca.deprecation import RemovedInDjangoCA124Warning, deprecate_type
-from django_ca.extensions import (
-    KEY_TO_EXTENSION,
-    OID_TO_EXTENSION,
-    Extension,
-    parse_extension,
-    serialize_extension,
-)
-from django_ca.signals import pre_issue_cert, pre_sign_cert
+from django_ca.extensions import parse_extension, serialize_extension
+from django_ca.signals import pre_sign_cert
 from django_ca.subject import Subject
 from django_ca.typehints import (
     Expires,
@@ -136,13 +130,6 @@ class Profile:
         for key, extension in extensions.items():
             if isinstance(extension, x509.Extension):
                 self.extensions[extension.oid] = extension
-            elif isinstance(extension, Extension):
-                warnings.warn(
-                    f"Passing {extension.__class__.__name__} is deprecated.",
-                    RemovedInDjangoCA124Warning,
-                    stacklevel=2,
-                )
-                self.extensions[extension.oid] = extension.as_extension()
             elif extension is None:
                 # None value explicitly deactivates/unsets an extension in the admin interface
                 self.extensions[EXTENSION_KEY_OIDS[key]] = None
@@ -187,61 +174,19 @@ class Profile:
 
     def _get_extensions(
         self, extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]]
-    ) -> ExtensionMapping:
-        extensions_msg = "Passing a django_ca.extensions.Extension instance deprecated."
-
+    ) -> Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
         if extensions is None:
-            # NOTE: Remove Optional from dict values once support for dicts is removed
-            extensions_update: Dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]] = {}
-        elif isinstance(extensions, dict):
-            warnings.warn(
-                "Passing a dict for extensions is deprecated.", RemovedInDjangoCA124Warning, stacklevel=2
-            )
-            extensions_update = {}
+            extensions = {}
 
-            # Convert deprecated django_ca.extensions.Extension class
-            for key, ext in extensions.items():
-                if isinstance(ext, Extension):
-                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
-                    converted_extension = ext.as_extension()
-                    expected = KEY_TO_EXTENSION[key]
+        extensions_update = {ext.oid: ext for ext in extensions}
 
-                    if expected.oid != converted_extension.oid:
-                        raise ValueError(f"extensions[{key}] is not of type {expected.__name__}")
-
-                    extensions_update[converted_extension.oid] = converted_extension
-                elif isinstance(ext, x509.Extension):
-                    if EXTENSION_KEY_OIDS[key] != ext.oid:
-                        raise ValueError(f"extensions[{key}] is not of expected type")
-
-                    extensions_update[ext.oid] = ext
-                elif ext is None:
-                    extensions_update[EXTENSION_KEY_OIDS[key]] = None
-                else:
-                    raise ValueError(f"{ext}: Must be a cryptography.x509.Extension instance or None")
-
-        else:  # should be a list
-            extensions_update = {}
-
-            # Convert deprecated django_ca.extensions.Extension class
-            for ext_item in extensions:
-                if isinstance(ext_item, x509.Extension):
-                    extensions_update[ext_item.oid] = ext_item
-                else:
-                    warnings.warn(extensions_msg, RemovedInDjangoCA124Warning, stacklevel=2)
-                    extensions_update[ext_item.oid] = ext_item.as_extension()
-
-        cert_extensions = self.extensions.copy()
+        cert_extensions = {ext.oid: ext for oid, ext in self.extensions.items() if ext is not None}
         cert_extensions.update(extensions_update)
 
-        # NOTE: this line is no longer necessary once support for passing dicts is dropped, as values can no
-        # longer be None.
-        filtered_cert_extensions = {k: v for k, v in cert_extensions.items() if v is not None}
-        return filtered_cert_extensions
+        return cert_extensions
 
     @deprecate_type("subject", (dict, str, Subject), RemovedInDjangoCA124Warning)
-    @deprecate_type("extensions", dict, RemovedInDjangoCA124Warning)
-    def create_cert(  # pylint: disable=too-many-arguments,too-many-locals
+    def create_cert(  # pylint: disable=too-many-arguments
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -383,21 +328,6 @@ class Profile:
 
         if not converted_subject.get("CN") and not cert_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
-
-        # Convert extensions to legacy classes so that we can send the deprecated signal
-        with warnings.catch_warnings():  # disable warnings as constructors raise a warning
-            warnings.simplefilter("ignore")
-            cert_extensions_old = [OID_TO_EXTENSION[ext.oid](ext) for ext in cert_extensions.values()]
-        pre_issue_cert.send(
-            sender=self.__class__,
-            ca=ca,
-            csr=csr,
-            expires=expires,
-            algorithm=algorithm,
-            subject=cert_subject,
-            extensions=cert_extensions_old,
-            password=password,
-        )
 
         pre_sign_cert.send(
             sender=self.__class__,

@@ -150,7 +150,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
         txt_responses = [self.to_txt_record(resp) for resp in responses]
 
-        with mock.patch.object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_mock:
+        with self.patch_object(dns.resolver.default_resolver, "resolve", autospec=True) as resolve_mock:
             resolve_mock.return_value = txt_responses
             yield resolve_mock
 

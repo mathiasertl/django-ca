@@ -113,8 +113,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, subject, pathlen=2)
         self.assertProperties(ca, name, subject)
-        self.assertIsNone(ca.authority_information_access)
-        self.assertIsNone(ca.crl_distribution_points)
+        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
 
         name = "child"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")])

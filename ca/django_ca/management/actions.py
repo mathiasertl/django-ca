@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Collection of argparse actions for django-ca management commands."""
 
@@ -19,6 +19,7 @@ import getpass
 import typing
 import warnings
 from datetime import timedelta
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -78,7 +79,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=a
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: typing.Optional[str] = None,
+        option_string: Optional[str] = None,
     ) -> None:
         setattr(namespace, self.dest, self.parse_value(values))
 
@@ -92,7 +93,7 @@ class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
     Namespace(algorithm=<cryptography.hazmat.primitives.hashes.SHA256 object at ...>)
     """
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("metavar", "{SHA-512,SHA-256,...}")
         # Enable this line once support for non-standard names is dropped
         # kwargs.setdefault("choices", sorted(constants.HASH_ALGORITHM_TYPES))
@@ -118,7 +119,7 @@ class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
 class CertificateAction(SingleValueAction[Certificate]):
     """Action for naming a certificate."""
 
-    def __init__(self, allow_revoked: bool = False, **kwargs: typing.Any) -> None:
+    def __init__(self, allow_revoked: bool = False, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.allow_revoked = allow_revoked
 
@@ -139,9 +140,7 @@ class CertificateAction(SingleValueAction[Certificate]):
 class CertificateAuthorityAction(SingleValueAction[CertificateAuthority]):
     """Action for naming a certificate authority."""
 
-    def __init__(
-        self, allow_disabled: bool = False, allow_unusable: bool = False, **kwargs: typing.Any
-    ) -> None:
+    def __init__(self, allow_disabled: bool = False, allow_unusable: bool = False, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.allow_disabled = allow_disabled
         self.allow_unusable = allow_unusable
@@ -216,7 +215,7 @@ class EllipticCurveAction(SingleValueAction[ec.EllipticCurve]):
     Namespace(elliptic_curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
     """
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         # Enable this line once support for non-standard names is dropped
         # kwargs.setdefault("choices", list(constants.ELLIPTIC_CURVE_TYPES))
@@ -246,7 +245,7 @@ class KeySizeAction(SingleValueAction[int]):
     Namespace(size=4096)
     """
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("metavar", "{2048,4096,8192,...}")
         super().__init__(**kwargs)
 
@@ -276,7 +275,7 @@ class MultipleURLAction(argparse.Action):
     Namespace(url=['https://example.com', 'https://example.net'])
     """
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("default", [])
         kwargs.setdefault("metavar", "URL")
         super().__init__(**kwargs)
@@ -286,7 +285,7 @@ class MultipleURLAction(argparse.Action):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: typing.Optional[str] = None,
+        option_string: Optional[str] = None,
     ) -> None:
         validator = URLValidator()
         try:
@@ -308,7 +307,7 @@ class PasswordAction(argparse.Action):
     Namespace(password=b'secret')
     """
 
-    def __init__(self, prompt: str = "Password: ", **kwargs: typing.Any) -> None:
+    def __init__(self, prompt: str = "Password: ", **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.prompt = prompt
 
@@ -316,8 +315,8 @@ class PasswordAction(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: typing.Optional[str],
-        option_string: typing.Optional[str] = None,
+        values: Optional[str],
+        option_string: Optional[str] = None,
     ) -> None:
         if values is None:
             values = getpass.getpass(prompt=self.prompt)
@@ -334,7 +333,7 @@ class ReasonAction(SingleValueAction[ReasonFlags]):
     Namespace(reason=<ReasonFlags.key_compromise: 'keyCompromise'>)
     """
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs["choices"] = sorted([r.name for r in ReasonFlags])
         kwargs.setdefault("default", ReasonFlags.unspecified)
         super().__init__(**kwargs)
@@ -393,7 +392,7 @@ class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType]
 
     extension_type: typing.Type[ExtensionType]
 
-    def __init__(self, **kwargs: typing.Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         kwargs["dest"] = EXTENSION_KEYS[self.extension_type.oid]
         super().__init__(**kwargs)
 
@@ -401,7 +400,6 @@ class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType]
 class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
     """Action for AlternativeName extensions.
 
-    >>> from django_ca.extensions import SubjectAlternativeName
     >>> parser.add_argument('--san', action=AlternativeNameAction,
     ...                     extension_type=x509.SubjectAlternativeName)  # doctest: +ELLIPSIS
     AlternativeNameAction(...)
@@ -412,9 +410,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
                value=<SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>)>
     """
 
-    def __init__(
-        self, extension_type: typing.Type[AlternativeNameExtensionType], **kwargs: typing.Any
-    ) -> None:
+    def __init__(self, extension_type: typing.Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
         self.extension_type = extension_type
         super().__init__(**kwargs)
 
@@ -423,7 +419,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: typing.Optional[str] = None,
+        option_string: Optional[str] = None,
     ) -> None:
         ext = getattr(namespace, self.dest)
         if ext is None:
@@ -459,7 +455,7 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: typing.Optional[str] = None,
+        option_string: Optional[str] = None,
     ) -> None:
         ext_values = values.split(",")
 
@@ -514,7 +510,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: typing.Optional[str] = None,
+        option_string: Optional[str] = None,
     ) -> None:
         ext_values = values.split(",")
 
@@ -546,7 +542,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: typing.Optional[str] = None,
+        option_string: Optional[str] = None,
     ) -> None:
         ext_values = values.split(",")
 
