@@ -29,8 +29,8 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
+from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
-from django_ca.tests.tests_views_acme import AcmeWithAccountViewTestCaseMixin
 from django_ca.utils import get_cert_builder
 
 

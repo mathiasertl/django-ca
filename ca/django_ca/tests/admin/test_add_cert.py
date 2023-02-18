@@ -42,9 +42,9 @@ from django_ca.extensions import serialize_extension
 from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
+from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.testcases import SeleniumTestCase
-from django_ca.tests.tests_admin import CertificateModelAdminTestCaseMixin
 from django_ca.typehints import SerializedExtension
 from django_ca.utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
 

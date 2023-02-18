@@ -36,8 +36,8 @@ from freezegun import freeze_time
 from django_ca.acme.messages import CertificateRequest
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder
 from django_ca.tasks import acme_issue_certificate
+from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps
-from django_ca.tests.tests_views_acme import AcmeWithAccountViewTestCaseMixin
 
 
 @freeze_time(timestamps["everything_valid"])
