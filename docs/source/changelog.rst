@@ -10,6 +10,18 @@ ChangeLog
 1.23.0 (2023-02-18)
 *******************
 
+.. WARNING::
+
+   **docker-compose users:**
+
+   * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
+     volumes.
+
+   **Django app or source users:**
+
+   * Changes in cryptography 38 make it incompatible with common versions of certbot. See
+     :ref:`cryptography_38_warning`.
+
 * Added support for cryptography 39.0.
 * Added support for acme 2.2.0 and 2.3.0.
 * Added support for Ed448 and Ed25519 based certificate authorities.
@@ -53,6 +65,7 @@ Bugfixes
 Deprecation notices
 ===================
 
+* This is the last release to support ``acme==2.1.0`` and ``acme==2.2.0``.
 * Support for the ``CA_DIGEST_ALGORITHM`` setting will be removed in ``django-ca==1.25.0``. Use the
   :ref:`settings-ca-default-signature-hash-algorithm` setting instead.
 * Support for the  ``CA_DEFAULT_ECC_CURVE`` setting will be removed in ``django-ca==1.25.0``. Use the
