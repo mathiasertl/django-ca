@@ -32,7 +32,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings
 from django.test.utils import override_settings
 
-from django_ca.extensions import KEY_TO_EXTENSION, parse_extension
+from django_ca import constants
+from django_ca.extensions import parse_extension
 from django_ca.profiles import profiles
 from django_ca.typehints import PrivateKeyTypes
 from django_ca.utils import add_colons, ca_storage
@@ -322,7 +323,7 @@ for cert_name, cert_data in certs.items():
     cert_data["ocsp-expires"] = cert_data["valid_until"].strftime("%y%m%d%H%M%SZ")
 
     # parse extensions
-    for ext_key, ext_cls in KEY_TO_EXTENSION.items():
+    for ext_key in constants.EXTENSION_KEY_OIDS:
         if cert_data.get(ext_key):
             cert_data[f"{ext_key}_serialized"] = cert_data[ext_key]
 

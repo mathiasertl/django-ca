@@ -1,77 +1,28 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Extension classes wrapping various X.509 extensions.
 
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
 in a more pythonic manner and provide access functions."""
 
-from typing import Any, Dict, Type
-
 from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
 
 from django_ca.constants import EXTENSION_NAMES
-from django_ca.extensions.base import Extension
-from django_ca.extensions.extensions import (
-    AuthorityInformationAccess,
-    AuthorityKeyIdentifier,
-    BasicConstraints,
-    CertificatePolicies,
-    CRLDistributionPoints,
-    ExtendedKeyUsage,
-    FreshestCRL,
-    InhibitAnyPolicy,
-    IssuerAlternativeName,
-    KeyUsage,
-    NameConstraints,
-    OCSPNoCheck,
-    PolicyConstraints,
-    PrecertificateSignedCertificateTimestamps,
-    PrecertPoison,
-    SubjectAlternativeName,
-    SubjectKeyIdentifier,
-    TLSFeature,
-)
 from django_ca.extensions.parse import parse_extension
 from django_ca.extensions.serialize import serialize_extension
 from django_ca.extensions.text import extension_as_text
-
-# NOTE: for some reason, extension classes are Extension[Any] in the dictionary.
-KEY_TO_EXTENSION: Dict[str, Type[Extension[Any, Any, Any]]] = {
-    AuthorityInformationAccess.key: AuthorityInformationAccess,
-    AuthorityKeyIdentifier.key: AuthorityKeyIdentifier,
-    BasicConstraints.key: BasicConstraints,
-    CRLDistributionPoints.key: CRLDistributionPoints,
-    CertificatePolicies.key: CertificatePolicies,
-    ExtendedKeyUsage.key: ExtendedKeyUsage,
-    FreshestCRL.key: FreshestCRL,
-    InhibitAnyPolicy.key: InhibitAnyPolicy,
-    IssuerAlternativeName.key: IssuerAlternativeName,
-    KeyUsage.key: KeyUsage,
-    NameConstraints.key: NameConstraints,
-    OCSPNoCheck.key: OCSPNoCheck,
-    PolicyConstraints.key: PolicyConstraints,
-    PrecertPoison.key: PrecertPoison,
-    PrecertificateSignedCertificateTimestamps.key: PrecertificateSignedCertificateTimestamps,
-    SubjectAlternativeName.key: SubjectAlternativeName,
-    SubjectKeyIdentifier.key: SubjectKeyIdentifier,
-    TLSFeature.key: TLSFeature,
-}
-
-OID_TO_EXTENSION: Dict[x509.ObjectIdentifier, Type[Extension[x509.ExtensionType, Any, Any]]] = {
-    e.oid: e for e in KEY_TO_EXTENSION.values()
-}
 
 #: Tuple of extensions that can be set when creating a new certificate
 CERTIFICATE_EXTENSIONS = tuple(
@@ -111,24 +62,4 @@ __all__ = [
     "get_extension_name",
     "parse_extension",
     "serialize_extension",
-    "Extension",
-    "AuthorityInformationAccess",
-    "AuthorityKeyIdentifier",
-    "BasicConstraints",
-    "CRLDistributionPoints",
-    "CertificatePolicies",
-    "ExtendedKeyUsage",
-    "FreshestCRL",
-    "InhibitAnyPolicy",
-    "IssuerAlternativeName",
-    "KeyUsage",
-    "NameConstraints",
-    "OCSPNoCheck",
-    "OID_TO_EXTENSION",
-    "PolicyConstraints",
-    "PrecertPoison",
-    "PrecertificateSignedCertificateTimestamps",
-    "SubjectAlternativeName",
-    "SubjectKeyIdentifier",
-    "TLSFeature",
 ]

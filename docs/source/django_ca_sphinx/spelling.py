@@ -21,8 +21,7 @@ import typing
 
 from enchant.tokenize import Filter, URLFilter
 
-from django_ca import typehints
-from django_ca.extensions import KEY_TO_EXTENSION, ExtendedKeyUsage, KeyUsage
+from django_ca import constants, typehints
 
 
 class URIFilter(URLFilter):  # type: ignore[misc]
@@ -42,7 +41,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
     in a wordlist but can be dropped here.
     """
 
-    words = {
+    MAGIC_WORDS = {
         "GoDaddy",
         "TrustID",
         "Comodo",
@@ -68,11 +67,11 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         "SystemD",
     }
 
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.words |= KeyUsage.CRYPTOGRAPHY_MAPPING.keys()
-        self.words |= ExtendedKeyUsage.CRYPTOGRAPHY_MAPPING.keys()
-        self.words |= {e.name for e in KEY_TO_EXTENSION.values()}
+    words = (
+        MAGIC_WORDS
+        | set(constants.KEY_USAGE_NAMES.values())
+        | set(constants.EXTENDED_KEY_USAGE_NAMES.values())
+    )
 
     def _skip(self, word: str) -> bool:
         return word in self.words

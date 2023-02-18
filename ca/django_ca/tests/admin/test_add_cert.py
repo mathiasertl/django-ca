@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Test cases for adding certificates via the admin interface."""
 
@@ -128,7 +128,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.profile, "webserver")
 
         # Some extensions are not set
-        self.assertIsNone(cert.issuer_alternative_name)
+        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.x509_extensions)
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -523,10 +523,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.csr.pem.strip(), csr)
 
         # Some extensions are not set
-        self.assertIsNone(cert.certificate_policies)
-        self.assertIsNone(cert.issuer_alternative_name)
-        self.assertIsNone(cert.precertificate_signed_certificate_timestamps)
-        self.assertIsNone(cert.tls_feature)
+        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.TLS_FEATURE, cert.x509_extensions)
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)

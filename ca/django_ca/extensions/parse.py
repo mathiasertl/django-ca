@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Module to parse serialized extensions into cryptography objects."""
 
@@ -19,7 +19,7 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES
-from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING, DistributionPoint
+from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
 from django_ca.typehints import (
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
@@ -95,8 +95,6 @@ def _parse_distribution_points(
     for dpoint in value:
         if isinstance(dpoint, x509.DistributionPoint):
             yield dpoint
-        elif isinstance(dpoint, DistributionPoint):
-            yield dpoint.for_extension_type
         else:
             full_name = relative_name = reasons = crl_issuer = None
 

@@ -29,7 +29,6 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority, Watcher
-from django_ca.signals import post_issue_cert, pre_issue_cert
 from django_ca.tests.base import dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
 
@@ -92,11 +91,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Simplest test while resigning a cert."""
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial)
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
@@ -106,11 +103,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_dsa_ca_resign(self) -> None:
         """Resign a certificate from a DSA CA."""
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd("resign_cert", self.certs["dsa-cert"].serial)
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.certs["dsa-cert"], new)
@@ -120,11 +115,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_custom_algorityhm(self) -> None:
         """Test resigning a cert with a new algorithm."""
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
@@ -134,12 +127,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_different_ca(self) -> None:
         """Test writing with a different CA."""
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
 
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new, new_ca=self.cas["child"])
@@ -156,7 +147,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         alt = "new-alt-name.example.com"
 
         # resign a cert, but overwrite all options
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd_e2e(
                 [
                     "resign_cert",
@@ -176,8 +167,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 ]
             )
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
@@ -206,11 +195,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_set_profile(self) -> None:
         """Test getting the certificate from the profile."""
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial, "--server"])
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
@@ -227,11 +214,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.cert.profile = "server"
         self.cert.save()
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial])
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         new = Certificate.objects.get(pub=stdout)
         self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
@@ -243,12 +228,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test writing output to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
 
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post:
+        with self.assertCreateCertSignals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, out=out_path)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(post.call_count, 1)
 
         with open(out_path, encoding="ascii") as stream:
             pub = stream.read()
@@ -264,28 +247,18 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
 
         msg = r"^Must give at least a CN in --subject or one or more --alt arguments\."
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(
-            post_issue_cert
-        ) as post, self.assertCommandError(msg):
+        with self.assertCreateCertSignals(False, False), self.assertCommandError(msg):
             self.cmd("resign_cert", cert, subject=subject)
-
-        # signals not called
-        self.assertEqual(pre.call_count, 0)
-        self.assertEqual(post.call_count, 0)
 
     @override_tmpcadir()
     def test_error(self) -> None:
         """Test resign function throwing a random exception."""
         msg = "foobar"
         msg_re = rf"^{msg}$"
-        with self.mockSignal(pre_issue_cert) as pre, self.mockSignal(post_issue_cert) as post, patch(
+        with self.assertCreateCertSignals(False, False), patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
         ), self.assertCommandError(msg_re):
             self.cmd("resign_cert", self.cert.serial)
-
-        # signals not called
-        self.assertEqual(pre.call_count, 0)
-        self.assertEqual(post.call_count, 0)
 
     @override_tmpcadir()
     def test_invalid_algorithm(self) -> None:

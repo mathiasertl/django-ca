@@ -45,7 +45,6 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
-from django_ca.extensions import KEY_TO_EXTENSION, Extension, PrecertificateSignedCertificateTimestamps
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,
@@ -881,34 +880,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     load_cas = "__all__"
     load_certs = "__all__"
 
-    def assertExtension(  # pylint: disable=invalid-name; unittest style
-        self,
-        cert: X509CertMixin,
-        name: str,
-        key: str,
-        cls: typing.Type[Extension[typing.Any, typing.Any, typing.Any]],
-    ) -> None:
-        """Assert that an extension for the given certificate is equal to what we have on record.
-
-        Parameters
-        ----------
-
-        cert : :py:class:`django_ca.models.Certificate`
-        name : str
-        Name of the certificate
-        key : str
-        Extension name
-        cls : class
-        Expected extension class
-        """
-        ext = getattr(cert, key)
-
-        if ext is None:
-            self.assertNotIn(key, certs[name])
-        else:
-            self.assertIsInstance(ext, cls)
-            self.assertEqual(ext, certs[name].get(key))
-
     @override_tmpcadir()
     def test_bundle_as_pem(self) -> None:
         """Test bundles of various CAs."""
@@ -1180,33 +1151,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             self.assertEqual(
                 ext.value.key_identifier, certs[name]["subject_key_identifier"].value.key_identifier
             )
-
-    ###############################################
-    # Test extensions for all loaded certificates #
-    ###############################################
-    def test_extensions(self) -> None:  # pragma: django-ca<1.24  # tests internal extension wrapper classes
-        """Test getting extensions."""
-        for key, cls in KEY_TO_EXTENSION.items():
-            if key == PrecertificateSignedCertificateTimestamps.key:
-                # These extensions are never equal:
-                # Since we cannot instantiate this extension, the value is stored internally as cryptography
-                # object if it comes from the extension (or there would be no way back), but as serialized
-                # data if instantiated from dict (b/c we cannot create the cryptography objects).
-                continue
-
-            for name, ca in self.cas.items():
-                if key not in certs[name]:
-                    continue
-                if isinstance(certs[name].get(key), x509.Extension):
-                    continue
-                self.assertExtension(ca, name, key, cls)
-
-            for name, cert in self.certs.items():
-                if key not in certs[name]:
-                    continue
-                if isinstance(certs[name].get(key), x509.Extension):
-                    continue
-                self.assertExtension(cert, name, key, cls)
 
     def test_inconsistent_model_states(self) -> None:
         """Test exceptions raised for an inconsistent model state."""

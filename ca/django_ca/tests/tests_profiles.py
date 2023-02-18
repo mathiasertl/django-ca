@@ -1,15 +1,15 @@
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
-# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 #
-# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
 #
-# You should have received a copy of the GNU General Public License along with django-ca.  If not,
-# see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
 
 """Test :py:mod:`django_ca.profiles`."""
 
@@ -30,10 +30,9 @@ from django.test import TestCase
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
 from django_ca.deprecation import RemovedInDjangoCA124Warning
-from django_ca.extensions import KeyUsage, OCSPNoCheck, SubjectKeyIdentifier
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
-from django_ca.signals import pre_issue_cert
+from django_ca.signals import pre_sign_cert
 from django_ca.subject import Subject
 from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -196,7 +195,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         csr = certs["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[])
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -223,7 +222,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         prof = Profile("example", subject=[])
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -261,7 +260,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             add_issuer_url=False,
             add_issuer_alternative_name=False,
         )
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, expected_subject)
@@ -278,7 +277,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             expect_defaults=False,
         )
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -302,34 +301,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
     @override_tmpcadir()
-    def test_none_override(self) -> None:
-        """Test that we can remove a particular extension."""
-
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-        prof = Profile(
-            "example",
-            extensions={"ocsp_no_check": self.ocsp_no_check()},
-            add_crl_url=False,
-            add_ocsp_url=False,
-            add_issuer_url=False,
-            add_issuer_alternative_name=False,
-        )
-        with self.mockSignal(pre_issue_cert) as pre, self.assertDictExtensionWarning():
-            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions={"ocsp_no_check": None})
-        self.assertEqual(pre.call_count, 1)
-        self.assertExtensions(
-            cert,
-            [
-                self.subject_key_identifier(cert),
-                ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
     def test_cn_in_san(self) -> None:
         """Test writing the common name into the SAN."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
@@ -342,14 +313,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
         prof = Profile("example", subject=[("C", "AT")], add_issuer_alternative_name=False, cn_in_san=False)
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
 
         # Create the same cert, but pass cn_in_san=True to create_cert
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject, cn_in_san=True)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -359,7 +330,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
         # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -376,7 +347,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
         # test that cn_in_san=True with a SAN that does NOT yet contain the CN, so it's added
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -396,7 +367,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
         # test that the first SAN is added as CN if we don't have A CN
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof, ca, csr, cn_in_san=True, extensions=[self.subject_alternative_name(dns(self.hostname))]
             )
@@ -419,7 +390,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
         prof = Profile("example", subject=[])
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -457,7 +428,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         added_crldp = self.crl_distribution_points([uri("https://crl.cert.example.com")])
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -507,7 +478,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         added_crldp = self.crl_distribution_points([uri(ca.crl_url)])
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -547,7 +518,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         # Make sure that algorithm does not match what is the default profile above, so that we can test it
         self.assertIsInstance(root.algorithm, hashes.SHA256)
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 root,
@@ -575,7 +546,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         added_ian_uri = uri("https://ian.cert.example.com")
         added_ian = self.issuer_alternative_name(added_ian_uri)
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -623,7 +594,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp]
         )
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -656,115 +627,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         )
 
     @override_tmpcadir()
-    def test_extensions_dict(self) -> None:
-        """Test with a dict for an extension."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-        ski = x509.Extension(
-            oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-            critical=False,
-            value=x509.SubjectKeyIdentifier(b"custom value"),
-        )
-
-        prof = Profile("example", subject=[])
-        with self.mockSignal(pre_issue_cert) as pre, self.assertDictExtensionWarning():
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=False,
-                extensions={"subject_key_identifier": ski},
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
-                ski,
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
-    def test_old_extenion_class_in_dict(self) -> None:
-        """Test with a dict with an old extension class for an extension."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-
-        prof = Profile("example", subject=[])
-        with self.mockSignal(pre_issue_cert) as pre, self.assertDictExtensionWarning():
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=False,
-                extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: OCSPNoCheck()},
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [
-                self.subject_key_identifier(cert),
-                ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
-                self.ocsp_no_check(),
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
-    def test_hide_extension(self) -> None:
-        """Test with hiding extensions from the profile."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-
-        prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
-        with self.mockSignal(pre_issue_cert) as pre, self.assertDictExtensionWarning():
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=False,
-                extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: None},
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [
-                self.subject_key_identifier(cert),
-                ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
     def test_extension_as_cryptography(self) -> None:
         """Test with a profile that has cryptography extensions."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -793,19 +662,19 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         prof = Profile("example", subject=[("C", "AT")])
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=None)
         self.assertEqual(pre.call_count, 0)
 
     @override_tmpcadir()
     def test_no_valid_cn_in_san(self) -> None:
-        """TEst what happens when the SAN has nothing usable as CN."""
+        """Test what happens when the SAN has nothing usable as CN."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
         prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = self.subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
-        with self.mockSignal(pre_issue_cert) as pre:
+        with self.mockSignal(pre_sign_cert) as pre:
             self.create_cert(prof, ca, csr, cn_in_san=True, extensions=[san])
         self.assertEqual(pre.call_count, 1)
 
@@ -818,118 +687,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         prof = Profile("example", subject=[("C", "AT"), ("CN", cname)])
         msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
-        with self.mockSignal(pre_issue_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr)
         self.assertEqual(pre.call_count, 0)
-
-    @override_tmpcadir()
-    def test_invalid_extensions(self) -> None:
-        """Test with a dict with extensions of the wrong type."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        ca.issuer_url = "https://issuer.example.com"
-        ca.issuer_alt_name = "https://ian.example.com"
-        ca.save()
-        csr = certs["child-cert"]["csr"]["parsed"]
-        with self.assertRemovedExtensionWarning("SubjectKeyIdentifier"):
-            ski = SubjectKeyIdentifier({"value": b"333333"})
-        prof = Profile("example", subject=[])
-
-        msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
-        with self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_ocsp_url=False,
-                add_issuer_url=True,
-                extensions={EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: ski},
-            )
-        self.assertEqual(pre.call_count, 0)
-
-        msg = r"^extensions\[crl_distribution_points\] is not of type CRLDistributionPoints"
-        with self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=True,
-                extensions={EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]: ski},
-            )
-        self.assertEqual(pre.call_count, 0)
-
-        msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
-        with self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_ocsp_url=True,
-                extensions={EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: ski},
-            )
-        self.assertEqual(pre.call_count, 0)
-
-        msg = r"^extensions\[authority_information_access\] is not of type AuthorityInformationAccess"
-        with self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_ocsp_url=False,
-                add_issuer_url=True,
-                extensions={EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: ski},
-            )
-        self.assertEqual(pre.call_count, 0)
-
-        msg = r"^extensions\[issuer_alternative_name\] is not of type IssuerAlternativeName"
-        with self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=True,
-                extensions={EXTENSION_KEYS[ExtensionOID.ISSUER_ALTERNATIVE_NAME]: ski},
-            )
-        self.assertEqual(pre.call_count, 0)
-
-        msg = r"^extensions\[issuer_alternative_name\] is not of expected type"
-        with self.mockSignal(
-            pre_issue_cert
-        ) as pre, self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(
-                prof,
-                ca,
-                csr,
-                extensions={EXTENSION_KEYS[ExtensionOID.ISSUER_ALTERNATIVE_NAME]: self.ocsp_no_check()},
-            )
-        self.assertEqual(pre.call_count, 0)
-
-    def test_wrong_extension_type(self) -> None:
-        """Test passing wrong extension types to create_cert()."""
-
-        prof = Profile(self.id(), subject=[])
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-
-        msg = r"^False: Must be a cryptography\.x509\.Extension instance or None$"
-        with self.assertDictExtensionWarning(), self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, extensions={"ocsp_no_check": False})
 
     def test_str(self) -> None:
         """Test str()."""
@@ -954,28 +714,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         with self.assertRemovedIn124Warning(warning):
             prof = Profile(self.id(), subject=Subject({"C": "AT"}))  # type: ignore[arg-type]
-
-    @override_tmpcadir()
-    def test_deprecated_django_ca_extension(self) -> None:
-        """Pass an old subject to create_cert, to be removed in 1.24."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-        with self.assertRemovedExtensionWarning("KeyUsage"):
-            ku = KeyUsage({"value": ["keyAgreement"], "critical": True})  # pylint: disable=invalid-name
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
-
-        with self.assertRemovedIn124Warning(r"^Passing KeyUsage is deprecated\.$"):
-            prof = Profile(self.id(), extensions={"key_usage": ku})  # type: ignore[dict-item]  # what we test
-            cert = self.create_cert(prof, ca, csr, subject=subject)
-        self.assertEqual(cert.x509_extensions[ExtensionOID.KEY_USAGE], ku.as_extension())
-
-        # pass an old extension to the create_cert() function
-        prof2 = Profile(self.id())
-        with self.assertRemovedIn124Warning(
-            r"^Passing a django_ca\.extensions\.Extension instance deprecated\.$"
-        ):
-            cert = self.create_cert(prof2, ca, csr, subject=subject, extensions=[ku])
-        self.assertEqual(cert.x509_extensions[ExtensionOID.KEY_USAGE], ku.as_extension())
 
 
 class GetProfileTestCase(TestCase):

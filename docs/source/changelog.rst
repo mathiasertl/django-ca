@@ -629,7 +629,7 @@ Deprecation notices
 * ``django_ca.extensions.AuthorityKeyIdentifier`` now also supports issuers and serials.
 * :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
   unchanged, but throws an error if the name isn't a ``str`` otherwise.
-* New class :py:class:`~django_ca.utils.GeneralNameList` for extensions that store a list of general names.
+* New class ``django_ca.utils.GeneralNameList`` for extensions that store a list of general names.
 * Add support for the ``django_ca.extensions.FreshestCRL`` extension.
 * Store CA private keys in the ``ca/`` subdirectory by default, the directory can be configured using
   ``manage.py init_ca --path=...``.
