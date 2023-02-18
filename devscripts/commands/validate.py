@@ -43,7 +43,7 @@ class Command(DevCommand):
         subcommands.add_parser("state")
         subcommands.add_parser("docker", parents=[docker_options])
         compose_parser = subcommands.add_parser(
-            "docker-compose", help="Validate docker-compose setup.", parents=[docker_options]
+            "docker-compose", help="Validate docker compose setup.", parents=[docker_options]
         )
         compose_parser.add_argument(
             "--no-tutorial",

@@ -68,7 +68,6 @@ Finally, also make sure that ``devscripts/standalone/create-testdata.py`` also w
 
    $ rm -rf ca/db.sqlite3 ca/files
    $ python ca/manage.py migrate
-   $ devscripts/create-testdata.py
    $ devscripts/standalone/create-testdata.py
    $ devscripts/standalone/validate-testdata.py
 

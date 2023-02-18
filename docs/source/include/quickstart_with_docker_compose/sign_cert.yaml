@@ -1,5 +1,5 @@
 commands:
-    - command: docker-compose exec {% if validation %}-T {% endif %}backend manage sign_cert --ca=Intermediate --subject="/CN=example.com"
+    - command: docker compose exec {% if validation %}-T {% endif %}backend manage sign_cert --ca=Intermediate --subject="/CN=example.com"
       input: "{{ csr }}"
       display_output: |
           Please paste the CSR:

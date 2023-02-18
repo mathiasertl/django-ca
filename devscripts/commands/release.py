@@ -86,9 +86,9 @@ ChangeLog
         if version != release:
             raise CommandError(f"ca/django_ca/__init__.py: Version is {version}")
 
-        # Make sure that the docker-compose files are present and default to the about-to-be-released version
+        # Make sure that the docker compose files are present and default to the about-to-be-released version
         if docker_compose.validate_docker_compose_files(release) != 0:
-            raise CommandError("docker-compose files in inconsistent state.")
+            raise CommandError("docker compose files in inconsistent state.")
 
         # Validate that docs/source/changelog.rst has a proper header
         self._validate_changelog(release)

@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not,
 # see <http://www.gnu.org/licenses/>.
 
-"""Functions for validating docker-compose and the respective tutorial."""
+"""Functions for validating docker compose and the respective tutorial."""
 
 import os
 import re
@@ -37,10 +37,10 @@ from devscripts.validation.docker import build_docker_image, docker_cp
 @contextmanager
 def _compose_up(remove_volumes=True, **kwargs):
     try:
-        utils.run(["docker-compose", "up", "-d"], capture_output=True, **kwargs)
+        utils.run(["docker", "compose", "up", "-d"], capture_output=True, **kwargs)
         yield
     finally:
-        down = ["docker-compose", "down"]
+        down = ["docker", "compose", "down"]
         if remove_volumes is True:
             down.append("-v")
         down_kwargs = {}
@@ -51,7 +51,7 @@ def _compose_up(remove_volumes=True, **kwargs):
 
 
 def _compose_exec(*args, **kwargs):
-    cmd = ["docker-compose", "exec"] + kwargs.pop("compose_args", []) + list(args)
+    cmd = ["docker", "compose", "exec"] + kwargs.pop("compose_args", []) + list(args)
     return utils.run(cmd, **kwargs)
 
 
@@ -168,7 +168,8 @@ def _validate_crl_ocsp(ca_file, cert_file, cert_subject):
     try:
         _openssl_verify(ca_file, cert_file)
     except subprocess.CalledProcessError as ex:
-        assert "verification failed" in ex.stdout
+        # OpenSSL in Ubuntu 20.04 outputs this on stdout, in 22.04 it goes to stderr
+        assert "verification failed" in ex.stdout or "verification failed" in ex.stderr
     else:
         raise RuntimeError("Certificate is not revoked in CRL.")
 
@@ -194,7 +195,7 @@ def _sign_certificates(csr):
 
 
 def test_tutorial(release):  # pylint: disable=too-many-statements
-    """Validate the docker-compose quickstart tutorial."""
+    """Validate the docker compose quickstart tutorial."""
     info("Validating tutorial...")
     errors = 0
     docker_compose_yml = config.ROOT_DIR / "docker-compose.yml"
@@ -291,8 +292,8 @@ def test_tutorial(release):  # pylint: disable=too-many-statements
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
 
-                utils.run(["docker-compose", "down"], capture_output=True)
-                utils.run(["docker-compose", "up", "-d"], capture_output=True)
+                utils.run(["docker", "compose", "down"], capture_output=True)
+                utils.run(["docker", "compose", "up", "-d"], capture_output=True)
                 ok("Restarted docker containers.")
 
                 # Finally some manual testing
@@ -325,8 +326,8 @@ def test_tutorial(release):  # pylint: disable=too-many-statements
 
 
 def test_update(release):
-    """Validate updating with docker-compose."""
-    info("Validating docker-compose update...")
+    """Validate updating with docker compose."""
+    info("Validating docker compose update...")
     errors = 0
     # Get the last release, so we can update
     last_release = utils.get_previous_release(current_release=release)
@@ -337,8 +338,8 @@ def test_update(release):
             standalone_dir = last_release_dest / "devscripts"
         else:
             standalone_dir = last_release_dest / "devscripts" / "standalone"
-        backend = f"{os.path.basename(tmpdir)}_backend_1"
-        frontend = f"{os.path.basename(tmpdir)}_frontend_1"
+        backend = f"{os.path.basename(tmpdir)}-backend-1"
+        frontend = f"{os.path.basename(tmpdir)}-frontend-1"
         standalone_dest = "/usr/src/django-ca/ca/"
 
         with utils.chdir(tmpdir):
@@ -391,7 +392,10 @@ def test_acme(release):
         with utils.chdir(dest):
             # build containers
             utils.run(
-                ["docker-compose", "build"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=environ
+                ["docker", "compose", "build"],
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                env=environ,
             )
 
             # Start containers
@@ -433,8 +437,8 @@ def test_acme(release):
 
 
 def validate(release, prune, build, tutorial=True, update=True, acme=True):
-    """Validate the docker-compose file (and the tutorial)."""
-    print("Validating docker-compose setup...")
+    """Validate the docker compose file (and the tutorial)."""
+    print("Validating docker compose setup...")
     build_docker_image(release=release, prune=prune, build=build)
 
     errors = 0
@@ -469,7 +473,7 @@ def _validate_default_version(path, release):
 
 
 def validate_docker_compose_files(release):
-    """Validate the state of docker-compose files when releasing."""
+    """Validate the state of docker compose files when releasing."""
     errors = 0
     errors += _validate_default_version("docker-compose.yml", release)
     errors += _validate_default_version(Path(f"docs/source/_files/{release}/docker-compose.yml"), release)

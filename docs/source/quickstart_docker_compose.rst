@@ -4,9 +4,9 @@ Quickstart with docker-compose
 
 .. _docker-compose:
 
-This guide provides instructions for running your own certificate authority using docker-compose. This is the
-quickest and easiest way to run django-ca, especially if you do not care to much about custom configuration or
-extending django-ca.
+This guide provides instructions for running your own certificate authority using **docker compose**. This is
+the quickest and easiest way to run django-ca, especially if you do not care to much about custom
+configuration or extending django-ca.
 
 This tutorial will give you a CA with
 
@@ -32,7 +32,7 @@ generate the DH parameter file. On Debian/Ubuntu, simply do:
    user@host:~$ sudo apt install docker.io docker-compose certbot openssl
 
 For a different OS, please read `Install Docker <https://docs.docker.com/engine/install/>`_, `Install
-docker-compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
+docker compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 <https://certbot.eff.org/docs/install.html>`_.
 
 .. include:: include/docker-regular-user.rst
@@ -41,8 +41,8 @@ docker-compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 Get initial certificates
 ************************
 
-Use certbot to acquire initial certificates. This must be done `before` you run docker-compose, as both bind
-to port 80 (HTTP).
+Use certbot to acquire initial certificates. This must be done `before` you run **docker compose**, as both
+bind to port 80 (HTTP).
 
 .. code-block:: console
 
@@ -70,8 +70,8 @@ can also download the file for other versions `from github
 
 .. NOTE::
 
-   Because of how docker-compose works, it is better to put the file in a sub-directory and `not` directly into
-   your home directory. We assume you put all files into ``~/ca/`` from now on.
+   Because of how **docker compose** works, it is better to put the file in a sub-directory and `not` directly
+   into your home directory. We assume you put all files into ``~/ca/`` from now on.
 
 You can also get versions for specific versions of **django-ca** from the table below, which also shows
 bundled third-party Docker images.
@@ -141,20 +141,21 @@ details on how to configure the Docker container, refer to :ref:`docker-configur
 
 .. NOTE::
 
-   In our docker-compose setup, django-ca is used in both the ``backend`` and ``frontend`` containers. Make
-   sure you configure both of them.
+   In our **docker compose** setup, django-ca is used in both the ``backend`` and ``frontend`` containers.
+   Make sure you configure both of them.
 
 
 Configuration using a YAML configuration file
 ---------------------------------------------
 
 Using an extra configuration file is the most flexible way to configure django-ca, as it allows you to update
-even complex settings. It has the added advantage that docker-compose will not recreate the containers if you
-update the configuration.
+even complex settings. It has the added advantage that **docker compose** will not recreate the containers if
+you update the configuration.
 
 As with the normal docker container, django-ca will read configuration files in
 ``/usr/src/django-ca/ca/conf/`` in alphabetical order, but it will also read files in the subfolder
-``/usr/src/django-ca/conf/ca/compose/``, which provides configuration specific to our docker-compose setup.
+``/usr/src/django-ca/conf/ca/compose/``, which provides configuration specific to our **docker compose**
+setup.
 
 To add a configuration file, first add a volume mapping in your ``docker-compose.override.yml``:
 
@@ -230,7 +231,7 @@ Start your CA
 *************
 
 Now, you can start **django-ca** for the first time. Inside the folder with all your configuration, run
-docker-compose (and verify that everything is running):
+**docker compose** (and verify that everything is running):
 
 .. console-include::
    :include: include/quickstart_with_docker_compose/docker-compose-up.yaml
@@ -279,14 +280,14 @@ that you have a consistent backup:
 
 .. code-block:: console
 
-   user@host:~/ca/$ docker-compose stop frontend
-   user@host:~/ca/$ docker-compose stop backend
+   user@host:~/ca/$ docker compose stop frontend
+   user@host:~/ca/$ docker compose stop backend
 
 Create a database backup:
 
 .. code-block:: console
 
-   user@host:~/ca/$ docker-compose exec db pg_dump -U postgres postgres > db.backup.sql
+   user@host:~/ca/$ docker compose exec db pg_dump -U postgres postgres > db.backup.sql
 
 Backing up Docker volumes is not as straight forward as maybe it should be, please see `the official
 documentation <https://docs.docker.com/storage/volumes/#backup-restore-or-migrate-data-volumes>`_ for more
@@ -327,4 +328,4 @@ In general, updating django-ca is done by getting the :ref:`latest version of do
 .. code-block:: console
 
    user@host:~/ca/$ curl -O https://.../docker-compose.yml
-   user@host:~/ca/$ docker-compose up -d
+   user@host:~/ca/$ docker compose up -d

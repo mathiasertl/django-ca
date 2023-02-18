@@ -15,13 +15,13 @@ Update from 1.20.0 or earlier
 
 .. _update_121-docker-compose:
 
-docker-compose
+docker compose
 ==============
 
 In the configuration of 1.20.0 and earlier, the PostgreSQL container does not store data on a named volume.
 This means that the database would be lost if the container is removed. This does **not** happen during the
 reboot of a server or during the normal upgrade procedure. None the less, it is still safer to use named
-volumes to store data, so the docker-compose setup starting with 1.21.0 uses named volumes for PostgreSQL (and
+volumes to store data, so the docker compose setup starting with 1.21.0 uses named volumes for PostgreSQL (and
 also Redis).
 
 If you perform the normal update procedure, no data is lost, but you will receive a warning about the services
@@ -29,11 +29,11 @@ using data from the previous container:
 
 .. code-block:: console
 
-   $ docker-compose up -d
+   $ docker compose up -d
    Recreating django-ca_db_1 ...
    Recreating django-ca_cache_1 ...
    WARNING: Service "db" is using volume "/var/lib/postgresql/data" from the previous container. Host mapping
-   "django-ca_pgdata" has no effect. Remove the existing containers (with `docker-compose rm db`) to use the host volume mapping.
+   "django-ca_pgdata" has no effect. Remove the existing containers (with `docker compose rm db`) to use the host volume mapping.
    ...
 
 To switch to named volumes, create a database backup, remove and recreate the `db` container with the new
@@ -44,15 +44,15 @@ First, stop containers that might access the database:
 
 .. code-block:: console
 
-   $ docker-compose stop frontend
-   $ docker-compose stop backend
+   $ docker compose stop frontend
+   $ docker compose stop backend
 
 Second, create a dump of the database (Note: if you use a different database name or username, adapt
 accordingly):
 
 .. code-block:: console
 
-   $ docker-compose exec db pg_dump -U postgres postgres > db.sql
+   $ docker compose exec db pg_dump -U postgres postgres > db.sql
 
 Third, you might want to check if :file:`db.sql` contains a valid database dump.
 
@@ -60,7 +60,7 @@ Fourth, remove the containers:
 
 .. code-block:: console
 
-   $ docker-compose rm -sf cache db
+   $ docker compose rm -sf cache db
 
 Fifth, if you haven't already, update your :file:`docker-compose.yml`. To verify you have the named volumes,
 check that both the ``db`` and ``cache`` services have a ``volume`` with them. It does not matter if you have
@@ -70,21 +70,21 @@ Sixth, start the ``db`` container again (it will be recreated) and import the du
 
 .. code-block:: console
 
-   $ docker-compose up -d db
-   $ docker-compose exec -T db psql -U postgres postgres < db.sql
+   $ docker compose up -d db
+   $ docker compose exec -T db psql -U postgres postgres < db.sql
 
 
 Seventh, start all other containers:
 
 .. code-block:: console
 
-   $ docker-compose up -d
+   $ docker compose up -d
 
 And finally, verify success - you should see your CAs:
 
 .. code-block:: console
 
-   $ docker-compose exec backend manage list_cas
+   $ docker compose exec backend manage list_cas
    ...
 
 .. _update_119:
@@ -93,7 +93,7 @@ And finally, verify success - you should see your CAs:
 Update from 1.18 or earlier
 ***************************
 
-If you use **docker-compose**, you need to backup private keys and update your :file:`docker-compose.yml`
+If you use **docker compose**, you need to backup private keys and update your :file:`docker-compose.yml`
 before upgrading. If you don't private keys will be lost. The change to :file:`docker-compose.yml` will make
 sure that keys will survive the next update.
 
@@ -102,10 +102,10 @@ either the backend or frontend, ``mv`` will throw an error, which is of course f
 
 .. code-block:: console
 
-   $ docker-compose exec backend mkdir -p /var/lib/django-ca/certs/ca/shared/backend/
-   $ docker-compose exec backend /bin/sh -c "cp /var/lib/django-ca/certs/ca/*.key /var/lib/django-ca/certs/ca/shared/backend/"
-   $ docker-compose exec frontend mkdir -p /var/lib/django-ca/certs/ca/shared/frontend/
-   $ docker-compose exec frontend /bin/sh -c "cp /var/lib/django-ca/certs/ca/*.key /var/lib/django-ca/certs/ca/shared/frontend/"
+   $ docker compose exec backend mkdir -p /var/lib/django-ca/certs/ca/shared/backend/
+   $ docker compose exec backend /bin/sh -c "cp /var/lib/django-ca/certs/ca/*.key /var/lib/django-ca/certs/ca/shared/backend/"
+   $ docker compose exec frontend mkdir -p /var/lib/django-ca/certs/ca/shared/frontend/
+   $ docker compose exec frontend /bin/sh -c "cp /var/lib/django-ca/certs/ca/*.key /var/lib/django-ca/certs/ca/shared/frontend/"
 
 Note that if you have stored private keys in any custom location with the ``--path`` argument, you need to
 backup these locations as well.
@@ -147,17 +147,17 @@ backup these locations as well.
 
 .. code-block:: console
 
-   $ docker-compose pull
-   $ docker-compose up -d
+   $ docker compose pull
+   $ docker compose up -d
 
 **Finally,** move the keys from the temporary location to the primary location:
 
 .. code-block:: console
 
-   $ docker-compose exec backend /bin/sh -c "mv /var/lib/django-ca/certs/ca/shared/backend/*.key /var/lib/django-ca/certs/ca/"
-   $ docker-compose exec backend rmdir /var/lib/django-ca/certs/ca/shared/backend/
-   $ docker-compose exec frontend /bin/sh -c "mv /var/lib/django-ca/certs/ca/shared/frontend/*.key /var/lib/django-ca/certs/ca/"
-   $ docker-compose exec frontend rmdir /var/lib/django-ca/certs/ca/shared/frontend/
+   $ docker compose exec backend /bin/sh -c "mv /var/lib/django-ca/certs/ca/shared/backend/*.key /var/lib/django-ca/certs/ca/"
+   $ docker compose exec backend rmdir /var/lib/django-ca/certs/ca/shared/backend/
+   $ docker compose exec frontend /bin/sh -c "mv /var/lib/django-ca/certs/ca/shared/frontend/*.key /var/lib/django-ca/certs/ca/"
+   $ docker compose exec frontend rmdir /var/lib/django-ca/certs/ca/shared/frontend/
 
 .. _update_114:
 

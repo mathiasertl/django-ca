@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.23.0:
 
-************
-1.23.0 (TBR)
-************
+*******************
+1.23.0 (2023-02-18)
+*******************
 
 * Added support for cryptography 39.0.
 * Added support for acme 2.2.0 and 2.3.0.

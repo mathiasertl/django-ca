@@ -1,5 +1,5 @@
 commands:
-    - command: docker-compose exec backend manage createsuperuser
-      run: docker-compose exec backend manage shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
-    - command: docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root
-    - command: docker-compose exec backend manage init_ca --path=ca/shared/ --parent=Root Intermediate /CN=Intermediate
+    - command: docker compose exec backend manage createsuperuser
+      run: docker compose exec backend manage shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
+    - command: docker compose exec backend manage init_ca --pathlen=1 Root /CN=Root
+    - command: docker compose exec backend manage init_ca --path=ca/shared/ --parent=Root Intermediate /CN=Intermediate

@@ -383,7 +383,7 @@ jinja_contexts = {
     },
     "manage-as-py": {"manage": "python manage.py"},
     "manage-in-docker-compose": {
-        "manage": "docker-compose exec backend manage",
+        "manage": "docker compose exec backend manage",
         "shared": True,
         "console_include": "include/quickstart_with_docker_compose/setup-cas.yaml",
         "context": "quickstart-with-docker-compose",
@@ -427,7 +427,7 @@ jinja_contexts = {
     "guide-docker-compose-where-to-go": {
         "shared": True,
         "guide": "with-docker-compose",
-        "manage": "docker-compose exec backend manage",
+        "manage": "docker compose exec backend manage",
         "path": "~/ca/",
     },
 }
