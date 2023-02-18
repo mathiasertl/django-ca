@@ -33,9 +33,9 @@ class Command(DevCommand):
         #   https://docs.djangoproject.com/en/4.0/releases/4.0/#miscellaneous
         python += ["-W", "ignore:The USE_L10N setting is deprecated."]  # pragma: only django<4.0
 
-        # urllib3==1.26.12 deprecates urllib3.contrib.pyopenssl and is used by requests-toolbelt=0.9.1
-        #   https://github.com/requests/toolbelt/issues/331
-        python += ["-W", "ignore:'urllib3.contrib.pyopenssl' module is deprecated and will be removed"]
+        # kombu==5.2.4 uses the deprecated select interface. Should be fixed in the next release:
+        #   https://github.com/celery/kombu/pull/1601
+        python += ["-W", "ignore:SelectableGroups dict interface is deprecated. Use select."]
 
         python.append(config.MANAGE_PY.relative_to(config.ROOT_DIR))
         python += args
