@@ -459,7 +459,7 @@ def create_special_certs(dest, now, delay, data):
             subject=data[name]["subject"],
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
-            extensions=data[name]["extensions"],
+            extensions=data[name]["extensions"].values(),
         )
     data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
     _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -482,7 +482,7 @@ def create_special_certs(dest, now, delay, data):
             subject=data[name]["subject"],
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
-            extensions=data[name]["extensions"],
+            extensions=data[name]["extensions"].values(),
         )
     data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
     _copy_cert(dest, cert, data[name], key_path, csr_path)
