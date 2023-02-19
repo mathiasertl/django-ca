@@ -76,7 +76,6 @@ class Profile:
     algorithm: Optional[HashAlgorithm] = None
     extensions: Dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]]
 
-    @deprecate_type("subject", (dict, Subject), RemovedInDjangoCA124Warning)
     def __init__(
         self,
         name: str,
@@ -106,8 +105,6 @@ class Profile:
 
         if isinstance(subject, x509.Name):
             self.subject = subject
-        elif isinstance(subject, Subject):  # pragma: django-ca<=1.24
-            self.subject = subject.name
         else:
             self.subject = x509_name(subject)
 
