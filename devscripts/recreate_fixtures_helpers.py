@@ -49,8 +49,7 @@ from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
-from django_ca.subject import Subject
-from django_ca.utils import bytes_to_hex, ca_storage
+from django_ca.utils import bytes_to_hex, ca_storage, format_name, sort_name, x509_name
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
@@ -312,7 +311,7 @@ def create_cas(dest, now, delay, data):
             ca = CertificateAuthority.objects.init(
                 name=data[name]["name"],
                 password=data[name].get("password"),
-                subject=Subject(data[name]["subject"]).name,
+                subject=sort_name(x509_name(data[name]["subject"].items())),
                 expires=datetime.utcnow() + data[name]["expires"],
                 key_type=data[name]["key_type"],
                 key_size=data[name].get("key_size"),
@@ -341,10 +340,11 @@ def create_certs(dest, cas, now, delay, data):
         name = f"{ca.name}-cert"
         key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
         csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+        csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
         csr = _create_csr(
             key_path,
             csr_path,
-            subject=data[name]["csr_subject_str"],
+            subject=csr_subject,
             key_type=data[name]["key_type"],
         )
 
@@ -353,7 +353,6 @@ def create_certs(dest, cas, now, delay, data):
             freeze_now += data[name]["delta"]
 
         pwd = data[data[name]["ca"]].get("password")
-        subject = Subject(f"/CN={data[name]['cn']}")
         with freeze_time(freeze_now):
             cert = Certificate.objects.create_cert(
                 ca=ca,
@@ -362,7 +361,7 @@ def create_certs(dest, cas, now, delay, data):
                 expires=data[name]["expires"],
                 algorithm=data[name]["algorithm"],
                 password=pwd,
-                subject=subject,
+                subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
             )
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
@@ -373,10 +372,11 @@ def create_certs(dest, cas, now, delay, data):
 
         key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
         csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+        csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
         csr = _create_csr(
             key_path,
             csr_path,
-            subject=data[name]["csr_subject_str"],
+            subject=csr_subject,
             key_type=data[name]["key_type"],
         )
 
@@ -385,7 +385,6 @@ def create_certs(dest, cas, now, delay, data):
             freeze_now += data[name]["delta"]
 
         pwd = data[ca.name].get("password")
-        subject = Subject(f"/CN={data[name]['cn']}")
         with freeze_time(freeze_now):
             cert = Certificate.objects.create_cert(
                 ca=ca,
@@ -394,7 +393,7 @@ def create_certs(dest, cas, now, delay, data):
                 algorithm=data[name]["algorithm"],
                 expires=data[name]["expires"],
                 password=pwd,
-                subject=subject,
+                subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
             )
 
         data[name]["profile"] = profile
@@ -408,7 +407,8 @@ def create_special_certs(dest, now, delay, data):
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
-    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
+    csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+    csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     freeze_now = now
     if delay:
@@ -448,7 +448,8 @@ def create_special_certs(dest, now, delay, data):
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
-    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
+    csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+    csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     with freeze_time(now + data[name]["delta"]):
         cert = Certificate.objects.create_cert(
@@ -456,7 +457,7 @@ def create_special_certs(dest, now, delay, data):
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=data[name]["subject"],
+            subject=sort_name(x509_name(data[name]["subject"].items())),
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
@@ -471,7 +472,8 @@ def create_special_certs(dest, now, delay, data):
     ca.crl_url = ""
     key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
     csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
-    csr = _create_csr(key_path, csr_path, subject=data[name]["csr_subject_str"])
+    csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+    csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     with freeze_time(now + data[name]["delta"]):
         cert = Certificate.objects.create_cert(
@@ -479,7 +481,7 @@ def create_special_certs(dest, now, delay, data):
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=data[name]["subject"],
+            subject=sort_name(x509_name(data[name]["subject"].items())),
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),

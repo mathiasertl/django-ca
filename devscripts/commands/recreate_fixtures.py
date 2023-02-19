@@ -57,7 +57,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         regenerate_ocsp_files,
     )
 
-    from django_ca.subject import Subject
+    from django_ca.utils import format_name, sort_name, x509_name
 
     # pylint: enable=import-outside-toplevel
     # The time-offsets from now from which CAs/certs are valid starts 25 days in the past, with the largest
@@ -379,11 +379,10 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         cert_values.setdefault("algorithm", hashes.SHA256())
         cert_values.setdefault("subject", {})
         cert_values["subject"].setdefault("CN", f"{cert_name}.example.com")
-        cert_values["subject_str"] = str(Subject(cert_values["subject"]))
+        cert_values["subject_str"] = format_name(sort_name(x509_name(cert_values["subject"].items())))
         cert_values["csr_subject"] = {
             k: f"csr.{v}" if k != "C" else v for k, v in cert_values["subject"].items()
         }
-        cert_values["csr_subject_str"] = str(Subject(cert_values["csr_subject"]))
         cert_values["key_filename"] = f"{cert_name}.key"
         cert_values["pub_filename"] = f"{cert_name}.pub"
         cert_values["key_der_filename"] = f"{cert_name}.key.der"

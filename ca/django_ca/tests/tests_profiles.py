@@ -33,7 +33,6 @@ from django_ca.deprecation import RemovedInDjangoCA124Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
-from django_ca.subject import Subject
 from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
 
@@ -700,20 +699,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test repr()."""
         for name in ca_settings.CA_PROFILES:
             self.assertEqual(repr(profiles[name]), f"<Profile: {name}>")
-
-    @override_tmpcadir()
-    def test_deprecated_create_cert_subject(self) -> None:
-        """Pass an old subject to create_cert, to be removed in 1.24."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
-        prof = Profile(self.id(), subject=[])
-        warning = "Passing Subject for subject is deprecated and will be removed in django ca 1.24."
-        with self.assertRemovedIn124Warning(warning):
-            cert = self.create_cert(prof, ca, csr, subject=Subject({"CN": self.hostname}))
-        self.assertEqual(cert.subject, self.subject)
-
-        with self.assertRemovedIn124Warning(warning):
-            prof = Profile(self.id(), subject=Subject({"C": "AT"}))  # type: ignore[arg-type]
 
 
 class GetProfileTestCase(TestCase):

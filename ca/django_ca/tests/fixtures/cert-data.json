@@ -49,7 +49,6 @@
                 "ST": "csr.Vienna",
                 "emailAddress": "csr.user@example.com"
             },
-            "csr_subject_str": "/C=AT/ST=csr.Vienna/L=csr.Vienna/O=csr.Example/OU=csr.Example OU/CN=csr.all-extensions.example.com/emailAddress=csr.user@example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -207,7 +206,6 @@
             "csr_subject": {
                 "CN": "csr.alt-extensions.example.com"
             },
-            "csr_subject_str": "/CN=csr.alt-extensions.example.com",
             "extended_key_usage": {
                 "critical": true,
                 "value": [
@@ -327,7 +325,6 @@
             "csr_subject": {
                 "CN": "csr.child.example.com"
             },
-            "csr_subject_str": "/CN=csr.child.example.com",
             "hpkp": "pwOhybCeNB79ODPgbj06X498Pg6tszBu/RjrLgQLM2E=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/7F0321617853C594E461584E37662CCB45FE306B.der",
             "key_der_filename": "child.key.der",
@@ -408,7 +405,6 @@
             "csr_subject": {
                 "CN": "csr.child-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.child-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -1415,7 +1411,6 @@
             "csr_subject": {
                 "CN": "csr.dsa.example.com"
             },
-            "csr_subject_str": "/CN=csr.dsa.example.com",
             "hpkp": "a5xGDiCzCHt3+hUmL3iOmrx8N10iVP3loLEwrMdnIpo=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/5231F76A6E3F69153C89A7D4022189A44D548D33.der",
             "key_der_filename": "dsa.key.der",
@@ -1495,7 +1490,6 @@
             "csr_subject": {
                 "CN": "csr.dsa-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.dsa-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -1600,7 +1594,6 @@
             "csr_subject": {
                 "CN": "csr.ec.example.com"
             },
-            "csr_subject_str": "/CN=csr.ec.example.com",
             "hpkp": "qW4ioJTTKticnX8RNYOF80SdXqKgWIhzIC/oLeiofHI=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/1BA1997C654CCD3BA7E6E2467DDB217310B8D743.der",
             "key_der_filename": "ec.key.der",
@@ -1679,7 +1672,6 @@
             "csr_subject": {
                 "CN": "csr.ec-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.ec-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -1745,7 +1737,6 @@
             "csr_subject": {
                 "CN": "csr.ed25519.example.com"
             },
-            "csr_subject_str": "/CN=csr.ed25519.example.com",
             "hpkp": "VtPd8PfkLNx6AocxqRq2ZOu0+yf7OwBZc2dlU7nE5pE=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/64E4D79CE2CA8B93F379EE7BD10A8F60A6A2F620.der",
             "key_der_filename": "ed25519.key.der",
@@ -1824,7 +1815,6 @@
             "csr_subject": {
                 "CN": "csr.ed25519-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.ed25519-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -1890,7 +1880,6 @@
             "csr_subject": {
                 "CN": "csr.ed448.example.com"
             },
-            "csr_subject_str": "/CN=csr.ed448.example.com",
             "hpkp": "zJDAyKA72VQkdcfpkDiACMsVWGDGcccbzBRwqVztjkI=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/7C68036069E59FF167C496332F230B2BA65F798A.der",
             "key_der_filename": "ed448.key.der",
@@ -1969,7 +1958,6 @@
             "csr_subject": {
                 "CN": "csr.ed448-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.ed448-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3162,7 +3150,6 @@
             "csr_subject": {
                 "CN": "csr.no-extensions.example.com"
             },
-            "csr_subject_str": "/CN=csr.no-extensions.example.com",
             "hpkp": "B2CZr+Q0FjnX8mStKEXPOM5ARy2ApYj0g9boboWXdwo=",
             "key_der_filename": "no-extensions.key.der",
             "key_filename": "no-extensions.key",
@@ -3225,7 +3212,6 @@
             "csr_subject": {
                 "CN": "csr.profile-client.example.com"
             },
-            "csr_subject_str": "/CN=csr.profile-client.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3311,7 +3297,6 @@
             "csr_subject": {
                 "CN": "csr.profile-enduser.example.com"
             },
-            "csr_subject_str": "/CN=csr.profile-enduser.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3392,7 +3377,6 @@
             "csr_subject": {
                 "CN": "csr.profile-ocsp.example.com"
             },
-            "csr_subject_str": "/CN=csr.profile-ocsp.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3474,7 +3458,6 @@
             "csr_subject": {
                 "CN": "csr.profile-server.example.com"
             },
-            "csr_subject_str": "/CN=csr.profile-server.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3563,7 +3546,6 @@
             "csr_subject": {
                 "CN": "csr.profile-webserver.example.com"
             },
-            "csr_subject_str": "/CN=csr.profile-webserver.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3630,7 +3612,6 @@
             "csr_subject": {
                 "CN": "csr.pwd.example.com"
             },
-            "csr_subject_str": "/CN=csr.pwd.example.com",
             "hpkp": "Mqy4pWMTR25uwPZ7Idl1c1HaGaMFp4pn8sKP+HP0fvc=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/20BCEB6D5079C6DC7996AEEA3EA42847C541FB0B.der",
             "key_der_filename": "pwd.key.der",
@@ -3711,7 +3692,6 @@
             "csr_subject": {
                 "CN": "csr.pwd-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.pwd-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3942,7 +3922,6 @@
             "csr_subject": {
                 "CN": "csr.root.example.com"
             },
-            "csr_subject_str": "/CN=csr.root.example.com",
             "hpkp": "f2baBRySxGpO/o1obqtVKjFjB6JFy0Il2zPf1QqdLFw=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/7F0321617853C594E461584E37662CCB45FE306B.der",
             "key_der_filename": "root.key.der",
@@ -4021,7 +4000,6 @@
             "csr_subject": {
                 "CN": "csr.root-cert.example.com"
             },
-            "csr_subject_str": "/CN=csr.root-cert.example.com",
             "extended_key_usage": {
                 "critical": false,
                 "value": [
