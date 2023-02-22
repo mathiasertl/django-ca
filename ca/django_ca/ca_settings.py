@@ -20,6 +20,7 @@ import warnings
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -52,6 +53,19 @@ def _normalize_subject(value: Any, hint: str) -> Tuple[Tuple[str, str], ...]:
 
         subject.append(typing.cast(Tuple[str, str], tuple(elem)))
     return tuple(subject)
+
+
+def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
+    """Normalize str to x509.NameOID."""
+    if isinstance(value, x509.ObjectIdentifier):
+        return value
+    elif isinstance(value, str):
+        try:
+            return constants.NAME_OID_TYPES[value]
+        except KeyError as ex:
+            raise ImproperlyConfigured(f"{ex.args[0]}: Unknown Name identifier.") from ex
+    else:
+        raise ImproperlyConfigured(f"{value}: Must be a str or x509.NameOID member.")
 
 
 if "CA_DIR" in os.environ:  # pragma: no cover
@@ -190,6 +204,28 @@ if re.search("[^0-9A-F]", CA_DEFAULT_CA):
 
 CA_DEFAULT_SUBJECT: Tuple[Tuple[str, str], ...] = getattr(settings, "CA_DEFAULT_SUBJECT", tuple())
 CA_DEFAULT_SUBJECT = _normalize_subject(CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
+
+_CA_DEFAULT_NAME_ORDER = (
+    x509.NameOID.DN_QUALIFIER,
+    x509.NameOID.COUNTRY_NAME,
+    x509.NameOID.POSTAL_CODE,
+    x509.NameOID.STATE_OR_PROVINCE_NAME,
+    x509.NameOID.LOCALITY_NAME,
+    x509.NameOID.DOMAIN_COMPONENT,
+    x509.NameOID.ORGANIZATION_NAME,
+    x509.NameOID.ORGANIZATIONAL_UNIT_NAME,
+    x509.NameOID.TITLE,
+    x509.NameOID.COMMON_NAME,
+    x509.NameOID.USER_ID,
+    x509.NameOID.EMAIL_ADDRESS,
+    x509.NameOID.SERIAL_NUMBER,
+)
+CA_DEFAULT_NAME_ORDER: Tuple[x509.ObjectIdentifier, ...] = getattr(
+    settings, "CA_DEFAULT_NAME_ORDER", _CA_DEFAULT_NAME_ORDER
+)
+if not isinstance(CA_DEFAULT_NAME_ORDER, tuple):
+    raise ImproperlyConfigured("CA_DEFAULT_NAME_ORDER: setting must be a tuple.")
+CA_DEFAULT_NAME_ORDER = tuple(_normalize_name_oid(name_oid) for name_oid in CA_DEFAULT_NAME_ORDER)
 
 # Add ability just override/add some profiles
 CA_DEFAULT_PROFILE = getattr(settings, "CA_DEFAULT_PROFILE", "webserver")

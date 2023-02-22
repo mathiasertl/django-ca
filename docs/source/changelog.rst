@@ -10,6 +10,8 @@ ChangeLog
 1.24.0 (TBR)
 ************
 
+* Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
+
 .. _changelog-1.23.0:
 
 *******************

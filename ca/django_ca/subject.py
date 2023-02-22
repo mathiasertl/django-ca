@@ -19,10 +19,10 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union, 
 
 from cryptography import x509
 
-from django_ca import constants
+from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA124Warning
 from django_ca.typehints import ParsableSubject
-from django_ca.utils import MULTIPLE_OIDS, SUBJECT_FIELDS, parse_name_x509
+from django_ca.utils import MULTIPLE_OIDS, parse_name_x509
 
 
 class Subject:
@@ -166,7 +166,7 @@ class Subject:
     @property
     def _iter(self) -> List[Tuple[x509.ObjectIdentifier, List[str]]]:
         try:
-            return sorted(self._data.items(), key=lambda t: SUBJECT_FIELDS.index(t[0]))
+            return sorted(self._data.items(), key=lambda t: ca_settings.CA_DEFAULT_NAME_ORDER.index(t[0]))
         except ValueError:
             # Thrown when subject contains fields that cannot be implicitly sorted
             return list(self._data.items())  # cast to list for uniform return type value

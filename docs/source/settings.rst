@@ -169,6 +169,29 @@ CA_DEFAULT_KEY_SIZE
 
    The default key size for newly created CAs (not used for CAs based on EC, Ed448 or Ed25519).
 
+.. _settings-ca-default-name-order:
+
+CA_DEFAULT_NAME_ORDER
+   Default::
+
+      (
+         "dnQualifier", "countryName", "postalCode", "jurisdictionStateOrProvinceName",
+         "localityName", "domainComponent", "organizationName", "organizationalUnitName",
+         "title", "commonName", "uid", "emailAddress", "serialNumber"
+      )
+
+   .. versionadded:: 1.24.0
+
+   Default order to use for x509 Names (such as the certificates subject). Must be a ``tuple``, with the
+   values being either a :py:class:`~cg:cryptography.x509.oid.NameOID` or a ``str``. String values must be one of
+   the values listed in :py:attr:`~django_ca.constants.NAME_OID_TYPES`.
+
+   The default is based on experience with existing certificates, as there is no known standard for an order.
+
+   The value is used when signing certificates to normalize the order of x509 name fields such as the
+   certificates subject and issuer field. On most applications, the order does not matter, but is relevant
+   in LDAP applications.
+
 .. _settings-ca-default-profile:
 
 CA_DEFAULT_PROFILE

@@ -26,7 +26,7 @@ from tabulate import tabulate
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 
 class MappingDocumentor(DataDocumenter):
@@ -44,6 +44,7 @@ class MappingDocumentor(DataDocumenter):
         """Determine if this documentor can document the given variable."""
         return super().can_document_member(member, membername, isattr, parent) and isinstance(member, Mapping)
 
+    # pylint: disable-next=too-many-return-statements  # just a lot of cases to cover
     def serialize_value(self, value: Any) -> str:
         """Serialize a value (or key) into a string as displayed in the table."""
         if isinstance(value, bool):
@@ -60,6 +61,16 @@ class MappingDocumentor(DataDocumenter):
                     return f"``ExtensionOID.{name}``"
                 if value == getattr(ExtensionOID, name):
                     return f":py:attr:`ExtensionOID.{name} <cg:cryptography.x509.oid.ExtensionOID.{name}>`"
+
+            # Return undocumented OIDs as strings.
+            for oid_name in ("INN", "OGRN", "SNILS"):
+                if value == getattr(NameOID, oid_name):
+                    return f"``NameOID.{oid_name}``"
+
+            for name in dir(NameOID):
+                if value == getattr(NameOID, name):
+                    return f":py:attr:`NameOID.{name} <cg:cryptography.x509.oid.NameOID.{name}>`"
+
             return str(value)
 
         return str(value)

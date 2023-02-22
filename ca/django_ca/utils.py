@@ -46,23 +46,6 @@ from django_ca.typehints import (
     SerializedName,
 )
 
-# List of possible subject fields, in order
-SUBJECT_FIELDS = [
-    NameOID.DN_QUALIFIER,
-    NameOID.COUNTRY_NAME,
-    NameOID.POSTAL_CODE,
-    NameOID.STATE_OR_PROVINCE_NAME,
-    NameOID.LOCALITY_NAME,
-    NameOID.DOMAIN_COMPONENT,
-    NameOID.ORGANIZATION_NAME,
-    NameOID.ORGANIZATIONAL_UNIT_NAME,
-    NameOID.TITLE,
-    NameOID.COMMON_NAME,
-    NameOID.USER_ID,
-    NameOID.EMAIL_ADDRESS,
-    NameOID.SERIAL_NUMBER,
-]
-
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
 
@@ -84,6 +67,7 @@ SAN_NAME_MAPPINGS = {
 # Sources for OIDs that can be duplicate:
 # * https://www.ibm.com/docs/en/ibm-mq/7.5?topic=certificates-distinguished-names - OU and DC
 # * multiple_ous cert from the test suite.
+#: OIDs that can occur multiple times in a certificate
 MULTIPLE_OIDS = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.STREET_ADDRESS)
 
 # uppercase values as keys for normalizing case
@@ -111,7 +95,7 @@ def make_naive(timestamp: datetime) -> datetime:
 def sort_name(name: x509.Name) -> x509.Name:
     """Returns the subject in the correct order for a x509 subject."""
     try:
-        return x509.Name(sorted(name, key=lambda attr: SUBJECT_FIELDS.index(attr.oid)))
+        return x509.Name(sorted(name, key=lambda attr: constants.CA_DEFAULT_NAME_ORDER.index(attr.oid)))
     except ValueError:
         return name
 
