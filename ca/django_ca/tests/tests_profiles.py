@@ -72,7 +72,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
 
-class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
+class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
 
     @contextmanager

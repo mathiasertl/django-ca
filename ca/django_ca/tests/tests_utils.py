@@ -38,7 +38,6 @@ from freezegun import freeze_time
 from django_ca import ca_settings, constants, utils
 from django_ca.tests.base import dns, override_settings, override_tmpcadir, rdn, uri
 from django_ca.utils import (
-    OID_NAME_MAPPINGS,
     bytes_to_hex,
     format_general_name,
     format_name,
@@ -71,15 +70,6 @@ def load_tests(  # pylint: disable=unused-argument
     """Load doctests."""
     tests.addTests(doctest.DocTestSuite(utils))
     return tests
-
-
-class ConstantsTestCase(TestCase):
-    """Test various constants in the utils module."""
-
-    def test_nameoid_completeness(self) -> None:
-        """Test that we support all NameOID instances."""
-        known_oids = [v for v in vars(NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
-        self.assertCountEqual(known_oids, list(OID_NAME_MAPPINGS.keys()))
 
 
 class ReadFileTestCase(TestCase):

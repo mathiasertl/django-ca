@@ -17,6 +17,12 @@
 .. automapping:: django_ca.constants.HASH_ALGORITHM_NAMES
    :no-value:
 
+.. automapping:: django_ca.constants.NAME_OID_NAMES
+   :no-value:
+
+.. automapping:: django_ca.constants.NAME_OID_TYPES
+   :no-value:
+
 .. automodule:: django_ca.constants
    :members: ReasonFlags
 

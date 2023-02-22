@@ -78,7 +78,7 @@ from django_ca.profiles import profiles
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import CRLExtensionType, X509CertMixinTypeVar
-from django_ca.utils import OID_NAME_MAPPINGS, SERIAL_RE, add_colons, format_name
+from django_ca.utils import SERIAL_RE, add_colons, format_name
 
 log = logging.getLogger(__name__)
 
@@ -832,7 +832,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return JsonResponse({"message": str(e)}, status=HTTPStatus.BAD_REQUEST)
 
         # TODO: support CSRs with multiple OIDs (from django_ca.utils.MULTIPLE_OIDS)
-        subject = {OID_NAME_MAPPINGS[s.oid]: s.value for s in csr.subject}
+        subject = {constants.NAME_OID_NAMES[s.oid]: s.value for s in csr.subject}
         return JsonResponse({"subject": subject})
 
     def get_urls(self) -> typing.List[URLPattern]:

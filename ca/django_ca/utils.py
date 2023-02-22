@@ -19,7 +19,7 @@ import shlex
 import typing
 from datetime import datetime, timedelta, timezone
 from ipaddress import ip_address, ip_network
-from typing import Dict, Optional, Tuple, Type, Union
+from typing import Optional, Tuple, Type, Union
 from urllib.parse import urlparse
 
 import idna
@@ -81,65 +81,14 @@ SAN_NAME_MAPPINGS = {
     x509.OtherName: "otherName",
 }
 
-# Human-readable names come from RFC 4519 except where noted
-#: Map OID objects to IDs used in subject strings
-OID_NAME_MAPPINGS: Dict[x509.ObjectIdentifier, str] = {
-    NameOID.BUSINESS_CATEGORY: "businessCategory",
-    NameOID.COMMON_NAME: "CN",
-    NameOID.COUNTRY_NAME: "C",
-    NameOID.DN_QUALIFIER: "dnQualifier",
-    NameOID.DOMAIN_COMPONENT: "DC",
-    NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
-    NameOID.GENERATION_QUALIFIER: "generationQualifier",
-    NameOID.GIVEN_NAME: "givenName",
-    NameOID.INN: "inn",  # undocumented
-    NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
-    NameOID.JURISDICTION_LOCALITY_NAME: "jurisdictionLocalityName",
-    NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
-    NameOID.LOCALITY_NAME: "L",
-    NameOID.OGRN: "ogrn",  # undocumented
-    NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
-    NameOID.ORGANIZATION_NAME: "O",
-    NameOID.POSTAL_ADDRESS: "postalAddress",
-    NameOID.POSTAL_CODE: "postalCode",
-    NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519
-    NameOID.SERIAL_NUMBER: "serialNumber",
-    NameOID.SNILS: "snils",  # undocumented
-    NameOID.STATE_OR_PROVINCE_NAME: "ST",
-    NameOID.STREET_ADDRESS: "street",
-    NameOID.SURNAME: "sn",
-    NameOID.TITLE: "title",
-    NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
-    NameOID.USER_ID: "uid",
-    NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
-}
-
-# same, but reversed, used for parsing
-NAME_OID_MAPPINGS = {v: k for k, v in OID_NAME_MAPPINGS.items()}
-
-# RFC 4519 adds some aliases so we add them here
-NAME_OID_MAPPINGS.update(
-    {
-        "commonName": NameOID.COMMON_NAME,
-        "domainComponent": NameOID.DOMAIN_COMPONENT,
-        "localityName": NameOID.LOCALITY_NAME,
-        "organizationName": NameOID.ORGANIZATION_NAME,
-        "organizationalUnitName": NameOID.ORGANIZATIONAL_UNIT_NAME,
-        "streetAddress": NameOID.STREET_ADDRESS,  # not specified in RFC 4519, but consistent with others
-        "surname": NameOID.SURNAME,
-        "userid": NameOID.USER_ID,
-    }
-)
-
-#: List of OIDs that may occur multiple times in a subject.
-MULTIPLE_OIDS = (
-    NameOID.DOMAIN_COMPONENT,
-    NameOID.ORGANIZATIONAL_UNIT_NAME,
-    NameOID.STREET_ADDRESS,
-)
+# Sources for OIDs that can be duplicate:
+# * https://www.ibm.com/docs/en/ibm-mq/7.5?topic=certificates-distinguished-names - OU and DC
+# * multiple_ous cert from the test suite.
+MULTIPLE_OIDS = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.STREET_ADDRESS)
 
 # uppercase values as keys for normalizing case
-NAME_CASE_MAPPINGS = {k.upper(): v for k, v in NAME_OID_MAPPINGS.items()}
+NAME_CASE_MAPPINGS = {k.upper(): v for k, v in constants.NAME_OID_TYPES.items()}
+
 
 ADMIN_SUBJECT_OIDS = (
     NameOID.COUNTRY_NAME,
@@ -226,7 +175,7 @@ def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> st
             return val
         return '"' + val.replace('"', r"\"").replace(r"\\", r"\\\\") + '"'
 
-    items = [(OID_NAME_MAPPINGS[s.oid], s.value) for s in subject]
+    items = [(constants.NAME_OID_NAMES[s.oid], s.value) for s in subject]
 
     values = "/".join([f"{k}={_format_value(v)}" for k, v in items])  # type: ignore[arg-type]
     return f"/{values}"
@@ -255,7 +204,7 @@ def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> Se
         value = attr.value
         if isinstance(value, bytes):
             value = bytes_to_hex(value)
-        items.append((OID_NAME_MAPPINGS[attr.oid], value))
+        items.append((constants.NAME_OID_NAMES[attr.oid], value))
     return items
 
 
@@ -367,7 +316,7 @@ def check_name(name: x509.Name) -> x509.Name:
 
         # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
         if oid in seen and oid not in MULTIPLE_OIDS:
-            raise ValueError(f'Subject contains multiple "{OID_NAME_MAPPINGS[attr.oid]}" fields')
+            raise ValueError(f'Subject contains multiple "{constants.NAME_OID_NAMES[attr.oid]}" fields')
         seen.add(oid)
 
         if oid == NameOID.COMMON_NAME and not attr.value:

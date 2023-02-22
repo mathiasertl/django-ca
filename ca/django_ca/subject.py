@@ -19,15 +19,10 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union, 
 
 from cryptography import x509
 
+from django_ca import constants
 from django_ca.deprecation import RemovedInDjangoCA124Warning
 from django_ca.typehints import ParsableSubject
-from django_ca.utils import (
-    MULTIPLE_OIDS,
-    NAME_OID_MAPPINGS,
-    OID_NAME_MAPPINGS,
-    SUBJECT_FIELDS,
-    parse_name_x509,
-)
+from django_ca.utils import MULTIPLE_OIDS, SUBJECT_FIELDS, parse_name_x509
 
 
 class Subject:
@@ -96,7 +91,7 @@ class Subject:
         for oid, value in iterable:
             if isinstance(oid, str):
                 try:
-                    oid = NAME_OID_MAPPINGS[oid]
+                    oid = constants.NAME_OID_TYPES[oid]
                 except KeyError as ex:
                     raise ValueError(f"Invalid OID: {oid}") from ex
 
@@ -106,13 +101,13 @@ class Subject:
             if oid not in self._data:
                 self._data[oid] = [value]  # type: ignore
             elif oid not in MULTIPLE_OIDS:
-                raise ValueError(f"{OID_NAME_MAPPINGS[oid]}: Must not occur multiple times")
+                raise ValueError(f"{constants.NAME_OID_NAMES[oid]}: Must not occur multiple times")
             else:
                 self._data[oid].append(value)  # type: ignore
 
     def __contains__(self, oid: Union[str, x509.ObjectIdentifier]) -> bool:
         if isinstance(oid, str):
-            oid = NAME_OID_MAPPINGS[oid]
+            oid = constants.NAME_OID_TYPES[oid]
         return oid in self._data
 
     def __eq__(self, other: Any) -> bool:
@@ -120,18 +115,18 @@ class Subject:
 
     def __getitem__(self, key: Union[x509.ObjectIdentifier, str]) -> Union[List[str], str]:
         if isinstance(key, str):
-            key = NAME_OID_MAPPINGS[key]
+            key = constants.NAME_OID_TYPES[key]
 
         try:
             if key in MULTIPLE_OIDS:
                 return self._data[key]
             return self._data[key][0]
         except KeyError as ex:
-            raise KeyError(OID_NAME_MAPPINGS[key]) from ex
+            raise KeyError(constants.NAME_OID_NAMES[key]) from ex
 
     def __iter__(self) -> Iterator[str]:
         for key, _value in self._iter:
-            yield OID_NAME_MAPPINGS[key]
+            yield constants.NAME_OID_NAMES[key]
 
     def __len__(self) -> int:
         return len(self._data)
@@ -140,7 +135,7 @@ class Subject:
         self, key: Union[x509.ObjectIdentifier, str], value: Optional[Union[str, Iterable[str]]]
     ) -> None:
         if isinstance(key, str):
-            key = NAME_OID_MAPPINGS[key]
+            key = constants.NAME_OID_TYPES[key]
 
         if not value and key in self._data:
             del self._data[key]
@@ -152,7 +147,7 @@ class Subject:
             raise ValueError("Value must be str or list")
 
         if len(value) > 1 and key not in MULTIPLE_OIDS:
-            raise ValueError(f"{OID_NAME_MAPPINGS[key]}: Must not occur multiple times")
+            raise ValueError(f"{constants.NAME_OID_NAMES[key]}: Must not occur multiple times")
 
         self._data[key] = value
 
@@ -165,7 +160,7 @@ class Subject:
             for val in values:
                 data.append((oid, val))
 
-        joined_data = "/".join([f"{OID_NAME_MAPPINGS[k]}={v}" for k, v in data])
+        joined_data = "/".join([f"{constants.NAME_OID_NAMES[k]}={v}" for k, v in data])
         return f"/{joined_data}"
 
     @property
@@ -196,7 +191,7 @@ class Subject:
     def items(self) -> Iterator[Tuple[str, str]]:
         """View of the subjects items."""
         for key, value in self._iter:
-            key_str = OID_NAME_MAPPINGS[key]
+            key_str = constants.NAME_OID_NAMES[key]
             for val in value:
                 yield key_str, val
 
@@ -214,7 +209,7 @@ class Subject:
         """
 
         if isinstance(oid, str):
-            oid = NAME_OID_MAPPINGS[oid]
+            oid = constants.NAME_OID_TYPES[oid]
 
         if oid in self._data:  # already set
             return self._data[oid]
@@ -225,7 +220,7 @@ class Subject:
             raise ValueError("Value must be str or list")
 
         if len(value) > 1 and oid not in MULTIPLE_OIDS:
-            raise ValueError(f"{OID_NAME_MAPPINGS[oid]}: Must not occur multiple times")
+            raise ValueError(f"{constants.NAME_OID_NAMES[oid]}: Must not occur multiple times")
 
         self._data[oid] = value
         return value
