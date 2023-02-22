@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.utils.translation import gettext_lazy as _
 
@@ -342,6 +342,58 @@ LOG_ENTRY_TYPE_KEYS = MappingProxyType(
     {
         LogEntryType.PRE_CERTIFICATE: "precertificate",
         LogEntryType.X509_CERTIFICATE: "x509_certificate",
+    }
+)
+
+# Human-readable names come from RFC 4519 except where noted
+#: Map OID objects to IDs used in subject strings
+NAME_OID_NAMES = MappingProxyType(
+    {
+        NameOID.BUSINESS_CATEGORY: "businessCategory",
+        NameOID.COMMON_NAME: "CN",
+        NameOID.COUNTRY_NAME: "C",
+        NameOID.DN_QUALIFIER: "dnQualifier",
+        NameOID.DOMAIN_COMPONENT: "DC",
+        NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
+        NameOID.GENERATION_QUALIFIER: "generationQualifier",
+        NameOID.GIVEN_NAME: "givenName",
+        NameOID.INN: "inn",  # undocumented
+        NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
+        NameOID.JURISDICTION_LOCALITY_NAME: "jurisdictionLocalityName",
+        NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
+        NameOID.LOCALITY_NAME: "L",
+        NameOID.OGRN: "ogrn",  # undocumented
+        NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
+        NameOID.ORGANIZATION_NAME: "O",
+        NameOID.POSTAL_ADDRESS: "postalAddress",
+        NameOID.POSTAL_CODE: "postalCode",
+        NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519
+        NameOID.SERIAL_NUMBER: "serialNumber",
+        NameOID.SNILS: "snils",  # undocumented
+        NameOID.STATE_OR_PROVINCE_NAME: "ST",
+        NameOID.STREET_ADDRESS: "street",
+        NameOID.SURNAME: "sn",
+        NameOID.TITLE: "title",
+        NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
+        NameOID.USER_ID: "uid",
+        NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
+    }
+)
+
+#: Map NameOID names to cryptography NameOID objects. This variant als adds all RFC 4519 aliases as well.
+NAME_OID_TYPES = MappingProxyType(
+    {
+        **{v: k for k, v in NAME_OID_NAMES.items()},
+        **{
+            "commonName": NameOID.COMMON_NAME,
+            "domainComponent": NameOID.DOMAIN_COMPONENT,
+            "localityName": NameOID.LOCALITY_NAME,
+            "organizationName": NameOID.ORGANIZATION_NAME,
+            "organizationalUnitName": NameOID.ORGANIZATIONAL_UNIT_NAME,
+            "streetAddress": NameOID.STREET_ADDRESS,  # not specified in RFC 4519, but consistent with others
+            "surname": NameOID.SURNAME,
+            "userid": NameOID.USER_ID,
+        },
     }
 )
 

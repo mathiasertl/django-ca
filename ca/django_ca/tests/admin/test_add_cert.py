@@ -36,7 +36,7 @@ from webtest import Checkbox, Hidden
 from webtest import Select as WebTestSelect
 from webtest import Submit
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.extensions import serialize_extension
 from django_ca.fields import CertificateSigningRequestField
@@ -46,7 +46,7 @@ from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.typehints import SerializedExtension
-from django_ca.utils import MULTIPLE_OIDS, NAME_OID_MAPPINGS, ca_storage, x509_name
+from django_ca.utils import MULTIPLE_OIDS, ca_storage, x509_name
 
 
 @freeze_time(timestamps["after_child"])
@@ -949,14 +949,14 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         self.assertEqual(profile.cn_in_san, cn_in_san.is_selected())
 
         for key, field in subject.items():
-            oid = NAME_OID_MAPPINGS[key]
+            oid = constants.NAME_OID_TYPES[key]
             value = field.get_attribute("value")
 
             # OIDs that can occur multiple times are stored as list in subject, so we wrap it
             attrs = [attr.value for attr in profile.subject.get_attributes_for_oid(oid)]
             if not attrs:
                 attrs = [""]
-            if NAME_OID_MAPPINGS[key] in MULTIPLE_OIDS:
+            if constants.NAME_OID_TYPES[key] in MULTIPLE_OIDS:
                 self.assertEqual([value], attrs)
             else:
                 self.assertEqual(value, attrs[0])

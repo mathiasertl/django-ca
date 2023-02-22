@@ -33,7 +33,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.typehints import PrivateKeyTypes
-from django_ca.utils import OID_NAME_MAPPINGS, x509_name
+from django_ca.utils import x509_name
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
@@ -65,7 +65,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test fetching a CSR with all subject fields."""
         subject = [
             (f, "AT" if f in ("C", "jurisdictionCountryName") else f"test-{f}")
-            for f in OID_NAME_MAPPINGS.values()
+            for f in constants.NAME_OID_NAMES.values()
         ]
         subject_strs = [f"{k}={v}" for k, v in subject]
         csr = self.create_csr("/".join(subject_strs))[1]

@@ -142,6 +142,11 @@ class CompletenessTestCase(TestCase):
 
         self.assertEqual(len(constants.HASH_ALGORITHM_NAMES), len(subclasses))
 
+    def test_nameoid(self) -> None:
+        """Test that we support all NameOID instances."""
+        known_oids = [v for v in vars(x509.NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
+        self.assertCountEqual(known_oids, list(constants.NAME_OID_NAMES.keys()))
+
     def test_oid_to_extension_names(self) -> None:
         """Test completeness of EXTENSION_NAMES."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_NAMES.keys())

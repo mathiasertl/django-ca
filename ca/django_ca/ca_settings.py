@@ -188,7 +188,6 @@ if CA_DEFAULT_CA != "0":
 if re.search("[^0-9A-F]", CA_DEFAULT_CA):
     raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
-_SUBJECT_AS_DICT_MAPPING = "%s as a dict wil be removed in django-ca==1.23. Please use a tuple instead."
 CA_DEFAULT_SUBJECT: Tuple[Tuple[str, str], ...] = getattr(settings, "CA_DEFAULT_SUBJECT", tuple())
 CA_DEFAULT_SUBJECT = _normalize_subject(CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
 

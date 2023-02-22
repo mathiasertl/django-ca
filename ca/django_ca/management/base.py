@@ -27,11 +27,10 @@ from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError, CommandParser, OutputWrapper
 from django.utils import timezone
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority
 from django_ca.profiles import Profile
-from django_ca.utils import NAME_OID_MAPPINGS
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -111,7 +110,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     @property
     def valid_subject_keys(self) -> str:
         """Return human-readable enumeration of valid subject keys (CN/...)."""
-        fields = [f'"{f}"' for f in NAME_OID_MAPPINGS]
+        fields = [f'"{f}"' for f in constants.NAME_OID_TYPES]
         return f"{', '.join(fields[:-1])} and {fields[-1]}"
 
     def add_subject(
