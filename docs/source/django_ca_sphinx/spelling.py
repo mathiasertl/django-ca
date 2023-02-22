@@ -71,6 +71,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         MAGIC_WORDS
         | set(constants.KEY_USAGE_NAMES.values())
         | set(constants.EXTENDED_KEY_USAGE_NAMES.values())
+        | set(constants.NAME_OID_TYPES)
     )
 
     def _skip(self, word: str) -> bool:

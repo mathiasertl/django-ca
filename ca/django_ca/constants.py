@@ -380,12 +380,13 @@ NAME_OID_NAMES = MappingProxyType(
     }
 )
 
-#: Map NameOID names to cryptography NameOID objects. This variant als adds all RFC 4519 aliases as well.
+#: Map NameOID names to cryptography NameOID objects. This variant adds all RFC 4519 aliases as well.
 NAME_OID_TYPES = MappingProxyType(
     {
         **{v: k for k, v in NAME_OID_NAMES.items()},
         **{
             "commonName": NameOID.COMMON_NAME,
+            "countryName": NameOID.COUNTRY_NAME,
             "domainComponent": NameOID.DOMAIN_COMPONENT,
             "localityName": NameOID.LOCALITY_NAME,
             "organizationName": NameOID.ORGANIZATION_NAME,
