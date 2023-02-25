@@ -23,12 +23,6 @@ from inspect import signature
 F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
 
 
-class RemovedInDjangoCA124Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.24."""
-
-    version = "1.24"
-
-
 class RemovedInDjangoCA125Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in django-ca==1.25."""
 
@@ -41,12 +35,18 @@ class RemovedInDjangoCA126Warning(PendingDeprecationWarning):
     version = "1.26"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA124Warning
+class RemovedInDjangoCA127Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==1.25."""
+
+    version = "1.27"
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA125Warning
 
 DeprecationWarningType = typing.Union[
-    typing.Type[RemovedInDjangoCA124Warning],
     typing.Type[RemovedInDjangoCA125Warning],
     typing.Type[RemovedInDjangoCA126Warning],
+    typing.Type[RemovedInDjangoCA127Warning],
 ]
 
 
@@ -83,7 +83,7 @@ def deprecate_type(
     types: typing.Union[typing.Type[typing.Any], typing.Tuple[typing.Type[typing.Any], ...]],
     category: DeprecationWarningType,
     stacklevel: int = 2,
-) -> typing.Callable[[F], F]:
+) -> typing.Callable[[F], F]:  # pragma: no cover  # not used at the beginning of 1.24.0 development
     """Decorator to mark a type for an argument as deprecated."""
 
     def decorator_deprecate(func: F) -> F:

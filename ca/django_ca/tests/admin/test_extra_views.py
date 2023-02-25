@@ -22,7 +22,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse

@@ -14,9 +14,7 @@
 """Test :py:mod:`django_ca.profiles`."""
 
 import doctest
-import typing
 import unittest
-from contextlib import contextmanager
 from datetime import timedelta
 from typing import Any, Dict
 
@@ -29,7 +27,6 @@ from django.test import TestCase
 
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
-from django_ca.deprecation import RemovedInDjangoCA124Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
@@ -74,13 +71,6 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
 
 class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
-
-    @contextmanager
-    def assertDictExtensionWarning(self) -> typing.Iterator[None]:  # pylint: disable=invalid-name
-        """Capture warning when passing a dict."""
-        msg = r"^Passing dict for extensions is deprecated and will be removed in django ca 1\.24\.$"
-        with self.assertWarnsRegex(RemovedInDjangoCA124Warning, msg):
-            yield
 
     def create_cert(  # type: ignore[override]
         self, prof: Profile, ca: CertificateAuthority, *args: Any, **kwargs: Any
@@ -689,6 +679,15 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr)
         self.assertEqual(pre.call_count, 0)
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
+    def test_no_valid_subject(self) -> None:
+        """Test case where no subject at all could be determined."""
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        prof = Profile("test")
+        with self.assertRaisesRegex(ValueError, r"^Cannot determine subject for certificate\.$"):
+            self.create_cert(prof, ca, csr)
 
     def test_str(self) -> None:
         """Test str()."""
