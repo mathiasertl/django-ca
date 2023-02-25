@@ -125,6 +125,12 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_ECC_CURVE="foo"):
                 pass
 
+    def test_default_name_order(self) -> None:
+        """Test invalid values for a default name order"""
+        with self.assertImproperlyConfigured(r"^CA_DEFAULT_NAME_ORDER: setting must be a tuple\.$"):
+            with self.settings(CA_DEFAULT_NAME_ORDER=True):
+                pass
+
     def test_min_default_key_size(self) -> None:
         """Test ``A_DEFAULT_KEY_SIZE``."""
         with self.assertImproperlyConfigured("^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$"):
@@ -246,7 +252,6 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
 
     def test_empty_iterable(self) -> None:
         """Test that an empty list is normalized to None"""
-        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         with self.settings(CA_DEFAULT_SUBJECT=[]):
             self.assertIsNone(ca_settings.CA_DEFAULT_SUBJECT)
         with self.settings(CA_DEFAULT_SUBJECT=tuple()):

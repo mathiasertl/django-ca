@@ -258,7 +258,7 @@ class Profile:
             Override if any IssuerAlternativeNames from the CA should be added to the CA. If not passed, the
             value set in the profile is used.
         add_san_as_cn : bool, optional
-            Set the first applicable subjectAlternativeName as commonName if the passed `subject` does not
+            Set the first applicable SubjectAlternativeName as commonName if the passed `subject` does not
             define a common name.
         ignore_profile_subject : bool, optional
             Ignore the subject defined for the profile. This is used for OCSP responder certificates, where
@@ -533,8 +533,7 @@ class Profile:
 
                 if subject is None:
                     return common_name_name
-                else:
-                    return merge_x509_names(subject, common_name_name)
+                return merge_x509_names(subject, common_name_name)
 
         return subject
 
