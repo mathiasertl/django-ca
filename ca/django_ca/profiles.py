@@ -14,21 +14,18 @@
 """Module for handling certificate profiles."""
 
 import typing
-import warnings
 from datetime import datetime, timedelta
 from threading import local
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
-from django_ca.deprecation import RemovedInDjangoCA124Warning, deprecate_type
 from django_ca.extensions import parse_extension, serialize_extension
 from django_ca.signals import pre_sign_cert
-from django_ca.subject import Subject
 from django_ca.typehints import (
     Expires,
     ExtensionMapping,
@@ -39,10 +36,12 @@ from django_ca.typehints import (
 )
 from django_ca.utils import (
     get_cert_builder,
+    merge_x509_names,
     parse_expires,
     parse_general_name,
     parse_hash_algorithm,
     serialize_name,
+    sort_name,
     x509_name,
 )
 
@@ -101,9 +100,8 @@ class Profile:
         if extensions is None:
             extensions = {}
         if subject is None:
-            subject = ca_settings.CA_DEFAULT_SUBJECT
-
-        if isinstance(subject, x509.Name):
+            self.subject = ca_settings.CA_DEFAULT_SUBJECT
+        elif isinstance(subject, x509.Name):
             self.subject = subject
         else:
             self.subject = x509_name(subject)
@@ -182,7 +180,6 @@ class Profile:
 
         return cert_extensions
 
-    @deprecate_type("subject", (dict, str, Subject), RemovedInDjangoCA124Warning)
     def create_cert(  # pylint: disable=too-many-arguments
         self,
         ca: "CertificateAuthority",
@@ -196,6 +193,8 @@ class Profile:
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
         add_issuer_alternative_name: Optional[bool] = None,
+        add_san_as_cn: Optional[bool] = True,
+        ignore_profile_subject: bool = False,
         password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
@@ -244,7 +243,7 @@ class Profile:
             is ``True`` and the passed CA has an IssuerAlternativeName set, that value will be appended to the
             extension you pass here.
         cn_in_san : bool, optional
-            Override if the CommonName should be added as an SubjectAlternativeName. If not passed, the value
+            Override if the commonName should be added as an SubjectAlternativeName. If not passed, the value
             set in the profile is used.
         add_crl_url : bool, optional
             Override if any CRL URLs from the CA should be added to the CA. If not passed, the value set in
@@ -258,6 +257,12 @@ class Profile:
         add_issuer_alternative_name : bool, optional
             Override if any IssuerAlternativeNames from the CA should be added to the CA. If not passed, the
             value set in the profile is used.
+        add_san_as_cn : bool, optional
+            Set the first applicable subjectAlternativeName as commonName if the passed `subject` does not
+            define a common name.
+        ignore_profile_subject : bool, optional
+            Ignore the subject defined for the profile. This is used for OCSP responder certificates, where
+            the subject matches the subject of the certificate authority.
         password: bytes or str, optional
             The password to the private key of the CA.
 
@@ -280,14 +285,6 @@ class Profile:
         if add_issuer_alternative_name is None:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="django_ca.subject.Subject will be removed in 1.24.0.",
-                category=RemovedInDjangoCA124Warning,
-            )
-            cert_subject = Subject(self.subject)
-
         cert_extensions = self._get_extensions(extensions)
 
         self._update_from_ca(
@@ -299,17 +296,16 @@ class Profile:
             add_issuer_alternative_name=add_issuer_alternative_name,
         )
 
-        if not isinstance(subject, Subject):
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message="django_ca.subject.Subject will be removed in 1.24.0.",
-                    category=RemovedInDjangoCA124Warning,
-                )
-                converted_subject = Subject(subject)  # NOTE: also accepts None
-        else:  # pragma: only django_ca<=1.24
-            converted_subject = subject
-        cert_subject.update(converted_subject)
+        if ignore_profile_subject is False:
+            if self.subject is not None and subject is not None:
+                subject = merge_x509_names(self.subject, subject)
+            elif self.subject is not None:
+                subject = self.subject
+
+        subject = self._update_cn_from_san(subject, cert_extensions)
+        if subject is None:
+            raise ValueError("Cannot determine subject for certificate.")
+        subject = sort_name(subject)
 
         if algorithm is None and ca.algorithm:
             if self.algorithm is not None:
@@ -321,9 +317,12 @@ class Profile:
         expires = self.get_expires(expires)
 
         # Finally, update SAN with the current CN, if set and requested
-        self._update_san_from_cn(cn_in_san, subject=cert_subject, extensions=cert_extensions)
+        if add_san_as_cn:
+            self._update_san_from_cn(cn_in_san, subject=subject, extensions=cert_extensions)
 
-        if not converted_subject.get("CN") and not cert_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
+        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not cert_extensions.get(
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
         pre_sign_cert.send(
@@ -332,7 +331,7 @@ class Profile:
             csr=csr,
             expires=expires,
             algorithm=algorithm,
-            subject=cert_subject.name,
+            subject=subject,
             extensions=extensions,
             password=password,
         )
@@ -341,7 +340,7 @@ class Profile:
         builder = get_cert_builder(expires)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.subject)
-        builder = builder.subject_name(cert_subject.name)
+        builder = builder.subject_name(subject)
 
         for _key, extension in cert_extensions.items():
             builder = builder.add_extension(extension.value, critical=extension.critical)
@@ -375,10 +374,14 @@ class Profile:
             else:
                 extensions[EXTENSION_KEYS[key]] = serialize_extension(extension)
 
+        serialized_name = None
+        if self.subject is not None:
+            serialized_name = serialize_name(self.subject)
+
         data: SerializedProfile = {
             "cn_in_san": self.cn_in_san,
             "description": self.description,
-            "subject": serialize_name(self.subject),
+            "subject": serialized_name,
             "extensions": extensions,
         }
 
@@ -507,50 +510,67 @@ class Profile:
         if add_issuer_alternative_name is not False:
             self._update_issuer_alternative_name(extensions, ca_extensions)
 
-    def _update_san_from_cn(self, cn_in_san: bool, subject: Subject, extensions: ExtensionMapping) -> None:
-        if subject.get("CN") and cn_in_san is True:
-            try:
-                common_name = parse_general_name(typing.cast(str, subject["CN"]))
-            except ValueError as e:
-                raise ValueError(
-                    f"{subject['CN']}: Could not parse CommonName as subjectAlternativeName."
-                ) from e
+    def _update_cn_from_san(
+        self, subject: Optional[x509.Name], extensions: ExtensionMapping
+    ) -> Optional[x509.Name]:
+        # If we already have a common name, return the subject unchanged
+        if subject is not None and subject.get_attributes_for_oid(NameOID.COMMON_NAME):
+            return subject
 
-            if ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
-                san_ext = typing.cast(
-                    x509.Extension[x509.SubjectAlternativeName],
-                    extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-                )
-
-                if common_name not in san_ext.value:
-                    extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
-                        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                        critical=san_ext.critical,
-                        value=x509.SubjectAlternativeName(list(san_ext.value) + [common_name]),
-                    )
-
-            else:
-                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
-                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                    critical=False,
-                    value=x509.SubjectAlternativeName([common_name]),
-                )
-
-        elif not subject.get("CN") and ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
+        if ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
             san_ext = typing.cast(
-                x509.Extension[x509.SubjectAlternativeName], extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
+                x509.Extension[x509.SubjectAlternativeName],
+                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             )
-            cn_from_san = next(
-                (
-                    str(val.value)
-                    for val in san_ext.value
-                    if isinstance(val, (x509.DNSName, x509.UniformResourceIdentifier, x509.IPAddress))
-                ),
+            cn_types = (x509.DNSName, x509.IPAddress)
+            common_name = next(
+                (str(val.value) for val in san_ext.value if isinstance(val, cn_types)),
                 None,
             )
 
-            if cn_from_san is not None:
-                subject["CN"] = cn_from_san
+            if common_name is not None:
+                common_name_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
+
+                if subject is None:
+                    return common_name_name
+                else:
+                    return merge_x509_names(subject, common_name_name)
+
+        return subject
+
+    def _update_san_from_cn(self, cn_in_san: bool, subject: x509.Name, extensions: ExtensionMapping) -> None:
+        if cn_in_san is False:
+            return
+
+        if not (common_name_attributes := subject.get_attributes_for_oid(NameOID.COMMON_NAME)):
+            return
+
+        common_name_value = typing.cast(str, common_name_attributes[0].value)
+        try:
+            common_name = parse_general_name(common_name_value)
+        except ValueError as ex:
+            raise ValueError(
+                f"{common_name_value}: Could not parse CommonName as subjectAlternativeName."
+            ) from ex
+
+        if ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
+            san_ext = typing.cast(
+                x509.Extension[x509.SubjectAlternativeName],
+                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            )
+
+            if common_name not in san_ext.value:
+                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=san_ext.critical,
+                    value=x509.SubjectAlternativeName(list(san_ext.value) + [common_name]),
+                )
+        else:
+            extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
+                oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                critical=False,
+                value=x509.SubjectAlternativeName([common_name]),
+            )
 
 
 def get_profile(name: Optional[str] = None) -> Profile:

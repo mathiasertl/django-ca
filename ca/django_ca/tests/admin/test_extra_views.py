@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -33,7 +34,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.typehints import PrivateKeyTypes
-from django_ca.utils import x509_name
+from django_ca.utils import serialize_name, x509_name
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
@@ -257,8 +258,10 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         enduser_desc = "A certificate for an enduser, allows client authentication, code and email signing."
 
-        # Cast elements of subject to list, since actual data is comming from JSON
-        expected_subject = [[k, v] for k, v in ca_settings.CA_DEFAULT_SUBJECT]
+        # Cast elements of subject to list, since actual data is coming from JSON
+        expected_subject = [
+            [k, v] for k, v in serialize_name(ca_settings.CA_DEFAULT_SUBJECT)  # type: ignore[arg-type]
+        ]
 
         self.assertEqual(
             response.json(),
@@ -380,14 +383,13 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             },
         },
         CA_DEFAULT_PROFILE="test",
+        CA_DEFAULT_SUBJECT=None,
     )
     def test_empty_profile(self) -> None:
         """Try fetching a simple profile."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
-        # Cast elements of subject to list, since actual data is comming from JSON
-        expected_subject = [[k, v] for k, v in ca_settings.CA_DEFAULT_SUBJECT]
         self.assertEqual(
             response.json(),
             {
@@ -400,7 +402,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             "value": {"ca": False},
                         },
                     },
-                    "subject": expected_subject,
+                    "subject": None,
                 },
             },
         )

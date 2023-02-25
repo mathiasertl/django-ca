@@ -25,15 +25,15 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
+from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.utils import ca_storage, x509_name
+from django_ca.utils import ca_storage
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
@@ -301,9 +301,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     )
     def test_profile_subject(self) -> None:
         """Test signing with a subject in the profile."""
-        self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == "O"), "MyOrg")
-        self.assertEqual(next(t[1] for t in ca_settings.CA_DEFAULT_SUBJECT if t[0] == "OU"), "MyOrgUnit")
-
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
         stdin = self.csr_pem.encode()
         with self.assertCreateCertSignals() as (pre, post):
@@ -319,7 +316,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
         self.assertSignature([self.ca], cert)
-        self.assertEqual(cert.pub.loaded.subject, x509_name(ca_settings.CA_DEFAULT_SUBJECT))
+        self.assertEqual(cert.pub.loaded.subject, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
@@ -598,8 +595,3 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         self.assertIn("Do not add the CommonName as subjectAlternativeName (default).", help_text)
         self.assertIn("Add the CommonName as subjectAlternativeName.", help_text)
-
-
-@override_settings(USE_TZ=True)
-class SignCertWithTZTestCase(SignCertTestCase):
-    """Same but with timezone support."""

@@ -18,6 +18,7 @@ import typing
 import unittest
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import List, Union
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -952,10 +953,15 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             oid = constants.NAME_OID_TYPES[key]
             value = field.get_attribute("value")
 
+            if profile.subject is None:
+                attrs: List[Union[str, bytes]] = [""]
+            else:
+                attrs = [attr.value for attr in profile.subject.get_attributes_for_oid(oid)]
+
             # OIDs that can occur multiple times are stored as list in subject, so we wrap it
-            attrs = [attr.value for attr in profile.subject.get_attributes_for_oid(oid)]
             if not attrs:
                 attrs = [""]
+
             if constants.NAME_OID_TYPES[key] in MULTIPLE_OIDS:
                 self.assertEqual([value], attrs)
             else:

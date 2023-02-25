@@ -82,7 +82,7 @@ SerializedProfile = typing.TypedDict(
     {
         "cn_in_san": bool,
         "description": str,
-        "subject": SerializedName,
+        "subject": Optional[SerializedName],
         "extensions": Dict[str, Any],
     },
 )
