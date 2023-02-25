@@ -15,11 +15,13 @@
 
 import doctest
 import ipaddress
+import itertools
 import os
 import typing
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from typing import Iterable
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -44,6 +46,7 @@ from django_ca.utils import (
     generate_private_key,
     get_cert_builder,
     is_power2,
+    merge_x509_names,
     multiline_url_validator,
     parse_encoding,
     parse_general_name,
@@ -1010,6 +1013,80 @@ class X509NameTestCase(TestCase):
             x509_name("/C=AT/C=DE")
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
             x509_name("/CN=AT/CN=FOO")
+
+
+class MergeX509NamesTestCase(TestCase):
+    """Test ``django_ca.utils.merge_x509_name``."""
+
+    cc1 = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
+    cc2 = x509.NameAttribute(NameOID.COUNTRY_NAME, "US")
+    org1 = x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Example Org")
+    org2 = x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Other Org")
+    ou1 = x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Example Org Unit")
+    ou2 = x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Other Org Unit")
+    ou3 = x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Example Org Unit2")
+    ou4 = x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Other Org Unit2")
+    common_name1 = x509.NameAttribute(NameOID.COMMON_NAME, "example.com")
+    common_name2 = x509.NameAttribute(NameOID.COMMON_NAME, "example.net")
+    email1 = x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@xample.com")
+    email2 = x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@xample.net")
+
+    def assertMerged(  # pylint: disable=invalid-name  # unittest standard
+        self,
+        base: Iterable[x509.NameAttribute],
+        update: Iterable[x509.NameAttribute],
+        merged: Iterable[x509.NameAttribute],
+    ) -> None:
+        """Assert that the given base and update are merged to the expected value."""
+        base_name = x509.Name(base)
+        update_name = x509.Name(update)
+        merged_name = x509.Name(merged)
+        self.assertEqual(merge_x509_names(base_name, update_name), merged_name)
+
+    def test_full_merge(self) -> None:
+        """Test a basic merge."""
+        # Order here matches the order from ca_settings.CA_DEFAULT_NAME_ORDER
+        expected = [self.cc1, self.org1, self.ou1, self.common_name1, self.email1]
+
+        self.assertMerged([self.cc1, self.org1, self.ou1], [self.common_name1, self.email1], expected)
+        self.assertMerged([self.cc1, self.org1], [self.ou1, self.common_name1, self.email1], expected)
+        self.assertMerged([self.cc1], [self.org1, self.ou1, self.common_name1, self.email1], expected)
+
+    def test_order(self) -> None:
+        """Test passing subjects in different order."""
+        expected = [self.cc1, self.org1, self.ou1, self.common_name1, self.email1]
+
+        # For-loop for splitting expected between every element
+        for i in range(1, len(expected)):
+            base = expected[:i]
+            update = expected[i:]
+
+            # loop through every possible permutation
+            for base_perm in itertools.permutations(base):
+                for update_perm in itertools.permutations(update):
+                    self.assertMerged(base_perm, update_perm, expected)
+
+    def test_merging_multiple_org_units(self) -> None:
+        """Test merging names with multiple org units."""
+        expected = [self.cc1, self.org1, self.ou1, self.ou2, self.common_name1]
+        self.assertMerged([self.cc1, self.org1, self.ou1, self.ou2], [self.common_name1], expected)
+        self.assertMerged([self.cc1, self.org1], [self.common_name1, self.ou1, self.ou2], expected)
+
+    def test_overwriting_attributes(self) -> None:
+        """Test overwriting attributes when merging."""
+        expected = [self.cc2, self.org2, self.ou3, self.ou4, self.common_name2, self.email2]
+        self.assertMerged([self.cc1], expected, expected)
+        self.assertMerged([self.cc1, self.ou1], expected, expected)
+        self.assertMerged([self.cc1, self.ou1, self.ou2, self.email2, self.common_name1], expected, expected)
+
+    def test_unsortable_values(self) -> None:
+        """Test merging unsortable values."""
+        sortable = x509.Name([self.cc1, self.common_name1])
+        unsortable = x509.Name([self.cc1, x509.NameAttribute(NameOID.INN, "unsortable")])
+        with self.assertRaisesRegex(ValueError, r"Unsortable name"):
+            merge_x509_names(unsortable, sortable)
+        with self.assertRaisesRegex(ValueError, r"Unsortable name"):
+            merge_x509_names(sortable, unsortable)
 
 
 class MultilineURLValidatorTestCase(TestCase):
