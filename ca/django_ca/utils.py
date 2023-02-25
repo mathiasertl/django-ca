@@ -19,7 +19,7 @@ import shlex
 import typing
 from datetime import datetime, timedelta, timezone
 from ipaddress import ip_address, ip_network
-from typing import Optional, Tuple, Type, Union
+from typing import List, Optional, Tuple, Type, Union
 from urllib.parse import urlparse
 
 import idna
@@ -95,7 +95,7 @@ def make_naive(timestamp: datetime) -> datetime:
 def sort_name(name: x509.Name) -> x509.Name:
     """Returns the subject in the correct order for a x509 subject."""
     try:
-        return x509.Name(sorted(name, key=lambda attr: constants.CA_DEFAULT_NAME_ORDER.index(attr.oid)))
+        return x509.Name(sorted(name, key=lambda attr: ca_settings.CA_DEFAULT_NAME_ORDER.index(attr.oid)))
     except ValueError:
         return name
 
@@ -385,6 +385,54 @@ def x509_name(name: ParsableName) -> x509.Name:
     <Name(C=AT,CN=example.com)>
     """
     return check_name(x509.Name(parse_name_x509(name)))
+
+
+def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
+    """Merge two :py:class:`x509.Name <cg:cryptography.x509.Name>` instances.
+
+    This function will return a new :py:class:`x509.Name <cg:cryptography.x509.Name>` based on `base`, with
+    the attributes from `update` added. If an attribute type occurs in both names, the one from `update` take
+    precedence.
+
+    The resulting name will be sorted based on :ref:`settings-ca-default-name-order`, regardless of order of
+    `base` or `update`.
+
+    Example::
+
+        >>> base = x509.Name([
+        ...     x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+        ...     x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Example Org"),
+        ...     x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Example Org Unit"),
+        ... ])
+        >>> update = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
+        >>> merge_x509_names(base, update)
+        <Name(C=AT,O=Example Org,OU=Example Org Unit,CN=example.com)>
+    """
+
+    attributes: List[x509.NameAttribute] = []
+    if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
+        raise ValueError(f"{base}: Unsortable name")
+    if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in update):
+        raise ValueError(f"{update}: Unsortable name")
+
+    for oid in ca_settings.CA_DEFAULT_NAME_ORDER:
+        update_attributes = update.get_attributes_for_oid(oid)
+        if update_attributes:
+            if oid in MULTIPLE_OIDS:
+                attributes += update_attributes
+            else:
+                attributes.append(update_attributes[0])
+            continue
+
+        base_attributes = base.get_attributes_for_oid(oid)
+        if base_attributes:
+            if oid in MULTIPLE_OIDS:
+                attributes += base_attributes
+            else:
+                attributes.append(base_attributes[0])
+            continue
+
+    return x509.Name(attributes)
 
 
 def x509_relative_name(name: ParsableName) -> x509.RelativeDistinguishedName:
