@@ -965,7 +965,9 @@ class CertificateAuthority(X509CertMixin):
             .sign(private_key, csr_sign_algorithm)
         )
 
-        # TODO: The subject we pass is just a guess - see what public CAs do!?
+        # NOTE: RFC 6960 does not specify much about how the certificate should look like. In particular, it
+        # does not specify any requirements on the subject, so we just pass the subject of the certificate
+        # authority.
         cert = Certificate.objects.create_cert(
             ca=self,
             csr=csr,
@@ -976,6 +978,8 @@ class CertificateAuthority(X509CertMixin):
             password=password,
             expires=expires,
             add_ocsp_url=False,
+            add_san_as_cn=False,
+            ignore_profile_subject=True,
         )
 
         cert_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.pem")

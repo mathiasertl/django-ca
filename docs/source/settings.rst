@@ -221,10 +221,18 @@ CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 .. _settings-ca-default-subject:
 
 CA_DEFAULT_SUBJECT
-   Default: ``tuple()`` (empty tuple)
+   Default: ``None``
 
-   The default subject to use. The keys of this dictionary are the valid fields in X509 certificate subjects.
-   Example::
+   The default subject for :doc:`profiles` that don't define their own subject. You can use this setting to
+   define a default subject for all profiles without having to define the subject in every profile.
+
+   Please see :ref:`profiles-subject` for the effects of this value.
+
+   Any value given here must have its attribute type named in :ref:`settings-ca-default-name-order`, otherwise
+   signing certificates will fail.
+
+   In its most trivial form, this value is a ``tuple`` consisting of two-tuples naming the attribute type and
+   value. Attribute types must be one of the values in :py:attr:`~django_ca.constants.NAME_OID_TYPES`::
 
       CA_DEFAULT_SUBJECT = (
          ("C", "AT"),
@@ -232,8 +240,25 @@ CA_DEFAULT_SUBJECT
          ("L", "Vienna"),
          ("O", "Example"),
          ("OU", "Example Unit"),
-         ("emailAddress", "user@example.com"),
       )
+
+   For complex use cases, the value can also be a :py:class:`x509.Name <cg:cryptography.x509.Name>` instance.
+   For convenience, you can also give :py:class:`x509.NameAttribute <cg:cryptography.x509.NameAttribute>`
+   instances in the tuple defined above, or use an
+   :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as key::
+
+      CA_DEFAULT_NAME_ORDER = (
+         # ...
+         NameOID.INN,
+         NameOID.POSTAL_CODE,
+      )
+      CA_DEFAULT_SUBJECT = (
+         NameAttribute(NameOID.INN, "An exotic inn"),
+         (NameOID.POSTAL_CODE, "1010"),
+      )
+
+      # Or you just define the full name:
+      #CA_DEFAULT_SUBJECT = x509.Name(...)
 
 .. _settings-ca-dir:
 

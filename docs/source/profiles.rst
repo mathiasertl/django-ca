@@ -117,6 +117,14 @@ Option                          Default   Description
                                           <settings-ca-default-subject>`.
 =============================== ========= ====================================================================
 
+.. _profiles-subject:
+
+Configure the subject
+=====================
+
+The subject in a profile serves as a default value for subjects when signing certificates. You can use the
+:ref:`settings-ca-default-subject` setting to set a default value for all profiles.
+
 Configure extensions
 ====================
 

@@ -15,7 +15,6 @@
 
 import os
 import re
-import typing
 import warnings
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple, Type
@@ -34,38 +33,46 @@ from django.utils.translation import gettext_lazy as _
 from django_ca import constants, deprecation
 
 
-def _normalize_subject(value: Any, hint: str) -> Tuple[Tuple[str, str], ...]:
+def _normalize_x509_name(value: Any, hint: str) -> Optional[x509.Name]:
+    if value is None or isinstance(value, x509.Name):
+        return value
     if not isinstance(value, (tuple, list)):
-        raise ImproperlyConfigured(f"{hint}: Value must be a list or tuple.")
+        raise ImproperlyConfigured(f"{hint}: {value}: Value must be an x509.Name, list or tuple.")
 
-    subject: List[Tuple[str, str]] = []
+    name_attributes: List[x509.NameAttribute] = []
     for elem in value:
-        if not isinstance(elem, (tuple, list)):
-            raise ImproperlyConfigured(f"{hint}: {elem}: Items must be a list or tuple.")
-        if len(elem) != 2:
-            raise ImproperlyConfigured(
-                f"{hint}: {elem}: Must be lists/tuples with two items, got {len(elem)}."
-            )
-        if not isinstance(elem[0], str):
-            raise ImproperlyConfigured(f"{hint}: {elem[0]}: Item keys must be strings.")
-        if not isinstance(elem[1], str):
-            raise ImproperlyConfigured(f"{hint}: {elem[1]}: Item values must be strings.")
+        if isinstance(elem, x509.NameAttribute):
+            name_attributes.append(elem)
+        elif isinstance(elem, (tuple, list)):
+            if len(elem) != 2:
+                raise ImproperlyConfigured(
+                    f"{hint}: {elem}: Must be lists/tuples with two items, got {len(elem)}."
+                )
+            if not isinstance(elem[1], str):
+                raise ImproperlyConfigured(f"{hint}: {elem[1]}: Item values must be strings.")
 
-        subject.append(typing.cast(Tuple[str, str], tuple(elem)))
-    return tuple(subject)
+            name_oid = _normalize_name_oid(elem[0])
+            name_attribute = x509.NameAttribute(oid=name_oid, value=elem[1])
+            name_attributes.append(name_attribute)
+        else:
+            raise ImproperlyConfigured(f"{hint}: {elem}: Items must be a x509.NameAttribute, list or tuple.")
+
+    if not name_attributes:
+        return None
+    return x509.Name(name_attributes)
 
 
 def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
     """Normalize str to x509.NameOID."""
     if isinstance(value, x509.ObjectIdentifier):
         return value
-    elif isinstance(value, str):
+    if isinstance(value, str):
         try:
             return constants.NAME_OID_TYPES[value]
-        except KeyError as ex:
-            raise ImproperlyConfigured(f"{ex.args[0]}: Unknown Name identifier.") from ex
-    else:
-        raise ImproperlyConfigured(f"{value}: Must be a str or x509.NameOID member.")
+        except KeyError as kex:
+            raise ImproperlyConfigured(f"{kex.args[0]}: Unknown attribute type.") from kex
+
+    raise ImproperlyConfigured(f"{value}: Must be a x509.ObjectIdentifier or str.")
 
 
 if "CA_DIR" in os.environ:  # pragma: no cover
@@ -202,8 +209,8 @@ if CA_DEFAULT_CA != "0":
 if re.search("[^0-9A-F]", CA_DEFAULT_CA):
     raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
-CA_DEFAULT_SUBJECT: Tuple[Tuple[str, str], ...] = getattr(settings, "CA_DEFAULT_SUBJECT", tuple())
-CA_DEFAULT_SUBJECT = _normalize_subject(CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
+_CA_DEFAULT_SUBJECT = getattr(settings, "CA_DEFAULT_SUBJECT", None)
+CA_DEFAULT_SUBJECT: Optional[x509.Name] = _normalize_x509_name(_CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
 
 _CA_DEFAULT_NAME_ORDER = (
     x509.NameOID.DN_QUALIFIER,
@@ -245,7 +252,8 @@ for name, profile in CA_PROFILES.items():
     profile.setdefault("subject", CA_DEFAULT_SUBJECT)
     profile.setdefault("cn_in_san", True)
 
-    profile["subject"] = _normalize_subject(profile["subject"], f"subject in {name} profile")
+    if subject := profile.get("subject"):
+        profile["subject"] = _normalize_x509_name(subject, f"subject in {name} profile.")
 
 if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")

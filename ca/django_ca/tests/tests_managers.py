@@ -315,7 +315,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:
         """Test that creating a cert with no CommonName or SubjectAlternativeName is an error."""
-        subject = None
+        subject = x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")])
 
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with self.assertRaisesRegex(ValueError, msg), self.assertCreateCertSignals(False, False):
