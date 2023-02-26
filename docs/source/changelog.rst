@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
+* The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 
 .. _changelog-1.23.0:
 
@@ -923,8 +924,8 @@ Python API
   value accepted by the constructor of the specific class.
 * Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
 * ``django_ca.subject.Subject`` now implements every ``dict`` method.
-* The :py:func:`~django_ca.signals.pre_issue_cert` signal will now receive normalized values.
-* The :py:func:`~django_ca.signals.pre_issue_cert` signal is only invoked after all parameters are verified.
+* The ``~django_ca.signals.pre_issue_cert`` signal will now receive normalized values.
+* The ``~django_ca.signals.pre_issue_cert`` signal is only invoked after all parameters are verified.
 * Implement the ``django_ca.extensions.AuthorityInformationAccess``,
   ``django_ca.extensions.BasicConstraints``, ``django_ca.extensions.IssuerAlternativeName``,
   ``django_ca.extensions.SubjectAlternativeName`` and ``django_ca.extensions.NameConstraints`` extensions.
