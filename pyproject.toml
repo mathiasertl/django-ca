@@ -23,6 +23,24 @@ docker-image-blacklist = [
     "python:3.11-alpine3.15",
 ]
 
+[django-ca.validation]
+# list glob-style patterns to exclude from any check
+excludes = [
+    "ca/django_ca/migrations/0001_initial.py",
+    "ca/django_ca/migrations/*_auto_*.py",
+]
+# Files known to be stand-alone scripts (-> they include a shebang line)
+standalone-scripts = [
+    "ca/manage.py",
+    "ca/django_ca/tests/fixtures/django-ca-dns-clean.py",
+    "ca/django_ca/tests/fixtures/django-ca-dns-auth.py",
+    "devscripts/standalone/validate-testdata.py",
+    "devscripts/standalone/test-imports.py",
+    "devscripts/standalone/create-testdata.py",
+    "devscripts/standalone/clean.py",
+    "devscripts/standalone/check-clean-docker.py",
+]
+
 [tool.black]
 line-length = 110
 extend-exclude = "(migrations|stubs)/"

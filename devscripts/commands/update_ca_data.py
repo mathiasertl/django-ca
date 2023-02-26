@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
 # django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General

@@ -15,7 +15,7 @@
 import argparse
 import importlib
 
-from devscripts.commands import DevCommand, ParserError
+from devscripts.commands import DevCommand
 
 
 class Command(DevCommand):
@@ -41,6 +41,7 @@ class Command(DevCommand):
 
         subcommands = parser.add_subparsers(dest="subcommand", required=True)
         subcommands.add_parser("state")
+        subcommands.add_parser("license-headers")
         subcommands.add_parser("docker", parents=[docker_options])
         compose_parser = subcommands.add_parser(
             "docker-compose", help="Validate docker compose setup.", parents=[docker_options]
@@ -71,9 +72,7 @@ class Command(DevCommand):
 
         release = self.django_ca.__version__  # pylint: disable=no-member  # from lazy import
 
-        if args.subcommand == "state":
-            submodule.validate()
-        elif args.subcommand == "docker":
+        if args.subcommand == "docker":
             submodule.validate(release=release, prune=args.docker_prune, build=args.build)
         elif args.subcommand == "docker-compose":
             submodule.validate(
@@ -86,6 +85,5 @@ class Command(DevCommand):
             )
         elif args.subcommand == "wheel":
             submodule.validate(release)
-        else:  # pragma: no cover
-            # COVERAGE NOTE: This should not happen, parser catches all errors.
-            raise ParserError("Unknown subcommand.")
+        else:
+            submodule.validate()

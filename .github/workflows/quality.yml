@@ -45,9 +45,12 @@ jobs:
       - name: Run black, isort and flake8
         run: python dev.py code-quality
 
-      # Will show outdate dependencies, etc
+      # Will show outdated dependencies, etc
       - name: Validate state
         run: python dev.py validate state
+
+      - name: Check license headers
+        run: python dev.py validate license-headers
 
       - name: Validate sdist/wheel
         run: |
