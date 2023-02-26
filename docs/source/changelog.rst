@@ -12,6 +12,7 @@ ChangeLog
 
 * Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
 * The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
+* Add typehints when installing as wheel.
 
 .. _changelog-1.23.0:
 
