@@ -13,7 +13,7 @@
 
 """django-ca root module."""
 
-import typing
+from typing import Any, Tuple
 
 # WARNING: This module MUST NOT include any dependencies, as it is read by setup.py
 
@@ -26,5 +26,5 @@ VERSION = (1, 24, 0, "dev", 1)
 __version__ = ".".join([str(e) for e in VERSION[:3]])
 if len(VERSION) > 3:  # pragma: no cover
     # NOTE: dev_elements hack here only to make mypy happy in both dev and non-dev versions
-    dev_elements: typing.Tuple[typing.Any, ...] = VERSION[3:5]
+    dev_elements: Tuple[Any, ...] = VERSION[3:5]
     __version__ += f".{''.join(str(e) for e in dev_elements)}"

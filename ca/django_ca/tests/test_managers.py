@@ -13,8 +13,8 @@
 
 """TestCases for various model managers."""
 
-import typing
 import unittest
+from typing import List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -41,7 +41,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         ca: CertificateAuthority,
         name: str,
         subject: x509.Name,
-        parent: typing.Optional[CertificateAuthority] = None,
+        parent: Optional[CertificateAuthority] = None,
     ) -> None:
         """Assert some basic properties of a CA."""
         parent_ca = parent or ca
@@ -172,7 +172,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         tls_feature = self.tls_feature(x509.TLSFeatureType.status_request)
         name_constraints = self.name_constraints(permitted=[dns(".com")])
-        extensions: typing.List[x509.Extension[x509.ExtensionType]] = [
+        extensions: List[x509.Extension[x509.ExtensionType]] = [
             tls_feature,
             self.ocsp_no_check(),
             name_constraints,
@@ -351,7 +351,7 @@ class TypingTestCase(unittest.TestCase):
     def test_get(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get(pk=1)
 
-    def test_first(self) -> typing.Optional[CertificateAuthority]:
+    def test_first(self) -> Optional[CertificateAuthority]:
         return CertificateAuthority.objects.first()
 
     def test_get_queryset(self) -> CertificateAuthorityQuerySet:
@@ -397,7 +397,7 @@ class TypingTestCase(unittest.TestCase):
     def test_cert_get(self) -> Certificate:
         return Certificate.objects.get(pk=1)
 
-    def test_cert_first(self) -> typing.Optional[Certificate]:
+    def test_cert_first(self) -> Optional[Certificate]:
         return Certificate.objects.first()
 
     def test_cert_get_queryset(self) -> CertificateQuerySet:

@@ -13,7 +13,7 @@
 
 """Test the view_ca management command."""
 
-import typing
+from typing import Any
 
 from django.test import TestCase
 
@@ -1042,7 +1042,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     def test_no_no_private_key(self) -> None:
         """Test viewing when we have no private key."""
 
-        def side_effect(cls: typing.Any) -> None:
+        def side_effect(cls: Any) -> None:
             raise NotImplementedError
 
         ca_storage = "django_ca.management.commands.view_ca.ca_storage.%s"

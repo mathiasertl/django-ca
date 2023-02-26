@@ -14,6 +14,7 @@
 
 import logging
 import typing
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -34,7 +35,7 @@ from django_ca.utils import ADMIN_SUBJECT_OIDS, format_general_name
 log = logging.getLogger(__name__)
 
 
-ExtensionWidgetsType = typing.Tuple[typing.Union[typing.Type[forms.Widget], forms.Widget], ...]
+ExtensionWidgetsType = Tuple[Union[Type[forms.Widget], forms.Widget], ...]
 
 
 class DjangoCaWidgetMixin:
@@ -46,7 +47,7 @@ class DjangoCaWidgetMixin:
     the ``css_classes`` attribute.
     """
 
-    css_classes: typing.Iterable[str] = ("django-ca-widget",)
+    css_classes: Iterable[str] = ("django-ca-widget",)
 
     def get_css_classes(self) -> typing.Set[str]:
         """Get set of configured CSS classes."""
@@ -55,7 +56,7 @@ class DjangoCaWidgetMixin:
             css_classes |= set(getattr(cls, "css_classes", set()))
         return css_classes
 
-    def add_css_classes(self, attrs: typing.Dict[str, str]) -> None:
+    def add_css_classes(self, attrs: Dict[str, str]) -> None:
         """Add CSS classes to the passed attributes."""
         css_classes = " ".join(sorted(self.get_css_classes()))
 
@@ -64,10 +65,10 @@ class DjangoCaWidgetMixin:
         else:
             attrs["class"] = css_classes
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
-        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
+        ctx: Dict[str, Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
         self.add_css_classes(ctx["widget"]["attrs"])
         return ctx
 
@@ -81,18 +82,18 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
 
     css_classes = ("django-ca-multiwidget",)
     template_name = "django_ca/forms/widgets/multiwidget.html"
-    labels: typing.Tuple[typing.Optional[str], ...] = ()
-    help_texts: typing.Tuple[typing.Optional[str], ...] = ()
+    labels: Tuple[Optional[str], ...] = ()
+    help_texts: Tuple[Optional[str], ...] = ()
 
     class Media:
         css = {
             "all": ("django_ca/admin/css/multiwidget.css",),
         }
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
-        ctx: typing.Dict[str, typing.Any] = super().get_context(*args, **kwargs)
+        ctx: Dict[str, Any] = super().get_context(*args, **kwargs)
         for widget, label in zip(ctx["widget"]["subwidgets"], self.labels):
             widget["label"] = label
         for widget, help_text in zip(ctx["widget"]["subwidgets"], self.help_texts):
@@ -119,12 +120,12 @@ class LabeledCheckboxInput(CheckboxInput):
 
     template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 
-    def __init__(self, label: str, wrapper_classes: typing.Iterable[str] = tuple()) -> None:
+    def __init__(self, label: str, wrapper_classes: Iterable[str] = tuple()) -> None:
         self.wrapper_classes = tuple(wrapper_classes) + ("labeled-checkbox",)
         self.label = label
         super().__init__()
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["wrapper_classes"] = " ".join(self.wrapper_classes)
         ctx["widget"]["label"] = self.label
@@ -145,11 +146,11 @@ class CriticalInput(LabeledCheckboxInput):
     css_classes = ("critical",)
     template_name = "django_ca/forms/widgets/critical.html"
 
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.oid = kwargs.pop("oid")
         super().__init__(label=_("critical"), wrapper_classes=("critical",))
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["oid"] = self.oid.dotted_string
         return ctx
@@ -162,11 +163,11 @@ class LabeledTextInput(widgets.TextInput):
 
     template_name = "django_ca/forms/widgets/labeledtextinput.html"
 
-    def __init__(self, label: str, *args: typing.Any, **kwargs: typing.Any):
+    def __init__(self, label: str, *args: Any, **kwargs: Any):
         self.label = label
         super().__init__(*args, **kwargs)
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["label"] = self.label
         ctx["widget"]["cssid"] = self.label.lower().replace(" ", "-")
@@ -189,7 +190,7 @@ class ProfileWidget(widgets.Select):
 
     template_name = "django_ca/forms/widgets/profile.html"
 
-    def get_context(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["desc"] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
             "description", ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("desc", "")
@@ -213,7 +214,7 @@ class CustomMultiWidget(widgets.MultiWidget):  # pylint: disable=abstract-method
 class SubjectWidget(CustomMultiWidget):
     """Widget for a :py:class:`~django_ca.subject.Subject`."""
 
-    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None) -> None:
+    def __init__(self, attrs: Optional[Dict[str, str]] = None) -> None:
         _widgets = (
             SubjectTextInput(label=_("Country"), attrs={"placeholder": "2 character country code"}),
             SubjectTextInput(label=_("State")),
@@ -225,7 +226,7 @@ class SubjectWidget(CustomMultiWidget):
         )
         super().__init__(_widgets, attrs)
 
-    def decompress(self, value: typing.Optional[x509.Name]) -> typing.List[str]:
+    def decompress(self, value: Optional[x509.Name]) -> List[str]:
         if not value:
             return ["" for attr in ADMIN_SUBJECT_OIDS]
 
@@ -236,9 +237,7 @@ class SubjectWidget(CustomMultiWidget):
 class GeneralNamesWidget(Textarea):
     """Widget for a list of :py:class:`~cg:cryptography.x509.GeneralName` instances."""
 
-    def format_value(
-        self, value: typing.Optional[typing.Union[str, typing.Iterable[x509.GeneralName]]]
-    ) -> str:
+    def format_value(self, value: Optional[Union[str, Iterable[x509.GeneralName]]]) -> str:
         if isinstance(value, str):  # Received during form rendering for a bound form with errors
             return value
         if not value:
@@ -252,15 +251,15 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
     Subclasses of this class are expected to set the `extension_widgets` attribute or implement `get_widgets`.
     """
 
-    extension_widgets: typing.Optional[ExtensionWidgetsType]
+    extension_widgets: Optional[ExtensionWidgetsType]
     oid: x509.ObjectIdentifier
     css_classes = ("extension",)
 
-    def __init__(self, attrs: typing.Optional[typing.Dict[str, str]] = None, **kwargs: typing.Any) -> None:
+    def __init__(self, attrs: Optional[Dict[str, str]] = None, **kwargs: Any) -> None:
         sub_widgets = self.get_widgets(**kwargs) + (CriticalInput(oid=self.oid),)
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
-    def get_widgets(self, **kwargs: typing.Any) -> ExtensionWidgetsType:
+    def get_widgets(self, **kwargs: Any) -> ExtensionWidgetsType:
         """Get sub-widgets used by this widget."""
         if self.extension_widgets is not None:  # pragma: no branch
             return self.extension_widgets
@@ -286,10 +285,10 @@ class DistributionPointWidget(ExtensionWidget):
     )
 
     def decompress(
-        self, value: typing.Optional[x509.Extension[x509.CRLDistributionPoints]]
-    ) -> typing.Tuple[str, str, str, typing.List[str], bool]:
+        self, value: Optional[x509.Extension[x509.CRLDistributionPoints]]
+    ) -> Tuple[str, str, str, List[str], bool]:
         full_name = relative_name = crl_issuer = ""
-        reasons: typing.List[str] = []
+        reasons: List[str] = []
 
         if value is None:
             return full_name, relative_name, crl_issuer, reasons, EXTENSION_DEFAULT_CRITICAL[self.oid]
@@ -313,8 +312,8 @@ class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an
     """Base class for widgets that can be displayed with a simple SelectMultiple widget."""
 
     def get_widgets(  # type: ignore[override]  # we are more specific here
-        self, choices: typing.Sequence[typing.Tuple[str, str]]
-    ) -> typing.Tuple[widgets.SelectMultiple]:
+        self, choices: typing.Sequence[Tuple[str, str]]
+    ) -> Tuple[widgets.SelectMultiple]:
         return (widgets.SelectMultiple(choices=choices),)
 
 
@@ -336,8 +335,8 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def decompress(
-        self, value: typing.Optional[x509.Extension[x509.AuthorityInformationAccess]]
-    ) -> typing.Tuple[typing.List[x509.GeneralName], typing.List[x509.GeneralName], bool]:
+        self, value: Optional[x509.Extension[x509.AuthorityInformationAccess]]
+    ) -> Tuple[List[x509.GeneralName], List[x509.GeneralName], bool]:
         if value is None:
             return ([], [], EXTENSION_DEFAULT_CRITICAL[self.oid])
 
@@ -373,9 +372,7 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.EXTENDED_KEY_USAGE
 
-    def decompress(
-        self, value: typing.Optional[x509.Extension[x509.ExtendedKeyUsage]]
-    ) -> typing.Tuple[typing.List[str], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.ExtendedKeyUsage]]) -> Tuple[List[str], bool]:
         if value is None:
             return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
         choices = [EXTENDED_KEY_USAGE_NAMES[usage] for usage in value.value]
@@ -393,9 +390,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.KEY_USAGE
 
-    def decompress(
-        self, value: typing.Optional[x509.Extension[x509.KeyUsage]]
-    ) -> typing.Tuple[typing.List[str], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> Tuple[List[str], bool]:
         if value is None:
             return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
         choices = []
@@ -421,8 +416,8 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
 
     def decompress(
-        self, value: typing.Optional[x509.Extension[x509.IssuerAlternativeName]]
-    ) -> typing.Tuple[typing.List[x509.GeneralName], bool]:
+        self, value: Optional[x509.Extension[x509.IssuerAlternativeName]]
+    ) -> Tuple[List[x509.GeneralName], bool]:
         if value is None:
             return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
         return (list(value.value), value.critical)
@@ -434,9 +429,7 @@ class OCSPNoCheckWidget(ExtensionWidget):
     extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
     oid = ExtensionOID.OCSP_NO_CHECK
 
-    def decompress(
-        self, value: typing.Optional[x509.Extension[x509.OCSPNoCheck]]
-    ) -> typing.Tuple[bool, bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.OCSPNoCheck]]) -> Tuple[bool, bool]:
         if value is None:
             return (False, EXTENSION_DEFAULT_CRITICAL[self.oid])
         return (True, value.critical)
@@ -455,20 +448,20 @@ class SubjectAlternativeNameWidget(ExtensionWidget):
     #       https://github.com/django/django/commit/37602e49484a88867f40e9498f86c49c2d1c5d7c
     def decompress(
         self,
-        value: typing.Optional[
-            typing.Union[
-                typing.Tuple[typing.List[x509.GeneralName], bool, bool],
-                typing.Tuple[x509.Extension[x509.SubjectAlternativeName], bool],
+        value: Optional[
+            Union[
+                Tuple[List[x509.GeneralName], bool, bool],
+                Tuple[x509.Extension[x509.SubjectAlternativeName], bool],
             ]
         ],
-    ) -> typing.Tuple[typing.List[x509.GeneralName], bool, bool]:  # pragma: no cover
+    ) -> Tuple[List[x509.GeneralName], bool, bool]:  # pragma: no cover
         if value is None:
             default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
             return ([], default_cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid])
 
         if len(value) == 3:
             # TYPE NOTE: mypy does not eleminate two-tuple from union in length check
-            return typing.cast(typing.Tuple[typing.List[x509.GeneralName], bool, bool], value)
+            return typing.cast(Tuple[List[x509.GeneralName], bool, bool], value)
 
         ext, cn_in_san = value  # type: ignore[misc]
         if ext is None:
@@ -482,9 +475,7 @@ class TLSFeatureWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.TLS_FEATURE
 
-    def decompress(
-        self, value: typing.Optional[x509.Extension[x509.TLSFeature]]
-    ) -> typing.Tuple[typing.List[str], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.TLSFeature]]) -> Tuple[List[str], bool]:
         if value is None:
             return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
         return ([feature.name for feature in value.value], value.critical)

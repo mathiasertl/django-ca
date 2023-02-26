@@ -16,6 +16,7 @@
 import io
 import tempfile
 import typing
+from typing import Tuple
 
 from cryptography.x509.oid import ExtensionOID
 
@@ -162,22 +163,22 @@ class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a su
 
     # pylint: disable=missing-function-docstring
 
-    def cmd_basic(self) -> typing.Tuple[str, str]:
+    def cmd_basic(self) -> Tuple[str, str]:
         stdout, stderr = self.cmd("example")
         return stdout, stderr
 
-    def cmd_explicit(self) -> typing.Tuple[str, str]:
+    def cmd_explicit(self) -> Tuple[str, str]:
         stdout, stderr = self.cmd("example", stdout=io.StringIO(), stderr=io.StringIO())
         return stdout, stderr
 
-    def cmd_stdout_bytes(self) -> typing.Tuple[bytes, str]:
+    def cmd_stdout_bytes(self) -> Tuple[bytes, str]:
         stdout, stderr = self.cmd("example", stdout=io.BytesIO())
         return stdout, stderr
 
-    def cmd_stderr_bytes(self) -> typing.Tuple[str, bytes]:
+    def cmd_stderr_bytes(self) -> Tuple[str, bytes]:
         stdout, stderr = self.cmd("example", stderr=io.BytesIO())
         return stdout, stderr
 
-    def cmd_bytes(self) -> typing.Tuple[bytes, bytes]:
+    def cmd_bytes(self) -> Tuple[bytes, bytes]:
         stdout, stderr = self.cmd("example", stdout=io.BytesIO(), stderr=io.BytesIO())
         return stdout, stderr

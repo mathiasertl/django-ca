@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/topics/checks/
 """
 
-import typing
+from typing import Any, List, Optional
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -32,16 +32,14 @@ _UNSUPPORTED_BACKENDS = (
 
 
 @register(Tags.caches, deploy=True)  # type: ignore[type-var]  # django-stubs does not type-hint the decorator
-def check_cache(
-    app_configs: typing.Optional[typing.List[AppConfig]], **kwargs: typing.Any
-) -> typing.List[CheckMessage]:
+def check_cache(app_configs: Optional[List[AppConfig]], **kwargs: Any) -> List[CheckMessage]:
     """Check that a cache is configured and issue a warning if the cache is not a shared cache."""
 
     # only run checks if manage.py check is run with no app labels (== all) or the django_ca app label
     if app_configs is not None and not [config for config in app_configs if config.name == "django_ca"]:
         return []
 
-    errors: typing.List[CheckMessage] = []
+    errors: List[CheckMessage] = []
 
     config = settings.CACHES.get("default")
     if config is None:

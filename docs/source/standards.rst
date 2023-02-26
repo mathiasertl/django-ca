@@ -39,7 +39,7 @@ check typehints, use :command:`mypy`:
 
 The code generally imports the typing module as a whole, with the most common types imported directly to
 increase readability. The following types should be imported directly: ``Any``, ``Dict``, ``Iterable``,
-``List``, ``Optional``, ``Tuple`` and ``Union``.
+``Iterator``, ``List``, ``Optional``, ``Tuple`` and ``Type``, ``Union``.
 
 Thus::
 

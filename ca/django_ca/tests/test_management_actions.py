@@ -17,9 +17,9 @@ import argparse
 import doctest
 import os
 import sys
-import typing
 from datetime import timedelta
 from io import StringIO
+from typing import Any, List, Optional
 from unittest import TestLoader, TestSuite, mock
 
 from cryptography import x509
@@ -38,12 +38,12 @@ from django_ca.tests.base.mixins import TestCaseMixin
 
 
 def load_tests(  # pylint: disable=unused-argument
-    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+    loader: TestLoader, tests: TestSuite, ignore: Optional[str] = None
 ) -> TestSuite:
     """Load doctests"""
 
     # Trick so that every doctest in module gets completely new argument parser
-    def set_up(self: typing.Any) -> None:
+    def set_up(self: Any) -> None:
         self.globs["parser"] = argparse.ArgumentParser()
 
     tests.addTests(doctest.DocTestSuite("django_ca.management.actions", setUp=set_up))
@@ -56,7 +56,7 @@ class ParserTestCaseMixin(TestCaseMixin):
     parser: argparse.ArgumentParser
 
     def assertParserError(  # pylint: disable=invalid-name
-        self, args: typing.List[str], expected: str, **kwargs: typing.Any
+        self, args: List[str], expected: str, **kwargs: Any
     ) -> str:
         """Assert that given args throw a parser error."""
 
@@ -82,9 +82,7 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
             "--alt", action=actions.AlternativeNameAction, extension_type=x509.SubjectAlternativeName
         )
 
-    def assertValue(  # pylint: disable=invalid-name
-        self, namespace: argparse.Namespace, value: typing.Any
-    ) -> None:
+    def assertValue(self, namespace: argparse.Namespace, value: Any) -> None:  # pylint: disable=invalid-name
         """Assert a given extension value."""
 
         extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)

@@ -18,6 +18,7 @@ import os
 import typing
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import List, Optional, Union
 from unittest import mock
 
 import asn1crypto.ocsp
@@ -243,11 +244,11 @@ class OCSPViewTestMixin(TestCaseMixin):
         # pylint: disable=invalid-name
         self,
         http_response: "HttpResponse",
-        requested: typing.List[typing.Union[Certificate, CertificateAuthority]],
+        requested: List[Union[Certificate, CertificateAuthority]],
         status: str = "successful",
-        nonce: typing.Optional[bytes] = None,
+        nonce: Optional[bytes] = None,
         expires: int = 600,
-        ocsp_cert: typing.Optional[Certificate] = None,
+        ocsp_cert: Optional[Certificate] = None,
         ca_request: bool = False,
     ) -> None:
         """Assert an OCSP request."""

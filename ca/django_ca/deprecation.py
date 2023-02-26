@@ -17,10 +17,11 @@ import functools
 import typing
 import warnings
 from inspect import signature
+from typing import Any, Tuple, Type, Union
 
 # IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
 
-F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
+F = typing.TypeVar("F", bound=typing.Callable[..., Any])
 
 
 class RemovedInDjangoCA125Warning(PendingDeprecationWarning):
@@ -43,10 +44,8 @@ class RemovedInDjangoCA127Warning(PendingDeprecationWarning):
 
 RemovedInNextVersionWarning = RemovedInDjangoCA125Warning
 
-DeprecationWarningType = typing.Union[
-    typing.Type[RemovedInDjangoCA125Warning],
-    typing.Type[RemovedInDjangoCA126Warning],
-    typing.Type[RemovedInDjangoCA127Warning],
+DeprecationWarningType = Union[
+    Type[RemovedInDjangoCA125Warning], Type[RemovedInDjangoCA126Warning], Type[RemovedInDjangoCA127Warning]
 ]
 
 
@@ -61,7 +60,7 @@ def deprecate_argument(
 
     def decorator_deprecate(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             sig = signature(func)
             bound = sig.bind(*args, **kwargs)
             if arg in bound.arguments:
@@ -80,7 +79,7 @@ def deprecate_argument(
 
 def deprecate_type(
     arg: str,
-    types: typing.Union[typing.Type[typing.Any], typing.Tuple[typing.Type[typing.Any], ...]],
+    types: Union[Type[Any], Tuple[Type[Any], ...]],
     category: DeprecationWarningType,
     stacklevel: int = 2,
 ) -> typing.Callable[[F], F]:  # pragma: no cover  # not used at the beginning of 1.24.0 development
@@ -88,7 +87,7 @@ def deprecate_type(
 
     def decorator_deprecate(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             sig = signature(func)
             bound = sig.bind(*args, **kwargs)
             if arg in bound.arguments and isinstance(bound.arguments.get(arg), types):

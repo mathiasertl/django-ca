@@ -22,6 +22,7 @@ import tempfile
 import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from typing import Any, Dict, Iterable, Iterator, Tuple
 from unittest.mock import patch
 
 import cryptography
@@ -38,7 +39,7 @@ from django_ca.profiles import profiles
 from django_ca.typehints import PrivateKeyTypes
 from django_ca.utils import add_colons, ca_storage
 
-FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., typing.Any])
+FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
 KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
 CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest, "der": bytes})
 _PubDict = typing.TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
@@ -60,7 +61,7 @@ class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
     der: bytes
 
 
-def _load_key(data: typing.Dict[typing.Any, typing.Any]) -> KeyDict:
+def _load_key(data: Dict[Any, Any]) -> KeyDict:
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["key_filename"])
 
@@ -74,7 +75,7 @@ def _load_key(data: typing.Dict[typing.Any, typing.Any]) -> KeyDict:
     }
 
 
-def _load_csr(data: typing.Dict[typing.Any, typing.Any]) -> CsrDict:
+def _load_csr(data: Dict[Any, Any]) -> CsrDict:
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["csr_filename"])
 
@@ -89,7 +90,7 @@ def _load_csr(data: typing.Dict[typing.Any, typing.Any]) -> CsrDict:
     }
 
 
-def _load_pub(data: typing.Dict[typing.Any, typing.Any]) -> PubDict:
+def _load_pub(data: Dict[Any, Any]) -> PubDict:
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["pub_filename"])
 
@@ -366,14 +367,14 @@ def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
 
 
 def rdn(
-    name: typing.Iterable[typing.Tuple[x509.ObjectIdentifier, str]]
+    name: Iterable[Tuple[x509.ObjectIdentifier, str]]
 ) -> x509.RelativeDistinguishedName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.RelativeDistinguishedName`."""
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
 
 
 @contextmanager
-def mock_cadir(path: str) -> typing.Iterator[None]:
+def mock_cadir(path: str) -> Iterator[None]:
     """Contextmanager to set the CA_DIR to a given path without actually creating it."""
     with override_settings(CA_DIR=path), patch.object(ca_storage, "location", path), patch.object(
         ca_storage, "_location", path

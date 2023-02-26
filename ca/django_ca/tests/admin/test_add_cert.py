@@ -18,7 +18,7 @@ import typing
 import unittest
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -911,7 +911,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
     load_cas = "__usable__"
 
     def get_expected(
-        self, profile: Profile, oid: x509.ObjectIdentifier, default: typing.Any = None
+        self, profile: Profile, oid: x509.ObjectIdentifier, default: Any = None
     ) -> SerializedExtension:
         """Get expected value for a given extension for the given profile."""
         if oid in profile.extensions:
@@ -927,7 +927,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         eku_critical: WebElement,
         tf_select: Select,
         tf_critical: WebElement,
-        subject: typing.Dict[str, WebElement],
+        subject: Dict[str, WebElement],
         cn_in_san: WebElement,
     ) -> None:
         """Assert that the admin form equals the given profile."""
@@ -977,7 +977,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         eku_critical: WebElement,
         tf_select: Select,
         tf_critical: WebElement,
-        subject: typing.Dict[str, WebElement],
+        subject: Dict[str, WebElement],
         cn_in_san: WebElement,
     ) -> None:
         """Clear the form."""

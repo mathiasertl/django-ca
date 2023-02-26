@@ -15,6 +15,7 @@
 
 import typing
 from contextlib import contextmanager
+from typing import Any, Iterator
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -52,7 +53,7 @@ class QuerySetTestCaseMixin(TestCaseMixin):
         self.assertCountEqual(qs, items)
 
     @contextmanager
-    def attr(self, obj: models.Model, attr: str, value: typing.Any) -> typing.Iterator[None]:
+    def attr(self, obj: models.Model, attr: str, value: Any) -> Iterator[None]:
         """Context manager to temporarily set an attribute for an object."""
 
         original = getattr(obj, attr)

@@ -13,7 +13,7 @@
 
 """Test the list_certs management command."""
 
-import typing
+from typing import Any
 
 from django.test import TestCase
 from django.utils import timezone
@@ -44,7 +44,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             info = f"{word}: {strftime}"
         return f"{add_colons(cert.serial)} - {cert.cn} ({info})"
 
-    def assertCerts(self, *certs: Certificate, **kwargs: typing.Any) -> None:  # pylint: disable=invalid-name
+    def assertCerts(self, *certs: Certificate, **kwargs: Any) -> None:  # pylint: disable=invalid-name
         """Assert that command outputs the given certs."""
         stdout, stderr = self.cmd("list_certs", **kwargs)
         sorted_certs = sorted(certs, key=lambda c: (c.expires, c.cn, c.serial))

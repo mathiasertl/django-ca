@@ -16,7 +16,7 @@
 
 """Test custom Django form fields."""
 
-import typing
+from typing import Type
 
 from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
@@ -41,7 +41,7 @@ DNS3 = x509.DNSName(D3)
 class FieldTestCaseMixin(TestCaseMixin):
     """Subclass of TestCaseMixin that adds a few form-field related fields."""
 
-    field_class: typing.Type[forms.Field]
+    field_class: Type[forms.Field]
 
     def assertRequiredError(self, value) -> None:  # pylint: disable=invalid-name
         """Assert that the field raises a required error for the given value."""

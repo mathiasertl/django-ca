@@ -13,7 +13,7 @@
 
 """Mixin classes for admin view test cases."""
 
-import typing
+from typing import Tuple
 
 from django_ca.models import Certificate
 from django_ca.tests.base.mixins import AdminTestCaseMixin
@@ -26,7 +26,7 @@ class CertificateAdminTestCaseMixin:
     classes.
     """
 
-    media_css: typing.Tuple[str, ...] = (
+    media_css: Tuple[str, ...] = (
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateadmin.css",
     )

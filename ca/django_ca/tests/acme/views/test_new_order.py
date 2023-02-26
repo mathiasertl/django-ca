@@ -13,10 +13,10 @@
 
 """Test creating a new order."""
 
-import typing
 from datetime import timedelta
 from datetime import timezone as tz
 from http import HTTPStatus
+from typing import Any
 
 import acme
 import acme.jws
@@ -44,7 +44,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
     url = reverse_lazy("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
     message_cls = NewOrder
 
-    def get_message(self, **kwargs: typing.Any) -> NewOrder:
+    def get_message(self, **kwargs: Any) -> NewOrder:
         """Return a  message that can be sent to the server successfully."""
         kwargs.setdefault("identifiers", [{"type": "dns", "value": self.SERVER_NAME}])
         return super().get_message(**kwargs)  # type: ignore[return-value] # base has union

@@ -14,8 +14,8 @@
 """Test :py:mod:`django_ca.deprecation`."""
 
 import contextlib
-import typing
 import warnings
+from typing import Any, Iterator
 
 from django.test import TestCase
 
@@ -62,14 +62,14 @@ class DeprecateArgumentTestCase(TestCase):
     """Test the `@deprecate_argument` decorator."""
 
     @deprecate_argument("kw", RemovedInNextVersionWarning)
-    def func(self, unused: typing.Any, kw: str = "default") -> str:  # pylint: disable=all
+    def func(self, unused: Any, kw: str = "default") -> str:  # pylint: disable=all
         """Just  a test function with a deprecated argument (used in tests)."""
         return kw
 
     @contextlib.contextmanager
     def assertWarning(  # pylint: disable=invalid-name
         self, arg: str, cls: DeprecationWarningType = RemovedInNextVersionWarning
-    ) -> typing.Iterator[None]:
+    ) -> Iterator[None]:
         """Shortcut for testing the deprecation warning emitted."""
         message = rf"Argument {arg} is deprecated and will be removed"
         with self.assertWarnsRegex(cls, message) as warn_cm:

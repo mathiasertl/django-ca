@@ -15,8 +15,8 @@
 
 import doctest
 import os
-import typing
 import unittest
+from typing import Any, Dict
 
 from cryptography import x509
 
@@ -36,7 +36,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
     load_cas = ("root",)
     load_certs = ("root-cert",)
 
-    def get_globs(self) -> typing.Dict[str, typing.Any]:
+    def get_globs(self) -> Dict[str, Any]:
         """Get globs for test cases."""
         return {
             "ca": self.ca,

@@ -18,7 +18,7 @@
 
 import abc
 import typing
-from typing import Optional, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -28,8 +28,8 @@ from django.db import models
 
 from django_ca.fields import CertificateSigningRequestField as CertificateSigningRequestFormField
 
-DecodableCertificate = typing.Union[str, bytes, x509.Certificate]
-DecodableCertificateSigningRequest = typing.Union[str, bytes, x509.CertificateSigningRequest]
+DecodableCertificate = Union[str, bytes, x509.Certificate]
+DecodableCertificateSigningRequest = Union[str, bytes, x509.CertificateSigningRequest]
 LoadedTypeVar = typing.TypeVar("LoadedTypeVar", x509.CertificateSigningRequest, x509.Certificate)
 DecodableTypeVar = typing.TypeVar(
     "DecodableTypeVar", DecodableCertificate, DecodableCertificateSigningRequest
@@ -44,7 +44,7 @@ WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ig
 if typing.TYPE_CHECKING:
 
     class LazyBinaryFieldBase(
-        models.BinaryField[typing.Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
+        models.BinaryField[Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
         typing.Generic[DecodableTypeVar, WrapperTypeVar],
     ):
         # pylint: disable=missing-class-docstring
@@ -65,9 +65,9 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
     """
 
     _bytes: bytes
-    _loaded: typing.Optional[LoadedTypeVar] = None
+    _loaded: Optional[LoadedTypeVar] = None
     _pem_token: typing.ClassVar[bytes]
-    _type: typing.Type[LoadedTypeVar]
+    _type: Type[LoadedTypeVar]
 
     def __init__(self, value: DecodableTypeVar) -> None:
         """Constructor must accept a decodable type var."""
@@ -90,7 +90,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
         else:
             raise ValueError(f"{value}: Could not parse {self._type.__name__}")
 
-    def __eq__(self, other: typing.Any) -> bool:
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and self._bytes == other._bytes
 
     def __repr__(self) -> str:
@@ -171,14 +171,14 @@ class LazyBinaryField(
 ):
     """Base class for binary modelfields that parse the value when first used."""
 
-    formfield_class: typing.Type[forms.Field]
-    wrapper: typing.Type[WrapperTypeVar]
+    formfield_class: Type[forms.Field]
+    wrapper: Type[WrapperTypeVar]
 
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("editable", True)
         super().__init__(*args, **kwargs)
 
-    def deconstruct(self) -> typing.Tuple[str, str, typing.List[str], typing.Dict[str, str]]:
+    def deconstruct(self) -> Tuple[str, str, List[str], Dict[str, str]]:
         """Used in migrations."""
         name, path, args, kwargs = super().deconstruct()
 
@@ -190,8 +190,8 @@ class LazyBinaryField(
         return name, path, args, kwargs
 
     def from_db_value(  # pylint: disable=unused-argument
-        self, value: typing.Optional[bytes], expression: typing.Any, condition: typing.Any
-    ) -> typing.Optional[WrapperTypeVar]:
+        self, value: Optional[bytes], expression: Any, condition: Any
+    ) -> Optional[WrapperTypeVar]:
         """Called when data is loaded from the database.
 
         This is called when
@@ -205,8 +205,8 @@ class LazyBinaryField(
 
     def get_prep_value(
         self,
-        value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
-    ) -> typing.Optional[bytes]:
+        value: Optional[Union[WrapperTypeVar, DecodableTypeVar]],
+    ) -> Optional[bytes]:
         """Get the raw database value.
 
         This is called when
@@ -224,7 +224,7 @@ class LazyBinaryField(
         self,
         form_class: Optional[Type[forms.Field]] = None,
         choices_form_class: Optional[Type[forms.Field]] = None,
-        **kwargs: typing.Any,
+        **kwargs: Any,
     ) -> forms.Field:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
@@ -234,8 +234,8 @@ class LazyBinaryField(
 
     def to_python(
         self,
-        value: typing.Optional[typing.Union[WrapperTypeVar, DecodableTypeVar]],
-    ) -> typing.Optional[WrapperTypeVar]:
+        value: Optional[Union[WrapperTypeVar, DecodableTypeVar]],
+    ) -> Optional[WrapperTypeVar]:
         """Called during deserialization and during Certificate.full_clean().
 
         Note that this function is **not** called if the field value is ``None`` or ``b""``. It is however

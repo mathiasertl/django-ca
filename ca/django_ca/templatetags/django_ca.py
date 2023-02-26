@@ -13,7 +13,7 @@
 
 """Template tags used by the admin interface."""
 
-import typing
+from typing import Any, Iterable, List, Union
 
 from cryptography import x509
 
@@ -48,13 +48,13 @@ def critical_help(dotted_string: str) -> str:
 @register.filter
 def access_method(
     value: x509.AuthorityInformationAccess, oid: x509.ObjectIdentifier
-) -> typing.List[x509.AccessDescription]:
+) -> List[x509.AccessDescription]:
     """Get all entries of an `AuthorityInformationAccess` extension with the given access method `oid`."""
     return [ad.access_location for ad in value if ad.access_method == oid]
 
 
 @register.filter
-def sort_reasons(reasons: x509.ReasonFlags) -> typing.List[str]:
+def sort_reasons(reasons: x509.ReasonFlags) -> List[str]:
     """Return a sorted list of reasons."""
     # TYPE NOTE: mypy does not detect enum x509.ReasonsFlags as iterable
     return sorted(r.name for r in reasons)  # type: ignore[attr-defined]
@@ -72,7 +72,7 @@ def extended_key_usage_list(value: x509.ExtendedKeyUsage) -> str:
 
 
 @register.filter
-def enum(mod: typing.Any, cls_name_and_member: str) -> typing.Any:
+def enum(mod: Any, cls_name_and_member: str) -> Any:
     """A filter that makes enum members accessible in Django templates.
 
     Django will try to call callables, and since enums are callable, an empty string is returned instead in
@@ -84,7 +84,7 @@ def enum(mod: typing.Any, cls_name_and_member: str) -> typing.Any:
 
 
 @register.filter
-def format_general_names(value: typing.Iterable[x509.GeneralName]) -> typing.List[str]:
+def format_general_names(value: Iterable[x509.GeneralName]) -> List[str]:
     """A template tag to format general names.
 
     Note that currently general names always occur as list.
@@ -93,7 +93,7 @@ def format_general_names(value: typing.Iterable[x509.GeneralName]) -> typing.Lis
 
 
 @register.filter
-def as_hex(value: typing.Union[int, bytes]) -> str:
+def as_hex(value: Union[int, bytes]) -> str:
     """Takes a bytes value and returns its hex representation."""
 
     if isinstance(value, int):
@@ -108,7 +108,7 @@ def oid_name(value: x509.ObjectIdentifier) -> str:
 
 
 @register.filter
-def is_user_notice(value: typing.Any) -> bool:
+def is_user_notice(value: Any) -> bool:
     """Return ``True`` if `value` is :py:class:`~cg:cryptography.x509.UserNotice`."""
     return isinstance(value, x509.UserNotice)
 

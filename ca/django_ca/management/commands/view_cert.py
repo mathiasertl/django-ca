@@ -16,8 +16,8 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
 from datetime import datetime
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -54,7 +54,7 @@ class Command(CertCommandMixin, BinaryCommand):
         self.add_format(parser)
         super().add_arguments(parser)
 
-    def handle(self, cert: Certificate, encoding: Encoding, **options: typing.Any) -> None:
+    def handle(self, cert: Certificate, encoding: Encoding, **options: Any) -> None:
         self.stdout.write(f"Common Name: {cert.cn}")
 
         # self.stdout.write notBefore/notAfter

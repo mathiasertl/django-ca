@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
+from typing import Any
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -43,9 +43,7 @@ class Command(CertCommandMixin, BinaryCommand):
             "path", nargs="?", default="-", help='Path where to dump the certificate. Use "-" for stdout.'
         )
 
-    def handle(
-        self, cert: Certificate, bundle: bool, encoding: Encoding, path: str, **options: typing.Any
-    ) -> None:
+    def handle(self, cert: Certificate, bundle: bool, encoding: Encoding, path: str, **options: Any) -> None:
         if bundle and encoding == Encoding.DER:
             raise CommandError("Cannot dump bundle when using DER format.")
 

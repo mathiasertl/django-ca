@@ -16,6 +16,7 @@
 import typing
 import unittest
 from http import HTTPStatus
+from typing import Any
 
 import acme
 import josepy as jose
@@ -64,7 +65,7 @@ class AcmeCertificateRevocationViewTestCase(
         """Get URL for the standard auth object."""
         return self.get_url(serial=self.ca.serial)
 
-    def get_message(self, **kwargs: typing.Any) -> acme.messages.Revocation:
+    def get_message(self, **kwargs: Any) -> acme.messages.Revocation:
         kwargs.setdefault(
             "certificate", jose.util.ComparableX509(X509.from_cryptography(self.cert.pub.loaded))
         )
@@ -156,7 +157,7 @@ class AcmeCertificateRevocationWithAuthorizationsViewTestCase(AcmeCertificateRev
             order=self.acme_order, value="child-cert.example.com", status=AcmeAuthorization.STATUS_VALID
         )
 
-    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> "HttpResponse":
+    def acme(self, *args: Any, **kwargs: Any) -> "HttpResponse":
         kwargs.setdefault("cert", certs["child-cert"]["key"]["parsed"])
         kwargs["kid"] = self.child_kid
         return super().acme(*args, **kwargs)
@@ -207,7 +208,7 @@ class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationView
 
     requires_kid = False
 
-    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> "HttpResponse":
+    def acme(self, *args: Any, **kwargs: Any) -> "HttpResponse":
         kwargs.setdefault("cert", certs[self.default_cert]["key"]["parsed"])
         kwargs["kid"] = None
         return super().acme(*args, **kwargs)

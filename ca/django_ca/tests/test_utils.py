@@ -21,7 +21,7 @@ import typing
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Iterable
+from typing import Iterable, Iterator, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -64,11 +64,11 @@ from django_ca.utils import (
     x509_relative_name,
 )
 
-SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=typing.Type[object])
+SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
 
 
 def load_tests(  # pylint: disable=unused-argument
-    loader: unittest.TestLoader, tests: unittest.TestSuite, ignore: typing.Optional[str] = None
+    loader: unittest.TestLoader, tests: unittest.TestSuite, ignore: Optional[str] = None
 ) -> unittest.TestSuite:
     """Load doctests."""
     tests.addTests(doctest.DocTestSuite(utils))
@@ -128,7 +128,7 @@ class ParseNameX509TestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_name_x509`."""
 
     def assertSubject(  # pylint: disable=invalid-name
-        self, actual: str, expected: typing.Iterable[typing.Tuple[ObjectIdentifier, str]]
+        self, actual: str, expected: Iterable[Tuple[ObjectIdentifier, str]]
     ) -> None:
         """Test that the given subject matches."""
         self.assertEqual(
@@ -1093,7 +1093,7 @@ class MultilineURLValidatorTestCase(TestCase):
     """Test :py:func:`django_ca.utils.multiline_url_validator`."""
 
     @contextmanager
-    def assertValidationError(self, value: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    def assertValidationError(self, value: str) -> Iterator[None]:  # pylint: disable=invalid-name
         """Wrapper to assert a validation error.
 
         Django 3.2 adds the value to ValidationError. This method turns into a useless one-liner as soon as we

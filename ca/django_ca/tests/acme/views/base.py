@@ -18,6 +18,7 @@ import json
 import typing
 from contextlib import contextmanager
 from http import HTTPStatus
+from typing import Any, Dict, Iterator, Optional, Tuple, Type, Union
 from unittest import mock
 
 import acme
@@ -68,8 +69,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
     CHILD_THUMBPRINT = "ux-66bpJQiyeDduTWQZHgkB4KJWK0kSdPOabnFiitFM"
     ACCOUNT_TWO_CONTACT = "mailto:two@example.net"
 
-    load_cas: typing.Tuple[str, ...] = ("root",)
-    load_certs: typing.Tuple[str, ...] = ("root-cert",)
+    load_cas: Tuple[str, ...] = ("root",)
+    load_certs: Tuple[str, ...] = ("root-cert",)
 
     def setUp(self) -> None:
         super().setUp()
@@ -77,7 +78,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         self.ca.save()
         self.client.defaults["SERVER_NAME"] = self.SERVER_NAME
 
-    def absolute_uri(self, name: str, hostname: typing.Optional[str] = None, **kwargs: typing.Any) -> str:
+    def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
         """Override to set a default for `hostname`."""
 
         if not hostname:  # pragma: no branch
@@ -92,8 +93,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
         typ: str,
         status: int,
         message: str,
-        ca: typing.Optional[CertificateAuthority] = None,
-        link_relations: typing.Optional[typing.Dict[str, str]] = None,
+        ca: Optional[CertificateAuthority] = None,
+        link_relations: Optional[Dict[str, str]] = None,
         regex: bool = False,
     ) -> None:
         """Assert that an HTTP response confirms to an ACME problem report.
@@ -117,8 +118,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
     def assertAcmeResponse(  # pylint: disable=invalid-name
         self,
         response: "HttpResponse",
-        ca: typing.Optional[CertificateAuthority] = None,
-        link_relations: typing.Optional[typing.Dict[str, str]] = None,
+        ca: Optional[CertificateAuthority] = None,
+        link_relations: Optional[Dict[str, str]] = None,
     ) -> None:
         """Assert basic Acme Response properties (Content-Type & Link header)."""
         link_relations = link_relations or {}
@@ -128,7 +129,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
     def assertLinkRelations(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", ca: typing.Optional[CertificateAuthority] = None, **kwargs: str
+        self, response: "HttpResponse", ca: Optional[CertificateAuthority] = None, **kwargs: str
     ) -> None:
         """Assert Link relations for a given request."""
         if ca is None:  # pragma: no branch
@@ -144,7 +145,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
     def assertMalformed(  # pylint: disable=invalid-name
-        self, resp: "HttpResponse", message: str = "", typ: str = "malformed", **kwargs: typing.Any
+        self, resp: "HttpResponse", message: str = "", typ: str = "malformed", **kwargs: Any
     ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
@@ -152,14 +153,14 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
     def assertUnauthorized(  # pylint: disable=invalid-name
-        self, resp: "HttpResponse", message: str = AcmeResponseUnauthorized.message, **kwargs: typing.Any
+        self, resp: "HttpResponse", message: str = AcmeResponseUnauthorized.message, **kwargs: Any
     ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(
             resp, "unauthorized", status=HTTPStatus.UNAUTHORIZED, message=message, **kwargs
         )
 
-    def get_nonce(self, ca: typing.Optional[CertificateAuthority] = None) -> bytes:
+    def get_nonce(self, ca: Optional[CertificateAuthority] = None) -> bytes:
         """Get a nonce with an actual request.
 
         Returns
@@ -177,14 +178,14 @@ class AcmeTestCaseMixin(TestCaseMixin):
         return jose.json_util.decode_b64jose(response["replay-nonce"])
 
     @contextmanager
-    def mock_slug(self) -> typing.Iterator[str]:
+    def mock_slug(self) -> Iterator[str]:
         """Mock random slug generation, yields the static value."""
 
         slug = get_random_string(length=12)
         with mock.patch("django_ca.models.get_random_string", return_value=slug):
             yield slug
 
-    def post(self, url: str, data: typing.Any, **kwargs: str) -> "HttpResponse":
+    def post(self, url: str, data: Any, **kwargs: str) -> "HttpResponse":
         """Make a post request with some ACME specific default data."""
         ctype = kwargs.pop("content_type", "application/jose+json")
         return self.client.post(
@@ -197,7 +198,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     post_as_get = False
     requires_kid = True
-    message_cls: typing.Type[MessageTypeVar]
+    message_cls: Type[MessageTypeVar]
     view_name: str
 
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
@@ -219,14 +220,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     def acme(
         self,
         uri: str,
-        msg: typing.Union[jose.json_util.JSONObjectWithFields, bytes],
-        cert: typing.Optional[PrivateKeyTypes] = None,
-        kid: typing.Optional[str] = None,
-        nonce: typing.Optional[bytes] = None,
-        payload_cb: typing.Optional[
-            typing.Callable[[typing.Dict[typing.Any, typing.Any]], typing.Dict[typing.Any, typing.Any]]
-        ] = None,
-        post_kwargs: typing.Optional[typing.Dict[str, str]] = None,
+        msg: Union[jose.json_util.JSONObjectWithFields, bytes],
+        cert: Optional[PrivateKeyTypes] = None,
+        kid: Optional[str] = None,
+        nonce: Optional[bytes] = None,
+        payload_cb: Optional[typing.Callable[[Dict[Any, Any]], Dict[Any, Any]]] = None,
+        post_kwargs: Optional[Dict[str, str]] = None,
     ) -> "HttpResponse":
         """Do a generic ACME request.
 
@@ -260,7 +259,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         )
         return self.post(uri, jws.to_json(), **post_kwargs)
 
-    def get_message(self, **kwargs: typing.Any) -> typing.Union[bytes, MessageTypeVar]:
+    def get_message(self, **kwargs: Any) -> Union[bytes, MessageTypeVar]:
         """Return a  message that can be sent to the server successfully.
 
         This function is used by test cases that want to get a useful message and manipulate it in some way so
@@ -271,12 +270,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
         return self.message_cls(**kwargs)
 
-    def get_url(self, **kwargs: typing.Any) -> str:
+    def get_url(self, **kwargs: Any) -> str:
         """Get a URL for this view with the given kwargs."""
         return reverse(f"django_ca:{self.view_name}", kwargs=kwargs)
 
     @property
-    def message(self) -> typing.Union[bytes, MessageTypeVar]:
+    def message(self) -> Union[bytes, MessageTypeVar]:
         """Property for sending the default message."""
         return self.get_message()
 
@@ -361,7 +360,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     @override_tmpcadir()
     def test_wrong_jwk_or_kid(self) -> None:
         """Send a KID where a JWK is required and vice-versa."""
-        kid: typing.Optional[str] = self.kid
+        kid: Optional[str] = self.kid
         expected = "Request requires a full JWK key."
         if self.requires_kid:
             self.requires_kid = False

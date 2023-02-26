@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
+from typing import Any
 
 from django.core.management.base import CommandError, CommandParser
 
@@ -35,7 +35,7 @@ class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-d
         parser.add_argument("--reason", action=ReasonAction, help="An optional reason for revokation.")
         super().add_arguments(parser)
 
-    def handle(self, cert: Certificate, reason: ReasonFlags, **options: typing.Any) -> None:
+    def handle(self, cert: Certificate, reason: ReasonFlags, **options: Any) -> None:
         if cert.revoked:
             raise CommandError(f"{cert.serial}: Certificate is already revoked.")
 

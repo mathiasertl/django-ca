@@ -17,8 +17,8 @@ import os
 import shlex
 import subprocess
 import tempfile
-import typing
 from contextlib import contextmanager
+from typing import Any, Iterable, Iterator, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID, NameOID
@@ -41,7 +41,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     def assertFullName(  # pylint: disable=invalid-name
         self,
         crl: x509.CertificateRevocationList,
-        expected: typing.Optional[typing.List[x509.GeneralName]] = None,
+        expected: Optional[List[x509.GeneralName]] = None,
     ) -> None:
         """Assert that the full name of the CRL matches `expected`."""
 
@@ -71,15 +71,15 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         self.assertIs(idp.only_contains_user_certs, user)
         self.assertIs(idp.only_contains_attribute_certs, attribute)
 
-    def init_ca(self, name: str, **kwargs: typing.Any) -> CertificateAuthority:
+    def init_ca(self, name: str, **kwargs: Any) -> CertificateAuthority:
         """Create a CA."""
         self.cmd("init_ca", name, f"/CN={name}", **kwargs)
         return CertificateAuthority.objects.get(name=name)
 
     @contextmanager
     def crl(
-        self, ca: CertificateAuthority, **kwargs: typing.Any
-    ) -> typing.Iterator[typing.Tuple[str, x509.CertificateRevocationList]]:
+        self, ca: CertificateAuthority, **kwargs: Any
+    ) -> Iterator[Tuple[str, x509.CertificateRevocationList]]:
         """Dump CRL to a tmpdir, yield path to it."""
         kwargs["ca"] = ca
         with tempfile.TemporaryDirectory() as tempdir:
@@ -92,7 +92,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             yield path, crl
 
     @contextmanager
-    def dumped(self, *certificates: X509CertMixin) -> typing.Iterator[typing.List[str]]:
+    def dumped(self, *certificates: X509CertMixin) -> Iterator[List[str]]:
         """Dump certificates to a tempdir, yield list of paths."""
         with tempfile.TemporaryDirectory() as tempdir:
             paths = []
@@ -106,8 +106,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
     @contextmanager
     def sign_cert(
-        self, ca: CertificateAuthority, hostname: str = "example.com", **kwargs: typing.Any
-    ) -> typing.Iterator[str]:
+        self, ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any
+    ) -> Iterator[str]:
         """Create a signed certificate in a temporary directory."""
         stdin = self.csr_pem.encode()
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
@@ -138,8 +138,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         self,
         cmd: str,
         *args: str,
-        untrusted: typing.Optional[typing.Iterable[str]] = None,
-        crl: typing.Optional[typing.Iterable[str]] = None,
+        untrusted: Optional[Iterable[str]] = None,
+        crl: Optional[Iterable[str]] = None,
         code: int = 0,
         **kwargs: str,
     ) -> None:

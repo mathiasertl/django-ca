@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
+from typing import Any
 
 from django.core.management.base import CommandParser
 
@@ -32,7 +32,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
 
-    def handle(self, ca: CertificateAuthority, **options: typing.Any) -> None:
+    def handle(self, ca: CertificateAuthority, **options: Any) -> None:
         try:
             path = ca_storage.path(ca.private_key_path)
         except NotImplementedError:

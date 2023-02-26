@@ -15,6 +15,7 @@
 
 import typing
 from http import HTTPStatus
+from typing import Dict, Iterable, Iterator, Tuple
 
 from django.test import TestCase
 from django.urls import reverse
@@ -57,7 +58,7 @@ class CertificateAdminViewTestCase(
 
     def get_changelists(
         self,
-    ) -> typing.Iterator[typing.Tuple[typing.Iterable[Certificate], typing.Dict[str, str]]]:
+    ) -> Iterator[Tuple[Iterable[Certificate], Dict[str, str]]]:
         # yield various different result sets for different filters and times
         with self.freeze_time("everything_valid"):
             yield self.model.objects.all(), {}

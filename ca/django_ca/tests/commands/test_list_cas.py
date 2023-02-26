@@ -13,8 +13,8 @@
 
 """Test the list_cas management command."""
 
-import typing
 from datetime import timedelta
+from typing import Any
 
 from django.test import TestCase
 from django.utils import timezone
@@ -41,7 +41,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
     load_cas = "__usable__"
 
     def assertOutput(  # pylint: disable=invalid-name
-        self, output: str, expected: str, **context: typing.Any
+        self, output: str, expected: str, **context: Any
     ) -> None:
         """Assert the output of this command."""
         context.update(certs)

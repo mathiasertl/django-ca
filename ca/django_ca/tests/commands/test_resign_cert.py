@@ -14,8 +14,8 @@
 """Test the resign_cert management command."""
 
 import os
-import typing
 from datetime import timedelta
+from typing import Optional
 from unittest.mock import patch
 
 from cryptography import x509
@@ -42,7 +42,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     load_certs = ("root-cert", "dsa-cert", "no-extensions")
 
     def assertResigned(  # pylint: disable=invalid-name
-        self, old: Certificate, new: Certificate, new_ca: typing.Optional[CertificateAuthority] = None
+        self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
     ) -> None:
         """Assert that the resigned certificate mathes the old cert."""
         new_ca = new_ca or old.ca
@@ -56,7 +56,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(old.hpkp_pin, new.hpkp_pin)
 
     def assertEqualExt(  # pylint: disable=invalid-name
-        self, old: Certificate, new: Certificate, new_ca: typing.Optional[CertificateAuthority] = None
+        self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
     ) -> None:
         """Assert that the extensions in both certs are equal."""
         new_ca = new_ca or old.ca

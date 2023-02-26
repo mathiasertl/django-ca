@@ -15,8 +15,8 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
 from datetime import timedelta
+from typing import Any
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -35,7 +35,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             "--days", type=int, default=14, help="Warn DAYS days ahead of time (default: %(default)s)."
         )
 
-    def handle(self, **options: typing.Any) -> None:
+    def handle(self, **options: Any) -> None:
         now = timezone.now()
         expires = now + timedelta(days=options["days"] + 1)  # add a day to avoid one-of errors
 

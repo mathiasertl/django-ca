@@ -19,6 +19,7 @@
 import argparse
 import os
 import typing
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -76,12 +77,12 @@ Note that the private key will be copied to the directory configured by the CA_D
         name: str,
         key: typing.BinaryIO,
         pem: typing.BinaryIO,
-        parent: typing.Optional[CertificateAuthority],
-        password: typing.Optional[bytes],
-        import_password: typing.Optional[bytes],
-        issuer_alternative_name: typing.Optional[str],
-        issuer_url: typing.Optional[str],
-        **options: typing.Any,
+        parent: Optional[CertificateAuthority],
+        password: Optional[bytes],
+        import_password: Optional[bytes],
+        issuer_alternative_name: Optional[str],
+        issuer_url: Optional[str],
+        **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):
             try:

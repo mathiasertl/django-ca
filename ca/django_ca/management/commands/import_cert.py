@@ -18,6 +18,7 @@
 
 import argparse
 import typing
+from typing import Any
 
 from cryptography import x509
 
@@ -38,7 +39,7 @@ The authority that that signed the certificate must exist in the database."""
             "pub", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(self, pub: typing.BinaryIO, ca: CertificateAuthority, **options: typing.Any) -> None:
+    def handle(self, pub: typing.BinaryIO, ca: CertificateAuthority, **options: Any) -> None:
         pub_data = pub.read()
 
         # close reader objects (otherwise we get a ResourceWarning)

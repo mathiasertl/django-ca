@@ -15,7 +15,7 @@
 
 import typing
 from datetime import date, datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
@@ -47,7 +47,7 @@ def _initial_expires() -> datetime:
     return datetime.today() + ca_settings.CA_DEFAULT_EXPIRES
 
 
-def _profile_choices() -> typing.Iterable[Tuple[str, str]]:
+def _profile_choices() -> Iterable[Tuple[str, str]]:
     return sorted([(p, p) for p in ca_settings.CA_PROFILES], key=lambda e: e[0])
 
 

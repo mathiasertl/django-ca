@@ -19,7 +19,7 @@ import shlex
 import typing
 from datetime import datetime, timedelta, timezone
 from ipaddress import ip_address, ip_network
-from typing import List, Optional, Tuple, Type, Union
+from typing import Iterator, List, Optional, Tuple, Type, Union
 from urllib.parse import urlparse
 
 import idna
@@ -897,7 +897,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
 
 
 def parse_hash_algorithm(
-    value: Union[typing.Type[hashes.HashAlgorithm], ParsableHash] = None
+    value: Union[Type[hashes.HashAlgorithm], ParsableHash] = None
 ) -> hashes.HashAlgorithm:
     """Parse a hash algorithm value.
 
@@ -1109,7 +1109,7 @@ def read_file(path: str) -> bytes:
 #        fh.write(data)
 
 
-def split_str(val: str, sep: str) -> typing.Iterator[str]:
+def split_str(val: str, sep: str) -> Iterator[str]:
     """Split a character on the given set of characters.
 
     Example::

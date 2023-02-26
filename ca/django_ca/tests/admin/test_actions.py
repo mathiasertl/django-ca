@@ -16,6 +16,7 @@
 import typing
 from contextlib import contextmanager
 from http import HTTPStatus
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from unittest import mock
 
 from cryptography.x509.oid import ExtensionOID
@@ -47,9 +48,9 @@ class AdminActionTestCaseMixin(
     """TestCase mixin for normal Django admin actions."""
 
     action = ""
-    data: typing.Dict[str, typing.Any]
-    insufficient_permissions: typing.List[str] = []
-    required_permissions: typing.List[str] = []
+    data: Dict[str, Any]
+    insufficient_permissions: List[str] = []
+    required_permissions: List[str] = []
 
     def assertFailedRequest(  # pylint: disable=invalid-name
         self, response: "HttpResponse", *objects: DjangoCAModelTypeVar
@@ -137,7 +138,7 @@ class AdminChangeActionTestCaseMixin(
         "child",
     )
     load_certs = ("profile-webserver",)
-    data: typing.Dict[str, typing.Any] = {}
+    data: Dict[str, Any] = {}
     tool = ""
     pre_signal: Signal
     post_signal: Signal
@@ -148,13 +149,13 @@ class AdminChangeActionTestCaseMixin(
         return reverse(view_name, kwargs={"pk": obj.pk, "tool": self.tool})
 
     def assertFailedRequest(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: typing.Optional[DjangoCAModelTypeVar] = None
+        self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
     ) -> None:
         """Assert that a request did not have any effect."""
         raise NotImplementedError
 
     def assertForbidden(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: typing.Optional[DjangoCAModelTypeVar] = None
+        self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
     ) -> None:
         """Assert that the action returned HTTP 403 (Forbidden)."""
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
@@ -163,18 +164,18 @@ class AdminChangeActionTestCaseMixin(
     @contextmanager
     def assertNoSignals(  # pylint: disable=invalid-name
         self,
-    ) -> typing.Iterator[typing.Tuple[mock.MagicMock, mock.MagicMock]]:
+    ) -> Iterator[Tuple[mock.MagicMock, mock.MagicMock]]:
         """Shortcut to assert that **no** signals where called."""
         with self.mockSignals(False, False) as (pre, post):
             yield pre, post
 
-    def assertRequiresLogin(self, response: "HttpResponse", **kwargs: typing.Any) -> None:
+    def assertRequiresLogin(self, response: "HttpResponse", **kwargs: Any) -> None:
         """Overwritten as a shortcut to also test that the certificate was not revoked."""
         super().assertRequiresLogin(response, **kwargs)
         self.assertFailedRequest(response)
 
     def assertSuccessfulRequest(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: typing.Optional[DjangoCAModelTypeVar] = None
+        self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
     ) -> None:
         """Assert that the request was successful."""
         raise NotImplementedError
@@ -182,7 +183,7 @@ class AdminChangeActionTestCaseMixin(
     @contextmanager
     def mockSignals(  # pylint: disable=invalid-name
         self, pre_called: bool = True, post_called: bool = True
-    ) -> typing.Iterator[typing.Tuple[mock.Mock, mock.Mock]]:
+    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Assert that the singals were (not) called."""
         with self.mockSignal(self.pre_signal) as pre, self.mockSignal(self.post_signal) as post:
             try:
@@ -283,15 +284,15 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
     pre_signal = pre_revoke_cert
     post_signal = post_revoke_cert
 
-    def assertFailedRequest(self, response: "HttpResponse", obj: typing.Optional[Certificate] = None) -> None:
+    def assertFailedRequest(self, response: "HttpResponse", obj: Optional[Certificate] = None) -> None:
         obj = obj or self.cert
         self.assertNotRevoked(obj)
 
     def assertSuccessfulRequest(
         self,
         response: "HttpResponse",
-        obj: typing.Optional[Certificate] = None,
-        reason: typing.Optional[str] = None,
+        obj: Optional[Certificate] = None,
+        reason: Optional[str] = None,
     ) -> None:
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
@@ -354,14 +355,14 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     pre_signal = pre_sign_cert
     post_signal = post_issue_cert
 
-    def assertFailedRequest(self, response: "HttpResponse", obj: typing.Optional[Certificate] = None) -> None:
+    def assertFailedRequest(self, response: "HttpResponse", obj: Optional[Certificate] = None) -> None:
         obj = obj or self.cert
         self.assertEqual(self.model.objects.filter(cn=obj.cn).count(), 1)
 
     def assertSuccessfulRequest(
         self,
-        response: typing.Union[DjangoWebtestResponse, "HttpResponse"],
-        obj: typing.Optional[Certificate] = None,
+        response: Union[DjangoWebtestResponse, "HttpResponse"],
+        obj: Optional[Certificate] = None,
     ) -> None:
         obj = obj or self.cert
         obj.refresh_from_db()
@@ -386,7 +387,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertNotEqual(obj.serial, resigned.serial)
 
     @property
-    def data(self) -> typing.Dict[str, typing.Any]:  # type: ignore[override]
+    def data(self) -> Dict[str, Any]:  # type: ignore[override]
         """Return default data."""
         # mypy override: https://github.com/python/mypy/issues/4125
         return {

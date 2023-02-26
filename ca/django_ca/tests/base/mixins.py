@@ -22,7 +22,7 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest import mock
 from urllib.parse import quote
 
@@ -187,7 +187,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(actual.key_identifier, expected.key_identifier)
 
     def assertBasic(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, algo: typing.Type[hashes.HashAlgorithm] = hashes.SHA256
+        self, cert: x509.Certificate, algo: Type[hashes.HashAlgorithm] = hashes.SHA256
     ) -> None:
         """Assert some basic key properties."""
         self.assertEqual(cert.version, x509.Version.v3)
@@ -266,7 +266,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
-    def assertCommandError(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    def assertCommandError(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
         """Context manager asserting that CommandError is raised.
 
         Parameters
@@ -280,7 +280,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertCreateCASignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
+    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
             try:
@@ -292,7 +292,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertSignCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
+    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_sign_cert) as post_sig:
             try:
@@ -362,7 +362,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertCreateCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> typing.Iterator[Tuple[mock.Mock, mock.Mock]]:
+    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
             try:
@@ -450,7 +450,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(actual_tuple, expected_tuple)
 
     @contextmanager
-    def assertImproperlyConfigured(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    def assertImproperlyConfigured(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
         """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
         with self.assertRaisesRegex(ImproperlyConfigured, msg):
             yield
@@ -500,13 +500,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertTrue(key.key_size > 0)
 
     @contextmanager
-    def assertRemovedIn125Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    def assertRemovedIn125Warning(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
         """Assert that a RemovedInDjangoCA125Warning is thrown."""
         with self.assertWarnsRegex(RemovedInDjangoCA125Warning, msg):
             yield
 
     @contextmanager
-    def assertRemovedIn126Warning(self, msg: str) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    def assertRemovedIn126Warning(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
         """Assert that a RemovedInDjangoCA126Warning is thrown."""
         with self.assertWarnsRegex(RemovedInDjangoCA126Warning, msg):
             yield
@@ -553,7 +553,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     @contextmanager
-    def assertSystemExit(self, code: int) -> typing.Iterator[None]:  # pylint: disable=invalid-name
+    def assertSystemExit(self, code: int) -> Iterator[None]:  # pylint: disable=invalid-name
         """Assert that SystemExit is raised."""
         with self.assertRaisesRegex(SystemExit, rf"^{code}$") as excm:
             yield
@@ -562,7 +562,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard
         self, errors: Dict[str, List[str]]
-    ) -> typing.Iterator[None]:
+    ) -> Iterator[None]:
         """Context manager to assert that a ValidationError is thrown."""
         with self.assertRaises(ValidationError) as cmex:
             yield
@@ -595,7 +595,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
 
     @property
-    def ca_certs(self) -> typing.Iterator[Tuple[str, Certificate]]:
+    def ca_certs(self) -> Iterator[Tuple[str, Certificate]]:
         """Yield loaded certificates for each certificate authority."""
         for name, cert in self.certs.items():
             if name in [
@@ -968,7 +968,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def freeze_time(
         self, timestamp: Union[str, datetime]
-    ) -> typing.Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
+    ) -> Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
@@ -1058,7 +1058,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return cert
 
     @contextmanager
-    def mockSignal(self, signal: Signal) -> typing.Iterator[mock.Mock]:  # pylint: disable=invalid-name
+    def mockSignal(self, signal: Signal) -> Iterator[mock.Mock]:  # pylint: disable=invalid-name
         """Context manager to attach a mock to the given signal."""
 
         # This function is only here to create an autospec. From the documentation:
@@ -1079,7 +1079,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             signal.disconnect(signal_mock)
 
     @contextmanager
-    def mute_celery(self, *calls: Any) -> typing.Iterator[mock.MagicMock]:
+    def mute_celery(self, *calls: Any) -> Iterator[mock.MagicMock]:
         """Context manager to mock celery invocations.
 
         This context manager mocks ``celery.app.task.Task.apply_async``, the final function in celery before
@@ -1115,13 +1115,13 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(expected, actual, actual)
 
     @contextmanager
-    def patch(self, *args: Any, **kwargs: Any) -> typing.Iterator[mock.MagicMock]:
+    def patch(self, *args: Any, **kwargs: Any) -> Iterator[mock.MagicMock]:
         """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with mock.patch(*args, **kwargs) as mocked:
             yield mocked
 
     @contextmanager
-    def patch_object(self, *args: Any, **kwargs: Any) -> typing.Iterator[Any]:
+    def patch_object(self, *args: Any, **kwargs: Any) -> Iterator[Any]:
         """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with mock.patch.object(*args, **kwargs) as mocked:
             yield mocked
@@ -1131,14 +1131,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
 
     @property
-    def usable_cas(self) -> typing.Iterator[Tuple[str, CertificateAuthority]]:
+    def usable_cas(self) -> Iterator[Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
         for name, ca in self.cas.items():
             if certs[name]["key_filename"]:
                 yield name, ca
 
     @property
-    def usable_certs(self) -> typing.Iterator[Tuple[str, Certificate]]:
+    def usable_certs(self) -> Iterator[Tuple[str, Certificate]]:
         """Yield loaded generated certificates."""
         for name, cert in self.certs.items():
             if certs[name]["cat"] == "generated":
@@ -1148,7 +1148,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     """Common mixin for testing admin classes for models."""
 
-    model: typing.Type[DjangoCAModelTypeVar]
+    model: Type[DjangoCAModelTypeVar]
     """Model must be configured for TestCase instances using this mixin."""
 
     media_css: Tuple[str, ...] = tuple()
@@ -1247,7 +1247,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     @contextmanager
     def freeze_time(
         self, timestamp: Union[str, datetime]
-    ) -> typing.Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
+    ) -> Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Overridden to force a client login, otherwise the user session is expired."""
         with super().freeze_time(timestamp) as frozen:
             self.client.force_login(self.user)
@@ -1280,7 +1280,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
     def get_changelists(
         self,
-    ) -> typing.Iterator[Tuple[Iterable[DjangoCAModel], Dict[str, str]]]:
+    ) -> Iterator[Tuple[Iterable[DjangoCAModel], Dict[str, str]]]:
         """Generate list of objects for possible changelist views.
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.

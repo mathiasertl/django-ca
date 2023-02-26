@@ -16,6 +16,7 @@
 import io
 import typing
 from datetime import timedelta
+from typing import Any, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -38,7 +39,7 @@ from django_ca.utils import int_to_hex, x509_name
 class InitCATest(TestCaseMixin, TestCase):
     """Test the init_ca management command."""
 
-    def init_ca(self, **kwargs: typing.Any) -> typing.Tuple[str, str]:
+    def init_ca(self, **kwargs: Any) -> Tuple[str, str]:
         """Run a basic init_ca command."""
 
         stdout = io.StringIO()
@@ -56,7 +57,7 @@ class InitCATest(TestCaseMixin, TestCase):
             **kwargs,
         )
 
-    def init_ca_e2e(self, name: str, *args: str, **kwargs: typing.Any) -> CertificateAuthority:
+    def init_ca_e2e(self, name: str, *args: str, **kwargs: Any) -> CertificateAuthority:
         """Run a init_ca command via cmd_e2e()."""
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(["init_ca", name] + list(args))

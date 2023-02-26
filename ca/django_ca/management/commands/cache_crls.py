@@ -17,7 +17,7 @@
 """
 
 import argparse
-import typing
+from typing import Any, List
 
 from django_ca.management.base import BaseCommand
 from django_ca.tasks import cache_crls, run_task
@@ -33,6 +33,5 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.",
         )
 
-    def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        serials = typing.cast(typing.List[str], options["serial"])
-        run_task(cache_crls, serials)
+    def handle(self, serial: List[str], **options: Any) -> None:
+        run_task(cache_crls, serial)

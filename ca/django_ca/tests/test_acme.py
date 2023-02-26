@@ -16,6 +16,7 @@
 import typing
 from contextlib import contextmanager
 from importlib import reload
+from typing import Any, Dict, Iterable, Iterator, Optional
 from unittest import mock
 
 import acme
@@ -45,7 +46,7 @@ class URLPatternTestCase(TestCase):
     """Test that URL patterns are not enabled when CA_ENABLE_ACME."""
 
     @contextmanager
-    def reload_urlconf(self) -> typing.Iterator[None]:
+    def reload_urlconf(self) -> Iterator[None]:
         """Context manager to reload the current URL configuration."""
         reload(urls)
         try:
@@ -57,8 +58,8 @@ class URLPatternTestCase(TestCase):
     def assertNoReverseMatch(  # pylint: disable=invalid-name
         self,
         name: str,
-        args: typing.Optional[typing.Sequence[typing.Any]] = None,
-        kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        args: Optional[typing.Sequence[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Context manager asserting that the given URL pattern is **not** found."""
         urlname = name
@@ -124,8 +125,8 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
     @contextmanager
     def assertLogMessages(  # pylint: disable=invalid-name  # unittest standard
-        self, *messages: str, challenge: typing.Optional[AcmeChallenge] = None
-    ) -> typing.Iterator[None]:
+        self, *messages: str, challenge: Optional[AcmeChallenge] = None
+    ) -> Iterator[None]:
         """Assert log messages."""
         with self.assertLogs("django_ca.acme.validation", level="DEBUG") as logcm:
             yield
@@ -143,7 +144,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         return f"{prefix}:DNS-01 validation of {domain}: Expect {expected} on _acme_challenge.{domain}"
 
     @contextmanager
-    def mock_response(self, domain: str, *responses: typing.Iterable[bytes]) -> typing.Iterator[mock.Mock]:
+    def mock_response(self, domain: str, *responses: Iterable[bytes]) -> Iterator[mock.Mock]:
         """Mock TXT responses for the given domain."""
         # TYPEHINT NOTE: https://github.com/rthalley/dnspython/pull/889/
         dns.resolver.reset_default_resolver()  # type: ignore[no-untyped-call]
@@ -160,12 +161,12 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         self.assertEqual(resolve_mock.call_args_list[0].args[:2], expected)
 
     @contextmanager
-    def resolve(self, side_effect: typing.Any) -> typing.Iterator[mock.Mock]:
+    def resolve(self, side_effect: Any) -> Iterator[mock.Mock]:
         """Simpler function for mocking top-level resolve function."""
         with mock.patch("dns.resolver.resolve", side_effect=side_effect, autospec=True) as resolve_mock:
             yield resolve_mock
 
-    def to_txt_record(self, values: typing.Iterable[bytes]) -> TXTBase:
+    def to_txt_record(self, values: Iterable[bytes]) -> TXTBase:
         """Convert method to TXT record."""
         return TXTBase(dns.rdataclass.RdataClass.IN, dns.rdatatype.RdataType.TXT, values)
 

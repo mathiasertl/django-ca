@@ -13,8 +13,7 @@
 
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
-import typing
-from typing import Tuple
+from typing import Iterator, Tuple
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
@@ -43,7 +42,7 @@ def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> st
     return render_to_string([template], context={"extension": extension, "x509": x509})
 
 
-def key_usage_items(value: x509.KeyUsage) -> typing.Iterator[str]:
+def key_usage_items(value: x509.KeyUsage) -> Iterator[str]:
     """Get a list of basic key usages."""
     for attr, name in KEY_USAGE_NAMES.items():
         try:

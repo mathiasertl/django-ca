@@ -14,14 +14,14 @@
 """Test extension doctests."""
 
 import doctest
-import typing
+from typing import Optional
 from unittest import TestLoader, TestSuite
 
 from cryptography.hazmat._oid import ExtensionOID
 
 
 def load_tests(  # pylint: disable=unused-argument
-    loader: TestLoader, tests: TestSuite, ignore: typing.Optional[str] = None
+    loader: TestLoader, tests: TestSuite, ignore: Optional[str] = None
 ) -> TestSuite:
     """Load doctests."""
     globs = {"ExtensionOID": ExtensionOID}

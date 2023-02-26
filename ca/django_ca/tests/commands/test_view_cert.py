@@ -15,7 +15,7 @@
 
 import typing
 from io import BytesIO
-from typing import Optional
+from typing import Dict, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -460,7 +460,7 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
     load_cas = "__all__"
     load_certs = "__all__"
 
-    def _get_format(self, cert: Certificate) -> typing.Dict[str, str]:
+    def _get_format(self, cert: Certificate) -> Dict[str, str]:
         return {
             "cn": cert.cn,
             "from": cert.not_before.strftime("%Y-%m-%d %H:%M"),

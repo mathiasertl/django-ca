@@ -19,7 +19,7 @@ import getpass
 import typing
 import warnings
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -60,7 +60,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=a
     The main purpose of this class is to improve type hinting.
     """
 
-    type: typing.Type[ActionType]
+    type: Type[ActionType]
 
     @abc.abstractmethod
     def parse_value(self, value: str) -> ActionType:
@@ -390,7 +390,7 @@ class URLAction(SingleValueAction[str]):
 class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType], metaclass=abc.ABCMeta):
     """Base class for actions that return a cryptography ExtensionType instance."""
 
-    extension_type: typing.Type[ExtensionType]
+    extension_type: Type[ExtensionType]
 
     def __init__(self, **kwargs: Any) -> None:
         kwargs["dest"] = EXTENSION_KEYS[self.extension_type.oid]
@@ -410,7 +410,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
                value=<SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>)>
     """
 
-    def __init__(self, extension_type: typing.Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
+    def __init__(self, extension_type: Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
         self.extension_type = extension_type
         super().__init__(**kwargs)
 
