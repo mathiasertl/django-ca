@@ -955,8 +955,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
             x509.RFC822Name("user@example.com"),
             x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
-            dns("tests-models.certificatetests.test-subject-alternative-name.example.com"),
+            dns("test-models.certificatetests.test-subject-alternative-name.example.com"),
         )
+        actual_san = weird_cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
+        self.assertEqual(expected_san.critical, actual_san.critical)
         self.assertEqual(weird_cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], expected_san)
 
     @freeze_time("2019-02-03 15:43:12")
