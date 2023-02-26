@@ -44,25 +44,6 @@ ca : :py:class:`~django_ca.models.CertificateAuthority`
     The certificate authority that was just created.
 """
 
-
-pre_issue_cert = django.dispatch.Signal()
-"""Called before a new certificate is issued.
-
-.. deprecated:: 1.22.0
-
-   The signal is deprecated and will be removed in 1.24.0. Use the
-   :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
-
-Parameters
-----------
-
-ca
-csr
-**kwargs
-    All additional parameters passed to :py:meth:`~django_ca.profiles.Profile.create_cert`, but normalized to
-    expected values.
-"""
-
 post_issue_cert = django.dispatch.Signal()
 """Called after a new certificate was issued.
 
