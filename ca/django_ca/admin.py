@@ -22,7 +22,7 @@ import logging
 import typing
 from datetime import date, datetime
 from http import HTTPStatus
-from typing import Optional
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -96,6 +96,8 @@ if typing.TYPE_CHECKING:
     WatcherAdminBase = admin.ModelAdmin[Watcher]
     MixinBase = ModelAdminBase
     CertificateModelForm = ModelForm[Certificate]
+
+    from django_stubs_ext import StrOrPromise, StrPromise
 else:
     AcmeAccountAdminBase = admin.ModelAdmin
     AcmeAuthorizationAdminBase = admin.ModelAdmin
@@ -111,7 +113,10 @@ else:
     MixinBase = object
     CertificateModelForm = ModelForm
 
-FieldSets = typing.List[typing.Tuple[Optional[str], typing.Dict[str, typing.Any]]]
+FieldSets = Union[
+    List[Tuple[Optional[Union[str, "StrPromise"]], Dict[str, Any]]],
+    Tuple[Tuple[Optional[Union[str, "StrPromise"]], Dict[str, Any]], ...],
+]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
 
 
@@ -127,8 +132,9 @@ class CertificateMixin(
 ):
     """Mixin for CA/Certificate."""
 
-    form = X509CertMixinAdminForm
+    form = X509CertMixinAdminForm  # type: ignore[assignment]  # django-stubs false positive
     x509_fieldset_index: int
+    model: Type[X509CertMixinTypeVar]
 
     def pub_pem(self, obj: X509CertMixinTypeVar) -> str:
         """Get the CSR in PEM form for display."""
@@ -171,9 +177,9 @@ class CertificateMixin(
 
         if filetype == "PEM":
             if bundle is True:
-                data = obj.bundle_as_pem
+                data = obj.bundle_as_pem.encode("ascii")
             else:
-                data = obj.pub.pem
+                data = obj.pub.pem.encode("ascii")
         elif filetype == "DER":
             if bundle is True:
                 return HttpResponseBadRequest(_("DER/ASN.1 certificates cannot be downloaded as a bundle."))
@@ -221,22 +227,13 @@ class CertificateMixin(
         # pylint: disable=missing-function-docstring,unused-argument; Django standard
         return False
 
-    def get_actions(self, request: HttpRequest) -> typing.OrderedDict[str, str]:
-        """Disable the "delete selected" admin action.
-
-        Otherwise, the action is present even though has_delete_permission is False, it just doesn't work.
-        """
-        actions = super().get_actions(request)
-        actions.pop("delete_selected", "")
-        return actions
-
     def hpkp_pin(self, obj: X509CertMixinTypeVar) -> str:
         """Property showing the HPKP bin (only adds a short description)."""
         return obj.hpkp_pin
 
     hpkp_pin.short_description = _("HPKP pin")  # type: ignore[attr-defined] # django standard
 
-    def cn_display(self, obj: X509CertMixinTypeVar) -> str:
+    def cn_display(self, obj: X509CertMixinTypeVar) -> "StrOrPromise":
         """Display the common name or ``<none>``."""
         if obj.cn:
             return obj.cn
@@ -300,33 +297,33 @@ class CertificateMixin(
         fieldsets = super().get_fieldsets(request, obj=obj)
 
         if obj is None:
-            return fieldsets
+            # TYPEHINT NOTE: django-stubs uses an internal TypeVar for type hinting, making it impossible to
+            # correctly typehint this function.
+            return fieldsets  # type: ignore[return-value]
 
         fieldsets = copy.deepcopy(fieldsets)
         for ext in obj.sorted_extensions:
             field = self.get_oid_name(ext.oid)
-            fieldsets[self.x509_fieldset_index][1]["fields"].append(field)
-        return fieldsets
+            # TYPEHINT NOTE: django-stubs typehints as Sequence, which has no appends().
+            fieldsets[self.x509_fieldset_index][1]["fields"].append(field)  # type: ignore[attr-defined]
+        return fieldsets  # type: ignore[return-value]  # see other return above
 
     def get_readonly_fields(  # type: ignore[override] # pylint: disable=missing-function-docstring
         self, request: HttpRequest, obj: Optional[X509CertMixinTypeVar] = None
     ) -> typing.Union[typing.List[str], typing.Tuple[typing.Any, ...]]:
-        fields = super().get_readonly_fields(request, obj=obj)
+        fields = list(super().get_readonly_fields(request, obj=obj))
 
         if obj is None:  # pragma: no cover
             # This is never True because CertificateAdmin (the only case where objects are added) doesn't call
             # the superclass in this case.
             return fields
 
-        if isinstance(fields, tuple):  # pragma: no cover # just to make mypy happy, we always use lists
-            fields = list(fields)
-
         if not obj.revoked:
             # We can only change the date when the certificate was compromised if it's actually revoked.
             fields.append("compromised")
 
         extension_fields = [self.get_oid_name(oid) for oid in obj.x509_extensions]
-        return list(fields) + extension_fields
+        return fields + extension_fields
 
     class Media:  # pylint: disable=missing-class-docstring
         css = {
@@ -383,7 +380,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             },
         ),
     ]
-    form = CertificateAuthorityForm
+    form = CertificateAuthorityForm  # type: ignore[assignment]
     list_display = [
         "enabled",
         "name",
@@ -450,6 +447,8 @@ class DefaultListFilter(admin.SimpleListFilter):  # pylint: disable=abstract-met
     Inspired by https://stackoverflow.com/a/16556771.
     """
 
+    parameter_name: str
+
     def choices(self, changelist: ChangeList) -> typing.Iterator[typing.Dict[str, typing.Any]]:
         for lookup, title in self.lookup_choices:
             yield {
@@ -471,9 +470,9 @@ class StatusListFilter(DefaultListFilter):
     parameter_name = "status"
 
     # TODO: We should check if we can use "" for the first lookup for more type safety
-    def lookups(
+    def lookups(  # type: ignore[override]  # we are more specific here
         self, request: HttpRequest, model_admin: ModelAdminBase
-    ) -> typing.List[typing.Tuple[Optional[str], str]]:
+    ) -> typing.List[typing.Tuple[Optional[str], "StrPromise"]]:
         return [
             (None, _("Valid")),
             ("expired", _("Expired")),
@@ -501,9 +500,9 @@ class AutoGeneratedFilter(DefaultListFilter):
     parameter_name = "auto"
 
     # TODO: We should check if we can use "" for the first lookup for more type safety
-    def lookups(
+    def lookups(  # type: ignore[override]  # we are more specific here
         self, request: HttpRequest, model_admin: ModelAdminBase
-    ) -> typing.List[typing.Tuple[Optional[str], str]]:
+    ) -> typing.List[typing.Tuple[Optional[str], "StrPromise"]]:
         return [
             (None, _("No")),
             ("auto", _("Yes")),
@@ -811,7 +810,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         return super().add_view(
             request,
             form_url=form_url,
-            extra_context=extra_context,  # type: ignore[arg-type] # django-stubs wrongly thinks it's None
+            extra_context=extra_context,
         )
 
     @property
@@ -880,8 +879,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             "object_action": _("Resign"),
         }
 
-        # TYPE NOTE: django-stubs wrongly thinks that extra_context should be Dict[str, bool]
-        return self.changeform_view(request, extra_context=context)  # type: ignore[arg-type,no-any-return]
+        return self.changeform_view(request, extra_context=context)
 
     resign.short_description = _("Resign this certificate.")  # type: ignore[attr-defined] # django standard
 
@@ -966,7 +964,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return []
         return super().get_readonly_fields(request, obj=obj)
 
-    def status(self, obj: Certificate) -> str:
+    def status(self, obj: Certificate) -> "StrPromise":
         """Get a string for the status of a certificate."""
         if obj.revoked:
             return _("Revoked")
@@ -1090,9 +1088,9 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         title = _("Expired")
         parameter_name = "expired"
 
-        def lookups(
+        def lookups(  # type: ignore  # we are more specific here
             self, request: HttpRequest, model_admin: ModelAdminBase
-        ) -> typing.List[typing.Tuple[str, str]]:
+        ) -> typing.List[typing.Tuple[str, "StrPromise"]]:
             return [
                 ("0", _("No")),
                 ("1", _("Yes")),

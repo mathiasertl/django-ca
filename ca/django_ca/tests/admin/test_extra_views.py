@@ -59,7 +59,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         for cert_data in [v for v in certs.values() if v["type"] == "cert" and v["cat"] == "generated"]:
             response = self.client.post(self.url, data={"csr": cert_data["csr"]["pem"]})
             self.assertEqual(response.status_code, 200)
-            self.assertJSONEqual(response.content, {"subject": cert_data["csr_subject"]})
+            self.assertEqual(response.json(), {"subject": cert_data["csr_subject"]})
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""

@@ -390,7 +390,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
     def __call__(self, test_func: FuncTypeVar) -> FuncTypeVar:
         if not inspect.isfunction(test_func):
             raise ValueError("Only functions can use override_tmpcadir()")
-        return super().__call__(test_func)  # type: ignore[no-any-return]
+        return super().__call__(test_func)  # type: ignore[return-value]  # cannot figure out whats right here
 
     def enable(self) -> None:
         self.options["CA_DIR"] = tempfile.mkdtemp()

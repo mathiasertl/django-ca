@@ -21,7 +21,6 @@ import acme
 import josepy as jose
 from OpenSSL.crypto import X509, X509Req
 
-from django.http import HttpResponse
 from django.test import TestCase
 
 from freezegun import freeze_time
@@ -32,6 +31,9 @@ from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, Ac
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.utils import get_cert_builder
+
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -154,7 +156,7 @@ class AcmeCertificateRevocationWithAuthorizationsViewTestCase(AcmeCertificateRev
             order=self.acme_order, value="child-cert.example.com", status=AcmeAuthorization.STATUS_VALID
         )
 
-    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> HttpResponse:
+    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> "HttpResponse":
         kwargs.setdefault("cert", certs["child-cert"]["key"]["parsed"])
         kwargs["kid"] = self.child_kid
         return super().acme(*args, **kwargs)
@@ -205,7 +207,7 @@ class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationView
 
     requires_kid = False
 
-    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> HttpResponse:
+    def acme(self, *args: typing.Any, **kwargs: typing.Any) -> "HttpResponse":
         kwargs.setdefault("cert", certs[self.default_cert]["key"]["parsed"])
         kwargs["kid"] = None
         return super().acme(*args, **kwargs)

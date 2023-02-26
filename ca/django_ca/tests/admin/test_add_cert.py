@@ -24,7 +24,6 @@ from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.http.response import HttpResponse
 from django.test import TestCase
 
 from django_webtest import WebTestMixin
@@ -48,6 +47,9 @@ from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.typehints import SerializedExtension
 from django_ca.utils import MULTIPLE_OIDS, ca_storage, x509_name
+
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 @freeze_time(timestamps["after_child"])
@@ -135,7 +137,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def _test_get(self) -> HttpResponse:
+    def _test_get(self) -> "HttpResponse":
         """Do a basic get request (to test CSS etc)."""
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)

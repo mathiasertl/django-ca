@@ -27,7 +27,6 @@ from requests.utils import parse_header_links
 
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
-from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 
@@ -38,6 +37,9 @@ from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.typehints import PrivateKeyTypes
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
+
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 class AcmeTestCaseMixin(TestCaseMixin):
@@ -86,7 +88,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # noinspection PyPep8Naming
     def assertAcmeProblem(  # pylint: disable=invalid-name
         self,
-        response: HttpResponse,
+        response: "HttpResponse",
         typ: str,
         status: int,
         message: str,
@@ -114,7 +116,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # noinspection PyPep8Naming
     def assertAcmeResponse(  # pylint: disable=invalid-name
         self,
-        response: HttpResponse,
+        response: "HttpResponse",
         ca: typing.Optional[CertificateAuthority] = None,
         link_relations: typing.Optional[typing.Dict[str, str]] = None,
     ) -> None:
@@ -126,7 +128,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
     def assertLinkRelations(  # pylint: disable=invalid-name
-        self, response: HttpResponse, ca: typing.Optional[CertificateAuthority] = None, **kwargs: str
+        self, response: "HttpResponse", ca: typing.Optional[CertificateAuthority] = None, **kwargs: str
     ) -> None:
         """Assert Link relations for a given request."""
         if ca is None:  # pragma: no branch
@@ -142,7 +144,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
     def assertMalformed(  # pylint: disable=invalid-name
-        self, resp: HttpResponse, message: str = "", typ: str = "malformed", **kwargs: typing.Any
+        self, resp: "HttpResponse", message: str = "", typ: str = "malformed", **kwargs: typing.Any
     ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
@@ -150,7 +152,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
     def assertUnauthorized(  # pylint: disable=invalid-name
-        self, resp: HttpResponse, message: str = AcmeResponseUnauthorized.message, **kwargs: typing.Any
+        self, resp: "HttpResponse", message: str = AcmeResponseUnauthorized.message, **kwargs: typing.Any
     ) -> None:
         """Assert an unauthorized response."""
         self.assertAcmeProblem(
@@ -182,7 +184,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         with mock.patch("django_ca.models.get_random_string", return_value=slug):
             yield slug
 
-    def post(self, url: str, data: typing.Any, **kwargs: str) -> HttpResponse:
+    def post(self, url: str, data: typing.Any, **kwargs: str) -> "HttpResponse":
         """Make a post request with some ACME specific default data."""
         ctype = kwargs.pop("content_type", "application/jose+json")
         return self.client.post(
@@ -225,7 +227,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
             typing.Callable[[typing.Dict[typing.Any, typing.Any]], typing.Dict[typing.Any, typing.Any]]
         ] = None,
         post_kwargs: typing.Optional[typing.Dict[str, str]] = None,
-    ) -> HttpResponse:
+    ) -> "HttpResponse":
         """Do a generic ACME request.
 
         The `payload_cb` parameter is an optional callback that will receive the message data before being

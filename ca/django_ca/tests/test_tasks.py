@@ -531,6 +531,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
         )
         self.acme_cert.refresh_from_db()
+        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
@@ -557,6 +558,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         tasks.acme_issue_certificate(self.acme_cert.pk)
 
         self.acme_cert.refresh_from_db()
+        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
@@ -580,6 +582,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
         )
         self.acme_cert.refresh_from_db()
+        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
@@ -602,6 +605,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
         )
         self.acme_cert.refresh_from_db()
+        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
@@ -636,13 +640,15 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
-        self.cert = AcmeCertificate.objects.create(order=self.order, csr=certs["root-cert"]["csr"]["pem"])
+        self.acme_cert = AcmeCertificate.objects.create(
+            order=self.order, csr=certs["root-cert"]["csr"]["pem"]
+        )
 
     def test_basic(self) -> None:
         """Basic test."""
         tasks.acme_cleanup()  # does nothing if nothing is expired
 
-        self.assertEqual(self.cert, AcmeCertificate.objects.get(pk=self.cert.pk))
+        self.assertEqual(self.acme_cert, AcmeCertificate.objects.get(pk=self.acme_cert.pk))
         self.assertEqual(self.order, AcmeOrder.objects.get(pk=self.order.pk))
         self.assertEqual(self.auth, AcmeAuthorization.objects.get(pk=self.auth.pk))
         self.assertEqual(self.account, AcmeAccount.objects.get(pk=self.account.pk))

@@ -698,9 +698,11 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         now = datetime.now(tz.utc)
 
         # josepy message classes define field names as class variables, but instance attributes are of the
-        # same type (similar to Django). So we cast fields detected as RFC3339Field to datetime.
+        # same type (similar to Django). So we cast josepy fields to the actual type.
         not_before = cast(Optional[datetime], message.not_before)
         not_after = cast(Optional[datetime], message.not_after)
+        # TODO: test if identifiers are acceptable
+        identifiers = typing.cast(List[messages.Identifier], message.identifiers)
 
         if not_before and not_before < now:
             raise AcmeMalformed(message="Certificate cannot be valid before now.")
@@ -708,7 +710,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
             raise AcmeMalformed(message="Certificate cannot be valid that long.")
         if not_before and not_after and not_before > not_after:
             raise AcmeMalformed(message="notBefore must be before notAfter.")
-        if not message.identifiers:
+        if not identifiers:
             # NOTE: Catches sending an empty tuple, which is not caught in message deserialization
             raise AcmeMalformed(message="The following fields are required: identifiers")
 
@@ -718,12 +720,9 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
             if not_after is not None:
                 not_after = make_naive(not_after)
 
-        # TODO: test if identifiers are acceptable
         order = AcmeOrder.objects.create(account=self.account, not_before=not_before, not_after=not_after)
-
         authorizations = [
-            self.request.build_absolute_uri(authz.acme_url)
-            for authz in order.add_authorizations(message.identifiers)
+            self.request.build_absolute_uri(authz.acme_url) for authz in order.add_authorizations(identifiers)
         ]
 
         expires = order.expires
@@ -734,7 +733,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
             authorizations=authorizations,
             expires=expires,
             finalize=self.request.build_absolute_uri(order.acme_finalize_url),
-            identifiers=message.identifiers,
+            identifiers=identifiers,
             not_after=message.not_after,
             not_before=message.not_before,
             status=order.status,
@@ -944,6 +943,11 @@ class AcmeCertificateView(AcmePostAsGetView):
             cert = AcmeCertificate.objects.viewable().account(self.account).get(slug=slug)
         except AcmeCertificate.DoesNotExist as ex:
             raise AcmeUnauthorized() from ex
+
+        # COVERAGE NOTE: This should not happen in practice, as viewable() above already excludes those
+        # instances. We add this check here just to be sure (and to make mypy happy).
+        if cert.cert is None:  # pragma: no cover
+            raise AcmeUnauthorized()
 
         # self.prepared['cert'] = slug
         # self.prepared['csr'] = cert.csr

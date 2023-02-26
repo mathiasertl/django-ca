@@ -183,6 +183,11 @@ class Watcher(models.Model):
     name = models.CharField(max_length=64, blank=True, default="", verbose_name=_("CommonName"))
     mail = models.EmailField(verbose_name=_("E-Mail"), unique=True)
 
+    if typing.TYPE_CHECKING:
+        # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
+        # See also: https://github.com/typeddjango/django-stubs/issues/1354
+        certificates: "models.manager.RelatedManager[Certificate]"
+
     @classmethod
     def from_addr(cls, addr: str) -> "Watcher":
         """Class constructor that creates an instance from an email address."""
@@ -501,6 +506,13 @@ class CertificateAuthority(X509CertMixin):
     objects: CertificateAuthorityManager = CertificateAuthorityManager.from_queryset(
         CertificateAuthorityQuerySet
     )()
+
+    if typing.TYPE_CHECKING:
+        # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
+        # See also: https://github.com/typeddjango/django-stubs/issues/1354
+        children: "CertificateAuthorityManager"
+        certificate_set: "CertificateManager"
+        acmeaccount_set: "models.manager.RelatedManager[AcmeAccount]"
 
     name = models.CharField(max_length=32, help_text=_("A human-readable name"), unique=True)
     """Human-readable name of the CA, only used for displaying the CA."""

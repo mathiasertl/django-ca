@@ -18,6 +18,7 @@
 
 import abc
 import typing
+from typing import Optional, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -219,11 +220,17 @@ class LazyBinaryField(
             return value.der
         return self.wrapper(value).der
 
-    def formfield(self, **kwargs: typing.Any) -> forms.Field:
-        defaults = {"form_class": self.formfield_class}
-        defaults.update(kwargs)
-        # TYPE NOTE: superclass seems to be not typed.
-        return super().formfield(**defaults)  # type: ignore[no-any-return]
+    def formfield(
+        self,
+        form_class: Optional[Type[forms.Field]] = None,
+        choices_form_class: Optional[Type[forms.Field]] = None,
+        **kwargs: typing.Any,
+    ) -> forms.Field:
+        # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
+        if form_class is None:  # pragma: no branch
+            form_class = self.formfield_class
+        # TYPEHINT NOTE: return value of parent is typed to any.
+        return super().formfield(form_class, choices_form_class, **kwargs)  # type: ignore[no-any-return]
 
     def to_python(
         self,

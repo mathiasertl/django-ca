@@ -19,7 +19,7 @@
 import importlib
 from typing import Any, Type
 
-from django.test.signals import setting_changed
+from django.core.signals import setting_changed
 
 from django_ca import ca_settings, profiles
 

@@ -31,7 +31,7 @@ _UNSUPPORTED_BACKENDS = (
 )
 
 
-@register(Tags.caches, deploy=True)  # type: ignore[misc]  # django-stubs does not type-hint the decorator
+@register(Tags.caches, deploy=True)  # type: ignore[type-var]  # django-stubs does not type-hint the decorator
 def check_cache(
     app_configs: typing.Optional[typing.List[AppConfig]], **kwargs: typing.Any
 ) -> typing.List[CheckMessage]:

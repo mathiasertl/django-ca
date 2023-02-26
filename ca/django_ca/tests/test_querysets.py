@@ -352,7 +352,7 @@ class AcmeQuerySetTestCase(QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTe
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth = AcmeAuthorization.objects.create(order=self.order, value="example.com")
         self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01)
-        self.cert = AcmeCertificate.objects.create(order=self.order)
+        self.acme_cert = AcmeCertificate.objects.create(order=self.order)
 
 
 class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
@@ -458,7 +458,7 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
 
     def test_account(self) -> None:
         """Test the account filter."""
-        self.assertQuerySet(AcmeCertificate.objects.account(self.account), self.cert)
+        self.assertQuerySet(AcmeCertificate.objects.account(self.account), self.acme_cert)
         self.assertQuerySet(AcmeCertificate.objects.account(self.account2))
 
     @freeze_time(timestamps["everything_valid"])
@@ -467,7 +467,7 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
         # pylint: disable=expression-not-assigned
 
         with self.assertNumQueries(1):
-            AcmeCertificate.objects.url().get(pk=self.cert.pk).acme_url
+            AcmeCertificate.objects.url().get(pk=self.acme_cert.pk).acme_url
 
     @freeze_time(timestamps["everything_valid"])
     def test_viewable(self) -> None:

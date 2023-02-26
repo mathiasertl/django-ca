@@ -44,7 +44,6 @@ from django.core.management import ManagementUtility, call_command
 from django.core.management.base import CommandError
 from django.db import models
 from django.dispatch.dispatcher import Signal
-from django.http import HttpResponse
 from django.templatetags.static import static
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
@@ -74,6 +73,8 @@ if typing.TYPE_CHECKING:
     # that the mixin accesses. See also:
     #   https://github.com/python/mypy/issues/5837
     TestCaseProtocol = SimpleTestCase
+
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 else:
     TestCaseProtocol = object
 
@@ -461,7 +462,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(cert.issuer, issuer.subject)
 
     def assertMessages(  # pylint: disable=invalid-name
-        self, response: HttpResponse, expected: List[str]
+        self, response: "HttpResponse", expected: List[str]
     ) -> None:
         """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
@@ -1168,7 +1169,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     @property
     def add_url(self) -> str:
         """Shortcut for the "add" URL of the model under test."""
-        return typing.cast(str, self.model.admin_add_url)  # type hinting for @classproperty doesn't work
+        return self.model.admin_add_url
 
     def assertBundle(  # pylint: disable=invalid-name
         self, cert: DjangoCAModelTypeVar, expected: Iterable[X509CertMixin], filename: str
@@ -1185,7 +1186,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self.assertEqual(response["Content-Disposition"], f"attachment; filename={filename}")
         self.assertEqual(response.content.decode("utf-8"), expected_content)
 
-    def assertCSS(self, response: HttpResponse, path: str) -> None:  # pylint: disable=invalid-name
+    def assertCSS(self, response: "HttpResponse", path: str) -> None:  # pylint: disable=invalid-name
         """Assert that the HTML from the given response includes the mentioned CSS."""
         if django.VERSION[:2] <= (4, 0):  # pragma: only django<4.1
             css = f'<link href="{static(path)}" type="text/css" media="all" rel="stylesheet" />'
@@ -1194,7 +1195,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self.assertInHTML(css, response.content.decode("utf-8"), 1)
 
     def assertChangeResponse(  # pylint: disable=invalid-name,unused-argument # obj is unused
-        self, response: HttpResponse, obj: DjangoCAModelTypeVar, status: int = HTTPStatus.OK
+        self, response: "HttpResponse", obj: DjangoCAModelTypeVar, status: int = HTTPStatus.OK
     ) -> None:
         """Assert that the passed response is a model change view."""
         self.assertEqual(response.status_code, status)
@@ -1206,7 +1207,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
             self.assertCSS(response, css)
 
     def assertChangelistResponse(  # pylint: disable=invalid-name
-        self, response: HttpResponse, *objects: models.Model, status: int = HTTPStatus.OK
+        self, response: "HttpResponse", *objects: models.Model, status: int = HTTPStatus.OK
     ) -> None:
         """Assert that the passed response is a model changelist view."""
         self.assertEqual(response.status_code, status)
@@ -1220,7 +1221,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
             self.assertCSS(response, css)
 
     def assertRequiresLogin(  # pylint: disable=invalid-name
-        self, response: HttpResponse, **kwargs: Any
+        self, response: "HttpResponse", **kwargs: Any
     ) -> None:
         """Assert that the given response is a redirect to the login page."""
         path = reverse("admin:login")
@@ -1235,7 +1236,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     @property
     def changelist_url(self) -> str:
         """Shortcut for the changelist URL of the model under test."""
-        return typing.cast(str, self.model.admin_changelist_url)
+        return self.model.admin_changelist_url
 
     def create_superuser(
         self, username: str = "admin", password: str = "admin", email: str = "user@example.com"
@@ -1252,13 +1253,13 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
             self.client.force_login(self.user)
             yield frozen
 
-    def get_changelist_view(self, data: Optional[Dict[str, str]] = None) -> HttpResponse:
+    def get_changelist_view(self, data: Optional[Dict[str, str]] = None) -> "HttpResponse":
         """Get the response to a changelist view for the given model."""
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
         self, obj: DjangoCAModelTypeVar, data: Optional[Dict[str, str]] = None
-    ) -> HttpResponse:
+    ) -> "HttpResponse":
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
 

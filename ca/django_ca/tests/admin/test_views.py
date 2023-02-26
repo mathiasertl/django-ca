@@ -16,7 +16,6 @@
 import typing
 from http import HTTPStatus
 
-from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
@@ -26,6 +25,9 @@ from django_ca.models import Certificate, Watcher
 from django_ca.tests.admin.base import CertificateAdminTestCaseMixin
 from django_ca.tests.base import timestamps
 from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
+
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -39,7 +41,7 @@ class CertificateAdminViewTestCase(
     model = Certificate
 
     def assertChangeResponse(
-        self, response: HttpResponse, obj: Certificate, status: int = HTTPStatus.OK
+        self, response: "HttpResponse", obj: Certificate, status: int = HTTPStatus.OK
     ) -> None:
         super().assertChangeResponse(response, obj=obj, status=status)
 

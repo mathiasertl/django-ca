@@ -28,6 +28,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants, fields
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.querysets import CertificateAuthorityQuerySet
 from django_ca.utils import parse_general_name
 from django_ca.widgets import ProfileWidget
 
@@ -63,7 +64,7 @@ class X509CertMixinAdminForm(X509CertMixinModelForm):
       present in the form.
     """
 
-    _meta: ModelFormOptions
+    _meta: "ModelFormOptions[X509CertMixin]"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -166,7 +167,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         help_text=_("Allows enforcing TLS protocol features. Only OCSPMustStaple is commonly used.")
     )
 
-    # Prevent auto-filling the password field. Browsers will otherwise prefill this field with the *users*
+    # Prevent auto-completing the password field. Browsers will otherwise prefill this field with the *users*
     # password, which is usually the wrong password. Especially annoying for CAs without a password, as the
     # browser will prevent form submission without entering a different non-empty password.
     password.widget.attrs.update({"autocomplete": "new-password"})
@@ -174,11 +175,12 @@ class CreateCertificateBaseForm(CertificateModelForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        # Set choices so we can filter out CAs where the private key does not exist locally
-        field = self.fields["ca"]
+        # Set choices, so we can filter out CAs where the private key does not exist locally
+        field = typing.cast(forms.ModelChoiceField, self.fields["ca"])
+        qs = typing.cast(CertificateAuthorityQuerySet, field.queryset)
         field.choices = [
             (field.prepare_value(ca), field.label_from_instance(ca))
-            for ca in self.fields["ca"].queryset.filter(enabled=True)
+            for ca in qs.filter(enabled=True)
             if ca.key_exists
         ]
 
@@ -199,8 +201,13 @@ class CreateCertificateBaseForm(CertificateModelForm):
             return None
         return password.encode("utf-8")
 
-    def clean(self) -> Dict[str, Any]:
+    def clean(self) -> Optional[Dict[str, Any]]:
         data = super().clean()
+
+        # COVERAGE Unclear if/when this happens, but django-stubs==1.15.0 reports data as Optional.
+        if data is None:  # pragma: no cover
+            return data
+
         expires = data.get("expires")
         ca: CertificateAuthority = data["ca"]
         password = data.get("password")

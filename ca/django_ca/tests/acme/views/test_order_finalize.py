@@ -14,6 +14,7 @@
 """Test AcmeOrderFinalizeView."""
 
 import os
+import typing
 from http import HTTPStatus
 from unittest import mock
 
@@ -27,7 +28,6 @@ from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
 
 from django.conf import settings
-from django.http import HttpResponse
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse, reverse_lazy
 
@@ -38,6 +38,9 @@ from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps
+
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -73,7 +76,7 @@ class AcmeOrderFinalizeViewTestCase(
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
 
-    def assertBadCSR(self, resp: HttpResponse, message: str) -> None:  # pylint: disable=invalid-name
+    def assertBadCSR(self, resp: "HttpResponse", message: str) -> None:  # pylint: disable=invalid-name
         """Assert a badCSR error."""
         self.assertAcmeProblem(resp, "badCSR", status=HTTPStatus.BAD_REQUEST, message=message)
 

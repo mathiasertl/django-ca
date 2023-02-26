@@ -15,6 +15,7 @@
 
 import abc
 import typing
+from typing import Optional, Tuple
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, NameOID
@@ -184,7 +185,8 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
     """Base class for form fields that serialize to a :py:class:`~cg:cryptography.Extension`."""
 
     extension_type: typing.Type[ExtensionTypeTypeVar]
-    fields: typing.Optional[typing.Tuple[forms.Field, ...]] = None
+    # TYPEHINT NOTE: the value can be handled by the get_fields() method.
+    fields: Optional[Tuple[forms.Field, ...]] = None  # type: ignore[assignment]
 
     def __init__(self, **kwargs: typing.Any) -> None:
         fields = self.get_fields() + (forms.BooleanField(required=False, initial=True),)
@@ -372,9 +374,7 @@ class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
 class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
     """Form field for a :py:class:`~cg:cryptography.x509.KeyUsage` extension."""
 
-    # TYPEHINT NOTE: mypy typehints the tuple to the lambda function wrong and then mypy thinks the return
-    #   value thought to be not comparable
-    choices = sorted(KEY_USAGE_NAMES.items(), key=lambda t: t[1])  # type: ignore
+    choices = sorted(KEY_USAGE_NAMES.items(), key=lambda t: t[1])
 
     extension_type = x509.KeyUsage
     widget = widgets.KeyUsageWidget

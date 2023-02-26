@@ -30,7 +30,6 @@ from cryptography.x509.oid import NameOID
 from oscrypto import asymmetric
 
 from django.conf import settings
-from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import path, re_path, reverse
 
@@ -44,6 +43,9 @@ from django_ca.tests.base import certs, ocsp_data, override_settings, override_t
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import ca_storage, hex_to_bytes, int_to_hex
 from django_ca.views import OCSPView
+
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
@@ -240,7 +242,7 @@ class OCSPViewTestMixin(TestCaseMixin):
     def assertOCSP(
         # pylint: disable=invalid-name
         self,
-        http_response: HttpResponse,
+        http_response: "HttpResponse",
         requested: typing.List[typing.Union[Certificate, CertificateAuthority]],
         status: str = "successful",
         nonce: typing.Optional[bytes] = None,
