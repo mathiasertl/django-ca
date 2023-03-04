@@ -408,7 +408,6 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
         >>> merge_x509_names(base, update)
         <Name(C=AT,O=Example Org,OU=Example Org Unit,CN=example.com)>
     """
-
     attributes: List[x509.NameAttribute] = []
     if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
         raise ValueError(f"{base}: Unsortable name")

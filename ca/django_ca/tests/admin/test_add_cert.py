@@ -955,7 +955,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             oid = constants.NAME_OID_TYPES[key]
             value = field.get_attribute("value")
 
-            if profile.subject is None:
+            if profile.subject is None or profile.subject is False:
                 attrs: List[Union[str, bytes]] = [""]
             else:
                 attrs = [attr.value for attr in profile.subject.get_attributes_for_oid(oid)]

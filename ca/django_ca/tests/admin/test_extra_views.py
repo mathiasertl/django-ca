@@ -308,20 +308,15 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "cn_in_san": False,
                     "description": "A certificate for an OCSP responder.",
                     "extensions": {
-                        "basic_constraints": {
-                            "critical": True,
-                            "value": {"ca": False},
-                        },
+                        "basic_constraints": {"critical": True, "value": {"ca": False}},
                         "key_usage": {
                             "critical": True,
                             "value": ["content_commitment", "digital_signature", "key_encipherment"],
                         },
-                        "extended_key_usage": {
-                            "critical": False,
-                            "value": ["OCSPSigning"],
-                        },
+                        "extended_key_usage": {"critical": False, "value": ["OCSPSigning"]},
+                        "ocsp_no_check": {"critical": False, "value": None},
                     },
-                    "subject": expected_subject,
+                    "subject": None,
                 },
                 "server": {
                     "cn_in_san": True,

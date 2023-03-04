@@ -12,6 +12,10 @@ ChangeLog
 
 * Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
 * The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
+* Certificates for OCSP responders now include the "OCSPNoCheck" extension by default.
+* Certificates for OCSP responders now use a commonName designating the certificate as OCSP responder as
+  subject, other fields from the CAs subject are discarded.
+* A profile can now ignore :ref:`settings-ca-default-subject` by setting ``subject`` to ``False``.
 * Add typehints when installing as wheel.
 
 .. _changelog-1.23.0:

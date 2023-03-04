@@ -52,17 +52,6 @@ if typing.TYPE_CHECKING:
 class Profile:
     """A certificate profile defining properties and extensions of a certificate.
 
-    .. deprecated:: 1.21.0
-
-       Passing a ``dict`` or ``django_ca.subject.Subject`` as ``subject`` is deprecated. The feature will be
-       removed in ``django_ca==1.24.0`` instead. Pass a :py:class:`~cg:cryptography.x509.Name` or an iterable
-       of tuples instead.
-
-    .. deprecated:: 1.22.0
-
-       Passing a ``django_ca.extension.Extension`` is deprecated. The feature will be removed in
-       ``django_ca==1.24.0``. Pass a :py:class:`~cg:cryptography.x509.Extension` a serialized version instead.
-
     Instances of this class usually represent profiles defined in :ref:`CA_PROFILES <settings-ca-profiles>`,
     but you can also create your own profile to create a different type of certificate. An instance of this
     class can be used to create a signed certificate based on the given CA::
@@ -78,7 +67,7 @@ class Profile:
     def __init__(
         self,
         name: str,
-        subject: Optional[Union[x509.Name, Iterable[Tuple[str, str]]]] = None,
+        subject: Optional[Union[typing.Literal[False], x509.Name, Iterable[Tuple[str, str]]]] = None,
         algorithm: ParsableHash = None,
         extensions: Optional[
             Dict[str, Optional[Union[ParsableExtension, x509.Extension[x509.ExtensionType]]]]
@@ -100,7 +89,9 @@ class Profile:
         if extensions is None:
             extensions = {}
         if subject is None:
-            self.subject = ca_settings.CA_DEFAULT_SUBJECT
+            self.subject: Optional[Union[typing.Literal[False], x509.Name]] = ca_settings.CA_DEFAULT_SUBJECT
+        elif subject is False:
+            self.subject = False
         elif isinstance(subject, x509.Name):
             self.subject = subject
         else:
@@ -193,8 +184,6 @@ class Profile:
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
         add_issuer_alternative_name: Optional[bool] = None,
-        add_san_as_cn: Optional[bool] = True,
-        ignore_profile_subject: bool = False,
         password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
@@ -257,12 +246,6 @@ class Profile:
         add_issuer_alternative_name : bool, optional
             Override if any IssuerAlternativeNames from the CA should be added to the CA. If not passed, the
             value set in the profile is used.
-        add_san_as_cn : bool, optional
-            Set the first applicable SubjectAlternativeName as commonName if the passed `subject` does not
-            define a common name.
-        ignore_profile_subject : bool, optional
-            Ignore the subject defined for the profile. This is used for OCSP responder certificates, where
-            the subject matches the subject of the certificate authority.
         password: bytes or str, optional
             The password to the private key of the CA.
 
@@ -296,13 +279,15 @@ class Profile:
             add_issuer_alternative_name=add_issuer_alternative_name,
         )
 
-        if ignore_profile_subject is False:
-            if self.subject is not None and subject is not None:
+        if self.subject is not False and self.subject is not None:
+            if subject is not None:
                 subject = merge_x509_names(self.subject, subject)
-            elif self.subject is not None:
+            else:
                 subject = self.subject
 
+        # Add first DNSName/IPAdrress from subjectAlternativeName as commonName if not present in the subject
         subject = self._update_cn_from_san(subject, cert_extensions)
+
         if subject is None:
             raise ValueError("Cannot determine subject for certificate.")
         subject = sort_name(subject)
@@ -316,9 +301,8 @@ class Profile:
         # Make sure that expires is a fixed timestamp
         expires = self.get_expires(expires)
 
-        # Finally, update SAN with the current CN, if set and requested
-        if add_san_as_cn:
-            self._update_san_from_cn(cn_in_san, subject=subject, extensions=cert_extensions)
+        # Finally, add the commonName as a subjectAlternativeName if not already present.
+        self._update_san_from_cn(cn_in_san, subject=subject, extensions=cert_extensions)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not cert_extensions.get(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
@@ -375,7 +359,7 @@ class Profile:
                 extensions[EXTENSION_KEYS[key]] = serialize_extension(extension)
 
         serialized_name = None
-        if self.subject is not None:
+        if self.subject is not None and self.subject is not False:
             serialized_name = serialize_name(self.subject)
 
         data: SerializedProfile = {
