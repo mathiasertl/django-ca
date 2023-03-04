@@ -108,6 +108,7 @@ module = [
     "asn1crypto.*",
     "enchant.tokenize",
     "requests.packages.urllib3.response",
+    "sniffio",
 ]
 ignore_missing_imports = true
 

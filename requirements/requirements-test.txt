@@ -9,4 +9,3 @@ pyOpenSSL>=19
 pyrfc3339==1.1
 requests-mock==1.10.0
 selenium==4.8.2
-toml==0.10.2; python_version < '3.11'

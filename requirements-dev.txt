@@ -9,5 +9,4 @@ pip>=21.3
 
 tox>=4.4.6
 
-toml>=0.10.2
 wheel-inspect
