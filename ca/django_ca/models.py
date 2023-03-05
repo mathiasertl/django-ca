@@ -88,7 +88,6 @@ from django_ca.typehints import Expires, ParsableHash, ParsableKeyType, PrivateK
 from django_ca.utils import (
     bytes_to_hex,
     ca_storage,
-    format_name,
     generate_private_key,
     get_cert_builder,
     get_crl_cache_key,
@@ -471,11 +470,6 @@ class X509CertMixin(DjangoCAModel):
     def subject(self) -> x509.Name:
         """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`."""
         return self.pub.loaded.subject
-
-    @property
-    def distinguished_name(self) -> str:
-        """The certificate subject formatted as string."""
-        return format_name(self.pub.loaded.subject)
 
     ###################
     # X509 extensions #

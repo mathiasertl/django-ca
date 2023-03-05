@@ -21,55 +21,45 @@ from typing import Any
 from django.core.management.base import CommandParser
 
 from django_ca import ca_settings
-from django_ca.management.base import BaseCommand
+from django_ca.management.base import BaseViewCommand
 from django_ca.models import CertificateAuthority
 from django_ca.utils import add_colons, ca_storage
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseViewCommand):  # pylint: disable=missing-class-docstring
     help = "View details of a certificate authority."
 
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
+        super().add_arguments(parser)
 
-    def handle(self, ca: CertificateAuthority, **options: Any) -> None:
-        try:
-            path = ca_storage.path(ca.private_key_path)
-        except NotImplementedError:
-            # Will raise NotImplementedError if storage backend does not support path(), in which case we use
-            # the relative path from the database.
-            # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
-            path = ca.private_key_path
-
-        self.stdout.write(f"{ca.name} (%s):" % ("enabled" if ca.enabled else "disabled"))
-        self.stdout.write(f"* Serial: {add_colons(ca.serial)}")
-
-        if ca_storage.exists(ca.private_key_path):
-            self.stdout.write(f"* Path to private key:\n  {path}")
-        else:
-            self.stdout.write("* Private key not available locally.")
-
+    def output_ca_information(self, ca: CertificateAuthority, path: str) -> None:
+        """Output information specific to a CA."""
+        self.stdout.write("\nCertificate Authority information:")
         if ca.parent:
-            self.stdout.write(f"* Parent: {ca.parent.name} ({ca.parent.serial})")
+            self.stdout.write(f"* Parent: {ca.parent.name} ({add_colons(ca.parent.serial)})")
         else:
-            self.stdout.write("* Is a root CA.")
+            self.stdout.write("* Certificate authority is a root CA.")
 
         children = ca.children.all()
         if children:
             self.stdout.write("* Children:")
             for child in children:
-                self.stdout.write(f"  * {child.name} ({child.serial})")
+                self.stdout.write(f"  * {child.name} ({add_colons(child.serial)})")
         else:
-            self.stdout.write("* Has no children.")
+            self.stdout.write("* Certificate authority has no children.")
 
-        if ca.pathlen is None:
-            pathlen = "unlimited"
+        if ca.max_pathlen is None:
+            path_length = "unlimited"
         else:
-            pathlen = str(ca.pathlen)
+            path_length = str(ca.max_pathlen)
 
-        self.stdout.write(f"* Distinguished Name: {ca.distinguished_name}")
-        self.stdout.write(f"* Maximum levels of sub-CAs (pathlen): {pathlen}")
-        self.stdout.write(f"* HPKP pin: {ca.hpkp_pin}")
+        self.stdout.write(f"* Maximum levels of sub-CAs (path length): {path_length}")
+
+        if ca_storage.exists(ca.private_key_path):
+            self.stdout.write(f"* Path to private key:\n  {path}")
+        else:
+            self.stdout.write("* Private key not available locally.")
 
         if ca.website:
             self.stdout.write(f"* Website: {ca.website}")
@@ -78,6 +68,22 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         if ca.caa_identity:
             self.stdout.write(f"* CAA identity: {ca.caa_identity}")
 
+    def handle(
+        self, ca: CertificateAuthority, pem: bool, extensions: bool, wrap: bool = True, **options: Any
+    ) -> None:
+        try:
+            path = ca_storage.path(ca.private_key_path)
+        except NotImplementedError:
+            # Will raise NotImplementedError if storage backend does not support path(), in which case we use
+            # the relative path from the database.
+            # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
+            path = ca.private_key_path
+
+        self.stdout.write(f"* Name: {ca.name}")
+        self.stdout.write(f"* Enabled: {'Yes' if ca.enabled else 'No'}")
+        self.output_header(ca)
+        self.output_ca_information(ca, path)
+
         if ca_settings.CA_ENABLE_ACME:
             self.stdout.write("")
             self.stdout.write("ACMEv2 support:")
@@ -85,15 +91,14 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             if ca.acme_enabled:
                 self.stdout.write(f"* Requires contact: {ca.acme_requires_contact}")
 
-        self.stdout.write("")
-        self.stdout.write("X509 v3 certificate extensions for CA:")
+        if extensions is True:
+            self.stdout.write("\nCertificate extensions:")
+            self.print_extensions(ca)
 
-        self.print_extensions(ca)
-
-        self.stdout.write("")
-        self.stdout.write("X509 v3 certificate extensions for signed certificates:")
-        self.stdout.write(f"* Certificate Revokation List (CRL): {ca.crl_url or None}")
+        self.stdout.write("\nCertificate extensions for signed certificates:")
+        self.stdout.write(f"* Certificate Revocation List (CRL): {ca.crl_url or None}")
         self.stdout.write(f"* Issuer URL: {ca.issuer_url or None}")
         self.stdout.write(f"* OCSP URL: {ca.ocsp_url or None}")
         self.stdout.write(f"* Issuer Alternative Name: {ca.issuer_alt_name or None}")
-        self.stdout.write(f"\n{ca.pub.pem}")
+
+        self.output_footer(ca, pem=pem, wrap=wrap)

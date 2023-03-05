@@ -136,10 +136,10 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
         ext_name = get_extension_name(ext.oid)
         if ext.critical:
-            self.stdout.write(f"{ext_name} (critical):")
+            self.stdout.write(f"* {ext_name} (critical):")
         else:
-            self.stdout.write(f"{ext_name}:")
-        self.stdout.write(indent(extension_as_text(ext.value), "    "))
+            self.stdout.write(f"* {ext_name}:")
+        self.stdout.write(indent(extension_as_text(ext.value), "  "))
 
     def print_extensions(self, cert: X509CertMixin) -> None:
         """Print all extensions for the given certificate."""

@@ -16,82 +16,29 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from datetime import datetime
 from typing import Any
 
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import Encoding
-
-from django.core.management.base import CommandParser
-
-from django_ca.management.base import BinaryCommand
+from django_ca.management.base import BaseViewCommand
 from django_ca.management.mixins import CertCommandMixin
 from django_ca.models import Certificate
 
 
-class Command(CertCommandMixin, BinaryCommand):
+class Command(CertCommandMixin, BaseViewCommand):
     """Implement :command:`manage.py view_cert`."""
 
     allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
 
-    def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument(
-            "-n",
-            "--no-pem",
-            default=False,
-            action="store_true",
-            help="Do not output public certificate in PEM format.",
-        )
-        parser.add_argument(
-            "-e",
-            "--extensions",
-            default=False,
-            action="store_true",
-            help="Show all extensions, not just subjectAltName.",
-        )
-        self.add_format(parser)
-        super().add_arguments(parser)
+    def handle(self, cert: Certificate, pem: bool, extensions: bool, wrap: bool, **options: Any) -> None:
+        self.output_header(cert)
 
-    def handle(self, cert: Certificate, encoding: Encoding, **options: Any) -> None:
-        self.stdout.write(f"Common Name: {cert.cn}")
-
-        # self.stdout.write notBefore/notAfter
-        self.stdout.write(f"Valid from: {cert.not_before.strftime('%Y-%m-%d %H:%M')}")
-        self.stdout.write(f"Valid until: {cert.not_after.strftime('%Y-%m-%d %H:%M')}")
-
-        # self.stdout.write status
-        now = datetime.utcnow()
-        if cert.revoked:
-            self.stdout.write("Status: Revoked")
-        elif cert.not_after < now:
-            self.stdout.write("Status: Expired")
-        elif cert.not_before > now:
-            self.stdout.write("Status: Not yet valid")
-        else:
-            self.stdout.write("Status: Valid")
+        self.stdout.write("* Watchers:")
+        for watcher in cert.watchers.all():
+            self.stdout.write(f"  * {watcher}")
 
         # self.stdout.write extensions
-        if options["extensions"]:
+        if extensions:
+            self.stdout.write("\nCertificate extensions:")
             self.print_extensions(cert)
-        else:
-            try:
-                san = cert.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-                self.print_extension(san)
-            except x509.ExtensionNotFound:
-                pass
 
-        self.stdout.write("Watchers:")
-        for watcher in cert.watchers.all():
-            self.stdout.write(f"* {watcher}")
-
-        self.stdout.write("Digest:")
-        for algorithm in [hashes.SHA256(), hashes.SHA512()]:
-            self.stdout.write(f"    {algorithm.name}: {cert.get_fingerprint(algorithm)}")
-
-        self.stdout.write(f"HPKP pin: {cert.hpkp_pin}")
-
-        if not options["no_pem"]:
-            self.stdout.write("")
-            self.stdout.write(cert.pub.encode(encoding))
+        self.output_footer(cert, pem=pem, wrap=wrap)

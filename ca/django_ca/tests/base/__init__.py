@@ -36,7 +36,7 @@ from django_ca import constants
 from django_ca.extensions import parse_extension
 from django_ca.profiles import profiles
 from django_ca.typehints import PrivateKeyTypes
-from django_ca.utils import add_colons, ca_storage
+from django_ca.utils import add_colons, ca_storage, format_name
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
 KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
@@ -120,6 +120,7 @@ certs = _fixture_data.get("certs")
 # Update some data from contrib (data is not in cert-data.json, since we don't generate them)
 certs["multiple_ous"] = {
     "name": "multiple_ous",
+    "subject_str": "/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network",  # noqa: E501
     "cn": "",
     "key_filename": False,
     "csr_filename": False,
@@ -134,11 +135,12 @@ certs["multiple_ous"] = {
     "hpkp": "AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=",
     "md5": "A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9",
     "sha1": "85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F",
-    "sha256": "83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B",  # NOQA
+    "sha256": "83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B",  # noqa: E501
     "sha512": "86:20:07:9F:8B:06:80:43:44:98:F6:7A:A4:22:DE:7E:2B:33:10:9B:65:72:79:C4:EB:F3:F3:0F:66:C8:6E:89:1D:4C:6C:09:1C:83:45:D1:25:6C:F8:65:EB:9A:B9:50:8F:26:A8:85:AE:3A:E4:8A:58:60:48:65:BB:44:B6:CE",  # NOQA
 }
 certs["cloudflare_1"] = {
     "name": "cloudflare_1",
+    "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com",
     "cn": "sni24142.cloudflaressl.com",
     "key_filename": False,
     "csr_filename": False,
@@ -304,6 +306,7 @@ for cert_name, cert_data in certs.items():
 
     if cert_data["type"] == "ca":
         cert_data.setdefault("children", [])
+        cert_data["children"] = [(k, add_colons(v)) for k, v in cert_data["children"]]
 
     # Load data from files
     if cert_data["key_filename"] is not False:
@@ -311,12 +314,17 @@ for cert_name, cert_data in certs.items():
     if cert_data["csr_filename"] is not False:
         cert_data["csr"] = _load_csr(cert_data)
     cert_data["pub"] = _load_pub(cert_data)
+    cert_data["issuer"] = cert_data["pub"]["parsed"].issuer
+    cert_data["issuer_str"] = format_name(cert_data["issuer"])
+
+    if "subject_str" not in cert_data and "subject" in cert_data:
+        cert_data["subject_str"] = cert_data["subject"]
 
     # parse some data from the dict
     cert_data["valid_from"] = datetime.strptime(cert_data["valid_from"], "%Y-%m-%d %H:%M:%S")
     cert_data["valid_until"] = datetime.strptime(cert_data["valid_until"], "%Y-%m-%d %H:%M:%S")
-    cert_data["valid_from_short"] = cert_data["valid_from"].strftime("%Y-%m-%d %H:%M")
-    cert_data["valid_until_short"] = cert_data["valid_until"].strftime("%Y-%m-%d %H:%M")
+    cert_data["valid_from_str"] = cert_data["valid_from"].strftime("%Y-%m-%d %H:%M:%S")
+    cert_data["valid_until_str"] = cert_data["valid_until"].strftime("%Y-%m-%d %H:%M:%S")
 
     # parse extensions
     for ext_key in constants.EXTENSION_KEY_OIDS:

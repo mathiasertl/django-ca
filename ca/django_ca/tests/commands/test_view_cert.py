@@ -14,12 +14,10 @@
 """Test the view_cert management command."""
 
 import typing
-from io import BytesIO
 from typing import Dict, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
@@ -30,425 +28,476 @@ from django_ca.models import Certificate, Watcher
 from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
-output = {
-    "root-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+expected = {
+    "root-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "child-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "child-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+  CA:FALSE
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "ec-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "ec-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+  CA:FALSE
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "ed25519-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "ed25519-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "ed448-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "ed448-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "pwd-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "pwd-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "dsa-cert": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "dsa-cert": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+  CA:FALSE
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "profile-client": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "profile-client": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "profile-server": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "profile-server": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "profile-webserver": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "profile-webserver": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "profile-enduser": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "profile-enduser": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "profile-ocsp": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "profile-ocsp": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "no-extensions": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Watchers:
+    "no-extensions": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "all-extensions": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "all-extensions": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
+* Basic Constraints (critical):
+  CA:FALSE
+* CRL Distribution Points{crl_distribution_points_critical}:
+  * DistributionPoint:
+    * Full Name:
+      * URI:{crl}
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Freshest CRL{freshest_crl_critical}:
+* Freshest CRL{freshest_crl_critical}:
 {freshest_crl_text}
-Inhibit anyPolicy{inhibit_any_policy_critical}:
-    1
-Issuer Alternative Name{issuer_alternative_name_critical}:
+* Inhibit anyPolicy{inhibit_any_policy_critical}:
+  1
+* Issuer Alternative Name{issuer_alternative_name_critical}:
 {issuer_alternative_name_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Name Constraints{name_constraints_critical}:
+* Name Constraints{name_constraints_critical}:
 {name_constraints_text}
-OCSP No Check{ocsp_no_check_critical}:
-    Yes
-Policy Constraints{policy_constraints_critical}:
+* OCSP No Check{ocsp_no_check_critical}:
+  Yes
+* Policy Constraints{policy_constraints_critical}:
 {policy_constraints_text}
 {precert_poison}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-TLS Feature{tls_feature_critical}:
+* TLS Feature{tls_feature_critical}:
 {tls_feature_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
-    "alt-extensions": """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+    "alt-extensions": """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints{basic_constraints_critical}:
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
+* Basic Constraints{basic_constraints_critical}:
+  CA:FALSE
+* CRL Distribution Points{crl_distribution_points_critical}:
 {crl_distribution_points_text}
-Extended Key Usage{extended_key_usage_critical}:
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Issuer Alternative Name{issuer_alternative_name_critical}:
+* Issuer Alternative Name{issuer_alternative_name_critical}:
 {issuer_alternative_name_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
-Name Constraints{name_constraints_critical}:
+* Name Constraints{name_constraints_critical}:
 {name_constraints_text}
-OCSP No Check{ocsp_no_check_critical}:
-    Yes
-Subject Alternative Name{subject_alternative_name_critical}:
+* OCSP No Check{ocsp_no_check_critical}:
+  Yes
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-TLS Feature{tls_feature_critical}:
+* TLS Feature{tls_feature_critical}:
 {tls_feature_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
 }
 
@@ -476,22 +525,22 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
         """Test basic properties of output."""
         # pylint: disable=consider-using-f-string
         for key, cert in self.ca_certs:
-            stdout, stderr = self.cmd("view_cert", cert.serial, stdout=BytesIO(), stderr=BytesIO())
+            stdout, stderr = self.cmd("view_cert", cert.serial, wrap=False)
             san = typing.cast(
                 Optional[x509.Extension[x509.SubjectAlternativeName]],
                 cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
             )
             if san is None:
                 self.assertEqual(
-                    stdout.decode("utf-8"),
+                    stdout,
                     """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
+Valid from: {valid_from_str}
+Valid until: {valid_until_str}
 Status: {status}
 Watchers:
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 HPKP pin: {hpkp}
 
 {pub[pem]}""".format(
@@ -502,64 +551,66 @@ HPKP pin: {hpkp}
                 continue  # no need to duplicate this here
             else:
                 self.assertEqual(
-                    stdout.decode("utf-8"),
-                    """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: {status}
-Subject Alternative Name:
+                    stdout,
+                    """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: {status}
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
+{authority_information_access_text}
+* Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+* Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Extended Key Usage{extended_key_usage_critical}:
+{extended_key_usage_text}
+* Key Usage{key_usage_critical}:
+{key_usage_text}
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Watchers:
+* Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 
 {pub[pem]}""".format(
                         status=status, **self.get_cert_context(key)
                     ),
                 )
-            self.assertEqual(stderr, b"")
+            self.assertEqual(stderr, "")
 
-        # test with no pem but with extensions
+        # test with no pem and no extensions
         for key, cert in self.ca_certs:
-            stdout, stderr = self.cmd(
-                "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
-            )
+            stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
             self.assertEqual(
-                stdout.decode("utf-8"),
-                """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: {status}
-Authority Information Access{authority_information_access_critical}:
-{authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
-{authority_key_identifier_text}
-Basic Constraints (critical):
-    CA:FALSE
-CRL Distribution Points{crl_distribution_points_critical}:
-    * DistributionPoint:
-      * Full Name:
-        * URI:{crl}
-Extended Key Usage{extended_key_usage_critical}:
-{extended_key_usage_text}
-Key Usage{key_usage_critical}:
-{key_usage_text}
-Subject Alternative Name{subject_alternative_name_critical}:
-{subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
-{subject_key_identifier_text}
-Watchers:
+                stdout,
+                """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: {status}
+* HPKP pin: {hpkp}
+* Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """.format(
                     status=status, **self.get_cert_context(key)
                 ),
             )
-            self.assertEqual(stderr, b"")
+            self.assertEqual(stderr, "")
 
     @freeze_time(timestamps["before_everything"])
     def test_basic_not_yet_valid(self) -> None:
@@ -575,67 +626,37 @@ HPKP pin: {hpkp}
     def test_certs(self) -> None:
         """Test main certs."""
         for name, cert in self.usable_certs:
-            stdout, stderr = self.cmd(
-                "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
-            )
-            self.assertEqual(stderr, b"")
+            stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=True, wrap=False)
+            self.assertEqual(stderr, "")
 
             context = self.get_cert_context(name)
-            self.assertEqual(stdout.decode("utf-8"), output[name].format(**context))
-
-    @freeze_time(timestamps["everything_valid"])
-    def test_der(self) -> None:
-        """Test viewing a cert as DER."""
-        # pylint: disable=consider-using-f-string
-        stdout, stderr = self.cmd(
-            "view_cert", self.cert.serial, format=Encoding.DER, stdout=BytesIO(), stderr=BytesIO()
-        )
-        expected = """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Subject Alternative Name{subject_alternative_name_critical}:
-{subject_alternative_name_text}
-Watchers:
-Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
-
-""".format(
-            **self.get_cert_context("child-cert")
-        )
-        expected = expected.encode("utf-8") + certs["child-cert"]["pub"]["der"] + b"\n"
-
-        self.assertEqual(stdout, expected)
-        self.assertEqual(stderr, b"")
+            self.assertEqual(stdout, expected[name].format(**context))
 
     def test_revoked(self) -> None:
         """Test viewing a revoked cert."""
         # pylint: disable=consider-using-f-string
         self.cert.revoked = True
         self.cert.save()
-        stdout, stderr = self.cmd(
-            "view_cert", self.cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = self.cmd("view_cert", self.cert.serial, pem=False, wrap=False, extensions=False)
         self.assertEqual(
-            stdout.decode("utf-8"),
-            """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Revoked
-Subject Alternative Name:
-    * DNS:{cn}
-Watchers:
+            stdout,
+            """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Revoked
+* HPKP pin: {hpkp}
+* Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """.format(
                 **certs["child-cert"]
             ),
         )
-        self.assertEqual(stderr, b"")
+        self.assertEqual(stderr, "")
 
     @freeze_time(timestamps["everything_valid"])
     @override_tmpcadir()
@@ -645,33 +666,36 @@ HPKP pin: {hpkp}
         watcher = Watcher.from_addr("user@example.com")
         cert.watchers.add(watcher)
 
-        stdout, stderr = self.cmd("view_cert", cert.serial, no_pem=True, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
         self.assertEqual(
-            stdout.decode("utf-8"),
-            """Common Name: %(cn)s
-Valid from: %(from)s
-Valid until: %(until)s
-Status: Valid
-Watchers:
-* user@example.com
-Digest:
-    sha256: %(sha256)s
-    sha512: %(sha512)s
-HPKP pin: %(hpkp)s
-"""
-            % self._get_format(cert),
-        )
-        self.assertEqual(stderr, b"")
+            stdout,
+            # pylint: disable-next=consider-using-f-string
+            """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+  * user@example.com
 
-    def assertContrib(self, name: str, expected: str, **context: str) -> None:  # pylint: disable=invalid-name
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+""".format(
+                **self.get_cert_context("no-extensions")
+            ),
+        )
+        self.assertEqual(stderr, "")
+
+    def assertContrib(self, name: str, exp: str, **context: str) -> None:  # pylint: disable=invalid-name
         """Assert basic contrib output."""
         cert = self.certs[name]
-        stdout, stderr = self.cmd(
-            "view_cert", cert.serial, no_pem=True, extensions=True, stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=True, wrap=False)
         context.update(self.get_cert_context(name))
-        self.assertEqual(stderr, b"")
-        self.assertEqual(stdout.decode("utf-8"), expected.format(**context))
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, exp.format(**context))
 
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self) -> None:
@@ -680,49 +704,52 @@ HPKP pin: %(hpkp)s
         id1 = "A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10"  # NOQA: E501
         id2 = "EE:4B:BD:B7:75:CE:60:BA:E1:42:69:1F:AB:E1:9E:66:A3:0F:7E:5F:B0:72:D8:83:00:C4:7B:89:7A:A8:FD:CB"  # NOQA: E501
         id3 = "44:94:65:2E:B0:EE:CE:AF:C4:40:07:D8:A8:FE:28:C0:DA:E6:82:BE:D8:CB:31:B5:3F:D3:33:96:B5:B6:81:A8"  # NOQA: E501
-        sct = f"""Precertificate Signed Certificate Timestamps:
-    * Precertificate (v1):
-        Timestamp: 2019-03-27 09:13:54.342000
-        Log ID: {id1}
-    * Precertificate (v1):
-        Timestamp: 2019-03-27 09:13:55.237000
-        Log ID: {id2}
-    * Precertificate (v1):
-        Timestamp: 2019-03-27 09:13:56.485000
-        Log ID: {id3}"""
+        sct = f"""* Precertificate Signed Certificate Timestamps:
+  * Precertificate (v1):
+      Timestamp: 2019-03-27 09:13:54.342000
+      Log ID: {id1}
+  * Precertificate (v1):
+      Timestamp: 2019-03-27 09:13:55.237000
+      Log ID: {id2}
+  * Precertificate (v1):
+      Timestamp: 2019-03-27 09:13:56.485000
+      Log ID: {id3}"""
 
         self.assertContrib(
             "godaddy_g2_intermediate-cert",
-            """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+            """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints{basic_constraints_critical}:
+* Basic Constraints{basic_constraints_critical}:
 {basic_constraints_text}
-CRL Distribution Points:
-    * DistributionPoint:
-      * Full Name:
-        * URI:http://crl.godaddy.com/gdig2s1-1015.crl
-Certificate Policies{certificate_policies_critical}:
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Certificate Policies{certificate_policies_critical}:
 {certificate_policies_text}
-Extended Key Usage{extended_key_usage_critical}:
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
 {sct}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
             sct=sct,
         )
@@ -739,44 +766,49 @@ HPKP pin: {hpkp}
         context[
             "id2"
         ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"  # NOQA: E501
-        sct = """Precertificate Signed Certificate Timestamps{sct_critical}:
-    * Precertificate ({sct_values[0][version]}):
-        Timestamp: {sct_values[0][timestamp]}
-        Log ID: {id1}
-    * Precertificate ({sct_values[1][version]}):
-        Timestamp: {sct_values[1][timestamp]}
-        Log ID: {id2}""".format(
+        sct = """* Precertificate Signed Certificate Timestamps{sct_critical}:
+  * Precertificate ({sct_values[0][version]}):
+      Timestamp: {sct_values[0][timestamp]}
+      Log ID: {id1}
+  * Precertificate ({sct_values[1][version]}):
+      Timestamp: {sct_values[1][timestamp]}
+      Log ID: {id2}""".format(
             **context
         )
 
         self.assertContrib(
             "letsencrypt_x3-cert",
-            """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+            """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints{basic_constraints_critical}:
+* Basic Constraints{basic_constraints_critical}:
 {basic_constraints_text}
-Certificate Policies{certificate_policies_critical}:
+* Certificate Policies{certificate_policies_critical}:
 {certificate_policies_text}
-Extended Key Usage{extended_key_usage_critical}:
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
 {sct}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
             sct=sct,
         )
@@ -787,36 +819,39 @@ HPKP pin: {hpkp}
         # pylint: disable=consider-using-f-string
         self.assertContrib(
             "cloudflare_1",
-            """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Authority Information Access{authority_information_access_critical}:
+            """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+* Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
-Authority Key Identifier{authority_key_identifier_critical}:
+* Authority Key Identifier{authority_key_identifier_critical}:
 {authority_key_identifier_text}
-Basic Constraints{basic_constraints_critical}:
+* Basic Constraints{basic_constraints_critical}:
 {basic_constraints_text}
-CRL Distribution Points:
-    * DistributionPoint:
-      * Full Name:
-        * URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl
-Certificate Policies{certificate_policies_critical}:
+* CRL Distribution Points{crl_distribution_points_critical}:
+{crl_distribution_points_text}
+* Certificate Policies{certificate_policies_critical}:
 {certificate_policies_text}
-Extended Key Usage{extended_key_usage_critical}:
+* Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
-Key Usage{key_usage_critical}:
+* Key Usage{key_usage_critical}:
 {key_usage_text}
 {precert_poison}
-Subject Alternative Name{subject_alternative_name_critical}:
+* Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
-Subject Key Identifier{subject_key_identifier_critical}:
+* Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
-Watchers:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """.format(
                 **self.get_cert_context("cloudflare_1")
             ),
@@ -826,15 +861,20 @@ HPKP pin: {hpkp}
         """Test special contrib case with multiple OUs."""
         self.assertContrib(
             "multiple_ous",
-            """Common Name: {cn}
-Valid from: {valid_from_short}
-Valid until: {valid_until_short}
-Status: Valid
-Watchers:
+            """* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+* Watchers:
+
+Certificate extensions:
+
 Digest:
-    sha256: {sha256}
-    sha512: {sha512}
-HPKP pin: {hpkp}
+  SHA-256: {sha256}
+  SHA-512: {sha512}
 """,
         )
 
@@ -842,9 +882,4 @@ HPKP pin: {hpkp}
         """Test viewing an unknown certificate."""
         name = "foobar"
         with self.assertCommandError(rf"^Error: argument cert: {name}: Certificate not found\.$"):
-            self.cmd("view_cert", name, no_pem=True)
-
-
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), USE_TZ=True)
-class ViewCertWithTZTestCase(ViewCertTestCase):
-    """Main tests but with TZ support."""
+            self.cmd("view_cert", name)

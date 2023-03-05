@@ -66,7 +66,7 @@ from django_ca.signals import (
 )
 from django_ca.tests.base import certs, timestamps, uri
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.utils import ca_storage, parse_general_name
+from django_ca.utils import add_colons, ca_storage, parse_general_name
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -986,14 +986,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         for key, value in sorted(certs[name].items()):
             # Handle cryptography extensions
             if key == "precert_poison":
-                ctx["precert_poison"] = "Precert Poison (critical):\n    Yes"
+                ctx["precert_poison"] = "* Precert Poison (critical):\n  Yes"
             elif isinstance(value, x509.Extension):
                 if value.critical:
                     ctx[f"{key}_critical"] = " (critical)"
                 else:
                     ctx[f"{key}_critical"] = ""
 
-                ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "    ")
+                ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "  ")
             elif key == "precertificate_signed_certificate_timestamps_serialized":
                 ctx["sct_critical"] = " (critical)" if value["critical"] else ""
                 ctx["sct_values"] = []
@@ -1011,6 +1011,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             parent = certs[certs[name]["parent"]]
             ctx["parent_name"] = parent["name"]
             ctx["parent_serial"] = parent["serial"]
+            ctx["parent_serial_colons"] = add_colons(parent["serial"])
 
         if certs[name]["key_filename"] is not False:
             ctx["key_path"] = ca_storage.path(certs[name]["key_filename"])

@@ -16,12 +16,15 @@
 import abc
 import argparse
 import io
+import shutil
 import sys
+import textwrap
 import typing
 from datetime import datetime, timedelta
 from typing import Any, Optional, Tuple, Type, Union
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError, CommandParser, OutputWrapper
@@ -29,8 +32,9 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
-from django_ca.models import CertificateAuthority
+from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
+from django_ca.utils import add_colons, format_name
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -275,3 +279,84 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
 
         # See if we can work with the private key
         self.test_private_key(ca, password)
+
+
+class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
+    """Base class for view_* commands."""
+
+    def add_arguments(self, parser: CommandParser) -> None:
+        parser.add_argument(
+            "-n",
+            "--no-pem",
+            default=True,
+            dest="pem",
+            action="store_false",
+            help="Do not output public certificate in PEM format.",
+        )
+        parser.add_argument(
+            "--no-extensions",
+            default=True,
+            dest="extensions",
+            action="store_false",
+            help="Show all extensions, not just subjectAltName.",
+        )
+        parser.add_argument(
+            "--no-wrap",
+            default=True,
+            dest="wrap",
+            action="store_false",
+            help="Do not wrap long lines to terminal width.",
+        )
+        super().add_arguments(parser)
+
+    def wrap_digest(self, algorithm: str, text: str) -> str:
+        """Wrap digest in a way that colons align nicely in mulitple lines."""
+        # 107 is enough to (just) fit a SHA-256 hash
+        textwidth = min(107, shutil.get_terminal_size(fallback=(107, 100)).columns)
+        textwidth -= (textwidth + 1) % 3
+
+        subsequent_indent = " " * (len(algorithm) + 4)
+        lines = textwrap.wrap(text, textwidth, initial_indent="  ", subsequent_indent=subsequent_indent)
+        return "\n".join(lines)
+
+    def output_status(self, cert: X509CertMixin) -> None:
+        """Output certificate status"""
+        now = datetime.utcnow()
+        if cert.revoked:
+            self.stdout.write("* Status: Revoked")
+        elif cert.not_after < now:
+            self.stdout.write("* Status: Expired")
+        elif cert.not_before > now:
+            self.stdout.write("* Status: Not yet valid")
+        else:
+            self.stdout.write("* Status: Valid")
+
+    def output_header(self, cert: X509CertMixin) -> None:
+        """Output basic certificate information."""
+        self.stdout.write(f"* Subject: {format_name(cert.subject)}")
+        self.stdout.write(f"* Serial: {add_colons(cert.serial)}")
+        self.stdout.write(f"* Issuer: {format_name(cert.issuer)}")
+        self.stdout.write(f"* Valid from: {cert.not_before.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.stdout.write(f"* Valid until: {cert.not_after.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.output_status(cert)
+        self.stdout.write(f"* HPKP pin: {cert.hpkp_pin}")
+
+    def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:
+        """Output digest and PEM in footer."""
+        self.stdout.write("\nDigest:")
+        for algorithm in [hashes.SHA256, hashes.SHA512]:
+            # MYPY NOTE: seems to be a false positive
+            algorithm_name = constants.HASH_ALGORITHM_NAMES[algorithm]  # type: ignore[type-abstract]
+            fingerprint = cert.get_fingerprint(algorithm())
+            text = f"{algorithm_name}: {fingerprint}"
+
+            if wrap is True:
+                text = self.wrap_digest(algorithm_name, text)
+            else:
+                text = f"  {text}"
+
+            self.stdout.write(text)
+
+        if pem is True:
+            self.stdout.write("")
+            self.stdout.write(cert.pub.pem)
