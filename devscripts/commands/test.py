@@ -89,19 +89,23 @@ class Command(DevCommand):
                 module="django.utils.asyncio",
             )
 
-        # Can be removed with requests_toolbelt==2.9.2
-        #   https://github.com/requests/toolbelt/issues/331
+        # webob==1.8.7 uses the cgi module in some places. GitHub issue at:
+        #   https://github.com/Pylons/webob/issues/437
         warnings.filterwarnings(
             action="ignore",
-            message=(
-                "'urllib3.contrib.pyopenssl' module is deprecated and will be removed in a "
-                "future release of urllib3 2.x. Read more in this issue: "
-                "https://github.com/urllib3/urllib3/issues/2680"
-            ),
+            message="'cgi' is deprecated and slated for removal in Python 3.13",
             category=DeprecationWarning,
-            module="requests_toolbelt._compat",
+            module="webob.compat",
         )
-        warnings.filterwarnings(action="error", module="django_ca")  # turn our warnings into errors
+
+        # Turn warnings of important 3rd-party modules into errors
+        warnings.filterwarnings(action="error", module="django")
+        warnings.filterwarnings(action="error", module="cryptography")
+        warnings.filterwarnings(action="error", module="acme")
+        warnings.filterwarnings(action="error", module="josepy")
+
+        # Finally, turn warnings in django-ca itself into errors
+        warnings.filterwarnings(action="error", module="django_ca")
 
         print("Testing with:")
         print("* Python: ", sys.version.replace("\n", ""))
