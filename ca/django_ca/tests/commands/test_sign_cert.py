@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
@@ -493,7 +494,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         """Test using a DER CSR."""
         csr_path = os.path.join(ca_settings.CA_DIR, "test.csr")
         with open(csr_path, "wb") as csr_stream:
-            csr_stream.write(certs["child-cert"]["csr"]["der"])
+            csr_stream.write(certs["child-cert"]["csr"]["parsed"].public_bytes(Encoding.DER))
 
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=self.subject, csr=csr_path)

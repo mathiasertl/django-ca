@@ -127,7 +127,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             ],
         )
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem.strip(), csr)
+        self.assertEqual(cert.csr.pem, csr)
         self.assertEqual(cert.profile, "webserver")
 
         # Some extensions are not set
@@ -389,7 +389,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem.strip(), csr)
+        self.assertEqual(cert.csr.pem, csr)
 
         # Some extensions are not set
         self.assertExtensions(cert, [self.subject_alternative_name(dns(san), dns(cname))])
@@ -523,7 +523,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             ],
         )
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem.strip(), csr)
+        self.assertEqual(cert.csr.pem, csr)
 
         # Some extensions are not set
         self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, cert.x509_extensions)

@@ -66,6 +66,7 @@ class Command(DevCommand):
         self.setup_django()
 
         import django  # pylint: disable=import-outside-toplevel
+        from django.conf import settings  # pylint: disable=import-outside-toplevel
         from django.core.management import call_command  # pylint: disable=import-outside-toplevel
 
         # Testing the sphinx extension needs documentation in the Python path
@@ -108,6 +109,7 @@ class Command(DevCommand):
         installed_versions = {p.project_name: p.version for p in pkg_resources.working_set}
         for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
             print(f"* {pkg}: {installed_versions[pkg]}")
+        print(f"* Selenium tests: {not settings.SKIP_SELENIUM_TESTS}")
 
         kwargs = {}
         if django.VERSION[:2] >= (4, 0):  # pragma: only django<4.0

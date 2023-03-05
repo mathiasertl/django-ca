@@ -1178,27 +1178,6 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     pub = certs["root-cert"]["pub"]
     load_cas = ("root",)
 
-    def test_create(self) -> None:
-        """Test create() for the models."""
-        for prop in ["parsed", "pem", "der"]:
-            cert = Certificate.objects.create(
-                pub=self.pub[prop],
-                csr=self.csr[prop],
-                ca=self.ca,
-                expires=timezone.now(),
-                valid_from=timezone.now(),
-            )
-            self.assertEqual(cert.pub, self.pub[prop])
-            self.assertEqual(cert.csr, self.csr[prop])
-
-            # Refresh, so that we get lazy values
-            cert.refresh_from_db()
-
-            self.assertEqual(cert.pub.loaded, self.pub["parsed"])
-            self.assertEqual(cert.csr.loaded, self.csr["parsed"])
-
-            cert.delete()  # for next loop iteration
-
     def test_create_pem_bytes(self) -> None:
         """Test creating with bytes-encoded PEM."""
         pub = self.pub["pem"].encode()
@@ -1222,7 +1201,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_create_bytearray(self) -> None:
         """Test creating with bytes-encoded PEM."""
         pub = bytearray(self.pub["der"])
-        csr = bytearray(self.csr["der"])
+        csr = bytearray(self.csr["parsed"].public_bytes(Encoding.DER))
         cert = Certificate.objects.create(
             pub=pub,
             csr=csr,
@@ -1242,7 +1221,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_create_memoryview(self) -> None:
         """Test creating with bytes-encoded PEM."""
         pub = memoryview(self.pub["der"])
-        csr = memoryview(self.csr["der"])
+        csr = memoryview(self.csr["parsed"].public_bytes(Encoding.DER))
         cert = Certificate.objects.create(
             pub=pub,
             csr=csr,

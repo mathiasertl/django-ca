@@ -16,6 +16,7 @@
 import json
 import os
 import sys
+from importlib.metadata import version
 
 import packaging.version
 
@@ -240,21 +241,26 @@ CA_ENABLE_ACME = True
 NEWEST_PYTHON_VERSION = (3, 11)
 NEWEST_CRYPTOGRAPHY_VERSION = (39, 0)
 NEWEST_DJANGO_VERSION = (4, 1)
+NEWEST_ACME_VERSION = (2, 3, 0)
 
 # Determine if we're running on the respective newest versions
 _parsed_cg_version = packaging.version.parse(cryptography.__version__).release
 CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]
+ACME_VERSION = packaging.version.parse(version("acme")).release
+
 NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
 NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
-NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO
+NEWEST_ACME = ACME_VERSION == NEWEST_ACME_VERSION
+NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NEWEST_ACME
+
+# Skip selenium by default if python, cryptography and acme are NOT the newest version, but test for every
+# Django version.
+DEFAULT_SKIP_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
 
 # For Selenium test cases
 SKIP_SELENIUM_TESTS = (
-    os.environ.get("SKIP_SELENIUM_TESTS", "n" if (NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY) else "y")
-    .lower()
-    .strip()
-    == "y"
+    os.environ.get("SKIP_SELENIUM_TESTS", "n" if DEFAULT_SKIP_SELENIUM_TESTS else "y").lower().strip() == "y"
 )
 
 # Set COLUMNS, which is used by argparse to determine the terminal width. If this is not set, the output of

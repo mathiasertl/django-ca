@@ -28,7 +28,6 @@ from unittest.mock import patch
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -41,9 +40,8 @@ from django_ca.utils import add_colons, ca_storage
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
 KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
-CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest, "der": bytes})
+CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest})
 _PubDict = typing.TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
-
 
 # Regex used by certbot to split PEM-encodied certificate chains/bundles as of 2022-01-23. See also:
 # 	https://github.com/certbot/certbot/blob/master/certbot/certbot/crypto_util.py
@@ -55,6 +53,10 @@ CERT_PEM_REGEX = re.compile(
     re.DOTALL,  # DOTALL (/s) because the base64text may include newlines
 )
 
+# If the installed cryptography version supports the unsafe_skip_rsa_key_validation option when loading
+# private keys
+SKIP_KEY_VALIDATION = settings.CRYPTOGRAPHY_VERSION >= (39, 0)
+
 
 # pylint: disable-next=inherit-non-class; False positive
 class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
@@ -62,13 +64,15 @@ class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
 
 
 def _load_key(data: Dict[Any, Any]) -> KeyDict:
-    basedir = data.get("basedir", settings.FIXTURES_DIR)
-    path = os.path.join(basedir, data["key_filename"])
-
-    with open(path, "rb") as stream:
+    with open(os.path.join(settings.FIXTURES_DIR, data["key_filename"]), "rb") as stream:
         raw = stream.read()
 
-    parsed = serialization.load_pem_private_key(raw, password=data.get("password"))
+    if SKIP_KEY_VALIDATION is True:  # pragma: only cryptography>=39.0
+        parsed = serialization.load_pem_private_key(
+            raw, password=data.get("password"), unsafe_skip_rsa_key_validation=True
+        )
+    else:  # pragma: only cryptography<39.0
+        parsed = serialization.load_pem_private_key(raw, password=data.get("password"))
     return {
         "pem": raw.decode("utf-8"),
         "parsed": parsed,  # type: ignore[typeddict-item]  # we do not support all key types
@@ -76,39 +80,33 @@ def _load_key(data: Dict[Any, Any]) -> KeyDict:
 
 
 def _load_csr(data: Dict[Any, Any]) -> CsrDict:
-    basedir = data.get("basedir", settings.FIXTURES_DIR)
-    path = os.path.join(basedir, data["csr_filename"])
-
-    with open(path, "rb") as stream:
-        raw = stream.read().strip()
+    with open(os.path.join(settings.FIXTURES_DIR, data["csr_filename"]), "rb") as stream:
+        raw = stream.read()
 
     parsed = x509.load_pem_x509_csr(raw)
     return {
         "pem": raw.decode("utf-8"),
         "parsed": parsed,
-        "der": parsed.public_bytes(Encoding.DER),
     }
 
 
 def _load_pub(data: Dict[Any, Any]) -> PubDict:
+    # basedir is set for certificates in docs/source/_files
     basedir = data.get("basedir", settings.FIXTURES_DIR)
     path = os.path.join(basedir, data["pub_filename"])
 
     with open(path, "rb") as stream:
-        pem = stream.read().replace(b"\r\n", b"\n")
+        pem = stream.read()
 
     pub_data: PubDict = {
         "pem": pem.decode("utf-8"),
         "parsed": x509.load_pem_x509_certificate(pem),
     }
 
-    if data.get("pub_der_filename"):
-        der_path = os.path.join(basedir, data["pub_der_filename"])
-        with open(der_path, "rb") as stream:
-            der = stream.read().replace(b"\r\n", b"\n")
+    if der_filename := data.get("pub_der_filename"):
+        with open(os.path.join(basedir, der_filename), "rb") as stream:
+            der = stream.read()
         pub_data["der"] = der
-        # Fails for alt-extensions since alternative AKI was added
-        # pub_data['der_parsed'] = x509.load_der_x509_certificate(der),
 
     return pub_data
 
@@ -319,9 +317,6 @@ for cert_name, cert_data in certs.items():
     cert_data["valid_until"] = datetime.strptime(cert_data["valid_until"], "%Y-%m-%d %H:%M:%S")
     cert_data["valid_from_short"] = cert_data["valid_from"].strftime("%Y-%m-%d %H:%M")
     cert_data["valid_until_short"] = cert_data["valid_until"].strftime("%Y-%m-%d %H:%M")
-
-    cert_data["ocsp-serial"] = cert_data["serial"].replace(":", "")
-    cert_data["ocsp-expires"] = cert_data["valid_until"].strftime("%y%m%d%H%M%SZ")
 
     # parse extensions
     for ext_key in constants.EXTENSION_KEY_OIDS:
