@@ -31,7 +31,6 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.utils import validate_public_key_parameters
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -77,19 +76,12 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
     ) -> None:
         if ca is None:
             ca = cert.ca
-        if algorithm is None:
-            algorithm = ca.algorithm
 
         profile_obj = self.get_profile(profile, cert)
         self.test_options(ca=ca, password=password, expires=expires, profile=profile_obj, **options)
 
-        # Validate public key parameters early so that we can return better feedback to the user.  This can
-        # only happen if the user specified --algorithm manually and it does not work with the certificate
-        # authority used.
-        try:
-            algorithm = validate_public_key_parameters(ca.key_type, algorithm)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
+        # Get/validate signature hash algorithm
+        algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
 
         # get list of watchers
         if watch:

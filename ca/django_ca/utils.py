@@ -613,6 +613,7 @@ def validate_public_key_parameters(
             if key_type == "DSA":
                 return ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
             return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+
         if not isinstance(algorithm, hashes.HashAlgorithm):
             raise ValueError(f"{key_type}: algorithm must be an instance of hashes.HashAlgorithm.")
     elif algorithm is not None:  # Ed448 and Ed25519 keys do not allow hash algorithms

@@ -22,8 +22,10 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 
+from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
 
@@ -34,7 +36,7 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import dns, override_settings, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.utils import int_to_hex, x509_name
+from django_ca.utils import get_crl_cache_key, int_to_hex, x509_name
 
 
 class InitCATest(TestCaseMixin, TestCase):
@@ -74,6 +76,7 @@ class InitCATest(TestCaseMixin, TestCase):
         return ca
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    @freeze_time(timestamps["everything_valid"])
     def test_basic(self) -> None:
         """Basic tests for the command."""
 
@@ -128,6 +131,17 @@ class InitCATest(TestCaseMixin, TestCase):
             ],
             signer=ca,
         )
+
+        # Validate the CRL from the cache
+        cache_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, scope="user")
+        user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+        crl = cache.get(cache_key)
+        self.assertCRL(crl, signer=ca, algorithm=ca.algorithm, idp=user_idp)
+
+        cache_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, scope="ca")
+        ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
+        crl = cache.get(cache_key)
+        self.assertCRL(crl, signer=ca, algorithm=ca.algorithm, idp=ca_idp)
 
     @override_settings(USE_TZ=True)
     def test_basic_with_use_tz(self) -> None:
@@ -773,7 +787,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
         with self.assertCommandError(msg), self.assertCreateCASignals(False, False):
-            self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm="SHA-256")
+            self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm=hashes.SHA256())
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self) -> None:

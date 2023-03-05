@@ -32,7 +32,6 @@ from django_ca.constants import EXTENSION_KEYS
 from django_ca.management.base import BaseSignCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
-from django_ca.utils import validate_public_key_parameters
 
 
 class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
@@ -79,17 +78,17 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         )
 
     def add_arguments(self, parser: CommandParser) -> None:
-        self.add_base_args(parser)
+        general_group = self.add_base_args(parser)
         self.add_cn_in_san(parser)
 
-        parser.add_argument(
+        general_group.add_argument(
             "--csr",
             dest="csr_path",
             default="-",
             metavar="FILE",
             help="The path to the certificate to sign, if ommitted, you will be be prompted.",
         )
-        parser.add_argument(
+        general_group.add_argument(
             "-b", "--bundle", default=False, action="store_true", help="Output the whole certificate bundle."
         )
 
@@ -114,18 +113,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         algorithm: Optional[hashes.HashAlgorithm],
         **options: Any,
     ) -> None:
-        if algorithm is None:
-            algorithm = ca.algorithm
-
         # Validate parameters early so that we can return better feedback to the user.
         if ca.expires < timezone.now():
             raise CommandError("Certificate Authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
-        try:
-            algorithm = validate_public_key_parameters(ca.key_type, algorithm)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
+
+        # Get/validate signature hash algorithm
+        algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
 
         profile_obj = profiles[profile]
         self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)

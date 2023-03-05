@@ -44,12 +44,7 @@ from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import (
-    parse_general_name,
-    sort_name,
-    validate_private_key_parameters,
-    validate_public_key_parameters,
-)
+from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -63,51 +58,57 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             type(ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
         ]
 
-        self.add_general_args(parser)
-        self.add_algorithm(parser, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys")
-
-        private_key_group = parser.add_argument_group("Private key parameters")
-        self.add_key_type(private_key_group)
-        self.add_key_size(private_key_group)
-        self.add_elliptic_curve(private_key_group)
-
-        parser.add_argument(
+        general_group = self.add_general_args(parser)
+        general_group.add_argument(
             "--expires",
             metavar="DAYS",
             action=ExpiresAction,
             default=timedelta(365 * 10),
             help="CA certificate expires in DAYS days (default: %(default)s).",
         )
-        self.add_ca(
-            parser,
-            "--parent",
-            no_default=True,
-            help_text="Make the CA an intermediate CA of the named CA. By default, this is a new root CA.",
+        self.add_algorithm(
+            general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
-        parser.add_argument("name", help="Human-readable name of the CA")
-        parser.add_argument(
-            "subject",
-            action=NameAction,
-            help='The subject of the CA in the format "/key1=value1/key2=value2/...", requires at least a'
-            "CommonName to be present (/CN=...).",
-        )
-        self.add_password(
-            parser,
-            help_text="Optional password used to encrypt the private key. If no argument is passed, "
-            "you will be prompted.",
-        )
-        parser.add_argument(
+        general_group.add_argument(
             "--path",
             type=pathlib.PurePath,
             help="Path where to store Certificate Authorities (relative to CA_DIR).",
         )
-        parser.add_argument(
+
+        private_key_group = parser.add_argument_group("Private key parameters")
+        self.add_key_type(private_key_group)
+        self.add_key_size(private_key_group)
+        self.add_elliptic_curve(private_key_group)
+        self.add_password(
+            private_key_group,
+            help_text="Encrypt the private key with PASSWORD. If PASSWORD is not passed, you will be "
+            "prompted. By default, the private key is not encrypted.",
+        )
+
+        intermediate_group = parser.add_argument_group(
+            "Intermediate certificate authority", "Options to create an intermediate certificate authority."
+        )
+        self.add_ca(
+            intermediate_group,
+            "--parent",
+            no_default=True,
+            help_text="Make the CA an intermediate CA of the named CA. By default, this is a new root CA.",
+        )
+        intermediate_group.add_argument(
             "--parent-password",
             nargs="?",
             action=PasswordAction,
             metavar="PASSWORD",
             prompt="Password for parent CA: ",
             help="Password for the private key of any parent CA.",
+        )
+
+        parser.add_argument("name", help="Human-readable name of the CA")
+        parser.add_argument(
+            "subject",
+            action=NameAction,
+            help='The subject of the CA in the format "/key1=value1/key2=value2/...", requires at least a'
+            "CommonName to be present (/CN=...).",
         )
 
         group = parser.add_argument_group(
@@ -235,11 +236,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         except ValueError as ex:
             raise CommandError(*ex.args) from ex
 
-        # Validate public key parameters early so that we can return better feedback to the user.
-        try:
-            algorithm = validate_public_key_parameters(key_type, algorithm)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
+        # Get/validate signature hash algorithm
+        algorithm = self.get_hash_algorithm(key_type, algorithm)
 
         # In case of CAs, we silently set the expiry date to that of the parent CA if the user specified a
         # number of days that would make the CA expire after the parent CA.

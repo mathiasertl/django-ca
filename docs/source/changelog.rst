@@ -11,12 +11,16 @@ ChangeLog
 ************
 
 * Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
-* The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 * Certificates for OCSP responders now include the "OCSPNoCheck" extension by default.
 * Certificates for OCSP responders now use a commonName designating the certificate as OCSP responder as
   subject, other fields from the CAs subject are discarded.
 * A profile can now ignore :ref:`settings-ca-default-subject` by setting ``subject`` to ``False``.
 * Add typehints when installing as wheel.
+
+Backwards incompatible changes
+==============================
+
+* The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
 
 .. _changelog-1.23.0:
 
@@ -36,9 +40,9 @@ ChangeLog
    * Changes in cryptography 38 make it incompatible with common versions of certbot. See
      :ref:`cryptography_38_warning`.
 
-* Added support for cryptography 39.0.
-* Added support for acme 2.2.0 and 2.3.0.
-* Added support for Ed448 and Ed25519 based certificate authorities.
+* Add support for cryptography 39.0.
+* Add support for acme 2.2.0 and 2.3.0.
+* Add support for Ed448 and Ed25519 based certificate authorities.
 * Enable ACMEv2 support by default. ACMEv2 still needs to be enabled for every CA individually.
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.

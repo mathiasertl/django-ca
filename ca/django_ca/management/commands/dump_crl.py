@@ -26,7 +26,6 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca.management.base import BinaryCommand
 from django_ca.models import CertificateAuthority
-from django_ca.utils import validate_public_key_parameters
 
 
 class Command(BinaryCommand):
@@ -66,7 +65,7 @@ class Command(BinaryCommand):
             dest="include_issuing_distribution_point",
             help="Force exclusion of an IssuingDistributionPoint extension.",
         )
-        self.add_algorithm(parser, default_text="algorithm of the signing CA")
+        self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
         self.add_password(parser)
@@ -84,14 +83,8 @@ class Command(BinaryCommand):
         expires: int,
         **options: Any
     ) -> None:
-        if algorithm is None:
-            algorithm = ca.algorithm
-
-        # Validate parameters early so that we can return better feedback to the user.
-        try:
-            validate_public_key_parameters(ca.key_type, algorithm)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
+        # Get/validate signature hash algorithm
+        algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
 
         if include_issuing_distribution_point is True and ca.parent is None and scope is None:
             raise CommandError(

@@ -30,7 +30,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -376,8 +376,3 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         method = "django_ca.models.CertificateAuthority.get_crl"
         with self.patch(method, side_effect=Exception("foo")), self.assertCommandError("foo"):
             self.cmd("dump_crl", ca=self.ca, stdout=BytesIO(), stderr=BytesIO())
-
-
-@override_settings(USE_TZ=True)
-class DumpCRLWithTZTestCase(DumpCRLTestCase):
-    """Test the dump_crl management command with timezone support."""

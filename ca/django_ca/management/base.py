@@ -186,36 +186,38 @@ class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     )
     subject_help: typing.ClassVar  # concrete classes should set this
 
-    def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> None:
+    def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> argparse._ArgumentGroup:
         """Add common arguments for signing certificates."""
+        general_group = parser.add_argument_group("General")
         self.add_subject_group(parser)
-        self.add_algorithm(parser, default_text="algorithm of the signing CA")
-        self.add_ca(parser, no_default=no_default_ca)
-        self.add_password(parser)
+        self.add_algorithm(general_group)
+        self.add_ca(general_group, no_default=no_default_ca)
+        self.add_password(general_group)
         self.add_extensions(parser)
 
-        parser.add_argument(
+        general_group.add_argument(
             "--expires",
             action=actions.ExpiresAction,
             help=f"Sign the certificate for DAYS days (default: {ca_settings.CA_DEFAULT_EXPIRES})",
         )
-        parser.add_argument(
+        general_group.add_argument(
             "--alt",
             metavar="DOMAIN",
             action=actions.AlternativeNameAction,
             extension_type=x509.SubjectAlternativeName,
             help="Add a subjectAltName to the certificate (may be given multiple times)",
         )
-        parser.add_argument(
+        general_group.add_argument(
             "--watch",
             metavar="EMAIL",
             action="append",
             default=[],
             help="Email EMAIL when this certificate expires (may be given multiple times)",
         )
-        parser.add_argument(
+        general_group.add_argument(
             "--out", metavar="FILE", help="Save signed certificate to FILE. If omitted, print to stdout."
         )
+        return general_group
 
     def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""

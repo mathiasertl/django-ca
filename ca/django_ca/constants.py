@@ -281,10 +281,6 @@ HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mappi
         hashes.SHA3_256: hashes.SHA3_256.name,
         hashes.SHA3_384: hashes.SHA3_384.name,
         hashes.SHA3_512: hashes.SHA3_512.name,
-        # hashes.SHAKE128: hashes.SHAKE128.name,
-        # hashes.SHAKE256: hashes.SHAKE256.name,
-        # hashes.BLAKE2b: hashes.BLAKE2b.name,
-        # hashes.BLAKE2s: hashes.BLAKE2s.name,
         hashes.SM3: hashes.SM3.name,
     }
 )
@@ -298,7 +294,6 @@ HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = 
 #: ``--algorithm`` command line parameter.
 HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
-        # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
         hashes.SHA512_224: "SHA-512/224",
         hashes.SHA512_256: "SHA-512/256",
         hashes.SHA224: "SHA-224",
@@ -309,11 +304,12 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mapp
         hashes.SHA3_256: "SHA3/256",
         hashes.SHA3_384: "SHA3/384",
         hashes.SHA3_512: "SHA3/512",
-        # hashes.SHAKE128: hashes.SHAKE128.name,
-        # hashes.SHAKE256: hashes.SHAKE256.name,
-        # hashes.BLAKE2b: hashes.BLAKE2b.name,
-        # hashes.BLAKE2s: hashes.BLAKE2s.name,
         hashes.SM3: "SM3",
+        # cryptography does not support SHAKE128, SHAKE256, BLAKE2b and BLAKE2s for signatures
+        # hashes.SHAKE128: "SHAKE128",
+        # hashes.SHAKE256: "SHAKE256",
+        # hashes.BLAKE2b: "BLAKE2b",  # https://datatracker.ietf.org/doc/html/rfc7693.html
+        # hashes.BLAKE2s: "BLAKE2s",  # https://datatracker.ietf.org/doc/html/rfc7693.html
     }
 )
 #: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).

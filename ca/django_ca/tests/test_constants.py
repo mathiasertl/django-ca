@@ -64,6 +64,26 @@ class CompletenessTestCase(TestCase):
             [s for c in cls.__subclasses__() for s in self.get_subclasses(c)]
         )
 
+    @property
+    def supported_hash_algorithms(self) -> typing.Set[Type[hashes.HashAlgorithm]]:
+        """Get list of supported hash algorithms"""
+        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
+
+        # filter out hash algorithms that are not supported right now due to them having a digest size as
+        # parameter
+        subclasses = set(
+            sc
+            for sc in subclasses
+            if sc not in [hashes.SHAKE128, hashes.SHAKE256, hashes.BLAKE2b, hashes.BLAKE2s]
+        )
+
+        # These are deliberately not supported anymore:
+        if hasattr(hashes, "MD5"):
+            subclasses.remove(hashes.MD5)
+        if hasattr(hashes, "SHA1"):
+            subclasses.remove(hashes.SHA1)
+        return subclasses
+
     def test_elliptic_curves(self) -> None:
         """Test that ``utils.ELLIPTIC_CURVE_TYPES`` covers all known elliptic curves.
 
@@ -97,50 +117,12 @@ class CompletenessTestCase(TestCase):
 
     def test_hash_algorithm_keys(self) -> None:
         """Test completeness of the ``HASH_ALGORITHM_KEYS`` constant."""
-
-        # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
-        #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
-
-        # filter out hash algorithms that are not supported right now due to them having a digest size as
-        # parameter
-        subclasses = set(
-            sc
-            for sc in subclasses
-            if sc not in [hashes.SHAKE128, hashes.SHAKE256, hashes.BLAKE2b, hashes.BLAKE2s]
-        )
-
-        # These are deliberately not supported anymore:
-        if hasattr(hashes, "MD5"):
-            subclasses.remove(hashes.MD5)
-        if hasattr(hashes, "SHA1"):
-            subclasses.remove(hashes.SHA1)
-
-        self.assertEqual(len(constants.HASH_ALGORITHM_KEYS), len(subclasses))
-        self.assertEqual(constants.HASH_ALGORITHM_KEYS, {e: e.name for e in subclasses})
+        self.assertEqual(len(constants.HASH_ALGORITHM_KEYS), len(self.supported_hash_algorithms))
+        self.assertEqual(constants.HASH_ALGORITHM_KEYS, {e: e.name for e in self.supported_hash_algorithms})
 
     def test_hash_algorithm_names(self) -> None:
         """Test completeness of the ``HASH_ALGORITHM_KEYS`` constant."""
-
-        # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
-        #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
-
-        # filter out hash algorithms that are not supported right now due to them having a digest size as
-        # parameter
-        subclasses = set(
-            sc
-            for sc in subclasses
-            if sc not in [hashes.SHAKE128, hashes.SHAKE256, hashes.BLAKE2b, hashes.BLAKE2s]
-        )
-
-        # These are deliberately not supported anymore:
-        if hasattr(hashes, "MD5"):
-            subclasses.remove(hashes.MD5)
-        if hasattr(hashes, "SHA1"):
-            subclasses.remove(hashes.SHA1)
-
-        self.assertEqual(len(constants.HASH_ALGORITHM_NAMES), len(subclasses))
+        self.assertEqual(len(constants.HASH_ALGORITHM_NAMES), len(self.supported_hash_algorithms))
 
     def test_nameoid(self) -> None:
         """Test that we support all NameOID instances."""

@@ -14,11 +14,13 @@
 """Mixins for :py:class:`~django:django.core.management.BaseCommand` classes."""
 
 import abc
+import argparse
 import typing
 from textwrap import indent
 from typing import Optional
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
@@ -28,8 +30,8 @@ from django_ca import ca_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.management import actions
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.typehints import PrivateKeyTypes
-from django_ca.utils import add_colons
+from django_ca.typehints import ParsableKeyType, PrivateKeyTypes
+from django_ca.utils import add_colons, validate_public_key_parameters
 
 if typing.TYPE_CHECKING:
     # When type checking, mixins use BaseCommand as base class for all mixins.
@@ -42,7 +44,9 @@ else:
 class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin that adds some common functions to BaseCommand subclasses."""
 
-    def add_algorithm(self, parser: CommandParser, default_text: str) -> None:
+    def add_algorithm(
+        self, parser: argparse._ActionsContainer, default_text: str = "algorithm of the signing CA"
+    ) -> None:
         """Add the --algorithm option."""
         # Do NOT add an argparse-level default here, as the default depends on what the command does
         parser.add_argument(
@@ -53,7 +57,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_ca(
         self,
-        parser: CommandParser,
+        parser: argparse._ActionsContainer,
         arg: str = "--ca",
         help_text: str = "Certificate authority to use (default: %(default)s).",
         allow_disabled: bool = False,
@@ -104,11 +108,28 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             help=f'The format to use ("ASN1" is an alias for "DER", default: {Encoding.PEM.name}).',
         )
 
-    def add_password(self, parser: CommandParser, help_text: str = "") -> None:
+    def add_password(self, parser: argparse._ActionsContainer, help_text: str = "") -> None:
         """Add password option."""
         if not help_text:
             help_text = "Password used for accessing the private key of the CA."
         parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
+
+    def get_hash_algorithm(
+        self,
+        key_type: ParsableKeyType,
+        algorithm: Optional[hashes.HashAlgorithm],
+        default_algorithm: Optional[hashes.HashAlgorithm] = None,
+    ) -> Optional[hashes.HashAlgorithm]:
+        """Get the hash algorithm based on the options on the command line."""
+        # Use default if no hash algorithm was specified
+        if algorithm is None and default_algorithm is not None:
+            algorithm = default_algorithm
+
+        # Validate public key parameters early so that we can return better feedback to the user.
+        try:
+            return validate_public_key_parameters(key_type, algorithm)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
 
     def print_extension(self, ext: x509.Extension[x509.ExtensionType]) -> None:
         """Print extension to stdout."""
@@ -153,7 +174,9 @@ class CertCommandMixin(_Base, metaclass=abc.ABCMeta):
 class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin to add common arguments to commands that create or update a certificate authority."""
 
-    def add_general_args(self, parser: CommandParser, default: Optional[str] = "") -> None:
+    def add_general_args(
+        self, parser: CommandParser, default: Optional[str] = ""
+    ) -> argparse._ActionsContainer:
         """Add some general arguments.
 
         Parameters
@@ -181,6 +204,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             action=actions.URLAction,
             help="Terms of service URL for the CA.",
         )
+        return group
 
     def add_acme_group(self, parser: CommandParser) -> None:
         """Add arguments for ACMEv2."""
@@ -225,7 +249,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             help="Require email address during ACME account registration.",
         )
 
-    def add_ca_args(self, parser: CommandParser) -> None:
+    def add_ca_args(self, parser: argparse._ActionsContainer) -> None:
         """Add CA arguments."""
 
         group = parser.add_argument_group(

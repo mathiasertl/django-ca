@@ -112,8 +112,8 @@ class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
                     RemovedInDjangoCA125Warning,
                 )
                 return parsed
-            except ValueError as e:
-                raise argparse.ArgumentError(self, str(e))
+            except ValueError as ex:
+                raise argparse.ArgumentError(self, str(ex)) from ex
 
 
 class CertificateAction(SingleValueAction[Certificate]):
