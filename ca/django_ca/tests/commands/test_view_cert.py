@@ -36,7 +36,7 @@ expected = {
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -67,7 +67,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -98,7 +98,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -129,7 +129,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -160,7 +160,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -191,7 +191,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -222,7 +222,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -253,7 +253,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -284,7 +284,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -315,7 +315,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -346,7 +346,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -375,7 +375,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -406,7 +406,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 
@@ -421,7 +421,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -469,7 +469,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -561,7 +561,7 @@ HPKP pin: {hpkp}
 * Valid until: {valid_until_str}
 * Status: {status}
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -603,7 +603,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: {status}
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Digest:
   SHA-256: {sha256}
@@ -649,7 +649,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Revoked
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Digest:
   SHA-256: {sha256}
@@ -726,7 +726,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -787,7 +787,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -828,7 +828,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -870,7 +870,7 @@ Digest:
 * Valid until: {valid_until_str}
 * Status: Valid
 * HPKP pin: {hpkp}
-* Watchers:
+* No watchers
 
 Certificate extensions:
 

@@ -32,9 +32,13 @@ class Command(CertCommandMixin, BaseViewCommand):
     def handle(self, cert: Certificate, pem: bool, extensions: bool, wrap: bool, **options: Any) -> None:
         self.output_header(cert)
 
-        self.stdout.write("* Watchers:")
-        for watcher in cert.watchers.all():
-            self.stdout.write(f"  * {watcher}")
+        watchers = cert.watchers.all()
+        if watchers:
+            self.stdout.write("* Watchers:")
+            for watcher in watchers:
+                self.stdout.write(f"  * {watcher}")
+        else:
+            self.stdout.write("* No watchers")
 
         # self.stdout.write extensions
         if extensions:
