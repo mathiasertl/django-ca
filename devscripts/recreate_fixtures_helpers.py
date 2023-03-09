@@ -49,7 +49,7 @@ from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
-from django_ca.utils import bytes_to_hex, ca_storage, format_name, sort_name, x509_name
+from django_ca.utils import bytes_to_hex, ca_storage, format_name, serialize_name, x509_name
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
@@ -187,7 +187,8 @@ def _copy_cert(dest, cert, data, key_path, csr_path):
         stream.write(cert.pub.der)
 
     data["crl"] = cert.ca.crl_url
-    data["subject"] = cert.distinguished_name
+    data["subject"] = serialize_name(cert.subject)
+    data["subject_str"] = format_name(cert.subject)
     data["parsed_cert"] = cert
 
     _update_cert_data(cert, data)
@@ -204,7 +205,8 @@ def _update_contrib(parsed, data, cert, name, filename):
         "valid_from": parsed.not_valid_before.strftime(TIMEFORMAT),
         "valid_until": parsed.not_valid_after.strftime(TIMEFORMAT),
         "serial": cert.serial,
-        "subject": cert.distinguished_name,
+        "subject": serialize_name(cert.subject),
+        "subject_str": format_name(cert.subject),
         "hpkp": cert.hpkp_pin,
         "md5": cert.get_fingerprint(hashes.MD5()),
         "sha1": cert.get_fingerprint(hashes.SHA1()),
@@ -311,7 +313,7 @@ def create_cas(dest, now, delay, data):
             ca = CertificateAuthority.objects.init(
                 name=data[name]["name"],
                 password=data[name].get("password"),
-                subject=sort_name(x509_name(data[name]["subject"].items())),
+                subject=x509_name(data[name]["subject"]),
                 expires=datetime.utcnow() + data[name]["expires"],
                 key_type=data[name]["key_type"],
                 key_size=data[name].get("key_size"),
@@ -457,7 +459,7 @@ def create_special_certs(dest, now, delay, data):
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=sort_name(x509_name(data[name]["subject"].items())),
+            subject=x509_name(data[name]["subject"]),
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
@@ -481,7 +483,7 @@ def create_special_certs(dest, now, delay, data):
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=sort_name(x509_name(data[name]["subject"].items())),
+            subject=x509_name(data[name]["subject"]),
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),

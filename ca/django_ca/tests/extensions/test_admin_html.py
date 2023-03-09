@@ -654,6 +654,9 @@ DistributionPoint:
                 certs[name]["subject_key_identifier_serialized"]["value"],
             )
 
+        if certs[name].get("ocsp_no_check_serialized"):
+            self.admin_html[name].setdefault(ExtensionOID.OCSP_NO_CHECK, "Yes")
+
         aki = certs[name].get("authority_key_identifier_serialized", {}).get("value", {})
         if isinstance(aki, dict) and aki.get("key_identifier"):
             self.admin_html[name].setdefault(

@@ -390,6 +390,8 @@ Certificate extensions:
 {extended_key_usage_text}
 * Key Usage{key_usage_critical}:
 {key_usage_text}
+* OCSP No Check:
+  Yes
 * Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 

@@ -120,6 +120,13 @@ certs = _fixture_data.get("certs")
 # Update some data from contrib (data is not in cert-data.json, since we don't generate them)
 certs["multiple_ous"] = {
     "name": "multiple_ous",
+    "subject": [
+        ["C", "US"],
+        ["O", "VeriSign, Inc."],
+        ["OU", "Class 3 Public Primary Certification Authority - G2"],
+        ["OU", "(c) 1998 VeriSign, Inc. - For authorized use only"],
+        ["OU", "VeriSign Trust Network"],
+    ],
     "subject_str": "/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network",  # noqa: E501
     "cn": "",
     "key_filename": False,
@@ -140,6 +147,11 @@ certs["multiple_ous"] = {
 }
 certs["cloudflare_1"] = {
     "name": "cloudflare_1",
+    "subject": [
+        ["OU", "Domain Control Validated"],
+        ["OU", "PositiveSSL Multi-Domain"],
+        ["CN", "sni24142.cloudflaressl.com"],
+    ],
     "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com",
     "cn": "sni24142.cloudflaressl.com",
     "key_filename": False,
@@ -317,8 +329,14 @@ for cert_name, cert_data in certs.items():
     cert_data["issuer"] = cert_data["pub"]["parsed"].issuer
     cert_data["issuer_str"] = format_name(cert_data["issuer"])
 
-    if "subject_str" not in cert_data and "subject" in cert_data:
-        cert_data["subject_str"] = cert_data["subject"]
+    if "subject" not in cert_data:  # pragma: no cover
+        raise ValueError(f"subject not in {cert_name}")
+    if "subject_str" not in cert_data:  # pragma: no cover
+        raise ValueError(f"subject_str not in {cert_name}")
+    if not isinstance(cert_data["subject"], list):  # pragma: no cover
+        raise ValueError(cert_data["subject"])
+    if not isinstance(cert_data["subject_str"], str):  # pragma: no cover
+        raise ValueError(cert_data["subject_str"])
 
     # parse some data from the dict
     cert_data["valid_from"] = datetime.strptime(cert_data["valid_from"], "%Y-%m-%d %H:%M:%S")

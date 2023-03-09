@@ -55,7 +55,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         regenerate_ocsp_files,
     )
 
-    from django_ca.utils import format_name, sort_name, x509_name
+    from django_ca.utils import format_name, x509_name
 
     # pylint: enable=import-outside-toplevel
     # The time-offsets from now from which CAs/certs are valid starts 25 days in the past, with the largest
@@ -152,15 +152,15 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "ca": "child",
             "delta": timedelta(days=20),
             "csr": True,
-            "subject": {
-                "C": "AT",
-                "ST": "Vienna",
-                "L": "Vienna",
-                "O": "Example",
-                "OU": "Example OU",
-                "CN": "all-extensions.example.com",
-                "emailAddress": "user@example.com",
-            },
+            "subject": [
+                ["C", "AT"],
+                ["ST", "Vienna"],
+                ["L", "Vienna"],
+                ["O", "Example"],
+                ["OU", "Example OU"],
+                ["CN", "all-extensions.example.com"],
+                ["emailAddress", "user@example.com"],
+            ],
             "extensions": {
                 "extended_key_usage": x509.Extension(
                     oid=ExtensionOID.EXTENDED_KEY_USAGE,
@@ -257,6 +257,15 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "ca": "child",
             "delta": timedelta(days=20),
             "csr": True,
+            "subject": [
+                ["C", "AT"],
+                ["ST", "Vienna"],
+                ["L", "Vienna"],
+                ["O", "Example"],
+                ["OU", "Example OU"],
+                ["CN", "alt-extensions.example.com"],
+                ["emailAddress", "user@example.com"],
+            ],
             "extensions": {
                 "authority_key_identifier": x509.Extension(
                     oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -375,12 +384,9 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         cert_values.setdefault("type", "cert")
         cert_values.setdefault("cat", "generated")
         cert_values.setdefault("algorithm", hashes.SHA256())
-        cert_values.setdefault("subject", {})
-        cert_values["subject"].setdefault("CN", f"{cert_name}.example.com")
-        cert_values["subject_str"] = format_name(sort_name(x509_name(cert_values["subject"].items())))
-        cert_values["csr_subject"] = {
-            k: f"csr.{v}" if k != "C" else v for k, v in cert_values["subject"].items()
-        }
+        cert_values.setdefault("subject", [["CN", f"{cert_name}.example.com"]])
+        cert_values["subject_str"] = format_name(x509_name(cert_values["subject"]))
+        cert_values["csr_subject"] = {k: f"csr.{v}" if k != "C" else v for k, v in cert_values["subject"]}
         cert_values["key_filename"] = f"{cert_name}.key"
         cert_values["pub_filename"] = f"{cert_name}.pub"
         cert_values["key_der_filename"] = f"{cert_name}.key.der"

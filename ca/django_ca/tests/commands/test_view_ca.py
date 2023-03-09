@@ -54,7 +54,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -95,7 +95,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -136,7 +136,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -181,7 +181,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -223,7 +223,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -255,7 +255,7 @@ ACMEv2 support:
 * Enabled: False
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -286,7 +286,7 @@ ACMEv2 support:
 * Enabled: False
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -331,7 +331,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -370,7 +370,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): {crl_url}
+* Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
@@ -408,7 +408,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -448,7 +448,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -486,7 +486,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -524,7 +524,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -566,7 +566,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -614,7 +614,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -660,7 +660,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -698,7 +698,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -744,7 +744,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -792,7 +792,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -830,7 +830,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -876,7 +876,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -922,7 +922,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -960,7 +960,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1008,7 +1008,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1056,7 +1056,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1102,7 +1102,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1148,7 +1148,7 @@ Certificate extensions:
   16:29:53:74:61:72:74:43:6F:6D:20:46:72:65:65:20:53:53:4C:20:43:65:72:74:69:66:69:63:61:74:69:6F:6E:20:41:75:74:68:6F:72:69:74:79
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1194,7 +1194,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1242,7 +1242,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1290,7 +1290,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1330,7 +1330,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
@@ -1376,7 +1376,7 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Certificate extensions for signed certificates:
-* Certificate Revokation List (CRL): None
+* Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
 * Issuer Alternative Name: None
