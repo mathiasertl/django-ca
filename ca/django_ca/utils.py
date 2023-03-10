@@ -706,10 +706,10 @@ def generate_private_key(
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return ec.generate_private_key(elliptic_curve)
     if key_type == "Ed25519":
-        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
+        validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return ed25519.Ed25519PrivateKey.generate()
     if key_type == "Ed448":
-        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
+        validate_private_key_parameters(key_type, key_size, elliptic_curve)
         return ed448.Ed448PrivateKey.generate()
 
     # COVERAGE NOTE: Unreachable code, as all possible key_types are handled above and
@@ -1046,7 +1046,7 @@ def parse_key_curve(value: str) -> ec.EllipticCurve:
         curves = {k.lower(): v for k, v in constants.ELLIPTIC_CURVE_TYPES.items()}
         return curves[value.strip().lower()]()
     except KeyError as ex:
-        raise ValueError(f"{value}: Not a known Eliptic Curve") from ex
+        raise ValueError(f"{value}: Not a known Elliptic Curve") from ex
 
 
 def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:

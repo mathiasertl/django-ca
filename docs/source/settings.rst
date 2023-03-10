@@ -427,7 +427,7 @@ LIBRARY_LOG_LEVEL
 SECRET_KEY_FILE
    Default: ``"/var/lib/django-ca/secret_key"``
 
-   A path to a file that stores Djangos `SECRET_KEY
+   A path to a file that stores Django's `SECRET_KEY
    <https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY>`_. The setting is only used if
    no ``SECRET_KEY`` is defined.
 

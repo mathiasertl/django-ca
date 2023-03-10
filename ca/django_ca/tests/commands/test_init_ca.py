@@ -209,7 +209,7 @@ class InitCATest(TestCaseMixin, TestCase):
             "--algorithm=SHA-256",  # hashes.SHA256(),
             "--key-type=EC",
             "--expires=720",
-            "--pathlen=3",
+            "--path-length=3",
             "--issuer-url=http://issuer.ca.example.com",
             "--issuer-alt-name=http://ian.ca.example.com",
             "--crl-url=http://crl.example.com",
@@ -240,8 +240,8 @@ class InitCATest(TestCaseMixin, TestCase):
 
         self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA256)
         self.assertIsInstance(ca.pub.loaded.public_key(), ec.EllipticCurvePublicKey)
-        self.assertEqual(ca.pathlen, 3)
-        self.assertEqual(ca.max_pathlen, 3)
+        self.assertEqual(ca.path_length, 3)
+        self.assertEqual(ca.max_path_length, 3)
         self.assertTrue(ca.allows_intermediate_ca)
         self.assertEqual(ca.issuer_url, "http://issuer.ca.example.com")
         self.assertEqual(ca.issuer_alt_name, "URI:http://ian.ca.example.com")
@@ -317,7 +317,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 algorithm=hashes.SHA256(),
                 key_type="EC",
                 expires=self.expires(720),
-                pathlen=3,
+                path_length=3,
                 issuer_url="http://issuer.ca.example.com",
                 issuer_alt_name=self.issuer_alternative_name(uri("http://ian.ca.example.com")),
                 crl_url=["http://crl.example.com"],
@@ -341,7 +341,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 algorithm=hashes.SHA256(),
                 key_type="DSA",
                 expires=self.expires(720),
-                pathlen=3,
+                path_length=3,
                 issuer_url="http://issuer.ca.example.com",
                 issuer_alt_name=self.issuer_alternative_name(uri("http://ian.ca.example.com")),
                 crl_url=["http://crl.example.com"],
@@ -385,12 +385,12 @@ class InitCATest(TestCaseMixin, TestCase):
         self.test_arguments()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_no_pathlen(self) -> None:
-        """Test creating a CA with no pathlen."""
+    def test_no_path_length(self) -> None:
+        """Test creating a CA with no path length."""
 
-        name = "test_no_pathlen"
+        name = "test_no_path_length"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name=name, pathlen=None)
+            out, err = self.init_ca(name=name, path_length=None)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -398,8 +398,8 @@ class InitCATest(TestCaseMixin, TestCase):
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertPrivateKey(ca)
         self.assertSignature([ca], ca)
-        self.assertEqual(ca.max_pathlen, None)
-        self.assertEqual(ca.pathlen, None)
+        self.assertEqual(ca.max_path_length, None)
+        self.assertEqual(ca.path_length, None)
         self.assertTrue(ca.allows_intermediate_ca)
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
@@ -449,7 +449,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test creating a CA and an intermediate CA."""
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="Parent", pathlen=1)
+            out, err = self.init_ca(name="Parent", path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         parent = CertificateAuthority.objects.get(name="Parent")
@@ -506,7 +506,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self) -> None:  # pylint: disable=too-many-statements
-        """Test intermediate pathlen checks."""
+        """Test intermediate path length checks."""
 
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name="default")
@@ -516,99 +516,99 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPostCreateCa(post, parent)
         self.assertPrivateKey(parent)
         parent.full_clean()  # assert e.g. max_length in serials
-        self.assertEqual(parent.pathlen, 0)
-        self.assertEqual(parent.max_pathlen, 0)
+        self.assertEqual(parent.path_length, 0)
+        self.assertEqual(parent.max_path_length, 0)
         self.assertFalse(parent.allows_intermediate_ca)
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="pathlen-1", pathlen=1)
+            out, err = self.init_ca(name="path-length-1", path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        pathlen_1 = CertificateAuthority.objects.get(name="pathlen-1")
-        self.assertPostCreateCa(post, pathlen_1)
-        pathlen_1.full_clean()  # assert e.g. max_length in serials
-        self.assertPrivateKey(pathlen_1)
-        self.assertEqual(pathlen_1.pathlen, 1)
-        self.assertEqual(pathlen_1.max_pathlen, 1)
-        self.assertTrue(pathlen_1.allows_intermediate_ca)
+        path_length_1 = CertificateAuthority.objects.get(name="path-length-1")
+        self.assertPostCreateCa(post, path_length_1)
+        path_length_1.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(path_length_1)
+        self.assertEqual(path_length_1.path_length, 1)
+        self.assertEqual(path_length_1.max_path_length, 1)
+        self.assertTrue(path_length_1.allows_intermediate_ca)
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="pathlen-1-none", pathlen=None, parent=pathlen_1)
+            out, err = self.init_ca(name="path-length-1-none", path_length=None, parent=path_length_1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        pathlen_1_none = CertificateAuthority.objects.get(name="pathlen-1-none")
-        self.assertPostCreateCa(post, pathlen_1_none)
-        pathlen_1_none.full_clean()  # assert e.g. max_length in serials
-        self.assertPrivateKey(pathlen_1_none)
+        path_length_1_none = CertificateAuthority.objects.get(name="path-length-1-none")
+        self.assertPostCreateCa(post, path_length_1_none)
+        path_length_1_none.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(path_length_1_none)
 
-        # pathlen_1_none cannot have an intermediate CA because parent has pathlen=1
-        self.assertIsNone(pathlen_1_none.pathlen)
-        self.assertEqual(pathlen_1_none.max_pathlen, 0)
-        self.assertFalse(pathlen_1_none.allows_intermediate_ca)
+        # path_length_1_none cannot have an intermediate CA because parent has path_length=1
+        self.assertIsNone(path_length_1_none.path_length)
+        self.assertEqual(path_length_1_none.max_path_length, 0)
+        self.assertFalse(path_length_1_none.allows_intermediate_ca)
         with self.assertCommandError(
-            r"^Parent CA cannot create intermediate CA due to pathlen restrictions\.$"
+            r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
         ), self.assertCreateCASignals(False, False):
-            out, err = self.init_ca(name="wrong", parent=pathlen_1_none)
+            out, err = self.init_ca(name="wrong", parent=path_length_1_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="pathlen-1-three", pathlen=3, parent=pathlen_1)
+            out, err = self.init_ca(name="path-length-1-three", path_length=3, parent=path_length_1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        pathlen_1_three = CertificateAuthority.objects.get(name="pathlen-1-three")
-        self.assertPostCreateCa(post, pathlen_1_three)
-        pathlen_1_three.full_clean()  # assert e.g. max_length in serials
-        self.assertPrivateKey(pathlen_1_three)
+        path_length_1_three = CertificateAuthority.objects.get(name="path-length-1-three")
+        self.assertPostCreateCa(post, path_length_1_three)
+        path_length_1_three.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(path_length_1_three)
 
-        # pathlen_1_none cannot have an intermediate CA because parent has pathlen=1
-        self.assertEqual(pathlen_1_three.pathlen, 3)
-        self.assertEqual(pathlen_1_three.max_pathlen, 0)
-        self.assertFalse(pathlen_1_three.allows_intermediate_ca)
+        # path_length_1_none cannot have an intermediate CA because parent has path_length=1
+        self.assertEqual(path_length_1_three.path_length, 3)
+        self.assertEqual(path_length_1_three.max_path_length, 0)
+        self.assertFalse(path_length_1_three.allows_intermediate_ca)
         with self.assertCommandError(
-            r"^Parent CA cannot create intermediate CA due to pathlen restrictions\.$"
+            r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
         ), self.assertCreateCASignals(False, False):
-            out, _err = self.init_ca(name="wrong", parent=pathlen_1_none)
+            out, _err = self.init_ca(name="wrong", parent=path_length_1_none)
         self.assertEqual(out, "")
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="pathlen-none", pathlen=None)
+            out, err = self.init_ca(name="path-length-none", path_length=None)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        pathlen_none = CertificateAuthority.objects.get(name="pathlen-none")
-        self.assertPostCreateCa(post, pathlen_none)
-        pathlen_none.full_clean()  # assert e.g. max_length in serials
-        self.assertPrivateKey(pathlen_none)
-        self.assertIsNone(pathlen_none.pathlen)
-        self.assertIsNone(pathlen_none.max_pathlen, None)
-        self.assertTrue(pathlen_none.allows_intermediate_ca)
+        path_length_none = CertificateAuthority.objects.get(name="path-length-none")
+        self.assertPostCreateCa(post, path_length_none)
+        path_length_none.full_clean()  # assert e.g. max_length in serials
+        self.assertPrivateKey(path_length_none)
+        self.assertIsNone(path_length_none.path_length)
+        self.assertIsNone(path_length_none.max_path_length, None)
+        self.assertTrue(path_length_none.allows_intermediate_ca)
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="pathlen-none-none", pathlen=None, parent=pathlen_none)
+            out, err = self.init_ca(name="path-length-none-none", path_length=None, parent=path_length_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        pathlen_none_none = CertificateAuthority.objects.get(name="pathlen-none-none")
-        self.assertPostCreateCa(post, pathlen_none_none)
-        pathlen_none_none.full_clean()  # assert e.g. max_length in serials
-        self.assertIsNone(pathlen_none_none.pathlen)
-        self.assertIsNone(pathlen_none_none.max_pathlen)
+        path_length_none_none = CertificateAuthority.objects.get(name="path-length-none-none")
+        self.assertPostCreateCa(post, path_length_none_none)
+        path_length_none_none.full_clean()  # assert e.g. max_length in serials
+        self.assertIsNone(path_length_none_none.path_length)
+        self.assertIsNone(path_length_none_none.max_path_length)
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="pathlen-none-1", pathlen=1, parent=pathlen_none)
+            out, err = self.init_ca(name="path-length-none-1", path_length=1, parent=path_length_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
-        pathlen_none_1 = CertificateAuthority.objects.get(name="pathlen-none-1")
-        self.assertPostCreateCa(post, pathlen_none_1)
-        pathlen_none_1.full_clean()  # assert e.g. max_length in serials
-        self.assertEqual(pathlen_none_1.pathlen, 1)
-        self.assertEqual(pathlen_none_1.max_pathlen, 1)
+        path_length_none_1 = CertificateAuthority.objects.get(name="path-length-none-1")
+        self.assertPostCreateCa(post, path_length_none_1)
+        path_length_none_1.full_clean()  # assert e.g. max_length in serials
+        self.assertEqual(path_length_none_1.path_length, 1)
+        self.assertEqual(path_length_none_1.max_path_length, 1)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_expires_override(self) -> None:
         """Test that if we request an expiry after that of the parent, we override to that of the parent."""
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="Parent", pathlen=1)
+            out, err = self.init_ca(name="Parent", path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         parent = CertificateAuthority.objects.get(name="Parent")
@@ -652,7 +652,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         password = b"testpassword"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.init_ca(name="Parent", password=password, pathlen=1)
+            out, err = self.init_ca(name="Parent", password=password, path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         parent = CertificateAuthority.objects.get(name="Parent")

@@ -460,7 +460,7 @@ class SubjectAlternativeNameWidget(ExtensionWidget):
             return ([], default_cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid])
 
         if len(value) == 3:
-            # TYPE NOTE: mypy does not eleminate two-tuple from union in length check
+            # TYPE NOTE: mypy does not eliminate two-tuple from union in length check
             return typing.cast(Tuple[List[x509.GeneralName], bool, bool], value)
 
         ext, cn_in_san = value  # type: ignore[misc]

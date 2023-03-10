@@ -311,13 +311,13 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         super().add_arguments(parser)
 
     def wrap_digest(self, algorithm: str, text: str) -> str:
-        """Wrap digest in a way that colons align nicely in mulitple lines."""
-        # 107 is enough to (just) fit a SHA-256 hash
-        textwidth = min(107, shutil.get_terminal_size(fallback=(107, 100)).columns)
-        textwidth -= (textwidth + 1) % 3
+        """Wrap digest in a way that colons align nicely in multiple lines."""
+        # 107 is enough to (just) fit an SHA-256 hash
+        text_width = min(107, shutil.get_terminal_size(fallback=(107, 100)).columns)
+        text_width -= (text_width + 1) % 3
 
         subsequent_indent = " " * (len(algorithm) + 4)
-        lines = textwrap.wrap(text, textwidth, initial_indent="  ", subsequent_indent=subsequent_indent)
+        lines = textwrap.wrap(text, text_width, initial_indent="  ", subsequent_indent=subsequent_indent)
         return "\n".join(lines)
 
     def output_status(self, cert: X509CertMixin) -> None:

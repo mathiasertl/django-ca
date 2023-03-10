@@ -272,7 +272,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         group.add_argument(
             "--crl-url",
             action=actions.MultipleURLAction,
-            help="URL to a certificate revokation list. Can be given multiple times.",
+            help="URL to a certificate revocation list. Can be given multiple times.",
         )
         group.add_argument(
             "--ocsp-url", metavar="URL", action=actions.URLAction, help="URL of an OCSP responder."

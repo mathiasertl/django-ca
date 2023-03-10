@@ -49,10 +49,10 @@ class Command(BaseViewCommand):  # pylint: disable=missing-class-docstring
         else:
             self.stdout.write("* Certificate authority has no children.")
 
-        if ca.max_pathlen is None:
+        if ca.max_path_length is None:
             path_length = "unlimited"
         else:
-            path_length = str(ca.max_pathlen)
+            path_length = str(ca.max_path_length)
 
         self.stdout.write(f"* Maximum levels of sub-CAs (path length): {path_length}")
 

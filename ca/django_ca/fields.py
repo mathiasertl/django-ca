@@ -288,13 +288,13 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
                 raise forms.ValidationError(self.error_messages["no-dp-or-issuer"], code="no-dp-or-issuer")
             return None  # nothing was entered at all
 
-        dpoint = x509.DistributionPoint(
+        distribution_point = x509.DistributionPoint(
             full_name=full_name,
             relative_name=relative_distinguished_name,
             crl_issuer=crl_issuer,
             reasons=parsed_reasons,
         )
-        return self.extension_type(distribution_points=[dpoint])
+        return self.extension_type(distribution_points=[distribution_point])
 
 
 class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAccess]):

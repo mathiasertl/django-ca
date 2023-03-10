@@ -134,20 +134,25 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         self.add_acme_group(parser)
 
         group = parser.add_argument_group(
-            "pathlen attribute",
-            """Maximum number of CAs that can appear below this one. A pathlen of zero (the default) means it
-            can only be used to sign end user certificates and not further CAs.""",
+            "path length attribute",
+            """Maximum number of CAs that can appear below this one. A path length of zero (the default) means
+            it can only be used to sign end user certificates and not further CAs.""",
         )
         group = group.add_mutually_exclusive_group()
         group.add_argument(
-            "--pathlen", default=0, type=int, help="Maximum number of sublevel CAs (default: %(default)s)."
+            "--path-length",
+            "--pathlen",  # remove in django-ca==1.26.0
+            default=0,
+            type=int,
+            help="Maximum number of intermediate CAs (default: %(default)s).",
         )
         group.add_argument(
-            "--no-pathlen",
+            "--no-path-length",
+            "--no-pathlen",  # remove in django-ca==1.26.0
             action="store_const",
             const=None,
-            dest="pathlen",
-            help="Do not add a pathlen attribute.",
+            dest="path_length",
+            help="Do not add a path length attribute.",
         )
 
         group = parser.add_argument_group(
@@ -158,7 +163,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         group.add_argument(
             "--ca-crl-url",
             action=MultipleURLAction,
-            help="URL to a certificate revokation list. Can be given multiple times.",
+            help="URL to a certificate revocation list. Can be given multiple times.",
         )
         group.add_argument("--ca-ocsp-url", metavar="URL", action=URLAction, help="URL of an OCSP responder.")
         group.add_argument(
@@ -198,7 +203,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         key_type: ParsableKeyType,
         elliptic_curve: Optional[ec.EllipticCurve],
         algorithm: Optional[hashes.HashAlgorithm],
-        pathlen: Optional[int],
+        path_length: Optional[int],
         password: Optional[bytes],
         parent_password: Optional[bytes],
         crl_url: List[str],
@@ -247,7 +252,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         if parent and timezone.now() + expires > parent.expires:
             expires = parent.expires  # type: ignore[assignment]
         if parent and not parent.allows_intermediate_ca:
-            raise CommandError("Parent CA cannot create intermediate CA due to pathlen restrictions.")
+            raise CommandError("Parent CA cannot create intermediate CA due to path length restrictions.")
         if not parent and ca_crl_url:
             raise CommandError("CRLs cannot be used to revoke root CAs.")
         if not parent and ca_ocsp_url:
@@ -289,7 +294,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 expires=expires,
                 algorithm=algorithm,
                 parent=parent,
-                pathlen=pathlen,
+                pathlen=path_length,
                 issuer_url=issuer_url,
                 issuer_alt_name=issuer_alternative_name,
                 crl_url=crl_url,

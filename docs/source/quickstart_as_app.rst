@@ -124,7 +124,7 @@ various :command:`manage.py` commands (see :doc:`/cli/intro`).
 Create admin user and set up CAs
 ================================
 
-All functionality is available as custom `Djangos manage.py
+All functionality is available as custom `Django's manage.py
 commands <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_.
 
 .. jinja:: manage-as-py

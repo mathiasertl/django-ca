@@ -63,7 +63,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     # this script.
     #
     # This is important in tests, as the "everything_valid" timestamp is 23 days after the date computed
-    # below. If you use freezegun in a test and log in in the setUp method (before freezegun freezes time),
+    # below. If you use freezegun in a test and log in the setUp method (before freezegun freezes time),
     # the session starts with the current, real time. Django ignores sessions that start in the future, so
     # tests that use the test client would fail if "everything_valid" is in the future.
     now = datetime.utcnow().replace(second=0, minute=0) - timedelta(days=25)

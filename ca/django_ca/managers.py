@@ -86,7 +86,7 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
 
     if typing.TYPE_CHECKING:
         # django-stubs (mypy plugin for Django) currently typehints queryset methods as returning a manager,
-        # and does not know about queryset methods comming from the queryset. We typehint basic queryset
+        # and does not know about queryset methods coming from the queryset. We typehint basic queryset
         # methods here, so that mypy knows that returned objects are querysets.
         #
         # The type overrides are because of the return type, as mypy thinks they should return a manager.
@@ -250,7 +250,7 @@ class CertificateAuthorityManager(
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority. Let unset if this CA will be used for OpenSSH.
         default_hostname : str, optional
-            Override the URLconfigured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
+            Override the URL configured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
         pathlen : int, optional
             Value of the path length attribute for the Basic Constraints extension.

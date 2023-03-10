@@ -345,7 +345,9 @@ if _CA_DEFAULT_ELLIPTIC_CURVE := getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", 
     try:
         CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]
     except KeyError as ex:
-        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unkown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
+        raise ImproperlyConfigured(
+            f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE."
+        ) from ex
 elif _CA_DEFAULT_ELLIPTIC_CURVE := getattr(
     settings, "CA_DEFAULT_ECC_CURVE", None
 ):  # pragma: django-ca<1.25.0

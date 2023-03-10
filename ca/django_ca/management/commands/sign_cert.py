@@ -86,7 +86,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             dest="csr_path",
             default="-",
             metavar="FILE",
-            help="The path to the certificate to sign, if ommitted, you will be be prompted.",
+            help="The path to the certificate to sign, if omitted, you will be be prompted.",
         )
         general_group.add_argument(
             "-b", "--bundle", default=False, action="store_true", help="Output the whole certificate bundle."

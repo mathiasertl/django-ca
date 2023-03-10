@@ -684,7 +684,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         return JsonResponse(data)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
-        # Only grant add permissions if there is at least one useable CA
+        # Only grant add permissions if there is at least one usable CA
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists:
                 return True
@@ -1030,9 +1030,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     profile_ext = typing.cast(Union[x509.CRLDistributionPoints, x509.FreshestCRL], ext.value)
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
                         form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[oid])
-                        dpoints = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
+                        distribution_points = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
                         extensions[oid] = x509.Extension(
-                            oid=form_ext.oid, critical=form_ext.critical, value=dpoints
+                            oid=form_ext.oid, critical=form_ext.critical, value=distribution_points
                         )
                     continue
 
@@ -1043,7 +1043,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 if oid == ExtensionOID.BASIC_CONSTRAINTS:  # set by default in profile, so ignore it
                     continue
 
-                # Add any extension from the profile currently not changable in the web interface
+                # Add any extension from the profile currently not changeable in the web interface
                 extensions[oid] = ext
 
             ca: CertificateAuthority = data["ca"]

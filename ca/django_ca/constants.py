@@ -63,10 +63,10 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     IPSEC_TUNNEL = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6")
     IPSEC_USER = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
 
-    # Used by PKINIT logon on Windows (see  github#46)
+    # Used by PKINIT logon on Windows (see  #46)
     SMARTCARD_LOGON = x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2")
 
-    # mobilee Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
+    # mobile Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
     MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
 
@@ -267,7 +267,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 )
 
 
-# pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is droped in 1.25.0
+# pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is dropped in 1.25.0
 HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
         # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
@@ -285,7 +285,7 @@ HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mappi
     }
 )
 
-# pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is droped in 1.25.0
+# pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is dropped in 1.25.0
 HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
 )

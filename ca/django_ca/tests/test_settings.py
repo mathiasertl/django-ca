@@ -104,7 +104,7 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
 
     def test_default_elliptic_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ELLIPTIC_CURVE``."""
-        with self.assertImproperlyConfigured(r"^foo: Unkown CA_DEFAULT_ELLIPTIC_CURVE.$"):
+        with self.assertImproperlyConfigured(r"^foo: Unknown CA_DEFAULT_ELLIPTIC_CURVE.$"):
             with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 

@@ -68,7 +68,7 @@ class AcmeResponseAccountCreated(AcmeResponseAccount):
 
 
 class AcmeResponseOrder(AcmeSimpleResponse):
-    """A HTTP response returning an Order object."""
+    """An HTTP response returning an Order object."""
 
     message_cls = Order
 
@@ -80,13 +80,13 @@ class AcmeResponseOrderCreated(AcmeResponseOrder):
 
 
 class AcmeResponseAuthorization(AcmeSimpleResponse):
-    """A HTTP response for an ACME authorization."""
+    """An HTTP response for an ACME authorization."""
 
     message_cls = messages.Authorization
 
 
 class AcmeResponseChallenge(AcmeSimpleResponse):
-    """A HTTP response for an ACME challenge."""
+    """An HTTP response for an ACME challenge."""
 
     message_cls = messages.ChallengeBody
 

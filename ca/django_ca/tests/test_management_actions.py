@@ -317,7 +317,7 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--curve=foo"],
             "usage: {script} [-h] [--curve {{secp256r1,secp384r1,secp521r1,...}}]\n"
-            "{script}: error: argument --curve: foo: Not a known Eliptic Curve\n",
+            "{script}: error: argument --curve: foo: Not a known Elliptic Curve\n",
         )
 
 
@@ -385,7 +385,7 @@ class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
 
     @override_settings(CA_MIN_KEY_SIZE=2048, CA_DEFAULT_KEY_SIZE=4096)
     def test_to_small(self) -> None:
-        """Test giving values that are to small."""
+        """Test giving values that are too small."""
         expected = """usage: {script} [-h] [--size SIZE]
 {script}: error: argument --size: %s: Must be at least 2048 bits.\n"""
 
@@ -394,7 +394,7 @@ class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(["--size=256"], expected % 256)
 
     def test_no_str(self) -> None:
-        """Test giving values that are to small."""
+        """Test giving values that are too small."""
         expected = """usage: {script} [-h] [--size SIZE]
 {script}: error: argument --size: foo: Must be an integer.\n"""
 

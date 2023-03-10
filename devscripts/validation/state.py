@@ -127,7 +127,7 @@ def check_tox(project_config):
     if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
         errors += err(f"Expected envlist item not found: {expected_envlist}")
 
-    # Check that conditional dependencies are up to date
+    # Check that conditional dependencies are up-to-date
     for component in ["django", "cryptography", "acme", "josepy"]:
         # First, check if there are any leftover conditional settings for this component
         short_name = TOX_ENV_SHORT_NAMES.get(component, component)

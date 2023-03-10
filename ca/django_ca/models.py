@@ -237,7 +237,7 @@ class X509CertMixin(DjangoCAModel):
         max_length=32,
         blank=True,
         default="",
-        verbose_name=_("Reason for revokation"),
+        verbose_name=_("Reason for revocation"),
         choices=REVOCATION_REASONS,
     )
     compromised = models.DateTimeField(
@@ -419,10 +419,10 @@ class X509CertMixin(DjangoCAModel):
            issue is addressed in `this pull request <https://github.com/certbot/josepy/pull/98>`_.
         """
 
-        pkey = self.pub.loaded.public_key()
+        public_key = self.pub.loaded.public_key()
 
         try:
-            jwk = jose.jwk.JWK.load(pkey.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
+            jwk = jose.jwk.JWK.load(public_key.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
         except jose.errors.Error as ex:
             raise ValueError(*ex.args) from ex
 
@@ -1248,8 +1248,8 @@ class CertificateAuthority(X509CertMixin):
         return ca_settings.CA_PASSWORDS.get(self.serial)
 
     @property
-    def pathlen(self) -> Optional[int]:
-        """The ``pathlen`` attribute of the ``BasicConstraints`` extension (either an ``int`` or ``None``)."""
+    def path_length(self) -> Optional[int]:
+        """The ``path_length`` attribute of the ``BasicConstraints`` extension."""
 
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.BasicConstraints)
@@ -1258,31 +1258,31 @@ class CertificateAuthority(X509CertMixin):
         return ext.value.path_length
 
     @property
-    def max_pathlen(self) -> Optional[int]:
-        """The maximum `pathlen` for any intermediate CAs signed by this CA.
+    def max_path_length(self) -> Optional[int]:
+        """The maximum `path length` for any intermediate CAs signed by this CA.
 
-        This value is either ``None``, if this and all parent CAs don't have a ``pathlen`` attribute, or an
-        ``int`` if any parent CA has the attribute.
+        This value is either ``None``, if this and all parent CAs don't have a ``path_length`` attribute, or
+        an ``int`` if any parent CA has the attribute.
         """
 
         if self.parent is None:
-            return self.pathlen
+            return self.path_length
 
-        max_parent = self.parent.max_pathlen
+        max_parent = self.parent.max_path_length
 
         if max_parent is None:
-            return self.pathlen
-        if self.pathlen is None:
+            return self.path_length
+        if self.path_length is None:
             return max_parent - 1
 
-        return min(self.pathlen, max_parent - 1)
+        return min(self.path_length, max_parent - 1)
 
     @property
     def allows_intermediate_ca(self) -> bool:
         """Whether this CA allows creating intermediate CAs."""
 
-        max_pathlen = self.max_pathlen
-        return max_pathlen is None or max_pathlen > 0
+        max_path_length = self.max_path_length
+        return max_path_length is None or max_path_length > 0
 
     @property
     def bundle(self) -> List["CertificateAuthority"]:

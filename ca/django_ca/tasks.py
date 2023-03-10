@@ -309,6 +309,6 @@ def acme_cleanup() -> None:
         log.info("ACME is not enabled, not doing anything.")
         return
 
-    # Delete orders that expired more then a day ago.
+    # Delete orders that expired more than a day ago.
     threshold = timezone.now() - timedelta(days=1)
     AcmeOrder.objects.filter(expires__lt=threshold).delete()

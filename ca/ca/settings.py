@@ -241,7 +241,7 @@ if not _skip_local_config and yaml is not False:  # type: ignore[comparison-over
 
 
 def _parse_bool(env_value: str) -> bool:
-    # parse a env variable that is supposed to represent a boolean value
+    # parse an env variable that is supposed to represent a boolean value
     return env_value.strip().lower() in ("true", "yes", "1")
 
 

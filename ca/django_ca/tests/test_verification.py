@@ -233,8 +233,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_HOSTNAME="")
     def test_intermediate_ca(self) -> None:
         """Validate intermediate CA and its certs."""
-        root = self.init_ca("Root", pathlen=2)
-        child = self.init_ca("Child", parent=root, pathlen=1)
+        root = self.init_ca("Root", path_length=2)
+        child = self.init_ca("Child", parent=root, path_length=1)
         grandchild = self.init_ca("Grandchild", parent=child)
 
         #  Verify the state of the CAs themself.
@@ -280,8 +280,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     def test_intermediate_ca_default_hostname(self) -> None:
         """Test that a changing CA_DEFAULT_HOSTNAME does not lead to problems."""
 
-        root = self.init_ca("Root", pathlen=2)
-        child = self.init_ca("Child", parent=root, pathlen=1)
+        root = self.init_ca("Root", path_length=2)
+        child = self.init_ca("Child", parent=root, path_length=1)
         grandchild = self.init_ca("Grandchild", parent=child)
 
         child_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": root.serial})

@@ -804,10 +804,10 @@ class ParseEllipticCurveTestCase(TestCase):
 
     def test_error(self) -> None:
         """Test some error cases."""
-        with self.assertRaisesRegex(ValueError, "^FOOBAR: Not a known Eliptic Curve$"):
+        with self.assertRaisesRegex(ValueError, "^FOOBAR: Not a known Elliptic Curve$"):
             parse_key_curve("FOOBAR")
 
-        with self.assertRaisesRegex(ValueError, "^ECDH: Not a known Eliptic Curve$"):
+        with self.assertRaisesRegex(ValueError, "^ECDH: Not a known Elliptic Curve$"):
             parse_key_curve("ECDH")  # present in the module, but *not* an EllipticCurve
 
 

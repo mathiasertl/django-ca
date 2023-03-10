@@ -55,7 +55,7 @@ def _basic_constraints_as_text(value: x509.BasicConstraints) -> str:
     else:
         text = "CA:FALSE"
     if value.path_length is not None:
-        text += f", pathlen:{value.path_length}"
+        text += f", path length:{value.path_length}"
 
     return text
 
@@ -96,22 +96,22 @@ def _certificate_policies_as_text(value: x509.CertificatePolicies) -> str:
 
 def _distribution_points_as_text(value: typehints.CRLExtensionType) -> str:
     lines = []
-    for dpoint in value:
+    for distribution_point in value:
         lines.append("* DistributionPoint:")
 
-        if dpoint.full_name:
+        if distribution_point.full_name:
             lines.append("  * Full Name:")
-            lines += [f"    * {format_general_name(name)}" for name in dpoint.full_name]
-        elif dpoint.relative_name:
-            lines.append(f"  * Relative Name: {format_name(dpoint.relative_name)}")
+            lines += [f"    * {format_general_name(name)}" for name in distribution_point.full_name]
+        elif distribution_point.relative_name:
+            lines.append(f"  * Relative Name: {format_name(distribution_point.relative_name)}")
         else:  # pragma: no cover; either full_name or relative_name must be not-None.
             raise ValueError("Either full_name or relative_name must be not None.")
 
-        if dpoint.crl_issuer:
+        if distribution_point.crl_issuer:
             lines.append("  * CRL Issuer:")
-            lines += [f"    * {format_general_name(issuer)}" for issuer in dpoint.crl_issuer]
-        if dpoint.reasons:
-            reasons = ", ".join(sorted([r.name for r in dpoint.reasons]))
+            lines += [f"    * {format_general_name(issuer)}" for issuer in distribution_point.crl_issuer]
+        if distribution_point.reasons:
+            reasons = ", ".join(sorted([r.name for r in distribution_point.reasons]))
             lines.append(f"  * Reasons: {reasons}")
     return "\n".join(lines)
 

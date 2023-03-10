@@ -342,7 +342,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # "Because client requests in ACME carry JWS objects in the Flattened JSON Serialization, they
             # must have the Content-Type header field set to "application/jose+json".  If a request does not
             # meet this requirement, then the server MUST return a response with status code 415 (Unsupported
-            # Media Type).
+            # Media Type)."
             return AcmeResponseUnsupportedMediaType()
 
         # self.prepared['body'] = json.loads(request.body.decode('utf-8'))
@@ -400,7 +400,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # RFC 8555, 6.2: "The JWS MUST NOT have multiple signatures"
             return AcmeResponseMalformed(message="Multiple JWS signatures encountered.")
 
-        # "The JWS Protected Header MUST include the following fields:...
+        # "The JWS Protected Header MUST include the following fields:..."
         if not combined.alg:  # pragma: no cover
             # ... "alg"
             return AcmeResponseMalformed(message="No algorithm specified.")
@@ -1097,7 +1097,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         certs = Certificate.objects.filter(ca=self.ca).currently_valid()
 
         # If the request is signed with the certificate key (and not the account), a JWK is set for this
-        # request and we verify it was signed by the certificate on record.
+        # request, and we verify it was signed by the certificate on record.
         if self.jws.signature.combined.jwk:
             # NOTE: RFC 8555, section 7.6 states:
             #
@@ -1131,7 +1131,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             if cert.acmecertificate.order.account == self.account:
                 return cert
 
-            # If the account holds authorizations for all of the identifiers in the certificate, it can also
+            # If the account holds authorizations for all the identifiers in the certificate, it can also
             # be revoked, so get a list of all currently valid authorizations that the account holds
             authz = set(AcmeAuthorization.objects.dns().valid().account(account=self.account).names())
 

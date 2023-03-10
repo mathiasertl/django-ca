@@ -81,7 +81,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         profile = profile or "ocsp"
 
         # Check if the profile exists. Note that this shouldn't really happen, since valid parameters match
-        # existing profiles. The only case is when the user undefines the "ocsp" profile, which is the
+        # existing profiles. The only case is when the user removes the "ocsp" profile, which is the
         # default.
         if profile not in ca_settings.CA_PROFILES:
             raise CommandError(f"{profile}: Undefined profile.")

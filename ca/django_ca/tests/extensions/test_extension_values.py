@@ -402,14 +402,14 @@ class BasicConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
             "extension_type": x509.BasicConstraints(ca=True, path_length=0),
             "serialized": {"ca": True, "pathlen": 0},
             "serialized_alternatives": [{"ca": True, "pathlen": 0}],
-            "text": "CA:TRUE, pathlen:0",
+            "text": "CA:TRUE, path length:0",
         },
         "pathlen_three": {
             "admin_html": "CA: True, path length: 3",
             "extension_type": x509.BasicConstraints(ca=True, path_length=3),
             "serialized": {"ca": True, "pathlen": 3},
             "serialized_alternatives": [{"ca": True, "pathlen": 3}],
-            "text": "CA:TRUE, pathlen:3",
+            "text": "CA:TRUE, path length:3",
         },
     }
 

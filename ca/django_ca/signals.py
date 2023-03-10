@@ -13,7 +13,7 @@
 
 """
 **django-ca** adds a few custom Django signals to important events to let you execute custom actions when
-these events happen. Please see `Djangos documentation on signals
+these events happen. Please see `Django's documentation on signals
 <https://docs.djangoproject.com/en/dev/ref/signals/>`_ for further information on how to use signals.
 
 If you installed **django-ca** :doc:`from source <quickstart_from_source>`, use the :ref:`CA_CUSTOM_APPS

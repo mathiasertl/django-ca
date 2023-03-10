@@ -221,7 +221,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_pathlen(self) -> None:
         """Test the pathlen attribute."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.pathlen, certs[name].get("pathlen"))
+            self.assertEqual(ca.path_length, certs[name].get("pathlen"))
 
     def test_root(self) -> None:
         """Test the root attribute."""
@@ -589,7 +589,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_max_pathlen(self) -> None:
         """Test getting the maximum pathlen."""
         for name, ca in self.usable_cas:
-            self.assertEqual(ca.max_pathlen, certs[name].get("max_pathlen"), name)
+            self.assertEqual(ca.max_path_length, certs[name].get("max_pathlen"), name)
 
     def test_allows_intermediate(self) -> None:
         """Test checking if this CA allows intermediate CAs."""

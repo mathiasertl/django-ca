@@ -135,7 +135,7 @@ def console_include(path, context):
 
 
 def get_previous_release(current_release: typing.Optional[str] = None) -> str:
-    """Get the the previous release based on git tags.
+    """Get the previous release based on git tags.
 
     This function returns the name at the last tag that is a valid semantic version. Prerelease or build tags
     are automatically excluded.  If `current_release` is given, it will be excluded from the list.

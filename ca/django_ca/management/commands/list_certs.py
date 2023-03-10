@@ -72,6 +72,5 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 if cert.expires < timezone.now():
                     word = "expired"
 
-                strftime = cert.expires.strftime("%Y-%m-%d")
-                info = f"{word}: {strftime}"
+                info = f"{word}: {cert.expires.strftime('%Y-%m-%d')}"
             self.stdout.write(f"{add_colons(cert.serial)} - {cert.cn} ({info})")

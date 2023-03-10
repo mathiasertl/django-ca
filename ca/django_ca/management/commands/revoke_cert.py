@@ -32,7 +32,7 @@ class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-d
     help = "Revoke a certificate."
 
     def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument("--reason", action=ReasonAction, help="An optional reason for revokation.")
+        parser.add_argument("--reason", action=ReasonAction, help="An optional reason for revocation.")
         super().add_arguments(parser)
 
     def handle(self, cert: Certificate, reason: ReasonFlags, **options: Any) -> None:

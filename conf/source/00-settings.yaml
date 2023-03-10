@@ -2,7 +2,7 @@
 # django-ca settings #
 ######################
 # django-ca has many custom settings, but defaults are usually fine. The only django-ca specific setting you
-# have to configure is CA_DEFAULT_HOSTNAME. For more documentaiton on settings, see:
+# have to configure is CA_DEFAULT_HOSTNAME. For more documentation on settings, see:
 #   https://django-ca.readthedocs.io/en/latest/settings.html
 
 # Where django-ca will store private keys

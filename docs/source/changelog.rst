@@ -139,8 +139,8 @@ Backwards incompatible changes
   that receive the values as passed to the cryptography library.
 * Add the ability to force inclusion/exclusion of the IssuingDistributionPoint extension in CRLs.
 * Ensure that CRLs are regenerated periodically before the cache expires.
-* Switch to the Djangos `built in Redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>`_ in
-  the docker compose setup.
+* Switch to the Django's `built in Redis cache <https://docs.djangoproject.com/en/4.1/topics/cache/#redis>`_
+  in the docker compose setup.
 
 Admin interface
 ===============
@@ -524,7 +524,7 @@ Deprecation notices
 * Add support for Python 3.9.
 * Add support for cryptography 3.1, 3.2 and 3.3.
 * Start linting code with `pylint <https://www.pylint.org/>`_.
-* Secure CSRF and session cookies using Djangos ``SESSION_COOKIE_SECURE``, ``CSRF_COOKIE_HTTPONLY`` and
+* Secure CSRF and session cookies using Django's ``SESSION_COOKIE_SECURE``, ``CSRF_COOKIE_HTTPONLY`` and
   ``CSRF_COOKIE_SECURE`` settings.
 
 Docker (Compose)

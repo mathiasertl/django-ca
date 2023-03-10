@@ -51,7 +51,7 @@ class Command(CertCommandMixin, BaseCommand):
             metavar="EMAIL",
             default=[],
             action="append",
-            help="""Address that shoult no longer be notified when the certificate expires
+            help="""Address that should no longer be notified when the certificate expires
                 (may be given multiple times).""",
         )
         super().add_arguments(parser)

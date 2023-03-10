@@ -33,7 +33,7 @@ OUT_DIR = config.DOCS_SOURCE_DIR / "generated"
 
 
 def optional(value, formatter=None, fallback=None):
-    """Small function to get an value if set or a fallback."""
+    """Small function to get a value if set or a fallback."""
 
     if not value:
         return fallback

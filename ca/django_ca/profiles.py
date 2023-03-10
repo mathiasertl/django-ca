@@ -196,7 +196,7 @@ class Profile:
            * Passing ``django_ca.extensions.Extension`` in `extensions is now deprecated, pass regular
              :py:class:`~cg:cryptography.x509.Extension` objects instead.
 
-        This function is the core function used to create x509 certificates. In it's simplest form, you only
+        This function is the core function used to create x509 certificates. In its simplest form, you only
         need to pass a ca, a CSR and a subject to get a valid certificate::
 
             >>> profile = get_profile('webserver')
@@ -285,7 +285,7 @@ class Profile:
             else:
                 subject = self.subject
 
-        # Add first DNSName/IPAdrress from subjectAlternativeName as commonName if not present in the subject
+        # Add first DNSName/IPAddress from subjectAlternativeName as commonName if not present in the subject
         subject = self._update_cn_from_san(subject, cert_extensions)
 
         if subject is None:
@@ -433,10 +433,10 @@ class Profile:
 
             cert_crldp = typing.cast(x509.CRLDistributionPoints, extensions[oid].value)
 
-            for dpoint in cert_crldp:
-                if dpoint.full_name and ca_name in dpoint.full_name:
+            for distribution_point in cert_crldp:
+                if distribution_point.full_name and ca_name in distribution_point.full_name:
                     break
-            else:  # loop exits normally, so break not reached --> dpoint not in existing extension
+            else:  # loop exits normally, so break not reached -> distribution point not in existing extension
                 ext_value = x509.CRLDistributionPoints(list(ca_crldp) + list(cert_crldp))
                 extensions[oid] = x509.Extension(oid=oid, critical=extensions[oid].critical, value=ext_value)
         else:
@@ -574,7 +574,7 @@ def get_profile(name: Optional[str] = None) -> Profile:
 
 
 class Profiles:
-    """A profile handler similar to Djangos CacheHandler."""
+    """A profile handler similar to Django's CacheHandler."""
 
     def __init__(self) -> None:
         self._profiles = local()
@@ -601,7 +601,7 @@ profiles = Profiles()
 
 
 class DefaultProfileProxy:
-    """Default profile proxy, similar to Djangos DefaultCacheProxy.
+    """Default profile proxy, similar to Django's DefaultCacheProxy.
 
     .. NOTE:: We don't implement setattr/delattr, because Profiles are supposed to be read-only anyway.
     """
