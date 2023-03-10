@@ -22,6 +22,7 @@ import tempfile
 import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from datetime import timezone as tz
 from typing import Any, Dict, Iterable, Iterator, Tuple
 from unittest.mock import patch
 
@@ -341,8 +342,8 @@ for cert_name, cert_data in certs.items():
     # parse some data from the dict
     cert_data["valid_from"] = datetime.strptime(cert_data["valid_from"], "%Y-%m-%d %H:%M:%S")
     cert_data["valid_until"] = datetime.strptime(cert_data["valid_until"], "%Y-%m-%d %H:%M:%S")
-    cert_data["valid_from_str"] = cert_data["valid_from"].strftime("%Y-%m-%d %H:%M:%S")
-    cert_data["valid_until_str"] = cert_data["valid_until"].strftime("%Y-%m-%d %H:%M:%S")
+    cert_data["valid_from_str"] = cert_data["valid_from"].replace(tzinfo=tz.utc).isoformat(" ")
+    cert_data["valid_until_str"] = cert_data["valid_until"].replace(tzinfo=tz.utc).isoformat(" ")
 
     # parse extensions
     for ext_key in constants.EXTENSION_KEY_OIDS:

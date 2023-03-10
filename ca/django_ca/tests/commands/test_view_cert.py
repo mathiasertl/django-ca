@@ -14,17 +14,16 @@
 """Test the view_cert management command."""
 
 import typing
-from typing import Dict, Optional
+from typing import Optional
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 from django.test import TestCase
 
 from freezegun import freeze_time
 
-from django_ca.models import Certificate, Watcher
+from django_ca.models import Watcher
 from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
@@ -510,18 +509,6 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
 
     load_cas = "__all__"
     load_certs = "__all__"
-
-    def _get_format(self, cert: Certificate) -> Dict[str, str]:
-        return {
-            "cn": cert.cn,
-            "from": cert.not_before.strftime("%Y-%m-%d %H:%M"),
-            "until": cert.not_after.strftime("%Y-%m-%d %H:%M"),
-            "sha256": cert.get_fingerprint(hashes.SHA256()),
-            "sha512": cert.get_fingerprint(hashes.SHA512()),
-            "subjectKeyIdentifier": "",
-            "authorityKeyIdentifier": "",
-            "hpkp": cert.hpkp_pin,
-        }
 
     def assertBasicOutput(self, status: str) -> None:  # pylint: disable=invalid-name
         """Test basic properties of output."""

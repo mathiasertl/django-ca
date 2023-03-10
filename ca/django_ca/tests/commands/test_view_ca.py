@@ -17,6 +17,7 @@ import textwrap
 from typing import Any
 from unittest import mock
 
+from django.conf import settings
 from django.test import TestCase
 
 from django_ca.tests.base import override_tmpcadir
@@ -1404,11 +1405,32 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
+        self.maxDiff = None
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data), name)
             self.assertEqual(stderr, "")
+
+    @override_tmpcadir(USE_TZ=True)
+    def test_with_use_tz(self) -> None:
+        """Test viewing certificate with USE_TZ=True"""
+        self.assertTrue(settings.USE_TZ)
+
+        stdout, stderr = self.cmd("view_ca", self.ca.serial, wrap=False)
+        data = self.get_cert_context(self.ca.name)
+        self.assertMultiLineEqual(stdout, expected[self.ca.name].format(**data), self.ca.name)
+        self.assertEqual(stderr, "")
+
+    @override_tmpcadir(USE_TZ=False)
+    def test_with_use_tz_is_false(self) -> None:
+        """Test viewing certificate with USE_TZ=False"""
+        self.assertFalse(settings.USE_TZ)
+
+        stdout, stderr = self.cmd("view_ca", self.ca.serial, wrap=False)
+        data = self.get_cert_context(self.ca.name)
+        self.assertMultiLineEqual(stdout, expected[self.ca.name].format(**data), self.ca.name)
+        self.assertEqual(stderr, "")
 
     @override_tmpcadir()
     def test_properties(self) -> None:

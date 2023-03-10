@@ -21,6 +21,7 @@ import sys
 import textwrap
 import typing
 from datetime import datetime, timedelta
+from datetime import timezone as tz
 from typing import Any, Optional, Tuple, Type, Union
 
 from cryptography import x509
@@ -321,7 +322,7 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
 
     def output_status(self, cert: X509CertMixin) -> None:
         """Output certificate status"""
-        now = datetime.utcnow()
+        now = datetime.now(tz.utc)
         if cert.revoked:
             self.stdout.write("* Status: Revoked")
         elif cert.not_after < now:
@@ -336,8 +337,8 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         self.stdout.write(f"* Subject: {format_name(cert.subject)}")
         self.stdout.write(f"* Serial: {add_colons(cert.serial)}")
         self.stdout.write(f"* Issuer: {format_name(cert.issuer)}")
-        self.stdout.write(f"* Valid from: {cert.not_before.strftime('%Y-%m-%d %H:%M:%S')}")
-        self.stdout.write(f"* Valid until: {cert.not_after.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.stdout.write(f"* Valid from: {cert.not_before.isoformat(' ')}")
+        self.stdout.write(f"* Valid until: {cert.not_after.isoformat(' ')}")
         self.output_status(cert)
         self.stdout.write(f"* HPKP pin: {cert.hpkp_pin}")
 

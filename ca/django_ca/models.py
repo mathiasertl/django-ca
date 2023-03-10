@@ -308,9 +308,10 @@ class X509CertMixin(DjangoCAModel):
         )
         self.expires = self.not_after
         self.valid_from = self.not_before
-        if settings.USE_TZ:
-            self.expires = timezone.make_aware(self.expires, timezone=tz.utc)
-            self.valid_from = timezone.make_aware(self.valid_from, timezone=tz.utc)
+
+        if settings.USE_TZ is False:
+            self.expires = timezone.make_naive(self.expires, timezone=tz.utc)
+            self.valid_from = timezone.make_naive(self.valid_from, timezone=tz.utc)
 
         self.serial = int_to_hex(value.serial_number)  # upper-cased by int_to_hex()
 
@@ -433,13 +434,13 @@ class X509CertMixin(DjangoCAModel):
 
     @property
     def not_before(self) -> datetime:
-        """Date/Time before this certificate is **not** valid."""
-        return self.pub.loaded.not_valid_before
+        """A timezone-aware datetime representing the beginning of the validity period."""
+        return self.pub.loaded.not_valid_before.replace(tzinfo=tz.utc)
 
     @property
     def not_after(self) -> datetime:
-        """Date/Time this certificate expires."""
-        return self.pub.loaded.not_valid_after
+        """A timezone-aware datetime representing the end of the validity period."""
+        return self.pub.loaded.not_valid_after.replace(tzinfo=tz.utc)
 
     def revoke(
         self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
