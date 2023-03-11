@@ -16,6 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import argparse
 import os
 import pathlib
 import warnings
@@ -33,7 +34,7 @@ from django.utils import timezone
 from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.management.actions import ExpiresAction, MultipleURLAction, NameAction, PasswordAction
-from django_ca.management.base import BaseCommand
+from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
@@ -41,10 +42,31 @@ from django_ca.typehints import ParsableKeyType
 from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
 
 
-class Command(CertificateAuthorityDetailMixin, BaseCommand):
+class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
     """Implement :command:`manage.py init_ca`."""
 
     help = "Create a certificate authority."
+
+    def add_name_constraints_group(self, parser: CommandParser) -> argparse._ArgumentGroup:
+        """Add an argument group for the NameConstraints extension."""
+        group = parser.add_argument_group(
+            "Name Constraints", "Add name constraints to the CA, limiting what certificates this CA can sign."
+        )
+        group.add_argument(
+            "--permit-name",
+            metavar="NAME",
+            action="append",
+            type=parse_general_name,
+            help="Add NAME to the permitted-subtree.",
+        )
+        group.add_argument(
+            "--exclude-name",
+            metavar="NAME",
+            action="append",
+            type=parse_general_name,
+            help="Add NAME to the excluded-subtree.",
+        )
+        return group
 
     def add_arguments(self, parser: CommandParser) -> None:
         default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
@@ -180,23 +202,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             help="URL to the certificate of your CA (in DER format).",
         )
 
-        nc_group = parser.add_argument_group(
-            "Name Constraints", "Add name constraints to the CA, limiting what certificates this CA can sign."
-        )
-        nc_group.add_argument(
-            "--permit-name",
-            metavar="NAME",
-            action="append",
-            type=parse_general_name,
-            help="Add NAME to the permitted-subtree.",
-        )
-        nc_group.add_argument(
-            "--exclude-name",
-            metavar="NAME",
-            action="append",
-            type=parse_general_name,
-            help="Add NAME to the excluded-subtree.",
-        )
+        self.add_name_constraints_group(parser)
 
         self.add_ca_args(parser)
 

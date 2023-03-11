@@ -28,12 +28,12 @@ from django.core.management.base import CommandError, CommandParser
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_KEYS
 from django_ca.management.actions import CertificateAction
-from django_ca.management.base import BaseSignCommand
+from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
 
 
-class Command(BaseSignCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
     help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
 default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 

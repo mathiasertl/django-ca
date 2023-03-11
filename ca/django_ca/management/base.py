@@ -179,7 +179,11 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             )
 
 
-class BaseSignCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
+class BaseSignCommand(BaseCommand):
+    pass
+
+
+class BaseSignCertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
