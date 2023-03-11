@@ -114,9 +114,9 @@ BasicConstraints
 .. seealso:: https://tools.ietf.org/html/rfc5280#section-4.2.1.9
 
 The BasicConstraints extension specifies if the certificate can be used as a certificate authority. It is
-always marked as critical. The ``pathlen`` attribute specifies the levels of possible intermediate CAs. If not
-present, the level of intermediate CAs is unlimited, a ``pathlen:0`` means that the CA itself can not issue
-certificates with ``CA:TRUE`` itself.
+always marked as critical. The ``path_length`` attribute specifies the levels of possible intermediate CAs. If
+not present, the level of intermediate CAs is unlimited, a ``path_length:0`` means that the CA itself can not
+issue certificates with ``CA:TRUE`` itself.
 
 In CA certificates
 ==================

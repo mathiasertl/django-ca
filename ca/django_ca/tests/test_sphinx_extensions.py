@@ -46,8 +46,8 @@ class CommandLineTextWrapperTestCase(TestCase):
         self.assertSplits("a -b --long value", ["a", " ", "-b", " ", "--long", " ", "value"])
 
     def test_wrap(self) -> None:
-        """Some end to end testing of wrapping code."""
-        command = "a" * 4  # convenient lenght with test line width
+        """Some end-to-end testing of wrapping code."""
+        command = "a" * 4  # convenient length with test line width
         self.assertWraps(f"{command}", [command])
         self.assertWraps(f"{command} --long", [f"{command} --long"])
         self.assertWraps(f"{command} -a", [f"{command} -a"])

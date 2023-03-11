@@ -48,7 +48,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         excludes: Optional[Iterable[int]] = None,
         elliptic_curve: Type[ec.EllipticCurve] = ec.SECP256R1,
     ) -> Tuple[PrivateKeyTypes, x509.Certificate]:
-        """Assert that they key ispresent and can be read."""
+        """Assert that they key is present and can be read."""
         priv_path = f"ocsp/{ca.serial}.key"
         cert_path = f"ocsp/{ca.serial}.pem"
 

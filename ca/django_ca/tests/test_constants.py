@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Some sanitity tests for constants."""
+"""Some sanity tests for constants."""
 
 import typing
 from typing import Set, Type
@@ -41,7 +41,7 @@ KNOWN_EXTENDED_KEY_USAGE_OIDS = list(
 
 
 class ReasonFlagsTestCase(TestCase):
-    """Test readon flags."""
+    """Test reason flags."""
 
     def test_completeness(self) -> None:
         """Test that our list completely mirrors the cryptography list."""

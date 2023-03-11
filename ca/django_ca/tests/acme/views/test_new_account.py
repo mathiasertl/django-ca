@@ -346,7 +346,7 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     def test_validation_error(self) -> None:
         """Test triggering a model validation error.
 
-        Note that at present it's probably inpossible to have such an error in real life as no fields have any
+        Note that at present it's probably impossible to have such an error in real life as no fields have any
         validation of user-generated input that would not be captured before model validation.
         """
         msg = "Invalid account: thumbprint: Ensure this value has at most 64 characters (it has 256)."

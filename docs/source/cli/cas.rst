@@ -253,35 +253,36 @@ Create intermediate CAs
 ***********************
 
 Intermediate CAs are created, just like normal CAs, using :command:`manage.py init_ca`. For intermediate CAs
-to be valid, CAs however must have a correct ``pathlen`` x509 extension. Its value is an integer describing
-how many levels of intermediate CAs a CA may have. A ``pathlen`` of "0" means that a CA cannot have any
-intermediate CAs, if it is not present, a CA may have an infinite number of intermediate CAs.
+to be valid, CAs however must have a correct ``path length`` in the BasicConstraints x509 extension. Its value
+is an integer describing how many levels of intermediate CAs a CA may have. A ``path length`` of "0" means
+that a CA cannot have any intermediate CAs, if it is not present, a CA may have an infinite number of
+intermediate CAs.
 
 .. NOTE:: **django-ca** by default sets a ``pathlen`` of "0", as it aims to be secure by default.
-   The ``pathlen`` attribute cannot be changed in hindsight (not without resigning the CA). If you
+   The ``path length`` attribute cannot be changed in hindsight (not without resigning the CA). If you
    plan to create intermediate CAs, you have to consider this when creating the root CA.
 
-So for example, if you want two levels of intermediate CAs, , you'd need the following ``pathlen``
-values (the ``pathlen`` value is the minimum value, it could always be a larger number):
+So for example, if you want two levels of intermediate CAs, , you'd need the following ``path length``
+values (the ``path length`` value is the minimum value, it could always be a larger number):
 
-===== ==================== =========== ========================================================
-index CA                   ``pathlen`` description
-===== ==================== =========== ========================================================
-1     example.com          2           Your root CA.
-2     sub1.example.com     1           Your first intermediate CA, a sub-CA from (1).
-3     sub2.example.com     0           A second intermediate CA, also a sub-CA from (1).
-4     sub.sub1.example.com 0           An intermediate CA of (2).
-===== ==================== =========== ========================================================
+===== ==================== =============== ========================================================
+index CA                   ``path length`` description
+===== ==================== =============== ========================================================
+1     example.com          2               Your root CA.
+2     sub1.example.com     1               Your first intermediate CA, a sub-CA from (1).
+3     sub2.example.com     0               A second intermediate CA, also a sub-CA from (1).
+4     sub.sub1.example.com 0               An intermediate CA of (2).
+===== ==================== =============== ========================================================
 
-If in the above example, CA (1) had ``pathlen`` of "1" or CA (2) had a ``pathlen`` of "0", CA (4)
+If in the above example, CA (1) had ``path length`` of "1" or CA (2) had a ``path length`` of "0", CA (4)
 would no longer be a valid CA.
 
-By default, **django-ca** sets a ``pathlen`` of 0, so CAs will not be able to have any intermediate
-CAs. You can configure the value by passing ``--pathlen`` to ``init_ca``:
+By default, **django-ca** sets a ``path length`` of 0, so CAs will not be able to have any intermediate
+CAs. You can configure the value by passing ``--path-length`` to ``init_ca``:
 
 .. code-block:: console
 
-   $ python manage.py init_ca --pathlen=2 ...
+   $ python manage.py init_ca --path-length=2 ...
 
 When creating a sub-ca, you must name its parent using the ``--parent`` parameter:
 

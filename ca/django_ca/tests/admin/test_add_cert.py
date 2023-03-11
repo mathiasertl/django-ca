@@ -230,7 +230,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertCreateCertSignals(False, False) as (pre, post):
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -267,7 +267,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertCreateCertSignals(False, False) as (pre, post):
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -311,7 +311,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertCreateCertSignals(False, False) as (pre, post):
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -406,7 +406,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "with-password.example.com"
 
         # first post without password
-        with self.assertCreateCertSignals(False, False) as (pre, post):
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -437,7 +437,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # now post with a false password
-        with self.assertCreateCertSignals(False, False) as (pre, post):
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -537,11 +537,11 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_wrong_csr(self) -> None:
-        """Test passing an unparseable CSR."""
+        """Test passing an unparsable CSR."""
         ca = self.cas["root"]
         cname = "test-add-wrong-csr.example.com"
 
-        with self.assertCreateCertSignals(False, False) as (pre, post):
+        with self.assertCreateCertSignals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -576,7 +576,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             Certificate.objects.get(cn=cname)
 
     @override_tmpcadir()
-    def test_unparseable_csr(self) -> None:
+    def test_unparsable_csr(self) -> None:
         """Test passing something that looks like a CSR but isn't.
 
         This is different from test_wrong_csr() because this passes our initial test, but cryptography itself
@@ -706,7 +706,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_invalid_cn_in_san(self) -> None:
-        """Test that if you submit a CommonName that is not parseable as SubjectAlternativeName, but check "CN
+        """Test that if you submit a CommonName that is not parsable as SubjectAlternativeName, but check "CN
         in SAN", an error is thrown.
 
         .. seealso:: https://github.com/mathiasertl/django-ca/issues/62
@@ -1064,7 +1064,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             [ca_settings.CA_DEFAULT_PROFILE], [o.get_attribute("value") for o in select.all_selected_options]
         )
 
-        # assert that the values from the default profile are pre-loaded
+        # assert that the values from the default profile are preloaded
         self.assertProfile(
             ca_settings.CA_DEFAULT_PROFILE,
             ku_select,
@@ -1238,8 +1238,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
     def test_only_ca_prefill(self) -> None:
         """Create a cert with an empty profile.
 
-        This test shows that the values from the CA are prefilled correctly. If they where not, some
-        of the fields would not show up in the signed certificate.
+        This test shows that the values from the CA are prefilled correctly. If they were not, some fields
+        would not show up in the signed certificate.
         """
         # Make sure that the CA has field values set.
         cn = "test-only-ca.example.com"
@@ -1336,8 +1336,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
     def test_full_profile_prefill(self) -> None:
         """Create a cert with a full profile, which should mask any CA-specific values.
 
-        This test shows that the values from the profile are prefilled correctly. If they where not, some
-        of the fields would not show up in the signed certificate.
+        This test shows that the values from the profile are prefilled correctly. If they were not, some
+        fields would not show up in the signed certificate.
         """
         # Make sure that the CA has field values set.
         cn = "test-only-ca.example.com"
@@ -1443,8 +1443,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
     def test_multiple_distribution_points(self) -> None:
         """Create a cert with a full profile, which should mask any CA-specific values.
 
-        This test shows that the values from the profile are prefilled correctly. If they where not, some
-        of the fields would not show up in the signed certificate.
+        This test shows that the values from the profile are prefilled correctly. If they were not, some
+        fields would not show up in the signed certificate.
         """
         # Make sure that the CA has field values set.
         cn = "test-only-ca.example.com"

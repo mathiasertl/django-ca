@@ -369,7 +369,7 @@ timestamps["after_child"] = timestamps["base"] + timedelta(days=4)
 timestamps["ca_certs_valid"] = timestamps["base"] + timedelta(days=7)
 timestamps["profile_certs_valid"] = timestamps["base"] + timedelta(days=12)
 
-# When creating fixutres, latest valid_from from of any generated cert is 20 days, we need to be after that
+# When creating fixutres, latest valid_from of any generated cert is 20 days, we need to be after that
 timestamps["everything_valid"] = timestamps["base"] + timedelta(days=23)
 timestamps["everything_valid_naive"] = timezone.make_naive(timestamps["everything_valid"])
 timestamps["cas_expired"] = timestamps["base"] + timedelta(days=731, seconds=3600)

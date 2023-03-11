@@ -34,7 +34,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
 
     @freeze_time(timestamps["everything_valid"])
     def test_no_certs(self) -> None:
-        """Try notificy command when all certs are still valid."""
+        """Try notify command when all certs are still valid."""
         stdout, stderr = self.cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")

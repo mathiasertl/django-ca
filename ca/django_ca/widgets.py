@@ -338,7 +338,7 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         self, value: Optional[x509.Extension[x509.AuthorityInformationAccess]]
     ) -> Tuple[List[x509.GeneralName], List[x509.GeneralName], bool]:
         if value is None:
-            return ([], [], EXTENSION_DEFAULT_CRITICAL[self.oid])
+            return [], [], EXTENSION_DEFAULT_CRITICAL[self.oid]
 
         ocsp = [
             ad.access_location for ad in value.value if ad.access_method == AuthorityInformationAccessOID.OCSP
@@ -374,9 +374,9 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
 
     def decompress(self, value: Optional[x509.Extension[x509.ExtendedKeyUsage]]) -> Tuple[List[str], bool]:
         if value is None:
-            return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
+            return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = [EXTENDED_KEY_USAGE_NAMES[usage] for usage in value.value]
-        return (choices, value.critical)
+        return choices, value.critical
 
 
 class FreshestCRLWidget(DistributionPointWidget):
@@ -392,7 +392,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 
     def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> Tuple[List[str], bool]:
         if value is None:
-            return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
+            return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = []
 
         # Cannot use a list comprehension here, because cryptography raises ValueError for some attributes
@@ -406,7 +406,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
             if chosen:
                 choices.append(choice)
 
-        return (choices, value.critical)
+        return choices, value.critical
 
 
 class IssuerAlternativeNameWidget(ExtensionWidget):
@@ -419,8 +419,8 @@ class IssuerAlternativeNameWidget(ExtensionWidget):
         self, value: Optional[x509.Extension[x509.IssuerAlternativeName]]
     ) -> Tuple[List[x509.GeneralName], bool]:
         if value is None:
-            return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
-        return (list(value.value), value.critical)
+            return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
+        return list(value.value), value.critical
 
 
 class OCSPNoCheckWidget(ExtensionWidget):
@@ -431,8 +431,8 @@ class OCSPNoCheckWidget(ExtensionWidget):
 
     def decompress(self, value: Optional[x509.Extension[x509.OCSPNoCheck]]) -> Tuple[bool, bool]:
         if value is None:
-            return (False, EXTENSION_DEFAULT_CRITICAL[self.oid])
-        return (True, value.critical)
+            return False, EXTENSION_DEFAULT_CRITICAL[self.oid]
+        return True, value.critical
 
 
 class SubjectAlternativeNameWidget(ExtensionWidget):
@@ -457,7 +457,7 @@ class SubjectAlternativeNameWidget(ExtensionWidget):
     ) -> Tuple[List[x509.GeneralName], bool, bool]:  # pragma: no cover
         if value is None:
             default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
-            return ([], default_cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid])
+            return [], default_cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid]
 
         if len(value) == 3:
             # TYPE NOTE: mypy does not eliminate two-tuple from union in length check
@@ -465,9 +465,9 @@ class SubjectAlternativeNameWidget(ExtensionWidget):
 
         ext, cn_in_san = value  # type: ignore[misc]
         if ext is None:
-            return ([], cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid])
+            return [], cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid]
 
-        return (list(ext.value), cn_in_san, ext.critical)
+        return list(ext.value), cn_in_san, ext.critical
 
 
 class TLSFeatureWidget(MultipleChoiceExtensionWidget):
@@ -477,5 +477,5 @@ class TLSFeatureWidget(MultipleChoiceExtensionWidget):
 
     def decompress(self, value: Optional[x509.Extension[x509.TLSFeature]]) -> Tuple[List[str], bool]:
         if value is None:
-            return ([], EXTENSION_DEFAULT_CRITICAL[self.oid])
-        return ([feature.name for feature in value.value], value.critical)
+            return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
+        return [feature.name for feature in value.value], value.critical

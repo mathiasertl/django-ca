@@ -237,7 +237,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         child = self.init_ca("Child", parent=root, path_length=1)
         grandchild = self.init_ca("Grandchild", parent=child)
 
-        #  Verify the state of the CAs themself.
+        #  Verify the state of the CAs themselves.
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.x509_extensions)
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, child.x509_extensions)
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, grandchild.x509_extensions)
@@ -287,7 +287,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         child_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": root.serial})
         grandchild_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": child.serial})
 
-        #  Verify the state of the CAs themself.
+        #  Verify the state of the CAs themselves.
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.x509_extensions)
         self.assertEqual(
             child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],

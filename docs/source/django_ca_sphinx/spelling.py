@@ -36,7 +36,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
     This filter adds a few product names and keywords, as well as known extension names and
     KeyUsage/ExtendedKeyUsage values.
 
-    Note that filters are case sensitive, so adding keys here is also more restrictive then a wordlist and
+    Note that filters are case-sensitive, so adding keys here is also more restrictive then a wordlist and
     ensures canonical spelling. Filters are also a bit more inclusive, e.g. ``django-ca`` is not a single word
     in a wordlist but can be dropped here.
     """

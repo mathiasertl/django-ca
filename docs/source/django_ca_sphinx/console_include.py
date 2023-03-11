@@ -192,7 +192,7 @@ class ConsoleIncludeDirective(CodeBlock):
         if not context_name:
             context = {}
         elif context_name not in self.config.jinja_contexts:
-            raise ValueError(f"{context_name}: Unknow context specified.")
+            raise ValueError(f"{context_name}: Unknown context specified.")
         else:
             context = self.config.jinja_contexts[context_name].copy()
 

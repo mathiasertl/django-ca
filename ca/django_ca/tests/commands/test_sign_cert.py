@@ -189,9 +189,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     def test_with_rsa_with_algorithm(self) -> None:
         """Test creating a CA with a custom algorithm."""
         stdin = self.csr_pem.encode()
-        stdout, stderr = self.cmd(
-            "sign_cert", ca=self.ca, subject=self.subject, stdin=stdin, algorithm=hashes.SHA256()
-        )
+        self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin, algorithm=hashes.SHA256())
         cert = Certificate.objects.get()
         self.assertIsInstance(cert.algorithm, hashes.SHA256)
 
@@ -228,7 +226,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_no_dns_cn(self) -> None:
-        """Test using a CN that is not a vlaid DNS name."""
+        """Test using a CN that is not a valid DNS name."""
         # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
         # should fail.
 
@@ -475,7 +473,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @unittest.skipUnless(
         isinstance(ca_storage, FileSystemStorage), "Test only makes sense with local filesystem storage."
     )
-    def test_unparseable(self) -> None:
+    def test_unparsable(self) -> None:
         """Test creating a cert where the CA private key contains bogus data."""
         # NOTE: we assert ca_storage class in skipUnless() above
         key_path = os.path.join(ca_storage.location, self.ca.private_key_path)  # type: ignore[attr-defined]

@@ -162,7 +162,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         """Test getting a CA CRL."""
         root = self.cas["root"]
         child = self.cas["child"]
-        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
+        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
         self.assertIsNotNone(root.key(password=None))
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
@@ -249,7 +249,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     @override_tmpcadir()
     def test_force_idp_inclusion(self) -> None:
         """Test that forcing inclusion of CRLs works."""
-        # View still works with self.ca, because its the child CA
+        # View still works with self.ca, because it's the child CA
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca))
         response = self.client.get(reverse("include_idp", kwargs={"serial": self.ca.serial}))
         self.assertEqual(response.status_code, 200)

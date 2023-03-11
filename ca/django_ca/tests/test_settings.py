@@ -39,7 +39,7 @@ class SettingsTestCase(TestCase):
 
     def test_ca_profile_update(self) -> None:
         """Test adding a profile in settings."""
-        desc = "testdesc"
+        desc = "test description"
         with self.settings(CA_PROFILES={"client": {"desc": desc}}):
             self.assertEqual(ca_settings.CA_PROFILES["client"]["desc"], desc)
 

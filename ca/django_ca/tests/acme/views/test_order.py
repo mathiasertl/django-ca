@@ -101,7 +101,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
     def test_cert_not_yet_issued(self) -> None:
         """Test viewing an order where the certificate has not yet been issued.
 
-        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditionas that
+        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
         *should* always be true at the same time.
         """
 
@@ -129,7 +129,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
     def test_cert_not_yet_valid(self) -> None:
         """Test viewing an order where the certificate has not yet valid.
 
-        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditionas that
+        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
         *should* always be true at the same time.
         """
 

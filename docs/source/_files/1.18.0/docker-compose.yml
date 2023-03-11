@@ -19,7 +19,7 @@ services:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
         ports:
-            - 5432:5432
+            - "5432:5432"
         networks:
             - database
         restart: unless-stopped
@@ -62,7 +62,7 @@ services:
             - cache
             - db
         ports:
-            - 8000:8000
+            - "8000:8000"
         networks:
             - cache
             - database
@@ -104,7 +104,7 @@ services:
             NGINX_PRIVATE_KEY:
             NGINX_PUBLIC_KEY:
         ports:
-            - 80:80
+            - "80:80"
         networks:
             - frontend
             - public

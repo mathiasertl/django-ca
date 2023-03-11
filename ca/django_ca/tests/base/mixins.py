@@ -444,7 +444,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
             )
 
-        # Diff output is really bad for dicts, so we sort this based on dotted string to get better output
+        # Diff output is bad for dicts, so we sort this based on dotted string to get better output
         actual_tuple = sorted(actual.items(), key=lambda t: t[0].dotted_string)
         expected_tuple = sorted(expected.items(), key=lambda t: t[0].dotted_string)
         self.assertEqual(actual_tuple, expected_tuple)
@@ -743,7 +743,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
                 return stdin
 
-            # TYPE NOTE: mypy detects a different type, but important thing is its a context manager
+            # TYPE NOTE: mypy detects a different type, but important thing is it's a context manager
             stdin_mock = mock.patch(  # type: ignore[assignment]
                 "sys.stdin.buffer.read", side_effect=_read_mock
             )
@@ -1128,7 +1128,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield mocked
 
     def reverse(self, name: str, *args: Any, **kwargs: Any) -> str:
-        """Shortcut to reverse an URI name."""
+        """Shortcut to reverse a URI name."""
         return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
 
     @property

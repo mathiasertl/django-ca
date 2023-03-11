@@ -3,7 +3,7 @@ Command-line interface
 ######################
 
 **django-ca** provides a complete command-line interface for all functionality. It is implemented as
-subcommands of Djangos :command:`manage.py` script. You can use it for all certificate management operations,
+subcommands of Django's :command:`manage.py` script. You can use it for all certificate management operations,
 and :doc:`/cli/cas` is only possible via the command-line interface for security reasons.
 
 .. NOTE::

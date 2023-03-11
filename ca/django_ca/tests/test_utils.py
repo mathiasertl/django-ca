@@ -615,12 +615,12 @@ class ParseGeneralNameTest(TestCase):
             parse_general_name("otherName:1.2.3;MagicString:Broken")
 
     def test_error(self) -> None:
-        """Try parsing an unparseable IP address (b/c it has a network)."""
+        """Try parsing an unparsable IP address (b/c it has a network)."""
         with self.assertRaisesRegex(ValueError, r"^Could not parse IP address\.$"):
             parse_general_name("ip:1.2.3.4/24")
 
-    def test_unparseable(self) -> None:
-        """test some unparseable domains."""
+    def test_unparsable(self) -> None:
+        """test some unparsable domains."""
         with self.assertRaisesRegex(ValueError, r"^Could not parse name: http://ex ample\.com$"):
             parse_general_name("http://ex ample.com")
         with self.assertRaisesRegex(ValueError, r"^Could not parse DNS name in URL: http://ex ample\.com$"):
@@ -1300,7 +1300,7 @@ class SplitStrTestCase(TestCase):
         self.assertCountEqual(split_str("/C=AT/CN=example.com/", "/"), ["C=AT", "CN=example.com"])
 
     def test_quotes(self) -> None:
-        """Test quoting a little bit."""
+        """Test quoting."""
         self.assertCountEqual(split_str(r"foo/bar", "/"), ["foo", "bar"])
         self.assertCountEqual(split_str(r"foo'/'bar", "/"), ["foo/bar"])
         self.assertCountEqual(split_str(r'foo"/"bar', "/"), ["foo/bar"])
@@ -1330,7 +1330,7 @@ class SplitStrTestCase(TestCase):
     def test_escaping_non_special_characters(self) -> None:
         """Test how a backslash in front of a non-special character behaves."""
 
-        # Backslash in front of normal character in unquoted string- the backslash is ignored
+        # Backslash in front of normal character in unquoted string - the backslash is ignored
         self.assertCountEqual(split_str(r"foo\xbar", "/"), ["fooxbar"])
 
         # Inside a quoted or double-quoted string, single backslash is preserved

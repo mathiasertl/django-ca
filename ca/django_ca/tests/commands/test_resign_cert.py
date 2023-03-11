@@ -44,7 +44,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def assertResigned(  # pylint: disable=invalid-name
         self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
     ) -> None:
-        """Assert that the resigned certificate mathes the old cert."""
+        """Assert that the resigned certificate matches the old cert."""
         new_ca = new_ca or old.ca
         issuer = new_ca.subject
 
@@ -113,7 +113,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
     @override_tmpcadir()
-    def test_custom_algorityhm(self) -> None:
+    def test_custom_algorithm(self) -> None:
         """Test resigning a cert with a new algorithm."""
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
@@ -273,7 +273,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         CA_DEFAULT_EXPIRES=31,
     )
     def test_missing_cert_profile(self) -> None:
-        """Test resigning a certificate with a profile that doesnt' exist.."""
+        """Test resigning a certificate with a profile that doesn't exist."""
 
         self.cert.profile = "profile-gone"
         self.cert.save()

@@ -125,7 +125,7 @@ class AcmeResponseBadCSR(AcmeResponseMalformed):
 
 
 class AcmeResponseMalformedPayload(AcmeResponseMalformed):
-    """A subclass of a malformed response for unparseable payloads.
+    """A subclass of a malformed response for unparsable payloads.
 
     This class is reserved for cases where the payload cannot even be processed, e.g. it's missing a required
     key, or a value is invalid.

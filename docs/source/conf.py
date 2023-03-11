@@ -501,7 +501,7 @@ def resolve_canonical_names(app, doctree):
     ``cryptography.x509.base.Certificate`` (and re-exported in x509.py).
 
     When Sphinx encounters typehints it tries to create links to the types, looking up types from external
-    projects using ``sphinx.ext.intersphinx``. The lookup for such re-exported types failes because Sphinx
+    projects using ``sphinx.ext.intersphinx``. The lookup for such re-exported types fails because Sphinx
     tries to look up the object in the implemented ("canonical") location.
 
     .. seealso::

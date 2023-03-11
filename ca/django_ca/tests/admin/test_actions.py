@@ -84,7 +84,7 @@ class AdminActionTestCaseMixin(
         * If a different required permission is required, Django behaves differently depending on if the view
           permission is present or not:
 
-          * If it is **not** present, it will return a HTTP 403.
+          * If it is **not** present, it will return an HTTP 403.
           * If it is present, it will return HTTP 200.
         """
         self.user.is_superuser = False
@@ -184,7 +184,7 @@ class AdminChangeActionTestCaseMixin(
     def mockSignals(  # pylint: disable=invalid-name
         self, pre_called: bool = True, post_called: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
-        """Assert that the singals were (not) called."""
+        """Assert that the signals were (not) called."""
         with self.mockSignal(self.pre_signal) as pre, self.mockSignal(self.post_signal) as post:
             try:
                 yield pre, post
@@ -348,7 +348,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
 @freeze_time(timestamps["everything_valid"])
 class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], WebTestMixin, TestCase):
-    """Test the resign change action."""
+    """Test the "resign" change action."""
 
     model = Certificate
     tool = "resign"
@@ -485,7 +485,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
 
     @override_tmpcadir()
     def test_webtest_ed448(self) -> None:
-        """Resign certificate signed with a Ed448 CA."""
+        """Resign certificate signed with an Ed448 CA."""
         self.load_ca("ed448")
         cert = self.load_named_cert("ed448-cert")
         cert.profile = "webserver"

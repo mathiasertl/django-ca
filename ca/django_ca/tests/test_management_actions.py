@@ -553,7 +553,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         args = parser.parse_args([self.ca.serial])
         self.assertEqual(args.ca, self.ca)
 
-    def test_pkey_doesnt_exists(self) -> None:
+    def test_private_key_does_not_exists(self) -> None:
         """Test error case where private key for CA does not exist."""
         self.ca.private_key_path = "does-not-exist"
         self.ca.save()

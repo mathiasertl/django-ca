@@ -394,7 +394,7 @@ class BasicConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
             "admin_html": "CA: True",
             "extension_type": x509.BasicConstraints(ca=True, path_length=None),
             "serialized": {"ca": True, "path_length": None},
-            "serialized_alternatives": [{"ca": True}, {"ca": True, "path_lenth": None}],
+            "serialized_alternatives": [{"ca": True}, {"ca": True, "path_length": None}],
             "text": "CA:TRUE",
         },
         "path_length_zero": {

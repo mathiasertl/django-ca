@@ -293,7 +293,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
         ca = self.cas["root"]
-        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (github issue #64)
+        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
 
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
@@ -379,9 +379,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
     def test_no_auth_key_identifier(self) -> None:
-        """Test an getting the CRL from a CA with no AuthorityKeyIdentifier."""
+        """Test getting the CRL from a CA with no AuthorityKeyIdentifier."""
 
-        # All CAs have a authority key identifier, so we mock that this exception is not present
+        # All CAs have an authority key identifier, so we mock that this exception is not present
         def side_effect(cls: Any) -> typing.NoReturn:
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
@@ -418,7 +418,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertTrue(re.match("Must be valid JSON: ", exc_cm.exception.message_dict["crl_number"][0]))
 
     def test_crl_invalid_scope(self) -> None:
-        """ "Try getting a CRL with an invalid scope."""
+        """Try getting a CRL with an invalid scope."""
         with self.assertRaisesRegex(ValueError, r'^scope must be either None, "ca", "user" or "attribute"$'):
             self.ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)  # type: ignore[arg-type]
 

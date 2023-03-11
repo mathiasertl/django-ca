@@ -101,7 +101,7 @@ services:
             NGINX_PRIVATE_KEY:
             NGINX_PUBLIC_KEY:
         ports:
-            - 80:80
+            - "80:80"
         networks:
             - frontend
             - public

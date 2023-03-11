@@ -53,7 +53,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_rsa_ca(self) -> None:
-        """Test creating a CRL from a RSA key."""
+        """Test creating a CRL from an RSA key."""
 
         stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
@@ -62,7 +62,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_rsa_ca_with_sha512(self) -> None:
-        """Test creating a CRL from a RSA key with a custom algorithm."""
+        """Test creating a CRL from an RSA key with a custom algorithm."""
 
         stdout, stderr = self.cmd(
             "dump_crl",
@@ -90,7 +90,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_ec_ca(self) -> None:
-        """Test creating a CRL from a EC key."""
+        """Test creating a CRL from an EC key."""
 
         ca = self.cas["ec"]
         stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())

@@ -96,7 +96,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertEqual(key.key_size, 1024)
         self.assertIsInstance(ca.key(None).public_key(), rsa.RSAPublicKey)
 
-        # verity public key propertiesa
+        # verify public key properties
         self.assertBasic(ca.pub.loaded)
         self.assertEqual(ca.subject, subject)
 
@@ -117,7 +117,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertFalse(ca.is_openssh_ca)
 
     @override_tmpcadir()
-    def test_pathlen(self) -> None:
+    def test_path_length(self) -> None:
         """Test path_length parameter in manager."""
 
         ca = CertificateAuthority.objects.init(

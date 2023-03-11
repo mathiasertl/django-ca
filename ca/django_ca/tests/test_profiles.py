@@ -148,14 +148,14 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test profile serialization."""
 
         desc = "foo bar"
-        kusage = ["digital_signature"]
+        key_usage = ["digital_signature"]
         prof = Profile(
             "test",
             cn_in_san=True,
             description=desc,
             subject=[("CN", self.hostname)],
             extensions={
-                EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": kusage},
+                EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
             },
         )
         self.assertEqual(
@@ -170,7 +170,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                         "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
                     },
                     EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {
-                        "value": kusage,
+                        "value": key_usage,
                         "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
                     },
                 },
@@ -405,7 +405,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         )
 
     @override_tmpcadir()
-    def test_add_dpoint_to_existing_crldp_extension(self) -> None:
+    def test_add_distribution_point_to_existing_crldp_extension(self) -> None:
         """Pass a custom distribution point when creating the cert."""
         prof = Profile("example", subject=[])
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
@@ -455,7 +455,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         )
 
     @override_tmpcadir()
-    def test_add_dpoint_with_ca_crldp(self) -> None:
+    def test_add_distribution_point_with_ca_crldp(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
         prof = Profile("example", subject=[])
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
@@ -669,7 +669,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_unparsable_cn(self) -> None:
-        """Try creating a profile with an unparseable Common Name."""
+        """Try creating a profile with an unparsable Common Name."""
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
         cname = "foo bar"

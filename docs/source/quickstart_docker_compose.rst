@@ -1,5 +1,5 @@
 ##############################
-Quickstart with docker-compose
+Quickstart with docker compose
 ##############################
 
 .. _docker-compose:

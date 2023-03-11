@@ -40,7 +40,7 @@ django.jQuery(document).ready(function() {
             });
         });
 
-        // set wether to include the CommonName in the subjectAltName
+        // set whether to include the CommonName in the subjectAltName
         cn_in_san = '.field-subject_alternative_name .labeled-checkbox input';
         if (typeof profile.cn_in_san === 'undefined' || profile.cn_in_san) {
             django.jQuery(cn_in_san).prop('checked', true);

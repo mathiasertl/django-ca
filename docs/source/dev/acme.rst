@@ -35,8 +35,8 @@ be used to retrieve certificates. The DNS of setup so that the CA can be reached
    ...
    $ docker-compose exec backend manage createsuperuser
    ...
-   $ docker-compose exec backend manage init_ca --pathlen=1 Root /CN=Root
-   $ docker-compose exec backend manage init_ca --pathlen=0 --path=ca/shared/ \
+   $ docker-compose exec backend manage init_ca --path-length=1 Root /CN=Root
+   $ docker-compose exec backend manage init_ca --path-length=0 --path=ca/shared/ \
    >     --parent=Root --acme-enable Intermediate /CN=Intermediate
 
 After that, you can login to the web interface at http://localhost/admin/ to view progress.
