@@ -30,7 +30,7 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings
-from django_ca.deprecation import RemovedInDjangoCA126Warning
+from django_ca.deprecation import RemovedInDjangoCA126Warning, deprecate_type
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
@@ -116,9 +116,9 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
 
     def get_common_extensions(
         self,
-        issuer_url: Optional[str] = None,
+        issuer_urls: Optional[Iterable[str]] = None,
         crl_url: Optional[Iterable[str]] = None,
-        ocsp_url: Optional[str] = None,
+        ocsp_urls: Optional[Iterable[str]] = None,
     ) -> List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]]:
         """Add extensions potentially common to both CAs and certs."""
 
@@ -130,14 +130,20 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
                 for c in urls
             ]
             extensions.append((False, x509.CRLDistributionPoints(dps)))
+
         auth_info_access = []
-        if ocsp_url:
-            uri = x509.UniformResourceIdentifier(ocsp_url)
+        if ocsp_urls is None:
+            ocsp_urls = []
+        for url in ocsp_urls:
+            uri = x509.UniformResourceIdentifier(url)
             auth_info_access.append(
                 x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=uri)
             )
-        if issuer_url:
-            uri = x509.UniformResourceIdentifier(issuer_url)
+
+        if issuer_urls is None:
+            issuer_urls = []
+        for url in issuer_urls:
+            uri = x509.UniformResourceIdentifier(url)
             auth_info_access.append(
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri
@@ -189,6 +195,8 @@ class CertificateAuthorityManager(
         def usable(self) -> "CertificateAuthorityQuerySet":
             ...
 
+    @deprecate_type("ca_ocsp_url", str, RemovedInDjangoCA126Warning)
+    @deprecate_type("ca_issuer_url", str, RemovedInDjangoCA126Warning)
     def init(
         self,
         name: str,
@@ -197,14 +205,14 @@ class CertificateAuthorityManager(
         algorithm: Optional[hashes.HashAlgorithm] = None,
         parent: Optional["CertificateAuthority"] = None,
         default_hostname: Optional[Union[bool, str]] = None,
-        pathlen: Optional[int] = None,
+        path_length: Optional[int] = None,
         issuer_url: Optional[str] = None,
         issuer_alt_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         crl_url: Optional[Iterable[str]] = None,
         ocsp_url: Optional[str] = None,
-        ca_issuer_url: Optional[str] = None,
+        ca_issuer_url: Optional[Sequence[str]] = None,
         ca_crl_url: Optional[Sequence[str]] = None,
-        ca_ocsp_url: Optional[str] = None,
+        ca_ocsp_url: Optional[Sequence[str]] = None,
         permitted_subtrees: Optional[Iterable[x509.GeneralName]] = None,
         excluded_subtrees: Optional[Iterable[x509.GeneralName]] = None,
         password: Optional[Union[str, bytes]] = None,
@@ -226,9 +234,13 @@ class CertificateAuthorityManager(
 
         .. versionchanged:: 1.23.0
 
-           * The ``ecc_curve`` parameter has been renamed to ``elliptic_curve``.
+           * The `ecc_curve` parameter was renamed to `elliptic_curve`.
            * Passing ``key_type="EdDSA"`` is deprecated, use ``key_type="Ed25519"`` instead.
            * Passing ``key_type="ECC"`` is deprecated, use ``key_type="EC"`` instead.
+
+        .. versionchanged:: 1.24.0
+
+           * The `pathlen` parameter was renamed to `path_length`.
 
 
         Parameters
@@ -252,7 +264,7 @@ class CertificateAuthorityManager(
         default_hostname : str, optional
             Override the URL configured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
-        pathlen : int, optional
+        path_length : int, optional
             Value of the path length attribute for the Basic Constraints extension.
         issuer_url : str
             URL for the DER/ASN1 formatted certificate that is signing certificates.
@@ -266,7 +278,7 @@ class CertificateAuthorityManager(
             :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
         ca_issuer_url : str, optional
             URL for the DER/ASN1 formatted certificate that is signing this CA. For intermediate CAs, this
-            would usually be the ``issuer_url`` of the parent CA.
+            would usually be the ``issuer_urls`` of the parent CA.
         ca_crl_url : list of str, optional
             CRL URLs used for this CA. This value is only meaningful for intermediate CAs.
         ca_ocsp_url : str, optional
@@ -336,6 +348,11 @@ class CertificateAuthorityManager(
             )
             key_type = "Ed25519"
 
+        if isinstance(ca_ocsp_url, str):  # pragma: django_ca<1.26.0
+            ca_ocsp_url = [ca_ocsp_url]
+        if isinstance(ca_issuer_url, str):  # pragma: django_ca<1.26.0
+            ca_issuer_url = [ca_issuer_url]
+
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         algorithm = validate_public_key_parameters(key_type, algorithm)
 
@@ -381,12 +398,12 @@ class CertificateAuthorityManager(
                 ocsp_url = f"http://{default_hostname}{ocsp_path}"
             if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
                 ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": root_serial})
-                ca_ocsp_url = f"http://{default_hostname}{ocsp_path}"
+                ca_ocsp_url = [f"http://{default_hostname}{ocsp_path}"]
 
             # Set issuer path
             issuer_path = reverse("django_ca:issuer", kwargs={"serial": root_serial})
             if parent and not ca_issuer_url:
-                ca_issuer_url = f"http://{default_hostname}{issuer_path}"
+                ca_issuer_url = [f"http://{default_hostname}{issuer_path}"]
             if not issuer_url:
                 issuer_url = f"http://{default_hostname}{issuer_path}"
 
@@ -407,7 +424,7 @@ class CertificateAuthorityManager(
             expires=expires,
             parent=parent,
             subject=subject,
-            pathlen=pathlen,
+            pathlen=path_length,
             issuer_url=issuer_url,
             issuer_alt_name=issuer_alt_name,
             crl_url=crl_url,
@@ -434,7 +451,9 @@ class CertificateAuthorityManager(
         builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)
         builder = builder.subject_name(subject)
-        builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=pathlen), critical=True)
+        builder = builder.add_extension(
+            x509.BasicConstraints(ca=True, path_length=path_length), critical=True
+        )
         builder = builder.add_extension(
             x509.KeyUsage(
                 key_cert_sign=True,

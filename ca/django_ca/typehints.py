@@ -233,10 +233,10 @@ class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
     A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-    has a ``"pathlen"`` value that is either ``None`` or an int.
+    has a ``"path_length"`` value that is either ``None`` or an int.
     """
 
-    pathlen: Optional[int]
+    path_length: Optional[int]
 
 
 SerializedDistributionPoint = typing.TypedDict(
@@ -321,10 +321,10 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
     A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-    has a ``"pathlen"`` value that is either ``None`` or an int.
+    has a ``"path_length"`` value that is either ``None`` or an int.
     """
 
-    pathlen: Union[int, str]
+    path_length: Union[int, str]
 
 
 ParsableNameConstraints = typing.TypedDict(

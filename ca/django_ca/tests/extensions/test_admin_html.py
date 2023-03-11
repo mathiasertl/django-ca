@@ -36,23 +36,23 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
     admin_html: Dict[str, Dict[x509.ObjectIdentifier, str]] = {
         "root": {},
         "child": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['child']['pathlen']}",
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['child']['path_length']}",
         },
         "ec": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ec']['pathlen']}",
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ec']['path_length']}",
         },
         "dsa": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['dsa']['pathlen']}",
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['dsa']['path_length']}",
             ExtensionOID.SUBJECT_KEY_IDENTIFIER: certs["dsa"]["subject_key_identifier_serialized"]["value"],
         },
         "pwd": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['pwd']['pathlen']}",
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['pwd']['path_length']}",
         },
         "ed25519": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ed25519']['pathlen']}",
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ed25519']['path_length']}",
         },
         "ed448": {
-            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ed448']['pathlen']}",
+            ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {certs['ed448']['path_length']}",
         },
         "trustid_server_a52": {
             ExtensionOID.CERTIFICATE_POLICIES: """<ul>

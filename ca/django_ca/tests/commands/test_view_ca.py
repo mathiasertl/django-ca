@@ -37,7 +37,7 @@ expected = {
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -78,7 +78,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -119,7 +119,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -160,7 +160,7 @@ Digest:
 Certificate Authority information:
 * Parent: {parent_name} ({parent_serial_colons})
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -206,7 +206,7 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -248,7 +248,7 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -280,7 +280,7 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -310,7 +310,7 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 * Website: {ca.website}
@@ -356,7 +356,7 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Path to private key:
   {key_path}
 
@@ -638,7 +638,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -854,7 +854,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -984,7 +984,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -1032,7 +1032,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -1080,7 +1080,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -1172,7 +1172,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:
@@ -1218,7 +1218,7 @@ Digest:
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): {pathlen_text}
+* Maximum levels of sub-CAs (path length): {path_length_text}
 * Private key not available locally.
 
 ACMEv2 support:

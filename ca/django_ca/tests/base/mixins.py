@@ -1001,7 +1001,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     ctx["sct_values"].append(val)
             elif key == "precertificate_signed_certificate_timestamps":
                 continue  # special extension b/c it cannot be created
-            elif key == "pathlen":
+            elif key == "path_length":
                 ctx[key] = value
                 ctx[f"{key}_text"] = "unlimited" if value is None else value
             else:

@@ -39,7 +39,7 @@ that work in most cases::
    >>> ca = CertificateAuthority.objects.init(
    ...   name='ca',
    ...   subject=x509_name('/CN=ca.example.com'),
-   ...   pathlen=1  # so we can create one level of intermediate CAs
+   ...   path_length=1  # so we can create one level of intermediate CAs
    ... )
    >>> ca
    <CertificateAuthority: ca>
@@ -75,8 +75,8 @@ parameters::
    ...   # CRL/OCSP/Issuer URLs for the CA. These are only meaningful for
    ...   # intermediate CAs:
    ...   ca_crl_url=['http://parent.example.com/parent.crl', ],
-   ...   ca_ocsp_url='http://parent.example.com/ocsp',
-   ...   ca_issuer_url='http://parent.example.com/parent.crt',
+   ...   ca_ocsp_url=['http://parent.example.com/ocsp'],
+   ...   ca_issuer_url=['http://parent.example.com/parent.crt'],
    ... )
 
 There are some more parameters to configure how the CA will be signed::
@@ -87,7 +87,7 @@ There are some more parameters to configure how the CA will be signed::
    ...   name='props',
    ...   subject=x509_name('/CN=child.example.com'),
    ...   algorithm=hashes.SHA256(),  # SHA512 would be the default
-   ...   pathlen=3,  # three levels of intermediate CAs allowed,
+   ...   path_length=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
    ...   key_type='EC',  # create a private key using Elliptic Curve cryptography
    ...   elliptic_curve=ec.SECP256R1()  # Elliptic curve for the key

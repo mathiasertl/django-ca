@@ -32,13 +32,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning
-from django_ca.management.actions import (
-    ExpiresAction,
-    MultipleURLAction,
-    NameAction,
-    PasswordAction,
-    URLAction,
-)
+from django_ca.management.actions import ExpiresAction, MultipleURLAction, NameAction, PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
@@ -157,19 +151,32 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
 
         group = parser.add_argument_group(
             "X509 v3 certificate extensions for CA",
-            """Extensions added to the certificate authority itself. These options cannot be changed without
-            creating a new authority.""",
+            """Extensions for the certificate authority. These options cannot be changed without
+            creating a new authority.
+
+            By default, URLs based on the default hostname (see above) will be used. The default URLs work
+            out of the box as long as a webserver is correctly configured.
+            """,
         )
         group.add_argument(
             "--ca-crl-url",
             action=MultipleURLAction,
             help="URL to a certificate revocation list. Can be given multiple times.",
         )
-        group.add_argument("--ca-ocsp-url", metavar="URL", action=URLAction, help="URL of an OCSP responder.")
-        group.add_argument(
+
+        aia_group = parser.add_argument_group(
+            "Authority Information Access",
+            """Information about the issuer of the CA. These options only work for intermediate CAs. Default
+            values are based on the default hostname (see above) and work out of the box if a webserver is
+            configured. Options can be given multiple times to add multiple values.""",
+        )
+        aia_group.add_argument(
+            "--ca-ocsp-url", metavar="URL", action=MultipleURLAction, help="URL of an OCSP responder."
+        )
+        aia_group.add_argument(
             "--ca-issuer-url",
             metavar="URL",
-            action=URLAction,
+            action=MultipleURLAction,
             help="URL to the certificate of your CA (in DER format).",
         )
 
@@ -210,8 +217,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         ocsp_url: Optional[str],
         issuer_url: Optional[str],
         ca_crl_url: List[str],
-        ca_ocsp_url: Optional[str],
-        ca_issuer_url: Optional[str],
+        ca_ocsp_url: List[str],
+        ca_issuer_url: List[str],
         permit_name: Optional[Iterable[x509.GeneralName]],
         exclude_name: Optional[Iterable[x509.GeneralName]],
         caa: str,
@@ -294,7 +301,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 expires=expires,
                 algorithm=algorithm,
                 parent=parent,
-                pathlen=path_length,
+                path_length=path_length,
                 issuer_url=issuer_url,
                 issuer_alt_name=issuer_alternative_name,
                 crl_url=crl_url,

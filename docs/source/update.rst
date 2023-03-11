@@ -7,6 +7,30 @@ method used.
 
 This document lists special update instructions when you update to a certain version.
 
+.. _update_123:
+
+*****************************
+Update from 1.23.0 or earlier
+*****************************
+
+Update notes when upgrading to 1.24.0.
+
+Command-line tools
+==================
+
+* :command:`manage.py init_ca`: The ``--pathlen`` and ``--no-pathlen`` parameters are replaced with
+  ``--path-length`` and ``--no-path-length``. Old parameter names will work until ``django-ca==1.25.0``.
+
+Python API
+==========
+
+* :py:func:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`:
+
+  * The ``pathlen`` argument to was renamed to ``path_length``.
+  * The ``ca_ocsp_url`` and ``ca_issuer_url`` parameters should now be list of strings. Support for passing
+    bare strings will be removed in ``django-ca==1.25.0``.
+
+
 .. _update_121:
 
 *****************************

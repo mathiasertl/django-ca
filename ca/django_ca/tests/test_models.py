@@ -129,7 +129,7 @@ class TestWatcher(TestCase):
 
 
 class X509CertMixinTestCaseMixin(TestCaseProtocol):
-    """Mixin collection  assection methods for CertificateAuthority and Certificate."""
+    """Mixin collecting assertion methods for CertificateAuthority and Certificate."""
 
     def assertBundle(  # pylint: disable=invalid-name
         self, chain: List[X509CertMixin], cert: X509CertMixin
@@ -218,10 +218,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
 
         self.assertIsNotNone(ca.key(pwd))
 
-    def test_pathlen(self) -> None:
-        """Test the pathlen attribute."""
+    def test_path_length(self) -> None:
+        """Test the path_length attribute."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.path_length, certs[name].get("pathlen"))
+            self.assertEqual(ca.path_length, certs[name].get("path_length"))
 
     def test_root(self) -> None:
         """Test the root attribute."""
@@ -586,10 +586,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertIsInstance(der_user_crl, bytes)
         self.assertIsInstance(pem_user_crl, bytes)
 
-    def test_max_pathlen(self) -> None:
-        """Test getting the maximum pathlen."""
+    def test_max_path_length(self) -> None:
+        """Test getting the maximum path_length."""
         for name, ca in self.usable_cas:
-            self.assertEqual(ca.max_path_length, certs[name].get("max_pathlen"), name)
+            self.assertEqual(ca.max_path_length, certs[name].get("max_path_length"), name)
 
     def test_allows_intermediate(self) -> None:
         """Test checking if this CA allows intermediate CAs."""

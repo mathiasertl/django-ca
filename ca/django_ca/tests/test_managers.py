@@ -111,7 +111,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "root"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "root.example.com")])
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init(name, subject, pathlen=2)
+            ca = CertificateAuthority.objects.init(name, subject, path_length=2)
         self.assertProperties(ca, name, subject)
         self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
@@ -203,6 +203,27 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.acme_profile, "client")
         self.assertFalse(ca.acme_requires_contact)
         ca.key().public_key()  # just access private key to make sure we can load it
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_deprecated_str_parameters(self) -> None:
+        """Test creating the most basic possible CA."""
+        name = self._testMethodName
+        ocsp_uri = "http://ocsp.example.com"
+        issuer_uri = "http://issuer.example.com"
+
+        msg = r"^Passing str for ca_ocsp_url is deprecated and will be removed in django ca 1\.26\.$"
+        with self.assertCreateCASignals(), self.assertRemovedIn126Warning(msg):
+            ca = CertificateAuthority.objects.init(
+                name, self.subject, ca_issuer_url=issuer_uri, ca_ocsp_url=ocsp_uri
+            )
+        self.assertProperties(ca, name, self.subject)
+        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertIsInstance(ca.algorithm, hashes.SHA512)
+        ca.key().public_key()  # just access private key to make sure we can load it
+
+        actual = ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
+        expected = self.authority_information_access([uri(issuer_uri)], [uri(ocsp_uri)])
+        self.assertEqual(actual, expected)
 
     @override_tmpcadir()
     def test_invalid_public_key_parameters(self) -> None:

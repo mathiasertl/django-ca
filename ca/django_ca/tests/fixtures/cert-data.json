@@ -371,7 +371,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
@@ -405,12 +405,12 @@
                     "key_cert_sign"
                 ]
             },
-            "max_pathlen": 0,
+            "max_path_length": 0,
             "md5": "8E:20:47:BF:40:8B:7D:0F:B8:20:8D:84:91:BA:3E:BE",
             "name": "child",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/",
             "parent": "root",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_der_filename": "child.pub.der",
             "pub_filename": "child.pub",
             "serial": "6B1F876325B19FEDC7D28CC1E1B422EB45092AA8",
@@ -549,7 +549,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -567,7 +567,7 @@
             },
             "md5": "1B:31:B0:71:40:36:CC:14:36:91:AD:C4:3E:FD:EC:18",
             "name": "comodo",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "comodo.pem",
             "serial": "4CAAF9CADB636FE01FF74ED85B03869D",
             "sha1": "AF:E5:D2:44:A8:D1:19:42:30:FF:47:9F:E2:F8:97:BB:CD:7A:8C:B4",
@@ -626,7 +626,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -675,7 +675,7 @@
             },
             "md5": "83:E1:04:65:B7:22:EF:33:FF:0B:6F:53:5E:8D:99:6B",
             "name": "comodo_dv",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "comodo_dv.pem",
             "serial": "2B2E6EEAD975366C148A6EDBA37C8C07",
             "sha1": "33:9C:DD:57:CF:D5:B1:41:16:9B:61:5F:F3:14:28:78:2D:1D:A6:39",
@@ -841,7 +841,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -880,7 +880,7 @@
             },
             "md5": "17:BA:11:3E:04:4A:9B:3C:DE:B0:A5:4A:6A:E1:89:87",
             "name": "comodo_ev",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "comodo_ev.pem",
             "serial": "6A74380D4EBFED435B5A3F7E16ABDD8",
             "sha1": "1F:36:5C:20:E5:2A:D2:A6:B0:90:20:A0:E5:53:97:59:C9:8D:F8:D0",
@@ -1098,7 +1098,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -1117,7 +1117,7 @@
             },
             "md5": "D4:74:DE:57:5C:39:B2:D3:9C:85:83:C5:C0:65:49:8A",
             "name": "digicert_ev_root",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "digicert_ev_root.pem",
             "serial": "2AC5C266A0B409B8F0B79F2AE462577",
             "sha1": "5F:B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25",
@@ -1161,7 +1161,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -1180,7 +1180,7 @@
             },
             "md5": "79:E4:A9:84:0D:7D:3A:96:D7:C0:4F:E2:43:4C:89:2E",
             "name": "digicert_global_root",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "digicert_global_root.pem",
             "serial": "83BE056904246B1A1756AC95991C74A",
             "sha1": "A8:98:5D:3A:65:E5:E5:C4:B2:D7:D6:6D:40:C6:DD:2F:B1:9C:54:36",
@@ -1232,7 +1232,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -1279,7 +1279,7 @@
             },
             "md5": "AA:EE:5C:F8:B0:D8:59:6D:2E:0C:BE:67:42:1C:F7:DB",
             "name": "digicert_ha_intermediate",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "digicert_ha_intermediate.pem",
             "serial": "4E1E7A4DC5CF2F36DC02B42B85D159F",
             "sha1": "A0:31:C4:67:82:E6:E6:C6:62:C2:C8:7C:76:DA:9A:A6:2C:CA:BD:8E",
@@ -1510,7 +1510,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -1555,7 +1555,7 @@
             },
             "md5": "34:5E:FF:15:B7:A4:9A:DD:45:1B:65:A7:F4:BD:C6:AE",
             "name": "digicert_sha2",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "digicert_sha2.pem",
             "serial": "1FDA3EB6ECA75C888438B724BCFBC91",
             "sha1": "1F:B8:6B:11:68:EC:74:31:54:06:2E:8C:9C:C5:B1:71:A4:B7:CC:B4",
@@ -1742,7 +1742,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 3
+                    "path_length": 3
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/",
@@ -1765,11 +1765,11 @@
                     "key_cert_sign"
                 ]
             },
-            "max_pathlen": 3,
+            "max_path_length": 3,
             "md5": "E9:F9:E9:C2:50:7D:18:86:D9:5D:C9:C7:53:6F:A6:49",
             "name": "dsa",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/cert/",
-            "pathlen": 3,
+            "path_length": 3,
             "pub_der_filename": "dsa.pub.der",
             "pub_filename": "dsa.pub",
             "serial": "3F2E372F2CF47CE41709BA4E3EAD89B5CA848669",
@@ -1908,7 +1908,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -1926,7 +1926,7 @@
             },
             "md5": "41:03:52:DC:0F:F7:50:1B:16:F0:02:8E:BA:6F:45:C5",
             "name": "dst_root_x3",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "dst_root_x3.pem",
             "serial": "44AFB080D6A327BA893039862EF8406B",
             "sha1": "DA:C9:02:4F:54:D8:F6:DF:94:93:5F:B1:73:26:38:CA:6A:D7:7C:13",
@@ -1963,7 +1963,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 1
+                    "path_length": 1
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/4F214CE0D8313B64F889CA09F8938CE1298F4C52/",
@@ -1985,11 +1985,11 @@
                     "key_cert_sign"
                 ]
             },
-            "max_pathlen": 1,
+            "max_path_length": 1,
             "md5": "3E:68:02:B8:A1:78:E0:D3:2C:02:0C:1C:64:9A:83:81",
             "name": "ec",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/4F214CE0D8313B64F889CA09F8938CE1298F4C52/cert/",
-            "pathlen": 1,
+            "path_length": 1,
             "pub_der_filename": "ec.pub.der",
             "pub_filename": "ec.pub",
             "serial": "4F214CE0D8313B64F889CA09F8938CE1298F4C52",
@@ -2134,7 +2134,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 1
+                    "path_length": 1
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/",
@@ -2156,11 +2156,11 @@
                     "key_cert_sign"
                 ]
             },
-            "max_pathlen": 1,
+            "max_path_length": 1,
             "md5": "65:15:54:6B:A2:54:CF:B1:19:6D:7D:40:B3:66:E1:88",
             "name": "ed25519",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/cert/",
-            "pathlen": 1,
+            "path_length": 1,
             "pub_der_filename": "ed25519.pub.der",
             "pub_filename": "ed25519.pub",
             "serial": "1C7835ABCFD9AA8241042B9E86A66468A3C8244E",
@@ -2305,7 +2305,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 1
+                    "path_length": 1
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/778A8A8D9EB551877643A9F3A8449CF32589FDB8/",
@@ -2327,11 +2327,11 @@
                     "key_cert_sign"
                 ]
             },
-            "max_pathlen": 1,
+            "max_path_length": 1,
             "md5": "0E:7F:17:3F:3A:1A:E2:AE:74:B3:58:5F:B4:39:C3:94",
             "name": "ed448",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/778A8A8D9EB551877643A9F3A8449CF32589FDB8/cert/",
-            "pathlen": 1,
+            "path_length": 1,
             "pub_der_filename": "ed448.pub.der",
             "pub_filename": "ed448.pub",
             "serial": "778A8A8D9EB551877643A9F3A8449CF32589FDB8",
@@ -2475,7 +2475,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -2486,7 +2486,7 @@
             "key_type": "RSA",
             "md5": "F7:75:AB:29:FB:51:4E:B7:77:5E:FF:05:3C:99:8E:F5",
             "name": "geotrust",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "geotrust.pem",
             "serial": "23456",
             "sha1": "DE:28:F4:A4:FF:E5:B9:2F:A3:C5:03:D1:A3:49:A7:F9:96:2A:82:12",
@@ -2520,7 +2520,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -2538,7 +2538,7 @@
             },
             "md5": "3E:45:52:15:09:51:92:E1:B7:5D:37:9F:B1:87:29:8A",
             "name": "globalsign",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "globalsign.pem",
             "serial": "40000000001154B5AC394",
             "sha1": "B1:BC:96:8B:D4:F4:9D:62:2A:A8:9A:81:F2:15:01:52:A4:1D:82:9C",
@@ -2590,7 +2590,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -2629,7 +2629,7 @@
             },
             "md5": "EC:F5:35:C5:05:B7:75:2B:0A:F1:88:A9:15:A2:37:86",
             "name": "globalsign_dv",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "globalsign_dv.pem",
             "serial": "40000000001444EF03E20",
             "sha1": "73:6A:4D:C6:79:D6:82:DA:32:15:63:64:7C:60:F6:99:F0:DF:C2:68",
@@ -2772,7 +2772,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -2800,7 +2800,7 @@
             },
             "md5": "94:14:77:7E:3E:5E:FD:8F:30:BD:41:B0:CF:E7:D0:30",
             "name": "globalsign_r2_root",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "globalsign_r2_root.pem",
             "serial": "400000000010F8626E60D",
             "sha1": "75:E0:AB:B6:13:85:12:27:1C:04:F8:5F:DD:DE:38:E4:B7:24:2E:FE",
@@ -2848,7 +2848,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -2887,7 +2887,7 @@
             },
             "md5": "96:C2:50:31:BC:0D:C3:5C:FB:A7:23:73:1E:1B:41:40",
             "name": "godaddy_g2_intermediate",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "godaddy_g2_intermediate.pem",
             "serial": "7",
             "sha1": "27:AC:93:69:FA:F2:52:07:BB:26:27:CE:FA:CC:BE:4E:F9:C3:19:B8",
@@ -3106,7 +3106,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -3124,7 +3124,7 @@
             },
             "md5": "80:3A:BC:22:C1:E6:FB:8D:9B:3B:27:4A:32:1B:9A:01",
             "name": "godaddy_g2_root",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "godaddy_g2_root.pem",
             "serial": "0",
             "sha1": "47:BE:AB:C9:22:EA:E8:0E:78:78:34:62:A7:9F:45:C2:54:FD:E6:8B",
@@ -3180,7 +3180,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -3227,7 +3227,7 @@
             },
             "md5": "C4:B8:1C:95:68:1A:CA:CB:64:4C:07:70:AD:D5:64:E1",
             "name": "google_g3",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "google_g3.pem",
             "serial": "1E3A9301CFC7206383F9A531D",
             "sha1": "EE:AC:BD:0C:B4:52:81:95:77:91:1E:1E:62:03:DB:26:2F:84:A3:18",
@@ -3371,7 +3371,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -3389,7 +3389,7 @@
             },
             "md5": "B3:3E:77:73:75:EE:A0:D3:E3:7E:49:63:49:59:BB:C7",
             "name": "identrust_root_1",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "identrust_root_1.pem",
             "serial": "A0142800000014523C844B500000002",
             "sha1": "DF:71:7E:AA:4A:D9:4E:C9:55:84:99:60:2D:48:DE:5F:BC:F0:3A:25",
@@ -3440,7 +3440,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -3492,7 +3492,7 @@
                     ]
                 }
             },
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "letsencrypt_x1.pem",
             "serial": "9813F47513E5750B43E7431E971E44BD",
             "sha1": "3E:AE:91:93:7E:C8:5D:74:48:3F:F4:B7:7B:07:B4:3E:2A:F3:6B:F4",
@@ -3634,7 +3634,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -3678,7 +3678,7 @@
             },
             "md5": "B1:54:09:27:4F:54:AD:8F:02:3D:3B:85:A5:EC:EC:5D",
             "name": "letsencrypt_x3",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "letsencrypt_x3.pem",
             "serial": "A0141420000015385736A0B85ECA708",
             "sha1": "E6:A3:B4:5B:06:2D:50:9B:33:82:28:2D:19:6E:FE:97:D5:95:6C:CB",
@@ -4397,7 +4397,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 2
+                    "path_length": 2
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/16E09FA62B5807A1E498653A740EB33F75873F9C/",
@@ -4420,12 +4420,12 @@
                     "key_cert_sign"
                 ]
             },
-            "max_pathlen": 2,
+            "max_path_length": 2,
             "md5": "E2:CC:B7:EB:12:7C:31:5A:05:38:49:05:8D:62:BF:18",
             "name": "pwd",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/16E09FA62B5807A1E498653A740EB33F75873F9C/cert/",
             "password": "testpassword",
-            "pathlen": 2,
+            "path_length": 2,
             "pub_der_filename": "pwd.pub.der",
             "pub_filename": "pwd.pub",
             "serial": "16E09FA62B5807A1E498653A740EB33F75873F9C",
@@ -4578,7 +4578,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -4617,7 +4617,7 @@
             },
             "md5": "23:BB:07:5F:AC:FB:FB:02:69:35:B3:1F:B6:EE:06:3B",
             "name": "rapidssl_g3",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "rapidssl_g3.pem",
             "serial": "23A77",
             "sha1": "0E:34:14:18:46:E7:42:3D:37:F2:0D:C0:AB:06:C9:BB:D8:43:DC:24",
@@ -4761,7 +4761,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/",
@@ -4793,7 +4793,7 @@
             "md5": "55:34:DF:E3:73:E5:F4:78:55:33:4E:A3:8E:60:A0:25",
             "name": "root",
             "ocsp_url": "http://localhost:8000/django_ca/ocsp/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/cert/",
-            "pathlen": null,
+            "path_length": null,
             "pub_der_filename": "root.pub.der",
             "pub_filename": "root.pub",
             "serial": "605C11DBA6C612F1687EDD04B7AC773DC02C3E8B",
@@ -4880,7 +4880,7 @@
             },
             "md5": "0E:EB:3B:E4:88:BE:7E:FB:5D:2A:46:33:71:E0:46:79",
             "name": "root-cert",
-            "pathlen": null,
+            "path_length": null,
             "pub_der_filename": "root-cert.pub.der",
             "pub_filename": "root-cert.pub",
             "serial": "7C53C5A195766A8CD2CE6A16464A11877D3F6AD",
@@ -4950,7 +4950,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -4989,7 +4989,7 @@
             },
             "md5": "8D:6E:45:A4:44:3D:90:A9:15:76:A4:27:E9:67:EF:A6",
             "name": "startssl_class2",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "startssl_class2.pem",
             "serial": "1CAB36472D9C51",
             "sha1": "06:49:69:B7:F4:D6:A7:4F:D0:98:BE:59:D3:79:FA:E4:29:A9:06:FB",
@@ -5179,7 +5179,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": 0
+                    "path_length": 0
                 }
             },
             "cat": "sphinx-contrib",
@@ -5225,7 +5225,7 @@
             },
             "md5": "24:CD:87:60:60:87:F5:7B:9E:24:31:51:89:51:F6:64",
             "name": "startssl_class3",
-            "pathlen": 0,
+            "path_length": 0,
             "pub_filename": "startssl_class3.pem",
             "serial": "138BFEF33294F9D816F945C271952998",
             "sha1": "5A:F7:D2:E0:80:5E:1C:7B:E5:74:22:F3:5E:63:6B:25:94:47:E5:D7",
@@ -5391,7 +5391,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -5430,7 +5430,7 @@
             },
             "md5": "C9:3B:0D:84:41:FC:A4:76:79:23:08:57:DE:10:19:16",
             "name": "startssl_root",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "startssl_root.pem",
             "serial": "2D",
             "sha1": "A3:F1:33:3F:E2:42:BF:CF:C5:D1:4E:8F:39:42:98:40:68:10:D1:A0",
@@ -5485,7 +5485,7 @@
                 "critical": true,
                 "value": {
                     "ca": true,
-                    "pathlen": null
+                    "path_length": null
                 }
             },
             "cat": "sphinx-contrib",
@@ -5543,7 +5543,7 @@
             },
             "md5": "DC:78:D4:30:8F:16:37:FB:DE:B1:88:37:A7:F4:A5:AA",
             "name": "trustid_server_a52",
-            "pathlen": null,
+            "path_length": null,
             "pub_filename": "trustid_server_a52.pem",
             "serial": "9BFCE240FD55BED9269E0C012C1B77",
             "sha1": "F8:79:D2:4C:6E:CC:B4:38:F4:9B:6B:82:EE:DB:D5:0B:C5:48:49:3D",

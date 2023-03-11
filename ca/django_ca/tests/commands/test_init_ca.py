@@ -16,7 +16,7 @@
 import io
 import typing
 from datetime import timedelta
-from typing import Any, Tuple
+from typing import Any, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -60,8 +60,13 @@ class InitCATest(TestCaseMixin, TestCase):
             **kwargs,
         )
 
-    def init_ca_e2e(self, name: str, *args: str, **kwargs: Any) -> CertificateAuthority:
+    def init_ca_e2e(
+        self, name: str, *args: str, chain: Optional[List[CertificateAuthority]] = None, **kwargs: Any
+    ) -> CertificateAuthority:
         """Run a init_ca command via cmd_e2e()."""
+        if chain is None:
+            chain = []
+
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd_e2e(["init_ca", name] + list(args))
         self.assertEqual(out, "")
@@ -71,7 +76,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature([ca], ca)
+        self.assertSignature(chain + [ca], ca)
 
         return ca
 
@@ -313,16 +318,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_ec"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
-                name=name,
-                algorithm=hashes.SHA256(),
-                key_type="EC",
-                expires=self.expires(720),
-                path_length=3,
-                issuer_url="http://issuer.ca.example.com",
-                issuer_alt_name=self.issuer_alternative_name(uri("http://ian.ca.example.com")),
-                crl_url=["http://crl.example.com"],
-                ocsp_url="http://ocsp.example.com",
-                ca_issuer_url="http://ca.issuer.ca.example.com",
+                name=name, algorithm=hashes.SHA256(), key_type="EC", expires=self.expires(720)
             )
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -337,16 +333,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_dsa"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
-                name=name,
-                algorithm=hashes.SHA256(),
-                key_type="DSA",
-                expires=self.expires(720),
-                path_length=3,
-                issuer_url="http://issuer.ca.example.com",
-                issuer_alt_name=self.issuer_alternative_name(uri("http://ian.ca.example.com")),
-                crl_url=["http://crl.example.com"],
-                ocsp_url="http://ocsp.example.com",
-                ca_issuer_url="http://ca.issuer.ca.example.com",
+                name=name, algorithm=hashes.SHA256(), key_type="DSA", expires=self.expires(720), path_length=3
             )
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -476,7 +463,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 name="Child",
                 parent=parent,
                 ca_crl_url=[ca_crl_url],
-                ca_ocsp_url="http://ca.ocsp.example.com",
+                ca_ocsp_url=["http://ca.ocsp.example.com"],
             )
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -757,6 +744,33 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsNone(ca.issuer_url)
         self.assertIsNone(ca.ocsp_url)
         self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_multiple_ocsp_and_ca_issuers(self) -> None:
+        """Test using multiple OCSP responders and CA issuers."""
+        root = self.load_ca("root")
+        name = self._testMethodName[:32]
+
+        ocsp_uri_one = "http://ocsp.example.com/one"
+        ocsp_uri_two = "http://ocsp.example.net/two"
+        issuer_uri_one = "http://issuer.example.com/one"
+        issuer_uri_two = "http://issuer.example.com/two"
+        ca = self.init_ca_e2e(
+            name,
+            f"/CN={name}",
+            f"--parent={root.serial}",
+            f"--ca-ocsp-url={ocsp_uri_one}",
+            f"--ca-ocsp-url={ocsp_uri_two}",
+            f"--ca-issuer-url={issuer_uri_one}",
+            f"--ca-issuer-url={issuer_uri_two}",
+            chain=[root],
+        )
+
+        actual = ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
+        expected = self.authority_information_access(
+            [uri(issuer_uri_one), uri(issuer_uri_two)], [uri(ocsp_uri_one), uri(ocsp_uri_two)]
+        )
+        self.assertEqual(actual, expected)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_deprecated_key_type_names(self) -> None:

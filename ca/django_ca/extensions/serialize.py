@@ -63,7 +63,7 @@ def _authority_key_identifier_serialized(
 def _basic_constraints_serialized(value: x509.BasicConstraints) -> typehints.SerializedBasicConstraints:
     serialized: typehints.SerializedBasicConstraints = {"ca": value.ca}
     if value.ca is True:
-        serialized["pathlen"] = value.path_length
+        serialized["path_length"] = value.path_length
     return serialized
 
 
@@ -105,17 +105,17 @@ def _distribution_points_serialized(
 ) -> List[typehints.SerializedDistributionPoint]:
     points: List[typehints.SerializedDistributionPoint] = []
 
-    for dpoint in value:
+    for distribution_point in value:
         point: typehints.SerializedDistributionPoint = {}
-        if dpoint.full_name:
-            point["full_name"] = [format_general_name(name) for name in dpoint.full_name]
-        elif dpoint.relative_name:  # pragma: no branch  # Distribution Point has only these two
-            point["relative_name"] = format_name(dpoint.relative_name)
+        if distribution_point.full_name:
+            point["full_name"] = [format_general_name(name) for name in distribution_point.full_name]
+        elif distribution_point.relative_name:  # pragma: no branch  # Distribution Point has only these two
+            point["relative_name"] = format_name(distribution_point.relative_name)
 
-        if dpoint.crl_issuer:
-            point["crl_issuer"] = [format_general_name(name) for name in dpoint.crl_issuer]
-        if dpoint.reasons:
-            point["reasons"] = sorted([r.name for r in dpoint.reasons])
+        if distribution_point.crl_issuer:
+            point["crl_issuer"] = [format_general_name(name) for name in distribution_point.crl_issuer]
+        if distribution_point.reasons:
+            point["reasons"] = sorted([r.name for r in distribution_point.reasons])
 
         points.append(point)
     return points
@@ -154,11 +154,11 @@ def _policy_constraints_serialized(value: x509.PolicyConstraints) -> typehints.S
 def _signed_certificate_timestamps_serialized(
     value: typehints.SignedCertificateTimestampType,
 ) -> List[typehints.SerializedSignedCertificateTimestamp]:
-    timeformat = "%Y-%m-%d %H:%M:%S.%f"
+    time_format = "%Y-%m-%d %H:%M:%S.%f"
     return [
         {
             "log_id": binascii.hexlify(sct.log_id).decode("utf-8"),
-            "timestamp": sct.timestamp.strftime(timeformat),
+            "timestamp": sct.timestamp.strftime(time_format),
             "type": LOG_ENTRY_TYPE_KEYS[sct.entry_type],
             "version": sct.version.name,
         }

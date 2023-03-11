@@ -384,31 +384,31 @@ class BasicConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
             "serialized": {"ca": False},
             "serialized_alternatives": [
                 {"ca": False},
-                {"ca": False, "pathlen": 3},  # ignored b/c ca=False
-                {"ca": False, "pathlen": None},  # ignored b/c ca=False
+                {"ca": False, "path_length": 3},  # ignored b/c ca=False
+                {"ca": False, "path_length": None},  # ignored b/c ca=False
             ],
             "text": "CA:FALSE",
         },
-        "no_pathlen": {
-            # include div to make sure that there's no pathlen
+        "no_path_length": {
+            # include div to make sure that there's no path length
             "admin_html": "CA: True",
             "extension_type": x509.BasicConstraints(ca=True, path_length=None),
-            "serialized": {"ca": True, "pathlen": None},
-            "serialized_alternatives": [{"ca": True}, {"ca": True, "pathlen": None}],
+            "serialized": {"ca": True, "path_length": None},
+            "serialized_alternatives": [{"ca": True}, {"ca": True, "path_lenth": None}],
             "text": "CA:TRUE",
         },
-        "pathlen_zero": {
+        "path_length_zero": {
             "admin_html": "CA: True, path length: 0",
             "extension_type": x509.BasicConstraints(ca=True, path_length=0),
-            "serialized": {"ca": True, "pathlen": 0},
-            "serialized_alternatives": [{"ca": True, "pathlen": 0}],
+            "serialized": {"ca": True, "path_length": 0},
+            "serialized_alternatives": [{"ca": True, "path_length": 0}],
             "text": "CA:TRUE, path length:0",
         },
-        "pathlen_three": {
+        "path_length_three": {
             "admin_html": "CA: True, path length: 3",
             "extension_type": x509.BasicConstraints(ca=True, path_length=3),
-            "serialized": {"ca": True, "pathlen": 3},
-            "serialized_alternatives": [{"ca": True, "pathlen": 3}],
+            "serialized": {"ca": True, "path_length": 3},
+            "serialized_alternatives": [{"ca": True, "path_length": 3}],
             "text": "CA:TRUE, path length:3",
         },
     }

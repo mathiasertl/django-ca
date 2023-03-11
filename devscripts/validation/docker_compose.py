@@ -401,7 +401,7 @@ def test_acme(release):
             # Start containers
             with _compose_up(env=environ):
                 _validate_container_versions(release, env=environ)
-                _manage("backend", "init_ca", "--pathlen=1", "Root", "/CN=Root", env=environ)
+                _manage("backend", "init_ca", "--path_length=1", "Root", "/CN=Root", env=environ)
                 _manage(
                     "backend",
                     "init_ca",

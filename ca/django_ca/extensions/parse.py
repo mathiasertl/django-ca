@@ -41,7 +41,7 @@ from django_ca.utils import hex_to_bytes, parse_general_name, x509_relative_name
 ##########################################
 
 
-def _parse_pathlen(value: Optional[Union[int, str]]) -> Optional[int]:
+def _parse_path_length(value: Optional[Union[int, str]]) -> Optional[int]:
     """Parse `value` as path length (either an int, a str of an int or None)."""
     if value is not None:
         return int(value)
@@ -176,10 +176,10 @@ def _parse_authority_information_access(
 
 def _parse_basic_constraints(value: ParsableBasicConstraints) -> x509.BasicConstraints:
     ca = bool(value.get("ca", False))
-    pathlen = None
+    path_length = None
     if ca is True:
-        pathlen = _parse_pathlen(value.get("pathlen"))
-    return x509.BasicConstraints(ca=value["ca"], path_length=pathlen)
+        path_length = _parse_path_length(value.get("path_length"))
+    return x509.BasicConstraints(ca=value["ca"], path_length=path_length)
 
 
 def _parse_certificate_policies(

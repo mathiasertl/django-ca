@@ -244,7 +244,7 @@ def _generate_contrib_files(data):
 
         _update_contrib(parsed, data, ca, name, filename.name)
         data[name]["type"] = "ca"
-        data[name]["pathlen"] = ca.path_length
+        data[name]["path_length"] = ca.path_length
 
         public_key = parsed.public_key()
         if isinstance(public_key, rsa.RSAPublicKey):
@@ -318,7 +318,7 @@ def create_cas(dest, now, delay, data):
                 key_type=data[name]["key_type"],
                 key_size=data[name].get("key_size"),
                 algorithm=data[name].get("algorithm"),
-                pathlen=data[name]["pathlen"],
+                path_length=data[name]["path_length"],
                 **kwargs,
             )
 

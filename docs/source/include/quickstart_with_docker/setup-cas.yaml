@@ -4,5 +4,5 @@ commands:
       waitfor:
           - command: docker exec -it backend nc -z {{ postgres_host }}:5432
           - command: docker exec -it -e PGPASSWORD={{ postgres_password }} backend psql -U postgres -h {{ postgres_host }} -p 5432 postgres -c "SELECT count(*) from auth_user"
-    - command: docker exec -it backend manage init_ca --pathlen=1 Root "/CN=Root CA"
+    - command: docker exec -it backend manage init_ca --path-length=1 Root "/CN=Root CA"
     - command: docker exec -it backend manage init_ca --path=ca/shared/ --parent="Root CA" Intermediate "/CN=Intermediate CA"

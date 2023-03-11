@@ -15,12 +15,21 @@ ChangeLog
 * Certificates for OCSP responders now use a commonName designating the certificate as OCSP responder as
   subject, other fields from the CAs subject are discarded.
 * A profile can now ignore :ref:`settings-ca-default-subject` by setting ``subject`` to ``False``.
+* The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were changed to
+  ``--path-length`` and ``--no-path-length``.
+* Add support for multiple OCSP responder and CA Issuer entries when creating a certificate authority.
 * Add typehints when installing as wheel.
 
 Backwards incompatible changes
 ==============================
 
 * The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
+
+Deprecation notices
+===================
+
+* The ``--pathlen`` and ``--no-pathlen`` parameters to :command:`manage.py init_ca` will be removed in
+  ``django-ca==1.26.0``. Use ``--path-length`` and ``--no-path-length`` instead.
 
 .. _changelog-1.23.0:
 
@@ -60,12 +69,12 @@ Standardization
 ===============
 
 A larger effort has been taken to use standard names for various parts of django-ca. Old option values are
-supported for a few more release, please refer to the deprecation notices below for how long they will be
+supported for a few more releases, please refer to the deprecation notices below for how long they will be
 supported.
 
 * Elliptic Curve keys are now consistently referred to as "EC" instead of "ECC" and Ed25519 keys are now
-  referred to as "Ed25519" instead of "EdDSA". This affects the ``--key-type`` parameter of ``manage.py
-  init_ca`` and other commands that generate private keys.
+  referred to as "Ed25519" instead of "EdDSA". This affects the ``--key-type`` parameter of
+  :command:`manage.py init_ca` and other commands that generate private keys.
 * The ``CA_DEFAULT_ECC_CURVE`` setting was renamed to ``CA_DEFAULT_ELLIPTIC_CURVE``.
 * Hash algorithms are now referred to by their standard name, e.g. "SHA-512" instead of
   ":spelling:ignore:`sha512`". Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for all
