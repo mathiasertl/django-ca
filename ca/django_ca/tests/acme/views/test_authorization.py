@@ -57,7 +57,7 @@ class AcmeAuthorizationViewTestCase(
         return self.get_url(serial=self.ca.serial, slug=self.authz.slug)
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive: bool = True) -> None:
+    def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
 
         resp = self.acme(self.url, self.message, kid=self.kid)
@@ -102,12 +102,12 @@ class AcmeAuthorizationViewTestCase(
             },
         )
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_tz(self) -> None:
+    @override_settings(USE_TZ=False)
+    def test_basic_without_tz(self) -> None:
         """Basic test but with timezone support."""
-        self.test_basic(accept_naive=False)
+        self.test_basic(accept_naive=True)
 
-    @override_tmpcadir(USE_TZ=True)
+    @override_tmpcadir()
     def test_valid_auth(self) -> None:
         """Test fetching a valid auth object."""
 
@@ -154,7 +154,7 @@ class AcmeAuthorizationViewTestCase(
             },
         )
 
-    @override_tmpcadir(USE_TZ=True)
+    @override_tmpcadir()
     def test_no_challenges(self) -> None:
         """Test viewing Auth with **no* challenges.
 

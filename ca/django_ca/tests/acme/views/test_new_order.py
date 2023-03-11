@@ -50,7 +50,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
         return super().get_message(**kwargs)  # type: ignore[return-value] # base has union
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive: bool = True) -> None:
+    def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
 
         with self.mock_slug() as slug:
@@ -88,13 +88,13 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
         self.assertEqual(authz[0].status, AcmeAuthorization.STATUS_PENDING)
         self.assertFalse(authz[0].wildcard)
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_tz(self) -> None:
+    @override_settings(USE_TZ=False)
+    def test_basic_without_timezone_support(self) -> None:
         """Basic test with timezone support enabled."""
-        self.test_basic(accept_naive=False)
+        self.test_basic(accept_naive=True)
 
     @override_tmpcadir()
-    def test_not_before_not_after(self, accept_naive: bool = True) -> None:
+    def test_not_before_not_after(self, accept_naive: bool = False) -> None:
         """Test the notBefore/notAfter properties."""
         not_before = timezone.now() + timedelta(seconds=10)
         not_after = timezone.now() + timedelta(days=3)
@@ -148,10 +148,10 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
         self.assertEqual(authz[0].status, AcmeAuthorization.STATUS_PENDING)
         self.assertFalse(authz[0].wildcard)
 
-    @override_settings(USE_TZ=True)
+    @override_settings(USE_TZ=False)
     def test_not_before_not_after_with_tz(self) -> None:
         """Test the notBefore/notAfter properties, but with timezone support."""
-        self.test_not_before_not_after(accept_naive=False)
+        self.test_not_before_not_after(accept_naive=True)
 
     @override_tmpcadir()
     def test_no_identifiers(self) -> None:
@@ -171,7 +171,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
 
         self.assertEqual(AcmeOrder.objects.all().count(), 0)
 
-    @override_tmpcadir(USE_TZ=True)
+    @override_tmpcadir()
     def test_invalid_not_before_after(self) -> None:
         """Test invalid not_before/not_after dates."""
 

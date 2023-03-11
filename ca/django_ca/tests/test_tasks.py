@@ -320,9 +320,9 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertValid()
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self) -> None:
-        """Same as test_basic but with USE_TZ=True."""
+    @override_settings(USE_TZ=False)
+    def test_basic_without_timezone_support(self) -> None:
+        """Same as test_basic but without timezone support."""
         self.test_basic()
 
     def test_multiple_auths(self) -> None:
@@ -542,9 +542,9 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
         self.assertEqual(self.acme_cert.cert.profile, ca_settings.CA_DEFAULT_PROFILE)
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self) -> None:
-        """Same as test_basic but with USE_TZ=True."""
+    @override_settings(USE_TZ=False)
+    def test_basic_without_timezone_support(self) -> None:
+        """Same as test_basic but with USE_TZ=False."""
         self.test_basic()
 
     @override_tmpcadir()

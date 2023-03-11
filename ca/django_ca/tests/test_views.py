@@ -281,10 +281,10 @@ class GenericCRLViewTests(GenericCRLViewTestsMixin, TestCase):
     """Test CertificateRevocationListView."""
 
 
-@override_settings(ROOT_URLCONF=__name__, USE_TZ=True)
+@override_settings(ROOT_URLCONF=__name__, USE_TZ=False)
 @freeze_time("2019-04-14 12:26:00")
-class GenericCRLWithTZViewTests(GenericCRLViewTestsMixin, TestCase):
-    """Test CertificateRevocationListView with timezone support."""
+class GenericCRLWithoutTimezoneSupportViewTests(GenericCRLViewTestsMixin, TestCase):
+    """Test CertificateRevocationListView without timezone support."""
 
 
 class GenericCAIssuersViewTests(TestCaseMixin, TestCase):

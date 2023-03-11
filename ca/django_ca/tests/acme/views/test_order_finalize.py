@@ -93,7 +93,7 @@ class AcmeOrderFinalizeViewTestCase(
         return self.get_message(self.csr)
 
     @override_tmpcadir()
-    def test_basic(self, accept_naive: bool = True) -> None:
+    def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -116,10 +116,10 @@ class AcmeOrderFinalizeViewTestCase(
             },
         )
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_tz(self) -> None:
-        """Basic test with USE_TZ=True."""
-        self.test_basic(False)
+    @override_settings(USE_TZ=False)
+    def test_basic_without_tz(self) -> None:
+        """Basic test without timezone support."""
+        self.test_basic(True)
 
     @override_tmpcadir()
     def test_not_found(self) -> None:

@@ -148,9 +148,9 @@ class InitCATest(TestCaseMixin, TestCase):
         crl = cache.get(cache_key)
         self.assertCRL(crl, signer=ca, algorithm=ca.algorithm, idp=ca_idp)
 
-    @override_settings(USE_TZ=True)
-    def test_basic_with_use_tz(self) -> None:
-        """Basic test with timezone support."""
+    @override_settings(USE_TZ=False)
+    def test_basic_without_timezone_support(self) -> None:
+        """Basic test without timezone support."""
 
         return self.test_basic()
 
@@ -365,9 +365,9 @@ class InitCATest(TestCaseMixin, TestCase):
             self.name_constraints(excluded=[dns(".com")], critical=True),
         )
 
-    @override_settings(USE_TZ=True)
-    def test_arguments_with_use_tz(self) -> None:
-        """Test arguments without NameConstraints."""
+    @override_settings(USE_TZ=False)
+    def test_arguments_without_timezone_support(self) -> None:
+        """Test arguments without timezone support."""
 
         self.test_arguments()
 

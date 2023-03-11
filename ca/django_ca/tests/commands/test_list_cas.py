@@ -22,7 +22,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base import certs, override_settings, timestamps
+from django_ca.tests.base import certs, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
@@ -167,8 +167,3 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 └───{certs['child']['serial_colons']} - {certs['child']['name']}
 """,
         )
-
-
-@override_settings(USE_TZ=True)
-class ListCertsWithTZTestCase(ListCertsTestCase):
-    """Same tests as above but with Timezone support."""

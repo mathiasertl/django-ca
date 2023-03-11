@@ -1412,7 +1412,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
             self.assertEqual(stderr, "")
 
     @override_tmpcadir(USE_TZ=True)
-    def test_with_use_tz(self) -> None:
+    def test_with_timezone_support(self) -> None:
         """Test viewing certificate with USE_TZ=True"""
         self.assertTrue(settings.USE_TZ)
 
@@ -1423,7 +1423,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir(USE_TZ=False)
     def test_with_use_tz_is_false(self) -> None:
-        """Test viewing certificate with USE_TZ=False"""
+        """Test viewing certificate without timezone support."""
         self.assertFalse(settings.USE_TZ)
 
         stdout, stderr = self.cmd("view_ca", self.ca.serial, wrap=False)

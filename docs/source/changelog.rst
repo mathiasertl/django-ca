@@ -10,6 +10,18 @@ ChangeLog
 1.24.0 (TBR)
 ************
 
+.. WARNING::
+
+   **Django app or source users:**
+
+   Changes in cryptography 38 make it incompatible with common versions of certbot. See
+   :ref:`cryptography_38_warning`.
+
+   **docker or source users that do *not* use PostgreSQL:**
+
+   The `USE_TZ <https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-USE_TZ>`_ setting was
+   switched to ``True`` in the Django project. See :ref:`switch-use-tz` for update information.
+
 * Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
 * Certificates for OCSP responders now include the "OCSPNoCheck" extension by default.
 * Certificates for OCSP responders now use a commonName designating the certificate as OCSP responder as

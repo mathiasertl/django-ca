@@ -104,7 +104,7 @@ class ContactValidationMixin:
                 #   Clients MUST NOT provide a "mailto" URL in the "contact" field that contains "hfields"
                 #   [RFC6068] or more than one "addr-spec" in the "to" component.
 
-                # We rule out quoted local address fields, otherwise it's extremely hard to validate
+                # We rule our quoted local address fields, otherwise it's extremely hard to validate
                 # email addresses.
                 if addr.startswith('"'):
                     raise AcmeMalformed("invalidContact", "Quoted local part in email is not allowed.")
@@ -192,7 +192,7 @@ class AcmeDirectory(View):
 class AcmeGetNonceViewMixin:
     """View mixin that provides methods to get and validate a Nonce.
 
-    Note that thix mixin depends on the presence of a ``serial`` argument to the URL resolver.
+    Note that this mixin depends on the presence of a ``serial`` argument to the URL resolver.
     """
 
     kwargs: Dict[str, str]
@@ -268,7 +268,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         return account.usable
 
     def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
-        """Set Link releations headers according to RFC8288.
+        """Set Link relations headers according to RFC8288.
 
         `RFC8555, section 7.1 <https://tools.ietf.org/html/rfc8555#section-7.1>`_ states:
 

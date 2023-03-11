@@ -32,6 +32,7 @@ from cryptography.hazmat.primitives import serialization
 
 from django.conf import settings
 from django.test.utils import override_settings
+from django.utils import timezone
 
 from django_ca import constants
 from django_ca.extensions import parse_extension
@@ -359,8 +360,8 @@ for cert_name, cert_data in certs.items():
 
 # Calculate some fixed timestamps that we reuse throughout the tests
 timestamps = {
-    "base": datetime.strptime(_fixture_data["timestamp"], "%Y-%m-%d %H:%M:%S"),
-    "before_everything": datetime(1990, 1, 1),
+    "base": datetime.fromisoformat(_fixture_data["timestamp"]),
+    "before_everything": datetime(1990, 1, 1, tzinfo=tz.utc),
 }
 timestamps["before_cas"] = timestamps["base"] - timedelta(days=1)
 timestamps["before_child"] = timestamps["base"] + timedelta(days=1)
@@ -370,6 +371,7 @@ timestamps["profile_certs_valid"] = timestamps["base"] + timedelta(days=12)
 
 # When creating fixutres, latest valid_from from of any generated cert is 20 days, we need to be after that
 timestamps["everything_valid"] = timestamps["base"] + timedelta(days=23)
+timestamps["everything_valid_naive"] = timezone.make_naive(timestamps["everything_valid"])
 timestamps["cas_expired"] = timestamps["base"] + timedelta(days=731, seconds=3600)
 timestamps["ca_certs_expiring"] = certs["root-cert"]["valid_until"] - timedelta(days=3)
 timestamps["ca_certs_expired"] = certs["root-cert"]["valid_until"] + timedelta(seconds=3600)

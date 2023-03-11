@@ -88,6 +88,6 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             self.assertCerts(*[c for c in self.certs.values() if c.ca == ca], ca=ca)
 
 
-@override_settings(USE_TZ=True)
+@override_settings(USE_TZ=False)
 class ListCertsWithTZTestCase(ListCertsTestCase):
     """Tests but with timezone support."""

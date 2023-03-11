@@ -22,7 +22,7 @@ import acme
 import josepy as jose
 from OpenSSL.crypto import X509, X509Req
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from freezegun import freeze_time
 
@@ -83,6 +83,17 @@ class AcmeCertificateRevocationViewTestCase(
         self.cert.refresh_from_db()
         self.assertTrue(self.cert.revoked)
         self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
+        self.assertEqual(self.cert.revoked_reason, ReasonFlags.unspecified.value)
+
+    @override_settings(USE_TZ=False)
+    def test_basic_with_use_tz_false(self) -> None:
+        """Test revocation with timezone support disabled (USE_TZ=False)"""
+        resp = self.acme(self.url, self.message, kid=self.kid)
+        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
+
+        self.cert.refresh_from_db()
+        self.assertTrue(self.cert.revoked)
+        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid_naive"])
         self.assertEqual(self.cert.revoked_reason, ReasonFlags.unspecified.value)
 
     def test_reason_code(self) -> None:

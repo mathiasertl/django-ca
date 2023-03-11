@@ -15,6 +15,35 @@ Update from 1.23.0 or earlier
 
 Update notes when upgrading to 1.24.0.
 
+.. _switch-use-tz:
+
+Switch to ``USE_TZ=True`` by default
+====================================
+
+The `USE_TZ <https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-USE_TZ>`_ was set to ``True`` in
+``django-ca==1.24.0``. This affects you if you if:
+
+* use the full Django project (so you :doc:`installed from source <quickstart_from_source>`, use
+  :doc:`docker <docker>` or :doc:`docker compose <quickstart_docker_compose>`)
+* **AND** use a database *other then* PostgreSQL (so e.g. MySQL or SQLite3).
+
+If *both* conditions are true for you, you should convert timestamps stored in the database to UTC. If you
+skip this step, timestamps stored in the database will shift by the offset from UTC of the default timezone.
+
+The default is ``Europe/Vienna``, so the shift is either one or two hours in this case. This affects stored
+expiry times, so certificates authorities and certificates will be considered as expired either too early or
+to late. ACME orders will also be affected by the shift, so any order made during upgrade will throw an error.
+
+.. WARNING::
+
+  Invoking the below command multiple times will shift timestamps as many times, causing corrupt timestamps.
+
+You can convert timestamps using a single ``manage.py`` command:
+
+.. code-block:: console
+
+   $ manage.py convert_timestamps
+
 Command-line tools
 ==================
 

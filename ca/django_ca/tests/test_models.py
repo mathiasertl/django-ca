@@ -282,9 +282,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         crl = child.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=child, algorithm=child.algorithm)
 
-    @override_settings(USE_TZ=True)
-    def test_full_crl_tz(self) -> None:
-        """Test full CRL but with timezone support enabled."""
+    @override_settings(USE_TZ=False)
+    def test_full_crl_without_timezone_support(self) -> None:
+        """Test full CRL but with timezone support disabled."""
         # otherwise we get TZ warnings for preloaded objects
         ca = self.cas["root"]
         child = self.cas["child"]
@@ -895,10 +895,23 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
         for name, ca in self.cas.items():
+            self.assertEqual(ca.valid_from, timezone.make_aware(certs[name]["valid_from"], tz.utc))
+            self.assertEqual(ca.expires, timezone.make_aware(certs[name]["valid_until"], tz.utc))
+
+        for name, cert in self.certs.items():
+            self.assertEqual(cert.valid_from, timezone.make_aware(certs[name]["valid_from"], tz.utc))
+            self.assertEqual(cert.expires, timezone.make_aware(certs[name]["valid_until"], tz.utc))
+
+    @override_settings(USE_TZ=False)
+    def test_dates_without_timezone_support(self) -> None:
+        """Test valid_from/valid_until dates without timezone support."""
+        for name, ca in self.cas.items():
+            ca.refresh_from_db()  # obj is loaded in setUp(), before decorator is active
             self.assertEqual(ca.valid_from, certs[name]["valid_from"])
             self.assertEqual(ca.expires, certs[name]["valid_until"])
 
         for name, cert in self.certs.items():
+            cert.refresh_from_db()  # obj is loaded in setUp(), before decorator is active
             self.assertEqual(cert.valid_from, certs[name]["valid_from"])
             self.assertEqual(cert.expires, certs[name]["valid_until"])
 
@@ -969,13 +982,11 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         self.cert.revoke()
 
         # timestamp does not have a timezone regardless of USE_TZ
-        with override_settings(USE_TZ=True):
-            self.cert.revoked_date = timezone.now()
-            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
+        self.cert.revoked_date = timezone.now()
+        self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
-        with override_settings(USE_TZ=False):
-            self.cert.revoked_date = timezone.now()
-            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
+        self.cert.revoked_date = timezone.now()
+        self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
     @freeze_time("2019-02-03 15:43:12")
     def test_get_compromised_time(self) -> None:
@@ -984,9 +995,8 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         self.cert.revoke(compromised=timezone.now())
 
         # timestamp does not have a timezone regardless of USE_TZ
-        with override_settings(USE_TZ=True):
-            self.cert.compromised = timezone.now()
-            self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
+        self.cert.compromised = timezone.now()
+        self.assertEqual(self.cert.get_compromised_time(), datetime(2019, 2, 3, 15, 43, 12))
 
         with override_settings(USE_TZ=False):
             self.cert.compromised = timezone.now()
@@ -1668,7 +1678,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     @freeze_time(timestamps["everything_valid"])
     def test_acme_validated(self) -> None:
-        """Test acme_calidated property."""
+        """Test acme_validated property."""
 
         # preconditions for checks (might change them in setUp without realising it might affect this test)
         self.assertNotEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
@@ -1680,11 +1690,12 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertIsNone(self.chall.acme_validated)  # still None (no validated timestamp)
 
         self.chall.validated = timezone.now()
-        self.assertEqual(self.chall.acme_validated, timezone.make_aware(timezone.now(), timezone=tz.utc))
+        self.assertEqual(self.chall.acme_validated, timestamps["everything_valid"])
 
-        with self.settings(USE_TZ=True):
+        # We return a UTC timestamp, even if timezone support is disabled.
+        with self.settings(USE_TZ=False):
             self.chall.validated = timezone.now()
-            self.assertEqual(self.chall.acme_validated, timezone.now())
+            self.assertEqual(self.chall.acme_validated, timestamps["everything_valid"])
 
     def test_encoded(self) -> None:
         """Test the encoded property."""

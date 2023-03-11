@@ -18,7 +18,7 @@ import os
 import re
 import stat
 import unittest
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -27,6 +27,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from freezegun import freeze_time
 
@@ -521,7 +522,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_expiry_too_late(self) -> None:
         """Test signing with an expiry after the CA expires."""
-        time_left = (self.ca.expires - datetime.now()).days
+        time_left = (self.ca.expires - timezone.now()).days
         expires = timedelta(days=time_left + 3)
         stdin = io.StringIO(self.csr_pem)
 

@@ -374,11 +374,6 @@ class OCSPTestGenericView(OCSPViewTestMixin, TestCase):
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce)
 
 
-@override_settings(USE_TZ=True)
-class OCSPTestGenericViewWithTZ(OCSPTestGenericView):
-    """Generic view tests but with timezone support."""
-
-
 class OCSPTestViewMixin(OCSPViewTestMixin):
     """Mixin defining test cases for OCSPView.
 
@@ -685,9 +680,9 @@ class OCSPTestView(OCSPTestViewMixin, TestCase):
     """Test OCSPView."""
 
 
-@override_settings(ROOT_URLCONF=__name__, USE_TZ=True)
+@override_settings(ROOT_URLCONF=__name__, USE_TZ=False)
 @freeze_time("2019-02-03 15:43:12")
-class OCSPWithTZTestView(OCSPTestViewMixin, TestCase):
+class OCSPWithoutTimezoneSupportTestView(OCSPTestViewMixin, TestCase):
     """Test OCSPView but with timezone support."""
 
 

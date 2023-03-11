@@ -20,6 +20,7 @@ import json
 import os
 import sys
 from datetime import datetime, timedelta
+from datetime import timezone as tz
 from pathlib import Path
 
 from cryptography import x509
@@ -66,7 +67,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     # below. If you use freezegun in a test and log in the setUp method (before freezegun freezes time),
     # the session starts with the current, real time. Django ignores sessions that start in the future, so
     # tests that use the test client would fail if "everything_valid" is in the future.
-    now = datetime.utcnow().replace(second=0, minute=0) - timedelta(days=25)
+    now = datetime.now(tz.utc).replace(second=0, minute=0, microsecond=0) - timedelta(days=25)
 
     manage("migrate", verbosity=0)
 
@@ -440,7 +441,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             fixture_data = json.load(stream)
         fixture_data["certs"].update(data)
     else:
-        fixture_data = {"timestamp": now.strftime(TIMEFORMAT), "certs": data, "ocsp": ocsp_data}
+        fixture_data = {"timestamp": now.isoformat(), "certs": data, "ocsp": ocsp_data}
 
     with open(out_path, "w", encoding="utf-8") as stream:
         json.dump(fixture_data, stream, indent=4, cls=CertificateEncoder, sort_keys=True)

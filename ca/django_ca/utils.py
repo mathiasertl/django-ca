@@ -17,7 +17,8 @@ import binascii
 import re
 import shlex
 import typing
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from datetime import timezone as tz
 from ipaddress import ip_address, ip_network
 from typing import Iterator, List, Optional, Tuple, Type, Union
 from urllib.parse import urlparse
@@ -34,7 +35,7 @@ from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
 from django.core.validators import URLValidator
-from django.utils import timezone as tz
+from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.typehints import (
@@ -87,8 +88,8 @@ ADMIN_SUBJECT_OIDS = (
 
 def make_naive(timestamp: datetime) -> datetime:
     """Like :py:func:`~django.utils.timezone.make_naive`, but does not return an error if already naive."""
-    if tz.is_naive(timestamp) is False:
-        return tz.make_naive(timestamp)
+    if timezone.is_naive(timestamp) is False:
+        return timezone.make_naive(timestamp)
     return timestamp
 
 
@@ -863,10 +864,10 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
                         f"Unsupported {asn_typ} specification for otherName: {val}: Must be TRUE or FALSE"
                     )
             elif asn_typ in ("UTC", "UTCTIME"):
-                parsed_datetime = datetime.strptime(val, "%y%m%d%H%M%SZ").replace(tzinfo=timezone.utc)
+                parsed_datetime = datetime.strptime(val, "%y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
                 parsed_value = asn1crypto.core.UTCTime(parsed_datetime).dump()
             elif asn_typ in ("GENTIME", "GENERALIZEDTIME"):
-                parsed_datetime = datetime.strptime(val, "%Y%m%d%H%M%SZ").replace(tzinfo=timezone.utc)
+                parsed_datetime = datetime.strptime(val, "%Y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
                 parsed_value = asn1crypto.core.GeneralizedTime(parsed_datetime).dump()
             elif asn_typ == "NULL":
                 if val:
@@ -996,7 +997,7 @@ def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
 def parse_expires(expires: Expires = None) -> datetime:
     """Parse a value specifying an expiry into a concrete datetime."""
 
-    now = datetime.utcnow().replace(second=0, microsecond=0)
+    now = timezone.now().replace(second=0, microsecond=0)
 
     if isinstance(expires, int):
         return now + timedelta(days=expires)
