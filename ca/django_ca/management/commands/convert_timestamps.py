@@ -10,6 +10,9 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
+
+"""convert_timestamps management command."""
+
 import datetime
 from datetime import timezone as tz
 from typing import Any
@@ -21,7 +24,7 @@ from django.utils import timezone
 from django_ca.models import AcmeAccount, AcmeChallenge, AcmeOrder, Certificate, CertificateAuthority
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):  # pylint: disable=missing-class-docstring
     help = """Convert naive timestamps in local time to timezone aware timestamps.
 
     WARNING: This command cannot tell if it has been invoked already and will change timestamps again.
@@ -29,6 +32,7 @@ class Command(BaseCommand):
     """
 
     def convert(self, timestamp: datetime.datetime) -> datetime.datetime:
+        """Convert a naive timestamp without timezone that now wrongly uses UTC to the correct value."""
         current_timezone = timezone.get_current_timezone()
         return timestamp.replace(tzinfo=current_timezone).astimezone(tz.utc).replace(microsecond=0)
 

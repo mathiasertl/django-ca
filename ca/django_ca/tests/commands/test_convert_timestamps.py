@@ -22,16 +22,19 @@ from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, Acme
 from django_ca.tests.base import timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
-input_path = "django_ca.management.commands.convert_timestamps.input"
+INPUT_PATH = "django_ca.management.commands.convert_timestamps.input"
 
 
 @override_settings(USE_TZ=False)
 @freeze_time(timestamps["everything_valid"])
 class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
+    """Test the convert_timestamps management command."""
+
     load_cas = ("root",)
     load_certs = ("root-cert",)
 
     def test_minimal_conversion(self) -> None:
+        """Test conversion of objects with optional timestamps set to None."""
         acme_account = AcmeAccount.objects.create(ca=self.ca)
         acme_order = AcmeOrder.objects.create(account=acme_account)
         acme_auth = AcmeAuthorization.objects.create(order=acme_order)
@@ -45,7 +48,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         )
         self.assertIsNone(acme_challenge.validated)
 
-        with self.settings(USE_TZ=True), self.patch(input_path, return_value="YES"):
+        with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="YES"):
             self.cmd("convert_timestamps")
 
             self.ca.refresh_from_db()
@@ -98,7 +101,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(acme_order.not_after, now)
         self.assertEqual(acme_challenge.validated, now)
 
-        with self.settings(USE_TZ=True), self.patch(input_path, return_value="YES"):
+        with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="YES"):
             self.cmd("convert_timestamps")
 
             self.ca.refresh_from_db()
@@ -125,7 +128,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         """Test that nothing happens if the user doesn't give confirmation."""
 
         self.assertEqual(self.ca.created, timestamps["everything_valid_naive"])
-        with self.settings(USE_TZ=True), self.patch(input_path, return_value="no"):
+        with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="no"):
             out, err = self.cmd("convert_timestamps")
         self.assertIn("Aborting.", out)
         self.ca.refresh_from_db()
