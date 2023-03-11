@@ -76,5 +76,6 @@ class Command(BaseCommand):
             acme_order.save()
 
         for acme_challenge in AcmeChallenge.objects.filter(validated__isnull=False):
-            acme_challenge.validated = self.convert(acme_challenge.validated)
+            # TYPE NOTE: mypy doesn't know that the field cannot be null due to the filter above
+            acme_challenge.validated = self.convert(acme_challenge.validated)  # type: ignore[arg-type]
             acme_challenge.save()

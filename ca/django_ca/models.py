@@ -219,7 +219,8 @@ class X509CertMixin(DjangoCAModel):
     # reasons are defined in http://www.ietf.org/rfc/rfc3280.txt
     REVOCATION_REASONS = REVOCATION_REASONS
 
-    created = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     valid_from = models.DateTimeField(blank=False)
     expires = models.DateTimeField(null=False, blank=False)

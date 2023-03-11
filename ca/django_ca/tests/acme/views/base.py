@@ -187,10 +187,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
 
     def post(self, url: str, data: Any, **kwargs: str) -> "HttpResponse":
         """Make a post request with some ACME specific default data."""
-        ctype = kwargs.pop("content_type", "application/jose+json")
-        return self.client.post(
-            url, json.dumps(data), content_type=ctype, follow=False, secure=False, **kwargs
-        )
+        kwargs.setdefault("content_type", "application/jose+json")
+        return self.client.post(url, json.dumps(data), follow=False, secure=False, **kwargs)
 
 
 class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar]):
@@ -418,7 +416,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     @override_tmpcadir()
     def test_payload_in_post_as_get(self) -> None:
-        """Test sending a paylod to a post-as-get request."""
+        """Test sending a payload to a post-as-get request."""
         if not self.post_as_get:
             return
 
