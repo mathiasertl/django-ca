@@ -26,7 +26,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from freezegun import freeze_time
@@ -34,7 +34,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import dns, override_settings, override_tmpcadir, timestamps, uri
+from django_ca.tests.base import dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import get_crl_cache_key, int_to_hex, x509_name
 

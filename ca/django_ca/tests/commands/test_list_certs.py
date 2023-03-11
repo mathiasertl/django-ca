@@ -21,7 +21,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from django_ca.models import Certificate
-from django_ca.tests.base import override_settings, timestamps
+from django_ca.tests.base import timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import add_colons
 
@@ -86,8 +86,3 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         """Test listing for all CAs."""
         for ca in self.cas.values():
             self.assertCerts(*[c for c in self.certs.values() if c.ca == ca], ca=ca)
-
-
-@override_settings(USE_TZ=False)
-class ListCertsWithTZTestCase(ListCertsTestCase):
-    """Tests but with timezone support."""

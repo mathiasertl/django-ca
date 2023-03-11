@@ -25,7 +25,7 @@ import dns.name
 from dns import resolver
 from dns.rdtypes.txtbase import TXTBase
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import include, path, reverse
 from django.urls.exceptions import NoReverseMatch
 from django.utils.crypto import get_random_string
@@ -34,7 +34,6 @@ from django_ca import urls
 from django_ca.acme import validation
 from django_ca.acme.constants import IdentifierType, Status
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
-from django_ca.tests.base import override_settings
 from django_ca.tests.base.mixins import TestCaseMixin
 
 urlpatterns = [

@@ -19,12 +19,12 @@ from typing import Optional
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from freezegun import freeze_time
 
 from django_ca.models import Watcher
-from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
 expected = {

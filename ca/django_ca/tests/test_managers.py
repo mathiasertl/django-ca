@@ -20,7 +20,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID, NameOID
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from freezegun import freeze_time
 
@@ -28,7 +28,7 @@ from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, timestamps, uri
+from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
 
 

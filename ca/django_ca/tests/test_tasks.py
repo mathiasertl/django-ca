@@ -34,7 +34,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 import requests_mock
@@ -42,7 +42,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings, tasks
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
-from django_ca.tests.base import certs, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.utils import ca_storage, get_crl_cache_key
 

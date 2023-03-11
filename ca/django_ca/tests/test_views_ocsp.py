@@ -31,7 +31,7 @@ from cryptography.x509.oid import NameOID
 from oscrypto import asymmetric
 
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import path, re_path, reverse
 
 from freezegun import freeze_time
@@ -40,7 +40,7 @@ from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
-from django_ca.tests.base import certs, ocsp_data, override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base import certs, ocsp_data, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import ca_storage, hex_to_bytes, int_to_hex
 from django_ca.views import OCSPView

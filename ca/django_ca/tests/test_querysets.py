@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.db import models
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 
 from freezegun import freeze_time
 
@@ -38,7 +38,7 @@ from django_ca.models import (
     Certificate,
     CertificateAuthority,
 )
-from django_ca.tests.base import override_settings, override_tmpcadir, timestamps
+from django_ca.tests.base import override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.utils import x509_name
 

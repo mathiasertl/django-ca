@@ -447,6 +447,3 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         self.mock.stop()
         self.mock_.stop()
         shutil.rmtree(self.options["CA_DIR"])
-
-
-__all__ = ("override_settings",)

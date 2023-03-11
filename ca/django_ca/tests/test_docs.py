@@ -21,9 +21,9 @@ from typing import Any, Dict
 from cryptography import x509
 
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from django_ca.tests.base import certs, override_settings, override_tmpcadir
+from django_ca.tests.base import certs, override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
 
 BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))

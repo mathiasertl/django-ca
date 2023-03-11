@@ -28,12 +28,12 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from django_ca.constants import EXTENSION_KEYS, ReasonFlags
 from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, dns, override_settings, override_tmpcadir, uri
+from django_ca.tests.base import certs, dns, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
 
 

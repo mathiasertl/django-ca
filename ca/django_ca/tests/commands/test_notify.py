@@ -16,12 +16,12 @@
 from datetime import timedelta
 
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from freezegun import freeze_time
 
 from django_ca.models import Watcher
-from django_ca.tests.base import override_settings, timestamps
+from django_ca.tests.base import timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
 
 

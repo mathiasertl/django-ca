@@ -38,7 +38,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import IntegrityError
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -58,15 +58,7 @@ from django_ca.models import (
     Watcher,
     X509CertMixin,
 )
-from django_ca.tests.base import (
-    CERT_PEM_REGEX,
-    certs,
-    dns,
-    override_settings,
-    override_tmpcadir,
-    timestamps,
-    uri,
-)
+from django_ca.tests.base import CERT_PEM_REGEX, certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
 from django_ca.utils import ca_storage, get_crl_cache_key, x509_name
 
