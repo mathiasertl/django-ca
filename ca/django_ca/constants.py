@@ -270,7 +270,6 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 # pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is dropped in 1.25.0
 HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
     {
-        # NOTE: shake128, shake256, blake2b and blake2s need a digest size, which is not currently supported
         hashes.SHA512_224: hashes.SHA512_224.name,
         hashes.SHA512_256: hashes.SHA512_256.name,
         hashes.SHA224: hashes.SHA224.name,

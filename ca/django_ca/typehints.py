@@ -49,6 +49,20 @@ PrivateKeyTypes = Union[
     ed25519.Ed25519PrivateKey,
 ]
 
+
+KEY_USAGES = typing.Literal[
+    "cRLSign",
+    "dataEncipherment",
+    "decipherOnly",
+    "digitalSignature",
+    "encipherOnly",
+    "keyAgreement",
+    "keyCertSign",
+    "keyEncipherment",
+    "nonRepudiation",  # http://marc.info/?t=107176106300005&r=1&w=2
+]
+
+
 ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]

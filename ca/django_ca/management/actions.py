@@ -37,7 +37,7 @@ from django_ca.constants import (
     KEY_USAGE_NAMES,
     ReasonFlags,
 )
-from django_ca.deprecation import RemovedInDjangoCA125Warning
+from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
 from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AlternativeNameExtensionType
@@ -51,10 +51,11 @@ from django_ca.utils import (
 )
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
+ParseType = typing.TypeVar("ParseType")  # pylint: disable=invalid-name
 ExtensionType = typing.TypeVar("ExtensionType", bound=x509.ExtensionType)  # pylint: disable=invalid-name
 
 
-class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=abc.ABCMeta):
+class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], metaclass=abc.ABCMeta):
     """Abstract/generic base class for arguments that take a single value.
 
     The main purpose of this class is to improve type hinting.
@@ -63,7 +64,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=a
     type: Type[ActionType]
 
     @abc.abstractmethod
-    def parse_value(self, value: str) -> ActionType:
+    def parse_value(self, value: ParseType) -> ActionType:
         """Parse the value passed to the command line. Implementing classes must implement this method.
 
         Parameters
@@ -78,13 +79,13 @@ class SingleValueAction(argparse.Action, typing.Generic[ActionType], metaclass=a
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: str,
+        values: ParseType,
         option_string: Optional[str] = None,
     ) -> None:
         setattr(namespace, self.dest, self.parse_value(values))
 
 
-class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
+class AlgorithmAction(SingleValueAction[str, hashes.HashAlgorithm]):
     """Action for giving an algorithm.
 
     >>> parser.add_argument('--algorithm', action=AlgorithmAction)  # doctest: +ELLIPSIS
@@ -116,7 +117,7 @@ class AlgorithmAction(SingleValueAction[hashes.HashAlgorithm]):
                 raise argparse.ArgumentError(self, str(ex)) from ex
 
 
-class CertificateAction(SingleValueAction[Certificate]):
+class CertificateAction(SingleValueAction[str, Certificate]):
     """Action for naming a certificate."""
 
     def __init__(self, allow_revoked: bool = False, **kwargs: Any) -> None:
@@ -137,7 +138,7 @@ class CertificateAction(SingleValueAction[Certificate]):
             raise argparse.ArgumentError(self, f"{value}: Multiple certificates match.") from ex
 
 
-class CertificateAuthorityAction(SingleValueAction[CertificateAuthority]):
+class CertificateAuthorityAction(SingleValueAction[str, CertificateAuthority]):
     """Action for naming a certificate authority."""
 
     def __init__(self, allow_disabled: bool = False, allow_unusable: bool = False, **kwargs: Any) -> None:
@@ -165,7 +166,7 @@ class CertificateAuthorityAction(SingleValueAction[CertificateAuthority]):
         return ca
 
 
-class ExpiresAction(SingleValueAction[timedelta]):
+class ExpiresAction(SingleValueAction[str, timedelta]):
     """Action for passing a timedelta in days.
 
     NOTE: str(timedelta) is different in python 3.6, so only outputting days here
@@ -189,7 +190,7 @@ class ExpiresAction(SingleValueAction[timedelta]):
         return timedelta(days=days)
 
 
-class FormatAction(SingleValueAction[Encoding]):
+class FormatAction(SingleValueAction[str, Encoding]):
     """Action for giving an encoding (DER/PEM).
 
     >>> parser.add_argument('--format', action=FormatAction)  # doctest: +ELLIPSIS
@@ -206,7 +207,7 @@ class FormatAction(SingleValueAction[Encoding]):
             raise argparse.ArgumentError(self, str(e))
 
 
-class EllipticCurveAction(SingleValueAction[ec.EllipticCurve]):
+class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
     """Action to parse an elliptic curve value.
 
     >>> parser.add_argument('--elliptic-curve', action=EllipticCurveAction)  # doctest: +ELLIPSIS
@@ -236,7 +237,39 @@ class EllipticCurveAction(SingleValueAction[ec.EllipticCurve]):
                 raise argparse.ArgumentError(self, str(e))
 
 
-class KeySizeAction(SingleValueAction[int]):
+class IntegerRangeAction(SingleValueAction[int, int]):
+    """An int action with an optional min/max value.
+
+    >>> parser.add_argument('--size', action=IntegerRangeAction, min=0, max=10)  # doctest: +ELLIPSIS
+    IntegerRangeAction(...)
+    >>> parser.parse_args(['--size', '5'])
+    Namespace(size=5)
+
+    Parameters
+    ----------
+
+    min: int, Optional
+        The optional minimum value.
+    max: int, Optional
+        The optional maximum value.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.min = kwargs.pop("min", None)
+        self.max = kwargs.pop("max", None)
+        kwargs["type"] = int  # so parse_value() will receive an int
+        kwargs.setdefault("metavar", "INT")
+        super().__init__(**kwargs)
+
+    def parse_value(self, value: int) -> int:
+        if self.min is not None and self.min > value:
+            raise argparse.ArgumentError(self, f"{self.metavar} must be equal or greater then {self.min}")
+        if self.max is not None and self.max < value:
+            raise argparse.ArgumentError(self, f"{self.metavar} must be equal or smaller then {self.max}")
+        return value
+
+
+class KeySizeAction(SingleValueAction[str, int]):
     """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...).
 
     >>> parser.add_argument('--size', action=KeySizeAction)  # doctest: +ELLIPSIS
@@ -324,7 +357,7 @@ class PasswordAction(argparse.Action):
         setattr(namespace, self.dest, values.encode("utf-8"))
 
 
-class ReasonAction(SingleValueAction[ReasonFlags]):
+class ReasonAction(SingleValueAction[str, ReasonFlags]):
     """Action to select a revocation reason.
 
     >>> parser.add_argument('--reason', action=ReasonAction)  # doctest: +ELLIPSIS
@@ -344,7 +377,7 @@ class ReasonAction(SingleValueAction[ReasonFlags]):
         return ReasonFlags[value]
 
 
-class NameAction(SingleValueAction[x509.Name]):
+class NameAction(SingleValueAction[str, x509.Name]):
     """Action to parse a string into a :py:class:`cg:~cryptography.x509.Name`.
 
     Note that this action does *not* take care of sorting the subject in any way.
@@ -362,7 +395,7 @@ class NameAction(SingleValueAction[x509.Name]):
             raise argparse.ArgumentError(self, str(e))
 
 
-class URLAction(SingleValueAction[str]):
+class URLAction(SingleValueAction[str, str]):
     """Action to pass a single valid URL.
 
     >>> parser.add_argument('--url', action=URLAction)  # doctest: +ELLIPSIS
@@ -489,18 +522,15 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
     KeyUsageAction(...)
     >>> args = parser.parse_args(['--key-usage', 'keyCertSign'])
     >>> args.key_usage  # doctest: +NORMALIZE_WHITESPACE
-    <Extension(oid=<ObjectIdentifier(oid=2.5.29.15, name=keyUsage)>,
-               critical=False,
-               value=<KeyUsage(digital_signature=False,
-                               content_commitment=False,
-                               key_encipherment=False,
-                               data_encipherment=False,
-                               key_agreement=False,
-                               key_cert_sign=True,
-                               crl_sign=False,
-                               encipher_only=False,
-                               decipher_only=False)>)>
-
+    <KeyUsage(digital_signature=False,
+             content_commitment=False,
+             key_encipherment=False,
+             data_encipherment=False,
+             key_agreement=False,
+             key_cert_sign=True,
+             crl_sign=False,
+             encipher_only=False,
+             decipher_only=False)>
     """
 
     extension_type = x509.KeyUsage
@@ -515,10 +545,14 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         ext_values = values.split(",")
 
         if ext_values[0] == "critical":
-            critical = True
+            warnings.warn(
+                "Using critical as first value is deprecated. The extension is critical by default.",
+                RemovedInDjangoCA126Warning,
+            )
             ext_values = ext_values[1:]
-        else:
-            critical = False
+
+        if invalid_usages := [ku for ku in ext_values if ku not in KEY_USAGE_NAMES.values()]:
+            parser.error(f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage.")
 
         key_usages = {k: v in ext_values for k, v in KEY_USAGE_NAMES.items()}
         try:
@@ -526,10 +560,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         except ValueError as ex:
             parser.error(str(ex))
 
-        # NOINSPECTION NOTE: parser.error() above never returns
-        # noinspection PyUnboundLocalVariable
-        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
-        setattr(namespace, self.dest, extension)
+        setattr(namespace, self.dest, extension_type)
 
 
 class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):

@@ -499,6 +499,18 @@ class X509CertMixin(DjangoCAModel):
 class CertificateAuthority(X509CertMixin):
     """Model representing a x509 Certificate Authority."""
 
+    DEFAULT_KEY_USAGE = x509.KeyUsage(
+        key_cert_sign=True,
+        crl_sign=True,
+        digital_signature=False,
+        content_commitment=False,
+        key_encipherment=False,
+        data_encipherment=False,
+        key_agreement=False,
+        encipher_only=False,
+        decipher_only=False,
+    )
+
     objects: CertificateAuthorityManager = CertificateAuthorityManager.from_queryset(
         CertificateAuthorityQuerySet
     )()

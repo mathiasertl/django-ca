@@ -155,16 +155,30 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         namespace = self.parser.parse_args(["-k", "keyCertSign"])
-        self.assertEqual(self.key_usage(key_cert_sign=True, critical=False), namespace.key_usage)
+        self.assertEqual(self.key_usage(key_cert_sign=True, critical=False).value, namespace.key_usage)
 
-        namespace = self.parser.parse_args(["-k", "critical,keyCertSign"])
-        self.assertEqual(self.key_usage(key_cert_sign=True, critical=True), namespace.key_usage)
+        namespace = self.parser.parse_args(["-k", "keyCertSign,keyAgreement"])
+        self.assertEqual(
+            self.key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
+        )
 
-        namespace = self.parser.parse_args(["-k", "keyCertSign,KeyAgreement"])
-        self.assertEqual(self.key_usage(key_cert_sign=True, critical=False), namespace.key_usage)
+        namespace = self.parser.parse_args(["-k", "keyCertSign,keyAgreement"])
+        self.assertEqual(
+            self.key_usage(key_cert_sign=True, key_agreement=True, critical=True).value, namespace.key_usage
+        )
 
-        namespace = self.parser.parse_args(["-k", "critical,keyCertSign,KeyAgreement"])
-        self.assertEqual(self.key_usage(key_cert_sign=True, critical=True), namespace.key_usage)
+    def test_deprecated_critical(self) -> None:
+        """Test deprecated critical flag."""
+        msg = r"^Using critical as first value is deprecated\. The extension is critical by default\.$"
+        with self.assertRemovedIn126Warning(msg):
+            namespace = self.parser.parse_args(["-k", "critical,keyCertSign"])
+            self.assertEqual(self.key_usage(key_cert_sign=True, critical=True).value, namespace.key_usage)
+
+    def test_invalid_values(self) -> None:
+        """Test passing invalid values."""
+        self.assertParserError(
+            ["-k", "foo"], "usage: dev.py [-h] [-k KEY_USAGE]\ndev.py: error: foo: Invalid key usage.\n"
+        )
 
     def test_error(self) -> None:
         """Test wrong option values."""
