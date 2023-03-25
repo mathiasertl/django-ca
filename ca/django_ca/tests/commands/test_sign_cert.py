@@ -359,7 +359,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             "sign_cert",
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
-            "--key-usage=critical,keyCertSign",
+            "--key-usage=keyCertSign",
+            "--key-usage-non-critical",
             "--ext-key-usage=clientAuth",
             "--alt=URI:https://example.net",
             "--tls-feature=OCSPMustStaple",
@@ -376,7 +377,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         actual = cert.x509_extensions
-        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
+        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False))
         self.assertEqual(
             actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH)
         )

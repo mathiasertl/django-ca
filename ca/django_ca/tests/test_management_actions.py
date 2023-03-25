@@ -144,6 +144,42 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
 
+class IntegerRangeActionTextCase(ParserTestCaseMixin, TestCase):
+    """Test the IntegerRangeAction."""
+
+    def test_no_min_no_max(self) -> None:
+        """Test action with no min/max values."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--value", action=actions.IntegerRangeAction)
+        self.assertEqual(parser.parse_args(["--value=0"]).value, 0)
+        self.assertEqual(parser.parse_args(["--value=1"]).value, 1)
+        self.assertEqual(parser.parse_args(["--value=-1"]).value, -1)
+
+    def test_min_values(self) -> None:
+        """Test the min value for the action."""
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--value", action=actions.IntegerRangeAction, min=0)
+        self.assertEqual(self.parser.parse_args(["--value=0"]).value, 0)
+        self.assertEqual(self.parser.parse_args(["--value=1"]).value, 1)
+        self.assertParserError(
+            ["--value=-1"],
+            "usage: dev.py [-h] [--value INT]\n"
+            "dev.py: error: argument --value: INT must be equal or greater then 0.\n",
+        )
+
+    def test_max_values(self) -> None:
+        """Test the max value for the action."""
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--value", action=actions.IntegerRangeAction, max=0)
+        self.assertEqual(self.parser.parse_args(["--value=0"]).value, 0)
+        self.assertEqual(self.parser.parse_args(["--value=-1"]).value, -1)
+        self.assertParserError(
+            ["--value=1"],
+            "usage: dev.py [-h] [--value INT]\n"
+            "dev.py: error: argument --value: INT must be equal or smaller then 0.\n",
+        )
+
+
 class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     """Test KeyUsageAction."""
 

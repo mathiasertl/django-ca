@@ -154,6 +154,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     self.cert.serial,
                     "--key-usage",
                     key_usage,
+                    "--key-usage-non-critical",
                     "--ext-key-usage",
                     ext_key_usage,
                     "--tls-feature",

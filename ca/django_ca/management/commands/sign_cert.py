@@ -22,7 +22,7 @@ from typing import Any, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
@@ -111,6 +111,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         profile: Optional[str],
         out: Optional[str],
         algorithm: Optional[hashes.HashAlgorithm],
+        key_usage: Optional[x509.KeyUsage],
+        key_usage_critical: bool,
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
@@ -135,6 +137,11 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             ext_key = EXTENSION_KEYS[ext_type.oid]
             if options[ext_key]:
                 extensions.append(options[ext_key])
+
+        if key_usage is not None:
+            extensions.append(
+                x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
+            )
 
         cname = None
         if subject is not None:

@@ -21,7 +21,7 @@ from typing import Any, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
@@ -62,7 +62,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
@@ -72,6 +72,8 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         password: Optional[bytes],
         profile: Optional[str],
         algorithm: Optional[hashes.HashAlgorithm],
+        key_usage: Optional[x509.KeyUsage],
+        key_usage_critical: bool,
         **options: Any,
     ) -> None:
         if ca is None:
@@ -104,6 +106,13 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 if ext_type == x509.SubjectAlternativeName:
                     have_san = True
                 extensions.append(ext)
+
+        if key_usage is not None:
+            extensions.append(
+                x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
+            )
+        elif cert_key_usage := cert.x509_extensions.get(ExtensionOID.KEY_USAGE):
+            extensions.append(cert_key_usage)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_san is False:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")

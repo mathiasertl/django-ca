@@ -22,7 +22,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
-from django_ca import ca_settings
+from django_ca import ca_settings, typehints
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
 from django_ca.extensions import parse_extension, serialize_extension
 from django_ca.signals import pre_sign_cert
@@ -158,18 +158,12 @@ class Profile:
     def __str__(self) -> str:
         return repr(self)
 
-    def _get_extensions(
-        self, extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]]
-    ) -> Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
-        if extensions is None:
-            extensions = {}
-
-        extensions_update = {ext.oid: ext for ext in extensions}
-
-        cert_extensions = {ext.oid: ext for oid, ext in self.extensions.items() if ext is not None}
-        cert_extensions.update(extensions_update)
-
-        return cert_extensions
+    def _get_extensions(self, extensions: typehints.ExtensionDict) -> None:
+        for oid, ext in self.extensions.items():
+            if ext is None:
+                extensions.pop(oid, None)
+            else:
+                extensions.setdefault(oid, ext)
 
     def create_cert(  # pylint: disable=too-many-arguments
         self,
@@ -268,7 +262,13 @@ class Profile:
         if add_issuer_alternative_name is None:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
-        cert_extensions = self._get_extensions(extensions)
+        if extensions is None:
+            cert_extensions: typehints.ExtensionDict = {}
+        else:
+            cert_extensions = {ext.oid: ext for ext in extensions}
+
+        # Get extensions from profile
+        self._get_extensions(cert_extensions)
 
         self._update_from_ca(
             ca,

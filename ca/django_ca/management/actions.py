@@ -263,9 +263,9 @@ class IntegerRangeAction(SingleValueAction[int, int]):
 
     def parse_value(self, value: int) -> int:
         if self.min is not None and self.min > value:
-            raise argparse.ArgumentError(self, f"{self.metavar} must be equal or greater then {self.min}")
+            raise argparse.ArgumentError(self, f"{self.metavar} must be equal or greater then {self.min}.")
         if self.max is not None and self.max < value:
-            raise argparse.ArgumentError(self, f"{self.metavar} must be equal or smaller then {self.max}")
+            raise argparse.ArgumentError(self, f"{self.metavar} must be equal or smaller then {self.max}.")
         return value
 
 

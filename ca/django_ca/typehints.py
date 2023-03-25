@@ -49,8 +49,9 @@ PrivateKeyTypes = Union[
     ed25519.Ed25519PrivateKey,
 ]
 
+ExtensionDict = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 
-KEY_USAGES = typing.Literal[
+KeyUsages = typing.Literal[
     "cRLSign",
     "dataEncipherment",
     "decipherOnly",

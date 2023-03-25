@@ -25,6 +25,7 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from django_ca import ca_settings
+from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
@@ -177,16 +178,18 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             self.ocsp_no_check(),
             name_constraints,
             self.precert_poison(),
+            self.ext(x509.InhibitAnyPolicy(3)),
         ]
 
         with self.assertCreateCASignals():
-            ca = CertificateAuthority.objects.init("with-extra", subject, extra_extensions=extensions)
+            ca = CertificateAuthority.objects.init("with-extra", subject, extensions=extensions)
 
         self.assertEqual(ca.subject, subject)
 
         expected = extensions + [
             self.basic_constraints(ca=True),
             self.key_usage(crl_sign=True, key_cert_sign=True),
+            self.ext(x509.InhibitAnyPolicy(3)),
         ]
         self.assertExtensions(ca, expected)
 
@@ -247,9 +250,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "unknown-extension-type"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"{name}.example.com")])
         with self.assertRaisesRegex(ValueError, r"^Cannot add extension of type bool$"):
-            CertificateAuthority.objects.init(
-                name, subject, extra_extensions=[True]  # type: ignore[list-item]
-            )
+            CertificateAuthority.objects.init(name, subject, extensions=[True])  # type: ignore[list-item]
         self.assertEqual(CertificateAuthority.objects.filter(name=name).count(), 0)
 
 
@@ -332,6 +333,24 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
             )
         self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(cert, [self.subject_alternative_name(dns(self.hostname))])
+
+    @override_tmpcadir()
+    def test_cryptography_extensions(self) -> None:
+        """Test passing readable extensions."""
+        key_usage = self.key_usage(key_cert_sign=True, key_encipherment=True)
+        with self.assertCreateCertSignals():
+            cert = Certificate.objects.create_cert(
+                self.ca, self.csr, subject=self.subject, extensions=[key_usage]
+            )
+        self.assertEqual(cert.subject, self.subject)
+        self.assertExtensions(
+            cert,
+            [
+                self.subject_alternative_name(dns(self.hostname)),
+                key_usage,
+                self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
+            ],
+        )
 
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:

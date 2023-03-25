@@ -26,14 +26,20 @@ from typing import Any, Iterable, List, Optional
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning
-from django_ca.management.actions import ExpiresAction, MultipleURLAction, NameAction, PasswordAction
+from django_ca.management.actions import (
+    ExpiresAction,
+    IntegerRangeAction,
+    MultipleURLAction,
+    NameAction,
+    PasswordAction,
+)
 from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
@@ -46,6 +52,11 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
     """Implement :command:`manage.py init_ca`."""
 
     help = "Create a certificate authority."
+
+    def add_inhibit_any_policy_group(self, parser: CommandParser) -> None:
+        """Add argument group for the Inhibit anyPolicy extension."""
+        group = parser.add_argument_group(constants.EXTENSION_NAMES[ExtensionOID.INHIBIT_ANY_POLICY])
+        group.add_argument("--inhibit-any-policy", action=IntegerRangeAction, min=0)
 
     def add_name_constraints_group(self, parser: CommandParser) -> argparse._ArgumentGroup:
         """Add an argument group for the NameConstraints extension."""
@@ -202,6 +213,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             help="URL to the certificate of your CA (in DER format).",
         )
 
+        self.add_inhibit_any_policy_group(parser)
+        self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
 
         self.add_ca_args(parser)
@@ -225,6 +238,12 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         ca_crl_url: List[str],
         ca_ocsp_url: List[str],
         ca_issuer_url: List[str],
+        # Inhibit anyPolicy extension:
+        inhibit_any_policy: Optional[int],
+        # Key Usage extension:
+        key_usage: x509.KeyUsage,
+        key_usage_critical: bool,
+        # NameConstraints extension:
         permit_name: Optional[Iterable[x509.GeneralName]],
         exclude_name: Optional[Iterable[x509.GeneralName]],
         caa: str,
@@ -281,6 +300,17 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             self.test_private_key(parent, parent_password)
 
         subject = sort_name(subject)
+        extensions = [
+            x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
+        ]
+        if inhibit_any_policy is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.INHIBIT_ANY_POLICY,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY],
+                    value=x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
+                )
+            )
 
         issuer_alternative_name = options[constants.EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]
 
@@ -325,6 +355,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 caa=caa,
                 website=website,
                 terms_of_service=tos,
+                extensions=extensions,
                 **kwargs,
             )
         except Exception as ex:  # pragma: no cover

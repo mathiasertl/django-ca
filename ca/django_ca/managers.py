@@ -23,13 +23,13 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
-from cryptography.x509.oid import AuthorityInformationAccessOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning, deprecate_type
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
@@ -153,18 +153,6 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
             extensions.append((False, x509.AuthorityInformationAccess(auth_info_access)))
         return extensions
 
-    def _extra_extensions(
-        self,
-        builder: x509.CertificateBuilder,
-        extra_extensions: List[Union[x509.Extension[x509.ExtensionType]]],
-    ) -> x509.CertificateBuilder:
-        for ext in extra_extensions:
-            if isinstance(ext, x509.Extension):
-                builder = builder.add_extension(ext.value, critical=ext.critical)
-            else:
-                raise ValueError(f"Cannot add extension of type {type(ext).__name__}")
-        return builder
-
 
 class CertificateAuthorityManager(
     CertificateManagerMixin["CertificateAuthority", "CertificateAuthorityQuerySet"],
@@ -220,7 +208,7 @@ class CertificateAuthorityManager(
         elliptic_curve: Optional[ec.EllipticCurve] = None,
         key_type: ParsableKeyType = "RSA",
         key_size: Optional[int] = None,
-        extra_extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
         path: Union[pathlib.PurePath, str] = "ca",
         caa: str = "",
         website: str = "",
@@ -240,7 +228,10 @@ class CertificateAuthorityManager(
 
         .. versionchanged:: 1.24.0
 
+           * The `extra_extensions` parameter was renamed to `extensions`.
            * The `pathlen` parameter was renamed to `path_length`.
+           * The `ca_issuer_url` and `ca_ocsp_url` parameters are now list of strings. Support for bare
+             strings will be removed in ``django-ca==1.26.0``.
 
 
         Parameters
@@ -302,7 +293,7 @@ class CertificateAuthorityManager(
             Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
             the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if
             ``key_type="EC"`` or ``key_type="Ed25519"``.
-        extra_extensions : list of :py:class:`cg:cryptography.x509.Extension`
+        extensions : list of :py:class:`cg:cryptography.x509.Extension`
             An optional list of additional extensions to add to the certificate.
         path : str or pathlib.PurePath, optional
             Where to store the CA private key (default ``ca``).
@@ -352,6 +343,8 @@ class CertificateAuthorityManager(
             ca_ocsp_url = [ca_ocsp_url]
         if isinstance(ca_issuer_url, str):  # pragma: django_ca<1.26.0
             ca_issuer_url = [ca_issuer_url]
+        if extensions is None:
+            extensions = []
 
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         algorithm = validate_public_key_parameters(key_type, algorithm)
@@ -361,15 +354,29 @@ class CertificateAuthorityManager(
         if openssh_ca and parent:
             raise ValueError("OpenSSH does not support intermediate authorities")
 
-        # Cast extra_extensions to list if set (so that we can extend if necessary)
-        if extra_extensions:
-            extra_extensions = list(extra_extensions)
+        # Cast extensions to list if set (so that we can extend if necessary)
+        if extensions is not None:
+            extensions = list(extensions)
+
+            # check type of values to provide better errors
+            for extension in extensions:
+                if isinstance(extension, x509.Extension) is False:
+                    raise ValueError(f"Cannot add extension of type {type(extension).__name__}")
         else:
-            extra_extensions = []
+            extensions = []
 
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
-            extra_extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
+            extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
+
+        extensions_dict = {ext.oid: ext for ext in extensions}
+
+        if ExtensionOID.KEY_USAGE not in extensions_dict:
+            extensions_dict[ExtensionOID.KEY_USAGE] = x509.Extension(
+                oid=ExtensionOID.KEY_USAGE,
+                critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
+                value=self.model.DEFAULT_KEY_USAGE,
+            )
 
         if crl_url is None:
             crl_url = []
@@ -415,6 +422,10 @@ class CertificateAuthorityManager(
                 ca_crl_path = reverse("django_ca:ca-crl", kwargs={"serial": root_serial})
                 ca_crl_url = [f"http://{default_hostname}{ca_crl_path}"]
 
+        # Cast extensions_dict back to list, so that signal handler receives the same type as the method
+        # itself. This has the added bonus of signal handlers being able to influence the extension order.
+        extensions = list(extensions_dict.values())
+
         pre_create_ca.send(
             sender=self.model,
             name=name,
@@ -436,7 +447,7 @@ class CertificateAuthorityManager(
             excluded_subtrees=excluded_subtrees,
             password=password,
             parent_password=parent_password,
-            extra_extensions=extra_extensions,
+            extensions=extensions,
             caa=caa,
             website=website,
             terms_of_service=terms_of_service,
@@ -453,20 +464,6 @@ class CertificateAuthorityManager(
         builder = builder.subject_name(subject)
         builder = builder.add_extension(
             x509.BasicConstraints(ca=True, path_length=path_length), critical=True
-        )
-        builder = builder.add_extension(
-            x509.KeyUsage(
-                key_cert_sign=True,
-                crl_sign=True,
-                digital_signature=False,
-                content_commitment=False,
-                key_encipherment=False,
-                data_encipherment=False,
-                key_agreement=False,
-                encipher_only=False,
-                decipher_only=False,
-            ),
-            critical=True,
         )
 
         subject_key_id = x509.SubjectKeyIdentifier.from_public_key(public_key)
@@ -490,8 +487,8 @@ class CertificateAuthorityManager(
                 x509.NameConstraints(permitted_subtrees, excluded_subtrees), critical=True
             )
 
-        if extra_extensions:
-            builder = self._extra_extensions(builder, extra_extensions)
+        for ext in extensions:
+            builder = builder.add_extension(ext.value, critical=ext.critical)
 
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm)
 

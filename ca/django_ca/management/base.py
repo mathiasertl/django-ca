@@ -26,6 +26,7 @@ from typing import Any, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError, CommandParser, OutputWrapper
@@ -179,17 +180,53 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             )
 
 
-class BaseSignCommand(BaseCommand):
-    pass
+class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
+    """Base class for all commands that sign certificates (init_ca, sign_cert, resign_cert).
+
+    This class can add options for all x509 extensions.
+    """
+
+    def add_critical_option(self, parser: argparse._ActionsContainer, oid: x509.ObjectIdentifier) -> None:
+        """Add a --...-(non-)critical option for the extension to the given argparse ActionContainer."""
+        destination = f"{constants.EXTENSION_KEYS[oid]}_critical"
+        extension_arg = constants.EXTENSION_KEYS[oid].replace("_", "-")
+        default = constants.EXTENSION_DEFAULT_CRITICAL[oid]
+
+        if default is True:
+            option = f"--{extension_arg}-non-critical"
+            action = "store_false"
+            help_text = "Mark the extension as non-critical."
+        else:
+            option = f"--{extension_arg}-critical"
+            action = "store_true"
+            help_text = "Mark the extension as critical."
+
+        parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
+
+    def add_key_usage_group(
+        self, parser: argparse.ArgumentParser, default: Optional[x509.KeyUsage] = None
+    ) -> None:
+        """Add argument group for the Key Usage extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.KEY_USAGE]
+        group = parser.add_argument_group(
+            ext_name, f"The {ext_name} extension defines what the certificate can be used for."
+        )
+        group.add_argument(
+            "--key-usage",
+            metavar="VALUES",
+            action=actions.KeyUsageAction,
+            default=default,
+            help='The keyUsage extension, e.g. "keyAgreement,keyEncipherment,keyCertSign,keyAgreement".',
+        )
+        self.add_critical_option(group, ExtensionOID.KEY_USAGE)
 
 
-class BaseSignCertCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
+class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
     sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (
         x509.ExtendedKeyUsage,
-        x509.KeyUsage,
         x509.SubjectAlternativeName,
         x509.TLSFeature,
     )
@@ -203,6 +240,7 @@ class BaseSignCertCommand(BaseCommand):  # pylint: disable=abstract-method; is a
         self.add_ca(general_group, no_default=no_default_ca)
         self.add_password(general_group)
         self.add_extensions(parser)
+        self.add_key_usage_group(parser)
 
         general_group.add_argument(
             "--expires",
@@ -245,12 +283,6 @@ class BaseSignCertCommand(BaseCommand):  # pylint: disable=abstract-method; is a
     def add_extensions(self, parser: CommandParser) -> None:
         """Add arguments for x509 extensions."""
         group = parser.add_argument_group("X509 v3 certificate extensions", self.add_extensions_help)
-        group.add_argument(
-            "--key-usage",
-            metavar="VALUES",
-            action=actions.KeyUsageAction,
-            help='The keyUsage extension, e.g. "critical,keyCertSign".',
-        )
         group.add_argument(
             "--ext-key-usage",
             metavar="VALUES",

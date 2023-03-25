@@ -129,7 +129,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                x509.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=x509.OCSPNoCheck()),
+                self.ocsp_no_check(),
                 self.extended_key_usage(ExtendedKeyUsageOID.OCSP_SIGNING),
                 self.key_usage(digital_signature=True, content_commitment=True, key_encipherment=True),
                 self.authority_information_access(ca_issuers=[uri(ca.issuer_url)]),  # type: ignore[arg-type]
@@ -342,6 +342,15 @@ class InitCATest(TestCaseMixin, TestCase):
         ca_key = typing.cast(dsa.DSAPrivateKey, ca.key())
         self.assertIsInstance(ca_key, dsa.DSAPrivateKey)
         self.assertEqual(ca_key.key_size, 1024)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_inhibit_any_policy(self) -> None:
+        """Test creating a certificate with the Inhibit anyPolicy extension."""
+
+        ca = self.init_ca_e2e(self.hostname[:32], "--inhibit-any-policy=3", f"/CN={self.hostname}")
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.INHIBIT_ANY_POLICY], self.ext(x509.InhibitAnyPolicy(3))
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self) -> None:

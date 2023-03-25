@@ -51,7 +51,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
 from django_ca.extensions import extension_as_text
@@ -828,6 +828,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return x509.Extension(
             oid=ExtensionOID.EXTENDED_KEY_USAGE, critical=critical, value=x509.ExtendedKeyUsage(usages)
         )
+
+    def ext(
+        self, value: x509.ExtensionType, critical: Optional[bool] = None
+    ) -> x509.Extension[x509.ExtensionType]:
+        """Shortcut to get a x509.Extension object from the given ExtensionType"""
+        if critical is None:
+            critical = constants.EXTENSION_DEFAULT_CRITICAL[value.oid]
+        return x509.Extension(oid=value.oid, critical=critical, value=value)
 
     def freshest_crl(
         self,
