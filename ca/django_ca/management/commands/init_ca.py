@@ -55,8 +55,21 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
     def add_inhibit_any_policy_group(self, parser: CommandParser) -> None:
         """Add argument group for the Inhibit anyPolicy extension."""
-        group = parser.add_argument_group(constants.EXTENSION_NAMES[ExtensionOID.INHIBIT_ANY_POLICY])
-        group.add_argument("--inhibit-any-policy", action=IntegerRangeAction, min=0)
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.INHIBIT_ANY_POLICY]
+        cert_policies_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
+        group = parser.add_argument_group(
+            ext_name,
+            f"The {ext_name} extension indicates that the special anyPolicy is not considered a match when "
+            f"it appears in the {cert_policies_name} extension after the given number of certificates in the "
+            "validation path.",
+        )
+        group.add_argument(
+            "--inhibit-any-policy",
+            action=IntegerRangeAction,
+            min=0,
+            help="Number of certificates in the validation path where the anyPolicy is still permitted. "
+            "Must be an integer >= 0.",
+        )
 
     def add_name_constraints_group(self, parser: CommandParser) -> argparse._ArgumentGroup:
         """Add an argument group for the NameConstraints extension."""
@@ -78,6 +91,28 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             help="Add NAME to the excluded-subtree.",
         )
         return group
+
+    def add_policy_constraints_group(self, parser: CommandParser) -> None:
+        """Add argument group for the Policy Constraints extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.POLICY_CONSTRAINTS]
+        group = parser.add_argument_group(
+            constants.EXTENSION_NAMES[ExtensionOID.POLICY_CONSTRAINTS],
+            f"The {ext_name} extension can be used to require an explicit policy and/or prohibit policy "
+            "mapping.",
+        )
+        group.add_argument(
+            "--inhibit-policy-mapping",
+            action=IntegerRangeAction,
+            min=0,
+            help="Number of certificates in the validation path until policy mapping is no longer permitted.",
+        )
+        group.add_argument(
+            "--require-explicit-policy",
+            action=IntegerRangeAction,
+            min=0,
+            help="Number of certificates in the validation path until an explicit policy for the entire path "
+            "is required.",
+        )
 
     def add_arguments(self, parser: CommandParser) -> None:
         default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
@@ -216,6 +251,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         self.add_inhibit_any_policy_group(parser)
         self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
+        self.add_policy_constraints_group(parser)
 
         self.add_ca_args(parser)
 
@@ -246,6 +282,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # NameConstraints extension:
         permit_name: Optional[Iterable[x509.GeneralName]],
         exclude_name: Optional[Iterable[x509.GeneralName]],
+        # PolicyConstraints extension:
+        require_explicit_policy: Optional[int],
+        inhibit_policy_mapping: Optional[int],
         caa: str,
         website: str,
         tos: str,
@@ -309,6 +348,17 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     oid=ExtensionOID.INHIBIT_ANY_POLICY,
                     critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY],
                     value=x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
+                )
+            )
+        if require_explicit_policy is not None or inhibit_policy_mapping is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.POLICY_CONSTRAINTS,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.POLICY_CONSTRAINTS],
+                    value=x509.PolicyConstraints(
+                        require_explicit_policy=require_explicit_policy,
+                        inhibit_policy_mapping=inhibit_policy_mapping,
+                    ),
                 )
             )
 

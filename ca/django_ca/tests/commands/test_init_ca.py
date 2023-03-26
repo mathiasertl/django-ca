@@ -344,12 +344,22 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca_key.key_size, 1024)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_inhibit_any_policy(self) -> None:
+    def test_extensions(self) -> None:
         """Test creating a certificate with the Inhibit anyPolicy extension."""
 
-        ca = self.init_ca_e2e(self.hostname[:32], "--inhibit-any-policy=3", f"/CN={self.hostname}")
+        ca = self.init_ca_e2e(
+            self.hostname[:32],
+            "--inhibit-any-policy=3",
+            "--require-explicit-policy=1",
+            "--inhibit-policy-mapping=2",
+            f"/CN={self.hostname}",
+        )
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.INHIBIT_ANY_POLICY], self.ext(x509.InhibitAnyPolicy(3))
+        )
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.POLICY_CONSTRAINTS],
+            self.ext(x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=2)),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

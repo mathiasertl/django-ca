@@ -30,7 +30,8 @@ ChangeLog
 * The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were changed to
   ``--path-length`` and ``--no-path-length``.
 * Make the Key Usage extension in :command:`manage.py init_ca` configurable.
-* Add support for adding the Inhibit anyPolicy extension when using :command:`manage.py init_ca`.
+* Add support for adding the Inhibit anyPolicy and Policy Constraints extensions when using
+  :command:`manage.py init_ca`.
 * Add support for multiple OCSP responder and CA Issuer entries when creating a certificate authority.
 * Add typehints when installing as wheel.
 
