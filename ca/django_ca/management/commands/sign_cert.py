@@ -113,6 +113,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         algorithm: Optional[hashes.HashAlgorithm],
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
+        ocsp_no_check: bool,
+        ocsp_no_check_critical: bool,
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
@@ -141,6 +143,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         if key_usage is not None:
             extensions.append(
                 x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
+            )
+        if ocsp_no_check is True:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.OCSP_NO_CHECK, critical=ocsp_no_check_critical, value=x509.OCSPNoCheck()
+                )
             )
 
         cname = None

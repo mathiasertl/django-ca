@@ -241,6 +241,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_password(general_group)
         self.add_extensions(parser)
         self.add_key_usage_group(parser)
+        self.add_ocsp_no_check_group(parser)
 
         general_group.add_argument(
             "--expires",
@@ -265,6 +266,19 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             "--out", metavar="FILE", help="Save signed certificate to FILE. If omitted, print to stdout."
         )
         return general_group
+
+    def add_ocsp_no_check_group(self, parser: CommandParser) -> None:
+        """Add argument group for the OCSPNoCheck extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.OCSP_NO_CHECK]
+        group = parser.add_argument_group(
+            ext_name,
+            f"The {ext_name} extension is used in OCSP responder certificates to indicate that it does not "
+            "need to be checked via OCSP.",
+        )
+        group.add_argument(
+            "--ocsp-no-check", default=False, action="store_true", help=f"Add the {ext_name} extension."
+        )
+        self.add_critical_option(group, ExtensionOID.OCSP_NO_CHECK)
 
     def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""

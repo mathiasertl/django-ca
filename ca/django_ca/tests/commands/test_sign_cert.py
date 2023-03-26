@@ -360,7 +360,52 @@ class SignCertTestCase(TestCaseMixin, TestCase):
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
             "--key-usage=keyCertSign",
+            "--ocsp-no-check",
+            "--ext-key-usage=clientAuth",
+            "--alt=URI:https://example.net",
+            "--tls-feature=OCSPMustStaple",
+        ]
+
+        with self.assertCreateCertSignals() as (pre, post):
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+        self.assertEqual(stderr, "")
+
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
+
+        actual = cert.x509_extensions
+        self.assertEqual(
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH)
+        )
+        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
+        self.assertEqual(actual[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+        self.assertEqual(
+            cert.x509_extensions[x509.SubjectAlternativeName.oid],
+            self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
+        )
+        self.assertEqual(
+            actual[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
+        )
+        self.assertEqual(
+            actual[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
+        )
+
+    @override_tmpcadir()
+    def test_extensions_with_non_default_critical(self):
+        """Test setting extensions with non-default critical values."""
+        stdin = self.csr_pem.encode()
+        cmdline = [
+            "sign_cert",
+            f"--subject=/CN={self.hostname}",
+            f"--ca={self.ca.serial}",
+            "--key-usage=keyCertSign",
             "--key-usage-non-critical",
+            "--ocsp-no-check",
+            "--ocsp-no-check-critical",
             "--ext-key-usage=clientAuth",
             "--alt=URI:https://example.net",
             "--tls-feature=OCSPMustStaple",
@@ -378,20 +423,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
 
         actual = cert.x509_extensions
         self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False))
-        self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH)
-        )
-        self.assertEqual(
-            cert.x509_extensions[x509.SubjectAlternativeName.oid],
-            self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
-        )
-        self.assertEqual(
-            actual[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
-        )
-        self.assertEqual(
-            actual[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
-        )
+        self.assertEqual(actual[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
 
     @override_tmpcadir()
     def test_multiple_sans(self) -> None:

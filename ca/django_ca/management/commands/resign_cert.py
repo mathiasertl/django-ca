@@ -74,6 +74,8 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         algorithm: Optional[hashes.HashAlgorithm],
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
+        ocsp_no_check: bool,
+        ocsp_no_check_critical: bool,
         **options: Any,
     ) -> None:
         if ca is None:
@@ -113,6 +115,15 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             )
         elif cert_key_usage := cert.x509_extensions.get(ExtensionOID.KEY_USAGE):
             extensions.append(cert_key_usage)
+
+        if ocsp_no_check is True:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.OCSP_NO_CHECK, critical=ocsp_no_check_critical, value=x509.OCSPNoCheck()
+                )
+            )
+        elif cert_ocsp_no_check := cert.x509_extensions.get(ExtensionOID.OCSP_NO_CHECK):
+            extensions.append(cert_ocsp_no_check)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_san is False:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
