@@ -193,6 +193,18 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         ]
         self.assertExtensions(ca, expected)
 
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_no_extensions(self) -> None:
+        """Test passing no extensions."""
+
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init("with-extra", subject, extensions=None)
+        self.assertEqual(ca.subject, subject)
+        self.assertExtensions(
+            ca, [self.basic_constraints(ca=True), self.key_usage(crl_sign=True, key_cert_sign=True)]
+        )
+
     @override_tmpcadir()
     def test_acme_parameters(self) -> None:
         """Test parameters for ACMEv2."""

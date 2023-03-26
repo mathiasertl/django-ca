@@ -833,7 +833,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, value: x509.ExtensionType, critical: Optional[bool] = None
     ) -> x509.Extension[x509.ExtensionType]:
         """Shortcut to get a x509.Extension object from the given ExtensionType"""
-        if critical is None:
+        if critical is None:  # pragma: no branch
             critical = constants.EXTENSION_DEFAULT_CRITICAL[value.oid]
         return x509.Extension(oid=value.oid, critical=critical, value=value)
 

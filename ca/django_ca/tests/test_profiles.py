@@ -69,7 +69,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
 
 
-class ProfileTestCase(TestCaseMixin, TestCase):
+class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
     """Main tests for the profile class."""
 
     def create_cert(  # type: ignore[override]
@@ -288,6 +288,18 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 self.subject_alternative_name(dns(self.hostname)),
             ],
         )
+
+    @override_tmpcadir()
+    def test_none_extension(self) -> None:
+        """Test passing an extension that is removed by the profile."""
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        csr = certs["child-cert"]["csr"]["parsed"]
+        prof = Profile("example", subject=[("C", "AT")], extensions={"ocsp_no_check": None})
+
+        with self.mockSignal(pre_sign_cert) as pre:
+            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[self.ocsp_no_check()])
+        self.assertEqual(pre.call_count, 1)
+        self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.x509_extensions)
 
     @override_tmpcadir()
     def test_cn_in_san(self) -> None:
