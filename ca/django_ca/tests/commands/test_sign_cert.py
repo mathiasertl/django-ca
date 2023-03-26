@@ -40,7 +40,7 @@ from django_ca.utils import ca_storage
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 @freeze_time(timestamps["everything_valid"])
-class SignCertTestCase(TestCaseMixin, TestCase):
+class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
     """Main test class for this command."""
 
     default_ca = "root"
@@ -395,7 +395,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):
         )
 
     @override_tmpcadir()
-    def test_extensions_with_non_default_critical(self):
+    def test_extensions_with_non_default_critical(self) -> None:
         """Test setting extensions with non-default critical values."""
         stdin = self.csr_pem.encode()
         cmdline = [

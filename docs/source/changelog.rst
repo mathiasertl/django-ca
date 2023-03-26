@@ -34,6 +34,7 @@ ChangeLog
   :command:`manage.py init_ca`.
 * Add support for adding the OCSP No Check extension in when issuing certificates with :command:`manage.py
   sign_cert` or :command:`manage.py resign_cert`.
+* Copy all extensions when using :command:`manage.py resign_cert`.
 * Add support for multiple OCSP responder and CA Issuer entries when creating a certificate authority.
 * Add typehints when installing as wheel.
 

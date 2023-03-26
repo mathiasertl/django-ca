@@ -339,7 +339,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             self.test_private_key(parent, parent_password)
 
         subject = sort_name(subject)
-        extensions = [
+        extensions: List[x509.Extension[x509.ExtensionType]] = [
             x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
         ]
         if inhibit_any_policy is not None:

@@ -39,7 +39,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
     default_cert = "root-cert"
     load_cas = ("root", "child", "dsa")
-    load_certs = ("root-cert", "dsa-cert", "no-extensions")
+    load_certs = ("root-cert", "dsa-cert", "no-extensions", "all-extensions")
 
     def assertResigned(  # pylint: disable=invalid-name
         self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
@@ -111,6 +111,97 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(self.certs["dsa-cert"], new)
         self.assertEqualExt(self.certs["dsa-cert"], new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
+
+    @override_tmpcadir()
+    def test_all_extensions_certificate(self) -> None:
+        """Test resigning the all-extensions certificate."""
+        orig = self.certs["all-extensions"]
+        with self.assertCreateCertSignals():
+            stdout, stderr = self.cmd("resign_cert", orig.serial)
+        self.assertEqual(stderr, "")
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(orig, new)
+        self.assertIsInstance(new.algorithm, hashes.SHA256)
+
+        expected = orig.x509_extensions
+        actual = new.x509_extensions
+        self.assertEqual(
+            sorted(expected.values(), key=lambda e: e.oid.dotted_string),  # type: ignore[no-any-return]
+            sorted(actual.values(), key=lambda e: e.oid.dotted_string),  # type: ignore[no-any-return]
+        )
+
+    @override_tmpcadir()
+    def test_test_all_extensions_cert_with_overrides(self) -> None:
+        """Test resigning a certificate with adding new extensions."""
+        orig = self.certs["all-extensions"]
+        with self.assertCreateCertSignals():
+            stdout, stderr = self.cmd(
+                "resign_cert",
+                "--key-usage=keyAgreement,keyEncipherment",
+                "--key-usage-non-critical",
+                "--ocsp-no-check",
+                "--ocsp-no-check-critical",
+                orig.serial,
+            )
+        self.assertEqual(stderr, "")
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(orig, new)
+        self.assertIsInstance(new.algorithm, hashes.SHA256)
+
+        extensions = new.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.KEY_USAGE],
+            self.key_usage(key_agreement=True, key_encipherment=True, critical=False),
+        )
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
+
+    @override_tmpcadir()
+    def test_test_no_extensions_cert_with_overrides(self) -> None:
+        """Test resigning a certificate with adding new extensions."""
+        orig = self.certs["no-extensions"]
+        with self.assertCreateCertSignals():
+            stdout, stderr = self.cmd(
+                "resign_cert", "--key-usage=keyAgreement,keyEncipherment", "--ocsp-no-check", orig.serial
+            )
+        self.assertEqual(stderr, "")
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(orig, new)
+        self.assertIsInstance(new.algorithm, hashes.SHA256)
+
+        extensions = new.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_agreement=True, key_encipherment=True)
+        )
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+
+    @override_tmpcadir()
+    def test_test_no_extensions_cert_with_overrides_with_non_default_critical(self) -> None:
+        """Test resigning a certificate with adding new extensions with non-default critical values."""
+        orig = self.certs["no-extensions"]
+        with self.assertCreateCertSignals():
+            stdout, stderr = self.cmd(
+                "resign_cert",
+                "--key-usage=keyAgreement,keyEncipherment",
+                "--key-usage-non-critical",
+                "--ocsp-no-check",
+                "--ocsp-no-check-critical",
+                orig.serial,
+            )
+        self.assertEqual(stderr, "")
+
+        new = Certificate.objects.get(pub=stdout)
+        self.assertResigned(orig, new)
+        self.assertIsInstance(new.algorithm, hashes.SHA256)
+
+        extensions = new.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.KEY_USAGE],
+            self.key_usage(key_agreement=True, key_encipherment=True, critical=False),
+        )
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(True))
 
     @override_tmpcadir()
     def test_custom_algorithm(self) -> None:

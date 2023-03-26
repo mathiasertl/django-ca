@@ -487,8 +487,8 @@ class CertificateAuthorityManager(
                 x509.NameConstraints(permitted_subtrees, excluded_subtrees), critical=True
             )
 
-        for ext in extensions:
-            builder = builder.add_extension(ext.value, critical=ext.critical)
+        for extra_extension in extensions:
+            builder = builder.add_extension(extra_extension.value, critical=extra_extension.critical)
 
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm)
 

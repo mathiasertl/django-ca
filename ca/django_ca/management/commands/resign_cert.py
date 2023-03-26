@@ -62,7 +62,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
@@ -127,6 +127,21 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_san is False:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
+
+        # Copy over extensions that are not handled above already:
+        for oid, extension in cert.x509_extensions.items():
+            if oid in (ExtensionOID.KEY_USAGE, ExtensionOID.OCSP_NO_CHECK):
+                continue
+            if oid in (ext_type.oid for ext_type in self.sign_extensions):
+                continue
+            # These extensions is handled by the manager itself based on the CA:
+            if oid in (
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            ):
+                continue
+            extensions.append(extension)
 
         try:
             cert = Certificate.objects.create_cert(
