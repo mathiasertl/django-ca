@@ -30,7 +30,7 @@ ChangeLog
 * The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were changed to
   ``--path-length`` and ``--no-path-length``.
 * Make the Key Usage extension in :command:`manage.py init_ca` configurable.
-* Add support for adding the Inhibit anyPolicy and Policy Constraints extensions when using
+* Add support for adding the Inhibit :spelling:word:`anyPolicy` and Policy Constraints extensions when using
   :command:`manage.py init_ca`.
 * Add support for adding the OCSP No Check extension in when issuing certificates with :command:`manage.py
   sign_cert` or :command:`manage.py resign_cert`.

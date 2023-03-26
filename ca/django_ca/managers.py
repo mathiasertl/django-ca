@@ -345,6 +345,13 @@ class CertificateAuthorityManager(
             ca_issuer_url = [ca_issuer_url]
         if extensions is None:
             extensions = []
+        else:
+            extensions = list(extensions)  # cast extensions to list if set (so that we can extend later)
+
+            # check type of values to provide better errors
+            for extension in extensions:
+                if isinstance(extension, x509.Extension) is False:
+                    raise ValueError(f"Cannot add extension of type {type(extension).__name__}")
 
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         algorithm = validate_public_key_parameters(key_type, algorithm)
@@ -353,17 +360,6 @@ class CertificateAuthorityManager(
 
         if openssh_ca and parent:
             raise ValueError("OpenSSH does not support intermediate authorities")
-
-        # Cast extensions to list if set (so that we can extend if necessary)
-        if extensions is not None:
-            extensions = list(extensions)
-
-            # check type of values to provide better errors
-            for extension in extensions:
-                if isinstance(extension, x509.Extension) is False:
-                    raise ValueError(f"Cannot add extension of type {type(extension).__name__}")
-        else:
-            extensions = []
 
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
