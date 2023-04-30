@@ -2,8 +2,8 @@
 GitPython==3.1.31
 Jinja2==3.1.2
 PyYAML==6.0
-coverage[toml]==7.2.1
+coverage[toml]==7.2.5
 semantic-version==2.10.0
 tabulate==0.9.0
-termcolor==2.2.0
+termcolor==2.3.0
 tomli==2.0.1; python_version < '3.11'

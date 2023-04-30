@@ -25,7 +25,6 @@ from typing import Any, Iterable, List, Optional, Tuple
 import requests
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import ExtensionOID
 
