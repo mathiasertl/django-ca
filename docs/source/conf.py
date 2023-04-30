@@ -436,7 +436,9 @@ jinja_filters = {
 }
 
 qualname_overrides = {
+    "AllowedHashTypes": "django_ca.typehints.AllowedHashTypes",
     "mappingproxy": "python:types.MappingProxyType",
+    "MappingProxyType": "python:types.MappingProxyType",
     "ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.hazmat._oid.ExtendedKeyUsageOID": "cg:cryptography.x509.oid.ExtendedKeyUsageOID",
@@ -486,6 +488,7 @@ nitpick_ignore = [
     # Django documents these under non-canonical path names
     ("py:class", "django.http.request.HttpRequest"),
     ("py:class", "django.http.response.HttpResponse"),
+    ("py:class", "django_ca.typehints.AllowedHashTypes"),
 ]
 
 
