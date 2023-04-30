@@ -29,7 +29,7 @@ import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
-from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -671,7 +671,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: ParsableKeyType,
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> PRIVATE_KEY_TYPES:
+) -> PrivateKeyTypes:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_private_key_parameters` on the
