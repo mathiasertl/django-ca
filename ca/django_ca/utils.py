@@ -29,7 +29,6 @@ import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -39,6 +38,8 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.typehints import (
+    AllowedHashTypes,
+    CertificateIssuerPrivateKeyTypes,
     Expires,
     ParsableGeneralName,
     ParsableHash,
@@ -592,8 +593,8 @@ def validate_private_key_parameters(
 
 
 def validate_public_key_parameters(
-    key_type: ParsableKeyType, algorithm: Optional[hashes.HashAlgorithm]
-) -> Optional[hashes.HashAlgorithm]:
+    key_type: ParsableKeyType, algorithm: Optional[AllowedHashTypes]
+) -> Optional[AllowedHashTypes]:
     """Validate parameters for signing a certificate.
 
     This function can be used to fail early if invalid parameters are passed.
@@ -671,7 +672,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: ParsableKeyType,
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> PrivateKeyTypes:
+) -> CertificateIssuerPrivateKeyTypes:
     """Generate a private key.
 
     This function assumes that you called :py:func:`~django_ca.utils.validate_private_key_parameters` on the
@@ -897,9 +898,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
             raise ValueError(f"Could not parse DNS name: {name}") from e
 
 
-def parse_hash_algorithm(
-    value: Union[Type[hashes.HashAlgorithm], ParsableHash] = None
-) -> hashes.HashAlgorithm:
+def parse_hash_algorithm(value: Union[Type[hashes.HashAlgorithm], ParsableHash] = None) -> AllowedHashTypes:
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
@@ -948,14 +947,18 @@ def parse_hash_algorithm(
     if value is None:
         return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
     if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
-        return value()
+        if value in constants.HASH_ALGORITHM_NAMES:
+            return typing.cast(AllowedHashTypes, value())
+        raise ValueError(f"{value}: Algorithm is not allowed for signing.")
     if isinstance(value, hashes.HashAlgorithm):
-        return value
+        if type(value) in constants.HASH_ALGORITHM_NAMES:
+            return typing.cast(AllowedHashTypes, value)
+        raise ValueError(f"{value}: Algorithm is not allowed for signing.")
     if isinstance(value, str):
         if value in constants.HASH_ALGORITHM_KEY_TYPES:
             return constants.HASH_ALGORITHM_KEY_TYPES[value]()
         try:
-            algo: Type[hashes.HashAlgorithm] = getattr(hashes, value.strip())
+            algo: Type[AllowedHashTypes] = getattr(hashes, value.strip())
             return algo()
         except AttributeError as e:
             raise ValueError(f"Unknown hash algorithm: {value}") from e

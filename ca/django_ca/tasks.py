@@ -44,6 +44,7 @@ from django_ca.models import (
     CertificateAuthority,
 )
 from django_ca.profiles import profiles
+from django_ca.typehints import AllowedHashTypes
 from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ def generate_ocsp_key(
     ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
 
     parsed_expires: Optional[timedelta] = None
-    parsed_algorithm: Optional[hashes.HashAlgorithm] = None
+    parsed_algorithm: Optional[AllowedHashTypes] = None
     parsed_curve: Optional[ec.EllipticCurve] = None
     if expires is not None:
         parsed_expires = timedelta(seconds=expires)

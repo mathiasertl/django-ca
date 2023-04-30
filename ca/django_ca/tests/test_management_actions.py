@@ -710,7 +710,6 @@ class ReasonActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
-        self.maxDiff = None
         whitespace = " " * len(f"usage: {self.script} ")
         self.assertParserError(
             ["foo"],

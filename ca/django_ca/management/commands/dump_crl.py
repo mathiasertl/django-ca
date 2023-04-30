@@ -19,13 +19,13 @@
 import typing
 from typing import Any, Optional
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca.management.base import BinaryCommand
 from django_ca.models import CertificateAuthority
+from django_ca.typehints import AllowedHashTypes
 
 
 class Command(BinaryCommand):
@@ -76,7 +76,7 @@ class Command(BinaryCommand):
         path: str,
         ca: CertificateAuthority,
         encoding: Encoding,
-        algorithm: Optional[hashes.HashAlgorithm],
+        algorithm: Optional[AllowedHashTypes],
         scope: Optional[typing.Literal["ca", "user", "attribute"]],
         include_issuing_distribution_point: Optional[bool],
         password: Optional[bytes],

@@ -35,7 +35,7 @@ from django_ca.acme.responses import AcmeResponseUnauthorized
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug
 from django_ca.tests.base import certs, override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.typehints import PrivateKeyTypes
+from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 
@@ -219,7 +219,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         self,
         uri: str,
         msg: Union[jose.json_util.JSONObjectWithFields, bytes],
-        cert: Optional[PrivateKeyTypes] = None,
+        cert: Optional[CertificateIssuerPrivateKeyTypes] = None,
         kid: Optional[str] = None,
         nonce: Optional[bytes] = None,
         payload_cb: Optional[typing.Callable[[Dict[Any, Any]], Dict[Any, Any]]] = None,
@@ -234,7 +234,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         if nonce is None:
             nonce = self.get_nonce()
         if cert is None:
-            cert = typing.cast(PrivateKeyTypes, certs[self.load_certs[0]]["key"]["parsed"])
+            cert = typing.cast(CertificateIssuerPrivateKeyTypes, certs[self.load_certs[0]]["key"]["parsed"])
         if post_kwargs is None:
             post_kwargs = {}
 

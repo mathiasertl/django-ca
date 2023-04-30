@@ -84,7 +84,7 @@ from django_ca.querysets import (
     CertificateQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import Expires, ParsableHash, ParsableKeyType, PrivateKeyTypes
+from django_ca.typehints import AllowedHashTypes, Expires, ParsableHash, ParsableKeyType, PrivateKeyTypes
 from django_ca.utils import (
     bytes_to_hex,
     ca_storage,
@@ -321,9 +321,9 @@ class X509CertMixin(DjangoCAModel):
     ##########################
 
     @property
-    def algorithm(self) -> Optional[hashes.HashAlgorithm]:
+    def algorithm(self) -> Optional[AllowedHashTypes]:
         """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
-        return self.pub.loaded.signature_hash_algorithm
+        return typing.cast(AllowedHashTypes, self.pub.loaded.signature_hash_algorithm)
 
     def get_fingerprint(self, algorithm: hashes.HashAlgorithm) -> str:
         """Get the digest for a certificate as string, including colons."""
@@ -758,7 +758,7 @@ class CertificateAuthority(X509CertMixin):
         self,
         csr: x509.CertificateSigningRequest,
         subject: x509.Name,
-        algorithm: Optional[hashes.HashAlgorithm] = None,
+        algorithm: Optional[AllowedHashTypes] = None,
         expires: Optional[datetime] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
         cn_in_san: bool = True,
@@ -894,7 +894,7 @@ class CertificateAuthority(X509CertMixin):
         self,
         profile: str = "ocsp",
         expires: Expires = 3,
-        algorithm: Optional[hashes.HashAlgorithm] = None,
+        algorithm: Optional[AllowedHashTypes] = None,
         password: Optional[Union[str, bytes]] = None,
         key_size: Optional[int] = None,
         key_type: Optional[ParsableKeyType] = None,
@@ -1099,7 +1099,7 @@ class CertificateAuthority(X509CertMixin):
     def get_crl(
         self,
         expires: int = 86400,
-        algorithm: Optional[hashes.HashAlgorithm] = None,
+        algorithm: Optional[AllowedHashTypes] = None,
         password: Optional[Union[str, bytes]] = None,
         scope: Optional[typing.Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,

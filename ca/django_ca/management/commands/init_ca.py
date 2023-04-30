@@ -24,7 +24,6 @@ from datetime import timedelta
 from typing import Any, Iterable, List, Optional
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import ExtensionOID, NameOID
 
@@ -44,7 +43,7 @@ from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
-from django_ca.typehints import ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ParsableKeyType
 from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
 
 
@@ -264,7 +263,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         key_size: Optional[int],
         key_type: ParsableKeyType,
         elliptic_curve: Optional[ec.EllipticCurve],
-        algorithm: Optional[hashes.HashAlgorithm],
+        algorithm: Optional[AllowedHashTypes],
         path_length: Optional[int],
         password: Optional[bytes],
         parent_password: Optional[bytes],

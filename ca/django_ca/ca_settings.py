@@ -15,6 +15,7 @@
 
 import os
 import re
+import typing
 import warnings
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple, Type
@@ -31,6 +32,9 @@ from django.utils.translation import gettext_lazy as _
 # IMPORTANT: Do **not** import anything but django_ca.constants/deprecation here, or you risk circular
 # imports.
 from django_ca import constants, deprecation
+
+if typing.TYPE_CHECKING:
+    from django_ca.typehints import AllowedHashTypes
 
 
 def _normalize_x509_name(value: Any, hint: str) -> Optional[x509.Name]:
@@ -301,7 +305,7 @@ elif _CA_DIGEST_ALGORITHM := getattr(settings, "CA_DIGEST_ALGORITHM", "").upper(
         deprecation.RemovedInDjangoCA125Warning,
     )
     try:
-        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: hashes.HashAlgorithm = getattr(  # type: ignore[no-redef]
+        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: "AllowedHashTypes" = getattr(  # type: ignore[no-redef]
             hashes, _CA_DIGEST_ALGORITHM
         )()
     except AttributeError:

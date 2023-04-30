@@ -19,7 +19,6 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 # Module level imports to enable forward references. See also:
@@ -36,17 +35,35 @@ class SupportsLessThan(typing.Protocol):
         ...
 
 
+try:  # pragma: only cryptography>=40
+    # pylint: disable-next=useless-import-alias,ungrouped-imports
+    from cryptography.hazmat.primitives.asymmetric.types import (
+        CertificateIssuerPrivateKeyTypes as CertificateIssuerPrivateKeyTypes,
+    )
+except ImportError:  # pragma: only cryptography<40
+    # typehints as added in cryptography 40
+    from cryptography.hazmat.primitives.asymmetric.types import (
+        CERTIFICATE_PRIVATE_KEY_TYPES as CertificateIssuerPrivateKeyTypes,
+    )
+
 CRLExtensionTypeTypeVar = typing.TypeVar(
     "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL
 )
 
 #: Private key types that we support
-PrivateKeyTypes = Union[
-    dsa.DSAPrivateKey,
-    rsa.RSAPrivateKey,
-    ec.EllipticCurvePrivateKey,
-    ed448.Ed448PrivateKey,
-    ed25519.Ed25519PrivateKey,
+#: deprecated in 1.24.0: Use cryptography's CertificateIssuerPrivateKeyTypes instead.
+PrivateKeyTypes = CertificateIssuerPrivateKeyTypes  # pragma: only django-ca<=1.25.0
+
+#: duplicate of the protected cryptography.x509.base._AllowedHashTypes.
+AllowedHashTypes = typing.Union[
+    hashes.SHA224,
+    hashes.SHA256,
+    hashes.SHA384,
+    hashes.SHA512,
+    hashes.SHA3_224,
+    hashes.SHA3_256,
+    hashes.SHA3_384,
+    hashes.SHA3_512,
 ]
 
 ExtensionDict = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]

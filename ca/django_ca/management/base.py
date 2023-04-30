@@ -36,6 +36,7 @@ from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
+from django_ca.typehints import AllowedHashTypes
 from django_ca.utils import add_colons, format_name
 
 
@@ -264,9 +265,8 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         )
         return general_group
 
-    def add_extended_key_usage_group(
-        self, parser: argparse.ArgumentParser, default: Optional[Tuple[x509.ObjectIdentifier, ...]] = None
-    ) -> None:
+    def add_extended_key_usage_group(self, parser: argparse.ArgumentParser) -> None:
+        """Add argument group for the Extended Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.EXTENDED_KEY_USAGE]
         group = parser.add_argument_group(
             ext_name,
@@ -403,10 +403,10 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:
         """Output digest and PEM in footer."""
         self.stdout.write("\nDigest:")
-        for algorithm in [hashes.SHA256, hashes.SHA512]:
-            # MYPY NOTE: seems to be a false positive
-            algorithm_name = constants.HASH_ALGORITHM_NAMES[algorithm]  # type: ignore[type-abstract]
-            fingerprint = cert.get_fingerprint(algorithm())
+        hash_algorithms: Tuple[AllowedHashTypes, ...] = (hashes.SHA256(), hashes.SHA512())
+        for algorithm in hash_algorithms:
+            algorithm_name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+            fingerprint = cert.get_fingerprint(algorithm)
             text = f"{algorithm_name}: {fingerprint}"
 
             if wrap is True:

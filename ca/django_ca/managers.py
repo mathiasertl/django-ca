@@ -20,7 +20,7 @@ import warnings
 from typing import Any, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -35,7 +35,7 @@ from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca
-from django_ca.typehints import Expires, ParsableKeyType, X509CertMixinTypeVar
+from django_ca.typehints import AllowedHashTypes, Expires, ParsableKeyType, X509CertMixinTypeVar
 from django_ca.utils import (
     ca_storage,
     format_general_name,
@@ -190,7 +190,7 @@ class CertificateAuthorityManager(
         name: str,
         subject: x509.Name,
         expires: Expires = None,
-        algorithm: Optional[hashes.HashAlgorithm] = None,
+        algorithm: Optional[AllowedHashTypes] = None,
         parent: Optional["CertificateAuthority"] = None,
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,

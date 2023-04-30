@@ -19,7 +19,6 @@ from threading import local
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from cryptography import x509
-from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django_ca import ca_settings, typehints
@@ -27,6 +26,7 @@ from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, 
 from django_ca.extensions import parse_extension, serialize_extension
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
+    AllowedHashTypes,
     Expires,
     ExtensionMapping,
     ParsableExtension,
@@ -61,7 +61,7 @@ class Profile:
     """
 
     # pylint: disable=too-many-instance-attributes
-    algorithm: Optional[HashAlgorithm] = None
+    algorithm: Optional[AllowedHashTypes] = None
     extensions: Dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]]
 
     def __init__(
@@ -171,7 +171,7 @@ class Profile:
         csr: x509.CertificateSigningRequest,
         subject: Optional[x509.Name] = None,
         expires: Expires = None,
-        algorithm: Optional[HashAlgorithm] = None,
+        algorithm: Optional[AllowedHashTypes] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
         cn_in_san: Optional[bool] = None,
         add_crl_url: Optional[bool] = None,

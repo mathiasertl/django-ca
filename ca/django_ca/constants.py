@@ -14,6 +14,7 @@
 """Collection of constants used by django-ca."""
 
 import enum
+import typing
 from collections import defaultdict
 from types import MappingProxyType
 from typing import Type
@@ -27,7 +28,9 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.utils.translation import gettext_lazy as _
 
-# IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
+# IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
+if typing.TYPE_CHECKING:
+    from django_ca.typehints import AllowedHashTypes
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
@@ -271,10 +274,8 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 
 
 # pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is dropped in 1.25.0
-HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
+HASH_ALGORITHM_KEYS: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingProxyType(
     {
-        hashes.SHA512_224: hashes.SHA512_224.name,
-        hashes.SHA512_256: hashes.SHA512_256.name,
         hashes.SHA224: hashes.SHA224.name,
         hashes.SHA256: hashes.SHA256.name,
         hashes.SHA384: hashes.SHA384.name,
@@ -283,21 +284,18 @@ HASH_ALGORITHM_KEYS: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mappi
         hashes.SHA3_256: hashes.SHA3_256.name,
         hashes.SHA3_384: hashes.SHA3_384.name,
         hashes.SHA3_512: hashes.SHA3_512.name,
-        hashes.SM3: hashes.SM3.name,
     }
 )
 
 # pragma: only django-ca<1.25.0  # support for non-standard hash algorithm names is dropped in 1.25.0
-HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = MappingProxyType(
+HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
 )
 
 #: Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
 #: ``--algorithm`` command line parameter.
-HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = MappingProxyType(
+HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingProxyType(
     {
-        hashes.SHA512_224: "SHA-512/224",
-        hashes.SHA512_256: "SHA-512/256",
         hashes.SHA224: "SHA-224",
         hashes.SHA256: "SHA-256",
         hashes.SHA384: "SHA-384",
@@ -306,8 +304,10 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mapp
         hashes.SHA3_256: "SHA3/256",
         hashes.SHA3_384: "SHA3/384",
         hashes.SHA3_512: "SHA3/512",
-        hashes.SM3: "SM3",
-        # cryptography does not support SHAKE128, SHAKE256, BLAKE2b and BLAKE2s for signatures
+        # cryptography does not support these hash algorithms for signatures
+        # hashes.SHA512_224: "SHA-512/224",
+        # hashes.SHA512_256: "SHA-512/256",
+        # hashes.SM3: "SM3",
         # hashes.SHAKE128: "SHAKE128",
         # hashes.SHAKE256: "SHAKE256",
         # hashes.BLAKE2b: "BLAKE2b",  # https://datatracker.ietf.org/doc/html/rfc7693.html
@@ -315,7 +315,7 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[hashes.HashAlgorithm], str]" = Mapp
     }
 )
 #: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
-HASH_ALGORITHM_TYPES: "MappingProxyType[str, Type[hashes.HashAlgorithm]]" = MappingProxyType(
+HASH_ALGORITHM_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
 )
 

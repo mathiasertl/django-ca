@@ -139,8 +139,8 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
 
     def test_default_signature_hash_algorithm(self) -> None:
         """Test invalid ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
-        with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="SHA-512/256"):
-            self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA512_256)
+        with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="SHA-224"):
+            self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA224)
 
         with self.assertImproperlyConfigured(r"^foo: Unknown hash algorithm\.$"):
             with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="foo"):

@@ -19,7 +19,6 @@
 from datetime import timedelta
 from typing import Any, Iterable, Optional
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.core.management.base import CommandError, CommandParser
@@ -29,7 +28,7 @@ from django_ca.management.actions import ExpiresAction
 from django_ca.management.base import BaseCommand
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_key, run_task
-from django_ca.typehints import ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ParsableKeyType
 from django_ca.utils import add_colons, validate_private_key_parameters
 
 
@@ -70,7 +69,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         serials: Iterable[str],
         profile: Optional[str],
         expires: timedelta,
-        algorithm: Optional[hashes.HashAlgorithm],
+        algorithm: Optional[AllowedHashTypes],
         key_type: Optional[ParsableKeyType],
         key_size: Optional[int],
         elliptic_curve: Optional[ec.EllipticCurve],

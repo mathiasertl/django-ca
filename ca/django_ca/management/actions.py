@@ -33,7 +33,7 @@ from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, KEY_
 from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
 from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.typehints import AlternativeNameExtensionType
+from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
 from django_ca.utils import (
     is_power2,
     parse_encoding,
@@ -78,7 +78,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], 
         setattr(namespace, self.dest, self.parse_value(values))
 
 
-class AlgorithmAction(SingleValueAction[str, hashes.HashAlgorithm]):
+class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
     """Action for giving an algorithm.
 
     >>> parser.add_argument('--algorithm', action=AlgorithmAction)  # doctest: +ELLIPSIS
@@ -93,7 +93,7 @@ class AlgorithmAction(SingleValueAction[str, hashes.HashAlgorithm]):
         # kwargs.setdefault("choices", sorted(constants.HASH_ALGORITHM_TYPES))
         super().__init__(**kwargs)
 
-    def parse_value(self, value: str) -> hashes.HashAlgorithm:
+    def parse_value(self, value: str) -> AllowedHashTypes:
         """Parse the value for this action."""
         try:
             return constants.HASH_ALGORITHM_TYPES[value]()

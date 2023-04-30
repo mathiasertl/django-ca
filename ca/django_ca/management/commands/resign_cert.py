@@ -20,7 +20,6 @@ from datetime import timedelta
 from typing import Any, List, Optional
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
@@ -31,6 +30,7 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
+from django_ca.typehints import AllowedHashTypes
 
 
 class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
@@ -71,7 +71,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         watch: List[str],
         password: Optional[bytes],
         profile: Optional[str],
-        algorithm: Optional[hashes.HashAlgorithm],
+        algorithm: Optional[AllowedHashTypes],
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
         key_usage: Optional[x509.KeyUsage],
