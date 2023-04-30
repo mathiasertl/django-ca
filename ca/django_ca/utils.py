@@ -87,13 +87,6 @@ ADMIN_SUBJECT_OIDS = (
 )
 
 
-def make_naive(timestamp: datetime) -> datetime:
-    """Like :py:func:`~django.utils.timezone.make_naive`, but does not return an error if already naive."""
-    if timezone.is_naive(timestamp) is False:
-        return timezone.make_naive(timestamp)
-    return timestamp
-
-
 def sort_name(name: x509.Name) -> x509.Name:
     """Returns the subject in the correct order for a x509 subject."""
     try:
@@ -999,18 +992,25 @@ def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
 
 
 def parse_expires(expires: Expires = None) -> datetime:
-    """Parse a value specifying an expiry into a concrete datetime."""
+    """Parse a value specifying an expiry into a concrete datetime.
 
-    now = timezone.now().replace(second=0, microsecond=0)
+    This function always returns a timezone-aware datetime object with UTC as a timezone.
+    """
+
+    now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
 
     if isinstance(expires, int):
         return now + timedelta(days=expires)
     if isinstance(expires, timedelta):
         return now + expires
     if isinstance(expires, datetime):
+        if timezone.is_naive(expires):
+            # Should never happen, as all callers of this function already pass a tz-aware timestamp.
+            raise ValueError("expires must not be a naive datetime")
+
         # NOTE: A datetime is passed when creating an intermediate CA and the expiry is limited by the expiry
         # of the parent CA.
-        return expires.replace(second=0, microsecond=0)
+        return expires.replace(second=0, microsecond=0).astimezone(tz.utc)
 
     return now + ca_settings.CA_DEFAULT_EXPIRES
 
@@ -1061,26 +1061,30 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
     ----------
 
     expires : datetime
-        Serial number to set for this certificate. Use :py:func:`~cg:cryptography.x509.random_serial_number`
-        to generate such a value. By default, a value will be generated.
+        When this certificate is supposed to expire, as a timezone-aware datetime object.
     serial : int, optional
         Serial for the certificate. If not passed, a serial will be randomly generated using
         :py:func:`~cg:cryptography.x509.random_serial_number`.
     """
 
-    now = datetime.utcnow().replace(second=0, microsecond=0)
+    now = datetime.now(tz.utc).replace(second=0, microsecond=0)
 
     # NOTE: Explicitly passing a serial is used when creating a CA, where we want to add extensions where the
     # value references the serial.
     if serial is None:
         serial = x509.random_serial_number()
 
-    expires = make_naive(expires)
+    if timezone.is_naive(expires):
+        raise ValueError("expires must not be a naive datetime")
     if expires <= now:
         raise ValueError("expires must be in the future")
 
     # strip seconds and microseconds
     expires = expires.replace(second=0, microsecond=0)
+
+    # cryptography expects timezone-naive objects in UTC, so we convert them.
+    now = timezone.make_naive(now, timezone=tz.utc)
+    expires = timezone.make_naive(expires, timezone=tz.utc)
 
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)

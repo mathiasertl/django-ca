@@ -17,6 +17,7 @@ import html
 import typing
 import unittest
 from datetime import datetime, timedelta
+from datetime import timezone as tz
 from http import HTTPStatus
 from typing import Any, Dict, List, Union
 
@@ -68,7 +69,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.default_expires = self.expires(3).strftime("%Y-%m-%d")
+
+        self.default_expires = (datetime.now(tz=tz.utc) + self.expires(3)).strftime("%Y-%m-%d")
 
     def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
         """Add certificate based on given name with given CA."""

@@ -321,16 +321,16 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     def test_options(  # pylint: disable=unused-argument
         self,
         ca: CertificateAuthority,
-        expires: Optional[Union[datetime, timedelta]],
+        expires: Optional[timedelta],
         password: Optional[bytes],
         profile: Profile,
         **options: Any,
     ) -> None:
         """Additional tests for validity of some options."""
 
-        expires = profile.get_expires(expires)
+        parsed_expires = profile.get_expires(expires)
 
-        if ca.expires < expires:
+        if ca.expires < parsed_expires:
             max_days = (ca.expires - timezone.now()).days
             raise CommandError(
                 f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."

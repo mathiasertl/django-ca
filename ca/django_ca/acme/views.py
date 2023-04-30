@@ -43,6 +43,7 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import transaction
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -78,7 +79,7 @@ from django_ca.models import (
     CertificateAuthority,
 )
 from django_ca.tasks import acme_issue_certificate, acme_validate_challenge, run_task
-from django_ca.utils import check_name, int_to_hex, make_naive, validate_email
+from django_ca.utils import check_name, int_to_hex, validate_email
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
@@ -715,10 +716,10 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
             raise AcmeMalformed(message="The following fields are required: identifiers")
 
         if settings.USE_TZ is False:
-            if not_before is not None:
-                not_before = make_naive(not_before)
-            if not_after is not None:
-                not_after = make_naive(not_after)
+            if not_before is not None and timezone.is_aware(not_before):
+                not_before = timezone.make_naive(not_before)
+            if not_after is not None and timezone.is_aware(not_after):
+                not_after = timezone.make_naive(not_after)
 
         order = AcmeOrder.objects.create(account=self.account, not_before=not_before, not_after=not_after)
         authorizations = [

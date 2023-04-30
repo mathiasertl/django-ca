@@ -20,7 +20,8 @@ import argparse
 import os
 import pathlib
 import warnings
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as tz
 from typing import Any, Iterable, List, Optional
 
 from cryptography import x509
@@ -254,7 +255,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         self.add_ca_args(parser)
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         self,
         name: str,
         subject: x509.Name,
@@ -320,7 +321,14 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # The reasoning is simple: When issuing the child CA, the default is automatically after that of the
         # parent if it wasn't issued on the same day.
         if parent and timezone.now() + expires > parent.expires:
-            expires = parent.expires  # type: ignore[assignment]
+            expires_datetime = parent.expires
+
+            # Make sure expires_datetime is tz-aware, even if USE_TZ=False.
+            if timezone.is_naive(expires_datetime):
+                expires_datetime = timezone.make_aware(expires_datetime)
+        else:
+            expires_datetime = datetime.now(tz=tz.utc) + expires
+
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to path length restrictions.")
         if not parent and ca_crl_url:
@@ -383,7 +391,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             ca = CertificateAuthority.objects.init(
                 name=name,
                 subject=subject,
-                expires=expires,
+                expires=expires_datetime,
                 algorithm=algorithm,
                 parent=parent,
                 path_length=path_length,

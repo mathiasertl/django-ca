@@ -21,6 +21,7 @@ import typing
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from datetime import timezone as tz
 from typing import Iterable, Iterator, Optional, Tuple, Type
 
 from cryptography import x509
@@ -49,6 +50,7 @@ from django_ca.utils import (
     merge_x509_names,
     multiline_url_validator,
     parse_encoding,
+    parse_expires,
     parse_general_name,
     parse_hash_algorithm,
     parse_key_curve,
@@ -819,6 +821,45 @@ class ParseEllipticCurveTestCase(TestCase):
             parse_key_curve("ECDH")  # present in the module, but *not* an EllipticCurve
 
 
+@freeze_time("2023-04-30 12:30:50.12")
+class ParseExpiresTestCase(TestCase):
+    """Test :py:func:`django_ca.utils.parse_expires."""
+
+    def test_no_args(self) -> None:
+        """Test invocation with no args."""
+        self.assertEqual(
+            parse_expires(), datetime(2023, 4, 30, 12, 30, tzinfo=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES
+        )
+
+    def test_int(self) -> None:
+        """Test invocation with no args."""
+        self.assertEqual(parse_expires(10), datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc))
+
+    def test_timedelta(self) -> None:
+        """Test invocation with no args."""
+        self.assertEqual(parse_expires(timedelta(days=10)), datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc))
+
+    def test_datetime(self) -> None:
+        """Test invocation with no args."""
+        expires = datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)
+        parsed = parse_expires(expires)
+        self.assertEqual(parsed, expires)
+        self.assertEqual(parsed.tzinfo, tz.utc)
+
+    def test_datetime_with_non_local_timezone(self) -> None:
+        """Test parsing a tz-aware datetime object with a custom timezone."""
+        tzinfo = tz(timedelta(hours=2), name="Europe/Vienna")
+        expires = datetime(2023, 5, 10, 12, 30, tzinfo=tzinfo)
+        parsed = parse_expires(expires)
+        self.assertEqual(parsed, expires)
+        self.assertEqual(parsed.tzinfo, tz.utc)
+
+    def test_naive_datetime(self) -> None:
+        """Test ValueError when parsing a naive datetime."""
+        with self.assertRaisesRegex(ValueError, r"^expires must not be a naive datetime$"):
+            parse_expires(datetime(2023, 4, 30))
+
+
 class ParseEncodingTestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_encoding`."""
 
@@ -1156,18 +1197,17 @@ class GetCertBuilderTestCase(TestCase):
         """Basic tests."""
 
         # pylint: disable=protected-access; only way to test builder attributes
-        after = datetime(2020, 10, 23, 11, 21)
-        before = datetime(2018, 11, 3, 11, 21)
+        after = datetime(2020, 10, 23, 11, 21, tzinfo=tz.utc)
         builder = get_cert_builder(after)
-        self.assertEqual(builder._not_valid_after, after)
-        self.assertEqual(builder._not_valid_before, before)
+        self.assertEqual(builder._not_valid_before, datetime(2018, 11, 3, 11, 21))
+        self.assertEqual(builder._not_valid_after, datetime(2020, 10, 23, 11, 21))
         self.assertIsInstance(builder._serial_number, int)
 
     @freeze_time("2021-01-23 14:42:11.1234")
     def test_datetime(self) -> None:
         """Basic tests."""
 
-        expires = datetime.utcnow() + timedelta(days=10)
+        expires = datetime.now(tz.utc) + timedelta(days=10)
         self.assertNotEqual(expires.second, 0)
         self.assertNotEqual(expires.microsecond, 0)
         expires_expected = datetime(2021, 2, 2, 14, 42)
@@ -1178,22 +1218,29 @@ class GetCertBuilderTestCase(TestCase):
     @freeze_time("2021-01-23 14:42:11.1234")
     def test_serial(self) -> None:
         """Test manually setting a serial."""
-        after = datetime(2022, 10, 23, 11, 21)
+        after = datetime(2022, 10, 23, 11, 21, tzinfo=tz.utc)
         builder = get_cert_builder(after, serial=123)
         self.assertEqual(builder._serial_number, 123)  # pylint: disable=protected-access
-        self.assertEqual(builder._not_valid_after, after)  # pylint: disable=protected-access
+        self.assertEqual(
+            builder._not_valid_after, datetime(2022, 10, 23, 11, 21)  # pylint: disable=protected-access
+        )
 
     @freeze_time("2021-01-23 14:42:11")
     def test_negative_datetime(self) -> None:
         """Test passing a datetime in the past."""
         msg = r"^expires must be in the future$"
         with self.assertRaisesRegex(ValueError, msg):
-            get_cert_builder(datetime.utcnow() - timedelta(seconds=60))
+            get_cert_builder(datetime.now(tz.utc) - timedelta(seconds=60))
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid type."""
         with self.assertRaises(AttributeError):
             get_cert_builder("a string")  # type: ignore[arg-type]
+
+    def test_naive_datetime(self) -> None:
+        """Test passing a naive datetime."""
+        with self.assertRaisesRegex(ValueError, r"^expires must not be a naive datetime$"):
+            get_cert_builder(datetime.now())
 
 
 class ValidatePrivateKeyParametersTest(TestCase):

@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import tempfile
 from datetime import datetime
+from datetime import timezone as tz
 from pathlib import Path
 from unittest.mock import patch
 
@@ -314,7 +315,7 @@ def create_cas(dest, now, delay, data):
                 name=data[name]["name"],
                 password=data[name].get("password"),
                 subject=x509_name(data[name]["subject"]),
-                expires=datetime.utcnow() + data[name]["expires"],
+                expires=datetime.now(tz=tz.utc) + data[name]["expires"],
                 key_type=data[name]["key_type"],
                 key_size=data[name].get("key_size"),
                 algorithm=data[name].get("algorithm"),

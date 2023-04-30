@@ -652,6 +652,18 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
 
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024, USE_TZ=False)
+    def test_expires_override_with_use_tz_false(self) -> None:
+        """Test silently limiting expiry if USE_TZ=False."""
+
+        self.init_ca(name="Parent", path_length=1, expires=timedelta(days=100))
+        parent = CertificateAuthority.objects.get(name="Parent")
+
+        self.init_ca(name="Child", expires=timedelta(days=300), parent=parent)
+        ca = CertificateAuthority.objects.get(name="Child")
+        self.assertIsNone(ca.expires.tzinfo)
+        self.assertEqual(ca.expires, parent.expires)
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_password(self) -> None:
         """Test creating a CA with a password."""

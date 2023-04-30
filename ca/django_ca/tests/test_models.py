@@ -715,13 +715,13 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         algorithm = hashes.SHA256()
-        expires = datetime.utcnow() + ca_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+        expires = datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, algorithm=algorithm, expires=expires)
 
         self.assertBasicCert(cert)
-        self.assertEqual(cert.not_valid_after, expires)
+        self.assertEqual(cert.not_valid_after, expires.replace(tzinfo=None))
         self.assertIsInstance(cert.signature_hash_algorithm, hashes.SHA256)
 
     @override_tmpcadir()

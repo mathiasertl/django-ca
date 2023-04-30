@@ -592,6 +592,12 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.acme_cert.cert.expires, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
 
+    def test_not_after_with_use_tz_is_false(self) -> None:
+        """Test not_after with USE_TZ=False."""
+        with self.settings(USE_TZ=False):
+            self.order.refresh_from_db()  # otherwise save() fails in SQLite
+            self.test_not_after()
+
     @override_tmpcadir()
     def test_profile(self) -> None:
         """Test that setting a different profile also returns the appropriate certificate."""

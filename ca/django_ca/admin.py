@@ -21,6 +21,7 @@ import functools
 import logging
 import typing
 from datetime import date, datetime
+from datetime import timezone as tz
 from http import HTTPStatus
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
 
@@ -1002,7 +1003,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 # Note: ``obj.csr`` is set by model form already
                 csr = data["csr"]
 
-            expires = datetime.combine(data["expires"], datetime.min.time())
+            # NOTE: Use replace() and not astimzeone(), as we want to expire at midnight in UTC time.
+            #   astimezone() will assume that the naive datetime object is in the system local time and
+            #   convert it to what the system would consider midnight in its local time.
+            expires = datetime.combine(data["expires"], datetime.min.time()).replace(tzinfo=tz.utc)
 
             # Set Subject Alternative Name from form
             extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}

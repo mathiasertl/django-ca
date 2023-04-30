@@ -18,7 +18,8 @@
 
 import logging
 import typing
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as tz
 from http import HTTPStatus
 from typing import Any, Iterable, List, Optional, Tuple
 
@@ -283,8 +284,12 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
     # Honor not_after from the order if set
     if acme_cert.order.not_after:
         expires = acme_cert.order.not_after
+
+        # Make sure expires_datetime is tz-aware, even if USE_TZ=False.
+        if timezone.is_naive(expires):
+            expires = timezone.make_aware(expires)
     else:
-        expires = timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY
+        expires = datetime.now(tz=tz.utc) + ca_settings.ACME_DEFAULT_CERT_VALIDITY
 
     csr = acme_cert.parse_csr()
 

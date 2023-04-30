@@ -968,10 +968,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
 
     @classmethod
-    def expires(cls, days: int) -> datetime:
+    def expires(cls, days: int) -> timedelta:
         """Get a timestamp `days` from now."""
-        now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        return now + timedelta(days + 1)
+        return timedelta(days=days + 1)
 
     @contextmanager
     def freeze_time(
