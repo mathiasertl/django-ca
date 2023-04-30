@@ -31,7 +31,6 @@ from django.core.validators import URLValidator
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
-from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
 from django_ca.utils import (
@@ -482,10 +481,25 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: str,
+        values: List[str],
         option_string: Optional[str] = None,
     ) -> None:
         usages: List[x509.ObjectIdentifier] = []
+
+        # Parse legacy format
+        if len(values) == 1 and "," in values[0]:
+            values = values[0].split(",")
+            warnings.warn(
+                "Passing a coma-separated list is deprecated, pass space-separated values instead.",
+                RemovedInDjangoCA126Warning,
+            )
+
+            if values[0] == "critical":
+                warnings.warn(
+                    "Using critical as first value is deprecated. The extension is critical by default.",
+                    RemovedInDjangoCA126Warning,
+                )
+                values = values[1:]
 
         for value in values:
             if value in constants.EXTENDED_KEY_USAGE_OIDS:
@@ -524,26 +538,36 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
 
     extension_type = x509.KeyUsage
 
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("nargs", "+")
+        super().__init__(**kwargs)
+
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: str,
+        values: List[str],
         option_string: Optional[str] = None,
     ) -> None:
-        ext_values = values.split(",")
-
-        if ext_values[0] == "critical":
+        # Parse legacy format
+        if len(values) == 1 and "," in values[0]:
+            values = values[0].split(",")
             warnings.warn(
-                "Using critical as first value is deprecated. The extension is critical by default.",
+                "Passing a coma-separated list is deprecated, pass space-separated values instead.",
                 RemovedInDjangoCA126Warning,
             )
-            ext_values = ext_values[1:]
 
-        if invalid_usages := [ku for ku in ext_values if ku not in KEY_USAGE_NAMES.values()]:
+            if values[0] == "critical":
+                warnings.warn(
+                    "Using critical as first value is deprecated. The extension is critical by default.",
+                    RemovedInDjangoCA126Warning,
+                )
+                values = values[1:]
+
+        if invalid_usages := [ku for ku in values if ku not in KEY_USAGE_NAMES.values()]:
             parser.error(f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage.")
 
-        key_usages = {k: v in ext_values for k, v in KEY_USAGE_NAMES.items()}
+        key_usages = {k: v in values for k, v in KEY_USAGE_NAMES.items()}
         try:
             extension_type = x509.KeyUsage(**key_usages)
         except ValueError as ex:
@@ -557,28 +581,36 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
 
     extension_type = x509.TLSFeature
 
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("nargs", "+")
+        super().__init__(**kwargs)
+
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: str,
+        values: List[str],
         option_string: Optional[str] = None,
     ) -> None:
-        ext_values = values.split(",")
+        # Parse legacy format
+        if len(values) == 1 and "," in values[0]:
+            values = values[0].split(",")
+            warnings.warn(
+                "Passing a coma-separated list is deprecated, pass space-separated values instead.",
+                RemovedInDjangoCA126Warning,
+            )
 
-        if ext_values[0] == "critical":
-            critical = True
-            ext_values = ext_values[1:]
-        else:
-            critical = False
+            if values[0] == "critical":
+                warnings.warn(
+                    "Using critical as first value is deprecated. The extension is critical by default.",
+                    RemovedInDjangoCA126Warning,
+                )
+                values = values[1:]
 
         try:
-            features = [TLS_FEATURE_NAME_MAPPING[value] for value in ext_values]
+            features = [constants.TLS_FEATURE_NAMES[value] for value in values]
         except KeyError as ex:
             parser.error(f"Unknown TLSFeature: {ex.args[0]}")
 
-        # NOINSPECTION NOTE: parser.error() above never returns
-        # noinspection PyUnboundLocalVariable
         extension_type = x509.TLSFeature(features=features)
-        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
-        setattr(namespace, self.dest, extension)
+        setattr(namespace, self.dest, extension_type)

@@ -78,6 +78,8 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         key_usage_critical: bool,
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
+        tls_feature: Optional[x509.TLSFeature],
+        tls_feature_critical: bool,
         **options: Any,
     ) -> None:
         if ca is None:
@@ -107,7 +109,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 ext = options[EXTENSION_KEYS[ext_type.oid]]
 
             if ext is not None:
-                if ext_type == x509.SubjectAlternativeName:
+                if ext_type == x509.SubjectAlternativeName:  # pragma: no branch
                     have_san = True
                 extensions.append(ext)
 
@@ -138,12 +140,24 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         elif cert_ocsp_no_check := cert.x509_extensions.get(ExtensionOID.OCSP_NO_CHECK):
             extensions.append(cert_ocsp_no_check)
 
+        if tls_feature is not None:
+            extensions.append(
+                x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=tls_feature_critical, value=tls_feature)
+            )
+        elif cert_tls_feature := cert.x509_extensions.get(ExtensionOID.TLS_FEATURE):
+            extensions.append(cert_tls_feature)
+
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_san is False:
             raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
 
         # Copy over extensions that are not handled above already:
         for oid, extension in cert.x509_extensions.items():
-            if oid in (ExtensionOID.KEY_USAGE, ExtensionOID.OCSP_NO_CHECK, ExtensionOID.EXTENDED_KEY_USAGE):
+            if oid in (
+                ExtensionOID.KEY_USAGE,
+                ExtensionOID.OCSP_NO_CHECK,
+                ExtensionOID.EXTENDED_KEY_USAGE,
+                ExtensionOID.TLS_FEATURE,
+            ):
                 continue
             if oid in (ext_type.oid for ext_type in self.sign_extensions):
                 continue

@@ -420,8 +420,8 @@ PARSABLE_KEY_TYPES = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
 TLS_FEATURE_NAMES = MappingProxyType(
     {
         # https://tools.ietf.org/html/rfc6066.html:
-        "OCSPMustStaple": x509.TLSFeatureType.status_request,
         "status_request": x509.TLSFeatureType.status_request,
+        "OCSPMustStaple": x509.TLSFeatureType.status_request,
         # https://tools.ietf.org/html/rfc6961.html (not commonly used):
         "MultipleCertStatusRequest": x509.TLSFeatureType.status_request_v2,
         "status_request_v2": x509.TLSFeatureType.status_request_v2,

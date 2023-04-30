@@ -164,17 +164,16 @@ authorities.
 Override extensions
 ===================
 
-You can override some extensions using command-line parameters. Currently, this includes ``keyUsage``,
-``extendedKeyUsage`` and ``TLSFeature``.  In every case, prefixing the value with ``critical`` marks the
-extension as critical (meaning a TLS client that does not understand the extension will reject the
-connection):
+You can override some extensions using command-line parameters. Currently, this includes the Key Usage,
+Extended Key Usage, OCSPNoCheck and TLSFeature extensions:
 
 .. code-block:: console
 
    $ python manage.py sign_cert \
-      --key-usage critical,keyCertSign \
+      --key-usage keyCertSign \
       --extended-key-usage serverAuth clientAuth \
-      --tls-feature OCSPMustStaple \
+      --extended-key-usage-critical \
+      --tls-feature status_request \
       ...
 
 For more information on these extensions, their meaning and typical values, see :doc:`/extensions`.

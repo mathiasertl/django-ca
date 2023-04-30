@@ -252,6 +252,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
         self.add_policy_constraints_group(parser)
+        self.add_tls_feature_group(parser)
 
         self.add_ca_args(parser)
 

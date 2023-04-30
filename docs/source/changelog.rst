@@ -36,8 +36,11 @@ Command-line interface
 
 * The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were renamed to
   ``--path-length`` and ``--no-path-length``.
+* The ``--key-usage`` option was changed to/split into ``--key-usage`` and ``--key-usage-non-critical``.
+  ``--key-usage`` takes multiple option values instead of a single coma-separated list.
 * The ``--ext-key-usage`` option was changed to/split into ``--extended-key-usage`` and
-  ``--extended-key-usage-critical``.
+  ``--extended-key-usage-critical``. ``--extended-key-usage`` takes multiple option values instead of a single
+  coma-separated list.
 * Add support for specifying a custom Key Usage extension when using :command:`manage.py init_ca`.
 * Add support for adding the Inhibit :spelling:word:`anyPolicy` and Policy Constraints extensions when using
   :command:`manage.py init_ca`.

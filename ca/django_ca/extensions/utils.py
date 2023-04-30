@@ -23,15 +23,6 @@ from django.template.loader import render_to_string
 from django_ca.constants import KEY_USAGE_NAMES
 from django_ca.utils import bytes_to_hex
 
-TLS_FEATURE_NAME_MAPPING = {
-    # https://tools.ietf.org/html/rfc6066.html:
-    "OCSPMustStaple": x509.TLSFeatureType.status_request,
-    "status_request": x509.TLSFeatureType.status_request,
-    # https://tools.ietf.org/html/rfc6961.html (not commonly used):
-    "MultipleCertStatusRequest": x509.TLSFeatureType.status_request_v2,
-    "status_request_v2": x509.TLSFeatureType.status_request_v2,
-}
-
 
 def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
     """Convert an extension to HTML code suitable for the admin interface."""

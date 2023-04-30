@@ -18,8 +18,12 @@ from typing import Iterable, Iterator, List, Optional, Union
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES
-from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
+from django_ca.constants import (
+    EXTENDED_KEY_USAGE_NAMES,
+    EXTENSION_DEFAULT_CRITICAL,
+    KEY_USAGE_NAMES,
+    TLS_FEATURE_NAMES,
+)
 from django_ca.typehints import (
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
@@ -269,7 +273,7 @@ def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509
     features: List[x509.TLSFeatureType] = []
     for feature in value:
         if isinstance(feature, str):
-            feature = TLS_FEATURE_NAME_MAPPING[feature]
+            feature = TLS_FEATURE_NAMES[feature]
         features.append(feature)
 
     features = sorted(features, key=lambda f: f.name)

@@ -214,19 +214,37 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         )
         group.add_argument(
             "--key-usage",
-            metavar="VALUES",
+            metavar="KEY_USAGE",
             action=actions.KeyUsageAction,
             default=default,
-            help='The keyUsage extension, e.g. "keyAgreement,keyEncipherment,keyCertSign,keyAgreement".',
+            help='Key Usage bits for this certificate, e.g. "keyAgreement" or "keyEncipherment". '
+            "This option accepts multiple values.",
         )
         self.add_critical_option(group, ExtensionOID.KEY_USAGE)
+
+    def add_tls_feature_group(self, parser: argparse.ArgumentParser) -> None:
+        """Add argument group for the TLS Feature extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.TLS_FEATURE]
+        group = parser.add_argument_group(
+            ext_name, f"The {ext_name} extension allows specifying required TLS feature extensions."
+        )
+        group.add_argument(
+            "--tls-feature",
+            metavar="TLS_FEATURE",
+            # TODO: Set choices when old coma-separated values are removed in 1.26.0.
+            # choices=tuple(constants.TLS_FEATURE_NAMES)
+            action=actions.TLSFeatureAction,
+            help='TLS feature flags to include. Valid values are "status_request" (also known as '
+            'OCSPMustSTaple) and "status_request_v2" (also known as Multiple Certificate Status Request).',
+        )
+        self.add_critical_option(group, ExtensionOID.TLS_FEATURE)
 
 
 class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName, x509.TLSFeature)
+    sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName,)
     subject_help: typing.ClassVar  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> argparse._ArgumentGroup:
@@ -236,9 +254,9 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_algorithm(general_group)
         self.add_ca(general_group, no_default=no_default_ca)
         self.add_password(general_group)
-        self.add_extensions(parser)
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
+        self.add_tls_feature_group(parser)
         self.add_ocsp_no_check_group(parser)
 
         general_group.add_argument(
@@ -276,8 +294,9 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             "--extended-key-usage",
             metavar="EXTENDED_KEY_USAGE",
             action=actions.ExtendedKeyUsageAction,
-            help="Extended Key Usages to use for this certificate. %(metavar)s is either a dotted string or"
-            "a known Extended Key Usage, e.g. serverAuth or clientAuth.",
+            help="Extended Key Usages to use for this certificate. %(metavar)s is either a dotted string or "
+            'a known Extended Key Usage, e.g. "serverAuth" or "clientAuth". This option takes multiple '
+            "values.",
         )
         self.add_critical_option(group, ExtensionOID.EXTENDED_KEY_USAGE)
 
@@ -306,16 +325,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             metavar="/key1=value1/key2=value2/...",
             help_text=f"""Valid keys are {self.valid_subject_keys}. Pass an empty value (e.g. "/C=/ST=...")
             to remove a field from the subject.""",
-        )
-
-    def add_extensions(self, parser: CommandParser) -> None:
-        """Add arguments for x509 extensions."""
-        group = parser.add_argument_group("X509 v3 certificate extensions", self.add_extensions_help)
-        group.add_argument(
-            "--tls-feature",
-            metavar="VALUES",
-            action=actions.TLSFeatureAction,
-            help="TLS Feature extensions.",
         )
 
     def test_options(  # pylint: disable=unused-argument

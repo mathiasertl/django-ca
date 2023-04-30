@@ -49,6 +49,23 @@ Command-line tools
 
 * :command:`manage.py init_ca`: The ``--pathlen`` and ``--no-pathlen`` parameters are replaced with
   ``--path-length`` and ``--no-path-length``. Old parameter names will work until ``django-ca==1.25.0``.
+* :command:`manage.py sign_cert`: The ``--key-usage`` option is split into the ``--key-usage`` and
+  ``--key-usage-non-critical`` option. The ``--key-usage`` takes multiple arguments (instead of a
+  coma-separated list).
+
+  New, since ``django==1.24.0``:
+
+  .. code-block:: console
+
+     $ manage.py sign_cert \
+     >     --key-usage keyAgreement keyEncipherment
+
+  Before, in earlier versions:
+
+  .. code-block:: console
+
+     $ manage.py sign_cert --key-usage critical,keyAgreement,keyEncipherment
+
 * :command:`manage.py sign_cert`: The ``--ext-key-usage`` option is split into the ``--extended-key-usage``
   and ``--extended-key-usage-critical`` option. The ``--extended-key-usage`` takes multiple arguments (instead
   of a coma-separated list) and also allows you to pass dotted strings for OIDs unknown to django-ca.

@@ -138,11 +138,18 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(
                 "resign_cert",
-                "--key-usage=keyAgreement,keyEncipherment",
+                orig.serial,
+                "--extended-key-usage",
+                "clientAuth",
+                "serverAuth",
+                "--key-usage",
+                "keyAgreement",
+                "keyEncipherment",
                 "--key-usage-non-critical",
                 "--ocsp-no-check",
                 "--ocsp-no-check-critical",
-                orig.serial,
+                "--tls-feature",
+                "status_request",
             )
         self.assertEqual(stderr, "")
 
@@ -152,10 +159,17 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         extensions = new.x509_extensions
         self.assertEqual(
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+        )
+        self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
             self.key_usage(key_agreement=True, key_encipherment=True, critical=False),
         )
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
+        self.assertEqual(
+            extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
+        )
 
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides(self) -> None:
@@ -163,7 +177,17 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         orig = self.certs["no-extensions"]
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(
-                "resign_cert", "--key-usage=keyAgreement,keyEncipherment", "--ocsp-no-check", orig.serial
+                "resign_cert",
+                orig.serial,
+                "--extended-key-usage",
+                "clientAuth",
+                "serverAuth",
+                "--key-usage",
+                "keyAgreement",
+                "keyEncipherment",
+                "--ocsp-no-check",
+                "--tls-feature",
+                "status_request",
             )
         self.assertEqual(stderr, "")
 
@@ -173,9 +197,16 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         extensions = new.x509_extensions
         self.assertEqual(
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+        )
+        self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_agreement=True, key_encipherment=True)
         )
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+        self.assertEqual(
+            extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
+        )
 
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides_with_non_default_critical(self) -> None:
@@ -184,11 +215,20 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(
                 "resign_cert",
-                "--key-usage=keyAgreement,keyEncipherment",
+                orig.serial,
+                "--extended-key-usage",
+                "clientAuth",
+                "serverAuth",
+                "--extended-key-usage-critical",
+                "--key-usage",
+                "keyAgreement",
+                "keyEncipherment",
                 "--key-usage-non-critical",
                 "--ocsp-no-check",
                 "--ocsp-no-check-critical",
-                orig.serial,
+                "--tls-feature",
+                "status_request",
+                "--tls-feature-critical",
             )
         self.assertEqual(stderr, "")
 
@@ -198,10 +238,20 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         extensions = new.x509_extensions
         self.assertEqual(
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(
+                ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
+            ),
+        )
+        self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
             self.key_usage(key_agreement=True, key_encipherment=True, critical=False),
         )
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(True))
+        self.assertEqual(
+            extensions[ExtensionOID.TLS_FEATURE],
+            self.tls_feature(x509.TLSFeatureType.status_request, critical=True),
+        )
 
     @override_tmpcadir()
     def test_custom_algorithm(self) -> None:
@@ -233,7 +283,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         cname = "new.example.com"
         key_usage = "cRLSign"
         ext_key_usage = "emailProtection"
-        tls_feature = "critical,MultipleCertStatusRequest"
         watcher = "new@example.com"
         alt = "new-alt-name.example.com"
 
@@ -250,7 +299,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     ext_key_usage,
                     "--extended-key-usage-critical",
                     "--tls-feature",
-                    tls_feature,
+                    "status_request_v2",
+                    "--tls-feature-critical",
                     "--subject",
                     f"/CN={cname}",
                     "--watch",

@@ -98,7 +98,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         self,
         ca: CertificateAuthority,
         subject: Optional[x509.Name],
@@ -117,6 +117,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         key_usage_critical: bool,
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
+        tls_feature: Optional[x509.TLSFeature],
+        tls_feature_critical: bool,
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
@@ -159,6 +161,10 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 x509.Extension(
                     oid=ExtensionOID.OCSP_NO_CHECK, critical=ocsp_no_check_critical, value=x509.OCSPNoCheck()
                 )
+            )
+        if tls_feature is not None:
+            extensions.append(
+                x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=tls_feature_critical, value=tls_feature)
             )
 
         cname = None
