@@ -292,8 +292,8 @@ HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = Mapp
     {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
 )
 
-#: Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
-#: ``--algorithm`` command line parameter.
+# Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
+# ``--algorithm`` command line parameter.
 HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingProxyType(
     {
         hashes.SHA224: "SHA-224",
@@ -314,6 +314,7 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingP
         # hashes.BLAKE2s: "BLAKE2s",  # https://datatracker.ietf.org/doc/html/rfc7693.html
     }
 )
+
 #: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
 HASH_ALGORITHM_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}

@@ -246,3 +246,9 @@ ignore-imports = "yes"
 
 # Minimum lines number of a similarity.
 min-similarity-lines = 16
+
+[tool.ruff]
+extend-exclude = [
+    "migrations",
+]
+line-length = 110

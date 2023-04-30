@@ -54,7 +54,8 @@ CRLExtensionTypeTypeVar = typing.TypeVar(
 #: deprecated in 1.24.0: Use cryptography's CertificateIssuerPrivateKeyTypes instead.
 PrivateKeyTypes = CertificateIssuerPrivateKeyTypes  # pragma: only django-ca<=1.25.0
 
-#: duplicate of the protected cryptography.x509.base._AllowedHashTypes.
+#: Hash algorithms that can be used for signing certificates.
+#: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
 AllowedHashTypes = typing.Union[
     hashes.SHA224,
     hashes.SHA256,
@@ -157,15 +158,6 @@ PolicyQualifier = Union[str, x509.UserNotice]
 ExtensionTypeTypeVar = typing.TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
-AlternativeNameTypeVar = typing.TypeVar(
-    "AlternativeNameTypeVar", x509.IssuerAlternativeName, x509.SubjectAlternativeName
-)
-SignedCertificateTimestampsBaseTypeVar = typing.TypeVar(
-    "SignedCertificateTimestampsBaseTypeVar",
-    x509.SignedCertificateTimestamps,
-    x509.PrecertificateSignedCertificateTimestamps,
-)
-
 ParsableExtension = typing.TypedDict(
     "ParsableExtension",
     {
@@ -176,23 +168,6 @@ ParsableExtension = typing.TypedDict(
     },
     total=False,
 )
-ParsableItem = typing.TypeVar("ParsableItem")
-"""TypeVar representing a parsable list item."""
-
-ParsableValue = typing.TypeVar("ParsableValue")
-"""A value that can be parsed to a valid extension."""
-
-SerializedItem = typing.TypeVar("SerializedItem")
-"""TypeVar representing a serialized item for an iterable extension."""
-
-SerializedSortableItem = typing.TypeVar("SerializedSortableItem", bound=SupportsLessThan)
-"""TypeVar representing a serialized item that can be sorted  (for OrderedSetExtension)."""
-
-SerializedValue = typing.TypeVar("SerializedValue")
-"""TypeVar representing a serialized value for an extension."""
-
-IterableItem = typing.TypeVar("IterableItem")
-"""TypeVar representing a value contained in an iterable extension."""
 
 if typing.TYPE_CHECKING:
     ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
