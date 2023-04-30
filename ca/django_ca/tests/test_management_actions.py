@@ -54,13 +54,14 @@ class ParserTestCaseMixin(TestCaseMixin):
     """Mixin class that provides assertParserError."""
 
     parser: argparse.ArgumentParser
+    script = os.path.basename(sys.argv[0])
 
     def assertParserError(  # pylint: disable=invalid-name
         self, args: List[str], expected: str, **kwargs: Any
     ) -> str:
         """Assert that given args throw a parser error."""
 
-        kwargs.setdefault("script", os.path.basename(sys.argv[0]))
+        kwargs.setdefault("script", self.script)
         expected = expected.format(**kwargs)
 
         buf = StringIO()
@@ -118,29 +119,36 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 
         namespace = self.parser.parse_args(["--eku", "clientAuth"])
         self.assertEqual(
-            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH), namespace.extended_key_usage
+            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.extended_key_usage
         )
 
-        namespace = self.parser.parse_args(["--eku", "clientAuth,serverAuth"])
+        namespace = self.parser.parse_args(["--eku", "clientAuth", "serverAuth"])
         self.assertEqual(
-            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
             namespace.extended_key_usage,
         )
 
-        namespace = self.parser.parse_args(["--eku", "critical,clientAuth,serverAuth"])
+    def test_dotted_string_value(self) -> None:
+        """Test passing a dotted string."""
+        namespace = self.parser.parse_args(["--eku", "1.3.6.1.5.5.7.3.2"])
         self.assertEqual(
-            self.extended_key_usage(
-                ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
-            ),
-            namespace.extended_key_usage,
+            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.extended_key_usage
         )
 
-    def test_error(self) -> None:
+    def test_duplicate_values(self) -> None:
+        """Test wrong option values."""
+        self.assertParserError(
+            ["--eku", "clientAuth", "1.3.6.1.5.5.7.3.2"],
+            "usage: {script} [-h] [--eku EXTENDED_KEY_USAGE [EXTENDED_KEY_USAGE ...]]\n"
+            "{script}: error: 1.3.6.1.5.5.7.3.2: Extended Key Usage is added multiple times.\n",
+        )
+
+    def test_unknown_extended_key_usage(self) -> None:
         """Test wrong option values."""
         self.assertParserError(
             ["--eku", "FOO"],
-            "usage: dev.py [-h] [--eku EXTENDED_KEY_USAGE]\n"
-            "dev.py: error: Unknown ExtendedKeyUsage: FOO\n",
+            "usage: {script} [-h] [--eku EXTENDED_KEY_USAGE [EXTENDED_KEY_USAGE ...]]\n"
+            "{script}: error: FOO: Not a dotted string or known Extended Key Usage.\n",
         )
 
 
@@ -163,8 +171,8 @@ class IntegerRangeActionTextCase(ParserTestCaseMixin, TestCase):
         self.assertEqual(self.parser.parse_args(["--value=1"]).value, 1)
         self.assertParserError(
             ["--value=-1"],
-            "usage: dev.py [-h] [--value INT]\n"
-            "dev.py: error: argument --value: INT must be equal or greater then 0.\n",
+            "usage: {script} [-h] [--value INT]\n"
+            "{script}: error: argument --value: INT must be equal or greater then 0.\n",
         )
 
     def test_max_values(self) -> None:
@@ -175,8 +183,8 @@ class IntegerRangeActionTextCase(ParserTestCaseMixin, TestCase):
         self.assertEqual(self.parser.parse_args(["--value=-1"]).value, -1)
         self.assertParserError(
             ["--value=1"],
-            "usage: dev.py [-h] [--value INT]\n"
-            "dev.py: error: argument --value: INT must be equal or smaller then 0.\n",
+            "usage: {script} [-h] [--value INT]\n"
+            "{script}: error: argument --value: INT must be equal or smaller then 0.\n",
         )
 
 
@@ -213,20 +221,21 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def test_invalid_values(self) -> None:
         """Test passing invalid values."""
         self.assertParserError(
-            ["-k", "foo"], "usage: dev.py [-h] [-k KEY_USAGE]\ndev.py: error: foo: Invalid key usage.\n"
+            ["-k", "foo"],
+            "usage: {script} [-h] [-k KEY_USAGE]\n{script}: error: foo: Invalid key usage.\n",
         )
 
     def test_error(self) -> None:
         """Test wrong option values."""
         self.assertParserError(
             ["-k", "encipherOnly"],
-            "usage: dev.py [-h] [-k KEY_USAGE]\n"
-            "dev.py: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
+            "usage: {script} [-h] [-k KEY_USAGE]\n"
+            "{script}: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
         )
         self.assertParserError(
             ["-k", "decipherOnly"],
-            "usage: dev.py [-h] [-k KEY_USAGE]\n"
-            "dev.py: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
+            "usage: {script} [-h] [-k KEY_USAGE]\n"
+            "{script}: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
         )
 
 
@@ -302,7 +311,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
         """Test wrong option values."""
         self.assertParserError(
             ["-f", "FOO"],
-            "usage: dev.py [-h] [-f TLS_FEATURE]\ndev.py: error: Unknown TLSFeature: FOO\n",
+            "usage: {script} [-h] [-f TLS_FEATURE]\n{script}: error: Unknown TLSFeature: FOO\n",
         )
 
 
@@ -681,7 +690,7 @@ class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
         value = "foobar"
         self.assertParserError(
             [f"--expires={value}"],
-            "usage: dev.py [-h] [--expires EXPIRES]\n"
+            "usage: {script} [-h] [--expires EXPIRES]\n"
             f"{{script}}: error: argument --expires: {value}: Value must be an integer.\n",
         )
 
@@ -701,10 +710,13 @@ class ReasonActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
+        self.maxDiff = None
+        whitespace = " " * len(f"usage: {self.script} ")
         self.assertParserError(
             ["foo"],
             "usage: {script} [-h]\n"
-            "              {{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,"
+            + whitespace  # whitespace indent depends on length of the name of the script
+            + "{{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,"
             "cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,"
             "unspecified}}\n"
             "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', "

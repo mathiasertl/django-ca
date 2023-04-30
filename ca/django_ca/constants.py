@@ -98,6 +98,9 @@ EXTENDED_KEY_USAGE_NAMES = MappingProxyType(
     }
 )
 
+#: Map of Extended Key Usage names to ExtendedKeyUsageOID (the inverse of EXTENDED_KEY_USAGE_NAMES).
+EXTENDED_KEY_USAGE_OIDS = MappingProxyType({v: k for k, v in EXTENDED_KEY_USAGE_NAMES.items()})
+
 #: Map of ExtendedKeyUsageOIDs to human-readable names.
 EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = MappingProxyType(
     {

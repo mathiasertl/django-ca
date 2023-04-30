@@ -232,7 +232,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test overwriting extensions."""
         cname = "new.example.com"
         key_usage = "cRLSign"
-        ext_key_usage = "critical,emailProtection"
+        ext_key_usage = "emailProtection"
         tls_feature = "critical,MultipleCertStatusRequest"
         watcher = "new@example.com"
         alt = "new-alt-name.example.com"
@@ -246,8 +246,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     "--key-usage",
                     key_usage,
                     "--key-usage-non-critical",
-                    "--ext-key-usage",
+                    "--extended-key-usage",
                     ext_key_usage,
+                    "--extended-key-usage-critical",
                     "--tls-feature",
                     tls_feature,
                     "--subject",

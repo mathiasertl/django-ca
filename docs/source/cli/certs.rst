@@ -173,7 +173,7 @@ connection):
 
    $ python manage.py sign_cert \
       --key-usage critical,keyCertSign \
-      --ext-key-usage serverAuth,clientAuth \
+      --extended-key-usage serverAuth clientAuth \
       --tls-feature OCSPMustStaple \
       ...
 

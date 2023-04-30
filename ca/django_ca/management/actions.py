@@ -19,10 +19,9 @@ import getpass
 import typing
 import warnings
 from datetime import timedelta
-from typing import Any, Optional, Type
+from typing import Any, List, Optional, Type
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -30,13 +29,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
-from django_ca.constants import (
-    EXTENDED_KEY_USAGE_NAMES,
-    EXTENSION_DEFAULT_CRITICAL,
-    EXTENSION_KEYS,
-    KEY_USAGE_NAMES,
-    ReasonFlags,
-)
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
 from django_ca.extensions.utils import TLS_FEATURE_NAME_MAPPING
 from django_ca.models import Certificate, CertificateAuthority
@@ -473,15 +466,17 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
 
     >>> parser.add_argument('--extended-key-usage', action=ExtendedKeyUsageAction)  # doctest: +ELLIPSIS
     ExtendedKeyUsageAction(...)
-    >>> args = parser.parse_args(['--extended-key-usage', 'serverAuth,clientAuth'])
+    >>> args = parser.parse_args(["--extended-key-usage", "serverAuth", "clientAuth"])
     >>> args.extended_key_usage  # doctest: +NORMALIZE_WHITESPACE
-    <Extension(oid=<ObjectIdentifier(oid=2.5.29.37, name=extendedKeyUsage)>,
-               critical=False,
-               value=<ExtendedKeyUsage([<ObjectIdentifier(oid=1.3.6.1.5.5.7.3.1, name=serverAuth)>,
-                                        <ObjectIdentifier(oid=1.3.6.1.5.5.7.3.2, name=clientAuth)>])>)>
+    <ExtendedKeyUsage([<ObjectIdentifier(oid=1.3.6.1.5.5.7.3.1, name=serverAuth)>,
+                                        <ObjectIdentifier(oid=1.3.6.1.5.5.7.3.2, name=clientAuth)>])>
     """
 
     extension_type = x509.ExtendedKeyUsage
+
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("nargs", "+")
+        super().__init__(**kwargs)
 
     def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
         self,
@@ -490,29 +485,23 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
         values: str,
         option_string: Optional[str] = None,
     ) -> None:
-        ext_values = values.split(",")
+        usages: List[x509.ObjectIdentifier] = []
 
-        if ext_values[0] == "critical":
-            critical = True
-            ext_values = ext_values[1:]
-        else:
-            critical = False
+        for value in values:
+            if value in constants.EXTENDED_KEY_USAGE_OIDS:
+                oid = constants.EXTENDED_KEY_USAGE_OIDS[value]
+            else:
+                try:
+                    oid = x509.ObjectIdentifier(value)
+                except ValueError:
+                    parser.error(f"{value}: Not a dotted string or known Extended Key Usage.")
 
-        mapping = {v: k for k, v in EXTENDED_KEY_USAGE_NAMES.items()}
+            if oid in usages:
+                parser.error(f"{value}: Extended Key Usage is added multiple times.")
+            usages.append(oid)
 
-        try:
-            usages = [mapping[value] for value in ext_values]
-        except KeyError as ex:
-            parser.error(f"Unknown ExtendedKeyUsage: {ex.args[0]}")
-
-        # Sort to get more predictable output
-        # NOINSPECTION NOTE: parser.error() above never returns
-        # noinspection PyUnboundLocalVariable
-        usages = sorted(usages, key=lambda oid: oid.dotted_string)
-
-        extension_type = x509.ExtendedKeyUsage(usages)
-        extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
-        setattr(namespace, self.dest, extension)
+        extended_key_usage = x509.ExtendedKeyUsage(usages)
+        setattr(namespace, self.dest, extended_key_usage)
 
 
 class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):

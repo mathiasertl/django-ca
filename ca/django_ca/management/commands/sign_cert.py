@@ -111,6 +111,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         profile: Optional[str],
         out: Optional[str],
         algorithm: Optional[hashes.HashAlgorithm],
+        extended_key_usage: Optional[x509.ExtendedKeyUsage],
+        extended_key_usage_critical: bool,
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
         ocsp_no_check: bool,
@@ -140,6 +142,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             if options[ext_key]:
                 extensions.append(options[ext_key])
 
+        if extended_key_usage is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
+                    critical=extended_key_usage_critical,
+                    value=extended_key_usage,
+                )
+            )
         if key_usage is not None:
             extensions.append(
                 x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)

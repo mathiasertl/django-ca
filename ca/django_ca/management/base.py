@@ -225,11 +225,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (
-        x509.ExtendedKeyUsage,
-        x509.SubjectAlternativeName,
-        x509.TLSFeature,
-    )
+    sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName, x509.TLSFeature)
     subject_help: typing.ClassVar  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> argparse._ArgumentGroup:
@@ -240,6 +236,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_ca(general_group, no_default=no_default_ca)
         self.add_password(general_group)
         self.add_extensions(parser)
+        self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
         self.add_ocsp_no_check_group(parser)
 
@@ -266,6 +263,23 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             "--out", metavar="FILE", help="Save signed certificate to FILE. If omitted, print to stdout."
         )
         return general_group
+
+    def add_extended_key_usage_group(
+        self, parser: argparse.ArgumentParser, default: Optional[Tuple[x509.ObjectIdentifier, ...]] = None
+    ) -> None:
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.EXTENDED_KEY_USAGE]
+        group = parser.add_argument_group(
+            ext_name,
+            f"The {ext_name} extension indicates additional purposes that this certificate may be used for.",
+        )
+        group.add_argument(
+            "--extended-key-usage",
+            metavar="EXTENDED_KEY_USAGE",
+            action=actions.ExtendedKeyUsageAction,
+            help="Extended Key Usages to use for this certificate. %(metavar)s is either a dotted string or"
+            "a known Extended Key Usage, e.g. serverAuth or clientAuth.",
+        )
+        self.add_critical_option(group, ExtensionOID.EXTENDED_KEY_USAGE)
 
     def add_ocsp_no_check_group(self, parser: CommandParser) -> None:
         """Add argument group for the OCSPNoCheck extension."""
@@ -297,12 +311,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     def add_extensions(self, parser: CommandParser) -> None:
         """Add arguments for x509 extensions."""
         group = parser.add_argument_group("X509 v3 certificate extensions", self.add_extensions_help)
-        group.add_argument(
-            "--ext-key-usage",
-            metavar="VALUES",
-            action=actions.ExtendedKeyUsageAction,
-            help='The extendedKeyUsage extension, e.g. "serverAuth,clientAuth".',
-        )
         group.add_argument(
             "--tls-feature",
             metavar="VALUES",

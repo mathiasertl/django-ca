@@ -27,16 +27,22 @@ ChangeLog
 * Certificates for OCSP responders now use a commonName designating the certificate as OCSP responder as
   subject, other fields from the CAs subject are discarded.
 * A profile can now ignore :ref:`settings-ca-default-subject` by setting ``subject`` to ``False``.
-* The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were changed to
+* Copy all extensions when using :command:`manage.py resign_cert`.
+* Add support for multiple OCSP responder and CA Issuer entries when creating a certificate authority.
+* Add typehints when installing as wheel.
+
+Command-line interface
+======================
+
+* The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were renamed to
   ``--path-length`` and ``--no-path-length``.
-* Make the Key Usage extension in :command:`manage.py init_ca` configurable.
+* The ``--ext-key-usage`` option was changed to/split into ``--extended-key-usage`` and
+  ``--extended-key-usage-critical``.
+* Add support for specifying a custom Key Usage extension when using :command:`manage.py init_ca`.
 * Add support for adding the Inhibit :spelling:word:`anyPolicy` and Policy Constraints extensions when using
   :command:`manage.py init_ca`.
 * Add support for adding the OCSP No Check extension in when issuing certificates with :command:`manage.py
   sign_cert` or :command:`manage.py resign_cert`.
-* Copy all extensions when using :command:`manage.py resign_cert`.
-* Add support for multiple OCSP responder and CA Issuer entries when creating a certificate authority.
-* Add typehints when installing as wheel.
 
 Backwards incompatible changes
 ==============================

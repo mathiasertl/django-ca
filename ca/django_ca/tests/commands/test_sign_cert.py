@@ -361,7 +361,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             f"--ca={self.ca.serial}",
             "--key-usage=keyCertSign",
             "--ocsp-no-check",
-            "--ext-key-usage=clientAuth",
+            "--extended-key-usage=clientAuth",
             "--alt=URI:https://example.net",
             "--tls-feature=OCSPMustStaple",
         ]
@@ -406,7 +406,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "--key-usage-non-critical",
             "--ocsp-no-check",
             "--ocsp-no-check-critical",
-            "--ext-key-usage=clientAuth",
+            "--extended-key-usage=clientAuth",
+            "--extended-key-usage-critical",
             "--alt=URI:https://example.net",
             "--tls-feature=OCSPMustStaple",
         ]
@@ -422,6 +423,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         actual = cert.x509_extensions
+        self.assertEqual(
+            actual[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, critical=True),
+        )
         self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False))
         self.assertEqual(actual[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
 

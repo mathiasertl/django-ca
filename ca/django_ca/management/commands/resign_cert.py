@@ -72,6 +72,8 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         password: Optional[bytes],
         profile: Optional[str],
         algorithm: Optional[hashes.HashAlgorithm],
+        extended_key_usage: Optional[x509.ExtendedKeyUsage],
+        extended_key_usage_critical: bool,
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
         ocsp_no_check: bool,
@@ -109,6 +111,17 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                     have_san = True
                 extensions.append(ext)
 
+        if extended_key_usage is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
+                    critical=extended_key_usage_critical,
+                    value=extended_key_usage,
+                )
+            )
+        elif cert_extended_key_usage := cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE):
+            extensions.append(cert_extended_key_usage)
+
         if key_usage is not None:
             extensions.append(
                 x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
@@ -130,7 +143,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         # Copy over extensions that are not handled above already:
         for oid, extension in cert.x509_extensions.items():
-            if oid in (ExtensionOID.KEY_USAGE, ExtensionOID.OCSP_NO_CHECK):
+            if oid in (ExtensionOID.KEY_USAGE, ExtensionOID.OCSP_NO_CHECK, ExtensionOID.EXTENDED_KEY_USAGE):
                 continue
             if oid in (ext_type.oid for ext_type in self.sign_extensions):
                 continue
