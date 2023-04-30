@@ -17,6 +17,7 @@ import typing
 from http import HTTPStatus
 from typing import Dict, Iterable, Iterator, Tuple
 
+import django
 from django.test import TestCase
 from django.urls import reverse
 
@@ -129,37 +130,72 @@ class CertificateAdminViewTestCase(
         response = self.client.get(self.change_url())
         self.assertChangeResponse(response, obj=self.obj)
 
-        self.assertContains(
-            response,
-            text="""<div class="fieldBox field-revoked"><label>Revoked:</label>
-                     <div class="readonly"><img src="/static/admin/img/icon-yes.svg" alt="True"></div>
-                </div>""",
-            html=True,
-        )
+        if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
+            # django 4.2 added the flex-container class
+            html = """
+                <div class="flex-container fieldBox field-revoked">
+                    <label>Revoked:</label>
+                    <div class="readonly">
+                        <img src="/static/admin/img/icon-yes.svg" alt="True">
+                    </div>
+                </div>
+            """
+        else:
+            # django<4.2 did not yet have the flex-container class
+            html = """
+                <div class="fieldBox field-revoked">
+                    <label>Revoked:</label>
+                    <div class="readonly">
+                        <img src="/static/admin/img/icon-yes.svg" alt="True">
+                    </div>
+                </div>
+            """
+
+        self.assertContains(response, text=html, html=True)
 
     def test_no_san(self) -> None:
         """Test viewing a certificate with no extensions."""
         cert = self.certs["no-extensions"]
         response = self.client.get(cert.admin_change_url)
         self.assertChangeResponse(response, obj=cert)
-        self.assertContains(
-            response,
-            text="""
-<div class="form-row field-oid_2_5_29_17">
-    <div>
-        <label>Subject Alternative Name:</label>
-        <div class="readonly">
-            <span class="django-ca-extension">
-                <div class="django-ca-extension-value">
-                    &lt;Not present&gt;
+
+        if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
+            # django 4.2 added the flex-container div
+            html = """
+                <div class="form-row field-oid_2_5_29_17">
+                    <div>
+                        <div class="flex-container">
+                            <label>Subject Alternative Name:</label>
+                            <div class="readonly">
+                                <span class="django-ca-extension">
+                                    <div class="django-ca-extension-value">
+                                        &lt;Not present&gt;
+                                    </div>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </span>
-        </div>
-    </div>
-</div>
-""",
-            html=True,
-        )
+            """
+
+        else:  # pragma: only django<4.2
+            # django<4.2 did not yet have the flex-container div
+            html = """
+                <div class="form-row field-oid_2_5_29_17">
+                    <div>
+                        <label>Subject Alternative Name:</label>
+                        <div class="readonly">
+                            <span class="django-ca-extension">
+                                <div class="django-ca-extension-value">
+                                    &lt;Not present&gt;
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            """
+
+        self.assertContains(response, text=html, html=True)
 
     def test_change_watchers(self) -> None:
         """Test changing watchers.

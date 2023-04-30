@@ -676,6 +676,14 @@ class ParseHashAlgorithm(TestCase):
         with self.assertRaisesRegex(ValueError, "^Unknown type passed: bool$"):
             parse_hash_algorithm(False)  # type: ignore[arg-type]
 
+    def test_disallowed_type(self) -> None:
+        """Test passing types that are not valid as signature hash algorithms."""
+
+        with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
+            parse_hash_algorithm(hashes.SM3)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
+            parse_hash_algorithm(hashes.SM3())  # type: ignore[arg-type]
+
 
 class FormatNameTestCase(TestCase):
     """Test :py:func:`django_ca.utils.format_name`."""

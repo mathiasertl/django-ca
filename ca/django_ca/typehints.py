@@ -35,12 +35,12 @@ class SupportsLessThan(typing.Protocol):
         ...
 
 
-try:  # pragma: only cryptography>=40
+try:  # pragma: only cryptography>=40.0
     # pylint: disable-next=useless-import-alias,ungrouped-imports
     from cryptography.hazmat.primitives.asymmetric.types import (
         CertificateIssuerPrivateKeyTypes as CertificateIssuerPrivateKeyTypes,
     )
-except ImportError:  # pragma: only cryptography<40
+except ImportError:  # pragma: only cryptography<40.0
     # typehints as added in cryptography 40
     from cryptography.hazmat.primitives.asymmetric.types import (
         CERTIFICATE_PRIVATE_KEY_TYPES as CertificateIssuerPrivateKeyTypes,
@@ -84,7 +84,7 @@ KeyUsages = typing.Literal[
 ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
-ParsableHash = Optional[Union[str, hashes.HashAlgorithm]]
+ParsableHash = Optional[Union[str, AllowedHashTypes]]
 ParsableKeyType = typing.Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[
     str,

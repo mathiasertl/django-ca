@@ -898,7 +898,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
             raise ValueError(f"Could not parse DNS name: {name}") from e
 
 
-def parse_hash_algorithm(value: Union[Type[hashes.HashAlgorithm], ParsableHash] = None) -> AllowedHashTypes:
+def parse_hash_algorithm(value: Union[Type[AllowedHashTypes], ParsableHash] = None) -> AllowedHashTypes:
     """Parse a hash algorithm value.
 
     The most common use case is to pass a str naming a class in
@@ -949,11 +949,12 @@ def parse_hash_algorithm(value: Union[Type[hashes.HashAlgorithm], ParsableHash] 
     if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
         if value in constants.HASH_ALGORITHM_NAMES:
             return typing.cast(AllowedHashTypes, value())
-        raise ValueError(f"{value}: Algorithm is not allowed for signing.")
+        raise ValueError(f"{value.__name__}: Algorithm is not allowed for signing")
     if isinstance(value, hashes.HashAlgorithm):
         if type(value) in constants.HASH_ALGORITHM_NAMES:
             return typing.cast(AllowedHashTypes, value)
-        raise ValueError(f"{value}: Algorithm is not allowed for signing.")
+        name = type(value).__name__
+        raise ValueError(f"{name}: Algorithm is not allowed for signing")
     if isinstance(value, str):
         if value in constants.HASH_ALGORITHM_KEY_TYPES:
             return constants.HASH_ALGORITHM_KEY_TYPES[value]()

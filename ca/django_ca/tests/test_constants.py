@@ -74,7 +74,16 @@ class CompletenessTestCase(TestCase):
         subclasses = set(
             sc
             for sc in subclasses
-            if sc not in [hashes.SHAKE128, hashes.SHAKE256, hashes.BLAKE2b, hashes.BLAKE2s]
+            if sc
+            not in [
+                hashes.SHAKE128,
+                hashes.SHAKE256,
+                hashes.BLAKE2b,
+                hashes.BLAKE2s,
+                hashes.SM3,
+                hashes.SHA512_224,
+                hashes.SHA512_256,
+            ]
         )
 
         # These are deliberately not supported anymore:
