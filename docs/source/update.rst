@@ -44,6 +44,8 @@ You can convert timestamps using a single ``manage.py`` command:
 
    $ manage.py convert_timestamps
 
+.. _cli-1.24.0-updates:
+
 Command-line tools
 ==================
 
@@ -83,6 +85,24 @@ Command-line tools
   .. code-block:: console
 
      $ manage.py sign_cert --ext-key-usage critical,clientAuth,serverAuth
+
+* :command:`manage.py sign_cert`: The ``--tls-feature`` option is split into the ``--tls-feature``
+  and ``--tls-feature-critical`` option. The ``--tls-feature-usage`` takes multiple arguments (instead of a
+  coma-separated list) and also allows you to pass dotted strings for OIDs unknown to django-ca.
+
+  New, since ``django==1.24.0``:
+
+  .. code-block:: console
+
+     $ manage.py sign_cert \
+     >     --tls-feature status_request \
+     >     --tls-feature-critical
+
+  Before, in earlier versions:
+
+  .. code-block:: console
+
+     $ manage.py sign_cert --tls-feature critical,status_request
 
 Python API
 ==========
