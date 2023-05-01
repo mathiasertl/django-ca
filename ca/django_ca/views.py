@@ -295,7 +295,7 @@ class OCSPView(View):
 
         now = datetime.utcnow()
         builder = ocsp.OCSPResponseBuilder()
-        expires = datetime.utcnow() + timedelta(seconds=self.expires)
+        expires = now + timedelta(seconds=self.expires)
         builder = builder.add_response(
             cert=cert.pub.loaded,
             issuer=ca.pub.loaded,
