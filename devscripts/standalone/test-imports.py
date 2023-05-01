@@ -103,9 +103,8 @@ django.setup()
 from django.contrib.staticfiles import finders
 from django.template.loader import TemplateDoesNotExist, get_template
 
-from django_ca import models, subject, utils, views
+from django_ca import models, utils, views
 from django_ca.acme import constants, messages, utils, views
-from django_ca.extensions import Extension
 
 # Test if (some) templates can be loaded
 for template in [

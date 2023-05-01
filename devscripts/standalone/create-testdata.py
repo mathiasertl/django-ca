@@ -104,14 +104,15 @@ def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
     common_name = f"cert.{ca.cn}"
     # NOTE: We don't care about the type of private key, as the CA only ever receives the CSR
     cert_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
 
     # Create the most basic CSR
     csr_builder = x509.CertificateSigningRequestBuilder()
-    csr_builder = csr_builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)]))
+    csr_builder = csr_builder.subject_name(subject)
     csr_request = csr_builder.sign(cert_key, hashes.SHA256())
 
     # Create a certificate
-    cert = Certificate.objects.create_cert(ca=ca, csr=csr_request, subject=f"/CN={common_name}", **kwargs)
+    cert = Certificate.objects.create_cert(ca=ca, csr=csr_request, subject=subject, **kwargs)
     return cert
 
 

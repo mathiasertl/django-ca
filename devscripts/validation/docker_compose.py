@@ -334,10 +334,7 @@ def test_update(release):
     with tempfile.TemporaryDirectory() as tmpdir:
         last_release_dest = utils.git_archive(last_release, tmpdir)
         shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
-        if last_release == "1.21.0":  # can be removed once 1.22.0 is released
-            standalone_dir = last_release_dest / "devscripts"
-        else:
-            standalone_dir = last_release_dest / "devscripts" / "standalone"
+        standalone_dir = last_release_dest / "devscripts" / "standalone"
         backend = f"{os.path.basename(tmpdir)}-backend-1"
         frontend = f"{os.path.basename(tmpdir)}-frontend-1"
         standalone_dest = "/usr/src/django-ca/ca/"
@@ -401,7 +398,7 @@ def test_acme(release):
             # Start containers
             with _compose_up(env=environ):
                 _validate_container_versions(release, env=environ)
-                _manage("backend", "init_ca", "--path_length=1", "Root", "/CN=Root", env=environ)
+                _manage("backend", "init_ca", "--path-length=1", "Root", "/CN=Root", env=environ)
                 _manage(
                     "backend",
                     "init_ca",
