@@ -13,10 +13,9 @@
 
 """Test the revoke_cert management command."""
 import re
-from contextlib import contextmanager
 from datetime import datetime, timedelta
 from datetime import timezone as tz
-from typing import List
+from typing import List, Optional
 
 from django.test import TestCase
 from django.utils import timezone
@@ -33,10 +32,12 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
     load_cas = ("root",)
     load_certs = ("root-cert",)
 
-    @contextmanager
     def revoke(
-        self, cert: Certificate, arguments: List[str] = None, reason: str = ReasonFlags.unspecified.name
-    ):
+        self,
+        cert: Certificate,
+        arguments: Optional[List[str]] = None,
+        reason: str = ReasonFlags.unspecified.name,
+    ) -> None:
         if arguments is None:
             arguments = []
 
