@@ -326,6 +326,20 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
             namespace = self.parser.parse_args(["-f", "critical,status_request"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
 
+    def test_deprecated_values(self) -> None:
+        """Test deprecated critical flag."""
+        msg = (
+            r"^OCSPMustStaple and MultipleCertStatusRequest are deprecated aliases for status_request and "
+            r"status_request_v2\.$"
+        )
+        with self.assertRemovedIn126Warning(msg):
+            namespace = self.parser.parse_args(["-f", "OCSPMustStaple"])
+        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
+
+        with self.assertRemovedIn126Warning(msg):
+            namespace = self.parser.parse_args(["-f", "MultipleCertStatusRequest"])
+        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request_v2]), namespace.tls_feature)
+
     def test_error(self) -> None:
         """Test wrong option values."""
         self.assertParserError(

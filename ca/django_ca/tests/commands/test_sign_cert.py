@@ -363,7 +363,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "--ocsp-no-check",
             "--extended-key-usage=clientAuth",
             "--alt=URI:https://example.net",
-            "--tls-feature=OCSPMustStaple",
+            "--tls-feature=status_request",
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
@@ -409,7 +409,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "--extended-key-usage=clientAuth",
             "--extended-key-usage-critical",
             "--alt=URI:https://example.net",
-            "--tls-feature=OCSPMustStaple",
+            "--tls-feature=status_request",
         ]
 
         with self.assertCreateCertSignals() as (pre, post):

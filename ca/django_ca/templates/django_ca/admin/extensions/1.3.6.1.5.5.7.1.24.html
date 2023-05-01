@@ -4,9 +4,9 @@
 
 {% block content %}<ul>{% for feature in value %}
   <li>{% if feature == x509|enum:"TLSFeatureType.status_request" %}
-    OCSPMustStaple
+    status_request (OCSPMustStaple)
   {% elif feature == x509|enum:"TLSFeatureType.status_request_v2" %}
-    MultipleCertStatusRequest
+    status_request_v2 (MultipleCertStatusRequest)
   {% else %}
     {% trans "Unknown TLS Feature Type." %}
   {% endif %}</li>

@@ -429,8 +429,8 @@ class TLSFeatureField(MultipleChoiceExtensionField[x509.TLSFeature]):
 
     extension_type = x509.TLSFeature
     choices = (
-        (x509.TLSFeatureType.status_request.name, "OCSPMustStaple"),
-        (x509.TLSFeatureType.status_request_v2.name, "MultipleCertStatusRequest"),
+        (x509.TLSFeatureType.status_request.name, "status_request (OCSPMustStaple)"),
+        (x509.TLSFeatureType.status_request_v2.name, "status_request_v2 (MultipleCertStatusRequest)"),
     )  # TODO: choices can also be a function - better for testing for completeness
     widget = widgets.TLSFeatureWidget
 

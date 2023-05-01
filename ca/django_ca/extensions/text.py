@@ -159,9 +159,9 @@ def _tls_feature_as_text(value: x509.TLSFeature) -> str:
     lines = []
     for feature in value:
         if feature == x509.TLSFeatureType.status_request:
-            lines.append("* OCSPMustStaple")
+            lines.append("* status_request (OCSPMustStaple)")
         elif feature == x509.TLSFeatureType.status_request_v2:
-            lines.append("* MultipleCertStatusRequest")
+            lines.append("* status_request_v2 (MultipleCertStatusRequest)")
         else:  # pragma: no cover
             # COVERAGE NOTE: we support all types, so this should never be raised. The descriptive error
             # message is just here in case a new thing ever comes up.

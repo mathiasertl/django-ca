@@ -1198,13 +1198,14 @@ class TLSFeatureTestCase(ExtensionTestCaseMixin, TestCase):
 
     test_values: TestValues = {
         "one": {
-            "admin_html": "<ul><li>OCSPMustStaple</li></ul>",
+            "admin_html": "<ul><li>status_request (OCSPMustStaple)</li></ul>",
             "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request]),
             "serialized": ["status_request"],
-            "text": "* OCSPMustStaple",
+            "text": "* status_request (OCSPMustStaple)",
         },
         "two": {
-            "admin_html": "<ul><li>OCSPMustStaple</li><li>MultipleCertStatusRequest</li></ul>",
+            "admin_html": "<ul><li>status_request (OCSPMustStaple)</li>"
+            "<li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
             "extension_type": x509.TLSFeature(
                 features=[TLSFeatureType.status_request, TLSFeatureType.status_request_v2]
             ),
@@ -1217,12 +1218,12 @@ class TLSFeatureTestCase(ExtensionTestCaseMixin, TestCase):
                 [TLSFeatureType.status_request, TLSFeatureType.status_request_v2],
                 [TLSFeatureType.status_request_v2, TLSFeatureType.status_request],
             ],
-            "text": "* MultipleCertStatusRequest\n* OCSPMustStaple",
+            "text": "* status_request (OCSPMustStaple)\n* status_request_v2 (MultipleCertStatusRequest)",
         },
         "three": {
-            "admin_html": "<ul><li>MultipleCertStatusRequest</li></ul>",
+            "admin_html": "<ul><li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
             "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request_v2]),
             "serialized": ["status_request_v2"],
-            "text": "* MultipleCertStatusRequest",
+            "text": "* status_request_v2 (MultipleCertStatusRequest)",
         },
     }

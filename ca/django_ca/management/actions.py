@@ -607,6 +607,13 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
                 )
                 values = values[1:]
 
+        if "OCSPMustStaple" in values or "MultipleCertStatusRequest" in values:
+            warnings.warn(
+                "OCSPMustStaple and MultipleCertStatusRequest are deprecated aliases for status_request and "
+                "status_request_v2.",
+                RemovedInDjangoCA126Warning,
+            )
+
         try:
             features = [constants.TLS_FEATURE_NAMES[value] for value in values]
         except KeyError as ex:

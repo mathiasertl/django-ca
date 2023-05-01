@@ -92,14 +92,14 @@ TLSFeature
 The ``TLSFeature`` extension is defined in `RFC7633 <https://tools.ietf.org/html/rfc7633>`_. This extension
 should not be marked as critical.
 
-========================= ==================================================================================
-Name                      Description
-========================= ==================================================================================
-OCSPMustStaple            TLS connections *must* include a stapled OCSP response, defined in
-                          `RFC6066 <https://tools.ietf.org/html/rfc6066.html>`_.
-MultipleCertStatusRequest Not commonly used, defined in
-                          `RFC6961 <https://tools.ietf.org/html/rfc6961.html>`_.
-========================= ==================================================================================
+================= ==========================================================================================
+Name              Description
+================= ==========================================================================================
+status_request    TLS connections *must* include a stapled OCSP response, defined in
+                  `RFC6066 <https://tools.ietf.org/html/rfc6066.html>`_. Also known as "OCSPMustStaple".
+status_request_v2 Not commonly used, defined in `RFC6961 <https://tools.ietf.org/html/rfc6961.html>`_. Also
+                  known as "MultipleCertStatusRequest".
+================= ==========================================================================================
 
 The use of this extension is currently discouraged. Current OCSP stapling implementation are still poor,
-making OCSPMustStaple a dangerous extension.
+making this a dangerous extension.

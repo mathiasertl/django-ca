@@ -241,7 +241,8 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
                 <li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 1</li>
             </ul>""",
             ExtensionOID.PRECERT_POISON: "Yes",
-            ExtensionOID.TLS_FEATURE: "<ul><li>MultipleCertStatusRequest</li><li>OCSPMustStaple</li></ul>",
+            ExtensionOID.TLS_FEATURE: "<ul><li>status_request_v2 (MultipleCertStatusRequest)</li>"
+            "<li>status_request (OCSPMustStaple)</li></ul>",
         },
         "alt-extensions": {
             ExtensionOID.AUTHORITY_KEY_IDENTIFIER: """
@@ -269,7 +270,7 @@ DistributionPoint:
             </ul>""",
             ExtensionOID.NAME_CONSTRAINTS: "Permitted: <ul><li>DNS:.org</li></ul>",
             ExtensionOID.OCSP_NO_CHECK: "Yes",
-            ExtensionOID.TLS_FEATURE: "<ul><li>OCSPMustStaple</li></ul>",
+            ExtensionOID.TLS_FEATURE: "<ul><li>status_request (OCSPMustStaple)</li></ul>",
         },
         ##########################
         # 3rd party certificates #

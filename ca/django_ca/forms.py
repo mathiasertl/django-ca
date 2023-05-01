@@ -164,7 +164,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         )
     )
     tls_feature = fields.TLSFeatureField(
-        help_text=_("Allows enforcing TLS protocol features. Only OCSPMustStaple is commonly used.")
+        help_text=_("Allows enforcing TLS protocol features. Only status_request is commonly used.")
     )
 
     # Prevent auto-completing the password field. Browsers will otherwise prefill this field with the *users*
