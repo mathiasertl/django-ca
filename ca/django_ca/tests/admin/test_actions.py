@@ -290,7 +290,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         obj = obj or self.cert
         self.assertNotRevoked(obj)
 
-    def assertFormValidationError(
+    def assertFormValidationError(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, response: "HttpResponse", **errors: List[str]
     ) -> None:
         """Assert that the form validation failed with the given errors."""

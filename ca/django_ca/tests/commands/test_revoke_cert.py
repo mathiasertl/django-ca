@@ -38,6 +38,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         arguments: Optional[List[str]] = None,
         reason: str = ReasonFlags.unspecified.name,
     ) -> None:
+        """Revoke a certificate and make the necessary assertions afterwards."""
         if arguments is None:
             arguments = []
 
