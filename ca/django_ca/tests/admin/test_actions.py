@@ -15,6 +15,8 @@
 
 import typing
 from contextlib import contextmanager
+from datetime import datetime, timedelta
+from datetime import timezone as tz
 from http import HTTPStatus
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from unittest import mock
@@ -32,7 +34,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
-from django_ca.models import Certificate
+from django_ca.models import Certificate, X509CertMixin
 from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.tests.base import override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AdminTestCaseMixin
@@ -288,22 +290,32 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         obj = obj or self.cert
         self.assertNotRevoked(obj)
 
+    def assertFormValidationError(
+        self, cert: X509CertMixin, response: "HttpResponse", **errors: List[str]
+    ) -> None:
+        """Assert that the form validation failed with the given errors."""
+        self.assertNotRevoked(cert)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
+        self.assertEqual(response.context["form"].errors, errors)
+
     def assertSuccessfulRequest(
         self,
         response: "HttpResponse",
         obj: Optional[Certificate] = None,
-        reason: Optional[str] = None,
+        reason: str = "unspecified",
+        compromised: Optional[datetime] = None,
     ) -> None:
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
-        self.assertRevoked(self.cert, reason=reason)
+        self.assertRevoked(self.cert, reason=reason, compromised=compromised)
 
     def test_no_reason(self) -> None:
         """Test revoking without any reason."""
         for obj in self.get_objects():
             with self.mockSignals():
                 response = self.client.post(self.get_url(obj), data={"revoked_reason": ""})
-        self.assertSuccessfulRequest(response, reason="unspecified")
+        self.assertSuccessfulRequest(response)
 
     def test_with_reason(self) -> None:
         """Test revoking a certificate with an explicit reason."""
@@ -313,18 +325,42 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
                 response = self.client.post(self.get_url(obj), data={"revoked_reason": reason.name})
             self.assertSuccessfulRequest(response, reason=reason.name)
 
+    def test_with_compromised(self) -> None:
+        """Test revoking a certificate with a revocation date."""
+        value = datetime.now(tz=tz.utc) - timedelta(days=1)
+        data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
+
+        with self.mockSignals():
+            response = self.client.post(self.get_url(self.cert), data=data)
+        self.assertSuccessfulRequest(response, compromised=value)
+
+    def test_with_compromised_without_use_tz(self) -> None:
+        """Test revoking a certificate with a revocation date with USE_TZ=False."""
+        value = datetime.now() - timedelta(days=1)
+        data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
+
+        with self.mockSignals(), self.settings(USE_TZ=False):
+            response = self.client.post(self.get_url(self.cert), data=data)
+            self.assertSuccessfulRequest(response, compromised=value)
+
+    def test_compromised_in_the_future(self) -> None:
+        """Test that the compromised must be in the past."""
+        value = datetime.now() + timedelta(days=1)
+        data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
+
+        with self.assertNoSignals():
+            response = self.client.post(self.get_url(self.cert), data=data)
+        self.assertFormValidationError(self.cert, response, compromised=["Date must be in the past!"])
+
     def test_with_bogus_reason(self) -> None:
         """Try setting an invalid reason."""
         reason = "bogus"
-        for obj in self.get_objects():
-            with self.assertNoSignals():
-                response = self.client.post(self.get_url(obj), data={"revoked_reason": reason})
-        self.assertNotRevoked(self.cert)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
-        self.assertEqual(
-            response.context["form"].errors,
-            {"revoked_reason": ["Select a valid choice. bogus is not one of the available choices."]},
+        with self.assertNoSignals():
+            response = self.client.post(self.get_url(self.cert), data={"revoked_reason": reason})
+        self.assertFormValidationError(
+            self.cert,
+            response,
+            revoked_reason=["Select a valid choice. bogus is not one of the available choices."],
         )
 
     def test_revoked(self) -> None:
@@ -334,14 +370,12 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         cert.save()
 
         # Viewing page already redirects to change URL
-        for obj in self.get_objects():
-            with self.assertNoSignals():
-                self.assertRedirects(self.client.get(self.get_url(obj)), self.change_url())
+        with self.assertNoSignals():
+            self.assertRedirects(self.client.get(self.get_url(self.cert)), self.change_url())
 
         # Revoke a second time, which does not update the reason
-        for obj in self.get_objects():
-            with self.assertNoSignals():
-                response = self.client.post(self.get_url(obj), data={"revoked_reason": "certificateHold"})
+        with self.assertNoSignals():
+            response = self.client.post(self.get_url(self.cert), data={"revoked_reason": "certificateHold"})
         self.assertRedirects(response, self.change_url())
         self.assertRevoked(self.cert)
 

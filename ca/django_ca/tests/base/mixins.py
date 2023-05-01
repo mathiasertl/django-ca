@@ -512,7 +512,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
 
     def assertRevoked(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, reason: Optional[str] = None
+        self, cert: X509CertMixin, reason: Optional[str] = None, compromised: Optional[datetime] = None
     ) -> None:
         """Assert that the certificate is now revoked."""
         if isinstance(cert, CertificateAuthority):
@@ -521,6 +521,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             cert = Certificate.objects.get(serial=cert.serial)
 
         self.assertTrue(cert.revoked)
+        self.assertEqual(cert.compromised, compromised)
 
         if reason is None:
             self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
