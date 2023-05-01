@@ -15,10 +15,13 @@
 
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
+from datetime import datetime
+from datetime import timezone as tz
+from typing import Any, Optional
 
-from typing import Any
-
+from django.conf import settings
 from django.core.management.base import CommandError, CommandParser
+from django.utils import timezone
 
 from django_ca.constants import ReasonFlags
 from django_ca.management.actions import ReasonAction
@@ -32,11 +35,36 @@ class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-d
     help = "Revoke a certificate."
 
     def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument("--reason", action=ReasonAction, help="An optional reason for revocation.")
         super().add_arguments(parser)
 
-    def handle(self, cert: Certificate, reason: ReasonFlags, **options: Any) -> None:
+        # Get a good example timestamp in for the help text
+        example = datetime.now(tz=tz.utc).replace(microsecond=0, second=0).isoformat()
+
+        group = parser.add_argument_group("Revocation information")
+        group.add_argument("--reason", action=ReasonAction, help="An optional reason for revocation.")
+        group.add_argument(
+            "--compromised",
+            metavar="TIMESTAMP",
+            type=datetime.fromisoformat,
+            help=f"When the certificate was compromised, as an ISO 8601 timestamp (example: {example}).",
+        )
+
+    def handle(
+        self, cert: Certificate, reason: ReasonFlags, compromised: Optional[datetime], **options: Any
+    ) -> None:
         if cert.revoked:
             raise CommandError(f"{cert.serial}: Certificate is already revoked.")
 
-        cert.revoke(reason=reason)
+        # Make sure that the timestamp is tz-aware (makes processing easier)
+        if compromised is not None and timezone.is_naive(compromised):
+            raise CommandError(f"{compromised.isoformat()}: Timestamp requires a timezone.")
+
+        # Make sure that the certificate was compromised in the past
+        if compromised is not None and compromised > datetime.now(tz=tz.utc):
+            raise CommandError(f"{compromised.isoformat()}: Timestamp must be in the past.")
+
+        # If compromised is passed and USE_TZ=False, convert the timestamp to a tz-naive timestamp
+        if compromised is not None and settings.USE_TZ is False:
+            compromised = timezone.make_naive(compromised)
+
+        cert.revoke(reason=reason, compromised=compromised)

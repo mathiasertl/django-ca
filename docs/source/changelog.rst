@@ -46,6 +46,8 @@ Command-line interface
   :command:`manage.py init_ca`.
 * Add support for adding the OCSP No Check extension in when issuing certificates with :command:`manage.py
   sign_cert` or :command:`manage.py resign_cert`.
+* Add support for specifying a date when the certificate was compromised when revoking a certificate with
+  :command:`manage.py revoke_cert`.
 
 Backwards incompatible changes
 ==============================
