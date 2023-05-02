@@ -24,12 +24,6 @@ from typing import Any, Tuple, Type, Union
 F = typing.TypeVar("F", bound=typing.Callable[..., Any])
 
 
-class RemovedInDjangoCA125Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.25."""
-
-    version = "1.25"
-
-
 class RemovedInDjangoCA126Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in django-ca==1.26."""
 
