@@ -14,6 +14,7 @@
 """Module for handling certificate profiles."""
 
 import typing
+import warnings
 from datetime import datetime, timedelta
 from threading import local
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -21,8 +22,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
-from django_ca import ca_settings, typehints
+from django_ca import ca_settings, constants, typehints
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
+from django_ca.deprecation import RemovedInDjangoCA127Warning
 from django_ca.extensions import parse_extension, serialize_extension
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
@@ -30,7 +32,6 @@ from django_ca.typehints import (
     Expires,
     ExtensionMapping,
     ParsableExtension,
-    ParsableHash,
     SerializedExtension,
     SerializedProfile,
 )
@@ -68,7 +69,7 @@ class Profile:
         self,
         name: str,
         subject: Optional[Union[typing.Literal[False], x509.Name, Iterable[Tuple[str, str]]]] = None,
-        algorithm: ParsableHash = None,
+        algorithm: Optional[str] = None,
         extensions: Optional[
             Dict[str, Optional[Union[ParsableExtension, x509.Extension[x509.ExtensionType]]]]
         ] = None,
@@ -97,8 +98,19 @@ class Profile:
         else:
             self.subject = x509_name(subject)
 
+        deprecation_msg = (
+            "Support for non-standard hash algorithm names is deprecated and will be removed in "
+            "django-ca 1.27.0."
+        )
         if algorithm is not None:
-            self.algorithm = parse_hash_algorithm(algorithm)
+            if algorithm in constants.HASH_ALGORITHM_TYPES:
+                self.algorithm = constants.HASH_ALGORITHM_TYPES[algorithm]()
+            elif algorithm in constants.HASH_ALGORITHM_KEY_TYPES:
+                warnings.warn(deprecation_msg, RemovedInDjangoCA127Warning)
+                self.algorithm = constants.HASH_ALGORITHM_KEY_TYPES[algorithm]()
+            else:
+                self.algorithm = parse_hash_algorithm(algorithm)
+                warnings.warn(deprecation_msg, RemovedInDjangoCA127Warning)
 
         self.cn_in_san = cn_in_san
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES

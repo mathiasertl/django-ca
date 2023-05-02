@@ -272,6 +272,24 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
     )
 )
 
+# pragma: only django-ca<1.27  # support for non-standard hash algorithm names is dropped in 1.27
+HASH_ALGORITHM_KEYS: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingProxyType(
+    {
+        hashes.SHA224: hashes.SHA224.name,
+        hashes.SHA256: hashes.SHA256.name,
+        hashes.SHA384: hashes.SHA384.name,
+        hashes.SHA512: hashes.SHA512.name,
+        hashes.SHA3_224: hashes.SHA3_224.name,
+        hashes.SHA3_256: hashes.SHA3_256.name,
+        hashes.SHA3_384: hashes.SHA3_384.name,
+        hashes.SHA3_512: hashes.SHA3_512.name,
+    }
+)
+
+# pragma: only django-ca<1.27  # support for non-standard hash algorithm names is dropped in 1.27
+HASH_ALGORITHM_KEY_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = MappingProxyType(
+    {v: k for k, v in HASH_ALGORITHM_KEYS.items()}
+)
 
 # Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
 # ``--algorithm`` command line parameter.

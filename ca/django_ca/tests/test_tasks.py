@@ -92,14 +92,14 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         for ca in self.cas.values():
             tasks.cache_crl(ca.serial)
 
-            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "ca")
+            key = get_crl_cache_key(ca.serial, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
             if ca.algorithm is None:
                 self.assertIsNone(crl.signature_hash_algorithm)
             else:
                 self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "user")
+            key = get_crl_cache_key(ca.serial, enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
             if ca.algorithm is None:
                 self.assertIsNone(crl.signature_hash_algorithm)
@@ -114,7 +114,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         tasks.cache_crls()
 
         for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "ca")
+            key = get_crl_cache_key(ca.serial, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
 
             if ca.algorithm is None:
@@ -122,7 +122,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
             else:
                 self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, ca.algorithm, enc_cls, "user")
+            key = get_crl_cache_key(ca.serial, enc_cls, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
 
     @override_tmpcadir()
@@ -133,7 +133,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         tasks.cache_crls()
 
         for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "ca")
+            key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
             self.assertIsNone(cache.get(key))
 
     @override_tmpcadir()

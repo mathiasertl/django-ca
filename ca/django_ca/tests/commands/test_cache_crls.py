@@ -44,11 +44,11 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
         for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "ca")
+            key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "user")
+            key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
             crl = x509.load_der_x509_crl(cache.get(key))
             self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
@@ -60,10 +60,10 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-        key = get_crl_cache_key(self.ca.serial, self.ca.algorithm, Encoding.DER, "ca")
+        key = get_crl_cache_key(self.ca.serial, Encoding.DER, "ca")
         crl = x509.load_der_x509_crl(cache.get(key))
         self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
 
-        key = get_crl_cache_key(self.ca.serial, self.ca.algorithm, Encoding.DER, "user")
+        key = get_crl_cache_key(self.ca.serial, Encoding.DER, "user")
         crl = x509.load_der_x509_crl(cache.get(key))
         self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))

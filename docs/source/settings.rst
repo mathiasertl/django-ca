@@ -57,13 +57,11 @@ CA_CRL_PROFILES
 
       {
           'user': {
-              'algorithm': 'SHA512',
               'expires': 86400,
               'scope': 'user',
               'encodings': ["DER", "PEM"],
           },
           'ca': {
-              'algorithm': 'SHA512',
               'expires': 86400,
               'scope': 'ca',
               'encodings': ["DER", "PEM"],
@@ -87,8 +85,12 @@ CA_CRL_PROFILES
           }
       }
 
-   Note that the hash algorithm will default to ``"SHA256"`` for certificate authorities with DSA keys, unless
-   you specify a different value in the ``"OVERRIDES"`` value described above.
+   .. versionchanged:: 1.25.0
+
+      Support for specifying custom signature hash algorithms in the configuration was removed.
+
+   The hash algorithm used for signing the CRL will be the one used for signing the certificate authority
+   itself.
 
 .. _settings-ca-default-ca:
 

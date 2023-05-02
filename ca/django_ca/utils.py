@@ -894,9 +894,12 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
 def parse_hash_algorithm(value: Union[Type[AllowedHashTypes], ParsableHash] = None) -> AllowedHashTypes:
     """Parse a hash algorithm value.
 
+    .. deprecated:: 1.25.0
+
+       This function will be removed in ``django-ca==1.27.0``. Use standard hash algorithm names instead.
+
     The most common use case is to pass a str naming a class in
     :py:mod:`~cg:cryptography.hazmat.primitives.hashes`.
-
     For convenience, passing ``None`` will return the value of
     :ref:`settings-ca-default-signature-hash-algorithm`, and passing an
     :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
@@ -935,7 +938,7 @@ def parse_hash_algorithm(value: Union[Type[AllowedHashTypes], ParsableHash] = No
     ------
 
     ValueError
-        If an unknown object is passed or if ``value`` does not name a known algorithm.
+        If an unknown object is passed or if ``value`` does not name a known algorithm
     """
     if value is None:
         return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
@@ -1154,19 +1157,10 @@ def split_str(val: str, sep: str) -> Iterator[str]:
     yield from lex
 
 
-def get_crl_cache_key(
-    serial: str,
-    algorithm: Optional[hashes.HashAlgorithm] = hashes.SHA512(),
-    encoding: Encoding = Encoding.DER,
-    scope: Optional[str] = None,
-) -> str:
+def get_crl_cache_key(serial: str, encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
     """Get the cache key for a CRL with the given parameters."""
-    if algorithm is None:
-        algorithm_name = "None"
-    else:
-        algorithm_name = algorithm.name
 
-    return f"crl_{serial}_{algorithm_name}_{encoding.name}_{scope}"
+    return f"crl_{serial}_{encoding.name}_{scope}"
 
 
 ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)

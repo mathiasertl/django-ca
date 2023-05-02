@@ -436,10 +436,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             ]
 
         for name, ca in self.usable_cas:
-            der_user_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "user")
-            pem_user_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, "user")
-            der_ca_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.DER, "ca")
-            pem_ca_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, "ca")
+            der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
+            pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
+            der_ca_key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
+            pem_ca_key = get_crl_cache_key(ca.serial, Encoding.PEM, "ca")
             user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
             if ca.parent is None:
                 ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
@@ -561,11 +561,10 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             ]
 
         ca = self.cas["root"]
-        algo = hashes.SHA256()
-        der_user_key = get_crl_cache_key(ca.serial, algo, Encoding.DER, "user")
-        pem_user_key = get_crl_cache_key(ca.serial, algo, Encoding.PEM, "user")
-        der_ca_key = get_crl_cache_key(ca.serial, algo, Encoding.DER, "ca")
-        pem_ca_key = get_crl_cache_key(ca.serial, algo, Encoding.PEM, "ca")
+        der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
+        pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
+        der_ca_key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
+        pem_ca_key = get_crl_cache_key(ca.serial, Encoding.PEM, "ca")
 
         self.assertIsNone(cache.get(der_ca_key))
         self.assertIsNone(cache.get(pem_ca_key))
@@ -573,7 +572,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertIsNone(cache.get(pem_user_key))
 
         with self.settings(CA_CRL_PROFILES=crl_profiles):
-            ca.cache_crls(algorithm=algo)
+            ca.cache_crls()
 
         der_user_crl = cache.get(der_user_key)
         pem_user_crl = cache.get(pem_user_key)

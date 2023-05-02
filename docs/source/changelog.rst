@@ -19,6 +19,8 @@ Backwards incompatible changes
 * The ``CA_DEFAULT_ECC_CURVE`` setting was removed. Use :ref:`settings-ca-default-elliptic-curve` instead.
 * Support for non-standard algorithm names for the ``--algorithm`` argument was removed.
 * Support for non-standard elliptic curve names via the ``--elliptic-curve`` argument was removed.
+* Support for custom signature hash algorithms in CRLs was removed. The algorithm used for signing the
+  certificate authority is now always used.
 * The old alias ``--ecc-curve`` for ``--elliptic-curve`` was removed.
 
 
@@ -27,6 +29,7 @@ Deprecation notices
 
 * This is the last release to support cryptography 37 and cryptography 39.
 * This is the last release to support acme 2.4.0.
+* Support for non-standard algorithm names in profile settings will be removed in django-ca 1.27.0.
 
 .. _changelog-1.24.0:
 

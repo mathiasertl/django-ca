@@ -84,13 +84,7 @@ from django_ca.querysets import (
     CertificateQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import (
-    AllowedHashTypes,
-    CertificateIssuerPrivateKeyTypes,
-    Expires,
-    ParsableHash,
-    ParsableKeyType,
-)
+from django_ca.typehints import AllowedHashTypes, CertificateIssuerPrivateKeyTypes, Expires, ParsableKeyType
 from django_ca.utils import (
     bytes_to_hex,
     ca_storage,
@@ -102,7 +96,6 @@ from django_ca.utils import (
     parse_encoding,
     parse_expires,
     parse_general_name,
-    parse_hash_algorithm,
     read_file,
     split_str,
     validate_private_key_parameters,
@@ -649,25 +642,17 @@ class CertificateAuthority(X509CertMixin):
             return "Ed448"
         raise ValueError(f"{pub}: Unknown key type.")  # pragma: no cover
 
-    def cache_crls(
-        self, password: Optional[Union[str, bytes]] = None, algorithm: ParsableHash = None
-    ) -> None:
+    def cache_crls(self, password: Optional[Union[str, bytes]] = None) -> None:
         """Function to cache all CRLs for this CA.
 
-        .. versionchanged:: 1.22.0
+        .. versionchanged:: 1.25.0
 
-           This function now always generates new CRLs.
+           Support for passing a custom hash algorithm to this function was removed.
         """
 
         password = password or self.get_password()
-        ca_key = self.key(password)
-
-        if algorithm is not None:
-            algorithm = parse_hash_algorithm(algorithm)
 
         for config in deepcopy(ca_settings.CA_CRL_PROFILES).values():
-            config.setdefault("algorithm", self.algorithm)
-
             # create a copy of the overrides with the serials sanitized so that the user can use a
             # case-insensitive string and can have colons (":").
             overrides = {k.replace(":", "").upper(): v for k, v in config.get("OVERRIDES", {}).items()}
@@ -676,11 +661,6 @@ class CertificateAuthority(X509CertMixin):
             if ca_override.get("skip"):
                 continue
 
-            if isinstance(ca_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
-                algorithm = None
-            elif not algorithm:
-                algorithm = parse_hash_algorithm(ca_override.get("algorithm", config.get("algorithm")))
-
             expires = ca_override.get("expires", config.get("expires", 86400))
             scope = ca_override.get("scope", config.get("scope"))
             full_name = ca_override.get("full_name", config.get("full_name"))
@@ -688,7 +668,7 @@ class CertificateAuthority(X509CertMixin):
             encodings = ca_override.get("encodings", config.get("encodings", ["DER"]))
             crl = self.get_crl(
                 expires=expires,
-                algorithm=algorithm,
+                algorithm=self.algorithm,
                 password=password,
                 scope=scope,
                 full_name=full_name,
@@ -697,7 +677,7 @@ class CertificateAuthority(X509CertMixin):
 
             for encoding in encodings:
                 encoding = parse_encoding(encoding)
-                cache_key = get_crl_cache_key(self.serial, algorithm, encoding, scope=scope)
+                cache_key = get_crl_cache_key(self.serial, encoding, scope=scope)
 
                 if expires >= 600:  # pragma: no branch
                     # for longer expiries we subtract a random value so that regular CRL regeneration is

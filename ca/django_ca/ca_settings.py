@@ -81,8 +81,8 @@ def _get_hash_algorithm(setting: str, default: str) -> "AllowedHashTypes":
     raw_value = getattr(settings, setting, default)
     try:
         return constants.HASH_ALGORITHM_TYPES[raw_value]()
-    except KeyError as ex:
-        raise ImproperlyConfigured(f"{setting}: {raw_value}: Unknown hash algorithm.") from ex
+    except KeyError as ex2:
+        raise ImproperlyConfigured(f"{setting}: {raw_value}: Unknown hash algorithm.") from ex2
 
 
 if "CA_DIR" in os.environ:  # pragma: no cover

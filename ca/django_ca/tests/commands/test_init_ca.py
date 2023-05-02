@@ -138,12 +138,12 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
         # Validate the CRL from the cache
-        cache_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, scope="user")
+        cache_key = get_crl_cache_key(ca.serial, Encoding.PEM, scope="user")
         user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
         crl = cache.get(cache_key)
         self.assertCRL(crl, signer=ca, algorithm=ca.algorithm, idp=user_idp)
 
-        cache_key = get_crl_cache_key(ca.serial, ca.algorithm, Encoding.PEM, scope="ca")
+        cache_key = get_crl_cache_key(ca.serial, Encoding.PEM, scope="ca")
         ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
         crl = cache.get(cache_key)
         self.assertCRL(crl, signer=ca, algorithm=ca.algorithm, idp=ca_idp)

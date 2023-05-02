@@ -41,7 +41,6 @@ urlpatterns = [
         r"^adv/(?P<serial>[0-9A-F:]+)/$",
         CertificateRevocationListView.as_view(
             content_type="text/plain",
-            digest=hashes.SHA256(),
             expires=321,
             type=Encoding.PEM,
         ),

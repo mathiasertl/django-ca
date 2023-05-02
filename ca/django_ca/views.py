@@ -78,9 +78,6 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     expires = 600
     """CRL expires in this many seconds."""
 
-    digest = None
-    """Digest used for generating the CRL."""
-
     # header used in the request
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
@@ -94,11 +91,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
 
         ca = self.get_object()
 
-        hash_algorithm = self.digest
-        if hash_algorithm is None:
-            hash_algorithm = ca.algorithm
-
-        cache_key = get_crl_cache_key(serial, algorithm=hash_algorithm, encoding=encoding, scope=self.scope)
+        cache_key = get_crl_cache_key(serial, encoding=encoding, scope=self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
@@ -111,7 +104,6 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
             encoding = parse_encoding(self.type)
             crl = ca.get_crl(
                 expires=self.expires,
-                algorithm=self.digest,
                 password=self.password,
                 scope=self.scope,
                 include_issuing_distribution_point=self.include_issuing_distribution_point,

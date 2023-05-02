@@ -514,7 +514,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         root = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[], algorithm="SHA512")
+        prof = Profile("example", subject=[], algorithm="SHA-512")
 
         # Make sure that algorithm does not match what is the default profile above, so that we can test it
         self.assertIsInstance(root.algorithm, hashes.SHA256)
@@ -700,6 +700,22 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         prof = Profile("test")
         with self.assertRaisesRegex(ValueError, r"^Cannot determine subject for certificate\.$"):
             self.create_cert(prof, ca, csr)
+
+    def test_deprecated_hash_algorithms(self) -> None:
+        """Test deprecated hash algorithm values."""
+
+        msg = (
+            r"^Support for non-standard hash algorithm names is deprecated and will be removed in "
+            r"django-ca 1\.27\.0\.$"
+        )
+        with self.assertRemovedIn127Warning(msg):
+            Profile("sha256", algorithm="sha256")
+
+        with self.assertRemovedIn127Warning(msg):
+            Profile("sha256", algorithm="SHA256")
+
+        with self.assertRaisesRegex(ValueError, r"^Unknown hash algorithm: foo$"):
+            Profile("sha256", algorithm="foo")
 
     def test_str(self) -> None:
         """Test str()."""
