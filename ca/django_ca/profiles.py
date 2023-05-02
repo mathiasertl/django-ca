@@ -182,14 +182,6 @@ class Profile:
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
-        .. deprecated:: 1.22.0
-
-           * Passing a ``~django_ca.subject.Subject`` as `subject` is now deprecated. The feature will be
-             removed in ``django_ca==1.24``. Pass a :py:class:`~cg:cryptography.x509.Name` instance instead.
-           * Passing a ``dict`` for `extensions` is now deprecated, pass a list instead.
-           * Passing ``django_ca.extensions.Extension`` in `extensions is now deprecated, pass regular
-             :py:class:`~cg:cryptography.x509.Extension` objects instead.
-
         This function is the core function used to create x509 certificates. In its simplest form, you only
         need to pass a ca, a CSR and a subject to get a valid certificate::
 
