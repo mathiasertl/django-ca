@@ -48,7 +48,7 @@ class RemovedInDjangoCA128Warning(PendingDeprecationWarning):
     version = "1.28"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA125Warning
+RemovedInNextVersionWarning = RemovedInDjangoCA126Warning
 
 DeprecationWarningType = Union[
     Type[RemovedInDjangoCA126Warning], Type[RemovedInDjangoCA127Warning], Type[RemovedInDjangoCA128Warning]

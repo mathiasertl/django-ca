@@ -33,14 +33,7 @@ from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, KEY_
 from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
-from django_ca.utils import (
-    is_power2,
-    parse_encoding,
-    parse_general_name,
-    parse_hash_algorithm,
-    parse_key_curve,
-    x509_name,
-)
+from django_ca.utils import is_power2, parse_encoding, parse_general_name, parse_key_curve, x509_name
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
 ParseType = typing.TypeVar("ParseType")  # pylint: disable=invalid-name
@@ -87,26 +80,14 @@ class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("choices", sorted(tuple(constants.HASH_ALGORITHM_TYPES)))
         kwargs.setdefault("metavar", "{SHA-512,SHA-256,...}")
-        # Enable this line once support for non-standard names is dropped
-        # kwargs.setdefault("choices", sorted(constants.HASH_ALGORITHM_TYPES))
         super().__init__(**kwargs)
 
     def parse_value(self, value: str) -> AllowedHashTypes:
         """Parse the value for this action."""
-        try:
-            return constants.HASH_ALGORITHM_TYPES[value]()
-        except KeyError:
-            # NOTE: when removing, add the choices option above
-            try:
-                parsed = parse_hash_algorithm(value)
-                warnings.warn(
-                    f"{value}: Support for non-standard algorithm names will be dropped in django-ca 1.25.0.",
-                    RemovedInDjangoCA125Warning,
-                )
-                return parsed
-            except ValueError as ex:
-                raise argparse.ArgumentError(self, str(ex)) from ex
+        # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
+        return constants.HASH_ALGORITHM_TYPES[value]()
 
 
 class CertificateAction(SingleValueAction[str, Certificate]):

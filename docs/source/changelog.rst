@@ -12,6 +12,7 @@ ChangeLog
 
 * The ``CA_DIGEST_ALGORITHM`` was removed. Use :ref:`settings-ca-default-signature-hash-algorithm` instead.
 * The ``CA_DEFAULT_ECC_CURVE`` was removed. Use :ref:`settings-ca-default-elliptic-curve` instead.
+* Support for non-standard algorithm names for the ``--algorithm`` argument was removed.
 
 .. _changelog-1.24.0:
 

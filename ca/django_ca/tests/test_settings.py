@@ -142,24 +142,15 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="SHA-224"):
             self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA224)
 
-        with self.assertImproperlyConfigured(r"^foo: Unknown hash algorithm\.$"):
+        msg = r"^CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: foo: Unknown hash algorithm\.$"
+        with self.assertImproperlyConfigured(msg):
             with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
-        warn = r"^CA_DIGEST_ALGORITHM is deprecated, please use CA_DEFAULT_SIGNATURE_HASH_ALGORITHM instead. Support for this setting will be removed in django-ca==1\.25\.0\.$"  # noqa: E501
-        with self.assertRemovedIn125Warning(warn):
-            with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM=None, CA_DIGEST_ALGORITHM="sha384"):
-                self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA384)
-
-        with self.assertRemovedIn125Warning(warn), self.assertImproperlyConfigured(
-            r"^FOO: Unknown hash algorithm\."
-        ):
-            with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM=None, CA_DIGEST_ALGORITHM="foo"):
-                self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA384)
-
     def test_default_dsa_signature_hash_algorithm(self) -> None:
         """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
-        with self.assertImproperlyConfigured(r"^foo: Unknown hash algorithm\.$"):
+        msg = r"^CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: foo: Unknown hash algorithm\.$"
+        with self.assertImproperlyConfigured(msg):
             with self.settings(CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
