@@ -10,11 +10,23 @@ ChangeLog
 1.25.0 (TBR)
 ************
 
-* The ``CA_DIGEST_ALGORITHM`` was removed. Use :ref:`settings-ca-default-signature-hash-algorithm` instead.
-* The ``CA_DEFAULT_ECC_CURVE`` was removed. Use :ref:`settings-ca-default-elliptic-curve` instead.
+Backwards incompatible changes
+==============================
+
+* Drop support for acme 2.3.0 and cryptography 38.
+* The ``CA_DIGEST_ALGORITHM`` setting was removed. Use :ref:`settings-ca-default-signature-hash-algorithm`
+  instead.
+* The ``CA_DEFAULT_ECC_CURVE`` setting was removed. Use :ref:`settings-ca-default-elliptic-curve` instead.
 * Support for non-standard algorithm names for the ``--algorithm`` argument was removed.
 * Support for non-standard elliptic curve names via the ``--elliptic-curve`` argument was removed.
 * The old alias ``--ecc-curve`` for ``--elliptic-curve`` was removed.
+
+
+Deprecation notices
+===================
+
+* This is the last release to support cryptography 37 and cryptography 39.
+* This is the last release to support acme 2.4.0.
 
 .. _changelog-1.24.0:
 
