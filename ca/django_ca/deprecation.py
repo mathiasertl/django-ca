@@ -31,21 +31,27 @@ class RemovedInDjangoCA125Warning(PendingDeprecationWarning):
 
 
 class RemovedInDjangoCA126Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.25."""
+    """Warning if a feature will be removed in django-ca==1.26."""
 
     version = "1.26"
 
 
 class RemovedInDjangoCA127Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.25."""
+    """Warning if a feature will be removed in django-ca==1.27."""
 
     version = "1.27"
+
+
+class RemovedInDjangoCA128Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==1.28."""
+
+    version = "1.28"
 
 
 RemovedInNextVersionWarning = RemovedInDjangoCA125Warning
 
 DeprecationWarningType = Union[
-    Type[RemovedInDjangoCA125Warning], Type[RemovedInDjangoCA126Warning], Type[RemovedInDjangoCA127Warning]
+    Type[RemovedInDjangoCA126Warning], Type[RemovedInDjangoCA127Warning], Type[RemovedInDjangoCA128Warning]
 ]
 
 

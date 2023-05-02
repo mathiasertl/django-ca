@@ -207,7 +207,7 @@ CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
    .. versionchanged:: 1.23.0
 
       The setting was called "CA_DIGEST_ALGORITHM" before 1.23.0 and non-standard algorithm names where
-      allowed.  Support for the old setting name and non-standard algorithms will be removed in
+      allowed.  Support for the old setting name and non-standard algorithms was removed in
       ``django-ca==1.25.0``.
 
    The default hash algorithm for signing public keys of certificate authorities that use an ``RSA`` or ``EC``

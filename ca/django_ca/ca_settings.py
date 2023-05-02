@@ -21,7 +21,6 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -77,6 +76,14 @@ def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
             raise ImproperlyConfigured(f"{kex.args[0]}: Unknown attribute type.") from kex
 
     raise ImproperlyConfigured(f"{value}: Must be a x509.ObjectIdentifier or str.")
+
+
+def _get_hash_algorithm(setting: str, default: str) -> "AllowedHashTypes":
+    raw_value = getattr(settings, setting, default)
+    try:
+        return constants.HASH_ALGORITHM_TYPES[raw_value]()
+    except KeyError as ex:
+        raise ImproperlyConfigured(f"{setting}: {raw_value}: Unknown hash algorithm.") from ex
 
 
 if "CA_DIR" in os.environ:  # pragma: no cover
@@ -265,16 +272,7 @@ if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
 
 CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
-CA_NOTIFICATION_DAYS = getattr(
-    settings,
-    "CA_NOTIFICATION_DAYS",
-    [
-        14,
-        7,
-        3,
-        1,
-    ],
-)
+CA_NOTIFICATION_DAYS = getattr(settings, "CA_NOTIFICATION_DAYS", [14, 7, 3, 1])
 CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
 CA_PASSWORDS: Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
 
@@ -285,45 +283,14 @@ ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, "CA_ACME_ACCOUNT_REQUIRES_CONT
 ACME_MAX_CERT_VALIDITY = getattr(settings, "CA_ACME_MAX_CERT_VALIDITY", timedelta(days=90))
 ACME_DEFAULT_CERT_VALIDITY = getattr(settings, "CA_ACME_DEFAULT_CERT_VALIDITY", timedelta(days=90))
 
-# Undocumented options, e.g. to share values between different parts of code
 CA_MIN_KEY_SIZE = getattr(settings, "CA_MIN_KEY_SIZE", 2048)
 
 CA_DEFAULT_HOSTNAME: Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
 
-if _CA_DEFAULT_SIGNATURE_HASH_ALGORITHM := getattr(settings, "CA_DEFAULT_SIGNATURE_HASH_ALGORITHM", None):
-    # NOTE: default is in else branch. Move to getattr default once old setting name is dropped
-    try:
-        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[
-            _CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
-        ]()
-    except KeyError as ex:
-        raise ImproperlyConfigured(f"{_CA_DEFAULT_SIGNATURE_HASH_ALGORITHM}: Unknown hash algorithm.") from ex
-elif _CA_DIGEST_ALGORITHM := getattr(settings, "CA_DIGEST_ALGORITHM", "").upper():  # pragma: django-ca<1.25.0
-    warnings.warn(
-        "CA_DIGEST_ALGORITHM is deprecated, please use CA_DEFAULT_SIGNATURE_HASH_ALGORITHM instead. Support "
-        "for this setting will be removed in django-ca==1.25.0.",
-        deprecation.RemovedInDjangoCA125Warning,
-    )
-    try:
-        CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: "AllowedHashTypes" = getattr(  # type: ignore[no-redef]
-            hashes, _CA_DIGEST_ALGORITHM
-        )()
-    except AttributeError:
-        # pylint: disable=raise-missing-from; not really useful in this context
-        raise ImproperlyConfigured(f"{_CA_DIGEST_ALGORITHM}: Unknown hash algorithm.")
-else:
-    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.SHA512()
-
-_CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = getattr(
-    settings, "CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256"
+CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm("CA_DEFAULT_SIGNATURE_HASH_ALGORITHM", "SHA-512")
+CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm(
+    "CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256"
 )
-try:
-    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = constants.HASH_ALGORITHM_TYPES[
-        _CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
-    ]()
-except KeyError:
-    # pylint: disable=raise-missing-from; not really useful in this context
-    raise ImproperlyConfigured(f"{_CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM}: Unknown hash algorithm.")
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
 if isinstance(CA_DEFAULT_EXPIRES, int):

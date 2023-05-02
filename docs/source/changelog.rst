@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.25.0:
+
+************
+1.25.0 (TBR)
+************
+
+* The ``CA_DIGEST_ALGORITHM`` was removed. Use :ref:`settings-ca-default-signature-hash-algorithm` instead.
+
 .. _changelog-1.24.0:
 
 *******************
