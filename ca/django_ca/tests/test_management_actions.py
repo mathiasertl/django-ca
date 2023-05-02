@@ -397,20 +397,15 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
         args = self.parser.parse_args(["--curve=brainpoolP512r1"])
         self.assertIsInstance(args.curve, ec.BrainpoolP512R1)
 
-    def test_non_standard_algorithms(self) -> None:
-        """Test parsing of old, non-standard hash algorithm names."""
-
-        msg = r"^SECT409K1: Support for non-standard elliptic curve names will be dropped in django-ca 1\.25\.0\.$"  # noqa: E501
-        with self.assertRemovedIn125Warning(msg):
-            args = self.parser.parse_args(["--curve=SECT409K1"])
-        self.assertIsInstance(args.curve, ec.SECT409K1)
-
     def test_error(self) -> None:
         """Test false option values."""
         self.assertParserError(
             ["--curve=foo"],
             "usage: {script} [-h] [--curve {{secp256r1,secp384r1,secp521r1,...}}]\n"
-            "{script}: error: argument --curve: foo: Not a known Elliptic Curve\n",
+            "{script}: error: argument --curve: invalid choice: 'foo' (choose from 'brainpoolP256r1', "
+            "'brainpoolP384r1', 'brainpoolP512r1', 'secp192r1', 'secp224r1', 'secp256k1', 'secp256r1', "
+            "'secp384r1', 'secp521r1', 'sect163k1', 'sect163r2', 'sect233k1', 'sect233r1', 'sect283k1', "
+            "'sect283r1', 'sect409k1', 'sect409r1', 'sect571k1', 'sect571r1')\n",
         )
 
 

@@ -30,10 +30,10 @@ from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, KEY_USAGE_NAMES, ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA125Warning, RemovedInDjangoCA126Warning
+from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
-from django_ca.utils import is_power2, parse_encoding, parse_general_name, parse_key_curve, x509_name
+from django_ca.utils import is_power2, parse_encoding, parse_general_name, x509_name
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
 ParseType = typing.TypeVar("ParseType")  # pylint: disable=invalid-name
@@ -190,24 +190,14 @@ class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("choices", sorted(tuple(constants.ELLIPTIC_CURVE_TYPES)))
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
-        # Enable this line once support for non-standard names is dropped
-        # kwargs.setdefault("choices", list(constants.ELLIPTIC_CURVE_TYPES))
         super().__init__(**kwargs)
 
     def parse_value(self, value: str) -> ec.EllipticCurve:
         """Parse the value for this action."""
-        msg = f"{value}: Support for non-standard elliptic curve names will be dropped in django-ca 1.25.0."
-        try:
-            return constants.ELLIPTIC_CURVE_TYPES[value]()
-        except KeyError:
-            # NOTE: when removing, add the choices option above
-            try:
-                parsed = parse_key_curve(value)
-                warnings.warn(msg, RemovedInDjangoCA125Warning)
-                return parsed
-            except ValueError as e:
-                raise argparse.ArgumentError(self, str(e))
+        # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
+        return constants.ELLIPTIC_CURVE_TYPES[value]()
 
 
 class IntegerRangeAction(SingleValueAction[int, int]):

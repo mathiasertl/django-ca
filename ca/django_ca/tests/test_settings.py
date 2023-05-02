@@ -108,23 +108,6 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 
-        warn = r"^CA_DEFAULT_ECC_CURVE is deprecated, please use CA_DEFAULT_ELLIPTIC_CURVE instead. Support for this setting will be removed in django-ca==1\.25\.0\.$"  # noqa: E501
-        with self.assertRemovedIn125Warning(warn):
-            with self.settings(CA_DEFAULT_ECC_CURVE="SECP256R1"):
-                self.assertEqual(ca_settings.CA_DEFAULT_ELLIPTIC_CURVE, ec.SECP256R1)
-
-        with self.assertRemovedIn125Warning(warn), self.assertImproperlyConfigured(
-            r"^ECDH: Not an elliptic curve\.$"
-        ):
-            with self.settings(CA_DEFAULT_ECC_CURVE="ECDH"):
-                pass
-
-        with self.assertRemovedIn125Warning(warn), self.assertImproperlyConfigured(
-            r"^foo: Unknown elliptic curve\.$"
-        ):
-            with self.settings(CA_DEFAULT_ECC_CURVE="foo"):
-                pass
-
     def test_default_name_order(self) -> None:
         """Test invalid values for a default name order"""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_NAME_ORDER: setting must be a tuple\.$"):

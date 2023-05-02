@@ -135,7 +135,6 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         default = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
         parser.add_argument(
             "--elliptic-curve",
-            "--ecc-curve",  # Remove in django-ca==1.26.0
             action=actions.EllipticCurveAction,
             help=f"Elliptic Curve used for EC keys (default: {default}).",
         )
