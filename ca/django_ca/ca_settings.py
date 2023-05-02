@@ -16,9 +16,8 @@
 import os
 import re
 import typing
-import warnings
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -30,7 +29,7 @@ from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import anything but django_ca.constants/deprecation here, or you risk circular
 # imports.
-from django_ca import constants, deprecation
+from django_ca import constants
 
 if typing.TYPE_CHECKING:
     from django_ca.typehints import AllowedHashTypes
@@ -311,33 +310,11 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
 
 
 # CA_DEFAULT_ECC_CURVE can be removed in django-ca==1.25.0
-if _CA_DEFAULT_ELLIPTIC_CURVE := getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", None):
-    # NOTE: default is in else branch. Move to getattr default once old setting name is dropped
-    try:
-        CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]
-    except KeyError as ex:
-        raise ImproperlyConfigured(
-            f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE."
-        ) from ex
-elif _CA_DEFAULT_ELLIPTIC_CURVE := getattr(
-    settings, "CA_DEFAULT_ECC_CURVE", None
-):  # pragma: django-ca<1.25.0
-    warnings.warn(
-        "CA_DEFAULT_ECC_CURVE is deprecated, please use CA_DEFAULT_ELLIPTIC_CURVE instead. Support "
-        "for this setting will be removed in django-ca==1.25.0.",
-        deprecation.RemovedInDjangoCA125Warning,
-    )
-    try:
-        CA_DEFAULT_ELLIPTIC_CURVE: Type[ec.EllipticCurve] = getattr(  # type: ignore[no-redef]
-            ec, _CA_DEFAULT_ELLIPTIC_CURVE
-        )
-        if not issubclass(CA_DEFAULT_ELLIPTIC_CURVE, ec.EllipticCurve):
-            raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Not an elliptic curve.")
-    except AttributeError:
-        # pylint: disable=raise-missing-from; not really useful in this context
-        raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown elliptic curve.")
-else:
-    CA_DEFAULT_ELLIPTIC_CURVE = ec.SECP256R1  # pylint: disable=invalid-name
+_CA_DEFAULT_ELLIPTIC_CURVE = getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", ec.SECP256R1.name)
+try:
+    CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]
+except KeyError as ex:
+    raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
 
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(
