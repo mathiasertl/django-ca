@@ -17,10 +17,12 @@ from typing import Any, Tuple
 
 # WARNING: This module MUST NOT include any dependencies, as it is read by setup.py
 
+# Between releases: (Major, Minor, Patch, "dev", 1)
+# On a release: (Major, Minor, Patch)
 # https://www.python.org/dev/peps/pep-0440/
 # https://www.python.org/dev/peps/pep-0396/
 # https://www.python.org/dev/peps/pep-0386/
-VERSION = (1, 24, 0)
+VERSION = (1, 25, 0, "dev", 1)
 
 # __version__ specified in PEP 0396, but we use the PEP 0440 format instead
 __version__ = ".".join([str(e) for e in VERSION[:3]])
