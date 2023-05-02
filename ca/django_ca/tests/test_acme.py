@@ -98,9 +98,6 @@ class TestConstantsTestCase(TestCase):
         """Test that the IdentifierType Enum is equivalent to the main ACME library."""
 
         actual = list(acme.messages.IdentifierType.POSSIBLE_NAMES)
-        if "ip" not in actual:  # pragma: acme<1.19
-            actual.append("ip")
-
         self.assertCountEqual(actual, [s.value for s in IdentifierType])
 
 

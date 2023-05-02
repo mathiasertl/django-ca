@@ -949,8 +949,6 @@ def parse_hash_algorithm(value: Union[Type[AllowedHashTypes], ParsableHash] = No
         name = type(value).__name__
         raise ValueError(f"{name}: Algorithm is not allowed for signing")
     if isinstance(value, str):
-        if value in constants.HASH_ALGORITHM_KEY_TYPES:
-            return constants.HASH_ALGORITHM_KEY_TYPES[value]()
         try:
             algo: Type[AllowedHashTypes] = getattr(hashes, value.strip())
             return algo()

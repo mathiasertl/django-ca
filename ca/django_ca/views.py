@@ -43,7 +43,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.typehints import PrivateKeyTypes
+from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
@@ -187,7 +187,7 @@ class OCSPView(View):
             ocsp.OCSPResponseBuilder.build_unsuccessful(status).public_bytes(Encoding.DER)
         )
 
-    def get_responder_key(self) -> PrivateKeyTypes:
+    def get_responder_key(self) -> CertificateIssuerPrivateKeyTypes:
         """Get the private key used to sign OCSP responses."""
         key = self.get_responder_key_data()
         loaded_key = serialization.load_pem_private_key(key, None)

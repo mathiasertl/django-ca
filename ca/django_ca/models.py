@@ -84,7 +84,13 @@ from django_ca.querysets import (
     CertificateQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import AllowedHashTypes, Expires, ParsableHash, ParsableKeyType, PrivateKeyTypes
+from django_ca.typehints import (
+    AllowedHashTypes,
+    CertificateIssuerPrivateKeyTypes,
+    Expires,
+    ParsableHash,
+    ParsableKeyType,
+)
 from django_ca.utils import (
     bytes_to_hex,
     ca_storage,
@@ -598,7 +604,7 @@ class CertificateAuthority(X509CertMixin):
 
     _key = None
 
-    def key(self, password: Optional[Union[str, bytes]] = None) -> PrivateKeyTypes:
+    def key(self, password: Optional[Union[str, bytes]] = None) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key.
 
         .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.

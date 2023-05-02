@@ -26,7 +26,7 @@ from django.test import TestCase
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.typehints import PrivateKeyTypes
+from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import add_colons, ca_storage
 
 
@@ -42,12 +42,12 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def assertKey(  # pylint: disable=invalid-name
         self,
         ca: CertificateAuthority,
-        key_type: Optional[Type[PrivateKeyTypes]] = None,
+        key_type: Optional[Type[CertificateIssuerPrivateKeyTypes]] = None,
         key_size: Optional[int] = 2048,
         password: Optional[bytes] = None,
         excludes: Optional[Iterable[int]] = None,
         elliptic_curve: Type[ec.EllipticCurve] = ec.SECP256R1,
-    ) -> Tuple[PrivateKeyTypes, x509.Certificate]:
+    ) -> Tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:
         """Assert that they key is present and can be read."""
         priv_path = f"ocsp/{ca.serial}.key"
         cert_path = f"ocsp/{ca.serial}.pem"

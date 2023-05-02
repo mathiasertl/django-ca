@@ -37,11 +37,11 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.extensions import parse_extension
 from django_ca.profiles import profiles
-from django_ca.typehints import PrivateKeyTypes
+from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import add_colons, ca_storage, format_name
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
-KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": PrivateKeyTypes})
+KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": CertificateIssuerPrivateKeyTypes})
 CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest})
 _PubDict = typing.TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
 

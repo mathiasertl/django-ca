@@ -668,10 +668,6 @@ class ParseHashAlgorithm(TestCase):
         self.assertIsInstance(parse_hash_algorithm(hashes.SHA512()), hashes.SHA512)
         self.assertIsInstance(parse_hash_algorithm("SHA512"), hashes.SHA512)
 
-        for cls, name in constants.HASH_ALGORITHM_KEYS.items():
-            # variable digest hash algorithms are not supported by this function
-            self.assertIsInstance(parse_hash_algorithm(name), cls)
-
         with self.assertRaisesRegex(ValueError, "^Unknown hash algorithm: foo$"):
             parse_hash_algorithm("foo")
 

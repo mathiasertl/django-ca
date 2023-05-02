@@ -29,7 +29,7 @@ from django_ca import ca_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.management import actions
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.typehints import AllowedHashTypes, ParsableKeyType, PrivateKeyTypes
+from django_ca.typehints import AllowedHashTypes, CertificateIssuerPrivateKeyTypes, ParsableKeyType
 from django_ca.utils import add_colons, validate_public_key_parameters
 
 if typing.TYPE_CHECKING:
@@ -145,7 +145,9 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         for ext in cert.sorted_extensions:
             self.print_extension(ext)
 
-    def test_private_key(self, ca: CertificateAuthority, password: Optional[bytes]) -> PrivateKeyTypes:
+    def test_private_key(
+        self, ca: CertificateAuthority, password: Optional[bytes]
+    ) -> CertificateIssuerPrivateKeyTypes:
         """Test that we can load the private key of a CA."""
         try:
             return ca.key(password)

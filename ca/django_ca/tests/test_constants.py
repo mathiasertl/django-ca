@@ -124,13 +124,8 @@ class CompletenessTestCase(TestCase):
         """Test completeness of the ``KNOWN_EXTENSION_OIDS`` constant."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_KEYS.keys())
 
-    def test_hash_algorithm_keys(self) -> None:
-        """Test completeness of the ``HASH_ALGORITHM_KEYS`` constant."""
-        self.assertEqual(len(constants.HASH_ALGORITHM_KEYS), len(self.supported_hash_algorithms))
-        self.assertEqual(constants.HASH_ALGORITHM_KEYS, {e: e.name for e in self.supported_hash_algorithms})
-
     def test_hash_algorithm_names(self) -> None:
-        """Test completeness of the ``HASH_ALGORITHM_KEYS`` constant."""
+        """Test completeness of the ``HASH_ALGORITHM_NAMES`` constant."""
         self.assertEqual(len(constants.HASH_ALGORITHM_NAMES), len(self.supported_hash_algorithms))
 
     def test_nameoid(self) -> None:

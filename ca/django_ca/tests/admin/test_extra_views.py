@@ -33,7 +33,7 @@ from django_ca import ca_settings, constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
-from django_ca.typehints import PrivateKeyTypes
+from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import serialize_name, x509_name
 
 
@@ -44,7 +44,9 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     csr_pem = certs["root-cert"]["csr"]["pem"]
 
     @classmethod
-    def create_csr(cls, subject: str) -> Tuple[PrivateKeyTypes, x509.CertificateSigningRequest]:
+    def create_csr(
+        cls, subject: str
+    ) -> Tuple[CertificateIssuerPrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
         builder = x509.CertificateSigningRequestBuilder()
