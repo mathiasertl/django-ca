@@ -14,7 +14,6 @@
 """Mixins for :py:class:`~django:django.core.management.BaseCommand` classes."""
 
 import abc
-import argparse
 import typing
 from textwrap import indent
 from typing import Optional

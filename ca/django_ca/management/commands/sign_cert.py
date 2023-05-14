@@ -111,6 +111,9 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         profile: Optional[str],
         out: Optional[str],
         algorithm: Optional[AllowedHashTypes],
+        # Certificate Policies extension
+        certificate_policies: Optional[x509.CertificatePolicies],
+        certificate_policies_critical: bool,
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
         key_usage: Optional[x509.KeyUsage],
@@ -144,6 +147,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             if options[ext_key]:
                 extensions.append(options[ext_key])
 
+        if certificate_policies is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.CERTIFICATE_POLICIES,
+                    critical=certificate_policies_critical,
+                    value=certificate_policies,
+                )
+            )
         if extended_key_usage is not None:
             extensions.append(
                 x509.Extension(

@@ -183,7 +183,43 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     This class can add options for all x509 extensions.
     """
 
-    def add_critical_option(self, parser: ActionsContainer, oid: x509.ObjectIdentifier) -> None:
+    def add_certificate_policies_group(
+        self, parser: argparse.ArgumentParser, description: str, allow_any_policy: bool = False
+    ) -> None:
+        """Add argument group for the Certificate Policies extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
+        group = parser.add_argument_group(f"{ext_name} extension", description.format(ext_name=ext_name))
+        group.add_argument(
+            "--policy-identifier",
+            action=actions.PolicyIdentifierAction,
+            dest="certificate_policies",
+            allow_any_policy=allow_any_policy,
+            help="Add a certificate policy with the given OID. May be given multiple times to add multiple "
+            "policies.",
+        )
+        group.add_argument(
+            "--certification-practice-statement",
+            action=actions.CertificationPracticeStatementAction,
+            dest="certificate_policies",
+            help="Add a certification practice statement (CPS) to the last policy added with"
+            "--policy-identifier.",
+        )
+        group.add_argument(
+            "--user-notice",
+            action=actions.UserNoticeAction,
+            dest="certificate_policies",
+            help="Add a textual statement that can be displayed to the user to the last policy added with "
+            "--policy-identifier.",
+        )
+        self.add_critical_option(
+            group,
+            ExtensionOID.CERTIFICATE_POLICIES,
+            help_suffix="It is usually not marked as critical.",
+        )
+
+    def add_critical_option(
+        self, parser: ActionsContainer, oid: x509.ObjectIdentifier, help_suffix: str = ""
+    ) -> None:
         """Add a --...-(non-)critical option for the extension to the given argparse ActionContainer."""
         destination = f"{constants.EXTENSION_KEYS[oid]}_critical"
         extension_arg = constants.EXTENSION_KEYS[oid].replace("_", "-")
@@ -192,11 +228,11 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         if default is True:
             option = f"--{extension_arg}-non-critical"
             action = "store_false"
-            help_text = f"Mark the extension as non-critical."
+            help_text = f"Mark the extension as non-critical. {help_suffix}".strip()
         else:
             option = f"--{extension_arg}-critical"
             action = "store_true"
-            help_text = f"Mark the extension as critical."
+            help_text = f"Mark the extension as critical. {help_suffix}".strip()
 
         parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
 
@@ -250,6 +286,11 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_algorithm(general_group)
         self.add_ca(general_group, no_default=no_default_ca)
         self.add_password(general_group)
+        self.add_certificate_policies_group(
+            parser,
+            description="In end-entity certificates, this extension indicates the policy under which the "
+            "certificate was issued and the purposes for which it may be used.",
+        )
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
         self.add_tls_feature_group(parser)

@@ -320,6 +320,106 @@ class PasswordAction(argparse.Action):
         setattr(namespace, self.dest, values.encode("utf-8"))
 
 
+class CertificationPracticeStatementAction(argparse.Action):
+    """Add a Certification Practice Statement to a previously added Certificate Policy.
+
+    This action works in tandem with :py:class:`~django_ca.management.actions.PolicyIdentifierAction`, and has
+    to be called after that action to add a `policy_qualifier` to it. The `dest` arg to this action must
+    match the destination of the `PolicyIdentifierAction`.
+
+    The action verifies that the given value is a URI.
+
+    >>> parser.add_argument('--pi', action=PolicyIdentifierAction)  # doctest: +ELLIPSIS
+    PolicyIdentifierAction(...)
+    >>> parser.add_argument(
+    ...     '--cps', action=CertificationPracticeStatementAction, dest="pi"
+    ... )  # doctest: +ELLIPSIS
+    CertificationPracticeStatementAction(...)
+    >>> parser.parse_args(['--pi', '1.2.3', '--cps', 'https://example.com/cps']).pi[0].policy_qualifiers
+    ['https://example.com/cps']
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs["metavar"] = "URL"
+        super().__init__(**kwargs)
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: Optional[str] = None,
+    ) -> None:
+        certificate_policies = getattr(namespace, self.dest)
+        # Make sure that --policy-identifier was called before
+        if certificate_policies is None:
+            raise argparse.ArgumentError(self, "Must be preceeded by --policy-identifier.")
+
+        # RFC 5280, section 4.2.1.4 mandates that CPS must be in the form of a URI.
+        validator = URLValidator()
+        try:
+            validator(values)
+        except ValidationError as ex:
+            raise argparse.ArgumentError(self, f"{values}: Not a valid URL.") from ex
+
+        certificate_policies[-1].policy_qualifiers.append(values)
+
+
+class PolicyIdentifierAction(argparse.Action):
+    """Action to add a Certificate Policies extension.
+
+    This action adds a :py:class:`cg:~cryptography.x509.CertificatePolicies` instance to the namespace. A
+    :py:class:`cg:~cryptography.x509.PolicyInformation` with the given OID as `policy_identifier` will be
+    added to it. Policies given in previous iterations of this argument will be prepended.
+
+    The `allow_any_policy` argument allows adding the ``anyPolicy`` (OID "2.5.29.32.0") policy can be added.
+    This is the case for certificate authorities.
+
+    >>> parser.add_argument('--pi', action=PolicyIdentifierAction)  # doctest: +ELLIPSIS
+    PolicyIdentifierAction(...)
+    >>> parser.parse_args(['--pi', '1.2.3']).pi  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    <CertificatePolicies([<PolicyInformation(policy_identifier=<ObjectIdentifier(oid=1.2.3, name=...)>,
+            policy_qualifiers=[])>])>
+    >>> parser.parse_args(['--pi', '2.5.29', '--pi', '1.2.3']).pi  # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
+    <CertificatePolicies([<PolicyInformation(policy_identifier=<ObjectIdentifier(oid=2.5.29, name=...)>,
+            policy_qualifiers=[])>,
+        <PolicyInformation(policy_identifier=<ObjectIdentifier(oid=1.2.3, name=...)>,
+            policy_qualifiers=[])>])>
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.allow_any_policy = kwargs.pop("allow_any_policy", False)
+        kwargs["metavar"] = "OID"
+        super().__init__(**kwargs)
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: Optional[str] = None,
+    ) -> None:
+        if values == "anyPolicy":
+            values = "2.5.29.32.0"
+
+        if self.allow_any_policy is False and values == "2.5.29.32.0":
+            raise argparse.ArgumentError(self, "anyPolicy is not allowed in this context.")
+
+        try:
+            oid = x509.ObjectIdentifier(values)
+        except ValueError as ex:
+            raise argparse.ArgumentError(self, f"invalid ObjectIdentifier value: '{values}'") from ex
+
+        policy = x509.PolicyInformation(policy_identifier=oid, policy_qualifiers=[])
+
+        if certificate_policies := getattr(namespace, self.dest):
+            policies = list(certificate_policies) + [policy]
+        else:
+            policies = [policy]
+
+        setattr(namespace, self.dest, x509.CertificatePolicies(policies=policies))
+
+
 class ReasonAction(SingleValueAction[str, ReasonFlags]):
     """Action to select a revocation reason.
 
@@ -376,6 +476,49 @@ class URLAction(SingleValueAction[str, str]):
             raise argparse.ArgumentError(self, f"{value}: Not a valid URL.") from ex
 
         return value
+
+
+class UserNoticeAction(argparse.Action):
+    """Add a User Notice to a previously added Certificate Policy.
+
+    This action works in tandem with :py:class:`~django_ca.management.actions.PolicyIdentifierAction`, and has
+    to be called after that action to add a `policy_qualifier` to it. The `dest` arg to this action must
+    match the destination of the `PolicyIdentifierAction`.
+
+    The action verifies that the given value is no longer then 200 characters (RFC 5280, section 4.2.1.4).
+
+    >>> parser.add_argument('--pi', action=PolicyIdentifierAction)  # doctest: +ELLIPSIS
+    PolicyIdentifierAction(...)
+    >>> parser.add_argument('--notice', action=UserNoticeAction, dest="pi")  # doctest: +ELLIPSIS
+    UserNoticeAction(...)
+    >>> parser.parse_args(['--pi', '1.2.3', '--notice', 'example text']).pi[0].policy_qualifiers
+    [<UserNotice(notice_reference=None, explicit_text='example text')>]
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs["metavar"] = "TEXT"
+        kwargs.setdefault("dest", "certificate_policies")
+        super().__init__(**kwargs)
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: Optional[str] = None,
+    ) -> None:
+        certificate_policies = getattr(namespace, self.dest)
+        # Make sure that --policy-identifier was called before
+        if certificate_policies is None:
+            raise argparse.ArgumentError(self, "Must be preceeded by --policy-identifier.")
+
+        # RFC 5280, section 4.2.1.4 mandates that CPS must be in the form of a URI.
+        if len(values) > 200:
+            raise argparse.ArgumentError(self, f"{self.metavar} must not be longer then 200 characters.")
+
+        user_notice = x509.UserNotice(notice_reference=None, explicit_text=values)
+
+        certificate_policies[-1].policy_qualifiers.append(user_notice)
 
 
 ##########################

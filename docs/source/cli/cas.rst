@@ -2,6 +2,8 @@
 Certificate authority management
 ################################
 
+.. highlight:: console
+
 **django-ca** supports managing multiple certificate authorities as well as child certificate
 authorities.
 
@@ -220,6 +222,39 @@ Values are any valid name, see :ref:`names_on_cli` for detailed documentation.  
 
 This will restrict the CA to issuing certificates for .com and .net subdomains, except for evil.com, which
 obviously should never have a certificate (evil.net is good, though).
+
+Extensions
+==========
+
+Certificate Policies
+--------------------
+
+To add the Certificate Policies extension (`RFC 5280, section 4.2.1.4
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.4>`_) to a certificate authority, use the
+``--policy-identifier`` option to add a policy with the given OID::
+
+   $ python manage.py init_ca --policy-identifier=1.2.3 ...
+
+The special value ``anyPolicy`` is recognized as an alias for the OID ``2.5.29.32.0``. To add a certification
+practice statement (CPS) and/or user notices, use::
+
+   $ python manage.py init_ca \
+   >     --policy-identifier=anyPolicy \
+   >     --certification-practice-statement=https://example.com/cps/ \
+   >     --user-notice="Example user notice text"
+   >     ...
+
+To add multiple policies, repeat the ``--policy-identifier`` option. The options for CPS and user notices will
+be added to the last named policy::
+
+   $ python manage.py init_ca \
+   >     --policy-identifier=1.2.3 \
+   >     --certification-practice-statement=https://example.com/cps-for-1.2.3/ \
+   >     --policy-identifier=1.2.4 \
+   >     --user-notice="User notice for 1.2.4"
+   >     ...
+
+Adding notice references via the command line is not supported.
 
 Examples
 ========

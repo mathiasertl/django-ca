@@ -62,7 +62,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
@@ -72,6 +72,9 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         password: Optional[bytes],
         profile: Optional[str],
         algorithm: Optional[AllowedHashTypes],
+        # Certificate Policies extension
+        certificate_policies: Optional[x509.CertificatePolicies],
+        certificate_policies_critical: bool,
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
         key_usage: Optional[x509.KeyUsage],
@@ -112,6 +115,17 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 if ext_type == x509.SubjectAlternativeName:  # pragma: no branch
                     have_san = True
                 extensions.append(ext)
+
+        if certificate_policies is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.CERTIFICATE_POLICIES,
+                    critical=certificate_policies_critical,
+                    value=certificate_policies,
+                )
+            )
+        elif cert_certificate_policies := cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE):
+            extensions.append(cert_certificate_policies)
 
         if extended_key_usage is not None:
             extensions.append(

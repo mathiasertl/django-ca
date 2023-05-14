@@ -222,6 +222,13 @@ class InitCATest(TestCaseMixin, TestCase):
             "--ca-issuer-url=http://ca.issuer.ca.example.com",
             "--permit-name=DNS:.com",
             "--exclude-name=DNS:.net",
+            "--policy-identifier=anyPolicy",
+            "--certification-practice-statement=https://example.com/cps1/",
+            "--user-notice=user notice text one",
+            "--policy-identifier=1.2.3",
+            "--user-notice=user notice text two",
+            "--certification-practice-statement=https://example.com/cps2/",
+            "--certificate-policies-critical",
             f"--caa={caa}",
             f"--website={website}",
             f"--tos={tos}",
@@ -254,6 +261,33 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.ocsp_url, "http://ocsp.example.com")
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
+
+        # test some extensions of the CA itself
+        self.assertEqual(
+            ca.x509_extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=True,
+                value=x509.CertificatePolicies(
+                    policies=[
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
+                            policy_qualifiers=[
+                                "https://example.com/cps1/",
+                                x509.UserNotice(notice_reference=None, explicit_text="user notice text one"),
+                            ],
+                        ),
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                            policy_qualifiers=[
+                                x509.UserNotice(notice_reference=None, explicit_text="user notice text two"),
+                                "https://example.com/cps2/",
+                            ],
+                        ),
+                    ]
+                ),
+            ),
+        )
 
         # test non-extension properties
         self.assertEqual(ca.caa_identity, caa)
@@ -292,17 +326,14 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False)
     def test_disabled_acme_arguments(self) -> None:
         """Test that ACME options don't work when ACME is disabled."""
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+        with self.assertSystemExit(2):
             self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-enable"])
-        self.assertEqual(excm.exception.args, (2,))
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+        with self.assertSystemExit(2):
             self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-contact-optional"])
-        self.assertEqual(excm.exception.args, (2,))
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+        with self.assertSystemExit(2):
             self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-profile=client"])
-        self.assertEqual(excm.exception.args, (2,))
 
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:

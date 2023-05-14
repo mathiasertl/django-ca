@@ -359,6 +359,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "sign_cert",
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
+            "--policy-identifier=1.2.3",
+            "--certification-practice-statement=https://example.com/cps/",
+            "--user-notice=user notice text",
             "--key-usage=keyCertSign",
             "--ocsp-no-check",
             "--extended-key-usage=clientAuth",
@@ -377,6 +380,26 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         actual = cert.x509_extensions
+
+        self.assertEqual(
+            actual[ExtensionOID.CERTIFICATE_POLICIES],
+            x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=False,
+                value=x509.CertificatePolicies(
+                    policies=[
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                            policy_qualifiers=[
+                                "https://example.com/cps/",
+                                x509.UserNotice(notice_reference=None, explicit_text="user notice text"),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+        )
+
         self.assertEqual(
             actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH)
         )
@@ -402,6 +425,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "sign_cert",
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
+            "--policy-identifier=1.2.3",
+            "--certification-practice-statement=https://example.com/cps/",
+            "--user-notice=user notice text",
+            "--certificate-policies-critical",
             "--key-usage=keyCertSign",
             "--key-usage-non-critical",
             "--ocsp-no-check",
@@ -423,6 +450,24 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
         actual = cert.x509_extensions
+        self.assertEqual(
+            actual[ExtensionOID.CERTIFICATE_POLICIES],
+            x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=True,
+                value=x509.CertificatePolicies(
+                    policies=[
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                            policy_qualifiers=[
+                                "https://example.com/cps/",
+                                x509.UserNotice(notice_reference=None, explicit_text="user notice text"),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+        )
         self.assertEqual(
             actual[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, critical=True),
@@ -633,3 +678,22 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         self.assertIn("Do not add the CommonName as subjectAlternativeName (default).", help_text)
         self.assertIn("Add the CommonName as subjectAlternativeName.", help_text)
+
+    @override_tmpcadir()
+    def test_add_any_policy(self) -> None:
+        """Test adding the anyPolicy, which is an error for end-entity certificates."""
+
+        cmdline = [
+            "sign_cert",
+            "--subject=/CN=example.com",
+            f"--ca={self.ca.serial}",
+            "--policy-identifier=anyPolicy",
+        ]
+
+        actual_stdout = io.StringIO()
+        actual_stderr = io.StringIO()
+        with self.assertSystemExit(2):
+            self.cmd_e2e(cmdline, stdout=actual_stdout, stderr=actual_stderr)
+
+        self.assertEqual("", actual_stdout.getvalue())
+        self.assertIn("anyPolicy is not allowed in this context.", actual_stderr.getvalue())

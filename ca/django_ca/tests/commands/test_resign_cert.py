@@ -150,6 +150,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--ocsp-no-check-critical",
                 "--tls-feature",
                 "status_request",
+                "--policy-identifier=1.2.3",
+                "--certification-practice-statement=https://example.com/overwritten/",
+                "--user-notice=overwritten user notice text",
             )
         self.assertEqual(stderr, "")
 
@@ -158,6 +161,26 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=False,
+                value=x509.CertificatePolicies(
+                    policies=[
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                            policy_qualifiers=[
+                                "https://example.com/overwritten/",
+                                x509.UserNotice(
+                                    notice_reference=None, explicit_text="overwritten user notice text"
+                                ),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+        )
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
@@ -188,6 +211,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--ocsp-no-check",
                 "--tls-feature",
                 "status_request",
+                "--policy-identifier=1.2.3",
+                "--certification-practice-statement=https://example.com/overwritten/",
+                "--user-notice=overwritten user notice text",
             )
         self.assertEqual(stderr, "")
 
@@ -196,6 +222,26 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=False,
+                value=x509.CertificatePolicies(
+                    policies=[
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                            policy_qualifiers=[
+                                "https://example.com/overwritten/",
+                                x509.UserNotice(
+                                    notice_reference=None, explicit_text="overwritten user notice text"
+                                ),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+        )
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),

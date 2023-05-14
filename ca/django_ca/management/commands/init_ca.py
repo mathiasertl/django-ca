@@ -16,7 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import argparse
 import os
 import pathlib
 import warnings
@@ -44,7 +43,7 @@ from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
-from django_ca.typehints import AllowedHashTypes, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
 
 
@@ -71,7 +70,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             "Must be an integer >= 0.",
         )
 
-    def add_name_constraints_group(self, parser: CommandParser) -> argparse._ArgumentGroup:
+    def add_name_constraints_group(self, parser: CommandParser) -> ArgumentGroup:
         """Add an argument group for the NameConstraints extension."""
         group = parser.add_argument_group(
             "Name Constraints", "Add name constraints to the CA, limiting what certificates this CA can sign."
@@ -248,6 +247,12 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             help="URL to the certificate of your CA (in DER format).",
         )
 
+        self.add_certificate_policies_group(
+            parser,
+            "In certificate authorities, this extension limits the policies that may occur in certification "
+            "paths that include the certificate authority.",
+            allow_any_policy=True,
+        )
         self.add_inhibit_any_policy_group(parser)
         self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
@@ -275,6 +280,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         ca_crl_url: List[str],
         ca_ocsp_url: List[str],
         ca_issuer_url: List[str],
+        # Certificate Policies extension
+        certificate_policies: Optional[x509.CertificatePolicies],
+        certificate_policies_critical: bool,
         # Inhibit anyPolicy extension:
         inhibit_any_policy: Optional[int],
         # Key Usage extension:
@@ -350,6 +358,16 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         extensions: List[x509.Extension[x509.ExtensionType]] = [
             x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
         ]
+        # Add the Certificate Policies extension
+        if certificate_policies is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.CERTIFICATE_POLICIES,
+                    critical=certificate_policies_critical,
+                    value=certificate_policies,
+                )
+            )
+        # Add the inhibitAnyPolicy extension
         if inhibit_any_policy is not None:
             extensions.append(
                 x509.Extension(
@@ -358,6 +376,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     value=x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
                 )
             )
+        # Add the Policy Constraints extension
         if require_explicit_policy is not None or inhibit_policy_mapping is not None:
             extensions.append(
                 x509.Extension(

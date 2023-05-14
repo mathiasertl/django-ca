@@ -104,6 +104,86 @@ class AlternativeNameAction(ParserTestCaseMixin, TestCase):
         )
 
 
+class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test CertificationPracticeStatementAction."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--pi", action=actions.PolicyIdentifierAction)
+        self.parser.add_argument("--cps", action=actions.CertificationPracticeStatementAction, dest="pi")
+
+    def test_add_cps(self) -> None:
+        """Basic test for adding a certification practice statement (CPS)."""
+        oid = "1.2.3"
+        cps = "http://example.com/cps"
+        namespace = self.parser.parse_args(["--pi", oid, "--cps", cps])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[cps]
+                    )
+                ]
+            ),
+        )
+
+    def test_add_multiple_cps(self) -> None:
+        """Test adding multiple CPS to the same policy identifier."""
+        oid = "1.2.3"
+        cps1 = "http://example.com/cps1"
+        cps2 = "http://example.com/cps2"
+        namespace = self.parser.parse_args(["--pi", oid, "--cps", cps1, "--cps", cps2])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[cps1, cps2]
+                    )
+                ]
+            ),
+        )
+
+    def test_add_multiple_cps_to_different_policy_identifiers(self) -> None:
+        """Test adding multiple CPS to different policy identifiers."""
+        oid1 = "1.2.3"
+        oid2 = "1.2.4"
+        cps1 = "http://example.com/cps1"
+        cps2 = "http://example.com/cps2"
+        namespace = self.parser.parse_args(["--pi", oid1, "--cps", cps1, "--pi", oid2, "--cps", cps2])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid1), policy_qualifiers=[cps1]
+                    ),
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid2), policy_qualifiers=[cps2]
+                    ),
+                ]
+            ),
+        )
+
+    def test_missing_policy_identifier(self) -> None:
+        """Test not passing a policy information before."""
+        self.assertParserError(
+            ["--cps", "http://example.com/cps"],
+            "usage: {script} [-h] [--pi OID] [--cps URL]\n"
+            "{script}: error: argument --cps: Must be preceeded by --policy-identifier.\n",
+        )
+
+    def test_invalid_url(self) -> None:
+        """Test passing an invalid URL."""
+        self.assertParserError(
+            ["--pi", "1.2.3", "--cps", "not-a-url"],
+            "usage: {script} [-h] [--pi OID] [--cps URL]\n"
+            "{script}: error: argument --cps: not-a-url: Not a valid URL.\n",
+        )
+
+
 class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     """Test ExtendedKeyUsageAction."""
 
@@ -174,7 +254,82 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
 
-class IntegerRangeActionTextCase(ParserTestCaseMixin, TestCase):
+class PolicyIdentifierActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test the PolicyIdentifierAction."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--pi", action=actions.PolicyIdentifierAction)
+
+    def test_policy_identifier(self) -> None:
+        """Basic test for adding a policy identifier."""
+        oid = "1.2.3"
+        namespace = self.parser.parse_args(["--pi", oid])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[])
+                ]
+            ),
+        )
+
+    def test_multiple_policy_identifiers(self) -> None:
+        """Test adding multiple policy identifiers."""
+        oid1 = "1.2.3"
+        oid2 = "1.2.4"
+        namespace = self.parser.parse_args(["--pi", oid1, "--pi", oid2])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid1), policy_qualifiers=[]
+                    ),
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid2), policy_qualifiers=[]
+                    ),
+                ]
+            ),
+        )
+
+    def test_any_policy_value_disallowed(self) -> None:
+        """Test that the special anyPolicy value is correctly understood."""
+        self.assertParserError(
+            ["--pi", "anyPolicy"],
+            "usage: {script} [-h] [--pi OID]\n"
+            "{script}: error: argument --pi: anyPolicy is not allowed in this context.\n",
+        )
+
+    def test_any_policy_value(self) -> None:
+        """Test that the special anyPolicy value is correctly understood."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--pi", action=actions.PolicyIdentifierAction, allow_any_policy=True)
+
+        oid = "anyPolicy"
+        namespace = parser.parse_args(["--pi", oid])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"), policy_qualifiers=[]
+                    )
+                ]
+            ),
+        )
+
+    def test_invalid_dotted_string(self) -> None:
+        """Test passing a value that is not a dotted string."""
+        self.assertParserError(
+            ["--pi", "abc"],
+            "usage: {script} [-h] [--pi OID]\n"
+            "{script}: error: argument --pi: invalid ObjectIdentifier value: 'abc'\n",
+        )
+
+
+class IntegerRangeActionTestCase(ParserTestCaseMixin, TestCase):
     """Test the IntegerRangeAction."""
 
     def test_no_min_no_max(self) -> None:
@@ -346,6 +501,95 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
             ["-f", "FOO"],
             "usage: {script} [-h] [-f TLS_FEATURE [TLS_FEATURE ...]]\n"
             "{script}: error: Unknown TLSFeature: FOO\n",
+        )
+
+
+class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
+    """Test UserNoticeAction."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("--pi", action=actions.PolicyIdentifierAction)
+        self.parser.add_argument("--notice", action=actions.UserNoticeAction, dest="pi")
+
+    def test_add_notice(self) -> None:
+        """Basic test for adding a user notice."""
+        oid = "1.2.3"
+        notice = "notice text"
+        namespace = self.parser.parse_args(["--pi", oid, "--notice", notice])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid),
+                        policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice)],
+                    )
+                ]
+            ),
+        )
+
+    def test_add_multiple_notices(self) -> None:
+        """Test adding multiple user notices to the same policy identifier."""
+        oid = "1.2.3"
+        notice1 = "notice text one"
+        notice2 = "notice text two"
+        namespace = self.parser.parse_args(["--pi", oid, "--notice", notice1, "--notice", notice2])
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid),
+                        policy_qualifiers=[
+                            x509.UserNotice(notice_reference=None, explicit_text=notice1),
+                            x509.UserNotice(notice_reference=None, explicit_text=notice2),
+                        ],
+                    )
+                ]
+            ),
+        )
+
+    def test_add_multiple_cps_to_different_policy_identifiers(self) -> None:
+        """Test adding multiple user notices to different policy identifiers."""
+        oid1 = "1.2.3"
+        oid2 = "1.2.4"
+        notice1 = "notice text one"
+        notice2 = "notice text two"
+        namespace = self.parser.parse_args(
+            ["--pi", oid1, "--notice", notice1, "--pi", oid2, "--notice", notice2]
+        )
+        self.assertEqual(
+            namespace.pi,
+            x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid1),
+                        policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice1)],
+                    ),
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier(oid2),
+                        policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice2)],
+                    ),
+                ]
+            ),
+        )
+
+    def test_missing_policy_identifier(self) -> None:
+        """Test not passing a policy information before."""
+        self.assertParserError(
+            ["--notice", "http://example.com/cps"],
+            "usage: {script} [-h] [--pi OID] [--notice TEXT]\n"
+            "{script}: error: argument --notice: Must be preceeded by --policy-identifier.\n",
+        )
+
+    def test_invalid_url(self) -> None:
+        """Test passing a user notice that is too long."""
+        self.assertParserError(
+            ["--pi", "1.2.3", "--notice", "a" * 201],  # RFC 5280 says maximum length is 200 characters
+            "usage: {script} [-h] [--pi OID] [--notice TEXT]\n"
+            "{script}: error: argument --notice: TEXT must not be longer then 200 characters.\n",
         )
 
 
