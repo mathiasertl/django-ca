@@ -48,7 +48,7 @@ that has ACMEv2 enabled, simply use:
 
 .. code-block:: console
 
-   $ python manage.py init_ca --pathlen=1 Root /CN=Root
+   $ python manage.py init_ca --path-length=1 Root /CN=Root
    $ python manage.py init_ca --parent=Root --acme-enable Intermediate /CN=Intermediate
 
 .. NOTE::
@@ -60,10 +60,8 @@ You should be very careful when creating a new certificate authority, especially
 number of clients. If you make a mistake here, it could make your CA unusable and you have to redistribute new
 public keys to all clients, which is usually a lot of work.
 
-
 Please think carefully about how you want to run your CA: Do you want intermediate CAs? Do you want to use
 CRLs and/or run an OCSP responder?
-
 
 Private key parameters
 ======================
@@ -104,34 +102,6 @@ Hostname
 Running a CA with an OCSP responder or CRLs for certificate validation requires a web server providing HTTP.
 Please configure :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` accordingly. You can always
 override that setting by passing manual URLs when creating a new CA.
-
-``pathlen`` attribute
-=====================
-
-The ``pathlen`` attribute says how many levels of intermediate CAs can be used below a given CA. If present,
-it is an integer attribute (>= 0) meaning how many intermediate CAs can be below this CA. If *not* present,
-the number is unlimited. For a valid setup, all ``pathlen`` attributes of all intermediate CAs must be
-correct. Here is a typical (correct) example::
-
-   root   # pathlen: 2
-   |- child_A  # pathlen 1
-      |- child_A.1  # pathlen 0
-   |- child_B  # pathlen 0
-
-In this example, `root` and `child_A` can have intermediate CAs, while `child_B` and `child_A.1` can
-not.
-
-The default value for the ``pathlen`` attribute is ``0``, meaning that any CA cannot have any intermediate
-CAs. You can use the ``--pathlen`` parameter to set a different value or the ``--no-pathlen`` parameter if you
-don't want to set the attribute:
-
-.. code-block:: console
-
-   # Two sublevels of intermediate CAs:
-   $ python manage.py init_ca --pathlen=2 ...
-
-   # unlimited number of intermediate CAs:
-   $ python manage.py init_ca --no-pathlen ...
 
 .. _signature_hash_algorithms:
 
@@ -191,40 +161,36 @@ keys:
 
    $ python manage.py regenerate_ocsp_keys
 
-.. _name_constraints:
-
-Name constraints
-================
-
-NameConstraints are a little-used extension (see `RFC 5280, section 4.2.1.10
-<https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_ that allows you to create CAs that are limited to
-issuing certificates for a particular set of addresses. The parsing of this syntax is quite complex, see e.g.
-`this blog post
-<https://www.sysadmins.lv/blog-en/x509-name-constraints-certificate-extension-all-you-should-know.aspx>`_ for
-a good explanation.
-
-.. WARNING::
-
-   This extension is marked as "critical". Any client that does not understand this extension will refuse a
-   connection.
-
-To add name constraints to a CA, use the ``--name-constraint`` option, which can be given multiple times.
-Values are any valid name, see :ref:`names_on_cli` for detailed documentation.  Prefix the value with either
-``permitted,`` or ``excluded,`` to add them to the Permitted or Excluded subtree:
-
-.. code-block:: console
-
-   $ python manage.py init_ca \
-      --name-constraint permitted,DNS:com
-      --name-constraint permitted,DNS:net
-      --name-constraint excluded,DNS:evil.com
-      ...
-
-This will restrict the CA to issuing certificates for .com and .net subdomains, except for evil.com, which
-obviously should never have a certificate (evil.net is good, though).
-
 Extensions
 ==========
+
+Basic Constraints
+-----------------
+
+The Basic Constraints extension (`RFC 5280, section 4.2.1.9
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.9>`_) is always added as a critical extension.
+For certificate authorities, the optional `path length` attribute specifies how many levels of intermediate
+certificate authorities can exist below itself. If the attribute is *not* present, the number is unlimited.
+
+**django-ca** sets a path length of ``0`` by default. You can set a different value using ``--path-length``::
+
+    $ python manage.py init_ca --path-length 3 ...
+
+If you do not want to set a path length attribute, use ``--no-path-length``::
+
+    $ python manage.py init_ca --no-path-length ...
+
+Note that for a valid setup, the attributes in all intermediate CAs must be correct. Here is a typical
+example:
+
+.. code-block:: none
+
+   root   # path length: 2
+   |- child_A  # path length: 1
+      |- child_A.1  # path length: 0
+   |- child_B  # path length" 0
+
+In this example, `root` and `child_A` can have intermediate CAs, while `child_B` and `child_A.1` can not.
 
 Certificate Policies
 --------------------
@@ -241,7 +207,7 @@ practice statement (CPS) and/or user notices, use::
    $ python manage.py init_ca \
    >     --policy-identifier=anyPolicy \
    >     --certification-practice-statement=https://example.com/cps/ \
-   >     --user-notice="Example user notice text"
+   >     --user-notice="Example user notice text" \
    >     ...
 
 To add multiple policies, repeat the ``--policy-identifier`` option. The options for CPS and user notices will
@@ -251,10 +217,35 @@ be added to the last named policy::
    >     --policy-identifier=1.2.3 \
    >     --certification-practice-statement=https://example.com/cps-for-1.2.3/ \
    >     --policy-identifier=1.2.4 \
-   >     --user-notice="User notice for 1.2.4"
+   >     --user-notice="User notice for 1.2.4" \
    >     ...
 
 Adding notice references via the command line is not supported.
+
+.. _name_constraints:
+
+Name Constraints
+----------------
+
+The Name Constraints extension (`RFC 5280, section 4.2.1.10
+<https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_ allows you to create CAs that are limited to
+issuing certificates for a particular set of names. The parsing of this syntax is quite complex, see e.g.
+`this blog post
+<https://www.sysadmins.lv/blog-en/x509-name-constraints-certificate-extension-all-you-should-know.aspx>`_ for
+a good explanation.
+
+.. WARNING::
+
+   This extension is marked as "critical". Any client that does not understand this extension will refuse a
+   connection.
+
+To add name constraints to a CA, use the ``--permit-name`` and ``--exclude-name``, both of which can be given
+multiple times. Values are any valid name, see :ref:`names_on_cli` for detailed documentation::
+
+   $ python manage.py init_ca --permit-name DNS:example.com --exclude-name DNS:example.net ...
+
+This will restrict the CA to issuing certificates for .com and .net subdomains, except for evil.com, which
+obviously should never have a certificate (evil.net is good, though).
 
 Examples
 ========
@@ -263,7 +254,7 @@ Here is a shell session that illustrates the respective :command:`manage.py` com
 
 .. code-block:: console
 
-   $ python manage.py init_ca --pathlen=2
+   $ python manage.py init_ca --path-length=2
    >     --crl-url=http://ca.example.com/crl \
    >     --ocsp-url=http://ocsp.ca.example.com \
    >     --issuer-url=http://ca.example.com/ca.crt \
@@ -293,7 +284,7 @@ is an integer describing how many levels of intermediate CAs a CA may have. A ``
 that a CA cannot have any intermediate CAs, if it is not present, a CA may have an infinite number of
 intermediate CAs.
 
-.. NOTE:: **django-ca** by default sets a ``pathlen`` of "0", as it aims to be secure by default.
+.. NOTE:: **django-ca** by default sets a ``path length`` of "0", as it aims to be secure by default.
    The ``path length`` attribute cannot be changed in hindsight (not without resigning the CA). If you
    plan to create intermediate CAs, you have to consider this when creating the root CA.
 

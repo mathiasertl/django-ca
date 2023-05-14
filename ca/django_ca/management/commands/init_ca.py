@@ -52,7 +52,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
     help = "Create a certificate authority."
 
-    def add_authority_information_access_group(self, parser: CommandParser):
+    def add_authority_information_access_group(self, parser: CommandParser) -> None:
+        """Add argument group for the Authority Information Access extension."""
         group = parser.add_argument_group(
             f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
             """Information about the issuer of the CA. These options only work for intermediate CAs. Default

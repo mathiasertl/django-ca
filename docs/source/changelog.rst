@@ -10,7 +10,7 @@ ChangeLog
 1.25.0 (TBR)
 ************
 
-* Add support for adding the Certificate Policy extension when creating certificate authorities or 
+* Add support for adding the Certificate Policy extension when creating certificate authorities or
   end-entity certificates via the command-line.
 
 Backwards incompatible changes
