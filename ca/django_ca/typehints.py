@@ -13,6 +13,7 @@
 
 """Various type aliases used in throughout django-ca."""
 
+import argparse
 import typing
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -20,6 +21,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
+
+from django.core.management.base import CommandParser
 
 # Module level imports to enable forward references. See also:
 #
@@ -199,6 +202,11 @@ SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical
 # Type aliases #
 ################
 ExtensionMapping = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
+
+# Type aliases for protected subclass returned by add_argument_group().
+ArgumentGroup = argparse._ArgumentGroup  # pylint: disable=protected-access
+# An CommandParser (subclass of argparse.ArgumentParser) or an argument group added by add_argument_group().
+ActionsContainer = Union[CommandParser, ArgumentGroup]
 
 ############
 # TypeVars #

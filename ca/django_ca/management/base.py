@@ -36,7 +36,7 @@ from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
-from django_ca.typehints import AllowedHashTypes
+from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup
 from django_ca.utils import add_colons, format_name
 
 
@@ -122,7 +122,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def add_subject(
         self,
-        parser: argparse._ActionsContainer,
+        parser: ActionsContainer,
         arg: str = "subject",
         metavar: Optional[str] = None,
         help_text: Optional[str] = None,
@@ -130,7 +130,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         """Add subject option."""
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
 
-    def add_elliptic_curve(self, parser: argparse._ActionsContainer) -> None:
+    def add_elliptic_curve(self, parser: ActionsContainer) -> None:
         """Add --elliptic-curve option."""
         default = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
         parser.add_argument(
@@ -139,7 +139,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             help=f"Elliptic Curve used for EC keys (default: {default}).",
         )
 
-    def add_key_size(self, parser: argparse._ActionsContainer) -> None:
+    def add_key_size(self, parser: ActionsContainer) -> None:
         """Add --key-size option (2048, 4096, ...)."""
         parser.add_argument(
             "--key-size",
@@ -148,10 +148,7 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         )
 
     def add_key_type(
-        self,
-        parser: argparse._ActionsContainer,
-        default: Optional[str] = "RSA",
-        default_text: str = "%(default)s",
+        self, parser: ActionsContainer, default: Optional[str] = "RSA", default_text: str = "%(default)s"
     ) -> None:
         """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
         # NOTE: This can be simplified once support for "ECC" and "EdDSA" values is dropped.
@@ -186,7 +183,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     This class can add options for all x509 extensions.
     """
 
-    def add_critical_option(self, parser: argparse._ActionsContainer, oid: x509.ObjectIdentifier) -> None:
+    def add_critical_option(self, parser: ActionsContainer, oid: x509.ObjectIdentifier) -> None:
         """Add a --...-(non-)critical option for the extension to the given argparse ActionContainer."""
         destination = f"{constants.EXTENSION_KEYS[oid]}_critical"
         extension_arg = constants.EXTENSION_KEYS[oid].replace("_", "-")
@@ -195,11 +192,11 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         if default is True:
             option = f"--{extension_arg}-non-critical"
             action = "store_false"
-            help_text = "Mark the extension as non-critical."
+            help_text = f"Mark the extension as non-critical."
         else:
             option = f"--{extension_arg}-critical"
             action = "store_true"
-            help_text = "Mark the extension as critical."
+            help_text = f"Mark the extension as critical."
 
         parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
 
@@ -246,7 +243,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName,)
     subject_help: typing.ClassVar  # concrete classes should set this
 
-    def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> argparse._ArgumentGroup:
+    def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> ArgumentGroup:
         """Add common arguments for signing certificates."""
         general_group = parser.add_argument_group("General")
         self.add_subject_group(parser)
