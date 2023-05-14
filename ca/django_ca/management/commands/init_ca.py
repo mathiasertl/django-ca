@@ -52,12 +52,29 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
     help = "Create a certificate authority."
 
+    def add_authority_information_access_group(self, parser: CommandParser):
+        group = parser.add_argument_group(
+            f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
+            """Information about the issuer of the CA. These options only work for intermediate CAs. Default
+            values are based on the default hostname (see above) and work out of the box if a webserver is
+            configured. Options can be given multiple times to add multiple values.""",
+        )
+        group.add_argument(
+            "--ca-ocsp-url", metavar="URL", action=MultipleURLAction, help="URL of an OCSP responder."
+        )
+        group.add_argument(
+            "--ca-issuer-url",
+            metavar="URL",
+            action=MultipleURLAction,
+            help="URL to the certificate of your CA (in DER format).",
+        )
+
     def add_inhibit_any_policy_group(self, parser: CommandParser) -> None:
         """Add argument group for the Inhibit anyPolicy extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.INHIBIT_ANY_POLICY]
         cert_policies_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
         group = parser.add_argument_group(
-            ext_name,
+            f"{ext_name} extension",
             f"The {ext_name} extension indicates that the special anyPolicy is not considered a match when "
             f"it appears in the {cert_policies_name} extension after the given number of certificates in the "
             "validation path.",
@@ -72,8 +89,10 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
     def add_name_constraints_group(self, parser: CommandParser) -> ArgumentGroup:
         """Add an argument group for the NameConstraints extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.NAME_CONSTRAINTS]
         group = parser.add_argument_group(
-            "Name Constraints", "Add name constraints to the CA, limiting what certificates this CA can sign."
+            f"{ext_name} extension",
+            f"The {ext_name} extension limits the names a signed certificate can contain.",
         )
         group.add_argument(
             "--permit-name",
@@ -95,7 +114,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         """Add argument group for the Policy Constraints extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.POLICY_CONSTRAINTS]
         group = parser.add_argument_group(
-            constants.EXTENSION_NAMES[ExtensionOID.POLICY_CONSTRAINTS],
+            f"{ext_name} extension",
             f"The {ext_name} extension can be used to require an explicit policy and/or prohibit policy "
             "mapping.",
         )
@@ -231,22 +250,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             help="URL to a certificate revocation list. Can be given multiple times.",
         )
 
-        aia_group = parser.add_argument_group(
-            "Authority Information Access",
-            """Information about the issuer of the CA. These options only work for intermediate CAs. Default
-            values are based on the default hostname (see above) and work out of the box if a webserver is
-            configured. Options can be given multiple times to add multiple values.""",
-        )
-        aia_group.add_argument(
-            "--ca-ocsp-url", metavar="URL", action=MultipleURLAction, help="URL of an OCSP responder."
-        )
-        aia_group.add_argument(
-            "--ca-issuer-url",
-            metavar="URL",
-            action=MultipleURLAction,
-            help="URL to the certificate of your CA (in DER format).",
-        )
-
+        self.add_authority_information_access_group(parser)
         self.add_certificate_policies_group(
             parser,
             "In certificate authorities, this extension limits the policies that may occur in certification "

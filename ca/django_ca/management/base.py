@@ -242,7 +242,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         """Add argument group for the Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.KEY_USAGE]
         group = parser.add_argument_group(
-            ext_name, f"The {ext_name} extension defines what the certificate can be used for."
+            f"{ext_name} extension", f"The {ext_name} extension defines what the certificate can be used for."
         )
         group.add_argument(
             "--key-usage",
@@ -258,7 +258,8 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         """Add argument group for the TLS Feature extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.TLS_FEATURE]
         group = parser.add_argument_group(
-            ext_name, f"The {ext_name} extension allows specifying required TLS feature extensions."
+            f"{ext_name} extension",
+            f"The {ext_name} extension allows specifying required TLS feature extensions.",
         )
         group.add_argument(
             "--tls-feature",
@@ -324,7 +325,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         """Add argument group for the Extended Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.EXTENDED_KEY_USAGE]
         group = parser.add_argument_group(
-            ext_name,
+            f"{ext_name} extension",
             f"The {ext_name} extension indicates additional purposes that this certificate may be used for.",
         )
         group.add_argument(
@@ -341,7 +342,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         """Add argument group for the OCSPNoCheck extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.OCSP_NO_CHECK]
         group = parser.add_argument_group(
-            ext_name,
+            f"{ext_name} extension",
             f"The {ext_name} extension is used in OCSP responder certificates to indicate that it does not "
             "need to be checked via OCSP.",
         )
