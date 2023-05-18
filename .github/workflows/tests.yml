@@ -13,14 +13,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.8", "3.9", "3.10", "3.11" ]
-        django-version: [ "3.2.18", "4.1.8", "4.2" ]
+        django-version: [ "3.2.18", "4.1.8", "4.2.1" ]
         cryptography-version: [ "37.0.4", "39.0.2", "40.0.2" ]
-        acme-version: [ "2.5.0" ]
 
     env:
       DJANGO_CA_SECRET_KEY: dummy
 
-    name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, acme ${{ matrix.acme-version }}, OS ${{ matrix.os }}
+    name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}
     steps:
 
       - name: Acquire sources
@@ -42,7 +41,6 @@ jobs:
         run: |
           echo "cryptography==${{ matrix.cryptography-version }}" > constraints.txt
           echo "django==${{ matrix.django-version }}" >> constraints.txt
-          echo "acme==${{ matrix.acme-version }}" >> constraints.txt
           pip install -U pip setuptools wheel
           pip install -c constraints.txt -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt
 

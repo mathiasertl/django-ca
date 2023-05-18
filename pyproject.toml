@@ -9,9 +9,9 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.8.16", "3.9.16", "3.10.10", "3.11.2"]
 # https://www.djangoproject.com/download/
-django = ["3.2.18", "4.1.8", "4.2"]
+django = ["3.2.18", "4.1.8", "4.2.1"]
 cryptography = ["37.0.4", "39.0.2", "40.0.2"]
-acme = ["2.4.0", "2.5.0"]
+acme = ["2.4.0", "2.5.0", "2.6.0"]
 josepy = ["1.13.0"]
 
 # https://alpinelinux.org/releases/
