@@ -42,6 +42,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
     """
 
     MAGIC_WORDS = {
+        "anyPolicy",
         "GoDaddy",
         "TrustID",
         "Comodo",

@@ -277,6 +277,9 @@ class InitCATest(TestCaseMixin, TestCase):
             "--extended-key-usage",
             "clientAuth",
             "1.3.6.1.5.5.7.3.1",  # == serverAuth, to test custom OIDs
+            # Inhibit anyPolicy extension
+            "--inhibit-any-policy",
+            "1",
             # Key Usage extension
             "--key-usage",
             "keyCertSign",
@@ -284,6 +287,11 @@ class InitCATest(TestCaseMixin, TestCase):
             # Name Constraints extension
             "--permit-name=DNS:.com",
             "--exclude-name=DNS:.net",
+            # Policy Constraints extension
+            "--inhibit-policy-mapping",
+            "1",
+            "--require-explicit-policy",
+            "2",
         )
 
         extensions = ca.x509_extensions
@@ -321,6 +329,14 @@ class InitCATest(TestCaseMixin, TestCase):
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
         )
 
+        # Test Inhibit anyPolicy extension
+        self.assertEqual(
+            extensions[ExtensionOID.INHIBIT_ANY_POLICY],
+            x509.Extension(
+                oid=ExtensionOID.INHIBIT_ANY_POLICY, critical=True, value=x509.InhibitAnyPolicy(1)
+            ),
+        )
+
         # Test KeyUsage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
@@ -331,6 +347,16 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(
             extensions[ExtensionOID.NAME_CONSTRAINTS],
             self.name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
+        )
+
+        # Test PolicyConstraints extension
+        self.assertEqual(
+            extensions[ExtensionOID.POLICY_CONSTRAINTS],
+            x509.Extension(
+                oid=ExtensionOID.POLICY_CONSTRAINTS,
+                critical=True,
+                value=x509.PolicyConstraints(inhibit_policy_mapping=1, require_explicit_policy=2),
+            ),
         )
 
     @override_tmpcadir()

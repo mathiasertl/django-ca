@@ -247,6 +247,15 @@ instead. In this example, the OID for ``serverAuth`` is used::
 
     $ python manage.py init_ca NameOfCa /CN=example.com --extended-key-usage 1.3.6.1.5.5.7.3.1
 
+Inhibit anyPolicy
+-----------------
+
+The Inhibit anyPolicy extension (`RFC 5280, section 4.2.1.14
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.14>`_) can be added using the
+``--inhibit-any-policy`` option. The value must an integer larger then 0::
+
+    $ python manage.py init_ca --inhibit-any-policy 1 ...
+
 Key Usage
 ---------
 
@@ -267,7 +276,9 @@ not append to) the default, so you have to name the default values as well. Vali
 values of the :py:attr:`~django_ca.constants.KEY_USAGE_NAMES` mapping. For example, to also set the
 `digitalSignature` flag::
 
-    $ python manage.py init_ca Name /CN=example.com --key-usage keyCertSign cRLSign digitalSignature ...
+    $ python manage.py init_ca Name /CN=example.com \
+    >    --key-usage keyCertSign cRLSign digitalSignature \
+    >    ...
 
 .. _name_constraints:
 
@@ -293,6 +304,15 @@ multiple times. Values are any valid name, see :ref:`names_on_cli` for detailed 
 
 This will restrict the CA to issuing certificates for .com and .net subdomains, except for evil.com, which
 obviously should never have a certificate (evil.net is good, though).
+
+Policy Constraints
+------------------
+
+The Policy Constraints extension (`RFC 5280, section 4.2.1.11
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.11>`_) can be added via the
+``--inhibit-policy-mapping`` and/or ``--require-explicit-policy`` options::
+
+    $ python manage.py init_ca --inhibit-policy-mapping 1 --require-explicit-policy 2 ...
 
 Examples
 ========
