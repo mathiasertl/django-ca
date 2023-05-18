@@ -164,15 +164,27 @@ keys:
 Extensions
 ==========
 
+:command:`manage.py init_ca` will add mandatory and common extensions for certificate authorities
+automatically. In most cases, the only extension you really should think about is the
+:ref:`cli_cas_basic_constraints` extension, in case you ever want to create intermediate certificate
+authorities. Only extensions that make sense in the context of a certificate authority can be added here.
+
+Some important extensions (the Key Usage, CRL Distribution Points and Authority Information Access extensions)
+are automatically set with sane defaults and you do not typically have to configure them.
+
+.. _cli_cas_basic_constraints:
+
 Basic Constraints
 -----------------
 
 The Basic Constraints extension (`RFC 5280, section 4.2.1.9
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.9>`_) is always added as a critical extension.
-For certificate authorities, the optional `path length` attribute specifies how many levels of intermediate
-certificate authorities can exist below itself. If the attribute is *not* present, the number is unlimited.
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.9>`_) indicates if you are creating a certificate
+authority. For certificate authorities, the optional `path length` attribute specifies how many levels of
+intermediate certificate authorities can exist below itself. If the attribute is *not* present, the number is
+unlimited.
 
-**django-ca** sets a path length of ``0`` by default. You can set a different value using ``--path-length``::
+This extension is always added, and is always a critical extension. **django-ca** sets a path length of ``0``
+by default. You can set a different value using ``--path-length``::
 
     $ python manage.py init_ca --path-length 3 ...
 
@@ -195,9 +207,12 @@ In this example, `root` and `child_A` can have intermediate CAs, while `child_B`
 Certificate Policies
 --------------------
 
-To add the Certificate Policies extension (`RFC 5280, section 4.2.1.4
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.4>`_) to a certificate authority, use the
-``--policy-identifier`` option to add a policy with the given OID::
+In certificate authorities, the Certificate Policies extension (`RFC 5280, section 4.2.1.4
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.4>`_) limits the policies that may occur in
+certification paths that include the certificate authority.
+
+To add this extension to a certificate authority, use the ``--policy-identifier`` option to add a policy with
+the given OID::
 
    $ python manage.py init_ca --policy-identifier=1.2.3 ...
 
@@ -226,8 +241,9 @@ Extended Key Usage
 ------------------
 
 The Extended Key Usage extension (`RFC 5280, section 4.2.1.12
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_) is often not present in certificate
-authorities, and **django-ca** does not add it by default.
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_) indicates additional purposes that this
+certificate may be used for. It is often not present in certificate authorities, and **django-ca** does not
+add it by default.
 
 .. NOTE::
 
@@ -251,8 +267,12 @@ Inhibit anyPolicy
 -----------------
 
 The Inhibit anyPolicy extension (`RFC 5280, section 4.2.1.14
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.14>`_) can be added using the
-``--inhibit-any-policy`` option. The value must an integer larger then 0::
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.14>`_) indicates that the special anyPolicy is
+not considered a match when it appears in the Certificate Policies extension after the given number of
+certificates in the validation path.
+
+The extension can be added using the ``--inhibit-any-policy`` option. The value must an integer larger then
+0::
 
     $ python manage.py init_ca --inhibit-any-policy 1 ...
 
@@ -260,8 +280,9 @@ Key Usage
 ---------
 
 The Key Usage extension (`RFC 5280, section 4.2.1.3
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_) is always added. By default, the
-`keyCertSign` and `cRLSign` bits are set, matching most public certificate authorities.
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_) defines what the certificate can be used
+for and is always added. By default, the `keyCertSign` and `cRLSign` bits are set, matching most public
+certificate authorities.
 
 .. NOTE::
 
@@ -309,10 +330,25 @@ Policy Constraints
 ------------------
 
 The Policy Constraints extension (`RFC 5280, section 4.2.1.11
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.11>`_) can be added via the
-``--inhibit-policy-mapping`` and/or ``--require-explicit-policy`` options::
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.11>`_) can be used to require an explicit policy
+and/or prohibit policy mapping.
+
+The extension can be added via the ``--inhibit-policy-mapping`` and/or ``--require-explicit-policy`` options::
 
     $ python manage.py init_ca --inhibit-policy-mapping 1 --require-explicit-policy 2 ...
+
+Mark extensions as (non-)critical
+---------------------------------
+
+Extensions that may or may not be critical according to the RFC where they are defined (usually RFC 5280),
+can be marked as either in the command line. The default matches the defining RFC (and what is commonly found
+in the wild).
+
+For example, to mark the Key Usage extension as non-critical, and the Extended Key Usage as critical, use::
+
+    $ python manage.py init_ca --key-usage-non-critical --extended-key-usage-critical ...
+
+Extensions that either MUST or MUST NOT be marked as critical, cannot be changed via the command-line.
 
 Examples
 ========

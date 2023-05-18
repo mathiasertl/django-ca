@@ -70,6 +70,32 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             help="URL to the certificate of your CA (in DER format).",
         )
 
+    def add_basic_constraints_group(self, parser: CommandParser) -> None:
+        """Add argument group for the Basic Constraints extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.BASIC_CONSTRAINTS]
+        group = parser.add_argument_group(
+            f"{ext_name} extension",
+            f"The {ext_name} extension allows you to specify the number of CAs that can appear below this "
+            "one. A path length of zero (the default) means it can only be used to sign end-entity "
+            "certificates and not further CAs.",
+        )
+        group = group.add_mutually_exclusive_group()
+        group.add_argument(
+            "--path-length",
+            "--pathlen",  # remove in django-ca==1.26.0
+            default=0,
+            type=int,
+            help="Maximum number of intermediate CAs (default: %(default)s).",
+        )
+        group.add_argument(
+            "--no-path-length",
+            "--no-pathlen",  # remove in django-ca==1.26.0
+            action="store_const",
+            const=None,
+            dest="path_length",
+            help="Do not add a path length attribute.",
+        )
+
     def add_inhibit_any_policy_group(self, parser: CommandParser) -> None:
         """Add argument group for the Inhibit anyPolicy extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.INHIBIT_ANY_POLICY]
@@ -215,28 +241,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         self.add_acme_group(parser)
 
         group = parser.add_argument_group(
-            "path length attribute",
-            """Maximum number of CAs that can appear below this one. A path length of zero (the default) means
-            it can only be used to sign end user certificates and not further CAs.""",
-        )
-        group = group.add_mutually_exclusive_group()
-        group.add_argument(
-            "--path-length",
-            "--pathlen",  # remove in django-ca==1.26.0
-            default=0,
-            type=int,
-            help="Maximum number of intermediate CAs (default: %(default)s).",
-        )
-        group.add_argument(
-            "--no-path-length",
-            "--no-pathlen",  # remove in django-ca==1.26.0
-            action="store_const",
-            const=None,
-            dest="path_length",
-            help="Do not add a path length attribute.",
-        )
-
-        group = parser.add_argument_group(
             "X509 v3 certificate extensions for CA",
             """Extensions for the certificate authority. These options cannot be changed without
             creating a new authority.
@@ -252,6 +256,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         )
 
         self.add_authority_information_access_group(parser)
+        self.add_basic_constraints_group(parser)
         self.add_certificate_policies_group(
             parser,
             "In certificate authorities, this extension limits the policies that may occur in certification "
@@ -277,7 +282,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         key_type: ParsableKeyType,
         elliptic_curve: Optional[ec.EllipticCurve],
         algorithm: Optional[AllowedHashTypes],
-        path_length: Optional[int],
         password: Optional[bytes],
         parent_password: Optional[bytes],
         crl_url: List[str],
@@ -286,6 +290,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         ca_crl_url: List[str],
         ca_ocsp_url: List[str],
         ca_issuer_url: List[str],
+        # Basic Constraints extension
+        path_length: Optional[int],
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
