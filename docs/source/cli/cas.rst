@@ -35,7 +35,7 @@ Command        Description
 ``view_ca``    View details of a certificate authority.
 ============== ======================================================
 
-Like all :command:`manage.py` subcommands, you can run ``manage.py <subcomand> -h`` to get a list of available
+Like all :command:`manage.py` subcommands, you can run ``manage.py <subcommand> -h`` to get a list of available
 parameters.
 
 ***************

@@ -53,7 +53,7 @@ Command-line tools
   ``--path-length`` and ``--no-path-length``. Old parameter names will work until ``django-ca==1.25.0``.
 * :command:`manage.py sign_cert`: The ``--key-usage`` option is split into the ``--key-usage`` and
   ``--key-usage-non-critical`` option. The ``--key-usage`` takes multiple arguments (instead of a
-  coma-separated list).
+  comma-separated list).
 
   New, since ``django==1.24.0``:
 
@@ -70,7 +70,7 @@ Command-line tools
 
 * :command:`manage.py sign_cert`: The ``--ext-key-usage`` option is split into the ``--extended-key-usage``
   and ``--extended-key-usage-critical`` option. The ``--extended-key-usage`` takes multiple arguments (instead
-  of a coma-separated list) and also allows you to pass dotted strings for OIDs unknown to django-ca.
+  of a comma-separated list) and also allows you to pass dotted strings for OIDs unknown to django-ca.
 
   New, since ``django==1.24.0``:
 
@@ -88,7 +88,7 @@ Command-line tools
 
 * :command:`manage.py sign_cert`: The ``--tls-feature`` option is split into the ``--tls-feature``
   and ``--tls-feature-critical`` option. The ``--tls-feature-usage`` takes multiple arguments (instead of a
-  coma-separated list) and also allows you to pass dotted strings for OIDs unknown to django-ca.
+  comma-separated list) and also allows you to pass dotted strings for OIDs unknown to django-ca.
 
   New, since ``django==1.24.0``:
 

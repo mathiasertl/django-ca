@@ -25,7 +25,7 @@ sign_cert             Sign a certificate.
 view_cert             View a certificate.
 ===================== ===============================================================
 
-Like all :command:`manage.py` subcommands, you can run ``manage.py <subcomand> -h`` to get a list of available
+Like all :command:`manage.py` subcommands, you can run ``manage.py <subcommand> -h`` to get a list of available
 parameters.
 
 .. _cli_sign_certs:

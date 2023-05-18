@@ -604,7 +604,7 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
         if len(values) == 1 and "," in values[0]:
             values = values[0].split(",")
             warnings.warn(
-                "Passing a coma-separated list is deprecated, pass space-separated values instead.",
+                "Passing a comma-separated list is deprecated, pass space-separated values instead.",
                 RemovedInDjangoCA126Warning,
             )
 
@@ -711,7 +711,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         if len(values) == 1 and "," in values[0]:
             values = values[0].split(",")
             warnings.warn(
-                "Passing a coma-separated list is deprecated, pass space-separated values instead.",
+                "Passing a comma-separated list is deprecated, pass space-separated values instead.",
                 RemovedInDjangoCA126Warning,
             )
 

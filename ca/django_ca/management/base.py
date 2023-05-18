@@ -281,7 +281,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         group.add_argument(
             "--tls-feature",
             metavar="TLS_FEATURE",
-            # TODO: Set choices when old coma-separated values are removed in 1.26.0.
+            # TODO: Set choices when old comma-separated values are removed in 1.26.0.
             # choices=tuple(constants.TLS_FEATURE_NAMES)
             action=actions.TLSFeatureAction,
             help='TLS feature flags to include. Valid values are "status_request" (also known as '

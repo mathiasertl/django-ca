@@ -74,12 +74,12 @@ different syntax. See the :ref:`update notes <cli-1.24.0-updates>` for more deta
 * The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were renamed to
   ``--path-length`` and ``--no-path-length``.
 * The ``--key-usage`` option was changed to/split into ``--key-usage`` and ``--key-usage-non-critical``.
-  ``--key-usage`` takes multiple option values instead of a single coma-separated list.
+  ``--key-usage`` takes multiple option values instead of a single comma-separated list.
 * The ``--ext-key-usage`` option was changed to/split into ``--extended-key-usage`` and
   ``--extended-key-usage-critical``. ``--extended-key-usage`` takes multiple option values instead of a single
-  coma-separated list.
+  comma-separated list.
 * The ``--tls-feature`` option was changed to/split into ``--tls-feature`` and ``--tls-feature-critical``.
-  ``--tls-feature`` takes multiple option values instead of a single coma-separated list.
+  ``--tls-feature`` takes multiple option values instead of a single comma-separated list.
 * Add support for specifying a custom Key Usage extension when using :command:`manage.py init_ca`.
 * Add support for adding the Inhibit :spelling:word:`anyPolicy`, Policy Constraints and TLS feature extensions
   when using :command:`manage.py init_ca`.
@@ -115,7 +115,7 @@ Removed in ``django-ca==1.26.0``:
 * Support for using ``ECC`` and ``EdDSA`` as key type. Use ``EC`` and ``Ed25519`` instead.
 * The ``--pathlen`` and ``--no-pathlen`` parameters to :command:`manage.py init_ca` will be removed. Use
   ``--path-length`` and ``--no-path-length`` instead.
-* Support for coma-separated lists in ``--key-usage``, ``--extended-key-usage`` and ``--tls-feature``.
+* Support for comma-separated lists in ``--key-usage``, ``--extended-key-usage`` and ``--tls-feature``.
   Use lists instead (e.g. ``--key-usage keyAgreement keyEncipherment`` instead of
   ``--key usagekeyAgreement,keyEncipherment``.
 * Support for non-standard TLS feature names "OCSPMustStaple" and "MultipleCertStatusRequest". Use

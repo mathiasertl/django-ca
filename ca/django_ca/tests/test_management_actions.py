@@ -209,9 +209,9 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
     def test_deprecated_values(self) -> None:
-        """Test old, coma-separated list format."""
+        """Test old, comma-separated list format."""
 
-        msg = r"^Passing a coma-separated list is deprecated, pass space-separated values instead\."
+        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\."
         with self.assertRemovedIn126Warning(msg):
             namespace = self.parser.parse_args(["--eku", "clientAuth,serverAuth"])
         self.assertEqual(
@@ -220,9 +220,9 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
     def test_deprecated_values_with_critical(self) -> None:
-        """Test old, coma-separated list format."""
+        """Test old, comma-separated list format."""
 
-        msg = r"^Passing a coma-separated list is deprecated, pass space-separated values instead\."
+        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\."
         with self.assertRemovedIn126Warning(msg):
             namespace = self.parser.parse_args(["--eku", "critical,clientAuth,serverAuth"])
         self.assertEqual(
@@ -383,9 +383,9 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
             self.key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
         )
 
-    def test_deprecated_coma_list(self) -> None:
+    def test_deprecated_comma_list(self) -> None:
         """Test deprecated critical flag."""
-        msg = r"^Passing a coma-separated list is deprecated, pass space-separated values instead\.$"
+        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
             namespace = self.parser.parse_args(["-k", "keyCertSign,keyAgreement"])
         self.assertEqual(
@@ -394,7 +394,7 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_deprecated_critical(self) -> None:
         """Test deprecated critical flag."""
-        msg = r"^Passing a coma-separated list is deprecated, pass space-separated values instead\.$"
+        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
             namespace = self.parser.parse_args(["-k", "critical,keyCertSign"])
         self.assertEqual(self.key_usage(key_cert_sign=True, critical=True).value, namespace.key_usage)
@@ -464,9 +464,9 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
             namespace.tls_feature,
         )
 
-    def test_deprecated_coma_list(self) -> None:
+    def test_deprecated_comma_list(self) -> None:
         """Test deprecated critical flag."""
-        msg = r"^Passing a coma-separated list is deprecated, pass space-separated values instead\.$"
+        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
             namespace = self.parser.parse_args(["-f", "status_request,status_request_v2"])
         self.assertEqual(
@@ -476,7 +476,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_deprecated_critical(self) -> None:
         """Test deprecated critical flag."""
-        msg = r"^Passing a coma-separated list is deprecated, pass space-separated values instead\.$"
+        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
             namespace = self.parser.parse_args(["-f", "critical,status_request"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
