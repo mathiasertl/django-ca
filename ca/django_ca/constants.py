@@ -66,9 +66,6 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     IPSEC_TUNNEL = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.6")
     IPSEC_USER = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
 
-    # Used by PKINIT logon on Windows (see  #46)
-    SMARTCARD_LOGON = x509.ObjectIdentifier("1.3.6.1.4.1.311.20.2.2")
-
     # mobile Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
     MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")

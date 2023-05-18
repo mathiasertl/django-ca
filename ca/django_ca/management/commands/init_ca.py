@@ -258,6 +258,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             "paths that include the certificate authority.",
             allow_any_policy=True,
         )
+        self.add_extended_key_usage_group(parser)
         self.add_inhibit_any_policy_group(parser)
         self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
@@ -288,6 +289,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
+        # Extended Key Usage extension
+        extended_key_usage: Optional[x509.ExtendedKeyUsage],
+        extended_key_usage_critical: bool,
         # Inhibit anyPolicy extension:
         inhibit_any_policy: Optional[int],
         # Key Usage extension:
@@ -370,6 +374,15 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     oid=ExtensionOID.CERTIFICATE_POLICIES,
                     critical=certificate_policies_critical,
                     value=certificate_policies,
+                )
+            )
+        # Add the Extended Key Usage extension
+        if extended_key_usage is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
+                    critical=extended_key_usage_critical,
+                    value=extended_key_usage,
                 )
             )
         # Add the inhibitAnyPolicy extension

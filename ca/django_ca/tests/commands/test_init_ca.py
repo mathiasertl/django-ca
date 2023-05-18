@@ -214,31 +214,17 @@ class InitCATest(TestCaseMixin, TestCase):
             "--algorithm=SHA-256",  # hashes.SHA256(),
             "--key-type=EC",
             "--expires=720",
-            "--path-length=3",
             "--issuer-url=http://issuer.ca.example.com",
             "--issuer-alt-name=http://ian.ca.example.com",
             "--crl-url=http://crl.example.com",
             "--ocsp-url=http://ocsp.example.com",
             "--ca-issuer-url=http://ca.issuer.ca.example.com",
-            "--permit-name=DNS:.com",
-            "--exclude-name=DNS:.net",
-            "--policy-identifier=anyPolicy",
-            "--certification-practice-statement=https://example.com/cps1/",
-            "--user-notice=user notice text one",
-            "--policy-identifier=1.2.3",
-            "--user-notice=user notice text two",
-            "--certification-practice-statement=https://example.com/cps2/",
-            "--certificate-policies-critical",
             f"--caa={caa}",
             f"--website={website}",
             f"--tos={tos}",
         )
 
         actual = ca.x509_extensions
-        self.assertEqual(
-            actual[ExtensionOID.NAME_CONSTRAINTS],
-            self.name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
-        )
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, actual)
         self.assertEqual(
             actual[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
@@ -252,42 +238,15 @@ class InitCATest(TestCaseMixin, TestCase):
 
         self.assertIsInstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA256)
         self.assertIsInstance(ca.pub.loaded.public_key(), ec.EllipticCurvePublicKey)
-        self.assertEqual(ca.path_length, 3)
-        self.assertEqual(ca.max_path_length, 3)
-        self.assertTrue(ca.allows_intermediate_ca)
+        self.assertEqual(ca.path_length, 0)
+        self.assertEqual(ca.max_path_length, 0)
+        self.assertFalse(ca.allows_intermediate_ca)
         self.assertEqual(ca.issuer_url, "http://issuer.ca.example.com")
         self.assertEqual(ca.issuer_alt_name, "URI:http://ian.ca.example.com")
         self.assertEqual(ca.crl_url, "http://crl.example.com")
         self.assertEqual(ca.ocsp_url, "http://ocsp.example.com")
         self.assertIssuer(ca, ca)
         self.assertAuthorityKeyIdentifier(ca, ca)
-
-        # test some extensions of the CA itself
-        self.assertEqual(
-            ca.x509_extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            x509.Extension(
-                oid=ExtensionOID.CERTIFICATE_POLICIES,
-                critical=True,
-                value=x509.CertificatePolicies(
-                    policies=[
-                        x509.PolicyInformation(
-                            policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
-                            policy_qualifiers=[
-                                "https://example.com/cps1/",
-                                x509.UserNotice(notice_reference=None, explicit_text="user notice text one"),
-                            ],
-                        ),
-                        x509.PolicyInformation(
-                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                            policy_qualifiers=[
-                                x509.UserNotice(notice_reference=None, explicit_text="user notice text two"),
-                                "https://example.com/cps2/",
-                            ],
-                        ),
-                    ]
-                ),
-            ),
-        )
 
         # test non-extension properties
         self.assertEqual(ca.caa_identity, caa)
@@ -297,6 +256,131 @@ class InitCATest(TestCaseMixin, TestCase):
         # test acme properties
         self.assertFalse(ca.acme_enabled)
         self.assertTrue(ca.acme_requires_contact)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_add_extensions(self) -> None:
+        """Test adding various extensions."""
+
+        ca = self.init_ca_e2e(
+            "extensions",
+            "/CN=extensions.example.com",
+            # Basic Constraints extension:
+            "--path-length=3",
+            # Certificate Policies extension:
+            "--policy-identifier=anyPolicy",
+            "--certification-practice-statement=https://example.com/cps1/",
+            "--user-notice=user notice text one",
+            "--policy-identifier=1.2.3",
+            "--user-notice=user notice text two",
+            "--certification-practice-statement=https://example.com/cps2/",
+            # Extended Key Usage extension
+            "--extended-key-usage",
+            "clientAuth",
+            "1.3.6.1.5.5.7.3.1",  # == serverAuth, to test custom OIDs
+            # Key Usage extension
+            "--key-usage",
+            "keyCertSign",
+            "digitalSignature",
+            # Name Constraints extension
+            "--permit-name=DNS:.com",
+            "--exclude-name=DNS:.net",
+        )
+
+        extensions = ca.x509_extensions
+
+        # Test BasicConstraints extension
+        self.assertEqual(extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(True, 3))
+        self.assertEqual(ca.path_length, 3)
+        self.assertEqual(ca.max_path_length, 3)
+        self.assertTrue(ca.allows_intermediate_ca)
+
+        # Test Certificate Policies extension
+        self.assertEqual(
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            self.certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
+                    policy_qualifiers=[
+                        "https://example.com/cps1/",
+                        x509.UserNotice(notice_reference=None, explicit_text="user notice text one"),
+                    ],
+                ),
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                    policy_qualifiers=[
+                        x509.UserNotice(notice_reference=None, explicit_text="user notice text two"),
+                        "https://example.com/cps2/",
+                    ],
+                ),
+            ),
+        )
+
+        # Test Extended Key Usage extension
+        self.assertEqual(
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+        )
+
+        # Test KeyUsage extension
+        self.assertEqual(
+            extensions[ExtensionOID.KEY_USAGE],
+            self.key_usage(key_cert_sign=True, digital_signature=True),
+        )
+
+        # Test Name Constraints extension
+        self.assertEqual(
+            extensions[ExtensionOID.NAME_CONSTRAINTS],
+            self.name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
+        )
+
+    @override_tmpcadir()
+    def test_add_extensions_with_non_default_critical(self) -> None:
+        """Test setting non-default critical values."""
+
+        ca = self.init_ca_e2e(
+            "extensions",
+            "/CN=extensions.example.com",
+            # Certificate Policies extension:
+            "--policy-identifier=anyPolicy",
+            "--certificate-policies-critical",
+            # Extended Key Usage extension
+            "--extended-key-usage",
+            "clientAuth",
+            "1.3.6.1.5.5.7.3.1",  # == serverAuth, to test custom OIDs
+            "--extended-key-usage-critical",
+            # Key Usage extension
+            "--key-usage",
+            "keyCertSign",
+            "digitalSignature",
+            "--key-usage-non-critical",
+        )
+
+        extensions = ca.x509_extensions
+
+        # Test Certificate Policies extension
+        self.assertEqual(
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            self.certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"), policy_qualifiers=None
+                ),
+                critical=True,
+            ),
+        )
+
+        # Test Extended Key Usage extension
+        self.assertEqual(
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(
+                ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
+            ),
+        )
+
+        # Test KeyUsage extension
+        self.assertEqual(
+            extensions[ExtensionOID.KEY_USAGE],
+            self.key_usage(key_cert_sign=True, digital_signature=True, critical=False),
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_multiple_ians(self) -> None:

@@ -222,13 +222,60 @@ be added to the last named policy::
 
 Adding notice references via the command line is not supported.
 
+Extended Key Usage
+------------------
+
+The Extended Key Usage extension (`RFC 5280, section 4.2.1.12
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_) is often not present in certificate
+authorities, and **django-ca** does not add it by default.
+
+.. NOTE::
+
+   This option must be given `after` the mandatory ``name`` and ``subject`` arguments::
+
+       $ python manage.py init_ca NameOfCa /CN=example.com --key-usage ...
+
+   The option has a variable number of values and parsing the command-line would not be unambiguous otherwise.
+
+The extension can be added using the ``--extended-key-usage`` option. Valid values are given by the values of
+the :py:attr:`~django_ca.constants.EXTENDED_KEY_USAGE_NAMES` mapping. For example::
+
+    $ python manage.py init_ca NameOfCa /CN=example.com --extended-key-usage clientAuth serverAuth
+
+If you need to add OIDs not understood by **django-ca**, you can also pass any valid OID as a dotted string
+instead. In this example, the OID for ``serverAuth`` is used::
+
+    $ python manage.py init_ca NameOfCa /CN=example.com --extended-key-usage 1.3.6.1.5.5.7.3.1
+
+Key Usage
+---------
+
+The Key Usage extension (`RFC 5280, section 4.2.1.3
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_) is always added. By default, the
+`keyCertSign` and `cRLSign` bits are set, matching most public certificate authorities.
+
+.. NOTE::
+
+   This option must be given `after` the mandatory ``name`` and ``subject`` arguments::
+
+       $ python manage.py init_ca NameOfCa /CN=example.com --key-usage ...
+
+   The option has a variable number of values and parsing the command-line would not be unambiguous otherwise.
+
+You can set a different extension value using the ``--key-usage`` option. Note that this will overwrite (and
+not append to) the default, so you have to name the default values as well. Valid values are given by the
+values of the :py:attr:`~django_ca.constants.KEY_USAGE_NAMES` mapping. For example, to also set the
+`digitalSignature` flag::
+
+    $ python manage.py init_ca Name /CN=example.com --key-usage keyCertSign cRLSign digitalSignature ...
+
 .. _name_constraints:
 
 Name Constraints
 ----------------
 
 The Name Constraints extension (`RFC 5280, section 4.2.1.10
-<https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_ allows you to create CAs that are limited to
+<https://tools.ietf.org/html/rfc5280#section-4.2.1.10>`_) allows you to create CAs that are limited to
 issuing certificates for a particular set of names. The parsing of this syntax is quite complex, see e.g.
 `this blog post
 <https://www.sysadmins.lv/blog-en/x509-name-constraints-certificate-extension-all-you-should-know.aspx>`_ for

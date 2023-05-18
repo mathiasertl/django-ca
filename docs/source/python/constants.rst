@@ -5,6 +5,11 @@
 .. automapping:: django_ca.constants.ELLIPTIC_CURVE_TYPES
    :annotation:
 
+.. automapping:: django_ca.constants.EXTENDED_KEY_USAGE_NAMES
+   :no-value:
+
+   test
+
 .. automapping:: django_ca.constants.EXTENSION_DEFAULT_CRITICAL
    :no-value:
 
@@ -15,6 +20,9 @@
    :no-value:
 
 .. automapping:: django_ca.constants.HASH_ALGORITHM_NAMES
+   :no-value:
+
+.. automapping:: django_ca.constants.KEY_USAGE_NAMES
    :no-value:
 
 .. automapping:: django_ca.constants.NAME_OID_NAMES

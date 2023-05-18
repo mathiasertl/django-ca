@@ -790,6 +790,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cert.full_clean()
         return cert
 
+    def certificate_policies(
+        self, *policies: x509.PolicyInformation, critical: bool = False
+    ) -> x509.Extension[x509.CertificatePolicies]:
+        """Shortcut for getting a Certificate Policy extension"""
+        return x509.Extension(
+            oid=ExtensionOID.CERTIFICATE_POLICIES, critical=critical, value=x509.CertificatePolicies(policies)
+        )
+
     def crl_distribution_points(
         self,
         full_name: Optional[Iterable[x509.GeneralName]] = None,

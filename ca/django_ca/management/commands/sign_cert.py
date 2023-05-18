@@ -114,8 +114,10 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
+        # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
+        # Key Usage extension
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
         ocsp_no_check: bool,

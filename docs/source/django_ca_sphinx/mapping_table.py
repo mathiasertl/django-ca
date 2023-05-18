@@ -26,7 +26,7 @@ from tabulate import tabulate
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 
 class MappingDocumentor(DataDocumenter):
@@ -56,9 +56,6 @@ class MappingDocumentor(DataDocumenter):
         if isinstance(value, x509.ObjectIdentifier):
             # First, try to find out if the OID is an ExtensionOID member
             for name in dir(ExtensionOID):
-                # These are currently not documented, see https://github.com/pyca/cryptography/pull/7904
-                if value in (ExtensionOID.POLICY_MAPPINGS, ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES):
-                    return f"``ExtensionOID.{name}``"
                 if value == getattr(ExtensionOID, name):
                     return f":py:attr:`ExtensionOID.{name} <cg:cryptography.x509.oid.ExtensionOID.{name}>`"
 
@@ -70,6 +67,16 @@ class MappingDocumentor(DataDocumenter):
             for name in dir(NameOID):
                 if value == getattr(NameOID, name):
                     return f":py:attr:`NameOID.{name} <cg:cryptography.x509.oid.NameOID.{name}>`"
+
+            for name in dir(ExtendedKeyUsageOID):
+                if value == getattr(ExtendedKeyUsageOID, name):
+                    return (
+                        f":py:attr:`ExtendedKeyUsageOID.{name} "
+                        f"<cg:cryptography.x509.oid.ExtendedKeyUsageOID.{name}>`"
+                    )
+
+            if isinstance(value, x509.ObjectIdentifier):
+                return f"``{str(value)}``"
 
             return str(value)
 

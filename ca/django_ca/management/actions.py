@@ -653,6 +653,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
     extension_type = x509.KeyUsage
 
     def __init__(self, **kwargs: Any) -> None:
+        # TODO: add choices once support for old comma-separated lists are removed.
         kwargs.setdefault("nargs", "+")
         super().__init__(**kwargs)
 
@@ -667,7 +668,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         if len(values) == 1 and "," in values[0]:
             values = values[0].split(",")
             warnings.warn(
-                "Passing a coma-separated list is deprecated, pass space-separated values instead.",
+                "Passing a comma-separated list is deprecated, pass space-separated values instead.",
                 RemovedInDjangoCA126Warning,
             )
 
