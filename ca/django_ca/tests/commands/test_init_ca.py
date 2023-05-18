@@ -264,9 +264,9 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = self.init_ca_e2e(
             "extensions",
             "/CN=extensions.example.com",
-            # Basic Constraints extension:
+            # Basic Constraints extension
             "--path-length=3",
-            # Certificate Policies extension:
+            # Certificate Policies extension
             "--policy-identifier=anyPolicy",
             "--certification-practice-statement=https://example.com/cps1/",
             "--user-notice=user notice text one",
@@ -280,6 +280,9 @@ class InitCATest(TestCaseMixin, TestCase):
             # Inhibit anyPolicy extension
             "--inhibit-any-policy",
             "1",
+            # Issuer Alternative Name extension
+            "--issuer-alternative-name",
+            "DNS:ian.example.com",
             # Key Usage extension
             "--key-usage",
             "keyCertSign",
@@ -335,6 +338,12 @@ class InitCATest(TestCaseMixin, TestCase):
             x509.Extension(
                 oid=ExtensionOID.INHIBIT_ANY_POLICY, critical=True, value=x509.InhibitAnyPolicy(1)
             ),
+        )
+
+        # Test Issuer Alternative Name extension
+        self.assertEqual(
+            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            self.issuer_alternative_name(dns("ian.example.com")),
         )
 
         # Test KeyUsage extension
@@ -483,25 +492,6 @@ class InitCATest(TestCaseMixin, TestCase):
         ca_key = typing.cast(dsa.DSAPrivateKey, ca.key())
         self.assertIsInstance(ca_key, dsa.DSAPrivateKey)
         self.assertEqual(ca_key.key_size, 1024)
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_extensions(self) -> None:
-        """Test creating a certificate with the Inhibit anyPolicy extension."""
-
-        ca = self.init_ca_e2e(
-            self.hostname[:32],
-            "--inhibit-any-policy=3",
-            "--require-explicit-policy=1",
-            "--inhibit-policy-mapping=2",
-            f"/CN={self.hostname}",
-        )
-        self.assertEqual(
-            ca.x509_extensions[ExtensionOID.INHIBIT_ANY_POLICY], self.ext(x509.InhibitAnyPolicy(3))
-        )
-        self.assertEqual(
-            ca.x509_extensions[ExtensionOID.POLICY_CONSTRAINTS],
-            self.ext(x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=2)),
-        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self) -> None:

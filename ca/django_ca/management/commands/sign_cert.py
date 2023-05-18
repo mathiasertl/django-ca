@@ -26,8 +26,7 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
-from django_ca import ca_settings
-from django_ca.constants import EXTENSION_KEYS
+from django_ca import ca_settings, constants
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
@@ -117,11 +116,15 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
+        # Issuer Alternative Name extension:
+        issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # Key Usage extension
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
+        # OCSP No Check extension
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
+        # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
         **options: Any,
@@ -145,7 +148,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         extensions: List[x509.Extension[x509.ExtensionType]] = []
 
         for ext_type in self.sign_extensions:
-            ext_key = EXTENSION_KEYS[ext_type.oid]
+            ext_key = constants.EXTENSION_KEYS[ext_type.oid]
             if options[ext_key]:
                 extensions.append(options[ext_key])
 
@@ -163,6 +166,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                     oid=ExtensionOID.EXTENDED_KEY_USAGE,
                     critical=extended_key_usage_critical,
                     value=extended_key_usage,
+                )
+            )
+        if issuer_alternative_name is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+                    value=issuer_alternative_name,
                 )
             )
         if key_usage is not None:

@@ -450,16 +450,7 @@ class Profile:
         self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
     ) -> None:
         oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
-        if oid not in ca_extensions:
-            return
-
-        if oid in extensions:
-            ca_ian = typing.cast(x509.IssuerAlternativeName, ca_extensions[oid].value)
-            cert_ian = typing.cast(x509.IssuerAlternativeName, extensions[oid].value)
-            ext_value = x509.IssuerAlternativeName(list(ca_ian) + list(cert_ian))
-
-            extensions[oid] = x509.Extension(oid=oid, critical=extensions[oid].critical, value=ext_value)
-        else:
+        if oid in ca_extensions and oid not in extensions:
             extensions[oid] = ca_extensions[oid]
 
     def _update_from_ca(

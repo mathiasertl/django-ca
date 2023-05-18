@@ -359,13 +359,24 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "sign_cert",
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
+            # Certificate Policies extension
             "--policy-identifier=1.2.3",
             "--certification-practice-statement=https://example.com/cps/",
             "--user-notice=user notice text",
-            "--key-usage=keyCertSign",
-            "--ocsp-no-check",
+            # Extended Key Usage extension
             "--extended-key-usage=clientAuth",
+            # Issuer Alternative Name extension
+            "--issuer-alternative-name",
+            "DNS:ian-cert.example.com",
+            "--issuer-alternative-name",
+            "URI:http://ian-cert.example.com",
+            # Key Usage extension
+            "--key-usage=keyCertSign",
+            # OCSP No Check extension
+            "--ocsp-no-check",
+            # Subject Alternative Name extension
             "--alt=URI:https://example.net",
+            # TLS Feature extension
             "--tls-feature=status_request",
         ]
 
@@ -379,10 +390,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-        actual = cert.x509_extensions
+        extensions = cert.x509_extensions
 
+        # Test Certificate Policies extension
         self.assertEqual(
-            actual[ExtensionOID.CERTIFICATE_POLICIES],
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
             x509.Extension(
                 oid=ExtensionOID.CERTIFICATE_POLICIES,
                 critical=False,
@@ -400,21 +412,33 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             ),
         )
 
+        # Test Extended Key Usage extension
         self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH)
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH),
         )
-        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
-        self.assertEqual(actual[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+
+        # Test Issuer Alternative Name extension
+        self.assertEqual(
+            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            self.issuer_alternative_name(dns("ian-cert.example.com"), uri("http://ian-cert.example.com")),
+        )
+
+        # Test KeyUsage extension
+        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
+
+        # Test OCSP No Check extension
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+
+        # Test Subject Alternative Name extension
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
             self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
         )
+
+        # Test TLSFeature extension
         self.assertEqual(
-            actual[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
-        )
-        self.assertEqual(
-            actual[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
+            extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
         )
 
     @override_tmpcadir()

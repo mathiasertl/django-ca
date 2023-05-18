@@ -276,6 +276,18 @@ The extension can be added using the ``--inhibit-any-policy`` option. The value 
 
     $ python manage.py init_ca --inhibit-any-policy 1 ...
 
+Issuer Alternative Name
+-----------------------
+
+The Issuer Alternative Name extension (`RFC 5280, section 4.2.1.7
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.7>`_) is used to associate alternative
+names with the certificate issuer. It is rarely used in practice.
+
+You can set this extension using the ``--issuer-alternative-name`` option. The option can be given multiple
+times. Values are any valid name, see :ref:`names_on_cli` for detailed documentation::
+
+   $ python manage.py init_ca --issuer-alternative-name DNS:example.com ...
+
 Key Usage
 ---------
 

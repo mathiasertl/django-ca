@@ -253,9 +253,23 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         )
         self.add_critical_option(group, ExtensionOID.EXTENDED_KEY_USAGE)
 
-    def add_key_usage_group(
-        self, parser: argparse.ArgumentParser, default: Optional[x509.KeyUsage] = None
-    ) -> None:
+    def add_issuer_alternative_name_group(self, parser: CommandParser) -> None:
+        """Add argument group for the Issuer Alternative Name extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
+        group = parser.add_argument_group(
+            f"{ext_name} extension",
+            f"The {ext_name} extension is used to associate alternative names with the certificate issuer.",
+        )
+        group.add_argument(
+            "--issuer-alternative-name",
+            action=actions.AlternativeNameAction,
+            extension_type=x509.IssuerAlternativeName,
+            help="Alternative name for the certificate issuer. May be given multiple times.",
+        )
+        # OpenSSL raises an error if this extension is critical.
+        # self.add_critical_option(group, ExtensionOID.ISSUER_ALTERNATIVE_NAME)
+
+    def add_key_usage_group(self, parser: CommandParser, default: Optional[x509.KeyUsage] = None) -> None:
         """Add argument group for the Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.KEY_USAGE]
         group = parser.add_argument_group(
@@ -285,7 +299,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             # choices=tuple(constants.TLS_FEATURE_NAMES)
             action=actions.TLSFeatureAction,
             help='TLS feature flags to include. Valid values are "status_request" (also known as '
-            'OCSPMustSTaple) and "status_request_v2" (also known as Multiple Certificate Status Request).',
+            'OCSPMustStaple) and "status_request_v2" (also known as Multiple Certificate Status Request).',
         )
         self.add_critical_option(group, ExtensionOID.TLS_FEATURE)
 
@@ -309,6 +323,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             description="In end-entity certificates, this extension indicates the policy under which the "
             "certificate was issued and the purposes for which it may be used.",
         )
+        self.add_issuer_alternative_name_group(parser)
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
         self.add_tls_feature_group(parser)
@@ -322,8 +337,9 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         general_group.add_argument(
             "--alt",
             metavar="DOMAIN",
-            action=actions.AlternativeNameAction,
+            action=actions.AlternativeNameLegacyAction,
             extension_type=x509.SubjectAlternativeName,
+            dest="subject_alternative_name",
             help="Add a subjectAltName to the certificate (may be given multiple times)",
         )
         general_group.add_argument(

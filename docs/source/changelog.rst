@@ -11,8 +11,9 @@ ChangeLog
 ************
 
 * Add support for setting the Extended Key Usage extension when creating certificate authorities.
-* Add support for adding the Certificate Policy extension when creating certificate authorities or
-  end-entity certificates via the command-line.
+* Add support for adding the Certificate Policy and Issuer Alternative Name extension when creating
+  certificate authorities or end-entity certificates via the command-line.
+* Add support for add
 
 Backwards incompatible changes
 ==============================

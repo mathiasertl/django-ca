@@ -29,7 +29,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, KEY_USAGE_NAMES, ReasonFlags
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
@@ -531,23 +531,9 @@ class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType]
 
     extension_type: Type[ExtensionType]
 
-    def __init__(self, **kwargs: Any) -> None:
-        kwargs["dest"] = EXTENSION_KEYS[self.extension_type.oid]
-        super().__init__(**kwargs)
 
-
-class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
-    """Action for AlternativeName extensions.
-
-    >>> parser.add_argument('--san', action=AlternativeNameAction,
-    ...                     extension_type=x509.SubjectAlternativeName)  # doctest: +ELLIPSIS
-    AlternativeNameAction(...)
-    >>> args = parser.parse_args(['--san', 'https://example.com'])
-    >>> args.subject_alternative_name  # doctest: +NORMALIZE_WHITESPACE
-    <Extension(oid=<ObjectIdentifier(oid=2.5.29.17, name=subjectAltName)>,
-               critical=False,
-               value=<SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>)>
-    """
+class AlternativeNameLegacyAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
+    """Action for AlternativeName extensions."""
 
     def __init__(self, extension_type: Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
         self.extension_type = extension_type
@@ -572,6 +558,44 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
         extension = x509.Extension(oid=self.extension_type.oid, critical=critical, value=extension_type)
 
         setattr(namespace, self.dest, extension)
+
+
+class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
+    """Action for AlternativeName extensions.
+
+    >>> parser.add_argument(
+    ...     '--subject-alternative-name',
+    ...     action=AlternativeNameAction,
+    ...     extension_type=x509.SubjectAlternativeName
+    ... )  # doctest: +ELLIPSIS
+    AlternativeNameAction(...)
+    >>> args = parser.parse_args(['--subject-alternative-name', 'https://example.com'])
+    >>> args.subject_alternative_name  # doctest: +NORMALIZE_WHITESPACE
+    <SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>
+    """
+
+    def __init__(self, extension_type: Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
+        self.extension_type = extension_type
+        kwargs["metavar"] = "NAME"
+        super().__init__(**kwargs)
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: Optional[str] = None,
+    ) -> None:
+        alternative_names = getattr(namespace, self.dest)
+        if alternative_names is None:
+            names = []
+        else:
+            names = list(alternative_names)
+
+        names.append(parse_general_name(values))
+        extension_type = self.extension_type(general_names=names)
+
+        setattr(namespace, self.dest, extension_type)
 
 
 class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage]):

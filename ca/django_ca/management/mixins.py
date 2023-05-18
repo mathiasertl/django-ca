@@ -268,7 +268,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         group.add_argument(
             "--issuer-alt-name",
             metavar="URL",
-            action=actions.AlternativeNameAction,
+            action=actions.AlternativeNameLegacyAction,
             extension_type=x509.IssuerAlternativeName,
             help="URL to the homepage of your CA.",
         )

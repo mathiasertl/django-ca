@@ -72,7 +72,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(
+    def handle(  # pylint: disable=too-many-locals
         self,
         name: str,
         key: typing.BinaryIO,
@@ -80,7 +80,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         parent: Optional[CertificateAuthority],
         password: Optional[bytes],
         import_password: Optional[bytes],
-        issuer_alternative_name: Optional[str],
+        issuer_alt_name: Optional[str],
         issuer_url: Optional[str],
         **options: Any,
     ) -> None:
@@ -103,7 +103,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
-        if issuer_alternative_name is None:  # pragma: no branch - no CA sets this
+        if issuer_alt_name is None:  # pragma: no branch - no CA sets this
             issuer_alternative_name = ""
 
         ca = CertificateAuthority(

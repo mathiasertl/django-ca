@@ -139,20 +139,30 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
+                # Certificate Policies extension
+                "--policy-identifier=1.2.3",
+                "--certification-practice-statement=https://example.com/overwritten/",
+                "--user-notice=overwritten user notice text",
+                # Extended Key Usage extension
                 "--extended-key-usage",
                 "clientAuth",
                 "serverAuth",
+                # Issuer Alternative Name extension
+                "--issuer-alternative-name",
+                "DNS:ian-override.example.com",
+                "--issuer-alternative-name",
+                "URI:http://ian-override.example.com",
+                # Key Usage extension
                 "--key-usage",
                 "keyAgreement",
                 "keyEncipherment",
                 "--key-usage-non-critical",
+                # OCSP No Check extension
                 "--ocsp-no-check",
                 "--ocsp-no-check-critical",
+                # TLS Feature extension
                 "--tls-feature",
                 "status_request",
-                "--policy-identifier=1.2.3",
-                "--certification-practice-statement=https://example.com/overwritten/",
-                "--user-notice=overwritten user notice text",
             )
         self.assertEqual(stderr, "")
 
@@ -161,6 +171,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.x509_extensions
+
+        # Test Certificate Policies extension
         self.assertEqual(
             extensions[ExtensionOID.CERTIFICATE_POLICIES],
             x509.Extension(
@@ -181,15 +193,31 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 ),
             ),
         )
+
+        # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
         )
+
+        # Test Issuer Alternative Name extension
+        self.assertEqual(
+            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            self.issuer_alternative_name(
+                dns("ian-override.example.com"), uri("http://ian-override.example.com")
+            ),
+        )
+
+        # Test KeyUsage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
             self.key_usage(key_agreement=True, key_encipherment=True, critical=False),
         )
+
+        # Test OCSP No Check extension
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
+
+        # Test TLSFeature extension
         self.assertEqual(
             extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
         )
@@ -202,18 +230,28 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
-                "--extended-key-usage",
-                "clientAuth",
-                "serverAuth",
-                "--key-usage",
-                "keyAgreement",
-                "keyEncipherment",
-                "--ocsp-no-check",
-                "--tls-feature",
-                "status_request",
+                # Certificate Policies extension
                 "--policy-identifier=1.2.3",
                 "--certification-practice-statement=https://example.com/overwritten/",
                 "--user-notice=overwritten user notice text",
+                # Extended Key Usage extension
+                "--extended-key-usage",
+                "clientAuth",
+                "serverAuth",
+                # Issuer Alternative Name extension
+                "--issuer-alternative-name",
+                "DNS:ian-override.example.com",
+                "--issuer-alternative-name",
+                "URI:http://ian-override.example.com",
+                # Key Usage extension
+                "--key-usage",
+                "keyAgreement",
+                "keyEncipherment",
+                # OCSP No Check extension
+                "--ocsp-no-check",
+                # TLS Feature extension
+                "--tls-feature",
+                "status_request",
             )
         self.assertEqual(stderr, "")
 
@@ -222,6 +260,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.x509_extensions
+
+        # Test Certificate Policies extension
         self.assertEqual(
             extensions[ExtensionOID.CERTIFICATE_POLICIES],
             x509.Extension(
@@ -242,14 +282,30 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 ),
             ),
         )
+
+        # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
         )
+
+        # Test Issuer Alternative Name extension
+        self.assertEqual(
+            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            self.issuer_alternative_name(
+                dns("ian-override.example.com"), uri("http://ian-override.example.com")
+            ),
+        )
+
+        # Test KeyUsage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_agreement=True, key_encipherment=True)
         )
+
+        # Test OCSP No Check extension
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+
+        # Test TLSFeature extension
         self.assertEqual(
             extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
         )

@@ -73,27 +73,27 @@ class ParserTestCaseMixin(TestCaseMixin):
         return output
 
 
-class AlternativeNameAction(ParserTestCaseMixin, TestCase):
-    """Test AlternativeNameAction."""
+class AlternativeNameLegacyAction(ParserTestCaseMixin, TestCase):
+    """Test AlternativeNameLegacyAction."""
 
     def setUp(self) -> None:
         super().setUp()
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument(
-            "--alt", action=actions.AlternativeNameAction, extension_type=x509.SubjectAlternativeName
+            "--alt", action=actions.AlternativeNameLegacyAction, extension_type=x509.SubjectAlternativeName
         )
 
     def assertValue(self, namespace: argparse.Namespace, value: Any) -> None:  # pylint: disable=invalid-name
         """Assert a given extension value."""
 
         extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)
-        self.assertEqual(getattr(namespace, EXTENSION_KEYS[x509.SubjectAlternativeName.oid]), extension)
+        self.assertEqual(namespace.alt, extension)
 
     def test_basic(self) -> None:
         """Test basic functionality."""
 
         namespace = self.parser.parse_args([])
-        self.assertEqual(namespace.subject_alternative_name, None)
+        self.assertEqual(namespace.alt, None)
 
         namespace = self.parser.parse_args(["--alt", "example.com"])
         self.assertValue(namespace, x509.SubjectAlternativeName([dns("example.com")]))
@@ -195,17 +195,15 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         namespace = self.parser.parse_args([])
-        self.assertIsNone(namespace.extended_key_usage)
+        self.assertIsNone(namespace.eku)
 
         namespace = self.parser.parse_args(["--eku", "clientAuth"])
-        self.assertEqual(
-            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.extended_key_usage
-        )
+        self.assertEqual(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.eku)
 
         namespace = self.parser.parse_args(["--eku", "clientAuth", "serverAuth"])
         self.assertEqual(
             x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
-            namespace.extended_key_usage,
+            namespace.eku,
         )
 
     def test_deprecated_values(self) -> None:
@@ -216,7 +214,7 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
             namespace = self.parser.parse_args(["--eku", "clientAuth,serverAuth"])
         self.assertEqual(
             x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
-            namespace.extended_key_usage,
+            namespace.eku,
         )
 
     def test_deprecated_values_with_critical(self) -> None:
@@ -227,21 +225,19 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
             namespace = self.parser.parse_args(["--eku", "critical,clientAuth,serverAuth"])
         self.assertEqual(
             x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
-            namespace.extended_key_usage,
+            namespace.eku,
         )
 
     def test_dotted_string_value(self) -> None:
         """Test passing a dotted string."""
         namespace = self.parser.parse_args(["--eku", "1.3.6.1.5.5.7.3.2"])
-        self.assertEqual(
-            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.extended_key_usage
-        )
+        self.assertEqual(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.eku)
 
     def test_duplicate_values(self) -> None:
         """Test wrong option values."""
         self.assertParserError(
             ["--eku", "clientAuth", "1.3.6.1.5.5.7.3.2"],
-            "usage: {script} [-h] [--eku EXTENDED_KEY_USAGE [EXTENDED_KEY_USAGE ...]]\n"
+            "usage: {script} [-h] [--eku EKU [EKU ...]]\n"
             "{script}: error: 1.3.6.1.5.5.7.3.2: Extended Key Usage is added multiple times.\n",
         )
 
@@ -249,7 +245,7 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         """Test wrong option values."""
         self.assertParserError(
             ["--eku", "FOO"],
-            "usage: {script} [-h] [--eku EXTENDED_KEY_USAGE [EXTENDED_KEY_USAGE ...]]\n"
+            "usage: {script} [-h] [--eku EKU [EKU ...]]\n"
             "{script}: error: FOO: Not a dotted string or known Extended Key Usage.\n",
         )
 
@@ -371,14 +367,14 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("-k", action=actions.KeyUsageAction)
+        self.parser.add_argument("--key-usage", action=actions.KeyUsageAction)
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        namespace = self.parser.parse_args(["-k", "keyCertSign"])
+        namespace = self.parser.parse_args(["--key-usage", "keyCertSign"])
         self.assertEqual(self.key_usage(key_cert_sign=True, critical=False).value, namespace.key_usage)
 
-        namespace = self.parser.parse_args(["-k", "keyCertSign", "keyAgreement"])
+        namespace = self.parser.parse_args(["--key-usage", "keyCertSign", "keyAgreement"])
         self.assertEqual(
             self.key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
         )
@@ -387,7 +383,7 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         """Test deprecated critical flag."""
         msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["-k", "keyCertSign,keyAgreement"])
+            namespace = self.parser.parse_args(["--key-usage", "keyCertSign,keyAgreement"])
         self.assertEqual(
             self.key_usage(key_cert_sign=True, key_agreement=True, critical=True).value, namespace.key_usage
         )
@@ -396,26 +392,27 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         """Test deprecated critical flag."""
         msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["-k", "critical,keyCertSign"])
+            namespace = self.parser.parse_args(["--key-usage", "critical,keyCertSign"])
         self.assertEqual(self.key_usage(key_cert_sign=True, critical=True).value, namespace.key_usage)
 
     def test_invalid_values(self) -> None:
         """Test passing invalid values."""
         self.assertParserError(
-            ["-k", "foo"],
-            "usage: {script} [-h] [-k KEY_USAGE [KEY_USAGE ...]]\n{script}: error: foo: Invalid key usage.\n",
+            ["--key-usage", "foo"],
+            "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
+            "{script}: error: foo: Invalid key usage.\n",
         )
 
     def test_error(self) -> None:
         """Test wrong option values."""
         self.assertParserError(
-            ["-k", "encipherOnly"],
-            "usage: {script} [-h] [-k KEY_USAGE [KEY_USAGE ...]]\n"
+            ["--key-usage", "encipherOnly"],
+            "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
             "{script}: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
         )
         self.assertParserError(
-            ["-k", "decipherOnly"],
-            "usage: {script} [-h] [-k KEY_USAGE [KEY_USAGE ...]]\n"
+            ["--key-usage", "decipherOnly"],
+            "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
             "{script}: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
         )
 
@@ -448,17 +445,17 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("-f", action=actions.TLSFeatureAction)
+        self.parser.add_argument("--tls-feature", action=actions.TLSFeatureAction)
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        namespace = self.parser.parse_args(["-f", "status_request"])
+        namespace = self.parser.parse_args(["--tls-feature", "status_request"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
 
-        namespace = self.parser.parse_args(["-f", "status_request_v2"])
+        namespace = self.parser.parse_args(["--tls-feature", "status_request_v2"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request_v2]), namespace.tls_feature)
 
-        namespace = self.parser.parse_args(["-f", "status_request", "status_request_v2"])
+        namespace = self.parser.parse_args(["--tls-feature", "status_request", "status_request_v2"])
         self.assertEqual(
             x509.TLSFeature([x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2]),
             namespace.tls_feature,
@@ -468,7 +465,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
         """Test deprecated critical flag."""
         msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["-f", "status_request,status_request_v2"])
+            namespace = self.parser.parse_args(["--tls-feature", "status_request,status_request_v2"])
         self.assertEqual(
             x509.TLSFeature([x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2]),
             namespace.tls_feature,
@@ -478,7 +475,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
         """Test deprecated critical flag."""
         msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
         with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["-f", "critical,status_request"])
+            namespace = self.parser.parse_args(["--tls-feature", "critical,status_request"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
 
     def test_deprecated_values(self) -> None:
@@ -488,18 +485,18 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
             r"status_request_v2\.$"
         )
         with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["-f", "OCSPMustStaple"])
+            namespace = self.parser.parse_args(["--tls-feature", "OCSPMustStaple"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
 
         with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["-f", "MultipleCertStatusRequest"])
+            namespace = self.parser.parse_args(["--tls-feature", "MultipleCertStatusRequest"])
         self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request_v2]), namespace.tls_feature)
 
     def test_error(self) -> None:
         """Test wrong option values."""
         self.assertParserError(
-            ["-f", "FOO"],
-            "usage: {script} [-h] [-f TLS_FEATURE [TLS_FEATURE ...]]\n"
+            ["--tls-feature", "FOO"],
+            "usage: {script} [-h] [--tls-feature TLS_FEATURE [TLS_FEATURE ...]]\n"
             "{script}: error: Unknown TLSFeature: FOO\n",
         )
 

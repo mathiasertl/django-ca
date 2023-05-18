@@ -56,8 +56,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     def handle(self, ca: CertificateAuthority, **options: Any) -> None:
         if options["issuer_url"] is not None:
             ca.issuer_url = options["issuer_url"]
-        if options[EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]:
-            ian = options[EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]
+        if options["issuer_alt_name"]:
+            ian = options["issuer_alt_name"]
             ca.issuer_alt_name = ",".join([format_general_name(name) for name in ian.value])
         if options["ocsp_url"] is not None:
             ca.ocsp_url = options["ocsp_url"]

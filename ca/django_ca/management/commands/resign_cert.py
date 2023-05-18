@@ -24,7 +24,7 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_KEYS
 from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
@@ -75,12 +75,18 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
+        # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
+        # Issuer Alternative Name extension:
+        issuer_alternative_name: Optional[x509.IssuerAlternativeName],
+        # Key Usage extension
         key_usage: Optional[x509.KeyUsage],
         key_usage_critical: bool,
+        # OCSP No Check extension
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
+        # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
         **options: Any,
@@ -138,6 +144,17 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         elif cert_extended_key_usage := cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE):
             extensions.append(cert_extended_key_usage)
 
+        if issuer_alternative_name is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+                    value=issuer_alternative_name,
+                )
+            )
+        elif cert_issuer_alternative_name := cert.x509_extensions.get(ExtensionOID.ISSUER_ALTERNATIVE_NAME):
+            extensions.append(cert_issuer_alternative_name)
+
         if key_usage is not None:
             extensions.append(
                 x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
@@ -167,9 +184,11 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         # Copy over extensions that are not handled above already:
         for oid, extension in cert.x509_extensions.items():
             if oid in (
+                ExtensionOID.CERTIFICATE_POLICIES,
+                ExtensionOID.EXTENDED_KEY_USAGE,
+                ExtensionOID.ISSUER_ALTERNATIVE_NAME,
                 ExtensionOID.KEY_USAGE,
                 ExtensionOID.OCSP_NO_CHECK,
-                ExtensionOID.EXTENDED_KEY_USAGE,
                 ExtensionOID.TLS_FEATURE,
             ):
                 continue
@@ -182,6 +201,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 ExtensionOID.CRL_DISTRIBUTION_POINTS,
             ):
                 continue
+
             extensions.append(extension)
 
         try:

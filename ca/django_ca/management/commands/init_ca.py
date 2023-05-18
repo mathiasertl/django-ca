@@ -265,6 +265,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         )
         self.add_extended_key_usage_group(parser)
         self.add_inhibit_any_policy_group(parser)
+        self.add_issuer_alternative_name_group(parser)
         self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
         self.add_policy_constraints_group(parser)
@@ -300,6 +301,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         extended_key_usage_critical: bool,
         # Inhibit anyPolicy extension:
         inhibit_any_policy: Optional[int],
+        # Issuer Alternative Name extension:
+        issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # Key Usage extension:
         key_usage: x509.KeyUsage,
         key_usage_critical: bool,
@@ -400,6 +403,15 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     value=x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
                 )
             )
+        # Add the inhibitAnyPolicy extension
+        if issuer_alternative_name is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+                    value=issuer_alternative_name,
+                )
+            )
         # Add the Policy Constraints extension
         if require_explicit_policy is not None or inhibit_policy_mapping is not None:
             extensions.append(
@@ -412,8 +424,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     ),
                 )
             )
-
-        issuer_alternative_name = options[constants.EXTENSION_KEYS[x509.IssuerAlternativeName.oid]]
 
         kwargs = {}
         for opt in ["path", "default_hostname"]:
@@ -440,7 +450,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 parent=parent,
                 path_length=path_length,
                 issuer_url=issuer_url,
-                issuer_alt_name=issuer_alternative_name,
+                issuer_alt_name=options["issuer_alt_name"],
                 crl_url=crl_url,
                 ocsp_url=ocsp_url,
                 ca_issuer_url=ca_issuer_url,

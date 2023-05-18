@@ -534,8 +534,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         self.assertIsInstance(cert.algorithm, hashes.SHA512)
 
     @override_tmpcadir()
-    def test_merge_issuer_alternative_name(self) -> None:
-        """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
+    def test_issuer_alternative_name_override(self) -> None:
+        """Pass a custom Issuer Alternative Name which overwrites the CA value."""
         prof = Profile("example", subject=[])
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -570,7 +570,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 self.basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
                 self.subject_alternative_name(dns(self.hostname)),
-                self.issuer_alternative_name(uri(ca.issuer_alt_name), added_ian_uri),
+                self.issuer_alternative_name(added_ian_uri),
             ],
             expect_defaults=False,
         )
