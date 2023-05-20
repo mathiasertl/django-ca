@@ -25,12 +25,11 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
-from django_ca.constants import EXTENSION_KEYS
 from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.typehints import AllowedHashTypes
+from django_ca.typehints import AllowedHashTypes, ExtensionMapping
 
 
 class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
@@ -62,7 +61,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
@@ -112,98 +111,31 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         if subject is None:
             subject = cert.subject
 
-        extensions: List[x509.Extension[x509.ExtensionType]] = []
+        # Process any extensions given via the command-line
+        extensions: ExtensionMapping = {}
 
         if certificate_policies is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.CERTIFICATE_POLICIES,
-                    critical=certificate_policies_critical,
-                    value=certificate_policies,
-                )
-            )
-        elif cert_certificate_policies := cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE):
-            extensions.append(cert_certificate_policies)
-
+            self._add_extension(extensions, certificate_policies, certificate_policies_critical)
         if extended_key_usage is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
-                    critical=extended_key_usage_critical,
-                    value=extended_key_usage,
-                )
-            )
-        elif cert_extended_key_usage := cert.x509_extensions.get(ExtensionOID.EXTENDED_KEY_USAGE):
-            extensions.append(cert_extended_key_usage)
-
+            self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         if issuer_alternative_name is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-                    value=issuer_alternative_name,
-                )
+            self._add_extension(
+                extensions,
+                issuer_alternative_name,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
-        elif cert_issuer_alternative_name := cert.x509_extensions.get(ExtensionOID.ISSUER_ALTERNATIVE_NAME):
-            extensions.append(cert_issuer_alternative_name)
-
         if key_usage is not None:
-            extensions.append(
-                x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
-            )
-        elif cert_key_usage := cert.x509_extensions.get(ExtensionOID.KEY_USAGE):
-            extensions.append(cert_key_usage)
-
+            self._add_extension(extensions, key_usage, key_usage_critical)
         if ocsp_no_check is True:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.OCSP_NO_CHECK, critical=ocsp_no_check_critical, value=x509.OCSPNoCheck()
-                )
-            )
-        elif cert_ocsp_no_check := cert.x509_extensions.get(ExtensionOID.OCSP_NO_CHECK):
-            extensions.append(cert_ocsp_no_check)
-
-        have_subject_alternative_name = False
+            self._add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
         if subject_alternative_name is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                    critical=subject_alternative_name_critical,
-                    value=subject_alternative_name,
-                )
-            )
-            have_subject_alternative_name = True
-        elif cert_subject_alternative_name := cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
-            extensions.append(cert_subject_alternative_name)
-            have_subject_alternative_name = True
-
+            self._add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
         if tls_feature is not None:
-            extensions.append(
-                x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=tls_feature_critical, value=tls_feature)
-            )
-        elif cert_tls_feature := cert.x509_extensions.get(ExtensionOID.TLS_FEATURE):
-            extensions.append(cert_tls_feature)
+            self._add_extension(extensions, tls_feature, tls_feature_critical)
 
-        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_subject_alternative_name is False:
-            raise CommandError(
-                "Must give at least a Common Name in --subject or one or more "
-                "--subject-alternative-name/--name arguments."
-            )
-
-        # Copy over extensions that are not handled above already:
+        # Copy over extensions from the original certificate (if not passed via the command-line)
         for oid, extension in cert.x509_extensions.items():
-            if oid in (
-                ExtensionOID.CERTIFICATE_POLICIES,
-                ExtensionOID.EXTENDED_KEY_USAGE,
-                ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                ExtensionOID.KEY_USAGE,
-                ExtensionOID.OCSP_NO_CHECK,
-                ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                ExtensionOID.TLS_FEATURE,
-            ):
-                continue
-
-            # These extensions is handled by the manager itself based on the CA:
+            # These extensions are handled by the manager itself based on the CA:
             if oid in (
                 ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
                 ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -211,7 +143,20 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             ):
                 continue
 
-            extensions.append(extension)
+            # Add extensions not already added via the command line
+            if oid not in extensions:
+                extensions[oid] = extension
+
+        # Verify that we have either a Common Name in the subject or a Subject Alternative Name extension
+        # NOTE: This can only happen here in two edge cases:
+        #   * Pass a subject without common name AND a certificate does *not* have a subject alternative name.
+        #   * An imported certificate that has neither Common Name nor subject alternative name.
+        common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        if not common_names and ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in extensions:
+            raise CommandError(
+                "Must give at least a Common Name in --subject or one or more "
+                "--subject-alternative-name/--name arguments."
+            )
 
         try:
             cert = Certificate.objects.create_cert(
@@ -221,7 +166,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 expires=expires,
                 subject=subject,
                 algorithm=algorithm,
-                extensions=extensions,
+                extensions=extensions.values(),
                 password=password,
                 cn_in_san=False,  # we already copy the SAN/CN from the original cert
             )

@@ -30,7 +30,7 @@ from django_ca import ca_settings, constants
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
-from django_ca.typehints import AllowedHashTypes
+from django_ca.typehints import AllowedHashTypes, ExtensionMapping
 
 
 class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
@@ -147,60 +147,32 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
-        # get extensions based on profiles
-        extensions: List[x509.Extension[x509.ExtensionType]] = []
+        # Process any extensions given via the command-line
+        extensions: ExtensionMapping = {}
 
         if certificate_policies is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.CERTIFICATE_POLICIES,
-                    critical=certificate_policies_critical,
-                    value=certificate_policies,
-                )
-            )
+            self._add_extension(extensions, certificate_policies, certificate_policies_critical)
         if extended_key_usage is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
-                    critical=extended_key_usage_critical,
-                    value=extended_key_usage,
-                )
-            )
+            self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         if issuer_alternative_name is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-                    value=issuer_alternative_name,
-                )
+            self._add_extension(
+                extensions,
+                issuer_alternative_name,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
         if key_usage is not None:
-            extensions.append(
-                x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
-            )
+            self._add_extension(extensions, key_usage, key_usage_critical)
         if ocsp_no_check is True:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.OCSP_NO_CHECK, critical=ocsp_no_check_critical, value=x509.OCSPNoCheck()
-                )
-            )
+            self._add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
         if subject_alternative_name is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                    critical=subject_alternative_name_critical,
-                    value=subject_alternative_name,
-                )
-            )
+            self._add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
         if tls_feature is not None:
-            extensions.append(
-                x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=tls_feature_critical, value=tls_feature)
-            )
+            self._add_extension(extensions, tls_feature, tls_feature_critical)
 
         cname = None
         if subject is not None:
             cname = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        if not cname and subject_alternative_name is None:
+        if not cname and ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in extensions:
             raise CommandError(
                 "Must give at least a Common Name in --subject or one or more "
                 "--subject-alternative-name/--name arguments."
@@ -231,7 +203,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 profile=profile_obj,
                 cn_in_san=cn_in_san,
                 expires=expires,
-                extensions=extensions,
+                extensions=extensions.values(),
                 password=password,
                 subject=subject,
                 algorithm=algorithm,

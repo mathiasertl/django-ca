@@ -357,7 +357,7 @@ The Subject Alternative Name extension (`RFC 5280, section 4.2.1.6
 It is usually only used in end entity certificates, certificate authorities do *not* use this extension:
 certificate validation does not require this information for certificate authorities.
 
-Since RFC 5280 does not rule out this extension occuring in certificate authorities, you can still add this
+Since RFC 5280 does not rule out this extension occurring in certificate authorities, you can still add this
 extension::
 
     $ python manage.py init_ca --subject-alternative-name DNS:example.com ...
@@ -367,7 +367,7 @@ TLS Feature
 
 In certificate authorities, the TLS Feature extension (`RFC 7633
 <https://datatracker.ietf.org/doc/html/rfc7633.html>`_) will require end entity certificates signed by this
-certificate authority to include the same or a superset of features. This is not commonly used in practice.
+certificate authority to include at least the same features. This is not commonly used in practice.
 
 .. NOTE::
 
@@ -380,7 +380,7 @@ certificate authority to include the same or a superset of features. This is not
 For example, if a root certificate authority includes a TLS Feature extension that sets ``status_request``,
 any certificate signed by it (or any intermediate CA) will also have to set ``status_request``.
 
-You can set the TLS Feature extension with ``--tls-feature``:
+You can set the TLS Feature extension with ``--tls-feature``::
 
     $ python manage.py init_ca NameOfCA /CN=example.com --tls-feature status_request ...
 

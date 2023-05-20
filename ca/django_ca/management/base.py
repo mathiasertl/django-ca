@@ -22,7 +22,7 @@ import textwrap
 import typing
 from datetime import datetime, timedelta
 from datetime import timezone as tz
-from typing import Any, Optional, Tuple, Type, Union
+from typing import Any, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -36,7 +36,7 @@ from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
-from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup
+from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ExtensionMapping
 from django_ca.utils import add_colons, format_name
 
 
@@ -183,6 +183,10 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     This class can add options for all x509 extensions.
     """
 
+    def _add_extension(self, extensions: ExtensionMapping, value: x509.ExtensionType, critical: bool) -> None:
+        """Add an extension to the passed extension dictionary."""
+        extensions[value.oid] = x509.Extension(oid=value.oid, critical=critical, value=value)
+
     def add_certificate_policies_group(
         self, parser: argparse.ArgumentParser, description: str, allow_any_policy: bool = False
     ) -> None:
@@ -287,7 +291,10 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         self.add_critical_option(group, ExtensionOID.KEY_USAGE)
 
     def add_subject_alternative_name_group(
-        self, parser: CommandParser, description_suffix: str = "", additional_option_strings=tuple()
+        self,
+        parser: CommandParser,
+        description_suffix: str = "",
+        additional_option_strings: Tuple[str, ...] = tuple(),
     ) -> None:
         """Add argument group for the Subject Alternative Name extension."""
 
