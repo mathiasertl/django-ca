@@ -248,7 +248,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 ca=self.ca,
                 subject=self.subject,
                 cn_in_san=False,
-                alt=self.subject_alternative_name(dns("example.com")),
+                subject_alternative_name=self.subject_alternative_name(dns("example.com")).value,
                 stdin=stdin,
             )
 
@@ -308,7 +308,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=self.subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name=self.subject_alternative_name(dns(self.hostname)).value,
                 stdin=stdin,
             )
         self.assertEqual(stderr, "")
@@ -338,7 +338,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                alt=self.subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name=self.subject_alternative_name(dns(self.hostname)).value,
                 stdin=stdin,
                 subject=subject,
             )
@@ -375,7 +375,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             # OCSP No Check extension
             "--ocsp-no-check",
             # Subject Alternative Name extension
-            "--alt=URI:https://example.net",
+            "--subject-alternative-name=URI:https://example.net",
             # TLS Feature extension
             "--tls-feature=status_request",
         ]
@@ -424,7 +424,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.issuer_alternative_name(dns("ian-cert.example.com"), uri("http://ian-cert.example.com")),
         )
 
-        # Test KeyUsage extension
+        # Test Key Usage extension
         self.assertEqual(extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
 
         # Test OCSP No Check extension
@@ -432,7 +432,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Test Subject Alternative Name extension
         self.assertEqual(
-            cert.x509_extensions[x509.SubjectAlternativeName.oid],
+            extensions[x509.SubjectAlternativeName.oid],
             self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
         )
 
@@ -459,7 +459,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "--ocsp-no-check-critical",
             "--extended-key-usage=clientAuth",
             "--extended-key-usage-critical",
-            "--alt=URI:https://example.net",
+            "--subject-alternative-name=URI:https://example.net",
+            "--subject-alternative-name-critical",
             "--tls-feature=status_request",
         ]
 
@@ -473,9 +474,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-        actual = cert.x509_extensions
+        extensions = cert.x509_extensions
+
+        # Test Certificate Policies extension
         self.assertEqual(
-            actual[ExtensionOID.CERTIFICATE_POLICIES],
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
             x509.Extension(
                 oid=ExtensionOID.CERTIFICATE_POLICIES,
                 critical=True,
@@ -492,12 +495,25 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 ),
             ),
         )
+
+        # Test Extended Key Usage extension
         self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE],
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, critical=True),
         )
-        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False))
-        self.assertEqual(actual[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
+        # Test Key Usage extension
+        self.assertEqual(
+            extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False)
+        )
+
+        # Test OCSP No Check extension
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
+
+        # Test Subject Alternative Name extension (NOTE: Common Name is automatically appended).
+        self.assertEqual(
+            cert.x509_extensions[x509.SubjectAlternativeName.oid],
+            self.subject_alternative_name(uri("https://example.net"), dns(self.hostname), critical=True),
+        )
 
     @override_tmpcadir()
     def test_multiple_sans(self) -> None:
@@ -508,8 +524,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "sign_cert",
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
-            "--alt=URI:https://example.net",
-            "--alt=DNS:example.org",
+            "--subject-alternative-name=URI:https://example.net",
+            "--subject-alternative-name=DNS:example.org",
         ]
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
@@ -533,7 +549,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                alt=self.subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name=self.subject_alternative_name(dns(self.hostname)).value,
                 stdin=stdin,
             )
 
@@ -564,17 +580,17 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
         ), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=ca, alt=san, stdin=stdin)
+            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin)
 
         # Pass a password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCreateCertSignals():
-            self.cmd("sign_cert", ca=ca, alt=san, stdin=stdin, password=password)
+            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin, password=password)
 
         # Pass the wrong password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCommandError(self.re_false_password), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=ca, alt=san, stdin=stdin, password=b"wrong")
+            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin, password=b"wrong")
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     @unittest.skipUnless(
@@ -592,8 +608,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Giving no password raises a CommandError
         stdin = io.StringIO(self.csr_pem)
+        san = self.subject_alternative_name(dns("example.com"))
         with self.assertCommandError(self.re_false_password), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=self.ca, alt=["example.com"], stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=stdin)
 
     @override_tmpcadir()
     def test_der_csr(self) -> None:
@@ -657,7 +674,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         """Test signing a cert that has neither CN nor SAN."""
         subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
         with self.assertCommandError(
-            r"^Must give at least a CN in --subject or one or more --alt arguments\.$"
+            r"^Must give at least a Common Name in --subject or one or more "
+            r"--subject-alternative-name/--name arguments\.$"
         ), self.assertCreateCertSignals(False, False):
             self.cmd("sign_cert", ca=self.ca, subject=subject)
 

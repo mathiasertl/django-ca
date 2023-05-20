@@ -124,6 +124,9 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # OCSP No Check extension
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
+        # Subject Alternative Name extension
+        subject_alternative_name: Optional[x509.SubjectAlternativeName],
+        subject_alternative_name_critical: bool,
         # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
@@ -146,11 +149,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         # get extensions based on profiles
         extensions: List[x509.Extension[x509.ExtensionType]] = []
-
-        for ext_type in self.sign_extensions:
-            ext_key = constants.EXTENSION_KEYS[ext_type.oid]
-            if options[ext_key]:
-                extensions.append(options[ext_key])
 
         if certificate_policies is not None:
             extensions.append(
@@ -186,6 +184,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                     oid=ExtensionOID.OCSP_NO_CHECK, critical=ocsp_no_check_critical, value=x509.OCSPNoCheck()
                 )
             )
+        if subject_alternative_name is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=subject_alternative_name_critical,
+                    value=subject_alternative_name,
+                )
+            )
         if tls_feature is not None:
             extensions.append(
                 x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=tls_feature_critical, value=tls_feature)
@@ -194,8 +200,11 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         cname = None
         if subject is not None:
             cname = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        if not cname and not options["subject_alternative_name"]:
-            raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
+        if not cname and subject_alternative_name is None:
+            raise CommandError(
+                "Must give at least a Common Name in --subject or one or more "
+                "--subject-alternative-name/--name arguments."
+            )
 
         # Read the CSR
         if csr_path == "-":

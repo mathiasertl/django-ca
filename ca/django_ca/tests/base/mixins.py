@@ -954,12 +954,12 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
     def subject_alternative_name(
-        self, *names: x509.GeneralName
+        self, *names: x509.GeneralName, critical=False
     ) -> x509.Extension[x509.SubjectAlternativeName]:
         """Shortcut for getting a SubjectAlternativeName extension."""
         return x509.Extension(
             oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-            critical=False,
+            critical=critical,
             value=x509.SubjectAlternativeName(names),
         )
 

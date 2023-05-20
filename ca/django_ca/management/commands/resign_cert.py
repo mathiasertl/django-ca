@@ -86,6 +86,9 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         # OCSP No Check extension
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
+        # Subject Alternative Name extension
+        subject_alternative_name: Optional[x509.SubjectAlternativeName],
+        subject_alternative_name_critical: bool,
         # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
@@ -110,17 +113,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             subject = cert.subject
 
         extensions: List[x509.Extension[x509.ExtensionType]] = []
-        have_san = False
-        for ext_type in self.sign_extensions:
-            if not options[EXTENSION_KEYS[ext_type.oid]]:
-                ext = cert.x509_extensions.get(ext_type.oid)
-            else:
-                ext = options[EXTENSION_KEYS[ext_type.oid]]
-
-            if ext is not None:
-                if ext_type == x509.SubjectAlternativeName:  # pragma: no branch
-                    have_san = True
-                extensions.append(ext)
 
         if certificate_policies is not None:
             extensions.append(
@@ -171,6 +163,20 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         elif cert_ocsp_no_check := cert.x509_extensions.get(ExtensionOID.OCSP_NO_CHECK):
             extensions.append(cert_ocsp_no_check)
 
+        have_subject_alternative_name = False
+        if subject_alternative_name is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=subject_alternative_name_critical,
+                    value=subject_alternative_name,
+                )
+            )
+            have_subject_alternative_name = True
+        elif cert_subject_alternative_name := cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
+            extensions.append(cert_subject_alternative_name)
+            have_subject_alternative_name = True
+
         if tls_feature is not None:
             extensions.append(
                 x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=tls_feature_critical, value=tls_feature)
@@ -178,8 +184,11 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         elif cert_tls_feature := cert.x509_extensions.get(ExtensionOID.TLS_FEATURE):
             extensions.append(cert_tls_feature)
 
-        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_san is False:
-            raise CommandError("Must give at least a CN in --subject or one or more --alt arguments.")
+        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and have_subject_alternative_name is False:
+            raise CommandError(
+                "Must give at least a Common Name in --subject or one or more "
+                "--subject-alternative-name/--name arguments."
+            )
 
         # Copy over extensions that are not handled above already:
         for oid, extension in cert.x509_extensions.items():
@@ -189,11 +198,11 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 ExtensionOID.ISSUER_ALTERNATIVE_NAME,
                 ExtensionOID.KEY_USAGE,
                 ExtensionOID.OCSP_NO_CHECK,
+                ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                 ExtensionOID.TLS_FEATURE,
             ):
                 continue
-            if oid in (ext_type.oid for ext_type in self.sign_extensions):
-                continue
+
             # These extensions is handled by the manager itself based on the CA:
             if oid in (
                 ExtensionOID.AUTHORITY_INFORMATION_ACCESS,

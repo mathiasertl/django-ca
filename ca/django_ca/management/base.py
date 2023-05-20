@@ -258,7 +258,8 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension is used to associate alternative names with the certificate issuer.",
+            f"The {ext_name} extension is used to associate alternative names with the certificate issuer. "
+            "It is rarely used in practice.",
         )
         group.add_argument(
             "--issuer-alternative-name",
@@ -285,7 +286,28 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         )
         self.add_critical_option(group, ExtensionOID.KEY_USAGE)
 
-    def add_tls_feature_group(self, parser: argparse.ArgumentParser) -> None:
+    def add_subject_alternative_name_group(
+        self, parser: CommandParser, description_suffix: str = "", additional_option_strings=tuple()
+    ) -> None:
+        """Add argument group for the Subject Alternative Name extension."""
+
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
+        description = "This extension lists the names (usually domain names) that a certificate is valid for."
+        if description_suffix:
+            description += f" {description_suffix}"
+
+        group = parser.add_argument_group(f"{ext_name} extension", description)
+        group.add_argument(
+            "--subject-alternative-name",
+            "--name",
+            *additional_option_strings,
+            action=actions.AlternativeNameAction,
+            extension_type=x509.SubjectAlternativeName,
+            help="Add %(metavar)s to the certificate.",
+        )
+        self.add_critical_option(group, ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+
+    def add_tls_feature_group(self, parser: CommandParser) -> None:
         """Add argument group for the TLS Feature extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.TLS_FEATURE]
         group = parser.add_argument_group(
@@ -308,7 +330,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    sign_extensions: Tuple[Type[x509.ExtensionType], ...] = (x509.SubjectAlternativeName,)
     subject_help: typing.ClassVar  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> ArgumentGroup:
@@ -326,21 +347,14 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_issuer_alternative_name_group(parser)
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
-        self.add_tls_feature_group(parser)
         self.add_ocsp_no_check_group(parser)
+        self.add_subject_alternative_name_group(parser, additional_option_strings=("--alt",))
+        self.add_tls_feature_group(parser)
 
         general_group.add_argument(
             "--expires",
             action=actions.ExpiresAction,
             help=f"Sign the certificate for DAYS days (default: {ca_settings.CA_DEFAULT_EXPIRES})",
-        )
-        general_group.add_argument(
-            "--alt",
-            metavar="DOMAIN",
-            action=actions.AlternativeNameLegacyAction,
-            extension_type=x509.SubjectAlternativeName,
-            dest="subject_alternative_name",
-            help="Add a subjectAltName to the certificate (may be given multiple times)",
         )
         general_group.add_argument(
             "--watch",

@@ -160,6 +160,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 # OCSP No Check extension
                 "--ocsp-no-check",
                 "--ocsp-no-check-critical",
+                # Subject Alternative Name extension
+                "--subject-alternative-name=DNS:override.example.net",
                 # TLS Feature extension
                 "--tls-feature",
                 "status_request",
@@ -217,6 +219,12 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         # Test OCSP No Check extension
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
 
+        # Test Subject Alternative Name extension
+        self.assertEqual(
+            extensions[x509.SubjectAlternativeName.oid],
+            self.subject_alternative_name(dns("override.example.net")),
+        )
+
         # Test TLSFeature extension
         self.assertEqual(
             extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
@@ -249,6 +257,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "keyEncipherment",
                 # OCSP No Check extension
                 "--ocsp-no-check",
+                # Subject Alternative Name extension
+                "--subject-alternative-name=DNS:override.example.net",
                 # TLS Feature extension
                 "--tls-feature",
                 "status_request",
@@ -297,13 +307,19 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             ),
         )
 
-        # Test KeyUsage extension
+        # Test Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_agreement=True, key_encipherment=True)
         )
 
         # Test OCSP No Check extension
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+
+        # Test Subject Alternative Name extension
+        self.assertEqual(
+            extensions[x509.SubjectAlternativeName.oid],
+            self.subject_alternative_name(dns("override.example.net")),
+        )
 
         # Test TLSFeature extension
         self.assertEqual(
@@ -318,16 +334,28 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
+                # Certificate Policies extension
+                "--policy-identifier=1.2.3",
+                "--certification-practice-statement=https://example.com/overwritten/",
+                "--user-notice=overwritten user notice text",
+                "--certificate-policies-critical",
+                # Extended Key Usage extension
                 "--extended-key-usage",
                 "clientAuth",
                 "serverAuth",
                 "--extended-key-usage-critical",
+                # Key Usage extension
                 "--key-usage",
                 "keyAgreement",
                 "keyEncipherment",
                 "--key-usage-non-critical",
+                # OCSP No Check extension
                 "--ocsp-no-check",
                 "--ocsp-no-check-critical",
+                # Subject Alternative Name extension
+                "--subject-alternative-name=DNS:override.example.net",
+                "--subject-alternative-name-critical",
+                # TLS Feature extension
                 "--tls-feature",
                 "status_request",
                 "--tls-feature-critical",
@@ -339,17 +367,53 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.x509_extensions
+
+        # Test Certificate Policies extension
+        self.assertEqual(
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=True,
+                value=x509.CertificatePolicies(
+                    policies=[
+                        x509.PolicyInformation(
+                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                            policy_qualifiers=[
+                                "https://example.com/overwritten/",
+                                x509.UserNotice(
+                                    notice_reference=None, explicit_text="overwritten user notice text"
+                                ),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+        )
+
+        # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(
                 ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
             ),
         )
+
+        # Test Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
             self.key_usage(key_agreement=True, key_encipherment=True, critical=False),
         )
+
+        # Test OCSP No Check extension
         self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(True))
+
+        # Test Subject Alternative Name extension
+        self.assertEqual(
+            extensions[x509.SubjectAlternativeName.oid],
+            self.subject_alternative_name(dns("override.example.net"), critical=True),
+        )
+
+        # Test TLSFeature extension
         self.assertEqual(
             extensions[ExtensionOID.TLS_FEATURE],
             self.tls_feature(x509.TLSFeatureType.status_request, critical=True),
@@ -386,7 +450,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         key_usage = "cRLSign"
         ext_key_usage = "emailProtection"
         watcher = "new@example.com"
-        alt = "new-alt-name.example.com"
+        subject_alternative_name = "new-alt-name.example.com"
 
         # resign a cert, but overwrite all options
         with self.assertCreateCertSignals():
@@ -407,8 +471,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     f"/CN={cname}",
                     "--watch",
                     watcher,
-                    "--alt",
-                    alt,
+                    "--subject-alternative-name",
+                    subject_alternative_name,
                 ]
             )
         self.assertEqual(stderr, "")
@@ -416,22 +480,31 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         new = Certificate.objects.get(pub=stdout)
         self.assertResigned(self.cert, new)
         self.assertEqual(new.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]))
+        self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
         # assert overwritten extensions
-        actual = new.x509_extensions
+        extensions = new.x509_extensions
+
+        # Test Extended Key Usage extension
         self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(alt))
-        )
-        self.assertEqual(actual[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, critical=False))
-        self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE],
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.EMAIL_PROTECTION, critical=True),
         )
+
+        # Test Key Usage extension
+        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, critical=False))
+
+        # Test Subject Alternative Name extension
         self.assertEqual(
-            actual[ExtensionOID.TLS_FEATURE],
+            extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(dns(subject_alternative_name)),
+        )
+
+        # Test TLSFeature extension
+        self.assertEqual(
+            extensions[ExtensionOID.TLS_FEATURE],
             self.tls_feature(x509.TLSFeatureType.status_request_v2, critical=True),
         )
-        self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
     @override_tmpcadir(
         CA_PROFILES={"server": {"expires": 200}, "webserver": {}},
@@ -491,7 +564,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         cert = self.certs["no-extensions"]
         subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
 
-        msg = r"^Must give at least a CN in --subject or one or more --alt arguments\."
+        msg = (
+            r"^Must give at least a Common Name in --subject or one or more "
+            r"--subject-alternative-name/--name arguments\.$"
+        )
         with self.assertCreateCertSignals(False, False), self.assertCommandError(msg):
             self.cmd("resign_cert", cert, subject=subject)
 

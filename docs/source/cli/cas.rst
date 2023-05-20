@@ -165,7 +165,7 @@ Extensions
 ==========
 
 :command:`manage.py init_ca` will add mandatory and common extensions for certificate authorities
-automatically. In most cases, the only extension you really should think about is the
+automatically. In most cases, the only extension you really should think about is the *path length* in the
 :ref:`cli_cas_basic_constraints` extension, in case you ever want to create intermediate certificate
 authorities. Only extensions that make sense in the context of a certificate authority can be added here.
 
@@ -348,6 +348,41 @@ and/or prohibit policy mapping.
 The extension can be added via the ``--inhibit-policy-mapping`` and/or ``--require-explicit-policy`` options::
 
     $ python manage.py init_ca --inhibit-policy-mapping 1 --require-explicit-policy 2 ...
+
+Subject Alternative Name
+------------------------
+
+The Subject Alternative Name extension (`RFC 5280, section 4.2.1.6
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.6>`_) lists the names a certificate is valid for.
+It is usually only used in end entity certificates, certificate authorities do *not* use this extension:
+certificate validation does not require this information for certificate authorities.
+
+Since RFC 5280 does not rule out this extension occuring in certificate authorities, you can still add this
+extension::
+
+    $ python manage.py init_ca --subject-alternative-name DNS:example.com ...
+
+TLS Feature
+-----------
+
+In certificate authorities, the TLS Feature extension (`RFC 7633
+<https://datatracker.ietf.org/doc/html/rfc7633.html>`_) will require end entity certificates signed by this
+certificate authority to include the same or a superset of features. This is not commonly used in practice.
+
+.. NOTE::
+
+   This option must be given `after` the mandatory ``name`` and ``subject`` arguments::
+
+       $ python manage.py init_ca NameOfCa /CN=example.com --key-usage ...
+
+   The option has a variable number of values and parsing the command-line would not be unambiguous otherwise.
+
+For example, if a root certificate authority includes a TLS Feature extension that sets ``status_request``,
+any certificate signed by it (or any intermediate CA) will also have to set ``status_request``.
+
+You can set the TLS Feature extension with ``--tls-feature``:
+
+    $ python manage.py init_ca NameOfCA /CN=example.com --tls-feature status_request ...
 
 Mark extensions as (non-)critical
 ---------------------------------

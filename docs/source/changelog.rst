@@ -10,10 +10,10 @@ ChangeLog
 1.25.0 (TBR)
 ************
 
-* Add support for setting the Extended Key Usage extension when creating certificate authorities.
-* Add support for adding the Certificate Policy and Issuer Alternative Name extension when creating
+* Add support for adding the Extended Key Usage, Issuer Alternative Name and Subject Alternative Name
+  extensions when creating certificate authorities.
+* Add support for adding the Certificate Policy and Issuer Alternative Name extensions when creating
   certificate authorities or end-entity certificates via the command-line.
-* Add support for add
 
 Backwards incompatible changes
 ==============================

@@ -269,6 +269,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         self.add_key_usage_group(parser, default=CertificateAuthority.DEFAULT_KEY_USAGE)
         self.add_name_constraints_group(parser)
         self.add_policy_constraints_group(parser)
+        self.add_subject_alternative_name_group(
+            parser, description_suffix="It is not commonly used in certificate authorities."
+        )
         self.add_tls_feature_group(parser)
 
         self.add_ca_args(parser)
@@ -306,12 +309,16 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # Key Usage extension:
         key_usage: x509.KeyUsage,
         key_usage_critical: bool,
-        # NameConstraints extension:
+        # Name Constraints extension:
         permit_name: Optional[Iterable[x509.GeneralName]],
         exclude_name: Optional[Iterable[x509.GeneralName]],
-        # PolicyConstraints extension:
+        # Policy Constraints extension:
         require_explicit_policy: Optional[int],
         inhibit_policy_mapping: Optional[int],
+        # Subject Alternative Name extension
+        subject_alternative_name: Optional[x509.SubjectAlternativeName],
+        subject_alternative_name_critical: bool,
+        # ACMEv2 related options
         caa: str,
         website: str,
         tos: str,
@@ -422,6 +429,15 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                         require_explicit_policy=require_explicit_policy,
                         inhibit_policy_mapping=inhibit_policy_mapping,
                     ),
+                )
+            )
+        # Add the Subject Alternative Name extension
+        if subject_alternative_name is not None:
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=subject_alternative_name_critical,
+                    value=subject_alternative_name,
                 )
             )
 

@@ -295,6 +295,11 @@ class InitCATest(TestCaseMixin, TestCase):
             "1",
             "--require-explicit-policy",
             "2",
+            # Subject Alternative Name extension
+            "--subject-alternative-name",
+            "DNS:san.example.com",
+            "--subject-alternative-name",
+            "URI:https://san.example.net",
         )
 
         extensions = ca.x509_extensions
@@ -346,7 +351,7 @@ class InitCATest(TestCaseMixin, TestCase):
             self.issuer_alternative_name(dns("ian.example.com")),
         )
 
-        # Test KeyUsage extension
+        # Test Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
             self.key_usage(key_cert_sign=True, digital_signature=True),
@@ -358,7 +363,7 @@ class InitCATest(TestCaseMixin, TestCase):
             self.name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
         )
 
-        # Test PolicyConstraints extension
+        # Test Policy Constraints extension
         self.assertEqual(
             extensions[ExtensionOID.POLICY_CONSTRAINTS],
             x509.Extension(
@@ -366,6 +371,12 @@ class InitCATest(TestCaseMixin, TestCase):
                 critical=True,
                 value=x509.PolicyConstraints(inhibit_policy_mapping=1, require_explicit_policy=2),
             ),
+        )
+
+        # Test Subject Alternative Name extension
+        self.assertEqual(
+            extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(dns("san.example.com"), uri("https://san.example.net")),
         )
 
     @override_tmpcadir()
@@ -388,6 +399,12 @@ class InitCATest(TestCaseMixin, TestCase):
             "keyCertSign",
             "digitalSignature",
             "--key-usage-non-critical",
+            # Subject Alternative Name extension
+            "--subject-alternative-name",
+            "DNS:san.example.com",
+            "--subject-alternative-name",
+            "URI:https://san.example.net",
+            "--subject-alternative-name-critical",
         )
 
         extensions = ca.x509_extensions
@@ -415,6 +432,14 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
             self.key_usage(key_cert_sign=True, digital_signature=True, critical=False),
+        )
+
+        # Test Subject Alternative Name extension
+        self.assertEqual(
+            extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(
+                dns("san.example.com"), uri("https://san.example.net"), critical=True
+            ),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
