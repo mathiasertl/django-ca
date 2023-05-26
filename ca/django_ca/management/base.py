@@ -37,7 +37,7 @@ from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ExtensionMapping
-from django_ca.utils import add_colons, format_name
+from django_ca.utils import add_colons, format_name, parse_general_name
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -240,12 +240,43 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
 
         parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
 
-    def add_extended_key_usage_group(self, parser: argparse.ArgumentParser) -> None:
+    def add_crl_distribution_points_group(
+        self,
+        parser: CommandParser,
+        help_suffix: str,
+        extra_args: Tuple[str, ...] = (),
+        description_suffix: str = "",
+    ) -> None:
+        """Add argument group for the CRL Distribution Points extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+        description = "This extension defines how a Certificate Revocation List (CRL) can be obtained."
+        help = (
+            "Add NAME (usually a URL) to the endpoints where a CRL can be retrieved. This option can be "
+            f"given multiple times and replaces the default endpoint. {help_suffix}"
+        )
+
+        if description_suffix:
+            description += f" {description_suffix}"
+
+        group = parser.add_argument_group(f"{ext_name} extension", description)
+
+        group.add_argument(
+            "--crl-full-name",
+            *extra_args,
+            dest="crl_full_names",
+            type=parse_general_name,
+            action="append",
+            metavar="NAME",
+            help=help,
+        )
+        self.add_critical_option(group, ExtensionOID.CRL_DISTRIBUTION_POINTS)
+
+    def add_extended_key_usage_group(self, parser: CommandParser) -> None:
         """Add argument group for the Extended Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.EXTENDED_KEY_USAGE]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension indicates additional purposes that this certificate may be used for.",
+            "This extension indicates additional purposes that this certificate may be used for.",
         )
         group.add_argument(
             "--extended-key-usage",
@@ -262,8 +293,8 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension is used to associate alternative names with the certificate issuer. "
-            "It is rarely used in practice.",
+            "This extension is used to associate alternative names with the certificate issuer. It is rarely "
+            "used in practice.",
         )
         group.add_argument(
             "--issuer-alternative-name",
@@ -278,7 +309,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         """Add argument group for the Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.KEY_USAGE]
         group = parser.add_argument_group(
-            f"{ext_name} extension", f"The {ext_name} extension defines what the certificate can be used for."
+            f"{ext_name} extension", "This extension defines what the certificate can be used for."
         )
         group.add_argument(
             "--key-usage",
@@ -319,7 +350,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.TLS_FEATURE]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension allows specifying required TLS feature extensions.",
+            "This extension allows specifying required TLS feature extensions.",
         )
         group.add_argument(
             "--tls-feature",
@@ -350,6 +381,9 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             parser,
             description="In end-entity certificates, this extension indicates the policy under which the "
             "certificate was issued and the purposes for which it may be used.",
+        )
+        self.add_crl_distribution_points_group(
+            parser, "This option will override distribution points configured by the CA."
         )
         self.add_issuer_alternative_name_group(parser)
         self.add_extended_key_usage_group(parser)

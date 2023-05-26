@@ -476,7 +476,9 @@ class CertificateAuthorityManager(
         builder = builder.add_extension(aki, critical=False)
 
         for critical, ext in self.get_common_extensions(ca_issuer_url, ca_crl_url, ca_ocsp_url):
-            builder = builder.add_extension(ext, critical=critical)
+            # Check if the extension was passed directly, in which case we do not add it here.
+            if ext.oid not in extensions_dict:
+                builder = builder.add_extension(ext, critical=critical)
 
         if permitted_subtrees is not None or excluded_subtrees is not None:
             builder = builder.add_extension(

@@ -75,9 +75,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.BASIC_CONSTRAINTS]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension allows you to specify the number of CAs that can appear below this "
-            "one. A path length of zero (the default) means it can only be used to sign end-entity "
-            "certificates and not further CAs.",
+            "This extension allows you to specify the number of CAs that can appear below this one. A path "
+            "length of zero (the default) means it can only be used to sign end-entity certificates and not "
+            "further CAs.",
         )
         group = group.add_mutually_exclusive_group()
         group.add_argument(
@@ -102,9 +102,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         cert_policies_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension indicates that the special anyPolicy is not considered a match when "
-            f"it appears in the {cert_policies_name} extension after the given number of certificates in the "
-            "validation path.",
+            "This extension indicates that the special anyPolicy is not considered a match when it appears "
+            f"in the {cert_policies_name} extension after the given number of certificates in the validation "
+            "path.",
         )
         group.add_argument(
             "--inhibit-any-policy",
@@ -119,7 +119,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.NAME_CONSTRAINTS]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension limits the names a signed certificate can contain.",
+            "This extension limits the names a signed certificate can contain.",
         )
         group.add_argument(
             "--permit-name",
@@ -142,8 +142,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.POLICY_CONSTRAINTS]
         group = parser.add_argument_group(
             f"{ext_name} extension",
-            f"The {ext_name} extension can be used to require an explicit policy and/or prohibit policy "
-            "mapping.",
+            "This extension can be used to require an explicit policy and/or prohibit policy mapping.",
         )
         group.add_argument(
             "--inhibit-policy-mapping",
@@ -240,21 +239,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         self.add_acme_group(parser)
 
-        group = parser.add_argument_group(
-            "X509 v3 certificate extensions for CA",
-            """Extensions for the certificate authority. These options cannot be changed without
-            creating a new authority.
-
-            By default, URLs based on the default hostname (see above) will be used. The default URLs work
-            out of the box as long as a webserver is correctly configured.
-            """,
-        )
-        group.add_argument(
-            "--ca-crl-url",
-            action=MultipleURLAction,
-            help="URL to a certificate revocation list. Can be given multiple times.",
-        )
-
         self.add_authority_information_access_group(parser)
         self.add_basic_constraints_group(parser)
         self.add_certificate_policies_group(
@@ -262,6 +246,12 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             "In certificate authorities, this extension limits the policies that may occur in certification "
             "paths that include the certificate authority.",
             allow_any_policy=True,
+        )
+        self.add_crl_distribution_points_group(
+            parser,
+            "--ca-crl-url is a legacy option name and will be removed in django-ca==1.27.",
+            extra_args=("--ca-crl-url",),  # Legacy option string, remove in django-ca==1.27
+            description_suffix="It cannot be added to root certificate authorities.",
         )
         self.add_extended_key_usage_group(parser)
         self.add_inhibit_any_policy_group(parser)
@@ -291,7 +281,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         crl_url: List[str],
         ocsp_url: Optional[str],
         issuer_url: Optional[str],
-        ca_crl_url: List[str],
         ca_ocsp_url: List[str],
         ca_issuer_url: List[str],
         # Basic Constraints extension
@@ -299,6 +288,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
+        # CRL Distribution Points extension
+        crl_full_names: Optional[List[x509.GeneralName]],
+        crl_distribution_points_critical: bool,
         # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
@@ -365,7 +357,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to path length restrictions.")
-        if not parent and ca_crl_url:
+        if not parent and crl_full_names:
             raise CommandError("CRLs cannot be used to revoke root CAs.")
         if not parent and ca_ocsp_url:
             raise CommandError("OCSP cannot be used to revoke root CAs.")
@@ -392,6 +384,18 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     value=certificate_policies,
                 )
             )
+        # Add the CRL Distribution Points extension
+        if crl_full_names is not None:
+            distribution_point = x509.DistributionPoint(
+                full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
+            )
+            extensions.append(
+                x509.Extension(
+                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                    critical=crl_distribution_points_critical,
+                    value=x509.CRLDistributionPoints([distribution_point]),
+                )
+            )
         # Add the Extended Key Usage extension
         if extended_key_usage is not None:
             extensions.append(
@@ -410,7 +414,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                     value=x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
                 )
             )
-        # Add the inhibitAnyPolicy extension
+        # Add the Issuer Alternative Name extension
         if issuer_alternative_name is not None:
             extensions.append(
                 x509.Extension(
@@ -470,7 +474,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 crl_url=crl_url,
                 ocsp_url=ocsp_url,
                 ca_issuer_url=ca_issuer_url,
-                ca_crl_url=ca_crl_url,
                 ca_ocsp_url=ca_ocsp_url,
                 permitted_subtrees=permit_name,
                 excluded_subtrees=exclude_name,

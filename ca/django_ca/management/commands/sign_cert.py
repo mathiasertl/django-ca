@@ -113,6 +113,9 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
+        # CRL Distribution Points extension
+        crl_full_names: Optional[List[x509.GeneralName]],
+        crl_distribution_points_critical: bool,
         # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
         extended_key_usage_critical: bool,
@@ -152,6 +155,13 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         if certificate_policies is not None:
             self._add_extension(extensions, certificate_policies, certificate_policies_critical)
+        if crl_full_names is not None:
+            distribution_point = x509.DistributionPoint(
+                full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
+            )
+            self._add_extension(
+                extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
+            )
         if extended_key_usage is not None:
             self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         if issuer_alternative_name is not None:

@@ -186,7 +186,7 @@ EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
         ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: False,  # MUST mark this extension as non-critical
         ExtensionOID.SUBJECT_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: False,  # MUST mark this extension as non-critical
-        ExtensionOID.TLS_FEATURE: False,  # RFC 7633: MUST NOT be marked critical
+        ExtensionOID.TLS_FEATURE: False,  # RFC 7633: SHOULD NOT be marked critical
     }
 )
 

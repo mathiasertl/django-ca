@@ -237,6 +237,27 @@ be added to the last named policy::
 
 Adding notice references via the command line is not supported.
 
+CRL Distribution Points
+-----------------------
+
+The CRL Distribution Points extension (`RFC 5280, section 4.2.1.13
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.13>`_) specifices endpoints where to retrieve
+Certificate Revocation Lists (CRLs). When including it in a CA, it indicates if the CA itself has been
+revoked. It can only be used for intermediate CAs, as root CAs are trusted by identity, and no trusted CA
+could then sign the CRL.
+
+**django-ca** will automatically add this extension for intermediate CAs, as long as the
+:ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is configured, so usually you do not have to add
+this extension manually.
+
+If you need to specify your own CRL endpoint(s), you can use the ``--crl-full-name`` argument:
+
+   $ python manage.py init_ca \
+   >     --crl-full-name http://example.com/crl --crl-full-name http://example.net/crl ...
+
+This will add a single Distribution Point with two URLs. Other, more complex configurations are not supported
+via the command-line.
+
 Extended Key Usage
 ------------------
 

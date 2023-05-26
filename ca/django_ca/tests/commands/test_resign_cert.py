@@ -134,6 +134,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_test_all_extensions_cert_with_overrides(self) -> None:
         """Test resigning a certificate with adding new extensions."""
+        self.ca.crl_url = "http://ca.crl.example.com"
+        self.ca.save()
+
         orig = self.certs["all-extensions"]
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(
@@ -143,6 +146,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--policy-identifier=1.2.3",
                 "--certification-practice-statement=https://example.com/overwritten/",
                 "--user-notice=overwritten user notice text",
+                # CRL Distribution Points
+                "--crl-full-name=http://crl.example.com",
+                "--crl-full-name=http://crl.example.net",
                 # Extended Key Usage extension
                 "--extended-key-usage",
                 "clientAuth",
@@ -196,6 +202,12 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             ),
         )
 
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri("http://crl.example.com"), uri("http://crl.example.net")]),
+        )
+
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
@@ -233,6 +245,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides(self) -> None:
         """Test resigning a certificate with adding new extensions."""
+        self.ca.crl_url = "http://ca.crl.example.com"
+        self.ca.save()
+
         orig = self.certs["no-extensions"]
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(
@@ -242,6 +257,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--policy-identifier=1.2.3",
                 "--certification-practice-statement=https://example.com/overwritten/",
                 "--user-notice=overwritten user notice text",
+                # CRL Distribution Points
+                "--crl-full-name=http://crl.example.com",
+                "--crl-full-name=http://crl.example.net",
                 # Extended Key Usage extension
                 "--extended-key-usage",
                 "clientAuth",
@@ -293,6 +311,12 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             ),
         )
 
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri("http://crl.example.com"), uri("http://crl.example.net")]),
+        )
+
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
@@ -329,6 +353,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides_with_non_default_critical(self) -> None:
         """Test resigning a certificate with adding new extensions with non-default critical values."""
+        self.ca.crl_url = "http://ca.crl.example.com"
+        self.ca.save()
         orig = self.certs["no-extensions"]
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(
@@ -339,6 +365,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--certification-practice-statement=https://example.com/overwritten/",
                 "--user-notice=overwritten user notice text",
                 "--certificate-policies-critical",
+                # CRL Distribution Points
+                "--crl-full-name=http://crl.example.com",
+                "--crl-full-name=http://crl.example.net",
+                "--crl-distribution-points-critical",
                 # Extended Key Usage extension
                 "--extended-key-usage",
                 "clientAuth",
@@ -387,6 +417,14 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                         )
                     ]
                 ),
+            ),
+        )
+
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points(
+                [uri("http://crl.example.com"), uri("http://crl.example.net")], critical=True
             ),
         )
 

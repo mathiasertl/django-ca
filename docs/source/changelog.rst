@@ -14,6 +14,8 @@ ChangeLog
   extensions when creating certificate authorities.
 * Add support for adding the Certificate Policy and Issuer Alternative Name extensions when creating
   certificate authorities or end-entity certificates via the command-line.
+* Add support for overriding the CRL Distribution Points extension when creating end-entity certificates via
+  the command-line.
 
 Backwards incompatible changes
 ==============================

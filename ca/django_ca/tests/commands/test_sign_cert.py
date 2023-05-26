@@ -351,6 +351,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_extensions(self) -> None:
         """Test setting extensions for the signed certificate."""
 
+        self.ca.crl_url = "http://ca.crl.example.com"
         self.ca.issuer_alt_name = "http://ian.example.com"
         self.ca.save()
 
@@ -363,6 +364,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "--policy-identifier=1.2.3",
             "--certification-practice-statement=https://example.com/cps/",
             "--user-notice=user notice text",
+            # CRL Distribution Points
+            "--crl-full-name=http://crl.example.com",
+            "--crl-full-name=http://crl.example.net",
             # Extended Key Usage extension
             "--extended-key-usage=clientAuth",
             # Issuer Alternative Name extension
@@ -412,6 +416,12 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             ),
         )
 
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri("http://crl.example.com"), uri("http://crl.example.net")]),
+        )
+
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
@@ -444,24 +454,40 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_extensions_with_non_default_critical(self) -> None:
         """Test setting extensions with non-default critical values."""
+        self.ca.crl_url = "http://ca.crl.example.com"
+        self.ca.save()
+
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject=/CN={self.hostname}",
             f"--ca={self.ca.serial}",
+            # Certificate Policies extension
             "--policy-identifier=1.2.3",
             "--certification-practice-statement=https://example.com/cps/",
             "--user-notice=user notice text",
             "--certificate-policies-critical",
-            "--key-usage=keyCertSign",
-            "--key-usage-non-critical",
-            "--ocsp-no-check",
-            "--ocsp-no-check-critical",
+            # CRL Distribution Points
+            "--crl-full-name=http://crl.example.com",
+            "--crl-full-name=http://crl.example.net",
+            "--crl-distribution-points-critical",
+            # Extended Key Usage extension
             "--extended-key-usage=clientAuth",
             "--extended-key-usage-critical",
+            # Key Usage extension
+            "--key-usage=keyCertSign",
+            "--key-usage-non-critical",
+            # OCSP No Check extension
+            "--ocsp-no-check",
+            "--ocsp-no-check-critical",
+            # Subject Alternative Name extension
             "--subject-alternative-name=URI:https://example.net",
             "--subject-alternative-name-critical",
-            "--tls-feature=status_request",
+            # TLS Feature extension: OpenSSL fails validation of certificates, but the RFC explicitly says
+            # it is possible for this to be critical. This means we cannot test this extension with a critical
+            # flag here.
+            # "--tls-feature=status_request",
+            # "--tls-feature-critical",
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
@@ -496,11 +522,20 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             ),
         )
 
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points(
+                [uri("http://crl.example.com"), uri("http://crl.example.net")], critical=True
+            ),
+        )
+
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
             self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, critical=True),
         )
+
         # Test Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False)

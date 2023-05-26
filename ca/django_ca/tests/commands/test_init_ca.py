@@ -632,12 +632,12 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertSignature([second], second)
         self.assertIsNone(second.parent)
 
-        ca_crl_url = "http://ca.crl.example.com"
+        crl_full_name = uri("http://ca.crl.example.com")
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
                 name="Child",
                 parent=parent,
-                ca_crl_url=[ca_crl_url],
+                crl_full_names=[crl_full_name],
                 ca_ocsp_url=["http://ca.ocsp.example.com"],
             )
         self.assertEqual(out, "")
@@ -656,7 +656,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertAuthorityKeyIdentifier(parent, child)
         self.assertEqual(
             child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri(ca_crl_url)]),
+            self.crl_distribution_points([crl_full_name]),
         )
         issuers = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/issuer/{parent.serial}.der"
         self.assertEqual(

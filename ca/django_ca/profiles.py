@@ -421,30 +421,15 @@ class Profile:
                 value=x509.AuthorityInformationAccess(access_descriptions),
             )
 
-    def _update_crl_distribution_points(
+    def _add_crl_distribution_points(
         self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
     ) -> None:
-        """Update the CRLDistributionPoints extension with the endpoint from the Certificate Authority."""
-        oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
-        if oid not in ca_extensions:
+        """Add the CRLDistribution Points extension with the endpoint from the Certificate Authority."""
+        if ExtensionOID.CRL_DISTRIBUTION_POINTS not in ca_extensions:
             return
-
-        ca_crldp_ext = typing.cast(x509.Extension[x509.CRLDistributionPoints], ca_extensions[oid])
-
-        if oid in extensions:
-            ca_crldp = ca_crldp_ext.value
-            ca_name = ca_crldp[0].full_name[0]
-
-            cert_crldp = typing.cast(x509.CRLDistributionPoints, extensions[oid].value)
-
-            for distribution_point in cert_crldp:
-                if distribution_point.full_name and ca_name in distribution_point.full_name:
-                    break
-            else:  # loop exits normally, so break not reached -> distribution point not in existing extension
-                ext_value = x509.CRLDistributionPoints(list(ca_crldp) + list(cert_crldp))
-                extensions[oid] = x509.Extension(oid=oid, critical=extensions[oid].critical, value=ext_value)
-        else:
-            extensions[oid] = ca_crldp_ext
+        if ExtensionOID.CRL_DISTRIBUTION_POINTS in extensions:
+            return
+        extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = ca_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS]
 
     def _update_issuer_alternative_name(
         self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
@@ -479,8 +464,8 @@ class Profile:
             ExtensionOID.AUTHORITY_KEY_IDENTIFIER, ca.get_authority_key_identifier_extension()
         )
 
-        if add_crl_url is not False:
-            self._update_crl_distribution_points(extensions, ca_extensions)
+        if add_crl_url is True:
+            self._add_crl_distribution_points(extensions, ca_extensions)
 
         self._update_authority_information_access(
             extensions, ca_extensions, add_issuer_url=add_issuer_url, add_ocsp_url=add_ocsp_url
