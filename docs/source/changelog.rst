@@ -16,6 +16,7 @@ ChangeLog
   certificate authorities or end-entity certificates via the command-line.
 * Add support for overriding the CRL Distribution Points extension when creating end-entity certificates via
   the command-line.
+* Add a temporary pip extra ``psycopg3`` for using Psycopg 3.
 
 Backwards incompatible changes
 ==============================

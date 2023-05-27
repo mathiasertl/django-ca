@@ -28,7 +28,7 @@ COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
-        -e .[celery,acme,redis,mysql,postgres] \
+        -e .[celery,acme,redis,mysql,psycopg3] \
         "cryptography<38"
 
 
