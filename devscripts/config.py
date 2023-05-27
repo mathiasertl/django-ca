@@ -14,6 +14,7 @@
 """Collection of directories and constants."""
 
 from pathlib import Path
+from typing import Any, Dict
 
 BASE_DIR = Path(__file__).resolve()
 ROOT_DIR = Path(BASE_DIR).parent.parent
@@ -39,18 +40,19 @@ def minor_to_major(version: str) -> str:
     return ".".join(version.split(".", 2)[:2])
 
 
-def get_project_config():
+def get_project_config() -> Dict[str, Any]:
     """Get project configuration from pyproject.toml."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
     try:
         import tomllib  # pylint: disable=import-outside-toplevel
     except ImportError:  # pragma: py<3.11
-        import tomli as tomllib  # pylint: disable=import-outside-toplevel
+        # pylint: disable-next=import-outside-toplevel
+        import tomli as tomllib  # type: ignore[no-redef]
 
     with open(PYPROJECT_PATH, "rb") as stream:
         full_config = tomllib.load(stream)
 
-    cfg = full_config["django-ca"]["release"]
+    cfg: Dict[str, Any] = full_config["django-ca"]["release"]
     cfg["python-map"] = {minor_to_major(pyver): pyver for pyver in cfg["python"]}
     cfg["python-major"] = [minor_to_major(pyver) for pyver in cfg["python"]]
     cfg["django-map"] = {minor_to_major(djver): djver for djver in cfg["django"]}

@@ -16,30 +16,30 @@
 from termcolor import colored
 
 
-def bold(msg):
+def bold(msg: str) -> str:
     """Return the text as bold text."""
     return colored(msg, attrs=["bold"])
 
 
-def err(msg):
+def err(msg: str) -> int:
     """Print the error message."""
     print(colored("[ERR]", "red", attrs=["bold"]), msg)
     return 1
 
 
-def info(msg, indent=""):
+def info(msg: str, indent: str = "") -> int:
     """Print warning message."""
     print(colored(f"{indent}[INFO]", "magenta"), msg)
     return 0
 
 
-def warn(msg):
+def warn(msg: str) -> int:
     """Print warning message."""
     print(colored("[WARN]", "yellow", attrs=["bold"]), msg)
     return 0
 
 
-def ok(msg):  # pylint: disable=invalid-name
+def ok(msg: str) -> int:  # pylint: disable=invalid-name
     """Print success message."""
     print(colored("[OKAY]", "green"), msg)
     return 0
