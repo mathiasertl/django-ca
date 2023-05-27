@@ -23,6 +23,7 @@ import time
 import typing
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
+from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Union
 
 import yaml
 
@@ -39,9 +40,14 @@ from cryptography.x509.oid import NameOID
 
 from devscripts import config
 
+if typing.TYPE_CHECKING:
+    import jinja2
+
+    from django_ca.typehints import CertificateIssuerPrivateKeyTypes
+
 
 @contextmanager
-def redirect_output():
+def redirect_output() -> Iterator[io.StringIO]:
     """Context manager to redirect both stdout and stderr."""
     out = io.StringIO()
     with redirect_stdout(out), redirect_stderr(out):
@@ -49,7 +55,7 @@ def redirect_output():
 
 
 @contextmanager
-def chdir(path):
+def chdir(path: Union[str, os.PathLike[str]]) -> Iterator[str]:
     """Context manager to temporarily change the working directory to `path`."""
     orig_cwd = os.getcwd()
     try:
@@ -59,7 +65,9 @@ def chdir(path):
         os.chdir(orig_cwd)
 
 
-def _waitfor(waitfor, jinja_env, context, **kwargs):
+def _waitfor(
+    waitfor: Iterable[Dict[str, Any]], jinja_env: "jinja2.Environment", context: Dict[str, Any], **kwargs: Any
+) -> None:
     """Helper function to wait until the "waitfor" command succeeds."""
     if not waitfor:
         return
@@ -75,7 +83,7 @@ def _waitfor(waitfor, jinja_env, context, **kwargs):
 
 
 @contextmanager
-def console_include(path, context):
+def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
     import jinja2  # pylint: disable=import-outside-toplevel
@@ -134,15 +142,15 @@ def console_include(path, context):
             run(args, check=False, capture_output=True)
 
 
-def get_previous_release(current_release: typing.Optional[str] = None) -> str:
+def get_previous_release(current_release: Optional[str] = None) -> str:
     """Get the previous release based on git tags.
 
     This function returns the name at the last tag that is a valid semantic version. Prerelease or build tags
     are automatically excluded.  If `current_release` is given, it will be excluded from the list.
     """
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
-    import semantic_version  # pylint: disable=import-outside-toplevel
-    from git import Repo  # pylint: disable=import-outside-toplevel
+    import semantic_version  # type: ignore[import]  # pylint: disable=import-outside-toplevel
+    from git import Repo  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
 
     repo = Repo(config.ROOT_DIR)
     tags = [tag.name for tag in repo.tags]
@@ -162,24 +170,24 @@ def get_previous_release(current_release: typing.Optional[str] = None) -> str:
     return str(parsed_tags[-1])
 
 
-def docker_run(*args, **kwargs):
+def docker_run(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     """Shortcut for running a docker command."""
     return run(["docker", "run", "--rm"] + list(args), **kwargs)
 
 
 @contextmanager
-def tmpdir(**kwargs):
+def tmpdir() -> Iterator[str]:
     """Context manager to temporarily change the working directory to a temporary directory."""
 
-    with tempfile.TemporaryDirectory(**kwargs) as tmpdirname, chdir(tmpdirname):
+    with tempfile.TemporaryDirectory() as tmpdirname, chdir(tmpdirname):
         yield tmpdirname
 
 
-def run(args, **kwargs):
+def run(args: Sequence[Union[str, os.PathLike[str]]], **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
     if config.OUTPUT_COMMANDS:
-        print("+", shlex.join(args))
+        print("+", shlex.join(args))  # type: ignore[arg-type]
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
 
 
@@ -194,19 +202,30 @@ def git_archive(ref: str, dest: str) -> Path:
 
     with subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE) as git_archive_cmd:
         with subprocess.Popen(["tar", "-x", "-C", dest], stdin=git_archive_cmd.stdout) as tar:
-            git_archive_cmd.stdout.close()
+            # TYPEHINT NOTE: stdout is not None b/c of stdout=subprocess.PIPE
+            stdout = typing.cast(typing.IO[bytes], git_archive_cmd.stdout)
+            stdout.close()
             tar.communicate()
     return Path(dest)
 
 
-def create_signed_cert(hostname, signer_privkey, signer_pubkey, priv_out, pub_out, password=None):
+def create_signed_cert(
+    hostname: str,
+    signer_privkey: Union[str, os.PathLike[str]],
+    signer_pubkey: Union[str, os.PathLike[str]],
+    priv_out: Union[str, os.PathLike[str]],
+    pub_out: Union[str, os.PathLike[str]],
+    password: Optional[bytes] = None,
+) -> None:
     """Create a self-signed cert for the given hostname.
 
     .. seealso:: https://letsencrypt.org/docs/certificates-for-localhost/
     """
 
     with open(signer_privkey, "rb") as stream:
-        signer_private_key = load_pem_private_key(stream.read(), password)
+        signer_private_key = typing.cast(
+            "CertificateIssuerPrivateKeyTypes", load_pem_private_key(stream.read(), password)
+        )
     with open(signer_pubkey, "rb") as stream:
         signer_public_key = x509.load_pem_x509_certificate(stream.read())
 

@@ -23,6 +23,22 @@ docker-image-blacklist = [
     "python:3.11-alpine3.15",
 ]
 
+# List of tested Debian releases:
+#   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
+debian-releases = [
+    "bullseye",
+    "bookworm",
+]
+
+# List of tested Ubuntu releases:
+#   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
+ubuntu-releases = [
+    "focal",
+    "jammy",
+    "kinetic",
+    "lunar",
+]
+
 [django-ca.validation]
 # list glob-style patterns to exclude from any check
 excludes = [

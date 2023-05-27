@@ -20,7 +20,7 @@ from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
 
-def _test_version(docker_tag, release):
+def _test_version(docker_tag: str, release: str) -> int:
     proc = utils.docker_run(
         docker_tag,
         "manage",
@@ -36,7 +36,7 @@ def _test_version(docker_tag, release):
     return ok(f"Image identifies as {actual_release}.")
 
 
-def _test_alpine_version(docker_tag, alpine_version):
+def _test_alpine_version(docker_tag: str, alpine_version: str) -> int:
     proc = utils.docker_run(
         docker_tag,
         "cat",
@@ -52,7 +52,7 @@ def _test_alpine_version(docker_tag, alpine_version):
     return ok(f"Docker image uses Alpine Linux {actual_release}.")
 
 
-def _test_extras(docker_tag):
+def _test_extras(docker_tag: str) -> int:
     cwd = os.getcwd()
     utils.docker_run(
         "-v",
@@ -68,7 +68,7 @@ def _test_extras(docker_tag):
     return ok("Imports validated.")
 
 
-def _test_clean(docker_tag):
+def _test_clean(docker_tag: str) -> int:
     """Make sure that the Docker image does not contain any unwanted files."""
     cwd = os.getcwd()
     script = "check-clean-docker.py"
@@ -78,12 +78,12 @@ def _test_clean(docker_tag):
     return ok("Docker image is clean.")
 
 
-def docker_cp(src, container, dest):
+def docker_cp(src: str, container: str, dest: str) -> None:
     """Copy file into the container."""
     utils.run(["docker", "cp", src, f"{container}:{dest}"])
 
 
-def build_docker_image(release, prune=True, build=True) -> str:
+def build_docker_image(release: str, prune: bool = True, build: bool = True) -> str:
     """Build the docker image."""
 
     if prune:
@@ -97,7 +97,7 @@ def build_docker_image(release, prune=True, build=True) -> str:
     return tag
 
 
-def validate_docker_image(release, docker_tag):
+def validate_docker_image(release: str, docker_tag: str) -> int:
     """Validate the Docker image."""
     print("Validating Docker image...")
 
@@ -136,7 +136,7 @@ def validate_docker_image(release, docker_tag):
     return errors
 
 
-def validate(release, prune, build):
+def validate(release: str, prune: bool, build: bool) -> None:
     """Main validation entry function."""
     docker_tag = build_docker_image(release=release, prune=prune, build=build)
     validate_docker_image(release, docker_tag)
