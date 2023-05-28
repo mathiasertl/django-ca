@@ -43,7 +43,7 @@ from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ExtensionMapping, ParsableKeyType
 from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
 
 
@@ -372,77 +372,55 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             self.test_private_key(parent, parent_password)
 
         subject = sort_name(subject)
-        extensions: List[x509.Extension[x509.ExtensionType]] = [
-            x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
-        ]
+        extensions: ExtensionMapping = {
+            ExtensionOID.KEY_USAGE: x509.Extension(
+                oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage
+            )
+        }
         # Add the Certificate Policies extension
         if certificate_policies is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.CERTIFICATE_POLICIES,
-                    critical=certificate_policies_critical,
-                    value=certificate_policies,
-                )
-            )
+            self._add_extension(extensions, certificate_policies, certificate_policies_critical)
         # Add the CRL Distribution Points extension
         if crl_full_names is not None:
             distribution_point = x509.DistributionPoint(
                 full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
             )
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                    critical=crl_distribution_points_critical,
-                    value=x509.CRLDistributionPoints([distribution_point]),
-                )
+            self._add_extension(
+                extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
             )
         # Add the Extended Key Usage extension
         if extended_key_usage is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.EXTENDED_KEY_USAGE,
-                    critical=extended_key_usage_critical,
-                    value=extended_key_usage,
-                )
-            )
+            self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         # Add the inhibitAnyPolicy extension
         if inhibit_any_policy is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.INHIBIT_ANY_POLICY,
-                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY],
-                    value=x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
-                )
+            self._add_extension(
+                extensions,
+                x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY],
             )
         # Add the Issuer Alternative Name extension
         if issuer_alternative_name is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-                    value=issuer_alternative_name,
-                )
+            self._add_extension(
+                extensions,
+                issuer_alternative_name,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
         # Add the Policy Constraints extension
         if require_explicit_policy is not None or inhibit_policy_mapping is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.POLICY_CONSTRAINTS,
-                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.POLICY_CONSTRAINTS],
-                    value=x509.PolicyConstraints(
-                        require_explicit_policy=require_explicit_policy,
-                        inhibit_policy_mapping=inhibit_policy_mapping,
-                    ),
-                )
+            self._add_extension(
+                extensions,
+                x509.PolicyConstraints(
+                    require_explicit_policy=require_explicit_policy,
+                    inhibit_policy_mapping=inhibit_policy_mapping,
+                ),
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.POLICY_CONSTRAINTS],
             )
         # Add the Subject Alternative Name extension
         if subject_alternative_name is not None:
-            extensions.append(
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                    critical=subject_alternative_name_critical,
-                    value=subject_alternative_name,
-                )
+            self._add_extension(
+                extensions,
+                subject_alternative_name,
+                subject_alternative_name_critical,
             )
 
         kwargs = {}
@@ -485,7 +463,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 caa=caa,
                 website=website,
                 terms_of_service=tos,
-                extensions=extensions,
+                extensions=extensions.values(),
                 **kwargs,
             )
         except Exception as ex:  # pragma: no cover
