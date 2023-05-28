@@ -52,12 +52,12 @@ def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
         utils.run(down, capture_output=True, **down_kwargs)
 
 
-def _compose_exec(*args: str, **kwargs: Any) -> subprocess.CalledProcessError:
+def _compose_exec(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     cmd = ["docker", "compose", "exec"] + kwargs.pop("compose_args", []) + list(args)
     return utils.run(cmd, **kwargs)
 
 
-def _manage(container: str, *args: str, **kwargs: Any) -> subprocess.CalledProcessError:
+def _manage(container: str, *args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     return _compose_exec(container, "manage", *args, **kwargs)
 
 
@@ -82,7 +82,7 @@ def _run_py(container: str, code: str, env: Optional[Dict[str, str]] = None) -> 
     return typing.cast(str, proc.stdout)  # is a str because of text=True above
 
 
-def _openssl_verify(ca_file: str, cert_file: str) -> subprocess.CalledProcessError:
+def _openssl_verify(ca_file: str, cert_file: str) -> "subprocess.CompletedProcess[Any]":
     return utils.run(
         ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file],
         capture_output=True,
@@ -90,7 +90,7 @@ def _openssl_verify(ca_file: str, cert_file: str) -> subprocess.CalledProcessErr
     )
 
 
-def _openssl_ocsp(ca_file: str, cert_file: str, url: str) -> subprocess.CalledProcessError:
+def _openssl_ocsp(ca_file: str, cert_file: str, url: str) -> "subprocess.CompletedProcess[Any]":
     return utils.run(
         [
             "openssl",

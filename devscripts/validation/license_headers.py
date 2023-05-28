@@ -14,15 +14,17 @@
 """validation module to validate license headers."""
 
 import difflib
+import os
 import textwrap
 from pathlib import Path
+from typing import Union
 
 from devscripts.commands import CommandError
 
 try:
     import tomllib
 except ImportError:  # pragma: py<3.11
-    import tomli as tomllib
+    import tomli as tomllib  # type: ignore[no-redef]
 
 LICENSE_HEADER = """This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 
@@ -45,7 +47,7 @@ PYTHON_LICENSE_HEADER = textwrap.indent(LICENSE_HEADER, "# ").replace("\n\n", "\
 PYTHON_READ_LENGTH = len(PYTHON_BIN_HEADER) + len(LICENSE_HEADER) + 64
 
 
-def handle_python_file(path, script):
+def handle_python_file(path: Union[str, "os.PathLike[str]"], script: bool) -> int:
     """Check the license header for a Python file."""
     expected_header = PYTHON_LICENSE_HEADER
     if script is True:
@@ -70,7 +72,7 @@ def handle_python_file(path, script):
     return 0
 
 
-def validate():
+def validate() -> None:
     """Main validation function."""
     errors = 0
     with open("pyproject.toml", "rb") as stream:

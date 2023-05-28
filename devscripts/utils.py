@@ -191,11 +191,11 @@ def tmpdir() -> Iterator[str]:
         yield tmp_directory
 
 
-def run(args: Sequence[Union[str, "os.PathLike[str]"]], **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
+def run(args: Sequence[str], **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
     if config.OUTPUT_COMMANDS:
-        print("+", shlex.join(args))  # type: ignore[arg-type]
+        print("+", shlex.join(args))
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
 
 

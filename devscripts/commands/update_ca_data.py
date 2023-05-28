@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Update tables for ca_examples.rst in docs."""
-
+import argparse
 import os
 
 from tabulate import tabulate
@@ -240,7 +240,7 @@ def policy_as_str(policy):
     return f"User Notice: {ref_as_str(policy.notice_reference)}: {policy.explicit_text}"
 
 
-def update_cert_data(prefix, dirname, cert_data, name_header):
+def update_cert_data(prefix, dirname, cert_data, name_header) -> None:
     """Update certificate/ca data."""
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
@@ -454,7 +454,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header):
             stream.write(table)
 
 
-def update_crl_data():  # pylint: disable=too-many-locals
+def update_crl_data() -> None:  # pylint: disable=too-many-locals
     """Update CRL data."""
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
@@ -628,7 +628,7 @@ class Command(DevCommand):
     It should be used when new CAs/certificates are added in docs/source/_files/.
     """
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         OUT_DIR.mkdir(exist_ok=True)
         self.setup_django()
 

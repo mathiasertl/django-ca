@@ -12,12 +12,12 @@
 # <http://www.gnu.org/licenses/>.
 
 """Common functionality for dev.py subcommands."""
-
+import argparse
 import importlib
 import os
 import subprocess
 import sys
-from pathlib import Path
+from typing import Any, Tuple, Union
 
 import django
 
@@ -27,7 +27,7 @@ from devscripts import config, utils
 class CommandError(Exception):
     """Exception class for handling dev.py errors."""
 
-    def __init__(self, value, code=1):
+    def __init__(self, value: str, code: int = 1) -> None:
         super().__init__()
         self.value = value
         self.code = code
@@ -36,29 +36,28 @@ class CommandError(Exception):
 class ParserError(CommandError):
     """Exception that allows a command to show usage information."""
 
-    def __init__(self, value, code=2):
+    def __init__(self, value: str, code: int = 2) -> None:
         super().__init__(value, code)
 
 
 class DevCommand:
     """Base class for all dev.py sub-commands."""
 
-    modules = None
+    modules: Tuple[Tuple[str, str], ...] = tuple()
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments to the command line parser."""
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         """Method that is supposed to be implemented by sub-commands."""
         raise NotImplementedError
 
-    def exec(self, parser, args):
+    def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
         """Default argparse entry point."""
 
-        if self.modules is not None:
-            for mod_name, pip_name in self.modules:
-                mod = importlib.import_module(mod_name)
-                setattr(self, mod_name, mod)
+        for mod_name, pip_name in self.modules:
+            mod = importlib.import_module(mod_name)
+            setattr(self, mod_name, mod)
 
         if args.quiet:
             config.OUTPUT_COMMANDS = False
@@ -71,21 +70,21 @@ class DevCommand:
             print(f"ERROR: {ex.value}")
             sys.exit(ex.code)
 
-    def setup_django(self, settings_module="ca.test_settings"):
+    def setup_django(self, settings_module: str = "ca.test_settings") -> None:
         """Call ``django.setup()`` and set ``DJANGO_SETTINGS_MODULE``."""
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
         django.setup()
 
-    def run(self, *args, check=True, **kwargs):
+    def run(self, *args: Union[str, "os.PathLike[str]"], check: bool = True, **kwargs: Any) -> None:
         """Shortcut to run the given command."""
-        args = [str(arg) if isinstance(arg, Path) else arg for arg in args]
+        str_args = tuple(str(arg) if isinstance(arg, os.PathLike) else arg for arg in args)
         try:
-            utils.run(args, check=check, **kwargs)
+            utils.run(str_args, check=check, **kwargs)
         except subprocess.CalledProcessError as ex:
             raise CommandError(f"{args[0]} returned with exit status {ex.returncode}.") from ex
 
 
-def add_command(cmd_subparser, name):
+def add_command(cmd_subparser: "argparse._SubParsersAction[argparse.ArgumentParser]", name: str) -> None:
     """Add a subcommand with the given name to the sub-command parser.
 
     The function expects to find ``Command`` class to be defined in `devscripts.{name}`.

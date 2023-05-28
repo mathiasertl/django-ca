@@ -14,6 +14,7 @@
 
 import argparse
 import importlib
+from typing import Any
 
 from devscripts.commands import DevCommand
 
@@ -22,8 +23,9 @@ class Command(DevCommand):
     """Validate various aspects of this repository not covered in unit tests."""
 
     modules = (("django_ca", "django-ca"),)
+    django_ca: Any
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         docker_options = argparse.ArgumentParser(add_help=False)
         docker_options.add_argument(
             "--docker-prune",
@@ -65,7 +67,7 @@ class Command(DevCommand):
         )
         subcommands.add_parser("wheel")
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         # Validation modules is imported on execution so that external libraries used there do not
         # automatically become dependencies for all other dev.py commands.
         submodule = importlib.import_module(f"devscripts.validation.{args.subcommand.replace('-', '_')}")

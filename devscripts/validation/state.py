@@ -18,7 +18,10 @@ import importlib.util
 import os
 import re
 import sys
+import types
+import typing
 from pathlib import Path
+from typing import Any, Dict, Union
 
 import yaml
 from setuptools.config.setupcfg import read_configuration
@@ -26,6 +29,8 @@ from termcolor import colored
 
 from devscripts import config
 from devscripts.out import err, ok
+
+CheckFuncSpec = typing.ParamSpec("CheckFuncSpec")
 
 # pylint: enable=no-name-in-module
 
@@ -42,35 +47,45 @@ TOX_ENV_SHORT_NAMES = {
 }
 
 
-def get_expected_version_line(project_config):
+def get_expected_version_line(project_config: Dict[str, Any]) -> str:
     """Get expected string for README and intro.rst."""
     min_pyver = project_config["python-major"][0]
-    min_djver = project_config["django-major"][0]
-    min_cgver = project_config["cryptography-major"][0]
-    return f"Written in Python {min_pyver}+, Django {min_djver}+ and cryptography {min_cgver}+."
+    min_django_version = project_config["django-major"][0]
+    min_cryptography_version = project_config["cryptography-major"][0]
+    return (
+        f"Written in Python {min_pyver}+, Django {min_django_version}+ and cryptography "
+        f"{min_cryptography_version}+."
+    )
 
 
-def check_path(path):
+def check_path(path: Union[str, "os.PathLike[str]"]) -> None:
     """Output the path to check."""
-    print(f"* Checking {colored(path, attrs=['bold'])}")
+    print(f"* Checking {colored(str(path), attrs=['bold'])}")
 
 
-def import_mod(name, path):
+def import_mod(name: str, path: Union[str, "os.PathLike[str]"]) -> types.ModuleType:
     """Import the module from the given path."""
     spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None:
+        raise ValueError(f"Cannot load spec from file: {path}.{name}.")
+    if spec.loader is None:
+        raise ValueError(f"Spec has no loader: {path}.{name}")
+
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
-def simple_diff(what, actual, expected) -> int:
+def simple_diff(what: str, actual: Any, expected: Any) -> int:
     """Simply compare two values and output any difference."""
     if expected == actual:
         return ok(what)
     return err(f"{what}: Have {actual}, expected {expected}.")
 
 
-def check(func, *args, **kwargs):
+def check(
+    func: typing.Callable[CheckFuncSpec, int], *args: CheckFuncSpec.args, **kwargs: CheckFuncSpec.kwargs
+) -> int:
     """Run a given check."""
     errors = func(*args, **kwargs)
     if errors == 1:
@@ -83,7 +98,7 @@ def check(func, *args, **kwargs):
     return errors
 
 
-def check_github_actions_tests(project_config):
+def check_github_actions_tests(project_config: Dict[str, Any]) -> int:
     """Check GitHub actions."""
     relpath = os.path.join(".github", "workflows", "tests.yml")
     full_path = os.path.join(config.ROOT_DIR, relpath)
@@ -100,7 +115,7 @@ def check_github_actions_tests(project_config):
     return errors
 
 
-def check_tox(project_config):
+def check_tox(project_config: Dict[str, Any]) -> int:
     """Check tox.ini."""
     errors = 0
     check_path("tox.ini")
@@ -114,7 +129,7 @@ def check_tox(project_config):
     # Check that there is a testenv listing all versions
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_envlist = "py{%s}-dj{%s}-cg{%s}-acme{%s}-josepy{%s}" % (
+    expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}-josepy{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
         ",".join(project_config["django-map"]),
         ",".join(project_config["cryptography-map"]),
@@ -124,8 +139,8 @@ def check_tox(project_config):
 
     # pylint: enable=consider-using-f-string
     # Check disabled as long as different Django versions support different Python versions
-    if expected_envlist not in tox_config["tox"]["envlist"].splitlines():
-        errors += err(f"Expected envlist item not found: {expected_envlist}")
+    if expected_env_list not in tox_config["tox"]["envlist"].splitlines():
+        errors += err(f"Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
     for component in ["django", "cryptography", "acme", "josepy"]:
@@ -155,7 +170,7 @@ def check_tox(project_config):
     return errors
 
 
-def check_setup_cfg(project_config):
+def check_setup_cfg(project_config: Dict[str, Any]) -> int:
     """Check setup.cfg"""
     check_path("setup.cfg")
     errors = 0
@@ -200,7 +215,7 @@ def check_setup_cfg(project_config):
     return errors
 
 
-def check_test_settings(project_config):
+def check_test_settings(project_config: Dict[str, Any]) -> int:
     """Check test_settings.py"""
     relpath = Path("ca/ca/test_settings.py")
     fullpath = config.ROOT_DIR / relpath
@@ -221,7 +236,7 @@ def check_test_settings(project_config):
     return errors
 
 
-def check_intro(project_config):
+def check_intro(project_config: Dict[str, Any]) -> int:
     """Check intro.rst (reused in a couple of places)."""
     errors = 0
     intro_path = os.path.join("docs", "source", "intro.rst")
@@ -236,7 +251,7 @@ def check_intro(project_config):
     return errors
 
 
-def check_readme(project_config):
+def check_readme(project_config: Dict[str, Any]) -> int:
     """Check contents of README.md."""
     errors = 0
     check_path("README.md")
@@ -265,7 +280,7 @@ def validate_main() -> int:
     return total_errors
 
 
-def validate():
+def validate() -> None:
     """Main function."""
     total_errors = validate_main()
     if total_errors:

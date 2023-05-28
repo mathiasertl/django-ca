@@ -16,6 +16,7 @@
 import os
 import subprocess
 import time
+from typing import Any
 
 import docker
 from setuptools.config.setupcfg import read_configuration
@@ -24,13 +25,13 @@ from devscripts import config, utils
 from devscripts.out import info
 
 
-def run(release, image, pip_cache_dir, extra=None):
+def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
     """Actually run a given wheel test."""
     docker_pip_cache = "/tmp/cache"
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
     command = "devscripts/standalone/test-imports.py"
 
-    if extra is not None:
+    if extra:
         wheel += f"[{extra}]"
         command += f" --extra={extra}"
 
@@ -59,7 +60,7 @@ def run(release, image, pip_cache_dir, extra=None):
         raise
 
 
-def validate(release):
+def validate(release: str) -> None:
     """Main validation entry function."""
 
     info("Testing Python wheel...")
