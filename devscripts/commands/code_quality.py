@@ -13,6 +13,9 @@
 
 # pylint: disable=missing-module-docstring  # covered in class docstring
 
+import argparse
+import os
+from typing import List, Union
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -24,9 +27,9 @@ class Command(DevCommand):
     This command does **not** invoke pylint (too slow) or mypy.
     """
 
-    def manage(self, *args):
+    def manage(self, *args: str) -> None:
         """Shortcut to run manage.py with warnings turned into errors."""
-        python = ["python", "-Wd"]
+        python: List[Union[str, "os.PathLike[str]"]] = ["python", "-Wd"]
 
         # Django 4.0 changes the default to True. Remove USE_L10N setting once support for Django<4.0 is
         # dropped.
@@ -41,7 +44,7 @@ class Command(DevCommand):
         python += args
         return self.run(*python)
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         self.run("isort", "--check-only", "--diff", ".")
         self.run("flake8", ".")
         self.run("black", "--check", ".")

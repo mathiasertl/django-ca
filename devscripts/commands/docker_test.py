@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """The docker-test subcommand generates the Docker image using various base images."""
-
+import argparse
 import os
 import subprocess
 import sys
@@ -25,7 +25,7 @@ from devscripts.out import err, info, ok
 class Command(DevCommand):
     """Build the Docker image using various base images."""
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         project_config = config.get_project_config()
         parser.add_argument(
             "-i",
@@ -45,7 +45,7 @@ class Command(DevCommand):
         parser.add_argument("--keep-image", action="store_true", default=False, help="Do not remove images.")
         parser.add_argument("-l", "--list", action="store_true", help="List images and exit.")
 
-    def handle(self, args):  # pylint: disable=too-many-branches
+    def handle(self, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
         docker_runs = []
 
         project_config = config.get_project_config()
@@ -87,7 +87,7 @@ class Command(DevCommand):
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env
                 ) as proc, open(logpath, "bw") as stream:
                     while True:
-                        byte = proc.stdout.read(1)
+                        byte = proc.stdout.read(1)  # type: ignore[union-attr]  # not None due to arguments
                         if byte:
                             sys.stdout.buffer.write(byte)
                             sys.stdout.flush()

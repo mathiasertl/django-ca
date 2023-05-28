@@ -13,8 +13,11 @@
 
 """A subclass of the test command that enables code coverage analysis."""
 
+import argparse
 import os
 import sys
+import typing
+from typing import Tuple
 
 import coverage
 import packaging.version
@@ -27,7 +30,13 @@ from devscripts import config
 from devscripts.commands.test import Command as TestCommand
 
 
-def exclude_versions(cov, software, current_version, pragma_version, version_str):
+def exclude_versions(
+    cov: coverage.Coverage,
+    software: str,
+    current_version: Tuple[int, int],
+    pragma_version: Tuple[int, int],
+    version_str: str,
+) -> None:
     """
     Parameters
     ----------
@@ -103,7 +112,7 @@ def exclude_versions(cov, software, current_version, pragma_version, version_str
 class Command(TestCommand):
     """Run the test suite with coverage analysis enabled."""
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         super().add_arguments(parser)
 
         parser.add_argument(
@@ -121,7 +130,7 @@ class Command(TestCommand):
             help="Fail if coverage is below given percentage (default: %(default)s%%).",
         )
 
-    def setup_pragmas(self, cov):
+    def setup_pragmas(self, cov: coverage.Coverage) -> None:
         """Setup pragmas to allow coverage exclusion based on Python/django/cryptography version."""
 
         # exclude python version specific code
@@ -137,13 +146,15 @@ class Command(TestCommand):
             exclude_versions(cov, "django", django.VERSION[:2], version, version_str)
 
         # exclude cryptography-version specific code
-        this_version = packaging.version.parse(cryptography.__version__).release[:2]
+        this_version = typing.cast(
+            Tuple[int, int], packaging.version.parse(cryptography.__version__).release[:2]
+        )
         cryptography_versions = [(37, 0), (38, 0), (39, 0), (40, 0), (41, 0), (42, 0), (43, 0), (44, 0)]
         for ver in cryptography_versions:
             version_str = ".".join([str(v) for v in ver])
             exclude_versions(cov, "cryptography", this_version, ver, version_str)
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         if "TOX_ENV_DIR" in os.environ:  # was invoked via tox
             # insert ca/ into path, otherwise it won't find test_settings in django project
             sys.path.insert(0, str(config.SRC_DIR))

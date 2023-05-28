@@ -12,8 +12,12 @@
 # <http://www.gnu.org/licenses/>.
 
 """Update tables for ca_examples.rst in docs."""
+
 import argparse
 import os
+import typing
+from datetime import timedelta
+from typing import Dict, Iterable, List, Optional, Sequence, Union
 
 from tabulate import tabulate
 
@@ -31,22 +35,39 @@ HASH_NAMES = {
 
 OUT_DIR = config.DOCS_SOURCE_DIR / "generated"
 
+T = typing.TypeVar("T")
 
-def optional(value, formatter=None, fallback=None):
+
+class _CertInfo(typing.TypedDict):
+    name: str
+    last: str
+
+
+class CertInfo(_CertInfo, total=False):
+    """type for cert info defined here."""
+
+    info: str
+
+
+def optional(
+    value: Optional[T], formatter: Optional[typing.Callable[[T], str]] = None, fallback: str = ""
+) -> str:
     """Small function to get a value if set or a fallback."""
 
     if not value:
         return fallback
     if callable(formatter):
         return formatter(value)
-    if formatter is not None:
-        return formatter
-    return value
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (timedelta, int)):
+        return str(value)
+    raise TypeError(f"{value}: No formatter passed to non-string value.")
 
 
 cert_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "cert")
 ca_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "ca")
-certs = {
+certs: Dict[str, CertInfo] = {
     "digicert_sha2.pem": {  # derstandard.at
         "name": "DigiCert Secure Server",
         "last": "2019-07-06",
@@ -100,7 +121,7 @@ certs = {
         "last": "2019-04-21",
     },
 }
-cas = {
+cas: Dict[str, CertInfo] = {
     "digicert_sha2.pem": {  # derstandard.at
         "name": "DigiCert Secure Server",
         "last": "2019-07-06",
@@ -218,14 +239,14 @@ cas = {
 }
 
 
-def ref_as_str(ref):
+def ref_as_str(ref: x509.NoticeReference) -> str:
     """Convert a CertificatePolicies reference to a str."""
 
     numbers = [str(n) for n in ref.notice_numbers]
     return f"{ref.organization}: {', '.join(numbers)}"
 
 
-def policy_as_str(policy):
+def policy_as_str(policy: Union[str, x509.UserNotice]) -> str:
     """Convert a CertificatePolicies policy to a str."""
 
     if isinstance(policy, str):
@@ -240,7 +261,7 @@ def policy_as_str(policy):
     return f"User Notice: {ref_as_str(policy.notice_reference)}: {policy.explicit_text}"
 
 
-def update_cert_data(prefix, dirname, cert_data, name_header) -> None:
+def update_cert_data(prefix: str, dirname: str, cert_data: Dict[str, CertInfo], name_header: str) -> None:
     """Update certificate/ca data."""
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
@@ -251,7 +272,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header) -> None:
 
     # pylint: enable=import-outside-toplevel
 
-    cert_values = {
+    cert_values: Dict[str, List[Sequence[str]]] = {
         "subject": [
             (
                 name_header,
@@ -281,7 +302,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header) -> None:
         "unknown",
     }
 
-    for cert_filename in sorted(os.listdir(dirname), key=lambda f: cert_data.get(f, {}).get("name", "")):
+    for cert_filename in sorted(os.listdir(dirname), key=lambda f: cert_data[f]["name"]):
         if cert_filename not in cert_data:
             warn(f"Unknown {prefix}: {cert_filename}")
             continue
@@ -317,15 +338,19 @@ def update_cert_data(prefix, dirname, cert_data, name_header) -> None:
             elif isinstance(value, x509.AuthorityKeyIdentifier):
                 this_cert_values["aki"] = [
                     critical,
-                    bytes_to_hex(value.key_identifier),
-                    optional(value.authority_cert_issuer, format_general_name, "✗"),
+                    optional(value.key_identifier, bytes_to_hex, "✗"),
+                    optional(
+                        value.authority_cert_issuer,
+                        lambda v: ", ".join(format_general_name(e) for e in v),
+                        "✗",
+                    ),
                     optional(value.authority_cert_serial_number, fallback="✗"),
                 ]
             elif isinstance(value, x509.BasicConstraints):
                 this_cert_values["basicconstraints"] = [
                     critical,
-                    value.ca,
-                    value.path_length if value.path_length is not None else "None",
+                    str(value.ca),
+                    optional(value.path_length, fallback="None"),
                 ]
             elif isinstance(value, x509.CRLDistributionPoints):
                 this_cert_values["crldp"] = []
@@ -352,7 +377,7 @@ def update_cert_data(prefix, dirname, cert_data, name_header) -> None:
                         else "✗"
                     )
                     this_cert_values["crldp"].append(
-                        [
+                        [  # type: ignore[arg-type]
                             critical,
                             full_name,
                             relative_name,
@@ -532,7 +557,7 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
     }
 
     crl_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "crl")
-    crl_values = {
+    crl_values: Dict[str, List[Sequence[str]]] = {
         # meta data
         "crl_info": [("CRL", "Source", "Last accessed", "Info")],
         "crl_issuer": [("CRL", "Issuer Name")],
@@ -562,7 +587,7 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
         crl_name = crls[crl_path]["name"]
 
         # set empty string as default value
-        this_crl_values = {}
+        this_crl_values: Dict[str, Iterable[str]] = {}
         for crl_key, crl_value in crl_values.items():
             this_crl_values[crl_key] = [""] * (len(crl_value[0]) - 1)
 
@@ -577,10 +602,15 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
         )
 
         # add data row
-        this_crl_values["crl_data"] = (
-            crl.next_update - crl.last_update,
-            HASH_NAMES[type(crl.signature_hash_algorithm)],
+        if crl.next_update is None:
+            update_frequency = "Unknown"
+        else:
+            update_frequency = str(crl.next_update - crl.last_update)
+        signature_hash_algorithm = optional(
+            crl.signature_hash_algorithm, lambda v: HASH_NAMES[type(v)], "None"
         )
+        this_crl_values["crl_data"] = (update_frequency, signature_hash_algorithm)
+
         this_crl_values["crl_issuer"] = (f"``{format_name(crl.issuer)}``",)
 
         # add extension values
@@ -606,8 +636,9 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
                     "✗",
                 )
                 crl_acsn = optional(value.authority_cert_serial_number, fallback="✗")
+                key_identifier = optional(value.key_identifier, bytes_to_hex, "✗")
 
-                this_crl_values["crl_aki"] = (bytes_to_hex(value.key_identifier), crl_aci, crl_acsn)
+                this_crl_values["crl_aki"] = (key_identifier, crl_aci, crl_acsn)
             else:
                 warn(f"Unknown extension: {ext.oid._name}")  # pylint: disable=protected-access
 
@@ -615,9 +646,9 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
             crl_values[crl_key].append([crl_name] + list(crl_row))
 
     # Finally, write CRL data to RST table
-    for crl_name, crl_extensions in crl_values.items():
+    for crl_key, crl_extensions in crl_values.items():
         crl_table = tabulate(crl_extensions, headers="firstrow", tablefmt="rst")
-        with open(OUT_DIR / f"{crl_name}.rst", "w", encoding="utf-8") as crl_table_stream:
+        with open(OUT_DIR / f"{crl_key}.rst", "w", encoding="utf-8") as crl_table_stream:
             crl_table_stream.write(crl_table)
 
 

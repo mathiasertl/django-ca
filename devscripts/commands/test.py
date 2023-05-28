@@ -15,7 +15,7 @@
 
 This command does **not** invoke pylint (too slow) or mypy.
 """
-
+import argparse
 import os
 import sys
 import warnings
@@ -29,7 +29,7 @@ from devscripts.commands import DevCommand
 class Command(DevCommand):
     """Run the test suite."""
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--fail-fast", default=False, action="store_true", help="Stop running after first error."
         )
@@ -59,7 +59,7 @@ class Command(DevCommand):
             help="Do not run tests in virtual display.",
         )
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         if not args.selenium:
             os.environ["SKIP_SELENIUM_TESTS"] = "y"
 

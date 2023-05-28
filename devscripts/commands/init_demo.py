@@ -12,11 +12,12 @@
 # <http://www.gnu.org/licenses/>.
 
 """The init-demo subcommand generates useful demo data."""
-
+import argparse
 import json
 import os
 import subprocess
 import sys
+from typing import Any
 
 from cryptography import x509
 
@@ -30,7 +31,7 @@ class Command(DevCommand):
 
     modules = (("termcolor", "termcolor"),)
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--base-url", metavar="URL", default="http://localhost:8000/", help="Base URL for CRL/OCSP URLs."
         )
@@ -39,7 +40,7 @@ class Command(DevCommand):
         """Get a file path."""
         return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
 
-    def ok(self, msg=" OK.", **kwargs):  # pylint: disable=invalid-name
+    def ok(self, msg: str = " OK.", **kwargs: Any) -> None:  # pylint: disable=invalid-name
         """Just print "OK" in green."""
         print(self.termcolor.colored(msg, "green"), **kwargs)  # pylint: disable=no-member  # from lazy import
 

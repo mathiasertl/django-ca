@@ -14,7 +14,7 @@
 
 import argparse
 import importlib
-from typing import Any
+from types import ModuleType
 
 from devscripts.commands import DevCommand
 
@@ -23,7 +23,7 @@ class Command(DevCommand):
     """Validate various aspects of this repository not covered in unit tests."""
 
     modules = (("django_ca", "django-ca"),)
-    django_ca: Any
+    django_ca: ModuleType
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         docker_options = argparse.ArgumentParser(add_help=False)
@@ -72,7 +72,7 @@ class Command(DevCommand):
         # automatically become dependencies for all other dev.py commands.
         submodule = importlib.import_module(f"devscripts.validation.{args.subcommand.replace('-', '_')}")
 
-        release = self.django_ca.__version__  # pylint: disable=no-member  # from lazy import
+        release = self.django_ca.__version__
 
         if args.subcommand == "docker":
             submodule.validate(release=release, prune=args.docker_prune, build=args.build)
