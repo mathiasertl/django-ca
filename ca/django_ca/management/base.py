@@ -250,7 +250,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         """Add argument group for the CRL Distribution Points extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.CRL_DISTRIBUTION_POINTS]
         description = "This extension defines how a Certificate Revocation List (CRL) can be obtained."
-        help = (
+        help_text = (
             "Add NAME (usually a URL) to the endpoints where a CRL can be retrieved. This option can be "
             f"given multiple times and replaces the default endpoint. {help_suffix}"
         )
@@ -267,7 +267,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             type=parse_general_name,
             action="append",
             metavar="NAME",
-            help=help,
+            help=help_text,
         )
         self.add_critical_option(group, ExtensionOID.CRL_DISTRIBUTION_POINTS)
 

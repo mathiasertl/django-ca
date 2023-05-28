@@ -238,7 +238,8 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--eku", "clientAuth", "1.3.6.1.5.5.7.3.2"],
             "usage: {script} [-h] [--eku EKU [EKU ...]]\n"
-            "{script}: error: 1.3.6.1.5.5.7.3.2: Extended Key Usage is added multiple times.\n",
+            "{script}: error: argument --eku: 1.3.6.1.5.5.7.3.2: "
+            "Extended Key Usage is added multiple times.\n",
         )
 
     def test_unknown_extended_key_usage(self) -> None:
@@ -246,7 +247,7 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--eku", "FOO"],
             "usage: {script} [-h] [--eku EKU [EKU ...]]\n"
-            "{script}: error: FOO: Not a dotted string or known Extended Key Usage.\n",
+            "{script}: error: argument --eku: FOO: Not a dotted string or known Extended Key Usage.\n",
         )
 
 
@@ -400,7 +401,7 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--key-usage", "foo"],
             "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
-            "{script}: error: foo: Invalid key usage.\n",
+            "{script}: error: argument --key-usage: foo: Invalid key usage.\n",
         )
 
     def test_error(self) -> None:
@@ -408,12 +409,14 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--key-usage", "encipherOnly"],
             "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
-            "{script}: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
+            "{script}: error: argument --key-usage: encipher_only and decipher_only can only be true when "
+            "key_agreement is true\n",
         )
         self.assertParserError(
             ["--key-usage", "decipherOnly"],
             "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
-            "{script}: error: encipher_only and decipher_only can only be true when key_agreement is true\n",
+            "{script}: error: argument --key-usage: encipher_only and decipher_only can only be true when "
+            "key_agreement is true\n",
         )
 
 
@@ -497,7 +500,7 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--tls-feature", "FOO"],
             "usage: {script} [-h] [--tls-feature TLS_FEATURE [TLS_FEATURE ...]]\n"
-            "{script}: error: Unknown TLSFeature: FOO\n",
+            "{script}: error: argument --tls-feature: Unknown TLSFeature: FOO\n",
         )
 
 
@@ -1019,5 +1022,6 @@ class MultipleURLActionTestCase(ParserTestCaseMixin, TestCase):
     def test_error(self) -> None:
         """Test false option values."""
         self.assertParserError(
-            ["--url=foo"], "usage: {script} [-h] [--url URL]\n{script}: error: foo: Not a valid URL.\n"
+            ["--url=foo"],
+            "usage: {script} [-h] [--url URL]\n{script}: error: argument --url: foo: Not a valid URL.\n",
         )

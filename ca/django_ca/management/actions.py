@@ -286,8 +286,8 @@ class MultipleURLAction(argparse.Action):
         validator = URLValidator()
         try:
             validator(values)
-        except ValidationError:
-            parser.error(f"{values}: Not a valid URL.")
+        except ValidationError as ex:
+            raise argparse.ArgumentError(self, f"{values}: Not a valid URL.") from ex
 
         getattr(namespace, self.dest).append(values)
 
@@ -645,11 +645,13 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
             else:
                 try:
                     oid = x509.ObjectIdentifier(value)
-                except ValueError:
-                    parser.error(f"{value}: Not a dotted string or known Extended Key Usage.")
+                except ValueError as ex:
+                    raise argparse.ArgumentError(
+                        self, f"{value}: Not a dotted string or known Extended Key Usage."
+                    ) from ex
 
             if oid in usages:
-                parser.error(f"{value}: Extended Key Usage is added multiple times.")
+                raise argparse.ArgumentError(self, f"{value}: Extended Key Usage is added multiple times.")
             usages.append(oid)
 
         extended_key_usage = x509.ExtendedKeyUsage(usages)
@@ -704,13 +706,15 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
                 values = values[1:]
 
         if invalid_usages := [ku for ku in values if ku not in KEY_USAGE_NAMES.values()]:
-            parser.error(f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage.")
+            raise argparse.ArgumentError(
+                self, f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage."
+            )
 
         key_usages = {k: v in values for k, v in KEY_USAGE_NAMES.items()}
         try:
             extension_type = x509.KeyUsage(**key_usages)
         except ValueError as ex:
-            parser.error(str(ex))
+            raise argparse.ArgumentError(self, str(ex)) from ex
 
         setattr(namespace, self.dest, extension_type)
 
@@ -756,7 +760,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         try:
             features = [constants.TLS_FEATURE_NAMES[value] for value in values]
         except KeyError as ex:
-            parser.error(f"Unknown TLSFeature: {ex.args[0]}")
+            raise argparse.ArgumentError(self, f"Unknown TLSFeature: {ex.args[0]}")
 
         extension_type = x509.TLSFeature(features=features)
         setattr(namespace, self.dest, extension_type)
