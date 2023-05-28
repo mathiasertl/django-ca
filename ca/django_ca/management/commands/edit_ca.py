@@ -18,12 +18,9 @@
 
 from typing import Any
 
-from cryptography import x509
-
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings
-from django_ca.constants import EXTENSION_KEYS
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority

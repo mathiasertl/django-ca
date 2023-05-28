@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Various utillity functions."""
+"""Various utility functions."""
 
 import datetime
 import io
@@ -55,7 +55,7 @@ def redirect_output() -> Iterator[io.StringIO]:
 
 
 @contextmanager
-def chdir(path: Union[str, os.PathLike[str]]) -> Iterator[str]:
+def chdir(path: Union[str, "os.PathLike[str]"]) -> Iterator[str]:
     """Context manager to temporarily change the working directory to `path`."""
     orig_cwd = os.getcwd()
     try:
@@ -65,19 +65,22 @@ def chdir(path: Union[str, os.PathLike[str]]) -> Iterator[str]:
         os.chdir(orig_cwd)
 
 
-def _waitfor(
-    waitfor: Iterable[Dict[str, Any]], jinja_env: "jinja2.Environment", context: Dict[str, Any], **kwargs: Any
+def _wait_for(
+    wait_for: Iterable[Dict[str, Any]],
+    jinja_env: "jinja2.Environment",
+    context: Dict[str, Any],
+    **kwargs: Any,
 ) -> None:
-    """Helper function to wait until the "waitfor" command succeeds."""
-    if not waitfor:
+    """Helper function to wait until the "wait_for" command succeeds."""
+    if not wait_for:
         return
 
-    for command in waitfor:
-        waitfor_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
+    for command in wait_for:
+        wait_for_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
 
         for i in range(0, 15):
-            waitfor_proc = run(waitfor_cmd, check=False, capture_output=True, **kwargs)
-            if waitfor_proc.returncode == 0:
+            wait_for_proc = run(wait_for_cmd, check=False, capture_output=True, **kwargs)
+            if wait_for_proc.returncode == 0:
                 break
             time.sleep(1)
 
@@ -125,27 +128,32 @@ def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
                 shell_env = {k: env.from_string(v).render(**context) for k, v in shell_env.items()}
                 shell_env = dict(os.environ, **shell_env)
 
-            # If a "waitfor" command is defined, don't run actual command until it succeeds
-            _waitfor(command.get("waitfor"), env, context, env=shell_env)
+            # If a "wait_for" command is defined, don't run actual command until it succeeds
+            _wait_for(command.get("wait_for"), env, context, env=shell_env)
 
             run(args, capture_output=command.get("capture_output", True), input=stdin, env=shell_env)
 
             for cmd in command.get("after_command", []):
                 run(shlex.split(env.from_string(cmd).render(**context)))
 
-            for clean in reversed(command.get("clean", [])):
-                clean_commands += tmp_clean_commands
+            print("### 1", reversed(command.get("clean", [])))
+            print("### 2", tmp_clean_commands)
+
+            clean_commands += tmp_clean_commands
+            print("### 3", clean_commands)
 
         yield
     finally:
+        print("### 4", clean_commands)
         for args in reversed(clean_commands):
+            print("#####", " ".join(args))
             run(args, check=False, capture_output=True)
 
 
 def get_previous_release(current_release: Optional[str] = None) -> str:
     """Get the previous release based on git tags.
 
-    This function returns the name at the last tag that is a valid semantic version. Prerelease or build tags
+    This function returns the name at the last tag that is a valid semantic version. Pre-release or build tags
     are automatically excluded.  If `current_release` is given, it will be excluded from the list.
     """
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
@@ -170,7 +178,7 @@ def get_previous_release(current_release: Optional[str] = None) -> str:
     return str(parsed_tags[-1])
 
 
-def docker_run(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
+def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for running a docker command."""
     return run(["docker", "run", "--rm"] + list(args), **kwargs)
 
@@ -179,11 +187,11 @@ def docker_run(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
 def tmpdir() -> Iterator[str]:
     """Context manager to temporarily change the working directory to a temporary directory."""
 
-    with tempfile.TemporaryDirectory() as tmpdirname, chdir(tmpdirname):
-        yield tmpdirname
+    with tempfile.TemporaryDirectory() as tmp_directory, chdir(tmp_directory):
+        yield tmp_directory
 
 
-def run(args: Sequence[Union[str, os.PathLike[str]]], **kwargs: Any) -> subprocess.CompletedProcess[Any]:
+def run(args: Sequence[Union[str, "os.PathLike[str]"]], **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
     if config.OUTPUT_COMMANDS:
@@ -191,30 +199,30 @@ def run(args: Sequence[Union[str, os.PathLike[str]]], **kwargs: Any) -> subproce
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
 
 
-def git_archive(ref: str, dest: str) -> Path:
+def git_archive(ref: str, destination: str) -> Path:
     """Export the git repository to `django-ca-{ref}/` in the given destination directory.
 
     `ref` may be any valid git reference, usually a git tag.
     """
-    dest = os.path.join(dest, f"django-ca-{ref}")
-    if not os.path.exists(dest):
-        os.makedirs(dest)
+    destination = os.path.join(destination, f"django-ca-{ref}")
+    if not os.path.exists(destination):
+        os.makedirs(destination)
 
     with subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE) as git_archive_cmd:
-        with subprocess.Popen(["tar", "-x", "-C", dest], stdin=git_archive_cmd.stdout) as tar:
+        with subprocess.Popen(["tar", "-x", "-C", destination], stdin=git_archive_cmd.stdout) as tar:
             # TYPEHINT NOTE: stdout is not None b/c of stdout=subprocess.PIPE
             stdout = typing.cast(typing.IO[bytes], git_archive_cmd.stdout)
             stdout.close()
             tar.communicate()
-    return Path(dest)
+    return Path(destination)
 
 
 def create_signed_cert(
     hostname: str,
-    signer_privkey: Union[str, os.PathLike[str]],
-    signer_pubkey: Union[str, os.PathLike[str]],
-    priv_out: Union[str, os.PathLike[str]],
-    pub_out: Union[str, os.PathLike[str]],
+    signer_private_key_path: Union[str, "os.PathLike[str]"],
+    signer_public_key_path: Union[str, "os.PathLike[str]"],
+    private_key_path: Union[str, "os.PathLike[str]"],
+    public_key_path: Union[str, "os.PathLike[str]"],
     password: Optional[bytes] = None,
 ) -> None:
     """Create a self-signed cert for the given hostname.
@@ -222,11 +230,11 @@ def create_signed_cert(
     .. seealso:: https://letsencrypt.org/docs/certificates-for-localhost/
     """
 
-    with open(signer_privkey, "rb") as stream:
+    with open(signer_private_key_path, "rb") as stream:
         signer_private_key = typing.cast(
             "CertificateIssuerPrivateKeyTypes", load_pem_private_key(stream.read(), password)
         )
-    with open(signer_pubkey, "rb") as stream:
+    with open(signer_public_key_path, "rb") as stream:
         signer_public_key = x509.load_pem_x509_certificate(stream.read())
 
     one_day = datetime.timedelta(1, 0, 0)
@@ -251,12 +259,12 @@ def create_signed_cert(
     )
     certificate = builder.sign(private_key=signer_private_key, algorithm=hashes.SHA256())
 
-    with open(priv_out, "wb") as stream:
+    with open(private_key_path, "wb") as stream:
         stream.write(
             private_key.private_bytes(
                 encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
             )
         )
 
-    with open(pub_out, "wb") as stream:
+    with open(public_key_path, "wb") as stream:
         stream.write(certificate.public_bytes(Encoding.PEM))

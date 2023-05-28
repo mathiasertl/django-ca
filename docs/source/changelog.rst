@@ -16,7 +16,8 @@ ChangeLog
   certificate authorities or end-entity certificates via the command-line.
 * Add support for overriding the CRL Distribution Points extension when creating end-entity certificates via
   the command-line.
-* Add a temporary pip extra ``psycopg3`` for using Psycopg 3.
+* Add a temporary pip extra ``psycopg3`` for using Psycopg 3. This extra will be removed once support for
+  Django 3.2 is removed.
 
 Backwards incompatible changes
 ==============================

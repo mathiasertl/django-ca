@@ -353,7 +353,7 @@ class CertificationPracticeStatementAction(argparse.Action):
         certificate_policies = getattr(namespace, self.dest)
         # Make sure that --policy-identifier was called before
         if certificate_policies is None:
-            raise argparse.ArgumentError(self, "Must be preceeded by --policy-identifier.")
+            raise argparse.ArgumentError(self, "Must be preceded by --policy-identifier.")
 
         # RFC 5280, section 4.2.1.4 mandates that CPS must be in the form of a URI.
         validator = URLValidator()
@@ -510,7 +510,7 @@ class UserNoticeAction(argparse.Action):
         certificate_policies = getattr(namespace, self.dest)
         # Make sure that --policy-identifier was called before
         if certificate_policies is None:
-            raise argparse.ArgumentError(self, "Must be preceeded by --policy-identifier.")
+            raise argparse.ArgumentError(self, "Must be preceded by --policy-identifier.")
 
         # RFC 5280, section 4.2.1.4 mandates that CPS must be in the form of a URI.
         if len(values) > 200:

@@ -30,7 +30,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from django.test import TestCase, override_settings
 
-from django_ca.constants import EXTENSION_KEYS, ReasonFlags
+from django_ca.constants import ReasonFlags
 from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, dns, override_tmpcadir, uri
@@ -172,7 +172,7 @@ class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase
         self.assertParserError(
             ["--cps", "http://example.com/cps"],
             "usage: {script} [-h] [--pi OID] [--cps URL]\n"
-            "{script}: error: argument --cps: Must be preceeded by --policy-identifier.\n",
+            "{script}: error: argument --cps: Must be preceded by --policy-identifier.\n",
         )
 
     def test_invalid_url(self) -> None:
@@ -578,7 +578,7 @@ class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
         self.assertParserError(
             ["--notice", "http://example.com/cps"],
             "usage: {script} [-h] [--pi OID] [--notice TEXT]\n"
-            "{script}: error: argument --notice: Must be preceeded by --policy-identifier.\n",
+            "{script}: error: argument --notice: Must be preceded by --policy-identifier.\n",
         )
 
     def test_invalid_url(self) -> None:
