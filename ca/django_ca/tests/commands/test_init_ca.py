@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.core.cache import cache
 from django.test import TestCase, override_settings
@@ -177,7 +177,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_unsortable_subject(self) -> None:
-        """Test subjects that do not have any standard storting."""
+        """Test subjects that do not have any standard sorting."""
         cname = "subject-unsortable.example.com"
         name = "test_subject_unsortable"
         given_name = "given-name"
@@ -218,7 +218,6 @@ class InitCATest(TestCaseMixin, TestCase):
             "--issuer-alt-name=http://ian.ca.example.com",
             "--crl-url=http://crl.example.com",
             "--ocsp-url=http://ocsp.example.com",
-            "--ca-issuer-url=http://ca.issuer.ca.example.com",
             f"--caa={caa}",
             f"--website={website}",
             f"--tos={tos}",
@@ -226,10 +225,6 @@ class InitCATest(TestCaseMixin, TestCase):
 
         actual = ca.x509_extensions
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, actual)
-        self.assertEqual(
-            actual[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(ca_issuers=[uri("http://ca.issuer.ca.example.com")]),
-        )
 
         # test the private key
         key = typing.cast(ec.EllipticCurvePrivateKey, ca.key(None))
@@ -638,7 +633,9 @@ class InitCATest(TestCaseMixin, TestCase):
                 name="Child",
                 parent=parent,
                 crl_full_names=[crl_full_name],
-                ca_ocsp_url=["http://ca.ocsp.example.com"],
+                authority_information_access=self.authority_information_access(
+                    ocsp=[uri("http://passed.ca.ocsp.example.com")]
+                ).value,
             )
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -659,12 +656,26 @@ class InitCATest(TestCaseMixin, TestCase):
             self.crl_distribution_points([crl_full_name]),
         )
         issuers = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/issuer/{parent.serial}.der"
-        self.assertEqual(
-            child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
-                ca_issuers=[uri(issuers)], ocsp=[uri("http://ca.ocsp.example.com")]
+        ocsp = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/ocsp/{parent.serial}/ca/"
+        expected = x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=False,
+            value=x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.OCSP,
+                        access_location=uri("http://passed.ca.ocsp.example.com"),
+                    ),
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri(issuers)
+                    ),
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.OCSP, access_location=uri(ocsp)
+                    ),
+                ]
             ),
         )
+        self.assertEqual(child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], expected)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self) -> None:  # pylint: disable=too-many-statements
@@ -1006,7 +1017,7 @@ class InitCATest(TestCaseMixin, TestCase):
         with self.assertCommandError(
             r"^OCSP cannot be used to revoke root CAs\.$"
         ), self.assertCreateCASignals(False, False):
-            self.init_ca(name="foobar", ca_ocsp_url="https://example.com")
+            self.init_ca(name="foobar", ca_ocsp=uri("https://example.com"))
 
     @override_tmpcadir()
     def test_small_key_size(self) -> None:

@@ -598,6 +598,29 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
         setattr(namespace, self.dest, extension_type)
 
 
+class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.AuthorityInformationAccess]):
+    def __init__(self, access_method: x509.ObjectIdentifier, **kwargs: Any) -> None:
+        self.access_method = access_method
+        kwargs["type"] = parse_general_name
+        kwargs["metavar"] = ("NAME",)
+        super().__init__(**kwargs)
+
+    def __call__(  # type: ignore[override] # argparse.Action defines much looser type for values
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: x509.GeneralName,
+        option_string: Optional[str] = None,
+    ) -> None:
+        extension: Optional[x509.AuthorityInformationAccess] = getattr(namespace, self.dest)
+        access_description = x509.AccessDescription(access_method=self.access_method, access_location=values)
+        if extension is None:
+            extension = x509.AuthorityInformationAccess([access_description])
+        else:
+            extension = x509.AuthorityInformationAccess(list(extension) + [access_description])
+        setattr(namespace, self.dest, extension)
+
+
 class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage]):
     """Action for parsing an ExtendedKeyUsage extension.
 

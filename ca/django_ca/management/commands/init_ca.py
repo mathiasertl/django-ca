@@ -32,13 +32,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning
-from django_ca.management.actions import (
-    ExpiresAction,
-    IntegerRangeAction,
-    MultipleURLAction,
-    NameAction,
-    PasswordAction,
-)
+from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction, PasswordAction
 from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
@@ -51,24 +45,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
     """Implement :command:`manage.py init_ca`."""
 
     help = "Create a certificate authority."
-
-    def add_authority_information_access_group(self, parser: CommandParser) -> None:
-        """Add argument group for the Authority Information Access extension."""
-        group = parser.add_argument_group(
-            f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
-            """Information about the issuer of the CA. These options only work for intermediate CAs. Default
-            values are based on the default hostname (see above) and work out of the box if a webserver is
-            configured. Options can be given multiple times to add multiple values.""",
-        )
-        group.add_argument(
-            "--ca-ocsp-url", metavar="URL", action=MultipleURLAction, help="URL of an OCSP responder."
-        )
-        group.add_argument(
-            "--ca-issuer-url",
-            metavar="URL",
-            action=MultipleURLAction,
-            help="URL to the certificate of your CA (in DER format).",
-        )
 
     def add_basic_constraints_group(self, parser: CommandParser) -> None:
         """Add argument group for the Basic Constraints extension."""
@@ -281,8 +257,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         crl_url: List[str],
         ocsp_url: Optional[str],
         issuer_url: Optional[str],
-        ca_ocsp_url: List[str],
-        ca_issuer_url: List[str],
+        # Authority Information Access extension
+        authority_information_access: x509.AuthorityInformationAccess,
         # Basic Constraints extension
         path_length: Optional[int],
         # Certificate Policies extension
@@ -359,7 +335,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             raise CommandError("Parent CA cannot create intermediate CA due to path length restrictions.")
         if not parent and crl_full_names:
             raise CommandError("CRLs cannot be used to revoke root CAs.")
-        if not parent and ca_ocsp_url:
+        if not parent and authority_information_access:
             raise CommandError("OCSP cannot be used to revoke root CAs.")
 
         # We require a valid common name
@@ -377,6 +353,14 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage
             )
         }
+
+        # Add the Authority Information Access extension
+        if authority_information_access is not None:
+            self._add_extension(
+                extensions,
+                authority_information_access,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            )
         # Add the Certificate Policies extension
         if certificate_policies is not None:
             self._add_extension(extensions, certificate_policies, certificate_policies_critical)
@@ -451,8 +435,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 issuer_alt_name=options["issuer_alt_name"],
                 crl_url=crl_url,
                 ocsp_url=ocsp_url,
-                ca_issuer_url=ca_issuer_url,
-                ca_ocsp_url=ca_ocsp_url,
                 permitted_subtrees=permit_name,
                 excluded_subtrees=exclude_name,
                 password=password,

@@ -26,7 +26,7 @@ from typing import Any, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.core.management.base import BaseCommand as _BaseCommand
 from django.core.management.base import CommandError, CommandParser, OutputWrapper
@@ -186,6 +186,31 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     def _add_extension(self, extensions: ExtensionMapping, value: x509.ExtensionType, critical: bool) -> None:
         """Add an extension to the passed extension dictionary."""
         extensions[value.oid] = x509.Extension(oid=value.oid, critical=critical, value=value)
+
+    def add_authority_information_access_group(self, parser: CommandParser) -> None:
+        """Add argument group for the Authority Information Access extension."""
+        group = parser.add_argument_group(
+            f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
+            """Information about the issuer of the CA. These options only work for intermediate CAs. Default
+            values are based on the default hostname (see above) and work out of the box if a webserver is
+            configured. Options can be given multiple times to add multiple values.""",
+        )
+        group.add_argument(
+            "--ca-ocsp",
+            "--ca-ocsp-url",
+            dest="authority_information_access",
+            action=actions.AuthorityInformationAccessAction,
+            access_method=AuthorityInformationAccessOID.OCSP,
+            help="URL of an OCSP responder.",
+        )
+        group.add_argument(
+            "--ca-issuer",
+            "--ca-issuer-url",
+            dest="authority_information_access",
+            action=actions.AuthorityInformationAccessAction,
+            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+            help="URL to the certificate of your CA (in DER format).",
+        )
 
     def add_certificate_policies_group(
         self, parser: argparse.ArgumentParser, description: str, allow_any_policy: bool = False
