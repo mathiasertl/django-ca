@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -76,41 +77,40 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         response = self.client.post(self.url, data={"csr": csr_pem})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.content.decode("utf-8")),
-            {
-                "subject": {
-                    "C": "AT",
-                    "CN": "test-CN",
-                    "DC": "test-DC",
-                    "L": "test-L",
-                    "O": "test-O",
-                    "OU": "test-OU",
-                    "ST": "test-ST",
-                    "emailAddress": "test-emailAddress",
-                    "businessCategory": "test-businessCategory",
-                    "dnQualifier": "test-dnQualifier",
-                    "generationQualifier": "test-generationQualifier",
-                    "givenName": "test-givenName",
-                    "inn": "test-inn",
-                    "jurisdictionCountryName": "AT",
-                    "jurisdictionLocalityName": "test-jurisdictionLocalityName",
-                    "jurisdictionStateOrProvinceName": "test-jurisdictionStateOrProvinceName",
-                    "ogrn": "test-ogrn",
-                    "postalAddress": "test-postalAddress",
-                    "postalCode": "test-postalCode",
-                    "pseudonym": "test-pseudonym",
-                    "serialNumber": "test-serialNumber",
-                    "sn": "test-sn",
-                    "snils": "test-snils",
-                    "street": "test-street",
-                    "title": "test-title",
-                    "uid": "test-uid",
-                    "unstructuredName": "test-unstructuredName",
-                    "x500UniqueIdentifier": "test-x500UniqueIdentifier",
-                }
-            },
-        )
+        self.maxDiff = None
+        expected = {
+            "C": "AT",
+            "CN": "test-CN",
+            "DC": "test-DC",
+            "L": "test-L",
+            "O": "test-O",
+            "OU": "test-OU",
+            "ST": "test-ST",
+            "emailAddress": "test-emailAddress",
+            "businessCategory": "test-businessCategory",
+            "dnQualifier": "test-dnQualifier",
+            "generationQualifier": "test-generationQualifier",
+            "givenName": "test-givenName",
+            "inn": "test-inn",
+            "jurisdictionCountryName": "AT",
+            "jurisdictionLocalityName": "test-jurisdictionLocalityName",
+            "jurisdictionStateOrProvinceName": "test-jurisdictionStateOrProvinceName",
+            "ogrn": "test-ogrn",
+            "postalAddress": "test-postalAddress",
+            "postalCode": "test-postalCode",
+            "pseudonym": "test-pseudonym",
+            "serialNumber": "test-serialNumber",
+            "sn": "test-sn",
+            "snils": "test-snils",
+            "street": "test-street",
+            "title": "test-title",
+            "uid": "test-uid",
+            "unstructuredName": "test-unstructuredName",
+            "x500UniqueIdentifier": "test-x500UniqueIdentifier",
+        }
+        if settings.CRYPTOGRAPHY_VERSION >= (41, 0):  # pragma: only cg>=41.0
+            expected["initials"] = "test-initials"
+        self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})
 
     def test_bad_request(self) -> None:
         """Test posting bogus data."""

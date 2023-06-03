@@ -26,9 +26,14 @@ from django.test import TestCase
 from django_ca import constants
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
+IGNORED_EXTENSIONS = [
+    x509.ObjectIdentifier(
+        "1.3.6.1.4.1.311.21.7"
+    ),  # only cryptography<=41  # replace with ExtensionOID.MS_CERTIFICATE_TEMPLATE
+]
 KNOWN_EXTENSION_OIDS = list(
     filter(
-        lambda attr: isinstance(attr, x509.ObjectIdentifier),
+        lambda attr: isinstance(attr, x509.ObjectIdentifier) and attr not in IGNORED_EXTENSIONS,
         [getattr(ExtensionOID, attr) for attr in dir(ExtensionOID)],
     )
 )
