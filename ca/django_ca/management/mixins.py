@@ -260,23 +260,35 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "Extensions added when signing certificates.",
         )
         group.add_argument(
-            "--issuer-url",
-            metavar="URL",
+            "--sign-ca-issuer",
+            "--issuer-url",  # pragma: only django-ca<1.27
+            metavar="NAME",
             action=actions.URLAction,
-            help="URL to the certificate of your CA (in DER format).",
+            help="URL to the certificate of your CA (in DER format). --issuer-url is a legacy option name "
+            "and will be removed in django-ca 1.27.",
         )
         group.add_argument(
+            "--sign-issuer-alternative-name",
             "--issuer-alt-name",
-            metavar="URL",
+            metavar="NAME",
             action=actions.AlternativeNameLegacyAction,
             extension_type=x509.IssuerAlternativeName,
-            help="URL to the homepage of your CA.",
+            help="URL to the homepage of your CA. --issuer-alt-name is a legacy option name "
+            "and will be removed in django-ca 1.27.",
         )
         group.add_argument(
+            "--sign-crl-full-name",
             "--crl-url",
             action=actions.MultipleURLAction,
-            help="URL to a certificate revocation list. Can be given multiple times.",
+            metavar="NAME",
+            help="URL to a certificate revocation list. Can be given multiple times. --crl-url is a legacy "
+            "option name and will be removed in django-ca 1.27.",
         )
         group.add_argument(
-            "--ocsp-url", metavar="URL", action=actions.URLAction, help="URL of an OCSP responder."
+            "--sign-ocsp-responder",
+            "--ocsp-url",
+            metavar="NAME",
+            action=actions.URLAction,
+            help="URL of an OCSP responder. --ocsp-url is a legacy option name and will be removed in"
+            "django-ca 1.27.",
         )

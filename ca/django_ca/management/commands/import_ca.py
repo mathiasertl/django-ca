@@ -19,7 +19,7 @@
 import argparse
 import os
 import typing
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -33,7 +33,7 @@ from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
-from django_ca.utils import ca_storage
+from django_ca.utils import ca_storage, format_general_name
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -80,8 +80,10 @@ Note that the private key will be copied to the directory configured by the CA_D
         parent: Optional[CertificateAuthority],
         password: Optional[bytes],
         import_password: Optional[bytes],
-        issuer_alt_name: Optional[str],
-        issuer_url: Optional[str],
+        sign_ca_issuer: Optional[str],
+        sign_crl_full_name: List[str],
+        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
+        sign_ocsp_responder: Optional[str],
         **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):
@@ -97,21 +99,23 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         pem_data = pem.read()
         key_data = key.read()
-        crl_url = "\n".join(options["crl_url"])
 
         # close reader objects (otherwise we get a ResourceWarning)
         key.close()
         pem.close()
 
-        if issuer_alt_name is None:  # pragma: no branch - no CA sets this
+        if sign_issuer_alternative_name is None:  # pragma: no branch - no CA sets this
             issuer_alternative_name = ""
+        else:
+            issuer_alternative_name = format_general_name(sign_issuer_alternative_name.value[0])
 
         ca = CertificateAuthority(
             name=name,
             parent=parent,
-            issuer_url=issuer_url,
+            issuer_url=sign_ca_issuer,
             issuer_alt_name=issuer_alternative_name,
-            crl_url=crl_url,
+            ocsp_url=sign_ocsp_responder,
+            crl_url="\n".join(sign_crl_full_name),
         )
 
         # load public key

@@ -16,7 +16,9 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
+from typing import Any, List, Optional
+
+from cryptography import x509
 
 from django.core.management.base import CommandError, CommandParser
 
@@ -50,16 +52,25 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             "--disable", action="store_false", dest="enabled", help="Disable the certificate authority."
         )
 
-    def handle(self, ca: CertificateAuthority, **options: Any) -> None:
-        if options["issuer_url"] is not None:
-            ca.issuer_url = options["issuer_url"]
-        if options["issuer_alt_name"]:
-            ian = options["issuer_alt_name"]
-            ca.issuer_alt_name = ",".join([format_general_name(name) for name in ian.value])
-        if options["ocsp_url"] is not None:
-            ca.ocsp_url = options["ocsp_url"]
-        if options["crl_url"] is not None:
-            ca.crl_url = "\n".join(options["crl_url"])
+    def handle(
+        self,
+        ca: CertificateAuthority,
+        sign_ca_issuer: Optional[str],
+        sign_crl_full_name: List[str],
+        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
+        sign_ocsp_responder: Optional[str],
+        **options: Any,
+    ) -> None:
+        if sign_ca_issuer is not None:
+            ca.issuer_url = sign_ca_issuer
+        if sign_issuer_alternative_name:
+            ca.issuer_alt_name = ",".join(
+                [format_general_name(name) for name in sign_issuer_alternative_name.value]
+            )
+        if sign_ocsp_responder is not None:
+            ca.ocsp_url = sign_ocsp_responder
+        if sign_crl_full_name:
+            ca.crl_url = "\n".join(sign_crl_full_name)
 
         if options["enabled"] is not None:
             ca.enabled = options["enabled"]
