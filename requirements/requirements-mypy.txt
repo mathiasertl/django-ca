@@ -1,15 +1,15 @@
 -r requirements-sphinx.txt
 mypy==1.3.0
-django-stubs==4.2.0
-types-docutils==0.19.1.8
+django-stubs==4.2.1
+types-docutils==0.20.0.1
 types-freezegun==1.1.10
 types-jinja2==2.11.9
 types-mysqlclient==2.1.5.7
 types-psycopg2==2.9.21.10
-types-pyOpenSSL==23.1.0.3
+types-pyOpenSSL==23.2.0.0
 types-pyRFC3339==1.1.1.4
 types-redis==4.5.5.2
-types-requests==2.30.0.0
+types-requests==2.31.0.1
 types-setuptools==67.8.0.0
 types-tabulate==0.9.0.2
 
