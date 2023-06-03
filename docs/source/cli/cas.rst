@@ -161,6 +161,8 @@ keys:
 
    $ python manage.py regenerate_ocsp_keys
 
+.. _cli_cas_extensions:
+
 Extensions
 ==========
 

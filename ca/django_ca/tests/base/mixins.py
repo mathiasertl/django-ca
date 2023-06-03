@@ -937,7 +937,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         permitted: Optional[Iterable[x509.GeneralName]] = None,
         excluded: Optional[Iterable[x509.GeneralName]] = None,
-        critical: bool = False,
+        critical: bool = True,
     ) -> x509.Extension[x509.NameConstraints]:
         """Shortcut for getting a NameConstraints extension."""
         return x509.Extension(

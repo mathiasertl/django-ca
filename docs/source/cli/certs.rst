@@ -164,19 +164,18 @@ authorities.
 Override extensions
 ===================
 
-You can override some extensions using command-line parameters. Currently, this includes the Key Usage,
-Extended Key Usage, OCSPNoCheck and TLSFeature extensions:
+You can add custom extensions to the certificate in the command-line. The syntax is generally the same as
+:ref:`for certificate authorities <cli_cas_extensions>`, however you can only add extensions that make sense
+in the context of an end-entity certificate (for example, RFC 5280 specifies that the Name Constraints
+extension can occur only in CA certificates).
 
-.. code-block:: console
+When you add extensions via the command line, they will override any extension set by profiles or by the
+certificate authority. For example, to set a custom OCSP responder in a certificate::
 
-   $ python manage.py sign_cert \
-      --key-usage keyCertSign \
-      --extended-key-usage serverAuth clientAuth \
-      --extended-key-usage-critical \
-      --tls-feature status_request \
-      ...
+    $ python manage.py sign_cert --ocsp-responder http://ocsp.example.com ...
 
-For more information on these extensions, their meaning and typical values, see :doc:`/extensions`.
+Note again that this will disable the OCSP responder that usually would be set based on the certificate
+authority.
 
 *******************
 Revoke certificates

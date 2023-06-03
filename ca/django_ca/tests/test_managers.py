@@ -241,6 +241,25 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(actual, expected)
 
     @override_tmpcadir()
+    def test_deprecated_parameters(self) -> None:
+        """Test deprecated parameters."""
+        msg1 = r"^Argument permitted_subtrees is deprecated and will be removed in django ca 1\.26\.$"
+        msg2 = r"^Argument excluded_subtrees is deprecated and will be removed in django ca 1\.26\.$"
+        with self.assertCreateCASignals(), self.assertRemovedIn126Warning(msg1):
+            ca = CertificateAuthority.objects.init(
+                self._testMethodName,
+                self.subject,
+                permitted_subtrees=[dns("example.com")],
+                excluded_subtrees=[dns("example.net")],
+            )
+
+        extensions = ca.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.NAME_CONSTRAINTS],
+            self.name_constraints(permitted=[dns("example.com")], excluded=[dns("example.net")]),
+        )
+
+    @override_tmpcadir()
     def test_invalid_public_key_parameters(self) -> None:
         """Test passing invalid public key parameters."""
         msg = r'^key_type="ECC" is deprecated, use key_type="EC" instead\.$'

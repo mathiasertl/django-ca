@@ -30,7 +30,7 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings, constants
-from django_ca.deprecation import RemovedInDjangoCA126Warning, deprecate_type
+from django_ca.deprecation import RemovedInDjangoCA126Warning, deprecate_argument, deprecate_type
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
@@ -209,6 +209,11 @@ class CertificateAuthorityManager(
                 value=x509.AuthorityInformationAccess(access_descriptions),
             )
 
+    @deprecate_argument("permitted_subtrees", RemovedInDjangoCA126Warning)
+    @deprecate_argument("excluded_subtrees", RemovedInDjangoCA126Warning)
+    @deprecate_argument("ca_issuer_url", RemovedInDjangoCA126Warning)
+    @deprecate_argument("ca_crl_url", RemovedInDjangoCA126Warning)
+    @deprecate_argument("ca_ocsp_url", RemovedInDjangoCA126Warning)
     @deprecate_type("ca_ocsp_url", str, RemovedInDjangoCA126Warning)
     @deprecate_type("ca_issuer_url", str, RemovedInDjangoCA126Warning)
     def init(
@@ -259,6 +264,12 @@ class CertificateAuthorityManager(
            * The `ca_issuer_url` and `ca_ocsp_url` parameters are now list of strings. Support for bare
              strings will be removed in ``django-ca==1.26.0``.
 
+        .. versionchanged:: 1.25.0
+
+           * The `permitted_subtrees` and `excluded_subtrees` subtrees are deprecated and will be removed in
+             ``django-ca==1.26.0``. Pass a :py:class:`~cg:cryptography.x509.NameConstraints` extension in
+             `extensions` instead.
+
 
         Parameters
         ----------
@@ -293,18 +304,6 @@ class CertificateAuthorityManager(
         ocsp_url : str, optional
             OCSP URL used for certificates signed by this CA. The default is no value, unless
             :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
-        ca_issuer_url : str, optional
-            URL for the DER/ASN1 formatted certificate that is signing this CA. For intermediate CAs, this
-            would usually be the ``issuer_urls`` of the parent CA.
-        ca_crl_url : list of str, optional
-            CRL URLs used for this CA. This value is only meaningful for intermediate CAs.
-        ca_ocsp_url : str, optional
-            OCSP URL used for this CA. This value is only meaningful for intermediate CAs. The default is
-            no value, unless :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
-        permitted_subtrees : list of x509.GeneralName, optional
-            List of general names to add to the permitted names of the NameConstraints extension.
-        excluded_subtrees : list of x509.GeneralName, optional
-            List of general names to add to the permitted names of the NameConstraints extension.
         password : bytes or str, optional
             Password to encrypt the private key with.
         parent_password : bytes or str, optional

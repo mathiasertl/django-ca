@@ -415,6 +415,13 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 issuer_alternative_name,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
+        # Add the NameConstraints extension
+        if permit_name or exclude_name:
+            self._add_extension(
+                extensions,
+                x509.NameConstraints(excluded_subtrees=exclude_name, permitted_subtrees=permit_name),
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.NAME_CONSTRAINTS],
+            )
         # Add the Policy Constraints extension
         if require_explicit_policy is not None or inhibit_policy_mapping is not None:
             self._add_extension(
@@ -461,8 +468,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 issuer_alt_name=options["issuer_alt_name"],
                 crl_url=crl_url,
                 ocsp_url=ocsp_url,
-                permitted_subtrees=permit_name,
-                excluded_subtrees=exclude_name,
                 password=password,
                 parent_password=parent_password,
                 elliptic_curve=elliptic_curve,

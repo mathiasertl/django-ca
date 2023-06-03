@@ -10,12 +10,12 @@ ChangeLog
 1.25.0 (TBR)
 ************
 
-* Add support for adding the Extended Key Usage, Issuer Alternative Name and Subject Alternative Name
-  extensions when creating certificate authorities.
 * Add support for adding the Certificate Policy and Issuer Alternative Name extensions when creating
   certificate authorities or end-entity certificates via the command-line.
-* Add support for overriding the CRL Distribution Points extension when creating end-entity certificates via
-  the command-line.
+* Add support for adding the Extended Key Usage, Issuer Alternative Name and Subject Alternative Name
+  extensions when creating certificate authorities.
+* Add support for overriding the Authority Information Access, CRL Distribution Points and OCSP No Check
+  extensions when creating end-entity certificates via the command-line.
 * Add a temporary pip extra ``psycopg3`` for using Psycopg 3. This extra will be removed once support for
   Django 3.2 is removed.
 

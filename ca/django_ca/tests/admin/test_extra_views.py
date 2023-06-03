@@ -77,7 +77,6 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         response = self.client.post(self.url, data={"csr": csr_pem})
         self.assertEqual(response.status_code, 200)
-        self.maxDiff = None
         expected = {
             "C": "AT",
             "CN": "test-CN",
