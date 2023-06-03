@@ -172,6 +172,32 @@ authorities. Only extensions that make sense in the context of a certificate aut
 Some important extensions (the Key Usage, CRL Distribution Points and Authority Information Access extensions)
 are automatically set with sane defaults and you do not typically have to configure them.
 
+.. _cli_cas_authority_information_access:
+
+Authority Information Access
+----------------------------
+
+The Authority Information Access extension (`RFC 5280, section 4.2.2.1
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.2.1>`_) provides information how to access services
+of the issuer of a certificate. It can point to either an OCSP responder or to the certificate of the issuer.
+It can only be used for intermediate CAs: The only valid signer for OCSP responses would be the root CA
+itself, making such an OCSP request pointless.
+
+**django-ca** will automatically add this extension for intermediate CAs, as long as the
+:ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is configured, so usually you do not have to add
+this extension manually.
+
+You can manually add OCSP responders or CA Issuers instead of the default ones using the ``--ca-issuer`` and
+``--ocsp-responder`` options::
+
+    $ python manage.py init_ca \
+    >     --ca-issuer http://issuer.example.com \
+    >     --ocsp-repsonder http://ocsp.example.com \
+    >     ...
+
+Each option can be given multiple times. These options will disable the default values added to intermediate
+CAs.
+
 .. _cli_cas_basic_constraints:
 
 Basic Constraints
@@ -257,6 +283,8 @@ If you need to specify your own CRL endpoint(s), you can use the ``--crl-full-na
 
 This will add a single Distribution Point with two URLs. Other, more complex configurations are not supported
 via the command-line.
+
+Manually adding a CRL via the command line will disable the default CRL added to intermediate CAs.
 
 Extended Key Usage
 ------------------

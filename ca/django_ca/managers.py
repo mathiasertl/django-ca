@@ -180,7 +180,10 @@ class CertificateAuthorityManager(
             )
             access_descriptions = list(extension)
 
-        if ca_issuer_url:
+        has_ocsp = any(ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions)
+        has_issuer = any(ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions)
+
+        if ca_issuer_url and has_issuer is False:
             access_descriptions += [
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.CA_ISSUERS,
@@ -188,13 +191,17 @@ class CertificateAuthorityManager(
                 )
                 for name in ca_issuer_url
             ]
-        if ca_ocsp_url:
+        if ca_ocsp_url and has_ocsp is False:
             access_descriptions += [
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.OCSP, access_location=parse_general_name(name)
                 )
                 for name in ca_ocsp_url
             ]
+
+        # Finally sort by OID so that we have more predictable behavior
+        access_descriptions = sorted(access_descriptions, key=lambda ad: ad.access_method.dotted_string)
+
         if access_descriptions:
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
                 oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,

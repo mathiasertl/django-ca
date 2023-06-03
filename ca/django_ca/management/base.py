@@ -187,7 +187,12 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         """Add an extension to the passed extension dictionary."""
         extensions[value.oid] = x509.Extension(oid=value.oid, critical=critical, value=value)
 
-    def add_authority_information_access_group(self, parser: CommandParser) -> None:
+    def add_authority_information_access_group(
+        self,
+        parser: CommandParser,
+        legacy_ocsp_args: Tuple[str, ...] = (),
+        legacy_issuer_args: Tuple[str, ...] = (),
+    ) -> None:
         """Add argument group for the Authority Information Access extension."""
         group = parser.add_argument_group(
             f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
@@ -196,8 +201,8 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             configured. Options can be given multiple times to add multiple values.""",
         )
         group.add_argument(
-            "--ca-ocsp",
-            "--ca-ocsp-url",
+            "--ocsp-responder",
+            *legacy_ocsp_args,
             dest="authority_information_access",
             action=actions.AuthorityInformationAccessAction,
             access_method=AuthorityInformationAccessOID.OCSP,
@@ -205,7 +210,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         )
         group.add_argument(
             "--ca-issuer",
-            "--ca-issuer-url",
+            *legacy_issuer_args,
             dest="authority_information_access",
             action=actions.AuthorityInformationAccessAction,
             access_method=AuthorityInformationAccessOID.CA_ISSUERS,
@@ -402,6 +407,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_algorithm(general_group)
         self.add_ca(general_group, no_default=no_default_ca)
         self.add_password(general_group)
+        self.add_authority_information_access_group(parser)
         self.add_certificate_policies_group(
             parser,
             description="In end-entity certificates, this extension indicates the policy under which the "

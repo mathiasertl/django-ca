@@ -71,6 +71,8 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         password: Optional[bytes],
         profile: Optional[str],
         algorithm: Optional[AllowedHashTypes],
+        # Authority Information Access extension
+        authority_information_access: x509.AuthorityInformationAccess,
         # Certificate Policies extension
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
@@ -117,6 +119,12 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         # Process any extensions given via the command-line
         extensions: ExtensionMapping = {}
 
+        if authority_information_access is not None:
+            self._add_extension(
+                extensions,
+                authority_information_access,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            )
         if certificate_policies is not None:
             self._add_extension(extensions, certificate_policies, certificate_policies_critical)
         if crl_full_names is not None:

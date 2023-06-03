@@ -94,6 +94,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def setUp(self) -> None:
         # Add custom equality functions
+        self.addTypeEqualityFunc(x509.AuthorityInformationAccess, self.assertAuthorityInformationAccessEqual)
         self.addTypeEqualityFunc(x509.ExtendedKeyUsage, self.assertExtendedKeyUsageEqual)
         self.addTypeEqualityFunc(x509.Extension, self.assertCryptographyExtensionEqual)
         self.addTypeEqualityFunc(x509.KeyUsage, self.assertKeyUsageEqual)
@@ -300,6 +301,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             finally:
                 self.assertTrue(pre_sig.called is pre)
                 self.assertTrue(post_sig.called is post)
+
+    def assertAuthorityInformationAccessEqual(  # pylint: disable=invalid-name
+        self,
+        first: x509.AuthorityInformationAccess,
+        second: x509.AuthorityInformationAccess,
+        msg: Optional[str] = None,
+    ) -> None:
+        """Type equality function for x509.AuthorityInformationAccess."""
+        self.assertEqual(list(first), list(second), msg=msg)
 
     def assertCryptographyExtensionEqual(  # pylint: disable=invalid-name
         self,

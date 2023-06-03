@@ -390,26 +390,33 @@ class Profile:
         ca_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], ca_extensions[oid])
         critical = ca_aia_ext.critical
 
+        has_issuer = has_ocsp = False
         access_descriptions: List[x509.AccessDescription] = []
-        if add_issuer_url is True:
+
+        if oid in extensions:
+            cert_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], extensions[oid])
+            access_descriptions = list(cert_aia_ext.value)
+            has_ocsp = any(
+                ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions
+            )
+            has_issuer = any(
+                ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS for ad in access_descriptions
+            )
+            critical = cert_aia_ext.critical
+
+        if add_issuer_url is True and has_issuer is False:
             access_descriptions += [
                 ad
                 for ad in ca_aia_ext.value
                 if ad not in access_descriptions
                 and ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
             ]
-        if add_ocsp_url is True:
+        if add_ocsp_url is True and has_ocsp is False:
             access_descriptions += [
                 ad
                 for ad in ca_aia_ext.value
                 if ad not in access_descriptions and ad.access_method == AuthorityInformationAccessOID.OCSP
             ]
-
-        # Add ADs from certificate
-        if oid in extensions:
-            cert_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], extensions[oid])
-            access_descriptions += list(cert_aia_ext.value)
-            critical = cert_aia_ext.critical
 
         # Finally sort by OID so that we have more predictable behavior
         access_descriptions = sorted(access_descriptions, key=lambda ad: ad.access_method.dotted_string)

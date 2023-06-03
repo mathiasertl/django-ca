@@ -570,8 +570,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
                 self.subject_alternative_name(dns(self.hostname)),
                 self.authority_information_access(
-                    ca_issuers=[uri(ca.issuer_url), cert_issuers, cert_issuers2],
-                    ocsp=[uri(ca.ocsp_url), cert_ocsp],
+                    ca_issuers=[cert_issuers, cert_issuers2],
+                    ocsp=[cert_ocsp],
                 ),
             ],
             expect_defaults=False,
@@ -603,6 +603,130 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 self.ocsp_no_check(),
                 self.subject_alternative_name(dns(self.hostname)),
             ],
+        )
+
+    @override_tmpcadir()
+    def test_extension_overrides(self) -> None:
+        """Test that all extensions can be overwritten when creating a new certificate."""
+        # Profile with extensions (will be overwritten by the command line).
+        prof = Profile(
+            "example",
+            subject=[],
+            extensions={
+                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: self.authority_information_access(
+                    ocsp=[uri("http://ocsp.example.com/profile")],
+                    ca_issuers=[uri("http://issuer.example.com/issuer")],
+                )
+            },
+        )
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+
+        ca.ocsp_url = "http://ocsp.example.com/ca"
+        ca.issuer_url = "http://issuer.example.com/issuer"
+        ca.save()
+
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        expected_authority_information_access = self.authority_information_access(
+            ocsp=[uri("http://ocsp.example.com/expected")],
+            ca_issuers=[uri("http://issuer.example.com/expected")],
+        )
+
+        with self.mockSignal(pre_sign_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_issuer_alternative_name=False,
+                add_issuer_url=True,
+                add_ocsp_url=True,
+                extensions=[expected_authority_information_access],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+
+        extensions = cert.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], expected_authority_information_access
+        )
+
+    @override_tmpcadir()
+    def test_partial_authority_information_access_override(self) -> None:
+        """Test partial overwriting of the Authority Information Access extension"""
+
+        prof = Profile(
+            "example",
+            subject=[],
+            extensions={
+                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: self.authority_information_access(
+                    ocsp=[uri("http://ocsp.example.com/profile")],
+                    ca_issuers=[uri("http://issuer.example.com/issuer")],
+                )
+            },
+        )
+        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+
+        ca.ocsp_url = "http://ocsp.example.com/ca"
+        ca.issuer_url = "http://issuer.example.com/ca"
+        ca.save()
+
+        csr = certs["child-cert"]["csr"]["parsed"]
+
+        # Only pass an OCSP responder
+        with self.mockSignal(pre_sign_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_issuer_alternative_name=False,
+                add_issuer_url=True,
+                add_ocsp_url=True,
+                extensions=[
+                    self.authority_information_access(
+                        ocsp=[uri("http://ocsp.example.com/expected")],
+                    )
+                ],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+
+        extensions = cert.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ocsp=[uri("http://ocsp.example.com/expected")],
+                ca_issuers=[uri("http://issuer.example.com/ca")],
+            ),
+        )
+
+        # Only pass an CA issuer
+        with self.mockSignal(pre_sign_cert) as pre:
+            cert = self.create_cert(
+                prof,
+                ca,
+                csr,
+                subject=self.subject,
+                add_issuer_alternative_name=False,
+                add_issuer_url=True,
+                add_ocsp_url=True,
+                extensions=[
+                    self.authority_information_access(
+                        ca_issuers=[uri("http://issuer.example.com/expected")],
+                    )
+                ],
+            )
+        self.assertEqual(pre.call_count, 1)
+        self.assertEqual(cert.subject, self.subject)
+
+        extensions = cert.x509_extensions
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ocsp=[uri("http://ocsp.example.com/ca")],
+                ca_issuers=[uri("http://issuer.example.com/expected")],
+            ),
         )
 
     @override_tmpcadir()

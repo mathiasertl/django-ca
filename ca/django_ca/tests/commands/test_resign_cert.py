@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.test import TestCase
 from django.utils import timezone
@@ -142,6 +142,11 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
+                # Authority Information Access extension
+                "--ocsp-responder=http://ocsp.example.com/1",
+                "--ca-issuer=http://issuer.example.com/1",
+                "--ocsp-responder=http://ocsp.example.com/2",
+                "--ca-issuer=http://issuer.example.com/2",
                 # Certificate Policies extension
                 "--policy-identifier=1.2.3",
                 "--certification-practice-statement=https://example.com/overwritten/",
@@ -179,6 +184,35 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.x509_extensions
+
+        # Test Authority Information Access extension
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=False,
+                value=x509.AuthorityInformationAccess(
+                    [
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.OCSP,
+                            access_location=uri("http://ocsp.example.com/1"),
+                        ),
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.OCSP,
+                            access_location=uri("http://ocsp.example.com/2"),
+                        ),
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                            access_location=uri("http://issuer.example.com/1"),
+                        ),
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                            access_location=uri("http://issuer.example.com/2"),
+                        ),
+                    ]
+                ),
+            ),
+        )
 
         # Test Certificate Policies extension
         self.assertEqual(
@@ -499,8 +533,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     "--key-usage",
                     key_usage,
                     "--key-usage-non-critical",
-                    "--extended-key-usage",
-                    ext_key_usage,
+                    f"--extended-key-usage={ext_key_usage}",
                     "--extended-key-usage-critical",
                     "--tls-feature",
                     "status_request_v2",

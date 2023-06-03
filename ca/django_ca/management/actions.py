@@ -599,6 +599,33 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
 
 
 class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.AuthorityInformationAccess]):
+    """Action for parsing an AuthorityInformationAccess extension.
+
+    This extension has a required parameter `access_method`, which should be the OID that it creates. You
+    would usually add two arguments using this action, one for OCSP responders and one for CA issuers, and
+    match the `dest` argument to produce one extension:
+
+    >>> from cryptography.x509.oid import AuthorityInformationAccessOID
+    >>> parser.add_argument(
+    ...     "--ocsp-responder",
+    ...     action=AuthorityInformationAccessAction,
+    ...     access_method=AuthorityInformationAccessOID.OCSP,
+    ...     dest="extension"
+    ... )  # doctest: +ELLIPSIS
+    AuthorityInformationAccessAction(...)
+    >>> parser.add_argument(
+    ...     "--ca-issuer",
+    ...     action=AuthorityInformationAccessAction,
+    ...     access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+    ...     dest="extension"
+    ... )  # doctest: +ELLIPSIS
+    AuthorityInformationAccessAction(...)
+    >>> parser.parse_args(
+    ...     ["--ocsp-responder", "http://ocsp", "--ca-issuer", "http://issuer"]
+    ... )  # doctest: +ELLIPSIS
+    Namespace(extension=<AuthorityInformationAccess(...)
+    """
+
     def __init__(self, access_method: x509.ObjectIdentifier, **kwargs: Any) -> None:
         self.access_method = access_method
         kwargs["type"] = parse_general_name
@@ -614,10 +641,17 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
     ) -> None:
         extension: Optional[x509.AuthorityInformationAccess] = getattr(namespace, self.dest)
         access_description = x509.AccessDescription(access_method=self.access_method, access_location=values)
+
         if extension is None:
-            extension = x509.AuthorityInformationAccess([access_description])
+            access_descriptions = [access_description]
         else:
-            extension = x509.AuthorityInformationAccess(list(extension) + [access_description])
+            access_descriptions = list(extension) + [access_description]
+
+        # Finally sort by OID so that we have more predictable behavior
+        access_descriptions = sorted(access_descriptions, key=lambda ad: ad.access_method.dotted_string)
+
+        extension = x509.AuthorityInformationAccess(access_descriptions)
+
         setattr(namespace, self.dest, extension)
 
 

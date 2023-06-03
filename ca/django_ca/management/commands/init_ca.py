@@ -25,7 +25,7 @@ from typing import Any, Iterable, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
@@ -38,7 +38,12 @@ from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ExtensionMapping, ParsableKeyType
-from django_ca.utils import parse_general_name, sort_name, validate_private_key_parameters
+from django_ca.utils import (
+    format_general_name,
+    parse_general_name,
+    sort_name,
+    validate_private_key_parameters,
+)
 
 
 class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
@@ -215,7 +220,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         self.add_acme_group(parser)
 
-        self.add_authority_information_access_group(parser)
+        self.add_authority_information_access_group(parser, ("--ca-ocsp-url",), ("--ca-issuer-url",))
         self.add_basic_constraints_group(parser)
         self.add_certificate_policies_group(
             parser,
@@ -336,7 +341,28 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         if not parent and crl_full_names:
             raise CommandError("CRLs cannot be used to revoke root CAs.")
         if not parent and authority_information_access:
-            raise CommandError("OCSP cannot be used to revoke root CAs.")
+            if ocsp_responder := next(
+                (
+                    ad
+                    for ad in authority_information_access
+                    if ad.access_method == AuthorityInformationAccessOID.OCSP
+                ),
+                None,
+            ):
+                responder_value = format_general_name(ocsp_responder.access_location)
+                raise CommandError(f"{responder_value}: OCSP responder cannot be added to root CAs.")
+
+            # No if check necessary here, authority_information_access contains either ocsp or ca_issuer
+            # COVERAGE NOTE: next() will always return, so it's not a branch
+            ca_issuer = next(  # pragma: no branch
+                (
+                    ad
+                    for ad in authority_information_access
+                    if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+                )
+            )
+            responder_value = format_general_name(ca_issuer.access_location)
+            raise CommandError(f"{responder_value}: CA issuer cannot be added to root CAs.")
 
         # We require a valid common name
         common_name = next((attr.value for attr in subject if attr.oid == NameOID.COMMON_NAME), False)

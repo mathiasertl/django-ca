@@ -655,8 +655,6 @@ class InitCATest(TestCaseMixin, TestCase):
             child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             self.crl_distribution_points([crl_full_name]),
         )
-        issuers = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/issuer/{parent.serial}.der"
-        ocsp = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/ocsp/{parent.serial}/ca/"
         expected = x509.Extension(
             oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
             critical=False,
@@ -665,13 +663,7 @@ class InitCATest(TestCaseMixin, TestCase):
                     x509.AccessDescription(
                         access_method=AuthorityInformationAccessOID.OCSP,
                         access_location=uri("http://passed.ca.ocsp.example.com"),
-                    ),
-                    x509.AccessDescription(
-                        access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri(issuers)
-                    ),
-                    x509.AccessDescription(
-                        access_method=AuthorityInformationAccessOID.OCSP, access_location=uri(ocsp)
-                    ),
+                    )
                 ]
             ),
         )
@@ -957,9 +949,11 @@ class InitCATest(TestCaseMixin, TestCase):
             name,
             f"/CN={name}",
             f"--parent={root.serial}",
+            # NOTE: mixing the order of arguments here. This way we make sure that the values are properly
+            # sorted (by method) in the assertion for the extension.
             f"--ca-ocsp-url={ocsp_uri_one}",
-            f"--ca-ocsp-url={ocsp_uri_two}",
             f"--ca-issuer-url={issuer_uri_one}",
+            f"--ca-ocsp-url={ocsp_uri_two}",
             f"--ca-issuer-url={issuer_uri_two}",
             chain=[root],
         )
@@ -1011,13 +1005,26 @@ class InitCATest(TestCaseMixin, TestCase):
             self.init_ca(name="foobar", ca_crl_url="https://example.com")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_root_ca_ocsp_url(self) -> None:
-        """Test that you cannot create a CA with a OCSP URL."""
+    def test_root_ca_ocsp_responder(self) -> None:
+        """Test that you cannot create a root CA with a OCSP responder."""
 
+        authority_information_access = self.authority_information_access(ocsp=[uri("http://example.com")])
         with self.assertCommandError(
-            r"^OCSP cannot be used to revoke root CAs\.$"
+            r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"
         ), self.assertCreateCASignals(False, False):
-            self.init_ca(name="foobar", ca_ocsp=uri("https://example.com"))
+            self.init_ca(name="foobar", authority_information_access=authority_information_access.value)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_root_ca_issuer(self) -> None:
+        """Test that you cannot create a root CA with a CA issuer field."""
+
+        authority_information_access = self.authority_information_access(
+            ca_issuers=[uri("http://example.com")]
+        )
+        with self.assertCommandError(
+            r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"
+        ), self.assertCreateCASignals(False, False):
+            self.init_ca(name="foobar", authority_information_access=authority_information_access.value)
 
     @override_tmpcadir()
     def test_small_key_size(self) -> None:
