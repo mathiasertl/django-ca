@@ -7,6 +7,43 @@ method used.
 
 This document lists special update instructions when you update to a certain version.
 
+.. _update_124:
+
+*****************************
+Update from 1.24.0 or earlier
+*****************************
+
+Update notes when upgrading to 1.25.0.
+
+Renamed command-line arguments
+==============================
+
+To make the interface more consistent, some command-line arguments have been renamed. Old versions will
+continue to work until ``django-ca==1.27.0``.
+
+===================== ===================================
+old option            new option
+===================== ===================================
+``--issuer-url``      ``--sign-ca-issuer``
+``--issuer-alt-name`` ``--sign-issuer-alternative-name``
+``--crl-url``         ``--sign-crl-full-name``
+``--ocsp-url``        ``--sign-ocsp-responder``
+``--ca-ocsp-url``     ``--ocsp-responder``
+``--ca-issuer-url``   ``--ca-issuer``
+===================== ===================================
+
+So if your old invocation looked like this:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --crl-url ... --ocsp-url ... ...
+
+instead use:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --sign-crl-full-name ... --ocsp-responder ... ...
+
 .. _update_123:
 
 *****************************

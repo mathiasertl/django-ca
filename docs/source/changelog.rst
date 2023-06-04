@@ -10,6 +10,7 @@ ChangeLog
 1.25.0 (TBR)
 ************
 
+* Add support for cryptography 41 and acme 2.6.0.
 * Add support for adding the Certificate Policy and Issuer Alternative Name extensions when creating
   certificate authorities or end-entity certificates via the command-line.
 * Add support for adding the Extended Key Usage, Issuer Alternative Name and Subject Alternative Name
@@ -19,6 +20,8 @@ ChangeLog
 * Add a temporary pip extra ``psycopg3`` for using Psycopg 3. This extra will be removed once support for
   Django 3.2 is removed.
 * Fix import parameters to :command:`manage.py import_ca`.
+* Further standardizing the command-line interface, some options for :command:`manage.py init_ca` and
+  :command:`manage.py edit_ca` are renamed. See the :ref:`update notes <update_124>` for more information.
 
 Backwards incompatible changes
 ==============================
@@ -39,6 +42,7 @@ Deprecation notices
 
 * This is the last release to support cryptography 37 and cryptography 39.
 * This is the last release to support acme 2.4.0.
+* This is the last release to support celery 5.1.
 * Support for non-standard algorithm names in profile settings will be removed in django-ca 1.27.0.
 
 .. _changelog-1.24.0:
