@@ -141,16 +141,6 @@ Command-line tools
 
      $ manage.py sign_cert --tls-feature critical,status_request
 
-Python API
-==========
-
-* :py:func:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`:
-
-  * The ``pathlen`` argument to was renamed to ``path_length``.
-  * The ``ca_ocsp_url`` and ``ca_issuer_url`` parameters should now be list of strings. Support for passing
-    bare strings will be removed in ``django-ca==1.25.0``.
-
-
 .. _update_121:
 
 *****************************
