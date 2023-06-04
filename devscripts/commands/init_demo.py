@@ -17,34 +17,50 @@ import json
 import os
 import subprocess
 import sys
-from typing import Any
+import types
+import typing
+from typing import Any, Dict, Union
 
 from cryptography import x509
+
+from django.core.files.storage import Storage
 
 from devscripts import config
 from devscripts.commands import DevCommand
 from devscripts.out import bold
+
+if typing.TYPE_CHECKING:
+    from django_ca.models import CertificateAuthority
+    from django_ca.tests.base.typehints import CertFixtureData, FixtureData
 
 
 class Command(DevCommand):
     """Initialize this project with useful example data."""
 
     modules = (("termcolor", "termcolor"),)
+    termcolor: types.ModuleType
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--base-url", metavar="URL", default="http://localhost:8000/", help="Base URL for CRL/OCSP URLs."
         )
 
-    def path(self, ca_storage, certs, name: str) -> str:
+    def path(self, ca_storage: Storage, certs: "CertFixtureData", name: str) -> str:
         """Get a file path."""
         return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
 
     def ok(self, msg: str = " OK.", **kwargs: Any) -> None:  # pylint: disable=invalid-name
         """Just print "OK" in green."""
-        print(self.termcolor.colored(msg, "green"), **kwargs)  # pylint: disable=no-member  # from lazy import
+        print(self.termcolor.colored(msg, "green"), **kwargs)
 
-    def output_info(self, ca_dir, ca_storage, loaded_cas, certs, base_url):  # pylint: disable=too-many-locals
+    def output_info(  # pylint: disable=too-many-locals
+        self,
+        ca_dir: str,
+        ca_storage: Storage,
+        loaded_cas: Dict[str, "CertificateAuthority"],
+        certs: "CertFixtureData",
+        base_url: str,
+    ) -> None:
         """Output demo info to the user."""
         from django.urls import reverse  # pylint: disable=import-outside-toplevel  # see handle() imports
 
@@ -96,7 +112,9 @@ class Command(DevCommand):
             cmd = f"openssl ocsp -CAfile {ca_path} -issuer {ca_path} -cert {cert_path} -url {ocsp_url} -resp_text"  # noqa: E501
             print(f"  * {bold(cmd)}")
 
-    def save_fixture_data(self, ca_settings, fixture_data):
+    def save_fixture_data(
+        self, ca_settings: types.ModuleType, fixture_data: "FixtureData"
+    ) -> Dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""
         # pylint: disable=import-outside-toplevel  # see handle() imports
         from django.contrib.auth import get_user_model
@@ -108,6 +126,7 @@ class Command(DevCommand):
         loaded_cas = {}
         certs = fixture_data["certs"]
         for cert_name, cert_data in sorted(certs.items(), key=lambda t: (t[1]["type"], t[0])):
+            cert: Union[CertificateAuthority, Certificate]  # facilitate type hinting later
             if cert_data["type"] == "ca":
                 if not cert_data["key_filename"]:
                     continue  # CA without private key (e.g. real-world CA)
@@ -128,14 +147,15 @@ class Command(DevCommand):
             with open(os.path.join(ca_settings.CA_DIR, cert_data["pub_filename"]), "rb") as stream:
                 pem = stream.read()
             cert.update_certificate(x509.load_pem_x509_certificate(pem))
-
             cert.save()
 
-            if cert_data["type"] == "ca":
+            # Generate OCSP key after saving, as cert.pub is still `bytes` before `save()`.
+            if isinstance(cert, CertificateAuthority):
                 password = cert_data.get("password")
                 if password is not None:
                     password = password.encode("utf-8")
                 cert.generate_ocsp_key(password=password)
+
         # Set parent relationships of CAs
         for cert_name, cert_data in certs.items():
             if cert_data["type"] == "ca" and cert_data.get("parent"):
@@ -149,7 +169,7 @@ class Command(DevCommand):
 
         return loaded_cas
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         os.environ["DJANGO_CA_SECRET_KEY"] = "dummy"
 
         if "TOX_ENV_DIR" in os.environ:

@@ -14,7 +14,17 @@
 """Shared typehints for tests."""
 
 import typing
+from typing import Any, Dict
 
 from django_ca.models import DjangoCAModel
 
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
+
+
+CertFixtureData = Dict[str, Any]
+
+
+class FixtureData(typing.TypedDict):
+    """Fixture data loaded/stored from JSON."""
+
+    certs: Dict[str, CertFixtureData]
