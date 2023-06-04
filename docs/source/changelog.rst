@@ -18,6 +18,7 @@ ChangeLog
   extensions when creating end-entity certificates via the command-line.
 * Add a temporary pip extra ``psycopg3`` for using Psycopg 3. This extra will be removed once support for
   Django 3.2 is removed.
+* Fix import parameters to :command:`manage.py import_ca`.
 
 Backwards incompatible changes
 ==============================

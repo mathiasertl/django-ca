@@ -104,7 +104,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
-        if sign_issuer_alternative_name is None:  # pragma: no branch - no CA sets this
+        if sign_issuer_alternative_name is None:
             issuer_alternative_name = ""
         else:
             issuer_alternative_name = format_general_name(sign_issuer_alternative_name.value[0])
