@@ -24,6 +24,24 @@ DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAMode
 CertFixtureData = Dict[str, Any]
 
 
+class _OcspFixtureData(typing.TypedDict):
+    name: str
+    filename: str
+
+
+class OcspFixtureData(_OcspFixtureData, total=False):
+    """Fixture data for OCSP requests.
+
+    Keys:
+
+    * name (str): name of the fixture
+    * filename (str): name of the file of the stored request
+    * nonce (str, optional): Nonce used in the request
+    """
+
+    nonce: str
+
+
 class FixtureData(typing.TypedDict):
     """Fixture data loaded/stored from JSON."""
 

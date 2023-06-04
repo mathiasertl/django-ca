@@ -14,7 +14,7 @@
 """The recreate-fixtures sub-command recreates the entire test fixture data.
 
 The test suite should be sufficiently modular to still run without errors after running this command."""
-
+import argparse
 import ipaddress
 import json
 import os
@@ -22,6 +22,7 @@ import sys
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from pathlib import Path
+from typing import Any, Dict
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -40,8 +41,14 @@ DSA_PATHLEN = 3
 
 
 def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
-    dest, delay, only_contrib, regenerate_ocsp, generate_contrib, ca_validity, cert_validity
-):
+    dest: Path,
+    delay: bool,
+    only_contrib: bool,
+    regenerate_ocsp: bool,
+    generate_contrib: bool,
+    ca_validity: int,
+    cert_validity: int,
+) -> None:
     """Main entry function to recreate fixtures."""
     # pylint: disable=import-outside-toplevel  # django needs to be set up
     from django.core.management import call_command as manage
@@ -74,7 +81,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
     out_path = dest / "cert-data.json"
     dest.mkdir(exist_ok=True)
 
-    data = {
+    data: Dict[str, Dict[str, Any]] = {
         "root": {
             "type": "ca",
             "path_length": ROOT_PATHLEN,
@@ -379,7 +386,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         },
     }
 
-    # Autocompute some values (name, filenames, ...) based on the dict key
+    # Auto-compute some values (name, filenames, ...) based on the dict key
     for cert_name, cert_values in data.items():
         cert_values["name"] = cert_name
         cert_values.setdefault("type", "cert")
@@ -450,7 +457,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
 class Command(DevCommand):
     """Regenerate fixtures for testing."""
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--only-contrib",
             default=False,
@@ -498,7 +505,7 @@ class Command(DevCommand):
             help="Where to store generated certificates (default: %(default)s).",
         )
 
-    def handle(self, args):
+    def handle(self, args: argparse.Namespace) -> None:
         if "TOX_ENV_DIR" in os.environ:  # was invoked via tox
             # insert ca/ into path, otherwise it won't find test_settings in django project
             sys.path.insert(0, str(config.SRC_DIR))

@@ -13,9 +13,10 @@
 
 import os
 import sys
+from typing import Any, Dict, List
 
 import sphinx_rtd_theme
-from sphinx.addnodes import pending_xref
+from sphinx.addnodes import document, pending_xref
 from sphinx.application import Sphinx
 
 try:
@@ -137,7 +138,7 @@ language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns: List[str] = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -267,7 +268,7 @@ htmlhelp_basename = "django-cadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {}
+latex_elements: Dict[Any, Any] = {}  # Note: we don't use this at all
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
@@ -495,7 +496,7 @@ nitpick_ignore = [
 
 # NOINSPECTION NOTE: app is passed by the caller, but we don't need it.
 # noinspection PyUnusedLocal
-def resolve_canonical_names(app, doctree):
+def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
     """Resolve canonical names of types to names that resolve in intersphinx inventories.
 
     .. NOTE:: This function can be removed if this is merged: https://github.com/pyca/cryptography/pull/7938

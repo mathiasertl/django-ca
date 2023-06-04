@@ -136,17 +136,11 @@ def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
             for cmd in command.get("after_command", []):
                 run(shlex.split(env.from_string(cmd).render(**context)))
 
-            print("### 1", reversed(command.get("clean", [])))
-            print("### 2", tmp_clean_commands)
-
             clean_commands += tmp_clean_commands
-            print("### 3", clean_commands)
 
         yield
     finally:
-        print("### 4", clean_commands)
         for args in reversed(clean_commands):
-            print("#####", " ".join(args))
             run(args, check=False, capture_output=True)
 
 
@@ -157,7 +151,7 @@ def get_previous_release(current_release: Optional[str] = None) -> str:
     are automatically excluded.  If `current_release` is given, it will be excluded from the list.
     """
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
-    import semantic_version  # type: ignore[import]  # pylint: disable=import-outside-toplevel
+    import semantic_version  # pylint: disable=import-outside-toplevel
     from git import Repo  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
 
     repo = Repo(config.ROOT_DIR)

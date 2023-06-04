@@ -1,4 +1,4 @@
--r requirements-devscripts.txt
+-r requirements-dev-common.txt
 black==23.3.0
 flake8==6.0.0
 isort==5.12.0

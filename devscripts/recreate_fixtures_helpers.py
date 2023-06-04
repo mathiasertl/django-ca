@@ -24,6 +24,7 @@ import tempfile
 from datetime import datetime
 from datetime import timezone as tz
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Union
 from unittest.mock import patch
 
 from cryptography import x509
@@ -32,12 +33,13 @@ from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.serialization import (
     BestAvailableEncryption,
     Encoding,
+    KeySerializationEncryption,
     NoEncryption,
     PrivateFormat,
     load_pem_private_key,
 )
 from cryptography.x509 import ocsp
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import NameOID
 
 from django.test.utils import override_settings
 from django.urls import reverse
@@ -50,13 +52,15 @@ from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
+from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
+from django_ca.typehints import ParsableKeyType
 from django_ca.utils import bytes_to_hex, ca_storage, format_name, serialize_name, x509_name
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-def genpkey(*args: str):
+def genpkey(*args: str) -> "subprocess.CompletedProcess[Any]":
     """Convenience wrapper for the openssl genpkey program."""
     return utils.run(["openssl", "genpkey"] + list(args), stderr=subprocess.DEVNULL)
 
@@ -64,7 +68,7 @@ def genpkey(*args: str):
 class CertificateEncoder(json.JSONEncoder):
     """Minor class to encode certificate data into json."""
 
-    def default(self, o):
+    def default(self, o: Any) -> Any:  # Any/Any matches base class typehints
         if isinstance(o, hashes.HashAlgorithm):
             return o.name
         if isinstance(o, Path):
@@ -74,45 +78,61 @@ class CertificateEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def _create_key(path, key_type):
+def _create_key(path: Path, key_type: ParsableKeyType) -> None:
     if key_type == "RSA":
-        utils.run(["openssl", "genrsa", "-out", path, str(DEFAULT_KEY_SIZE)], stderr=subprocess.DEVNULL)
+        utils.run(["openssl", "genrsa", "-out", str(path), str(DEFAULT_KEY_SIZE)], stderr=subprocess.DEVNULL)
     elif key_type == "DSA":
         genpkey(
             "-genparam",
             "-algorithm",
             "DSA",
             "-out",
-            path + ".param",
+            str(path.with_suffix(".param")),
             "-pkeyopt",
             "dsa_paramgen_bits:2048",
             "-pkeyopt",
             "dsa_paramgen_md:sha256",
         )
-        genpkey("-paramfile", path + ".param", "-out", path)
+        genpkey("-paramfile", str(path.with_suffix(".param")), "-out", str(path))
     elif key_type == "EC":
         utils.run(
-            ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", path],
+            ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", str(path)],
             stderr=subprocess.DEVNULL,
         )
     elif key_type == "Ed25519":
-        genpkey("-algorithm", "ED25519", "-out", path)
+        genpkey("-algorithm", "ED25519", "-out", str(path))
     elif key_type == "Ed448":
-        genpkey("-algorithm", "ED448", "-out", path)
+        genpkey("-algorithm", "ED448", "-out", str(path))
     else:
         raise ValueError(f"Unknown key type: {key_type}")
 
 
-def _create_csr(key_path, path, subject="/CN=ignored.example.com", key_type="RSA"):
+def _create_csr(
+    key_path: Path, path: Path, subject: str = "/CN=ignored.example.com", key_type: ParsableKeyType = "RSA"
+) -> x509.CertificateSigningRequest:
     _create_key(key_path, key_type)
-    utils.run(["openssl", "req", "-new", "-key", key_path, "-out", path, "-utf8", "-batch", "-subj", subject])
+    utils.run(
+        [
+            "openssl",
+            "req",
+            "-new",
+            "-key",
+            str(key_path),
+            "-out",
+            str(path),
+            "-utf8",
+            "-batch",
+            "-subj",
+            subject,
+        ]
+    )
 
     with open(path, encoding="utf-8") as stream:
         csr = stream.read()
     return x509.load_pem_x509_csr(csr.encode("utf-8"))
 
 
-def _update_cert_data(cert, data):
+def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict[str, Any]) -> None:
     data["serial"] = cert.serial
     data["hpkp"] = cert.hpkp_pin
     data["valid_from"] = cert.pub.loaded.not_valid_before.strftime(TIMEFORMAT)
@@ -128,11 +148,17 @@ def _update_cert_data(cert, data):
         data[ext_key] = serialize_extension(ext)
 
 
-def _write_ca(dest, ca, cert_data, testserver, password=None):
-    key_dest = os.path.join(dest, cert_data["key_filename"])
-    pub_dest = os.path.join(dest, cert_data["pub_filename"])
-    key_der_dest = os.path.join(dest, cert_data["key_der_filename"])
-    pub_der_dest = os.path.join(dest, cert_data["pub_der_filename"])
+def _write_ca(
+    dest: Path,
+    ca: CertificateAuthority,
+    cert_data: CertFixtureData,
+    testserver: str,
+    password: Optional[bytes] = None,
+) -> None:
+    key_dest = dest / cert_data["key_filename"]
+    pub_dest = dest / cert_data["pub_filename"]
+    key_der_dest = dest / cert_data["key_der_filename"]
+    pub_der_dest = dest / cert_data["pub_der_filename"]
 
     # write files to dest
     shutil.copy(ca_storage.path(ca.private_key_path), key_dest)
@@ -140,7 +166,7 @@ def _write_ca(dest, ca, cert_data, testserver, password=None):
         stream.write(ca.pub.pem)
 
     if password is None:
-        encryption = NoEncryption()
+        encryption: KeySerializationEncryption = NoEncryption()
     else:
         encryption = BestAvailableEncryption(password)
 
@@ -164,12 +190,18 @@ def _write_ca(dest, ca, cert_data, testserver, password=None):
     _update_cert_data(ca, cert_data)
 
 
-def _copy_cert(dest, cert, data, key_path, csr_path):
-    key_dest = os.path.join(dest, data["key_filename"])
-    csr_dest = os.path.join(dest, data["csr_filename"])
-    pub_dest = os.path.join(dest, data["pub_filename"])
-    key_der_dest = os.path.join(dest, data["key_der_filename"])
-    pub_der_dest = os.path.join(dest, data["pub_der_filename"])
+def _copy_cert(
+    dest: Path,
+    cert: Certificate,
+    data: CertFixtureData,
+    key_path: Path,
+    csr_path: Path,
+) -> None:
+    key_dest = dest / data["key_filename"]
+    csr_dest = dest / data["csr_filename"]
+    pub_dest = dest / data["pub_filename"]
+    key_der_dest = dest / data["key_der_filename"]
+    pub_der_dest = dest / data["pub_der_filename"]
 
     shutil.copy(key_path, key_dest)
     shutil.copy(csr_path, csr_dest)
@@ -178,8 +210,8 @@ def _copy_cert(dest, cert, data, key_path, csr_path):
 
     with open(key_dest, "rb") as stream:
         priv_key = stream.read()
-    priv_key = load_pem_private_key(priv_key, None)
-    key_der = priv_key.private_bytes(
+    loaded_priv_key = load_pem_private_key(priv_key, None)
+    key_der = loaded_priv_key.private_bytes(
         encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
     )
     with open(key_der_dest, "wb") as stream:
@@ -195,7 +227,13 @@ def _copy_cert(dest, cert, data, key_path, csr_path):
     _update_cert_data(cert, data)
 
 
-def _update_contrib(parsed, data, cert, name, filename):
+def _update_contrib(
+    parsed: x509.Certificate,
+    data: Dict[str, Any],
+    cert: Union[Certificate, CertificateAuthority],
+    name: str,
+    filename: str,
+) -> None:
     cert_data = {
         "name": name,
         "cn": cert.cn,
@@ -223,15 +261,10 @@ def _update_contrib(parsed, data, cert, name, filename):
         ext_key = constants.EXTENSION_KEYS[oid]
         cert_data[ext_key] = serialize_extension(ext)
 
-    try:
-        ext = cert.pub.loaded.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
-    except x509.ExtensionNotFound:
-        pass
-
     data[name] = cert_data
 
 
-def _generate_contrib_files(data):
+def _generate_contrib_files(data: Dict[str, Dict[str, Any]]) -> None:
     files_dir = config.DOCS_DIR / "source" / "_files"
     for filename in (files_dir / "ca").iterdir():
         name = filename.stem
@@ -285,26 +318,26 @@ def _generate_contrib_files(data):
             raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
 
-def create_cas(dest, now, delay, data):
+def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> List[CertificateAuthority]:
     """Create CAs."""
     testserver = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}"
     ca_names = [v["name"] for k, v in data.items() if v.get("type") == "ca"]
 
     # sort ca_names so that any children are created last
-    ca_names = sorted(ca_names, key=lambda n: data[n].get("parent", ""))
+    ca_names = sorted(ca_names, key=lambda n: data[n].get("parent", ""))  # type: ignore[no-any-return]
     ca_instances = []
 
     for name in ca_names:
-        kwargs = {}
-
         # Get some data from the parent, if present
-        parent = data[name].get("parent")
-        if parent:
-            kwargs["parent"] = CertificateAuthority.objects.get(name=parent)
-            kwargs["ca_crl_url"] = [data[parent]["ca_crl_url"]]
+        parent: Optional[CertificateAuthority] = None
+        ca_crl_url: Optional[Sequence[str]] = None
+        parent_name = data[name].get("parent")
+        if parent_name:
+            parent = CertificateAuthority.objects.get(name=parent_name)
+            ca_crl_url = [data[parent_name]["ca_crl_url"]]
 
             # also update data
-            data[name]["crl"] = data[parent]["ca_crl_url"]
+            data[name]["crl"] = data[parent_name]["ca_crl_url"]
 
         freeze_now = now
         if delay:
@@ -320,7 +353,8 @@ def create_cas(dest, now, delay, data):
                 key_size=data[name].get("key_size"),
                 algorithm=data[name].get("algorithm"),
                 path_length=data[name]["path_length"],
-                **kwargs,
+                parent=parent,
+                ca_crl_url=ca_crl_url,
             )
 
         # Same values can only be added here because they require data from the already created CA
@@ -336,13 +370,15 @@ def create_cas(dest, now, delay, data):
     return ca_instances
 
 
-def create_certs(dest, cas, now, delay, data):
+def create_certs(
+    dest: Path, cas: Sequence[CertificateAuthority], now: datetime, delay: bool, data: Dict[str, Any]
+) -> None:
     """Create regular certificates."""
     # let's create a standard certificate for every CA
     for ca in cas:
         name = f"{ca.name}-cert"
-        key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
-        csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+        key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
+        csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
         csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
         csr = _create_csr(
             key_path,
@@ -373,8 +409,8 @@ def create_certs(dest, cas, now, delay, data):
         name = f"profile-{profile}"
         ca = CertificateAuthority.objects.get(name=data[name]["ca"])
 
-        key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
-        csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+        key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
+        csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
         csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
         csr = _create_csr(
             key_path,
@@ -403,13 +439,13 @@ def create_certs(dest, cas, now, delay, data):
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
-def create_special_certs(dest, now, delay, data):
+def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> None:
     """Create special-interest certificates (edge cases etc.)."""
     # create a cert with absolutely no extensions
     name = "no-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
-    csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
     csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
@@ -449,8 +485,8 @@ def create_special_certs(dest, now, delay, data):
     #       https://github.com/pyca/cryptography/issues/1947)
     name = "all-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
-    csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
     csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
@@ -473,8 +509,8 @@ def create_special_certs(dest, now, delay, data):
     name = "alt-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     ca.crl_url = ""
-    key_path = os.path.join(ca_settings.CA_DIR, f"{name}.key")
-    csr_path = os.path.join(ca_settings.CA_DIR, f"{name}.csr")
+    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
     csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
@@ -493,13 +529,13 @@ def create_special_certs(dest, now, delay, data):
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
-def regenerate_ocsp_files(dest, data):
+def regenerate_ocsp_files(dest: Path, data: CertFixtureData) -> Dict[str, OcspFixtureData]:
     """Regenerate OCSP example requests."""
-    ocsp_data = {
+    ocsp_data: Dict[str, OcspFixtureData] = {
         "nonce": {"name": "nonce", "filename": "nonce.req"},
         "no-nonce": {"name": "no-nonce", "filename": "no-nonce.req"},
     }
-    ocsp_base = os.path.join(dest, "ocsp")
+    ocsp_base = dest / "ocsp"
     if not os.path.exists(ocsp_base):
         os.makedirs(ocsp_base)
     ocsp_builder = ocsp.OCSPRequestBuilder()
@@ -510,14 +546,14 @@ def regenerate_ocsp_files(dest, data):
     )
 
     no_nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
-    with open(os.path.join(ocsp_base, ocsp_data["no-nonce"]["filename"]), "wb") as stream:
+    with open(ocsp_base / ocsp_data["no-nonce"]["filename"], "wb") as stream:
         stream.write(no_nonce_req)
 
     nonce = os.urandom(16)
     ocsp_data["nonce"]["nonce"] = bytes_to_hex(nonce)
     ocsp_builder = ocsp_builder.add_extension(x509.OCSPNonce(nonce), critical=False)
     nonce_req = ocsp_builder.build().public_bytes(Encoding.DER)
-    with open(os.path.join(ocsp_base, ocsp_data["nonce"]["filename"]), "wb") as stream:
+    with open(ocsp_base / ocsp_data["nonce"]["filename"], "wb") as stream:
         stream.write(nonce_req)
     return ocsp_data
 
@@ -525,7 +561,7 @@ def regenerate_ocsp_files(dest, data):
 class override_tmpcadir(override_settings):  # pylint: disable=invalid-name
     """Simplified copy of the same decorator in tests.base."""
 
-    def enable(self):
+    def enable(self) -> None:
         # pylint: disable=attribute-defined-outside-init
         self.options["CA_DIR"] = tempfile.mkdtemp()
         self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
@@ -538,7 +574,7 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name
         self.mockc = patch.object(ca_settings, "CA_DIR", self.options["CA_DIR"])
         self.mockc.start()
 
-    def disable(self):
+    def disable(self) -> None:
         super().disable()
         self.mock.stop()
         self.mock_.stop()

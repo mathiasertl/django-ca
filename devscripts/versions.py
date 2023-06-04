@@ -12,11 +12,14 @@
 # <http://www.gnu.org/licenses/>.
 
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
+from typing import Optional, Tuple, Union
 
 import semantic_version
 
+VersionTuple = Union[Tuple[int, int, int], Tuple[int, int, int, str, int]]
 
-def get_semantic_version(version=None):
+
+def get_semantic_version(version: Optional[VersionTuple] = None) -> semantic_version.Version:
     """Function to get the last git release."""
 
     if version is None:
@@ -25,17 +28,18 @@ def get_semantic_version(version=None):
 
         version = django_ca.VERSION
 
-    kwargs = {"major": version[0], "minor": version[1], "patch": version[2]}
-    if len(version) >= 5:
-        kwargs["prerelease"] = tuple(str(e) for e in version[3:5])
-        version = version[:3]
+    prerelease: Optional[Tuple[str, ...]] = None
+    if len(version) == 5:
+        prerelease = tuple(str(e) for e in version[3:5])
     elif len(version) != 3:
         raise ValueError(f"{version}: django_ca.VERSION must have either three or five elements.")
 
-    return semantic_version.Version(**kwargs)
+    return semantic_version.Version(
+        major=version[0], minor=version[1], patch=version[2], prerelease=prerelease
+    )
 
 
-def get_last_version():
+def get_last_version() -> semantic_version.Version:
     """Get the last version that was released from ``django_ca.VERSION``."""
     version = get_semantic_version()
 

@@ -66,11 +66,11 @@ from django_ca.models import CertificateAuthority  # NOQA: E402
 User = get_user_model()
 
 
-def cn(common_name):
+def cn(common_name: str) -> x509.Name:
     return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
 
 
-def test_initial_state(env):
+def test_initial_state(env: str) -> None:
     """Test the expected initial state of the database."""
 
     # Make sure that migrations where run
@@ -99,7 +99,7 @@ def test_initial_state(env):
             sys.exit(1)
 
 
-def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
+def create_cert(ca: CertificateAuthority) -> Certificate:
     """Shortcut to create a certificate."""
     common_name = f"cert.{ca.cn}"
     # NOTE: We don't care about the type of private key, as the CA only ever receives the CSR
@@ -112,7 +112,7 @@ def create_cert(ca: CertificateAuthority, **kwargs) -> Certificate:
     csr_request = csr_builder.sign(cert_key, hashes.SHA256())
 
     # Create a certificate
-    cert = Certificate.objects.create_cert(ca=ca, csr=csr_request, subject=subject, **kwargs)
+    cert = Certificate.objects.create_cert(ca=ca, csr=csr_request, subject=subject)
     return cert
 
 
@@ -124,8 +124,8 @@ if args.env != "frontend":
     User.objects.create_superuser(username="user", password="nopass")
 
     rsa_root = CertificateAuthority.objects.init(name="rsa.example.com", subject=cn("rsa.example.com"))
-    ecc_root = CertificateAuthority.objects.init(
-        name="ecc.example.net", subject=cn("ecc.example.net"), key_type="ECC"
+    ec_root = CertificateAuthority.objects.init(
+        name="ecc.example.net", subject=cn("ecc.example.net"), key_type="EC"
     )
 
     rsa_child = CertificateAuthority.objects.init(
@@ -134,20 +134,20 @@ if args.env != "frontend":
     ecc_child = CertificateAuthority.objects.init(
         name="child.ecc.example.net",
         subject=cn("child.ecc.example.net"),
-        key_type="ECC",
-        parent=ecc_root,
+        key_type="EC",
+        parent=ec_root,
         path="ca/shared/",
     )
 else:
     rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")
-    ecc_root = CertificateAuthority.objects.get(name="ecc.example.net")
+    ec_root = CertificateAuthority.objects.get(name="ecc.example.net")
     rsa_child = CertificateAuthority.objects.get(name="child.rsa.example.com")
     ecc_child = CertificateAuthority.objects.get(name="child.ecc.example.net")
 
 # we can only create certs for root CAs if we're not in the frontend environment
 if args.env != "frontend":
     rsa_root_cert = create_cert(rsa_root)
-    ecc_root_cert = create_cert(ecc_root)
+    ecc_root_cert = create_cert(ec_root)
 
 if args.env != "backend":
     rsa_child_cert = create_cert(rsa_child)

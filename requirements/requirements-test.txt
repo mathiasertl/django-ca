@@ -1,5 +1,4 @@
--r requirements-devscripts.txt
--r requirements-sphinx.txt
+-r requirements-dev-common.txt
 PyVirtualDisplay==3.0
 django-webtest==1.9.10
 freezegun==1.2.2

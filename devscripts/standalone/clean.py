@@ -21,7 +21,7 @@ import shutil
 from pathlib import Path
 
 
-def remove(path, dry):
+def remove(path: Path, dry: bool) -> None:
     """Remove a file/dir if it exists."""
     if not path.exists():
         return
@@ -36,7 +36,7 @@ def remove(path, dry):
             path.unlink()
 
 
-def cleanup(root, dry=False):
+def cleanup(root: Path, dry: bool = False) -> None:
     remove(root / "pip-selfcheck.json", dry=dry)
     remove(root / "geckodriver.log", dry=dry)
     remove(root / "docs/build", dry=dry)

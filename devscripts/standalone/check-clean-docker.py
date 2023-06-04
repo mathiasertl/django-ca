@@ -21,6 +21,7 @@ The script will output all unwanted files and exit with status code 1 if any are
 import argparse
 import sys
 from pathlib import Path
+from typing import List
 
 parser = argparse.ArgumentParser(description="Check that Docker image does not contain any unwanted files.")
 parser.add_argument(
@@ -58,7 +59,7 @@ patterns = [
 ]
 if not args.ignore_devscripts:
     patterns.append("devscripts")
-unwanted = []
+unwanted: List[Path] = []
 for pattern in patterns:
     unwanted += path.rglob(pattern)
 
