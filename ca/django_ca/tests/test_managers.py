@@ -243,9 +243,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_deprecated_parameters(self) -> None:
         """Test deprecated parameters."""
-        msg1 = r"^Argument permitted_subtrees is deprecated and will be removed in django ca 1\.26\.$"
-        msg2 = r"^Argument excluded_subtrees is deprecated and will be removed in django ca 1\.26\.$"
-        with self.assertCreateCASignals(), self.assertRemovedIn126Warning(msg1):
+        msg = r"^Argument permitted_subtrees is deprecated and will be removed in django ca 1\.26\.$"
+        with self.assertCreateCASignals(), self.assertRemovedIn126Warning(msg):
             ca = CertificateAuthority.objects.init(
                 self._testMethodName,
                 self.subject,

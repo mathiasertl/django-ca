@@ -18,7 +18,7 @@ ChangeLog
 * Add support for overriding the Authority Information Access, CRL Distribution Points and OCSP No Check
   extensions when creating end-entity certificates via the command-line.
 * Add a temporary pip extra ``psycopg3`` for using Psycopg 3. This extra will be removed once support for
-  Django 3.2 is removed.
+  Django 3.2 is removed. Psycopg 3 will be required in the ``postgres`` extra from then on.
 * Fix import parameters to :command:`manage.py import_ca`.
 * Further standardizing the command-line interface, some options for :command:`manage.py init_ca` and
   :command:`manage.py edit_ca` are renamed. See the :ref:`update notes <update_124>` for more information.
