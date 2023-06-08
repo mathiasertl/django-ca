@@ -46,22 +46,6 @@ django-ca   Python         Django             cryptography        Celery        
 Note that we don't deliberately break support for older versions, we merely stop testing it. You can try your
 luck with older versions.
 
-.. _cryptography_38_warning:
-
-Warning: cryptography version 38
---------------------------------
-
-While django-ca fully supports cryptography 38, a recent change in cryptography makes it incompatible with
-common versions of certbot (see cryptography issues `7231 <https://github.com/pyca/cryptography/issues/7231>`_
-and `7783 <https://github.com/pyca/cryptography/issues/7783>`_) as well as some other clients.
-
-At time of release, at least the certbot versions found in Ubuntu 22.04 LTS and earlier are affected. A bug in
-Launchpad has been filed (`#2004073 <https://bugs.launchpad.net/ubuntu/+source/python-acme/+bug/2004073>`_) to
-port the fix.
-
-At time of release, it is recommended you keep using cryptography 37. The tutorials have been updated to
-reflect that.
-
 ************
 Installation
 ************
@@ -80,10 +64,7 @@ To install django-ca with one or more extras, use the regular pip syntax:
 
 .. code-block:: console
 
-   user@host:~$ pip install django-ca[celery,redis] "cryptography<38"
-
-We use a ``"cryptography<38"`` to make sure django-ca works with common ACMEv2 clients, see
-:ref:`cryptography_38_warning`.
+   user@host:~$ pip install django-ca[celery,redis]
 
 *********************
 Initial configuration

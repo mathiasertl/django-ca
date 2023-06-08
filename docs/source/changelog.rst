@@ -145,11 +145,6 @@ Removed in ``django-ca==1.26.0``:
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
 
-   **Django app or source users:**
-
-   * Changes in cryptography 38 make it incompatible with common versions of certbot. See
-     :ref:`cryptography_38_warning`.
-
 * Add support for cryptography 39.0.
 * Add support for acme 2.2.0 and 2.3.0.
 * Add support for Ed448 and Ed25519 based certificate authorities.

@@ -90,10 +90,7 @@ environment. Several tools building on virtualenv exist (e.g. `pyenv <https://gi
    root@host:~# python3 -m venv /opt/django-ca/venv/
    root@host:~# /opt/django-ca/venv/bin/pip install -U pip setuptools
    root@host:~# /opt/django-ca/venv/bin/pip install -U PyYAML
-   root@host:~# /opt/django-ca/venv/bin/pip install -U -e /opt/django-ca/src/django-ca[postgres,acme,celery,redis] "cryptography<38"
-
-We use a ``"cryptography<38"`` to make sure django-ca works with common ACMEv2 clients, see
-:ref:`cryptography_38_warning`.
+   root@host:~# /opt/django-ca/venv/bin/pip install -U -e /opt/django-ca/src/django-ca[postgres,celery,redis]
 
 PostgreSQL database
 ===================
