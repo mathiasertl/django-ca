@@ -27,6 +27,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 
 from django.core.cache import cache
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from freezegun import freeze_time
@@ -435,6 +436,101 @@ class InitCATest(TestCaseMixin, TestCase):
             self.subject_alternative_name(
                 dns("san.example.com"), uri("https://san.example.net"), critical=True
             ),
+        )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_add_extensions_with_formatting(self) -> None:
+        """Test adding various extensions."""
+        root = self.load_ca("root")
+
+        ca = self.init_ca_e2e(
+            "extensions_with_formatting",
+            "/CN=extensions_with_formatting.example.com",
+            f"--parent={root.serial}",
+            "--ocsp-responder=https://example.com/ocsp/{OCSP_PATH}",
+            "--ca-issuer=https://example.com/ca-issuer/{CA_ISSUER_PATH}",
+            "--crl-full-name=http://example.com/crl/{CRL_PATH}",
+            "--crl-full-name=http://example.net/crl/{CRL_PATH}",
+            chain=[root],
+        )
+
+        extensions = ca.x509_extensions
+        ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": root.serial})
+        ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": root.serial})
+        crl_path = reverse("django_ca:ca-crl", kwargs={"serial": root.serial})
+
+        # Test AuthorityInformationAccess extension
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=False,
+                value=x509.AuthorityInformationAccess(
+                    [
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.OCSP,
+                            access_location=uri(f"https://example.com/ocsp{ocsp_path}"),
+                        ),
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                            access_location=uri(f"https://example.com/ca-issuer{ca_issuer_path}"),
+                        ),
+                    ]
+                ),
+            ),
+        )
+
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points(
+                [uri(f"http://example.com/crl{crl_path}"), uri(f"http://example.net/crl{crl_path}")]
+            ),
+        )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_add_extensions_with_formatting_without_uri(self) -> None:
+        """Test adding various extensions."""
+        root = self.load_ca("root")
+
+        ca = self.init_ca_e2e(
+            "extensions_with_formatting",
+            "/CN=extensions_with_formatting.example.com",
+            f"--parent={root.serial}",
+            "--ocsp-responder=DNS:example.com",
+            "--ca-issuer=DNS:example.net",
+            "--crl-full-name=DNS:crl.example.com",
+            "--crl-full-name=DNS:crl.example.net",
+            chain=[root],
+        )
+
+        extensions = ca.x509_extensions
+
+        # Test AuthorityInformationAccess extension
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=False,
+                value=x509.AuthorityInformationAccess(
+                    [
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.OCSP,
+                            access_location=dns("example.com"),
+                        ),
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                            access_location=dns("example.net"),
+                        ),
+                    ]
+                ),
+            ),
+        )
+
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([dns("crl.example.com"), dns("crl.example.net")]),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

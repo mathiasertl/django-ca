@@ -40,6 +40,14 @@ ParseType = typing.TypeVar("ParseType")  # pylint: disable=invalid-name
 ExtensionType = typing.TypeVar("ExtensionType", bound=x509.ExtensionType)  # pylint: disable=invalid-name
 
 
+def general_name_type(value: str) -> x509.GeneralName:
+    """Wrapper function to parse_general_name() that sets a name."""
+    return parse_general_name(value)
+
+
+general_name_type.__name__ = "general name"
+
+
 class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], metaclass=abc.ABCMeta):
     """Abstract/generic base class for arguments that take a single value.
 
@@ -628,7 +636,7 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
 
     def __init__(self, access_method: x509.ObjectIdentifier, **kwargs: Any) -> None:
         self.access_method = access_method
-        kwargs["type"] = parse_general_name
+        kwargs["type"] = general_name_type
         kwargs["metavar"] = ("NAME",)
         super().__init__(**kwargs)
 

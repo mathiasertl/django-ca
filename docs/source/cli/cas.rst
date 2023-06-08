@@ -189,16 +189,26 @@ itself, making such an OCSP request pointless.
 :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is configured, so usually you do not have to add
 this extension manually.
 
-You can manually add OCSP responders or CA Issuers instead of the default ones using the ``--ca-issuer`` and
+You can manually add OCSP responders or CA Issuers *instead* of the default ones using the ``--ca-issuer`` and
 ``--ocsp-responder`` options::
 
     $ python manage.py init_ca \
     >     --ca-issuer http://issuer.example.com \
-    >     --ocsp-repsonder http://ocsp.example.com \
+    >     --ocsp-responder http://ocsp.example.com \
     >     ...
 
 Each option can be given multiple times. These options will disable the default values added to intermediate
 CAs.
+
+:ref:`cli_cas_string_formatting` can be used in this extension. To use the default URIs in addition to your
+own endpoints, you can use the ``CA_ISSUER_PATH`` and ``OCSP_PATH`` variables::
+
+    $ python manage.py init_ca \
+    >     --ca-issuer http://example.com/{CA_ISSUER_PATH} \
+    >     --ca-issuer ... \
+    >     --ocsp-responder http://example.com/{OCSP_PATH} \
+    >     --ocsp-responder ... \
+    >     ...
 
 .. _cli_cas_basic_constraints:
 
@@ -286,7 +296,15 @@ If you need to specify your own CRL endpoint(s), you can use the ``--crl-full-na
 This will add a single Distribution Point with two URLs. Other, more complex configurations are not supported
 via the command-line.
 
-Manually adding a CRL via the command line will disable the default CRL added to intermediate CAs.
+:ref:`cli_cas_string_formatting` can be used in this extension. To use the default URIs in addition to your
+own endpoints, you can use the ``CRL_PATH`` variable::
+
+    $ python manage.py init_ca \
+    >     --crl-full-name http://example.com/{CRL_PATH} \
+    >     --crl-full-name ... \
+    >     ...
+
+Manually adding a CRL via the command-line will disable the default CRL added to intermediate CAs.
 
 Extended Key Usage
 ------------------
@@ -434,6 +452,45 @@ any certificate signed by it (or any intermediate CA) will also have to set ``st
 You can set the TLS Feature extension with ``--tls-feature``::
 
     $ python manage.py init_ca NameOfCA /CN=example.com --tls-feature status_request ...
+
+.. _cli_cas_string_formatting:
+
+String formatting in URIs
+-------------------------
+
+For some extensions, you can apply string formatting operations to URIs to create URIs that contain the serial
+(or other dynamic values) of the certificate you about to create.
+
+.. NOTE:: String formatting is only available in URIs, and only in the extensions where noted.
+
+String formatting is available for Authority Information Access and the CRL Distribution Points extension. The
+strings are passed to ``str.format()``, so you can use any feature of the `Format String Syntax
+<https://docs.python.org/3/library/string.html#formatstrings>`_.
+
+For example, if you want to create a certificate authority that specifies the default CA Issuer URI in its
+Authority Information Access extension, but also specifies a second URI that includes its own serial::
+
+    $ python manage.py init_ca \
+    >     --ca-issuer http://example.com/{CA_ISSUER_PATH} \
+    >     --ca-issuer http://ca-issuer.example.com/{SERIAL}/ \
+    >     --parent 00:11:22... \
+    >     NameOfCA /CN=example.com
+
+The following variables are available:
+
+======================== ====================================================================================
+Variable                 Description
+======================== ====================================================================================
+SERIAL                   Serial (as ``int``) of the certificate (CA or end entity) that is created.
+SERIAL_HEX               Same as ``SERIAL``, but in hex form (e.g. ``aabbcc...``).
+SERIAL_HEX_COLONS        Same as ``SERIAL`` but in colon hex-form (e.g. ``aa:bb:cc:...``).
+SIGNER_SERIAL            Serial (as ``int``) of the CA that will sign the certificate.
+SIGNER_SERIAL_HEX        Same as ``SIGNER_SERIAL``, but in hex form (e.g. ``aabbcc...``).
+SIGNER_SERIAL_HEX_COLONS Same as ``SIGNER_SERIAL_HEX`` but in colon hex-form (e.g. ``aa:bb:cc:...``).
+CA_ISSUER_PATH           The URL path (*without* a leading slash) to the CA issuer URL provided by django-ca.
+OCSP_PATH                The URL path (*without* a leading slash) to the OCSP URL provided by django-ca.
+CRL_PATH                 The URL path (*without* a leading slash) to the CRL URL provided by django-ca.
+======================== ====================================================================================
 
 Mark extensions as (non-)critical
 ---------------------------------

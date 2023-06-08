@@ -37,7 +37,7 @@ from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ExtensionMapping
-from django_ca.utils import add_colons, format_name, parse_general_name
+from django_ca.utils import add_colons, format_name
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -294,7 +294,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             "--crl-full-name",
             *extra_args,
             dest="crl_full_names",
-            type=parse_general_name,
+            type=actions.general_name_type,
             action="append",
             metavar="NAME",
             help=help_text,

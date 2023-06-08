@@ -17,6 +17,8 @@ ChangeLog
   extensions when creating certificate authorities.
 * Add support for overriding the Authority Information Access, CRL Distribution Points and OCSP No Check
   extensions when creating end-entity certificates via the command-line.
+* Add support for string formatting operations on URL paths (see :ref:`cli_cas_string_formatting`) in
+  Authority Information Access and CRL Distribution Point extensions.
 * Add a temporary pip extra ``psycopg3`` for using Psycopg 3. This extra will be removed once support for
   Django 3.2 is removed. Psycopg 3 will be required in the ``postgres`` extra from then on.
 * Fix import parameters to :command:`manage.py import_ca`.
@@ -52,11 +54,6 @@ Deprecation notices
 *******************
 
 .. WARNING::
-
-   **Django app or source users:**
-
-   Changes in cryptography 38 make it incompatible with common versions of certbot. See
-   :ref:`cryptography_38_warning`.
 
    **docker or source users that do *not* use PostgreSQL:**
 
@@ -112,8 +109,7 @@ Deprecation notices
 
 Removed in ``django-ca==1.25.0``:
 
-* This is the last release to support acme 2.3.0 and cryptography 38 (cryptography 37 is still supported, see
-  :ref:`cryptography_38_warning`).
+* This is the last release to support acme 2.3.0 and cryptography 38.
 * Support for the ``CA_DIGEST_ALGORITHM`` setting, use ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM`` instead.
 * Support for the ``CA_DEFAULT_ECC_CURVE`` setting, use ``CA_DEFAULT_ELLIPTIC_CURVE`` instead.
 * Support for non-standard algorithm names (e.g. ``sha512``, use ``SHA-512`` instead).
@@ -137,13 +133,6 @@ Removed in ``django-ca==1.26.0``:
 *******************
 1.23.0 (2023-02-18)
 *******************
-
-.. WARNING::
-
-   **docker-compose users:**
-
-   * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
-     volumes.
 
 * Add support for cryptography 39.0.
 * Add support for acme 2.2.0 and 2.3.0.
@@ -230,11 +219,6 @@ Backwards incompatible changes
 
    * Update from 1.20 or earlier? See :ref:`the update notes <update_121-docker-compose>` to switch to named
      volumes.
-
-   **Django app or source users:**
-
-   * Changes in cryptography 38 make it incompatible with common versions of certbot. See
-     :ref:`cryptography_38_warning`.
 
 * Add support for Python 3.11, Alpine 3.17, Django 4.1, cryptography 38.0 and acme 2.0.
 * Support for MD5 and SHA1 hashes is removed, as they are no longer supported in upcoming releases of

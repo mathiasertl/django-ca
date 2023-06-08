@@ -21,6 +21,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase, override_settings
+from django.urls import reverse
 
 from freezegun import freeze_time
 
@@ -192,6 +193,82 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             self.ext(x509.InhibitAnyPolicy(3)),
         ]
         self.assertExtensions(ca, expected)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_formatting(self) -> None:
+        """Test passing extensions that are formatted."""
+        parent = self.load_ca("root")
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        passed_extensions: List[x509.Extension[x509.ExtensionType]] = [
+            self.authority_information_access(
+                [uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")],
+                [uri("https://example.com/ocsp/{OCSP_PATH}")],
+            ),
+            self.crl_distribution_points([uri("http://example.com/crl/{CRL_PATH}")]),
+        ]
+
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(
+                "formatting", subject, parent=parent, extensions=passed_extensions
+            )
+
+        extensions = ca.x509_extensions
+        ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": parent.serial})
+        ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": parent.serial})
+        crl_path = reverse("django_ca:ca-crl", kwargs={"serial": parent.serial})
+
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                [uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
+                [uri(f"https://example.com/ocsp{ocsp_path}")],
+            ),
+        )
+
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points([uri(f"http://example.com/crl{crl_path}")]),
+        )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_formatting_no_uri(self) -> None:
+        """Test passing extensions with values that cannot be formatted."""
+        parent = self.load_ca("root")
+
+        aia = self.authority_information_access([dns("ca-issuer.example.com")], [dns("ocsp.example.com")])
+        crldp = self.crl_distribution_points([dns("crl.example.com")])
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        passed_extensions: List[x509.Extension[x509.ExtensionType]] = [aia, crldp]
+
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(
+                "formatting", subject, parent=parent, extensions=passed_extensions
+            )
+
+        extensions = ca.x509_extensions
+        self.assertEqual(extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], aia)
+        self.assertEqual(extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], crldp)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_formatting_with_rdn_in_crldp(self) -> None:
+        """Test passing a relative distinguished name in the CRL Distribution Points extension."""
+        parent = self.load_ca("root")
+
+        crldp = self.crl_distribution_points(
+            relative_name=x509.RelativeDistinguishedName(
+                [x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]
+            )
+        )
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        passed_extensions: List[x509.Extension[x509.ExtensionType]] = [crldp]
+
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(
+                "formatting-rdn", subject, parent=parent, extensions=passed_extensions
+            )
+
+        extensions = ca.x509_extensions
+        self.assertEqual(extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], crldp)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_extensions(self) -> None:
