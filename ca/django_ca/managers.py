@@ -260,7 +260,9 @@ class CertificateAuthorityManager(
             access_descriptions = list(extension)
 
         has_ocsp = any(ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions)
-        has_issuer = any(ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions)
+        has_issuer = any(
+            ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS for ad in access_descriptions
+        )
 
         if ca_issuer_url and has_issuer is False:
             access_descriptions += [

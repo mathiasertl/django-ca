@@ -751,19 +751,14 @@ class InitCATest(TestCaseMixin, TestCase):
             child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             self.crl_distribution_points([crl_full_name]),
         )
-        expected = x509.Extension(
-            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-            critical=False,
-            value=x509.AuthorityInformationAccess(
-                [
-                    x509.AccessDescription(
-                        access_method=AuthorityInformationAccessOID.OCSP,
-                        access_location=uri("http://passed.ca.ocsp.example.com"),
-                    )
-                ]
+        ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": parent.serial})
+        self.assertEqual(
+            child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{ca_issuer_path}")],
+                ocsp=[uri("http://passed.ca.ocsp.example.com")],
             ),
         )
-        self.assertEqual(child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], expected)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self) -> None:  # pylint: disable=too-many-statements
