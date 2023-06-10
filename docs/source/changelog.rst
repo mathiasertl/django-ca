@@ -10,7 +10,7 @@ ChangeLog
 1.25.0 (TBR)
 ************
 
-* Add support for cryptography 41 and acme 2.6.0.
+* Add support for cryptography 41, acme 2.6.0 and celery 5.3.
 * Add support for adding the Certificate Policy and Issuer Alternative Name extensions when creating
   certificate authorities or end-entity certificates via the command-line.
 * Add support for adding the Extended Key Usage, Issuer Alternative Name and Subject Alternative Name
