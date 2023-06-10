@@ -155,7 +155,7 @@ ParsablePolicyInformation = typing.TypedDict(
 PolicyQualifier = Union[str, x509.UserNotice]
 
 ExtensionTypeTypeVar = typing.TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
-"""A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
+# """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
 
 ParsableExtension = typing.TypedDict(
     "ParsableExtension",

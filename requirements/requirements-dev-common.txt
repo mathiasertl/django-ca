@@ -2,11 +2,10 @@
 GitPython==3.1.31
 Jinja2==3.1.2
 PyYAML==6.0
-# Upgrade to Spinx 6.0 is blocked by celery<5.3:
-#   https://github.com/celery/celery/pull/7978
-# Upgrade to Sphinx 6.0 is blocked by sphinx_rtd_theme docutils==1.2.0 support:
+# sphinx_rtd_theme==1.2.2 requires Sphinx<7:
+#   https://github.com/readthedocs/sphinx_rtd_theme/issues/1463
 #   https://github.com/readthedocs/sphinx_rtd_theme/issues/1323
-Sphinx<6
+Sphinx<7
 coverage[toml]==7.2.7
 semantic-version==2.10.0
 tabulate==0.9.0

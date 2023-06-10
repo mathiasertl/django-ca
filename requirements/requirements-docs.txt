@@ -1,6 +1,9 @@
 -r requirements-dev-common.txt
+# doc8==1.0.0 and later requires docutils>19, but sphinx-rtd-theme==1.2.2
+# requires docutils<19, changes in doc8 are minimal:
+#   https://github.com/readthedocs/sphinx_rtd_theme/issues/1323
 doc8==0.11.2
 numpydoc==1.5.0
 sphinx-jinja==2.0.2
-sphinx_rtd_theme==1.2.0
+sphinx_rtd_theme==1.2.2
 sphinxcontrib-spelling==8.0.0

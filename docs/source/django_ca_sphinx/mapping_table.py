@@ -20,7 +20,7 @@ from collections.abc import Mapping
 from typing import Any, Optional
 
 from docutils.statemachine import StringList
-from sphinx.ext.autodoc import DataDocumenter
+from sphinx.ext.autodoc import DataDocumenter, ObjectMembers
 from tabulate import tabulate
 
 from cryptography import x509
@@ -38,6 +38,9 @@ class MappingDocumentor(DataDocumenter):
     # NOTE: we want this to be LOWER, because otherwise the class-documentor will use this class for **any**
     # attribute that gets documented via the :members: directive.
     priority = DataDocumenter.priority - 10
+
+    def get_object_members(self, want_all: bool) -> tuple[bool, ObjectMembers]:
+        return False, []  # type: ignore[return-value]
 
     @classmethod
     def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
