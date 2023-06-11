@@ -297,7 +297,7 @@ This will add a single Distribution Point with two URLs. Other, more complex con
 via the command-line.
 
 :ref:`cli_cas_string_formatting` can be used in this extension. To use the default URIs in addition to your
-own endpoints, you can use the ``CRL_PATH`` variable::
+own endpoint(s), you can use the ``CRL_PATH`` variable::
 
     $ python manage.py init_ca \
     >     --crl-full-name http://example.com/{CRL_PATH} \

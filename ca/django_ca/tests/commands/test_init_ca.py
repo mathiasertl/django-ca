@@ -462,21 +462,9 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test AuthorityInformationAccess extension
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=False,
-                value=x509.AuthorityInformationAccess(
-                    [
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.OCSP,
-                            access_location=uri(f"https://example.com/ocsp{ocsp_path}"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                            access_location=uri(f"https://example.com/ca-issuer{ca_issuer_path}"),
-                        ),
-                    ]
-                ),
+            self.authority_information_access(
+                ca_issuers=[uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
+                ocsp=[uri(f"https://example.com/ocsp{ocsp_path}")],
             ),
         )
 

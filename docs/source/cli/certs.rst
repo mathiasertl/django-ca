@@ -67,7 +67,7 @@ Profiles
 ========
 
 Use :doc:`profiles </profiles>` to configure how your certificates can be used. You can set a profile by
-simply passing it via the command line. For example, to use the **client** profile:
+simply passing it via the command-line. For example, to use the **client** profile:
 
 .. code-block:: console
 
@@ -169,13 +169,21 @@ You can add custom extensions to the certificate in the command-line. The syntax
 in the context of an end-entity certificate (for example, RFC 5280 specifies that the Name Constraints
 extension can occur only in CA certificates).
 
-When you add extensions via the command line, they will override any extension set by profiles or by the
+When you add extensions via the command-line, they will override any extension set by profiles or by the
 certificate authority. For example, to set a custom OCSP responder in a certificate::
 
     $ python manage.py sign_cert --ocsp-responder http://ocsp.example.com ...
 
 Note again that this will disable the OCSP responder that usually would be set based on the certificate
 authority.
+
+:ref:`cli_cas_string_formatting` can be used in the same way as with certificate authorities. For example, to
+use the default URIs in addition to your own endpoint(s), you can use the ``CRL_PATH`` variable::
+
+    $ python manage.py sign_cert \
+    >     --crl-full-name http://example.com/{CRL_PATH} \
+    >     --crl-full-name ... \
+    >     ...
 
 *******************
 Revoke certificates

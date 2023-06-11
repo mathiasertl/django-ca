@@ -22,10 +22,13 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
+from django.urls import reverse
+
 from django_ca import ca_settings, constants, typehints
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
 from django_ca.deprecation import RemovedInDjangoCA127Warning
 from django_ca.extensions import parse_extension, serialize_extension
+from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
@@ -313,6 +316,13 @@ class Profile:
         ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
+        serial = x509.random_serial_number()
+        signer_serial = ca.pub.loaded.serial_number
+        context = self._get_formatting_context(serial, signer_serial)
+        format_extensions(cert_extensions, context)
+
+        extensions = list(cert_extensions.values())
+
         pre_sign_cert.send(
             sender=self.__class__,
             ca=ca,
@@ -325,12 +335,12 @@ class Profile:
         )
 
         public_key = csr.public_key()
-        builder = get_cert_builder(expires)
+        builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(ca.subject)
         builder = builder.subject_name(subject)
 
-        for _key, extension in cert_extensions.items():
+        for extension in extensions:
             builder = builder.add_extension(extension.value, critical=extension.critical)
 
         # Add the SubjectKeyIdentifier
@@ -340,6 +350,13 @@ class Profile:
             )
 
         return builder.sign(private_key=ca.key(password), algorithm=algorithm)
+
+    def _get_formatting_context(self, serial: int, signer_serial: int) -> Dict[str, Union[str, int]]:
+        context = get_formatting_context(serial, signer_serial)
+        kwargs = {"serial": context["SIGNER_SERIAL_HEX"]}
+        context["OCSP_PATH"] = reverse("django_ca:ocsp-cert-post", kwargs=kwargs).lstrip("/")
+        context["CRL_PATH"] = reverse("django_ca:crl", kwargs=kwargs).lstrip("/")
+        return context
 
     def get_expires(self, expires: Expires) -> datetime:
         """Get expiry for the given expiry timestamp."""

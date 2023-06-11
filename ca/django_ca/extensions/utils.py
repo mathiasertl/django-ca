@@ -13,15 +13,19 @@
 
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
-from typing import Iterator, Tuple
+import typing
+from typing import Dict, Iterator, List, Tuple, Union
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
+from cryptography.x509.oid import ExtensionOID
 
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 from django_ca.constants import KEY_USAGE_NAMES
-from django_ca.utils import bytes_to_hex
+from django_ca.typehints import ExtensionMapping
+from django_ca.utils import add_colons, bytes_to_hex, int_to_hex
 
 
 def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
@@ -53,3 +57,76 @@ def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> Tupl
     else:  # pragma: no cover  # We support everything that has been specified so far
         entry_type = "unknown"
     return entry_type, sct.version.name, bytes_to_hex(sct.log_id), sct.timestamp.isoformat(" ")
+
+
+def get_formatting_context(serial: int, signer_serial: int) -> Dict[str, Union[int, str]]:
+    """Get the context for formatting extensions."""
+    hex_serial = int_to_hex(serial)
+    signer_serial_hex = int_to_hex(signer_serial)
+    return {
+        "SERIAL": serial,
+        "SERIAL_HEX": hex_serial,
+        "SERIAL_HEX_COLONS": add_colons(hex_serial),
+        "SIGNER_SERIAL": signer_serial,
+        "SIGNER_SERIAL_HEX": signer_serial_hex,
+        "SIGNER_SERIAL_HEX_COLONS": add_colons(signer_serial_hex),
+        "CA_ISSUER_PATH": reverse("django_ca:issuer", kwargs={"serial": signer_serial_hex}).lstrip("/"),
+    }
+
+
+def format_general_name(name: x509.GeneralName, context: Dict[str, Union[str, int]]) -> x509.GeneralName:
+    """Format a general name (currently only operating on UniformResourceIdentifier)."""
+    if isinstance(name, x509.UniformResourceIdentifier):
+        return x509.UniformResourceIdentifier(name.value.format(**context))
+    return name
+
+
+def format_extensions(extensions: ExtensionMapping, context: Dict[str, Union[str, int]]) -> None:
+    """Format extensions based on the given context."""
+    if ExtensionOID.AUTHORITY_INFORMATION_ACCESS in extensions:
+        authority_information_access = typing.cast(
+            x509.Extension[x509.AuthorityInformationAccess],
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+        )
+
+        access_descriptions = [
+            x509.AccessDescription(
+                access_method=ad.access_method,
+                access_location=format_general_name(ad.access_location, context),
+            )
+            for ad in authority_information_access.value
+        ]
+        extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=authority_information_access.critical,
+            value=x509.AuthorityInformationAccess(access_descriptions),
+        )
+
+    if ExtensionOID.CRL_DISTRIBUTION_POINTS in extensions:
+        crl_distribution_points = typing.cast(
+            x509.Extension[x509.CRLDistributionPoints],
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+        )
+
+        distribution_points: List[x509.DistributionPoint] = []
+
+        distribution_point: x509.DistributionPoint
+        for distribution_point in crl_distribution_points.value:
+            if distribution_point.full_name is None:
+                distribution_points.append(distribution_point)
+            else:
+                names = [format_general_name(name, context) for name in distribution_point.full_name]
+                distribution_points.append(
+                    x509.DistributionPoint(
+                        full_name=names,
+                        relative_name=None,
+                        reasons=distribution_point.reasons,
+                        crl_issuer=distribution_point.crl_issuer,
+                    )
+                )
+
+        extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
+            oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            critical=crl_distribution_points.critical,
+            value=x509.CRLDistributionPoints(distribution_points),
+        )

@@ -27,6 +27,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsag
 
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from freezegun import freeze_time
@@ -582,6 +583,53 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
             self.subject_alternative_name(uri("https://example.net"), dns(self.hostname), critical=True),
+        )
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_add_extensions_with_formatting(self) -> None:
+        """Test adding various extensions."""
+
+        stdin = self.csr_pem.encode()
+        cmdline = [
+            "sign_cert",
+            f"--subject=/CN={self.hostname}",
+            f"--ca={self.ca.serial}",
+            "--ocsp-responder=https://example.com/ocsp/{OCSP_PATH}",
+            "--ca-issuer=https://example.com/ca-issuer/{CA_ISSUER_PATH}",
+            "--crl-full-name=http://example.com/crl/{CRL_PATH}",
+            "--crl-full-name=http://example.net/crl/{CRL_PATH}",
+        ]
+
+        with self.assertCreateCertSignals() as (pre, post):
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+        self.assertEqual(stderr, "")
+
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(cert.pub.loaded.subject, self.subject)
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
+
+        extensions = cert.x509_extensions
+        ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": self.ca.serial})
+        ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": self.ca.serial})
+        crl_path = reverse("django_ca:crl", kwargs={"serial": self.ca.serial})
+
+        # Test AuthorityInformationAccess extension
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
+                ocsp=[uri(f"https://example.com/ocsp{ocsp_path}")],
+            ),
+        )
+
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            self.crl_distribution_points(
+                [uri(f"http://example.com/crl{crl_path}"), uri(f"http://example.net/crl{crl_path}")]
+            ),
         )
 
     @override_tmpcadir()

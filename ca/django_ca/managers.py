@@ -31,6 +31,7 @@ from django.urls import reverse
 
 from django_ca import ca_settings, constants
 from django_ca.deprecation import RemovedInDjangoCA126Warning, deprecate_argument, deprecate_type
+from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
@@ -122,77 +123,6 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
         def valid(self) -> QuerySetTypeVar:
             ...
 
-    def _get_context(self, serial: int, signer_serial: int) -> Dict[str, Union[int, str]]:
-        hex_serial = int_to_hex(serial)
-        signer_serial_hex = int_to_hex(signer_serial)
-        return {
-            "SERIAL": serial,
-            "SERIAL_HEX": hex_serial,
-            "SERIAL_HEX_COLONS": add_colons(hex_serial),
-            "SIGNER_SERIAL": signer_serial,
-            "SIGNER_SERIAL_HEX": signer_serial_hex,
-            "SIGNER_SERIAL_HEX_COLONS": add_colons(signer_serial_hex),
-            "CA_ISSUER_PATH": reverse("django_ca:issuer", kwargs={"serial": signer_serial_hex}).lstrip("/"),
-        }
-
-    def _format_general_name(
-        self, name: x509.GeneralName, context: Dict[str, Union[str, int]]
-    ) -> x509.GeneralName:
-        if isinstance(name, x509.UniformResourceIdentifier):
-            return x509.UniformResourceIdentifier(name.value.format(**context))
-        return name
-
-    def _format_extensions(self, extensions: ExtensionMapping, context: Dict[str, Union[str, int]]) -> None:
-        if ExtensionOID.AUTHORITY_INFORMATION_ACCESS in extensions:
-            authority_information_access = typing.cast(
-                x509.Extension[x509.AuthorityInformationAccess],
-                extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            )
-
-            access_descriptions = [
-                x509.AccessDescription(
-                    access_method=ad.access_method,
-                    access_location=self._format_general_name(ad.access_location, context),
-                )
-                for ad in authority_information_access.value
-            ]
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=authority_information_access.critical,
-                value=x509.AuthorityInformationAccess(access_descriptions),
-            )
-
-        if ExtensionOID.CRL_DISTRIBUTION_POINTS in extensions:
-            crl_distribution_points = typing.cast(
-                x509.Extension[x509.CRLDistributionPoints],
-                extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            )
-
-            distribution_points: List[x509.DistributionPoint] = []
-
-            distribution_point: x509.DistributionPoint
-            for distribution_point in crl_distribution_points.value:
-                if distribution_point.full_name is None:
-                    distribution_points.append(distribution_point)
-                else:
-                    names = [
-                        self._format_general_name(name, context) for name in distribution_point.full_name
-                    ]
-                    distribution_points.append(
-                        x509.DistributionPoint(
-                            full_name=names,
-                            relative_name=None,
-                            reasons=distribution_point.reasons,
-                            crl_issuer=distribution_point.crl_issuer,
-                        )
-                    )
-
-            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
-                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                critical=crl_distribution_points.critical,
-                value=x509.CRLDistributionPoints(distribution_points),
-            )
-
     def get_common_extensions(
         self, crl_url: Optional[Iterable[str]] = None
     ) -> List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]]:
@@ -239,8 +169,8 @@ class CertificateAuthorityManager(
         def usable(self) -> "CertificateAuthorityQuerySet":
             ...
 
-    def _get_context(self, serial: int, signer_serial: int) -> Dict[str, Union[int, str]]:
-        context = super()._get_context(serial, signer_serial)
+    def _get_formatting_context(self, serial: int, signer_serial: int) -> Dict[str, Union[int, str]]:
+        context = get_formatting_context(serial, signer_serial)
         kwargs = {"serial": context["SIGNER_SERIAL_HEX"]}
         context["OCSP_PATH"] = reverse("django_ca:ocsp-ca-post", kwargs=kwargs).lstrip("/")
         context["CRL_PATH"] = reverse("django_ca:ca-crl", kwargs=kwargs).lstrip("/")
@@ -497,7 +427,7 @@ class CertificateAuthorityManager(
         else:
             signer_serial = serial
 
-        context = self._get_context(serial, signer_serial)
+        context = self._get_formatting_context(serial, signer_serial)
 
         # If there is a default hostname, use it to compute some URLs from that
         if isinstance(default_hostname, str) and default_hostname != "":
@@ -527,7 +457,7 @@ class CertificateAuthorityManager(
         self._handle_authority_information_access(extensions_dict, ca_issuer_url, ca_ocsp_url)
 
         # Format extension values
-        self._format_extensions(extensions_dict, context)
+        format_extensions(extensions_dict, context)
 
         # Cast extensions_dict back to list, so that signal handler receives the same type as the method
         # itself. This has the added bonus of signal handlers being able to influence the extension order.
