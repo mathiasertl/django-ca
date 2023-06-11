@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Add support for cryptography 41, acme 2.6.0 and celery 5.3.
+* Update the Docker image to use Alpine Linux 3.18.
 * Add support for adding the Certificate Policy and Issuer Alternative Name extensions when creating
   certificate authorities or end-entity certificates via the command-line.
 * Add support for adding the Extended Key Usage, Issuer Alternative Name and Subject Alternative Name
