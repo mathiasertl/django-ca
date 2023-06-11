@@ -47,6 +47,8 @@ Deprecation notices
 * This is the last release to support acme 2.4.0.
 * This is the last release to support celery 5.1.
 * Support for non-standard algorithm names in profile settings will be removed in django-ca 1.27.0.
+* Several options :command:`manage.py init_ca` and :command:`manage.py edit_ca` are renamed, old options
+  will be removed in django-ca 1.27.0. See the :ref:`update notes <update_124>` for more information.
 
 .. _changelog-1.24.0:
 
