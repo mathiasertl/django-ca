@@ -88,9 +88,23 @@ environment. Several tools building on virtualenv exist (e.g. `pyenv <https://gi
 .. code-block:: console
 
    root@host:~# python3 -m venv /opt/django-ca/venv/
-   root@host:~# /opt/django-ca/venv/bin/pip install -U pip setuptools
-   root@host:~# /opt/django-ca/venv/bin/pip install -U PyYAML
-   root@host:~# /opt/django-ca/venv/bin/pip install -U -e /opt/django-ca/src/django-ca[postgres,celery,redis]
+   root@host:~# /opt/django-ca/venv/bin/pip install -U \
+   >    pip setuptools wheel
+   root@host:~# /opt/django-ca/venv/bin/pip install -U \
+   >    -e /opt/django-ca/src/django-ca[postgres,celery,redis,yaml]
+
+Alternatively, you can also use a pinned set of requirements created at the time of release by replacing the
+last command with:
+
+.. code-block:: console
+
+   root@host:~# /opt/django-ca/venv/bin/pip install -U \
+   >     -r /opt/django-ca/src/django-ca/requirements/requirements-pinned.txt \
+   >     -e /opt/django-ca/src/django-ca
+
+Both commands will install PostgreSQL support, but *not* install MySQL support. If you want to use MySQL,
+install the ``mysql`` extra.
+
 
 PostgreSQL database
 ===================

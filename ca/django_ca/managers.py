@@ -44,12 +44,10 @@ from django_ca.typehints import (
     X509CertMixinTypeVar,
 )
 from django_ca.utils import (
-    add_colons,
     ca_storage,
     format_general_name,
     generate_private_key,
     get_cert_builder,
-    int_to_hex,
     parse_expires,
     parse_general_name,
     validate_hostname,

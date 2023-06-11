@@ -20,6 +20,23 @@ Run these steps when you begin to create a new release:
 * Run :command:`./dev.py validate state` and fix any errors.
 * Update version in ``ca/django_ca/__init__.py``.
 
+Pin requirements
+================
+
+Create a file with pinned requirements, so that users can reliably reproduce a
+setup::
+
+   $ python -m venv venv
+   $ venv/bin/pip install -U pip setuptools wheel
+   $ venv/bin/pip install -e .[celery,redis,psycopg3,yaml]
+   $ venv/bin/pip freeze | grep -v django-ca > requirements/requirements-pinned.txt
+
+... and then copy that file to the archive::
+
+   $ mkdir docs/source/_files/$version/
+   $ cp requirements/requirements-pinned.txt \
+   >     docs/source/_files/$version/requirements.txt
+
 docker-compose
 ==============
 

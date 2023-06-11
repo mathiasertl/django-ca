@@ -24,11 +24,11 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pi
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY setup.cfg setup.py pyproject.toml ./
 COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
-# NOTE: pinning cryptography to <38, version 38 implements CSR version validation
 RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
-        -e .[celery,acme,redis,mysql,psycopg3]
+        -r requirements/requirements-pinned.txt \
+        -e .[celery,redis,mysql,psycopg3,yaml]
 
 
 # Finally, copy sources

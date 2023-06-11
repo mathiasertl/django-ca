@@ -17,7 +17,7 @@
 """
 
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from docutils.statemachine import StringList
 from sphinx.ext.autodoc import DataDocumenter, ObjectMembers
@@ -39,7 +39,7 @@ class MappingDocumentor(DataDocumenter):
     # attribute that gets documented via the :members: directive.
     priority = DataDocumenter.priority - 10
 
-    def get_object_members(self, want_all: bool) -> tuple[bool, ObjectMembers]:
+    def get_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:
         return False, []  # type: ignore[return-value]
 
     @classmethod
