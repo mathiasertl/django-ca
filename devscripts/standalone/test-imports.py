@@ -162,4 +162,8 @@ if "redis" in args.extra:
 if "mysql" in args.extra:
     import MySQLdb
 if "postgres" in args.extra:
-    import psycopg2
+    try:
+        import psycopg
+        import psycopg_c
+    except ImportError:
+        import psycopg2
