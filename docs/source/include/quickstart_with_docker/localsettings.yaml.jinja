@@ -14,7 +14,7 @@ CACHES:
         BACKEND: django.core.cache.backends.redis.RedisCache
         LOCATION: redis://{{ redis_host }}:6379
         OPTIONS:
-            DB: "1"
+            db: "1"
 
 # django-ca will use Celery as an asynchronous task worker
 CELERY_BROKER_URL: redis://{{ redis_host }}:6379/0

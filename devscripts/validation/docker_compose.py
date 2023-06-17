@@ -182,6 +182,17 @@ def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
     ok("CRL and OCSP validation works.")
 
 
+def _test_connectivity(standalone_dir: Path) -> int:
+    standalone_dest = "/usr/src/django-ca/ca/"
+    cwd_basename = os.path.basename(os.getcwd())
+
+    for typ in ["backend", "frontend"]:
+        container = f"{cwd_basename}-{typ}-1"
+        docker_cp(str(standalone_dir / "test-connectivity.py"), container, standalone_dest)
+        _compose_exec(typ, "./test-connectivity.py")
+    return ok("Tested connectivity.")
+
+
 def _sign_certificates(csr: str) -> str:
     # Sign some certs in the backend
     cert_subject = _sign_cert("backend", "Root", csr)
@@ -204,6 +215,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements
     """Validate the docker compose quickstart tutorial."""
     info("Validating tutorial...")
     errors = 0
+    standalone_dir = config.ROOT_DIR / "devscripts" / "standalone"
     docker_compose_yml = config.ROOT_DIR / "docker-compose.yml"
     if not docker_compose_yml.exists():
         return err(f"{docker_compose_yml}: File not found.")
@@ -262,6 +274,9 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements
 
             # Validate that the secret keys match
             errors += _validate_secret_key()
+
+            # Test connectivity
+            errors += _test_connectivity(standalone_dir)
 
             # Test that HTTPS connection and admin interface is working:
             resp = requests.get("https://localhost/admin/", verify=str(ca_pub), timeout=10)

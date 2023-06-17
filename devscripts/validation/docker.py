@@ -14,6 +14,7 @@
 """Functions for validating the Docker image and the respective tutorial."""
 
 import os
+import pathlib
 
 from devscripts import config, utils
 from devscripts.out import err, info, ok
@@ -78,6 +79,18 @@ def _test_clean(docker_tag: str) -> int:
     return ok("Docker image is clean.")
 
 
+def _test_connectivity(src: pathlib.Path) -> int:
+    standalone_dest = "/usr/src/django-ca/ca/"
+    script_name = "test-connectivity.py"
+    script_path = os.path.join(standalone_dest, script_name)
+
+    for container in ["frontend", "backend"]:
+        docker_cp(str(src / script_name), container, standalone_dest)
+        utils.docker_exec("frontend", script_path)
+
+    return ok("Tested connectivity.")
+
+
 def docker_cp(src: str, container: str, dest: str) -> None:
     """Copy file into the container."""
     utils.run(["docker", "cp", src, f"{container}:{dest}"])
@@ -102,6 +115,7 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
     print("Validating Docker image...")
 
     errors = 0
+    standalone_src = pathlib.Path().absolute() / "devscripts" / "standalone"
     project_config = config.get_project_config()
 
     _test_clean(docker_tag)
@@ -130,6 +144,8 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
         with tut.run("start-dependencies.yaml"), tut.run("start-django-ca.yaml"), tut.run(
             "start-nginx.yaml"
         ), tut.run("setup-cas.yaml"):
+            errors += _test_connectivity(standalone_src)
+
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
             input("Press enter to continue:")
 

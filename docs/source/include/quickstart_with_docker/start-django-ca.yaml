@@ -1,4 +1,5 @@
 commands:
+    # Start frontend
     - command: >
         docker run -d
             -e WAIT_FOR_CONNECTIONS={{ postgres_host }}:5432
@@ -12,6 +13,7 @@ commands:
       clean:
           - docker kill {{ frontend_host }}
           - docker rm -f {{ frontend_host }}
+    # Start celery worker
     - command: >
         docker run -d
             -e WAIT_FOR_CONNECTIONS={{ postgres_host }}:5432

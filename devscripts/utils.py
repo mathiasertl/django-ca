@@ -177,6 +177,10 @@ def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     return run(["docker", "run", "--rm"] + list(args), **kwargs)
 
 
+def docker_exec(container: str, *args: str) -> "subprocess.CompletedProcess[Any]":
+    return run(["docker", "exec", container] + list(args))
+
+
 @contextmanager
 def tmpdir() -> Iterator[str]:
     """Context manager to temporarily change the working directory to a temporary directory."""
