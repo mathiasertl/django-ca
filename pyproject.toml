@@ -126,6 +126,9 @@ module = [
     #   https://github.com/docker/docker-py/issues/2796
     "docker",
     "enchant.tokenize",
+    # psycopg and psycopg_c are not installed in isolated mypy envs (tox, ...)
+    "psycopg",
+    "psycopg_c",
     "requests.packages.urllib3.response",
     # semantic-version==2.10.0 does not have typehints. See also:
     #   https://github.com/rbarrois/python-semanticversion/issues/138
