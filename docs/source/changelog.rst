@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.25.0:
 
-************
-1.25.0 (TBR)
-************
+*******************
+1.25.0 (2023-06-17)
+*******************
 
 * Add support for cryptography 41, acme 2.6.0 and celery 5.3.
 * Update the Docker image to use Alpine Linux 3.18.
