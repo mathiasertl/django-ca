@@ -52,6 +52,7 @@ standalone-scripts = [
     "ca/django_ca/tests/fixtures/django-ca-dns-auth.py",
     "devscripts/standalone/validate-testdata.py",
     "devscripts/standalone/test-imports.py",
+    "devscripts/standalone/test-connectivity.py",
     "devscripts/standalone/create-testdata.py",
     "devscripts/standalone/clean.py",
     "devscripts/standalone/check-clean-docker.py",

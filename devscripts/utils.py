@@ -178,6 +178,7 @@ def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
 
 
 def docker_exec(container: str, *args: str) -> "subprocess.CompletedProcess[Any]":
+    """Run a command in the given Docker container."""
     return run(["docker", "exec", container] + list(args))
 
 
