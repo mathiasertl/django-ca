@@ -16,8 +16,7 @@
 
 import pathlib
 import typing
-import warnings
-from typing import Any, Dict, Generic, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, Iterable, List, Optional, TypeVar, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -30,7 +29,6 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings, constants
-from django_ca.deprecation import RemovedInDjangoCA126Warning, deprecate_argument, deprecate_type
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
@@ -49,7 +47,6 @@ from django_ca.utils import (
     generate_private_key,
     get_cert_builder,
     parse_expires,
-    parse_general_name,
     validate_hostname,
     validate_private_key_parameters,
     validate_public_key_parameters,
@@ -121,22 +118,6 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
         def valid(self) -> QuerySetTypeVar:
             ...
 
-    def get_common_extensions(
-        self, crl_url: Optional[Iterable[str]] = None
-    ) -> List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]]:
-        """Add extensions potentially common to both CAs and certs."""
-
-        extensions: List[Tuple[bool, Union[x509.CRLDistributionPoints, x509.AuthorityInformationAccess]]] = []
-        if crl_url:
-            urls = [x509.UniformResourceIdentifier(c) for c in crl_url]
-            dps = [
-                x509.DistributionPoint(full_name=[c], relative_name=None, crl_issuer=None, reasons=None)
-                for c in urls
-            ]
-            extensions.append((False, x509.CRLDistributionPoints(dps)))
-
-        return extensions
-
 
 class CertificateAuthorityManager(
     CertificateManagerMixin["CertificateAuthority", "CertificateAuthorityQuerySet"],
@@ -176,15 +157,18 @@ class CertificateAuthorityManager(
 
     def _handle_authority_information_access(
         self,
+        hostname: Optional[str],
         extensions: ExtensionMapping,
-        ca_issuer_url: Optional[Sequence[str]],
-        ca_ocsp_url: Optional[Sequence[str]],
     ) -> None:
+        """Add an Authority Information Access extension with a URI based on `hostname` to `extensions`.
+
+        If the extension is already present, OCSP/CA Issuers access description are only added if the
+        extension does not contain any access descriptions of the respective type.
+        """
+        oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
         access_descriptions: List[x509.AccessDescription] = []
-        if ExtensionOID.AUTHORITY_INFORMATION_ACCESS in extensions:
-            extension = typing.cast(
-                x509.AuthorityInformationAccess, extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS].value
-            )
+        if oid in extensions:
+            extension = typing.cast(x509.AuthorityInformationAccess, extensions[oid].value)
             access_descriptions = list(extension)
 
         has_ocsp = any(ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions)
@@ -192,39 +176,52 @@ class CertificateAuthorityManager(
             ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS for ad in access_descriptions
         )
 
-        if ca_issuer_url and has_issuer is False:
-            access_descriptions += [
+        # Fields are only added if not already present, so if both are present, we have nothing to do
+        if has_ocsp and has_issuer:
+            return
+
+        if has_issuer is False:
+            access_descriptions.append(
                 x509.AccessDescription(
                     access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                    access_location=parse_general_name(name),
+                    access_location=x509.UniformResourceIdentifier(f"http://{hostname}/{{CA_ISSUER_PATH}}"),
                 )
-                for name in ca_issuer_url
-            ]
-        if ca_ocsp_url and has_ocsp is False:
-            access_descriptions += [
+            )
+        if has_ocsp is False:
+            access_descriptions.append(
                 x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.OCSP, access_location=parse_general_name(name)
+                    access_method=AuthorityInformationAccessOID.OCSP,
+                    access_location=x509.UniformResourceIdentifier(f"http://{hostname}/{{OCSP_PATH}}"),
                 )
-                for name in ca_ocsp_url
-            ]
+            )
 
         # Finally sort by OID so that we have more predictable behavior
         access_descriptions = sorted(access_descriptions, key=lambda ad: ad.access_method.dotted_string)
 
-        if access_descriptions:
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=False,
-                value=x509.AuthorityInformationAccess(access_descriptions),
-            )
+        extensions[oid] = x509.Extension(
+            oid=oid,
+            critical=constants.EXTENSION_DEFAULT_CRITICAL[oid],
+            value=x509.AuthorityInformationAccess(access_descriptions),
+        )
 
-    @deprecate_argument("permitted_subtrees", RemovedInDjangoCA126Warning)
-    @deprecate_argument("excluded_subtrees", RemovedInDjangoCA126Warning)
-    @deprecate_argument("ca_issuer_url", RemovedInDjangoCA126Warning)
-    @deprecate_argument("ca_crl_url", RemovedInDjangoCA126Warning)
-    @deprecate_argument("ca_ocsp_url", RemovedInDjangoCA126Warning)
-    @deprecate_type("ca_ocsp_url", str, RemovedInDjangoCA126Warning)
-    @deprecate_type("ca_issuer_url", str, RemovedInDjangoCA126Warning)
+    def _handle_crl_distribution_point(self, hostname: Optional[str], extensions: ExtensionMapping) -> None:
+        """Add CRL Distribution Point extension with a URI based on `hostname` to `extensions`.
+
+        The extension is only added if it is not already set in `extensions`.
+        """
+        oid = ExtensionOID.CRL_DISTRIBUTION_POINTS
+        if oid in extensions:
+            return
+
+        uri = x509.UniformResourceIdentifier(f"http://{hostname}/{{CRL_PATH}}")
+        extensions[oid] = x509.Extension(
+            oid=oid,
+            critical=constants.EXTENSION_DEFAULT_CRITICAL[oid],
+            value=x509.CRLDistributionPoints(
+                [x509.DistributionPoint(full_name=[uri], relative_name=None, reasons=None, crl_issuer=None)]
+            ),
+        )
+
     def init(
         self,
         name: str,
@@ -238,11 +235,6 @@ class CertificateAuthorityManager(
         issuer_alt_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         crl_url: Optional[Iterable[str]] = None,
         ocsp_url: Optional[str] = None,
-        ca_issuer_url: Optional[Sequence[str]] = None,
-        ca_crl_url: Optional[Sequence[str]] = None,
-        ca_ocsp_url: Optional[Sequence[str]] = None,
-        permitted_subtrees: Optional[Iterable[x509.GeneralName]] = None,
-        excluded_subtrees: Optional[Iterable[x509.GeneralName]] = None,
         password: Optional[Union[str, bytes]] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         elliptic_curve: Optional[ec.EllipticCurve] = None,
@@ -260,25 +252,11 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
-        .. versionchanged:: 1.23.0
-
-           * The `ecc_curve` parameter was renamed to `elliptic_curve`.
-           * Passing ``key_type="EdDSA"`` is deprecated, use ``key_type="Ed25519"`` instead.
-           * Passing ``key_type="ECC"`` is deprecated, use ``key_type="EC"`` instead.
-
-        .. versionchanged:: 1.24.0
-
-           * The `extra_extensions` parameter was renamed to `extensions`.
-           * The `pathlen` parameter was renamed to `path_length`.
-           * The `ca_issuer_url` and `ca_ocsp_url` parameters are now list of strings. Support for bare
-             strings will be removed in ``django-ca==1.26.0``.
-
         .. versionchanged:: 1.25.0
 
            * The `permitted_subtrees` and `excluded_subtrees` subtrees are deprecated and will be removed in
              ``django-ca==1.26.0``. Pass a :py:class:`~cg:cryptography.x509.NameConstraints` extension in
              `extensions` instead.
-
 
         Parameters
         ----------
@@ -358,25 +336,6 @@ class CertificateAuthorityManager(
         # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
         #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
 
-        if key_type == "ECC":  # type: ignore[comparison-overlap]  # that's a deprecated value
-            warnings.warn(
-                'key_type="ECC" is deprecated, use key_type="EC" instead.',
-                RemovedInDjangoCA126Warning,
-                stacklevel=2,
-            )
-            key_type = "EC"
-        if key_type == "EdDSA":  # type: ignore[comparison-overlap]  # that's a deprecated value
-            warnings.warn(
-                'key_type="EdDSA" key_type is deprecated, use key_type="Ed25519" instead.',
-                RemovedInDjangoCA126Warning,
-                stacklevel=2,
-            )
-            key_type = "Ed25519"
-
-        if isinstance(ca_ocsp_url, str):  # pragma: django_ca<1.26.0
-            ca_ocsp_url = [ca_ocsp_url]
-        if isinstance(ca_issuer_url, str):  # pragma: django_ca<1.26.0
-            ca_issuer_url = [ca_issuer_url]
         if extensions is None:
             extensions = []
         else:
@@ -415,6 +374,7 @@ class CertificateAuthorityManager(
 
         if default_hostname is None:
             default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
+
         if acme_profile is None:
             acme_profile = ca_settings.CA_DEFAULT_PROFILE
         elif acme_profile not in ca_settings.CA_PROFILES:
@@ -428,31 +388,23 @@ class CertificateAuthorityManager(
         context = self._get_formatting_context(serial, signer_serial)
 
         # If there is a default hostname, use it to compute some URLs from that
-        if isinstance(default_hostname, str) and default_hostname != "":
+        if isinstance(default_hostname, str) and default_hostname:
             default_hostname = validate_hostname(default_hostname, allow_port=True)
 
             # Set OCSP urls
             if not ocsp_url:
                 ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": context["SERIAL_HEX"]})
                 ocsp_url = f"http://{default_hostname}{ocsp_path}"
-            if parent and not ca_ocsp_url:  # OCSP for CA only makes sense in intermediate CAs
-                ca_ocsp_url = [f"http://{default_hostname}/{context['OCSP_PATH']}"]
-
-            # Set issuer path
-            if parent and not ca_issuer_url:
-                ca_issuer_url = [f"http://{default_hostname}/{context['CA_ISSUER_PATH']}"]
             if not issuer_url:
                 issuer_url = f"http://{default_hostname}/{context['CA_ISSUER_PATH']}"
-
-            # Set CRL URLs
             if not crl_url:
                 crl_path = reverse("django_ca:crl", kwargs={"serial": context["SERIAL_HEX"]})
                 crl_url = [f"http://{default_hostname}{crl_path}"]
-            if parent and not ca_crl_url:  # CRL for CA only makes sense in intermediate CAs
-                ca_crl_url = [f"http://{default_hostname}/{context['CRL_PATH']}"]
 
-        # Handle the Authority Information Access extension by adding any manually passed access descriptions
-        self._handle_authority_information_access(extensions_dict, ca_issuer_url, ca_ocsp_url)
+            # Add extensions that make sense only for intermediate CAs
+            if parent:
+                self._handle_authority_information_access(default_hostname, extensions_dict)
+                self._handle_crl_distribution_point(default_hostname, extensions_dict)
 
         # Format extension values
         format_extensions(extensions_dict, context)
@@ -475,11 +427,6 @@ class CertificateAuthorityManager(
             issuer_alt_name=issuer_alt_name,
             crl_url=crl_url,
             ocsp_url=ocsp_url,
-            ca_issuer_url=ca_issuer_url,
-            ca_crl_url=ca_crl_url,
-            ca_ocsp_url=ca_ocsp_url,
-            permitted_subtrees=permitted_subtrees,
-            excluded_subtrees=excluded_subtrees,
             password=password,
             parent_password=parent_password,
             extensions=extensions,
@@ -513,16 +460,6 @@ class CertificateAuthorityManager(
             private_sign_key = parent.key(parent_password)
             aki = parent.get_authority_key_identifier()
         builder = builder.add_extension(aki, critical=False)
-
-        for critical, ext in self.get_common_extensions(ca_crl_url):
-            # Check if the extension was passed directly, in which case we do not add it here.
-            if ext.oid not in extensions_dict:
-                builder = builder.add_extension(ext, critical=critical)
-
-        if permitted_subtrees is not None or excluded_subtrees is not None:
-            builder = builder.add_extension(
-                x509.NameConstraints(permitted_subtrees, excluded_subtrees), critical=True
-            )
 
         for extra_extension in extensions:
             builder = builder.add_extension(extra_extension.value, critical=extra_extension.critical)

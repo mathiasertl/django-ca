@@ -17,7 +17,6 @@ import abc
 import argparse
 import getpass
 import typing
-import warnings
 from datetime import timedelta
 from typing import Any, List, Optional, Type
 
@@ -30,7 +29,6 @@ from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
 from django_ca.utils import is_power2, parse_encoding, parse_general_name, x509_name
@@ -689,21 +687,6 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
     ) -> None:
         usages: List[x509.ObjectIdentifier] = []
 
-        # Parse legacy format
-        if len(values) == 1 and "," in values[0]:
-            values = values[0].split(",")
-            warnings.warn(
-                "Passing a comma-separated list is deprecated, pass space-separated values instead.",
-                RemovedInDjangoCA126Warning,
-            )
-
-            if values[0] == "critical":
-                warnings.warn(
-                    "Using critical as first value is deprecated. The extension is critical by default.",
-                    RemovedInDjangoCA126Warning,
-                )
-                values = values[1:]
-
         for value in values:
             if value in constants.EXTENDED_KEY_USAGE_OIDS:
                 oid = constants.EXTENDED_KEY_USAGE_OIDS[value]
@@ -755,21 +738,6 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         values: List[str],
         option_string: Optional[str] = None,
     ) -> None:
-        # Parse legacy format
-        if len(values) == 1 and "," in values[0]:
-            values = values[0].split(",")
-            warnings.warn(
-                "Passing a comma-separated list is deprecated, pass space-separated values instead.",
-                RemovedInDjangoCA126Warning,
-            )
-
-            if values[0] == "critical":
-                warnings.warn(
-                    "Using critical as first value is deprecated. The extension is critical by default.",
-                    RemovedInDjangoCA126Warning,
-                )
-                values = values[1:]
-
         if invalid_usages := [ku for ku in values if ku not in KEY_USAGE_NAMES.values()]:
             raise argparse.ArgumentError(
                 self, f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage."
@@ -800,28 +768,6 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         values: List[str],
         option_string: Optional[str] = None,
     ) -> None:
-        # Parse legacy format
-        if len(values) == 1 and "," in values[0]:
-            values = values[0].split(",")
-            warnings.warn(
-                "Passing a comma-separated list is deprecated, pass space-separated values instead.",
-                RemovedInDjangoCA126Warning,
-            )
-
-            if values[0] == "critical":
-                warnings.warn(
-                    "Using critical as first value is deprecated. The extension is critical by default.",
-                    RemovedInDjangoCA126Warning,
-                )
-                values = values[1:]
-
-        if "OCSPMustStaple" in values or "MultipleCertStatusRequest" in values:
-            warnings.warn(
-                "OCSPMustStaple and MultipleCertStatusRequest are deprecated aliases for status_request and "
-                "status_request_v2.",
-                RemovedInDjangoCA126Warning,
-            )
-
         try:
             features = [constants.TLS_FEATURE_NAMES[value] for value in values]
         except KeyError as ex:

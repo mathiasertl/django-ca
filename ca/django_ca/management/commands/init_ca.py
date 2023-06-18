@@ -18,7 +18,6 @@
 
 import os
 import pathlib
-import warnings
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from typing import Any, Iterable, List, Optional
@@ -31,7 +30,6 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
-from django_ca.deprecation import RemovedInDjangoCA126Warning
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction, PasswordAction
 from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
@@ -301,18 +299,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
-
-        # NOTE: When removing this in 1.26.0, don't forget to remove choices in the --key-type action.
-        if key_type == "ECC":  # type: ignore[comparison-overlap]  # that's a deprecated value
-            warnings.warn(
-                "--key-type=ECC is deprecated, use --key-type=EC instead.", RemovedInDjangoCA126Warning
-            )
-            key_type = "EC"
-        if key_type == "EdDSA":  # type: ignore[comparison-overlap]  # that's a deprecated value
-            warnings.warn(
-                "--key-type=EdDSA is deprecated, use --key-type=Ed25519 instead.", RemovedInDjangoCA126Warning
-            )
-            key_type = "Ed25519"
 
         # Validate private key parameters early so that we can return better feedback to the user.
         try:

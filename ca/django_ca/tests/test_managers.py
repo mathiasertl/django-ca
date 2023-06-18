@@ -194,6 +194,59 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         ]
         self.assertExtensions(ca, expected)
 
+    @override_tmpcadir()
+    def test_partial_authority_information_access(self) -> None:
+        """Test passing a partial Authority Information Access extension."""
+        parent = self.load_ca("root")
+        host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+        ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": parent.serial})
+        ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": parent.serial})
+
+        # Pass no OCSP URIs
+        passed_extensions: List[x509.Extension[x509.ExtensionType]] = [
+            self.authority_information_access(
+                ca_issuers=[uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")]
+            ),
+        ]
+
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(
+                "auto-ocsp", subject, parent=parent, extensions=passed_extensions
+            )
+
+        extensions = ca.x509_extensions
+
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
+                ocsp=[uri(f"http://{host}{ocsp_path}")],
+            ),
+        )
+
+        # Pass no CA Issuers
+        passed_extensions = [
+            self.authority_information_access(
+                ocsp=[uri("https://example.com/ocsp/{OCSP_PATH}")],
+            ),
+        ]
+
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(
+                "auto-ca-issuers", subject, parent=parent, extensions=passed_extensions
+            )
+
+        extensions = ca.x509_extensions
+
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri(f"http://{host}{ca_issuer_path}")],
+                ocsp=[uri(f"https://example.com/ocsp{ocsp_path}")],
+            ),
+        )
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_formatting(self) -> None:
         """Test passing extensions that are formatted."""
@@ -295,56 +348,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.acme_profile, "client")
         self.assertFalse(ca.acme_requires_contact)
         ca.key().public_key()  # just access private key to make sure we can load it
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_deprecated_str_parameters(self) -> None:
-        """Test creating the most basic possible CA."""
-        name = self._testMethodName
-        ocsp_uri = "http://ocsp.example.com"
-        issuer_uri = "http://issuer.example.com"
-
-        msg = r"^Passing str for ca_ocsp_url is deprecated and will be removed in django ca 1\.26\.$"
-        with self.assertCreateCASignals(), self.assertRemovedIn126Warning(msg):
-            ca = CertificateAuthority.objects.init(
-                name, self.subject, ca_issuer_url=issuer_uri, ca_ocsp_url=ocsp_uri
-            )
-        self.assertProperties(ca, name, self.subject)
-        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertIsInstance(ca.algorithm, hashes.SHA512)
-        ca.key().public_key()  # just access private key to make sure we can load it
-
-        actual = ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
-        expected = self.authority_information_access([uri(issuer_uri)], [uri(ocsp_uri)])
-        self.assertEqual(actual, expected)
-
-    @override_tmpcadir()
-    def test_deprecated_parameters(self) -> None:
-        """Test deprecated parameters."""
-        msg = r"^Argument permitted_subtrees is deprecated and will be removed in django ca 1\.26\.$"
-        with self.assertCreateCASignals(), self.assertRemovedIn126Warning(msg):
-            ca = CertificateAuthority.objects.init(
-                self._testMethodName,
-                self.subject,
-                permitted_subtrees=[dns("example.com")],
-                excluded_subtrees=[dns("example.net")],
-            )
-
-        extensions = ca.x509_extensions
-        self.assertEqual(
-            extensions[ExtensionOID.NAME_CONSTRAINTS],
-            self.name_constraints(permitted=[dns("example.com")], excluded=[dns("example.net")]),
-        )
-
-    @override_tmpcadir()
-    def test_invalid_public_key_parameters(self) -> None:
-        """Test passing invalid public key parameters."""
-        msg = r'^key_type="ECC" is deprecated, use key_type="EC" instead\.$'
-        with self.assertRemovedIn126Warning(msg):
-            CertificateAuthority.objects.init("ecc-ca", self.subject, key_type="ECC")  # type: ignore
-
-        msg = r'^key_type="EdDSA" key_type is deprecated, use key_type="Ed25519" instead\.$'
-        with self.assertRemovedIn126Warning(msg):
-            CertificateAuthority.objects.init("eddsa-ca", self.subject, key_type="EdDSA")  # type: ignore
 
     def test_unknown_profile(self) -> None:
         """Test creating a certificate authority with a profile that doesn't exist."""

@@ -4,6 +4,17 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.26.0:
+
+************
+1.26.0 (TBR)
+************
+
+* Passing ``ECC`` and ``EdDSA`` as key types (e.g when using :command:`manage.py init_ca`) was removed. Use
+  ``EC`` and ``Ed25519`` instead. The old names where deprecated since 1.23.0.
+* Using comma-separated lists for the `--key-usage``, ``--extended-key-usage`` and ``--tls-feature``
+  command-line options was removed. The old format was deprecated since 1.24.0.
+
 .. _changelog-1.25.0:
 
 *******************

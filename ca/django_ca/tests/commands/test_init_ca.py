@@ -1044,29 +1044,6 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(actual, expected)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_deprecated_key_type_names(self) -> None:
-        """Test warnings for deprecated key type names."""
-        name = "ecc-ca"
-        msg = r"^--key-type=ECC is deprecated, use --key-type=EC instead\.$"
-        with self.assertCreateCASignals() as (pre, post), self.assertRemovedIn126Warning(msg):
-            out, err = self.init_ca(name=name, key_type="ECC")
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        self.assertEqual(ca.key_type, "EC")
-
-        name = "eddsa-ca"
-        msg = r"^--key-type=EdDSA is deprecated, use --key-type=Ed25519 instead\.$"
-        with self.assertCreateCASignals() as (pre, post), self.assertRemovedIn126Warning(msg):
-            out, err = self.init_ca(name=name, key_type="EdDSA")
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-        ca = CertificateAuthority.objects.get(name=name)
-        self.assertPostCreateCa(post, ca)
-        self.assertEqual(ca.key_type, "Ed25519")
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_invalid_public_key_parameters(self) -> None:
         """Test passing invalid public key parameters."""
 

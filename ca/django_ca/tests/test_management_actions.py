@@ -206,28 +206,6 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
             namespace.eku,
         )
 
-    def test_deprecated_values(self) -> None:
-        """Test old, comma-separated list format."""
-
-        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\."
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--eku", "clientAuth,serverAuth"])
-        self.assertEqual(
-            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
-            namespace.eku,
-        )
-
-    def test_deprecated_values_with_critical(self) -> None:
-        """Test old, comma-separated list format."""
-
-        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\."
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--eku", "critical,clientAuth,serverAuth"])
-        self.assertEqual(
-            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
-            namespace.eku,
-        )
-
     def test_dotted_string_value(self) -> None:
         """Test passing a dotted string."""
         namespace = self.parser.parse_args(["--eku", "1.3.6.1.5.5.7.3.2"])
@@ -380,22 +358,6 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
             self.key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
         )
 
-    def test_deprecated_comma_list(self) -> None:
-        """Test deprecated critical flag."""
-        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--key-usage", "keyCertSign,keyAgreement"])
-        self.assertEqual(
-            self.key_usage(key_cert_sign=True, key_agreement=True, critical=True).value, namespace.key_usage
-        )
-
-    def test_deprecated_critical(self) -> None:
-        """Test deprecated critical flag."""
-        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--key-usage", "critical,keyCertSign"])
-        self.assertEqual(self.key_usage(key_cert_sign=True, critical=True).value, namespace.key_usage)
-
     def test_invalid_values(self) -> None:
         """Test passing invalid values."""
         self.assertParserError(
@@ -463,37 +425,6 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
             x509.TLSFeature([x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2]),
             namespace.tls_feature,
         )
-
-    def test_deprecated_comma_list(self) -> None:
-        """Test deprecated critical flag."""
-        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--tls-feature", "status_request,status_request_v2"])
-        self.assertEqual(
-            x509.TLSFeature([x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2]),
-            namespace.tls_feature,
-        )
-
-    def test_deprecated_critical(self) -> None:
-        """Test deprecated critical flag."""
-        msg = r"^Passing a comma-separated list is deprecated, pass space-separated values instead\.$"
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--tls-feature", "critical,status_request"])
-        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
-
-    def test_deprecated_values(self) -> None:
-        """Test deprecated critical flag."""
-        msg = (
-            r"^OCSPMustStaple and MultipleCertStatusRequest are deprecated aliases for status_request and "
-            r"status_request_v2\.$"
-        )
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--tls-feature", "OCSPMustStaple"])
-        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
-
-        with self.assertRemovedIn126Warning(msg):
-            namespace = self.parser.parse_args(["--tls-feature", "MultipleCertStatusRequest"])
-        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request_v2]), namespace.tls_feature)
 
     def test_error(self) -> None:
         """Test wrong option values."""
