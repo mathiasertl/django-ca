@@ -14,7 +14,7 @@ jobs:
         os: [ ubuntu-latest ]
         python-version: [ "3.8", "3.9", "3.10", "3.11" ]
         django-version: [ "3.2.19", "4.1.9", "4.2.2" ]
-        cryptography-version: [ "37.0.4", "39.0.2", "40.0.2", "41.0.1" ]
+        cryptography-version: [ "40.0.2", "41.0.1" ]
 
     env:
       DJANGO_CA_SECRET_KEY: dummy

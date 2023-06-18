@@ -21,6 +21,7 @@ from typing import Tuple
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
@@ -34,7 +35,6 @@ from django_ca import ca_settings, constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
-from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import serialize_name, x509_name
 
 

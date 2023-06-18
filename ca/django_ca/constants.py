@@ -70,11 +70,6 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
 
-    # ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY was added in cryptography==39.0
-    # once support for cryptography<39.0 is dropped.
-    if not hasattr(_ExtendedKeyUsageOID, "CERTIFICATE_TRANSPARENCY"):  # pragma: cryptography<38.0 branch
-        CERTIFICATE_TRANSPARENCY = x509.ObjectIdentifier("1.3.6.1.4.1.11129.2.4.4")
-
 
 #: Map of ExtendedKeyUsageOIDs to names in RFC 5280 (and other RFCs).
 EXTENDED_KEY_USAGE_NAMES = MappingProxyType(

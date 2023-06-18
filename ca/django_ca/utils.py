@@ -29,6 +29,7 @@ import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -39,7 +40,6 @@ from django.utils import timezone
 from django_ca import ca_settings, constants
 from django_ca.typehints import (
     AllowedHashTypes,
-    CertificateIssuerPrivateKeyTypes,
     Expires,
     ParsableGeneralName,
     ParsableHash,

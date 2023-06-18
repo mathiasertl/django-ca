@@ -29,6 +29,7 @@ from unittest.mock import patch
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -37,7 +38,6 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.extensions import parse_extension
 from django_ca.profiles import profiles
-from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import add_colons, ca_storage, format_name
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
@@ -55,10 +55,6 @@ CERT_PEM_REGEX = re.compile(
     re.DOTALL,  # DOTALL (/s) because the base64text may include newlines
 )
 
-# If the installed cryptography version supports the unsafe_skip_rsa_key_validation option when loading
-# private keys
-SKIP_KEY_VALIDATION = settings.CRYPTOGRAPHY_VERSION >= (39, 0)
-
 
 # pylint: disable-next=inherit-non-class; False positive
 class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
@@ -69,12 +65,10 @@ def _load_key(data: Dict[Any, Any]) -> KeyDict:
     with open(os.path.join(settings.FIXTURES_DIR, data["key_filename"]), "rb") as stream:
         raw = stream.read()
 
-    if SKIP_KEY_VALIDATION is True:  # pragma: only cryptography>=39.0
-        parsed = serialization.load_pem_private_key(
-            raw, password=data.get("password"), unsafe_skip_rsa_key_validation=True
-        )
-    else:  # pragma: only cryptography<39.0
-        parsed = serialization.load_pem_private_key(raw, password=data.get("password"))
+    parsed = serialization.load_pem_private_key(
+        raw, password=data.get("password"), unsafe_skip_rsa_key_validation=True
+    )
+
     return {
         "pem": raw.decode("utf-8"),
         "parsed": parsed,  # type: ignore[typeddict-item]  # we do not support all key types

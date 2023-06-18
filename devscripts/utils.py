@@ -30,6 +30,7 @@ import yaml
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     NoEncryption,
@@ -42,8 +43,6 @@ from devscripts import config
 
 if typing.TYPE_CHECKING:
     import jinja2
-
-    from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 
 
 @contextmanager
@@ -231,7 +230,7 @@ def create_signed_cert(
 
     with open(signer_private_key_path, "rb") as stream:
         signer_private_key = typing.cast(
-            "CertificateIssuerPrivateKeyTypes", load_pem_private_key(stream.read(), password)
+            CertificateIssuerPrivateKeyTypes, load_pem_private_key(stream.read(), password)
         )
     with open(signer_public_key_path, "rb") as stream:
         signer_public_key = x509.load_pem_x509_certificate(stream.read())

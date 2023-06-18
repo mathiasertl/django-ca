@@ -330,11 +330,9 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
     for name in ca_names:
         # Get some data from the parent, if present
         parent: Optional[CertificateAuthority] = None
-        ca_crl_url: Optional[Sequence[str]] = None
         parent_name = data[name].get("parent")
         if parent_name:
             parent = CertificateAuthority.objects.get(name=parent_name)
-            ca_crl_url = [data[parent_name]["ca_crl_url"]]
 
             # also update data
             data[name]["crl"] = data[parent_name]["ca_crl_url"]
@@ -354,7 +352,6 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 algorithm=data[name].get("algorithm"),
                 path_length=data[name]["path_length"],
                 parent=parent,
-                ca_crl_url=ca_crl_url,
             )
 
         # Same values can only be added here because they require data from the already created CA

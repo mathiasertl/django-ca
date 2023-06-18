@@ -38,16 +38,7 @@ class SupportsLessThan(typing.Protocol):
         ...
 
 
-try:  # pragma: only cryptography>=40.0
-    # pylint: disable-next=useless-import-alias,ungrouped-imports
-    from cryptography.hazmat.primitives.asymmetric.types import (
-        CertificateIssuerPrivateKeyTypes as CertificateIssuerPrivateKeyTypes,
-    )
-except ImportError:  # pragma: only cryptography<40.0
-    # typehints as added in cryptography 40
-    from cryptography.hazmat.primitives.asymmetric.types import (  # noqa: F401
-        CERTIFICATE_PRIVATE_KEY_TYPES as CertificateIssuerPrivateKeyTypes,
-    )
+# from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 
 CRLExtensionTypeTypeVar = typing.TypeVar(
     "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL

@@ -29,6 +29,7 @@ from acme import challenges, messages
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding, load_pem_private_key
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
@@ -59,7 +60,6 @@ from django_ca.models import (
 )
 from django_ca.tests.base import CERT_PEM_REGEX, certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
-from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import ca_storage, get_crl_cache_key, x509_name
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)

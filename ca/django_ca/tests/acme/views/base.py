@@ -26,6 +26,7 @@ import acme.jws
 import josepy as jose
 from requests.utils import parse_header_links
 
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from django.urls import reverse
@@ -35,7 +36,6 @@ from django_ca.acme.responses import AcmeResponseUnauthorized
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug
 from django_ca.tests.base import certs, override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 

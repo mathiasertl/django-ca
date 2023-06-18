@@ -36,6 +36,7 @@ from acme import challenges, messages
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     PrivateFormat,
@@ -84,7 +85,7 @@ from django_ca.querysets import (
     CertificateQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import AllowedHashTypes, CertificateIssuerPrivateKeyTypes, Expires, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, Expires, ParsableKeyType
 from django_ca.utils import (
     bytes_to_hex,
     ca_storage,

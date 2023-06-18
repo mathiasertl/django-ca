@@ -30,6 +30,7 @@ from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ExtensionNotFound, OCSPNonce, load_pem_x509_certificate, ocsp
 
@@ -43,7 +44,6 @@ from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)

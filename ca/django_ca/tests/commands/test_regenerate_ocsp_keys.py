@@ -18,6 +18,7 @@ from typing import Iterable, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import ExtensionOID
 
@@ -26,7 +27,6 @@ from django.test import TestCase
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.typehints import CertificateIssuerPrivateKeyTypes
 from django_ca.utils import add_colons, ca_storage
 
 

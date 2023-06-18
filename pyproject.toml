@@ -10,8 +10,8 @@ build-backend = "setuptools.build_meta"
 python = ["3.8.17", "3.9.17", "3.10.12", "3.11.4"]
 # https://www.djangoproject.com/download/
 django = ["3.2.19", "4.1.9", "4.2.2"]
-cryptography = ["37.0.4", "39.0.2", "40.0.2", "41.0.1"]
-acme = ["2.4.0", "2.5.0", "2.6.0"]
+cryptography = ["40.0.2", "41.0.1"]
+acme = ["2.5.0", "2.6.0"]
 josepy = ["1.13.0"]
 
 # https://alpinelinux.org/releases/
@@ -19,8 +19,7 @@ alpine = ["3.16", "3.17", "3.18"]
 
 # Blacklist images that are just no longer built
 docker-image-blacklist = [
-    "python:3.11-alpine3.14",
-    "python:3.11-alpine3.15",
+    #"python:3.11-alpine3.14",
 ]
 
 # List of tested Debian releases:
