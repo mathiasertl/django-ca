@@ -17,8 +17,7 @@ import binascii
 import re
 import shlex
 import typing
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from ipaddress import ip_address, ip_network
 from typing import Iterator, List, Optional, Tuple, Type, Union
 from urllib.parse import urlparse

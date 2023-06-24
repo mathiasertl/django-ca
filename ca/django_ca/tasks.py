@@ -18,8 +18,7 @@
 
 import logging
 import typing
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, Iterable, List, Optional, Tuple
 

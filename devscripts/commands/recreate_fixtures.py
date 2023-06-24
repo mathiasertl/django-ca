@@ -19,8 +19,7 @@ import ipaddress
 import json
 import os
 import sys
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
 from typing import Any, Dict
 
@@ -62,7 +61,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         override_tmpcadir,
         regenerate_ocsp_files,
     )
-
     from django_ca.utils import format_name, x509_name
 
     # pylint: enable=import-outside-toplevel

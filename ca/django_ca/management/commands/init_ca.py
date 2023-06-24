@@ -18,8 +18,7 @@
 
 import os
 import pathlib
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Iterable, List, Optional
 
 from cryptography import x509

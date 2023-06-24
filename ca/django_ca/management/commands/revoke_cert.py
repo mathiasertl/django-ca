@@ -15,8 +15,7 @@
 
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
-from datetime import datetime
-from datetime import timezone as tz
+from datetime import datetime, timezone as tz
 from typing import Any, Optional
 
 from django.conf import settings

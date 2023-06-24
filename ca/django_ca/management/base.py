@@ -20,16 +20,19 @@ import shutil
 import sys
 import textwrap
 import typing
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from django.core.management.base import BaseCommand as _BaseCommand
-from django.core.management.base import CommandError, CommandParser, OutputWrapper
+from django.core.management.base import (
+    BaseCommand as _BaseCommand,
+    CommandError,
+    CommandParser,
+    OutputWrapper,
+)
 from django.utils import timezone
 
 from django_ca import ca_settings, constants

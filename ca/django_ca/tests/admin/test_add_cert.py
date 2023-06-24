@@ -16,8 +16,7 @@
 import html
 import typing
 import unittest
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, Dict, List, Union
 
@@ -33,9 +32,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
-from webtest import Checkbox, Hidden
-from webtest import Select as WebTestSelect
-from webtest import Submit
+from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID

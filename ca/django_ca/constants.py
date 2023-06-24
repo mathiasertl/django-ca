@@ -23,8 +23,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import LogEntryType
-from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.utils.translation import gettext_lazy as _
 

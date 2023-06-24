@@ -20,8 +20,7 @@ import os
 import typing
 import unittest
 from contextlib import contextmanager
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from typing import Iterable, Iterator, Optional, Tuple, Type
 
 from cryptography import x509

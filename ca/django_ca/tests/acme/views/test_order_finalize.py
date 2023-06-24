@@ -21,11 +21,11 @@ from unittest import mock
 import acme
 import josepy as jose
 import pyrfc3339
-from OpenSSL.crypto import X509Req
 
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
+from OpenSSL.crypto import X509Req
 
 from django.conf import settings
 from django.test import TransactionTestCase, override_settings

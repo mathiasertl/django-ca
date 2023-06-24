@@ -15,8 +15,7 @@
 
 import typing
 from contextlib import contextmanager
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from unittest import mock

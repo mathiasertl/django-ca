@@ -33,9 +33,8 @@ except ModuleNotFoundError as ex:
 from django.core.cache import cache  # NOQA: E402
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first.
-from ca.celery import app  # NOQA: E402
-
-from django_ca.models import CertificateAuthority  # NOQA: E402
+from ca.celery import app  # noqa: E402
+from django_ca.models import CertificateAuthority  # noqa: E402
 
 # Verify database connectivity by fetching a list of CAs. Even an empty list verifies connectivity.
 list(CertificateAuthority.objects.all())

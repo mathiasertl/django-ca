@@ -26,8 +26,7 @@ import re
 import typing
 from collections import OrderedDict
 from copy import deepcopy
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import josepy as jose
@@ -187,6 +186,11 @@ class Watcher(models.Model):
         # See also: https://github.com/typeddjango/django-stubs/issues/1354
         certificates: "models.manager.RelatedManager[Certificate]"
 
+    def __str__(self) -> str:
+        if self.name:
+            return f"{self.name} <{self.mail}>"
+        return self.mail
+
     @classmethod
     def from_addr(cls, addr: str) -> "Watcher":
         """Class constructor that creates an instance from an email address."""
@@ -206,11 +210,6 @@ class Watcher(models.Model):
             watcher.save()
 
         return watcher
-
-    def __str__(self) -> str:
-        if self.name:
-            return f"{self.name} <{self.mail}>"
-        return self.mail
 
 
 class X509CertMixin(DjangoCAModel):

@@ -26,13 +26,12 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, U
 from unittest import mock
 from urllib.parse import quote
 
-from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
+from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 import django
 from django.conf import settings

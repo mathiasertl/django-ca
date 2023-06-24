@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test some code in the test base module to make sure it really works."""
-
+import importlib
 import io
 import tempfile
 import typing
@@ -23,7 +23,6 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase, override_settings
 
 from django_ca import ca_settings
-from django_ca.tests.base import pragmas  # NOQA: F401  # import module to enable pragma checks
 from django_ca.tests.base import override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import add_colons
@@ -31,6 +30,10 @@ from django_ca.utils import add_colons
 
 class TestDjangoCATestCase(TestCaseMixin, TestCase):
     """Test some basic stuff in the base test classes."""
+
+    def test_pragmas(self) -> None:
+        """Import the pragmas module to ensure coverage works correctly."""
+        importlib.import_module("django_ca.tests.base.pragmas")
 
     @override_tmpcadir()
     def test_override_tmpcadir(self) -> None:

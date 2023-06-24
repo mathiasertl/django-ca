@@ -23,8 +23,7 @@ import abc
 import logging
 import secrets
 import typing
-from datetime import datetime
-from datetime import timezone as tz
+from datetime import datetime, timezone as tz
 from http import HTTPStatus
 from typing import Dict, Generic, Iterable, List, Optional, Set, Type, TypeVar, Union, cast
 

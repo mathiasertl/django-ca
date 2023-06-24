@@ -13,8 +13,7 @@
 
 """Test creating a new order."""
 
-from datetime import timedelta
-from datetime import timezone as tz
+from datetime import timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any
 

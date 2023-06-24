@@ -21,8 +21,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime
-from datetime import timezone as tz
+from datetime import datetime, timezone as tz
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 from unittest.mock import patch
@@ -47,7 +46,6 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from devscripts import config, utils
-
 from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority

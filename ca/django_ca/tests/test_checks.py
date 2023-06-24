@@ -15,11 +15,10 @@
 
 
 from django.apps import apps
-from django.core.checks import Warning  # pylint: disable=redefined-builtin
-from django.core.checks import Error
+from django.core import checks
 from django.test import TestCase
 
-from django_ca import checks
+from django_ca.checks import check_cache
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -30,24 +29,24 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
         """Test check if no caches are configured."""
 
         app_config = apps.get_app_config("django_ca")
-        expected = Error(
+        expected = checks.Error(
             "django-ca requires a (shared) cache to be configured.",
             hint="https://docs.djangoproject.com/en/dev/topics/cache/",
             id="django-ca.caches.E001",
         )
         with self.settings(CACHES={}):
-            errors = checks.check_cache([app_config])
+            errors = check_cache([app_config])
         self.assertEqual(errors, [expected])
 
         with self.settings(CACHES={}):
-            errors = checks.check_cache(None)
+            errors = check_cache(None)
         self.assertEqual(errors, [expected])
 
     def test_loc_mem_cache(self) -> None:
         """Test what happens if LocMemCache is used."""
 
         app_config = apps.get_app_config("django_ca")
-        expected = Warning(
+        expected = checks.Warning(
             "django-ca requires a shared cache like Redis or Memcached unless the application server uses only a single process.",  # NOQA: E501
             hint="https://docs.djangoproject.com/en/dev/topics/cache/",
             id="django-ca.caches.W001",
@@ -58,16 +57,16 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
             }
         }
         with self.settings(CACHES=setting):
-            errors = checks.check_cache([app_config])
+            errors = check_cache([app_config])
         self.assertEqual(errors, [expected])
         with self.settings(CACHES=setting):
-            errors = checks.check_cache(None)
+            errors = check_cache(None)
         self.assertEqual(errors, [expected])
 
     def test_django_ca_not_checked(self) -> None:
         """Test that no checks are run if django_ca is not checked."""
         app_config = apps.get_app_config("auth")
-        errors = checks.check_cache([app_config])
+        errors = check_cache([app_config])
         self.assertEqual(errors, [])
 
     def test_redis_cache(self) -> None:
@@ -80,5 +79,5 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
             }
         }
         with self.settings(CACHES=setting):
-            errors = checks.check_cache([app_config])
+            errors = check_cache([app_config])
         self.assertEqual(errors, [])

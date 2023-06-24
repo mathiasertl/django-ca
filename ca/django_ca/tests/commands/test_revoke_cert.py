@@ -13,8 +13,7 @@
 
 """Test the revoke_cert management command."""
 import re
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from typing import List, Optional
 
 from django.test import TestCase

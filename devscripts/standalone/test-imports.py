@@ -104,9 +104,7 @@ from django.contrib.staticfiles import finders
 from django.template.loader import TemplateDoesNotExist, get_template
 
 from django_ca import models, utils, views
-from django_ca.acme import constants, messages
-from django_ca.acme import utils as acme_utils
-from django_ca.acme import views as acme_views
+from django_ca.acme import constants, messages, utils as acme_utils, views as acme_views
 
 # Test if (some) templates can be loaded
 for template in [

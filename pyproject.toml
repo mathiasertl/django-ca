@@ -96,17 +96,17 @@ skip_gitignore = true
 line_length = 110
 extend_skip = ["migrations", "stubs"]
 known_crypto = [
-    "cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto",
+    "cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"
 ]
 known_django = "django"
 known_django_addon = "django_object_actions"
 known_test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock", "webtest"]
-known_third_party = "OpenSSL"
-known_local_folder = "django_ca"
+known_first_party = ["django_ca", "ca"]
 sections = [
     "FUTURE", "STDLIB", "THIRDPARTY", "CRYPTO", "DJANGO", "DJANGO_ADDON",
     "TEST", "FIRSTPARTY", "LOCALFOLDER",
 ]
+combine_as_imports = true
 
 [tool.mypy]
 strict = true
@@ -277,7 +277,27 @@ ignore-imports = "yes"
 min-similarity-lines = 16
 
 [tool.ruff]
-extend-exclude = [
-    "migrations",
-]
+select = ["E", "F", "I", "G", "DJ"]
+extend-exclude = ["migrations", "stubs"]
 line-length = 110
+
+[tool.ruff.isort]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "crypto",
+    "django",
+    "django-addon",
+    "test",
+    "first-party",
+    "local-folder",
+]
+known-first-party = ["django_ca", "ca"]
+combine-as-imports = true
+
+[tool.ruff.isort.sections]
+django = ["django"]
+django-addon = ["django_object_actions"]
+crypto = ["cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
+test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock", "webtest"]

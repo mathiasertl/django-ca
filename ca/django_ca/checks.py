@@ -20,8 +20,7 @@ from typing import Any, List, Optional
 
 from django.apps import AppConfig
 from django.conf import settings
-from django.core.checks import Warning  # pylint: disable=redefined-builtin
-from django.core.checks import CheckMessage, Error, Tags, register
+from django.core import checks
 
 # List of cache backends that do not share the data between multiple worker processes
 _UNSUPPORTED_BACKENDS = (
@@ -31,20 +30,21 @@ _UNSUPPORTED_BACKENDS = (
 )
 
 
-@register(Tags.caches, deploy=True)  # type: ignore[type-var]  # django-stubs does not type-hint the decorator
-def check_cache(app_configs: Optional[List[AppConfig]], **kwargs: Any) -> List[CheckMessage]:
+# TYPE NOTE: django-stubs does not type-hint the decorator
+@checks.register(checks.Tags.caches, deploy=True)  # type: ignore[type-var]
+def check_cache(app_configs: Optional[List[AppConfig]], **kwargs: Any) -> List[checks.CheckMessage]:
     """Check that a cache is configured and issue a warning if the cache is not a shared cache."""
 
     # only run checks if manage.py check is run with no app labels (== all) or the django_ca app label
     if app_configs is not None and not [config for config in app_configs if config.name == "django_ca"]:
         return []
 
-    errors: List[CheckMessage] = []
+    errors: List[checks.CheckMessage] = []
 
     config = settings.CACHES.get("default")
     if config is None:
         errors.append(
-            Error(
+            checks.Error(
                 "django-ca requires a (shared) cache to be configured.",
                 hint="https://docs.djangoproject.com/en/dev/topics/cache/",
                 id="django-ca.caches.E001",
@@ -52,7 +52,7 @@ def check_cache(app_configs: Optional[List[AppConfig]], **kwargs: Any) -> List[C
         )
     elif config.get("BACKEND") in _UNSUPPORTED_BACKENDS:
         errors.append(
-            Warning(
+            checks.Warning(
                 "django-ca requires a shared cache like Redis or Memcached unless the application server uses only a single process.",  # NOQA: E501
                 hint="https://docs.djangoproject.com/en/dev/topics/cache/",
                 id="django-ca.caches.W001",
