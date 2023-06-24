@@ -1222,8 +1222,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
             cert.sorted_extensions,
             [
                 self.authority_information_access(
-                    ca_issuers=[uri(self.ca.issuer_url)],  # type: ignore[arg-type]
-                    ocsp=[uri(self.ca.ocsp_url)],  # type: ignore[arg-type]
+                    ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),

@@ -55,25 +55,26 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     def handle(
         self,
         ca: CertificateAuthority,
-        sign_ca_issuer: Optional[str],
+        sign_ca_issuer: str,
         sign_crl_full_name: List[str],
         sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
-        sign_ocsp_responder: Optional[str],
+        sign_ocsp_responder: str,
+        enabled: Optional[bool],
         **options: Any,
     ) -> None:
-        if sign_ca_issuer is not None:
+        if sign_ca_issuer:
             ca.issuer_url = sign_ca_issuer
         if sign_issuer_alternative_name:
             ca.issuer_alt_name = ",".join(
                 [format_general_name(name) for name in sign_issuer_alternative_name.value]
             )
-        if sign_ocsp_responder is not None:
+        if sign_ocsp_responder:
             ca.ocsp_url = sign_ocsp_responder
         if sign_crl_full_name:
             ca.crl_url = "\n".join(sign_crl_full_name)
 
-        if options["enabled"] is not None:
-            ca.enabled = options["enabled"]
+        if enabled is not None:
+            ca.enabled = enabled
 
         if options["caa"] is not None:
             ca.caa_identity = options["caa"]

@@ -257,8 +257,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         password: Optional[bytes],
         parent_password: Optional[bytes],
         sign_crl_full_name: List[str],
-        sign_ocsp_responder: Optional[str],
-        sign_ca_issuer: Optional[str],
+        sign_ocsp_responder: str,
+        sign_ca_issuer: str,
         sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
         # Authority Information Access extension
         authority_information_access: x509.AuthorityInformationAccess,

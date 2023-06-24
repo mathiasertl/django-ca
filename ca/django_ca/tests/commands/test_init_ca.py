@@ -133,7 +133,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 self.ocsp_no_check(),
                 self.extended_key_usage(ExtendedKeyUsageOID.OCSP_SIGNING),
                 self.key_usage(digital_signature=True, content_commitment=True, key_encipherment=True),
-                self.authority_information_access(ca_issuers=[uri(ca.issuer_url)]),  # type: ignore[arg-type]
+                self.authority_information_access(ca_issuers=[uri(ca.issuer_url)]),
             ],
             signer=ca,
         )
@@ -1010,8 +1010,8 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
 
-        self.assertIsNone(ca.issuer_url)
-        self.assertIsNone(ca.ocsp_url)
+        self.assertEqual(ca.issuer_url, "")
+        self.assertEqual(ca.ocsp_url, "")
         self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

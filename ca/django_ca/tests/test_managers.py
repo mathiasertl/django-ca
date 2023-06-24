@@ -164,8 +164,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
         self.assertEqual(ca.crl_url, "")
         self.assertEqual(ca.crl_number, '{"scope": {}}')
-        self.assertIsNone(ca.issuer_url)
-        self.assertIsNone(ca.ocsp_url)
+        self.assertEqual(ca.issuer_url, "")
+        self.assertEqual(ca.ocsp_url, "")
         self.assertEqual(ca.issuer_alt_name, "")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

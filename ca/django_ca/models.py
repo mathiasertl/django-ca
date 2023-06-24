@@ -521,7 +521,7 @@ class CertificateAuthority(X509CertMixin):
         certificate_set: "CertificateManager"
         acmeaccount_set: "models.manager.RelatedManager[AcmeAccount]"
 
-    name = models.CharField(max_length=32, help_text=_("A human-readable name"), unique=True)
+    name = models.CharField(max_length=128, help_text=_("A human-readable name"), unique=True)
     """Human-readable name of the CA, only used for displaying the CA."""
     enabled = models.BooleanField(default=True)
     parent = models.ForeignKey(
@@ -546,20 +546,17 @@ class CertificateAuthority(X509CertMixin):
     )
     issuer_url = models.URLField(
         blank=True,
-        null=True,
         verbose_name=_("Issuer URL"),
         help_text=_("URL to the certificate of this CA (in DER format)."),
     )
     ocsp_url = models.URLField(
         blank=True,
-        null=True,
         verbose_name=_("OCSP responder URL"),
         help_text=_("URL of a OCSP responser for the CA."),
     )
     issuer_alt_name = models.CharField(
         blank=True,
         max_length=255,
-        default="",
         verbose_name=_("issuerAltName"),
         help_text=_("URL for your CA."),
     )

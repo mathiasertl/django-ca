@@ -260,6 +260,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--issuer-url",  # pragma: only django-ca<1.27
             metavar="NAME",
             action=actions.URLAction,
+            default="",
             help="URL to the certificate of your CA (in DER format). --issuer-url is a legacy option name "
             "and will be removed in django-ca 1.27.",
         )
@@ -284,6 +285,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--sign-ocsp-responder",
             "--ocsp-url",
             metavar="NAME",
+            default="",
             action=actions.URLAction,
             help="URL of an OCSP responder. --ocsp-url is a legacy option name and will be removed in"
             "django-ca 1.27.",
