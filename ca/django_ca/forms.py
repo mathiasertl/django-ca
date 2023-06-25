@@ -103,6 +103,7 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
         initial=ca_settings.CA_DEFAULT_PROFILE,
         choices=_profile_choices,
     )
+    sign_certificate_policies = fields.CertificatePoliciesField(required=False)
 
 
 class CreateCertificateBaseForm(CertificateModelForm):
@@ -145,6 +146,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     authority_information_access = fields.AuthorityInformationAccessField(
         help_text=_("Indicates how to access information and services of the issuer.")
     )
+    certificate_policies = fields.CertificatePoliciesField(required=False)
     crl_distribution_points = fields.CRLDistributionPointField(
         help_text=_("Where to retrieve Certificate Revocation Lists."),
     )

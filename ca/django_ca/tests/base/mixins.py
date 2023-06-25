@@ -562,6 +562,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, errors: Dict[str, List[str]]
     ) -> Iterator[None]:
         """Context manager to assert that a ValidationError is thrown."""
+
         with self.assertRaises(ValidationError) as cmex:
             yield
         self.assertEqual(cmex.exception.message_dict, errors)

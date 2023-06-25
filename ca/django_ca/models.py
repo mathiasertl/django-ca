@@ -71,7 +71,12 @@ from django_ca.managers import (
     CertificateAuthorityManager,
     CertificateManager,
 )
-from django_ca.modelfields import CertificateField, CertificateSigningRequestField, LazyCertificate
+from django_ca.modelfields import (
+    CertificateField,
+    CertificatePoliciesField,
+    CertificateSigningRequestField,
+    LazyCertificate,
+)
 from django_ca.openssh.extensions import SSH_HOST_CA, SSH_USER_CA
 from django_ca.profiles import profiles
 from django_ca.querysets import (
@@ -560,6 +565,13 @@ class CertificateAuthority(X509CertMixin):
         verbose_name=_("issuerAltName"),
         help_text=_("URL for your CA."),
     )
+    sign_certificate_policies = CertificatePoliciesField(
+        constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES],
+        null=True,
+        default=None,
+        blank=True,
+        help_text=_("Add a Certificate Policies extension when signing certificates."),
+    )
 
     caa_identity = models.CharField(
         blank=True,
@@ -691,6 +703,10 @@ class CertificateAuthority(X509CertMixin):
         """Get a list of extensions to use for the certificate."""
 
         extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
+
+        if self.sign_certificate_policies is not None:
+            extensions[ExtensionOID.CERTIFICATE_POLICIES] = self.sign_certificate_policies
+
         if self.issuer_alt_name:
             names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
             extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = x509.Extension(

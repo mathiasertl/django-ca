@@ -83,7 +83,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             db_cert.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
         )
 
-        ca_issuers = uri(ca.issuer_url)  # type: ignore[arg-type]  # we always set this
+        ca_issuers = uri(ca.issuer_url)
         self.assertEqual(aia, self.authority_information_access(ca_issuers=[ca_issuers]))
 
         return priv, cert

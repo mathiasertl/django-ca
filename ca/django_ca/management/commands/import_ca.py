@@ -24,6 +24,7 @@ from typing import Any, List, Optional
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
+from cryptography.x509.oid import ExtensionOID
 
 from django.core.files.base import ContentFile
 from django.core.management.base import CommandError, CommandParser
@@ -80,10 +81,13 @@ Note that the private key will be copied to the directory configured by the CA_D
         parent: Optional[CertificateAuthority],
         password: Optional[bytes],
         import_password: Optional[bytes],
-        sign_ca_issuer: Optional[str],
+        sign_ca_issuer: str,
         sign_crl_full_name: List[str],
         sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
-        sign_ocsp_responder: Optional[str],
+        sign_ocsp_responder: str,
+        # Certificate Policies extension
+        sign_certificate_policies: Optional[x509.CertificatePolicies],
+        sign_certificate_policies_critical: bool,
         **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):
@@ -108,6 +112,13 @@ Note that the private key will be copied to the directory configured by the CA_D
             issuer_alternative_name = ""
         else:
             issuer_alternative_name = format_general_name(sign_issuer_alternative_name.value[0])
+        sign_certificate_policies_ext = None
+        if sign_certificate_policies is not None:
+            sign_certificate_policies_ext = x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=sign_certificate_policies_critical,
+                value=sign_certificate_policies,
+            )
 
         ca = CertificateAuthority(
             name=name,
@@ -116,6 +127,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             issuer_alt_name=issuer_alternative_name,
             ocsp_url=sign_ocsp_responder,
             crl_url="\n".join(sign_crl_full_name),
+            sign_certificate_policies=sign_certificate_policies_ext,
         )
 
         # load public key

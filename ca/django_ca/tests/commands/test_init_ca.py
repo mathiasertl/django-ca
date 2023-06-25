@@ -521,6 +521,48 @@ class InitCATest(TestCaseMixin, TestCase):
             self.crl_distribution_points([dns("crl.example.com"), dns("crl.example.net")]),
         )
 
+    @override_tmpcadir()
+    def test_sign_extensions(self) -> None:
+        """Test adding extensions for signed certificates."""
+
+        root = self.load_ca("root")
+
+        ca = self.init_ca_e2e(
+            "extensions_with_formatting",
+            "/CN=extensions_with_formatting.example.com",
+            f"--parent={root.serial}",
+            # Certificate Policies extension
+            "--sign-policy-identifier=anyPolicy",
+            "--sign-certification-practice-statement=https://example.com/cps1/",
+            "--sign-user-notice=user notice text one",
+            "--sign-policy-identifier=1.2.3",
+            "--sign-user-notice=user notice text two",
+            "--sign-certification-practice-statement=https://example.com/cps2/",
+            chain=[root],
+        )
+
+        # Test Certificate Policies extension
+        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.x509_extensions)
+        self.assertEqual(
+            ca.sign_certificate_policies,
+            self.certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
+                    policy_qualifiers=[
+                        "https://example.com/cps1/",
+                        x509.UserNotice(notice_reference=None, explicit_text="user notice text one"),
+                    ],
+                ),
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                    policy_qualifiers=[
+                        x509.UserNotice(notice_reference=None, explicit_text="user notice text two"),
+                        "https://example.com/cps2/",
+                    ],
+                ),
+            ),
+        )
+
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_multiple_ians(self) -> None:
         """Test that we can set multiple IssuerAlternativeName values."""

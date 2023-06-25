@@ -17,16 +17,23 @@
 """
 
 import abc
+import json
 import typing
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
+import django
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
+from django_ca import constants
+from django_ca.extensions import parse_extension, serialize_extension
 from django_ca.fields import CertificateSigningRequestField as CertificateSigningRequestFormField
+from django_ca.typehints import JSON, ExtensionTypeTypeVar, SerializedExtension
 
 DecodableCertificate = Union[str, bytes, x509.Certificate]
 DecodableCertificateSigningRequest = Union[str, bytes, x509.CertificateSigningRequest]
@@ -40,7 +47,7 @@ DecodableTypeVar = typing.TypeVar(
 #   matches the type in required by the constructor of WrapperTypeVar.
 WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ignore[type-arg]
 
-# mypy-django makes modelfields a generic class, so we need  a different base when type checking.
+# django-stubs models.Field subclasses generic, so we need  a different base when type checking.
 if typing.TYPE_CHECKING:
 
     class LazyBinaryFieldBase(
@@ -60,8 +67,7 @@ else:
 class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta):
     """Abstract base class for lazy field values.
 
-    Subclasses of this class can be used by *binary* modelfields to load a cryptography value when first
-    accessed.
+    Subclasses of this class can be used by *binary* fields to load a cryptography value when first accessed.
     """
 
     _bytes: bytes
@@ -169,7 +175,7 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
 class LazyBinaryField(
     LazyBinaryFieldBase[DecodableTypeVar, WrapperTypeVar], typing.Generic[DecodableTypeVar, WrapperTypeVar]
 ):
-    """Base class for binary modelfields that parse the value when first used."""
+    """Base class for binary fields that parse the value when first used."""
 
     formfield_class: Type[forms.Field]
     wrapper: Type[WrapperTypeVar]
@@ -264,3 +270,139 @@ class CertificateField(LazyBinaryField[DecodableCertificate, LazyCertificate]):
     #       field, and formfield() is never called for this class. Thus, it's okay to use the wrong class.
     formfield_class = CertificateSigningRequestFormField
     wrapper = LazyCertificate
+
+
+class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar]):
+    """Base class for fields storing a `x509.Extension` class.
+
+    Since the docs are a bit confusing, here is how the methods are called in some scenarios
+
+    full_clean():
+    1. to_python() (with the value stored in the instance)
+    2. validate() (always an ext, thanks to to_python()
+
+    save():
+    1. get_prep_value()
+
+    load():
+    1. from_db_value() (with `value` being a string)
+    """
+
+    extension_class: Type[ExtensionTypeTypeVar]
+    default_error_messages = {
+        "unparsable-extension": _("The value cannot be parsed to an extension."),
+        "invalid-type": _("%(value)s: Not a cryptography.x509.Extension class."),
+        "invalid-extension-type": _("Expected an instance of %(extension_class)s."),
+    }
+
+    if typing.TYPE_CHECKING:
+
+        def __get__(  # type: ignore[override]
+            self, instance: Any, owner: Any
+        ) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
+            ...
+
+        def __set__(
+            self,
+            instance: Any,
+            value: Optional[Union[x509.Extension[x509.ExtensionType], SerializedExtension]],
+        ) -> None:
+            ...
+
+    @property
+    def extension_key(self) -> str:
+        """The extension key for the handled extension."""
+        return constants.EXTENSION_KEYS[self.extension_class.oid]
+
+    def from_db_value(
+        self, value: Any, expression: Any, connection: Any
+    ) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
+        """Convert the value loaded from the database to a cryptography extension."""
+        if value is None:
+            return value
+
+        # TYPE NOTE: django-stubs seems to not have the function in the super-class
+        parsed_json: JSON = super().from_db_value(value, expression, connection)  # type: ignore[misc]
+
+        return parse_extension(self.extension_key, parsed_json)  # type: ignore[return-value,arg-type]
+
+    def to_python(self, value: Any) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
+        if isinstance(value, x509.Extension):
+            return value
+
+        # COVERAGE NOTE: Despite extensive tests, this method never seems to be called with `value=None`. The
+        # docs however strongly recommend that we handle this case, hence the block below.
+        if value is None:  # pragma: no cover
+            return value
+
+        try:
+            return parse_extension(self.extension_key, value)  # type: ignore
+        except Exception as ex:
+            raise ValidationError(
+                self.error_messages["unparsable-extension"],
+                code="unparsable-extension",
+                params={"value": value},
+            ) from ex
+
+    def get_prep_value(self, value: Any) -> Optional[SerializedExtension]:
+        """Prepare the value so that it can be stored in the database.
+
+        This function is invoked during ``save()``. `value` may be the cryptography extension value (in
+        particular, if ``full_clean()`` was called before) or the serialized extension.
+        """
+        if value is None:  # pragma: no cover  # this happens during migrations
+            return value
+        if isinstance(value, dict):
+            # Run to_python() to make sure that we can deserialize the extension again when loading.
+            # Otherwise, we could just pass any dict and it would work.
+            self.to_python(value)
+
+            if django.VERSION < (4, 2):  # pragma: django<4.2 branch
+                return json.dumps(value)  # type: ignore[return-value]
+            return value  # type: ignore[return-value]  # pragma: django>=4.2 branch
+        if not isinstance(value, x509.Extension):
+            raise ValidationError(
+                self.error_messages["invalid-type"],
+                code="invalid-type",
+                params={"value": value},
+            )
+        if not isinstance(value.value, self.extension_class):
+            raise ValidationError(
+                self.error_messages["invalid-extension-type"],
+                code="invalid-extension-type",
+                params={"extension_class": self.extension_class.__name__},
+            )
+
+        serialized = serialize_extension(value)
+        if django.VERSION < (4, 2):  # pragma: django<4.2 branch
+            return json.dumps(serialized)  # type: ignore[return-value]
+        return serialized  # pragma: django>=4.2 branch
+
+    def validate(self, value: x509.Extension[ExtensionTypeTypeVar], model_instance: Any) -> None:
+        """Handle field-specific validation.
+
+        This method is called during full_clean(), but *after* `to_python()` is called. We can thus expect
+        `value` to be the appropriate extension already, and we just double-check.
+
+        Note that we *have to* override the function of the parent class, as JSONField.validate() validates
+        that the value is JSON serializable (which the extension of course isn't).
+        """
+        if not isinstance(value, x509.Extension):  # pragma: no cover
+            raise ValidationError(
+                self.error_messages["invalid-type"],
+                code="invalid-type",
+                params={"value": value},
+            )
+        if not isinstance(value.value, self.extension_class):  # pragma: no cover
+            raise ValidationError(
+                self.error_messages["invalid-extension-type"],
+                code="invalid-type",
+                params={"extension_class": self.extension_class.__name__},
+            )
+
+
+class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies]):
+    """Field storing a :py:class:`~cg:cryptography.x509.CertificatePolicies`-based extension."""
+
+    description = _("A Certificate Policies extension object.")
+    extension_class = x509.CertificatePolicies

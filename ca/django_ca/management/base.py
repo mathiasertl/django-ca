@@ -117,6 +117,69 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     """Base class for most/all management commands."""
 
+    def add_certificate_policies_group(
+        self,
+        parser: ActionsContainer,
+        description: str,
+        allow_any_policy: bool = False,
+        dest: str = "certificate_policies",
+        prefix: str = "",
+    ) -> None:
+        """Add argument group for the Certificate Policies extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
+        if isinstance(parser, argparse.ArgumentParser):
+            group = parser.add_argument_group(f"{ext_name} extension", description.format(ext_name=ext_name))
+        else:
+            group = parser  # parser is already an argument group
+
+        group.add_argument(
+            f"--{prefix}policy-identifier",
+            action=actions.PolicyIdentifierAction,
+            dest=dest,
+            allow_any_policy=allow_any_policy,
+            help="Add a certificate policy with the given OID. May be given multiple times to add multiple "
+            "policies.",
+        )
+        group.add_argument(
+            f"--{prefix}certification-practice-statement",
+            action=actions.CertificationPracticeStatementAction,
+            dest=dest,
+            help="Add a certification practice statement (CPS) to the last policy added with "
+            "--policy-identifier.",
+        )
+        group.add_argument(
+            f"--{prefix}user-notice",
+            action=actions.UserNoticeAction,
+            dest=dest,
+            help="Add a textual statement that can be displayed to the user to the last policy added with "
+            "--policy-identifier.",
+        )
+        self.add_critical_option(
+            group,
+            ExtensionOID.CERTIFICATE_POLICIES,
+            prefix=prefix,
+            help_suffix="It is usually not marked as critical.",
+        )
+
+    def add_critical_option(
+        self, parser: ActionsContainer, oid: x509.ObjectIdentifier, help_suffix: str = "", prefix: str = ""
+    ) -> None:
+        """Add a --...-(non-)critical option for the extension to the given argparse ActionContainer."""
+        destination = f"{prefix.replace('-', '_')}{constants.EXTENSION_KEYS[oid]}_critical"
+        extension_arg = constants.EXTENSION_KEYS[oid].replace("_", "-")
+        default = constants.EXTENSION_DEFAULT_CRITICAL[oid]
+
+        if default is True:
+            option = f"--{prefix}{extension_arg}-non-critical"
+            action = "store_false"
+            help_text = f"Mark the extension as non-critical. {help_suffix}".strip()
+        else:
+            option = f"--{prefix}{extension_arg}-critical"
+            action = "store_true"
+            help_text = f"Mark the extension as critical. {help_suffix}".strip()
+
+        parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
+
     @property
     def valid_subject_keys(self) -> str:
         """Return human-readable enumeration of valid subject keys (CN/...)."""
@@ -214,59 +277,6 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             access_method=AuthorityInformationAccessOID.CA_ISSUERS,
             help="URL to the certificate of your CA (in DER format).",
         )
-
-    def add_certificate_policies_group(
-        self, parser: argparse.ArgumentParser, description: str, allow_any_policy: bool = False
-    ) -> None:
-        """Add argument group for the Certificate Policies extension."""
-        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
-        group = parser.add_argument_group(f"{ext_name} extension", description.format(ext_name=ext_name))
-        group.add_argument(
-            "--policy-identifier",
-            action=actions.PolicyIdentifierAction,
-            dest="certificate_policies",
-            allow_any_policy=allow_any_policy,
-            help="Add a certificate policy with the given OID. May be given multiple times to add multiple "
-            "policies.",
-        )
-        group.add_argument(
-            "--certification-practice-statement",
-            action=actions.CertificationPracticeStatementAction,
-            dest="certificate_policies",
-            help="Add a certification practice statement (CPS) to the last policy added with"
-            "--policy-identifier.",
-        )
-        group.add_argument(
-            "--user-notice",
-            action=actions.UserNoticeAction,
-            dest="certificate_policies",
-            help="Add a textual statement that can be displayed to the user to the last policy added with "
-            "--policy-identifier.",
-        )
-        self.add_critical_option(
-            group,
-            ExtensionOID.CERTIFICATE_POLICIES,
-            help_suffix="It is usually not marked as critical.",
-        )
-
-    def add_critical_option(
-        self, parser: ActionsContainer, oid: x509.ObjectIdentifier, help_suffix: str = ""
-    ) -> None:
-        """Add a --...-(non-)critical option for the extension to the given argparse ActionContainer."""
-        destination = f"{constants.EXTENSION_KEYS[oid]}_critical"
-        extension_arg = constants.EXTENSION_KEYS[oid].replace("_", "-")
-        default = constants.EXTENSION_DEFAULT_CRITICAL[oid]
-
-        if default is True:
-            option = f"--{extension_arg}-non-critical"
-            action = "store_false"
-            help_text = f"Mark the extension as non-critical. {help_suffix}".strip()
-        else:
-            option = f"--{extension_arg}-critical"
-            action = "store_true"
-            help_text = f"Mark the extension as critical. {help_suffix}".strip()
-
-        parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
 
     def add_crl_distribution_points_group(
         self,

@@ -41,8 +41,7 @@ ubuntu-releases = [
 [django-ca.validation]
 # list glob-style patterns to exclude from any check
 excludes = [
-    "ca/django_ca/migrations/0001_initial.py",
-    "ca/django_ca/migrations/*_auto_*.py",
+    "ca/django_ca/migrations/*.py",
 ]
 # Files known to be stand-alone scripts (-> they include a shebang line)
 standalone-scripts = [
@@ -96,7 +95,7 @@ skip_gitignore = true
 line_length = 110
 extend_skip = ["migrations", "stubs"]
 known_crypto = [
-    "cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"
+    "cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"
 ]
 known_django = "django"
 known_django_addon = "django_object_actions"
@@ -299,5 +298,5 @@ combine-as-imports = true
 [tool.ruff.isort.sections]
 django = ["django"]
 django-addon = ["django_object_actions"]
-crypto = ["cryptography", "ocspbuilder", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
+crypto = ["cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
 test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock", "webtest"]

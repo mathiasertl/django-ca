@@ -21,6 +21,32 @@ var update_extensions = function(extensions) {
 				field.find('select').val(ext.value);
 			}
 			field.find('select').change();  // so any existing callbacks are called
+		} else if (key === "certificate_policies") {
+		    // We only support one policy information object, return if there are more
+		    if (ext.value.length > 1) {
+		        return;
+		    }
+		    var policy_information = ext.value[0];
+		    var cps = [];
+		    var explicit_text = "";
+
+		    for (policy_qualifier of policy_information.policy_qualifiers) {
+		        if (typeof policy_qualifier == "string") {
+		            cps.push(policy_qualifier);
+		        } else {
+                    if (policy_qualifier.notice_reference) {
+                        return;  // We don't support notice references
+                    } else if (explicit_text == "") {
+		                explicit_text = policy_qualifier.explicit_text;
+		            } else {
+		                return;  // extension has more then one explicit text
+		            }
+		        }
+		    }
+
+		    field.find('input#id_' + key + '_0').val(policy_information.policy_identifier);
+		    field.find('textarea#id_' + key + '_1').val(cps.join("\n"));
+		    field.find('textarea#id_' + key + '_2').val(explicit_text);
         } else if (key === 'crl_distribution_points' || key === 'freshest_crl') {
             var dpoint = ext.value[0];
             var full_name = dpoint.full_name ? dpoint.full_name.join('\n') : "";

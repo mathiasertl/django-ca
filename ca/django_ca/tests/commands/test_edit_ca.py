@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test the edit_ca management command."""
+from cryptography import x509
 
 from django.test import TestCase
 
@@ -45,6 +46,20 @@ class EditCATestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test command with e2e cli argument parsing."""
 
+        stdout, stderr = self.cmd_e2e(
+            ["edit_ca", self.ca.serial, f"--caa={self.caa}", f"--website={self.website}", f"--tos={self.tos}"]
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+
+        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
+        self.assertEqual(ca.caa_identity, self.caa)
+        self.assertEqual(ca.website, self.website)
+        self.assertEqual(ca.terms_of_service, self.tos)
+
+    @override_tmpcadir()
+    def test_signing_extensions(self) -> None:
+        """Test editing extensions used for signing certificates."""
         crl = "\n".join(self.crl)
         stdout, stderr = self.cmd_e2e(
             [
@@ -54,9 +69,10 @@ class EditCATestCase(TestCaseMixin, TestCase):
                 f"--issuer-alt-name={self.ian}",
                 f"--ocsp-url={self.ocsp_url}",
                 f"--crl-url={crl}",
-                f"--caa={self.caa}",
-                f"--website={self.website}",
-                f"--tos={self.tos}",
+                # Certificate Policies extension
+                "--sign-policy-identifier=1.2.3",
+                "--sign-certification-practice-statement=https://cps.example.com",
+                "--sign-user-notice=explicit-text",
             ]
         )
         self.assertEqual(stdout, "")
@@ -67,9 +83,20 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.issuer_alt_name, f"URI:{self.ian}")
         self.assertEqual(ca.ocsp_url, self.ocsp_url)
         self.assertEqual(ca.crl_url, "\n".join(self.crl))
-        self.assertEqual(ca.caa_identity, self.caa)
-        self.assertEqual(ca.website, self.website)
-        self.assertEqual(ca.terms_of_service, self.tos)
+
+        # Certificate Policies extension
+        self.assertEqual(
+            ca.sign_certificate_policies,
+            self.certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                    policy_qualifiers=[
+                        "https://cps.example.com",
+                        x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+                    ],
+                )
+            ),
+        )
 
     @override_tmpcadir()
     def test_enable_disable(self) -> None:

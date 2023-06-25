@@ -45,6 +45,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
+from django_ca.extensions import serialize_extension
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,
@@ -654,6 +655,73 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 ),
             },
         )
+
+    def test_sign_certificate_policies(self) -> None:
+        """Test setting the ``sign_certificate_policies`` field."""
+        certificate_policies = x509.Extension(
+            critical=True,
+            oid=ExtensionOID.CERTIFICATE_POLICIES,
+            value=x509.CertificatePolicies(
+                [
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
+                        policy_qualifiers=["http://example.com"],
+                    )
+                ]
+            ),
+        )
+
+        self.ca.sign_certificate_policies = certificate_policies
+        self.ca.full_clean()
+        self.ca.save()
+        self.assertEqual(self.ca.sign_certificate_policies, certificate_policies)
+
+        # Reload from db, we get the original extension back
+        ca = CertificateAuthority.objects.get(pk=self.ca.pk)
+        self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+
+        # Try storing a serialized extension
+        ca.sign_certificate_policies = serialize_extension(certificate_policies)
+        ca.full_clean()
+        self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+
+        # also works when just saving...
+        ca.sign_certificate_policies = serialize_extension(certificate_policies)
+        ca.save()
+
+        # Reload from db again, we get the original extension back
+        ca = CertificateAuthority.objects.get(pk=self.ca.pk)
+        self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+
+        # Setting a None value also works
+        ca.sign_certificate_policies = None
+        ca.full_clean()
+        ca.save()
+        ca = CertificateAuthority.objects.get(pk=ca.pk)
+        self.assertIsNone(ca.sign_certificate_policies)
+
+        # Try setting an invalid extension type
+        ca.sign_certificate_policies = self.basic_constraints()
+        with self.assertValidationError(
+            {"sign_certificate_policies": ["Expected an instance of CertificatePolicies."]}
+        ):
+            ca.full_clean()
+        with self.assertRaisesRegex(
+            ValidationError, r"^\['Expected an instance of CertificatePolicies\.'\]$"
+        ), transaction.atomic():
+            ca.save()
+
+        # Try setting something unparsable
+        ca.sign_certificate_policies = True  # type: ignore[assignment]  # what we're testing
+        with self.assertValidationError(
+            {"sign_certificate_policies": ["The value cannot be parsed to an extension."]}
+        ):
+            ca.full_clean()
+
+        with self.assertRaisesRegex(
+            ValidationError, r"^\['True: Not a cryptography\.x509\.Extension class\.'\]$"
+        ), transaction.atomic():
+            ca.save()
 
 
 class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):

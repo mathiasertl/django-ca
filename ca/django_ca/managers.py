@@ -249,6 +249,7 @@ class CertificateAuthorityManager(
         acme_requires_contact: bool = True,
         acme_profile: Optional[str] = None,
         openssh_ca: bool = False,
+        sign_certificate_policies: Optional[x509.Extension[x509.CertificatePolicies]] = None,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
@@ -323,6 +324,8 @@ class CertificateAuthorityManager(
             Set to ``False`` if you do not want to force clients to register with an email address.
         openssh_ca : bool, optional
             Set to ``True`` if you want to use this to use this CA for signing OpenSSH certs.
+        sign_certificate_policies : :py:class:`~cg:cryptography.x509.Extension`, optional
+            Add the given Certificate Policies extension when signing certificates.
 
         Raises
         ------
@@ -436,6 +439,7 @@ class CertificateAuthorityManager(
             acme_enabled=acme_enabled,
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
+            sign_certificate_policies=sign_certificate_policies,
         )
 
         private_key = generate_private_key(key_size, key_type, elliptic_curve)
@@ -487,6 +491,7 @@ class CertificateAuthorityManager(
             acme_enabled=acme_enabled,
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
+            sign_certificate_policies=sign_certificate_policies,
         )
         ca.update_certificate(certificate)
 

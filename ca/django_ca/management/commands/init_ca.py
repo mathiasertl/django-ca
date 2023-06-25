@@ -293,6 +293,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         caa: str,
         website: str,
         tos: str,
+        # Certificate Policies extension
+        sign_certificate_policies: Optional[x509.CertificatePolicies],
+        sign_certificate_policies_critical: bool,
         **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
@@ -426,6 +429,15 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 subject_alternative_name_critical,
             )
 
+        # Add extensions for signing new certificates
+        sign_certificate_policies_ext = None
+        if sign_certificate_policies is not None:
+            sign_certificate_policies_ext = x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=sign_certificate_policies_critical,
+                value=sign_certificate_policies,
+            )
+
         kwargs = {}
         for opt in ["path", "default_hostname"]:
             if options[opt] is not None:
@@ -463,6 +475,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 website=website,
                 terms_of_service=tos,
                 extensions=extensions.values(),
+                sign_certificate_policies=sign_certificate_policies_ext,
                 **kwargs,
             )
         except Exception as ex:  # pragma: no cover

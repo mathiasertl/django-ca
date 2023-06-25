@@ -19,6 +19,7 @@
 from typing import Any, List, Optional
 
 from cryptography import x509
+from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import CommandError, CommandParser
 
@@ -60,6 +61,9 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
         sign_ocsp_responder: str,
         enabled: Optional[bool],
+        # Certificate Policies extension
+        sign_certificate_policies: Optional[x509.CertificatePolicies],
+        sign_certificate_policies_critical: bool,
         **options: Any,
     ) -> None:
         if sign_ca_issuer:
@@ -72,6 +76,12 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             ca.ocsp_url = sign_ocsp_responder
         if sign_crl_full_name:
             ca.crl_url = "\n".join(sign_crl_full_name)
+        if sign_certificate_policies is not None:
+            ca.sign_certificate_policies = x509.Extension(
+                oid=ExtensionOID.CERTIFICATE_POLICIES,
+                critical=sign_certificate_policies_critical,
+                value=sign_certificate_policies,
+            )
 
         if enabled is not None:
             ca.enabled = enabled

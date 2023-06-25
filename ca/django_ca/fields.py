@@ -100,6 +100,23 @@ openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
             raise forms.ValidationError(str(ex)) from ex
 
 
+class ObjectIdentifierField(forms.CharField):
+    """A form field for a :py:class:`~cg:cryptography.x509.ObjectIdentifier`."""
+
+    default_error_messages = {"invalid-oid": _("%(value)s: The given OID is invalid.")}
+
+    def to_python(self, value: str) -> Optional[x509.ObjectIdentifier]:  # type: ignore[override]
+        if not value:
+            return None
+
+        try:
+            return x509.ObjectIdentifier(value)
+        except ValueError as ex:
+            raise forms.ValidationError(
+                self.error_messages["invalid-oid"], code="invalid-oid", params={"value": value}
+            ) from ex
+
+
 class SubjectField(forms.MultiValueField):
     """A MultiValue field for a :py:class:`~django_ca.subject.Subject`."""
 
@@ -323,6 +340,33 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
                 for name in ca_issuers
             ]
         return x509.AuthorityInformationAccess(descriptions=descriptions)
+
+
+class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies]):
+    """Form field for a :py:class:`~cg:cryptography.x509.CertificatePolicies` extension."""
+
+    extension_type = x509.CertificatePolicies
+    fields = (
+        ObjectIdentifierField(required=False),  # Policy Identifier
+        forms.CharField(required=False),
+        forms.CharField(required=False),
+    )
+    widget = widgets.CertificatePoliciesWidget
+
+    def get_value(  # type: ignore[override]
+        self, policy_identifier: x509.ObjectIdentifier, practice_statements: str, explicit_text: str
+    ) -> Optional[x509.CertificatePolicies]:
+        if not policy_identifier or not (practice_statements or explicit_text):
+            return None
+
+        policy_qualifiers = typing.cast(List[Union[str, x509.UserNotice]], practice_statements.splitlines())
+        if explicit_text:
+            policy_qualifiers.append(x509.UserNotice(notice_reference=None, explicit_text=explicit_text))
+
+        policy_information = x509.PolicyInformation(
+            policy_identifier=policy_identifier, policy_qualifiers=policy_qualifiers
+        )
+        return x509.CertificatePolicies([policy_information])
 
 
 class CRLDistributionPointField(DistributionPointField[x509.CRLDistributionPoints]):

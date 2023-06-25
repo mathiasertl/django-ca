@@ -127,8 +127,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         expected = orig.x509_extensions
         actual = new.x509_extensions
         self.assertEqual(
-            sorted(expected.values(), key=lambda e: e.oid.dotted_string),  # type: ignore[no-any-return]
-            sorted(actual.values(), key=lambda e: e.oid.dotted_string),  # type: ignore[no-any-return]
+            sorted(expected.values(), key=lambda e: e.oid.dotted_string),
+            sorted(actual.values(), key=lambda e: e.oid.dotted_string),
         )
 
     @override_tmpcadir()

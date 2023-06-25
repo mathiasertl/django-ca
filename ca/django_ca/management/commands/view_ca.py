@@ -100,5 +100,7 @@ class Command(BaseViewCommand):  # pylint: disable=missing-class-docstring
         self.stdout.write(f"* Issuer URL: {ca.issuer_url or None}")
         self.stdout.write(f"* OCSP URL: {ca.ocsp_url or None}")
         self.stdout.write(f"* Issuer Alternative Name: {ca.issuer_alt_name or None}")
+        if ca.sign_certificate_policies:
+            self.print_extension(ca.sign_certificate_policies)
 
         self.output_footer(ca, pem=pem, wrap=wrap)

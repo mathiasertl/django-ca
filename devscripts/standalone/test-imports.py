@@ -26,7 +26,7 @@ and run this script to detect any mistakes.
 """
 
 # NOTE: Disable import warnings, the whole point of this module to do imports later
-# flake8: NOQA: E408
+# flake8: noqa: E402,F401
 # pylint: disable=wrong-import-position,unused-import,reimported
 
 import argparse

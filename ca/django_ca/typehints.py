@@ -38,6 +38,9 @@ class SupportsLessThan(typing.Protocol):
         ...
 
 
+# pylint: disable-next=invalid-name
+JSON = Union[Dict[str, "JSON"], List["JSON"], str, int, float, bool, None]
+
 # from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 
 CRLExtensionTypeTypeVar = typing.TypeVar(

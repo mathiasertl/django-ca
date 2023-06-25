@@ -85,6 +85,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_alternative_name_1": True,
                     "algorithm": algorithm,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "certificate_policies_0": "1.2.3",
+                    "certificate_policies_1": "https://cps.example.com",
+                    "certificate_policies_2": "explicit-text",
                     "key_usage_0": [
                         "digital_signature",
                         "key_agreement",
@@ -123,6 +126,15 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 self.ocsp_no_check(),
                 self.subject_alternative_name(dns(cname)),
                 self.tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
+                self.certificate_policies(
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                        policy_qualifiers=[
+                            "https://cps.example.com",
+                            x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+                        ],
+                    )
+                ),
             ],
         )
         self.assertEqual(cert.ca, ca)
@@ -829,6 +841,42 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"algorithm": ["RSA-based certificate authorities require a signature hash algorithm."]},
         )
 
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    def test_add_invalid_oid(self) -> None:
+        """Test posting no common name but some other name components."""
+
+        ca = self.cas["root"]
+        csr = certs["root-cert"]["csr"]["pem"]
+        cert_count = Certificate.objects.all().count()
+
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": csr,
+                    "ca": ca.pk,
+                    "profile": "webserver",
+                    "subject_0": "AT",
+                    "subject_1": "",
+                    "subject_2": "",
+                    "subject_3": "",
+                    "subject_4": "",
+                    "subject_5": self.hostname,
+                    "subject_6": "",
+                    "subject_alternative_name_1": True,
+                    "algorithm": "SHA-256",
+                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "certificate_policies_0": "abc",
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertFalse(response.context["adminform"].form.is_valid())
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {"certificate_policies": ["abc: The given OID is invalid."]},
+        )
+        self.assertEqual(cert_count, Certificate.objects.all().count())
+
     def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
         ca = self.cas["root"]
@@ -1245,6 +1293,15 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.ca.issuer_url = "http://issuer.test-only-ca.example.com"
         self.ca.ocsp_url = "http://ocsp.test-only-ca.example.com"
         self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
+        self.ca.sign_certificate_policies = self.certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                policy_qualifiers=[
+                    "https://cps.example.com",
+                    x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+                ],
+            )
+        )
         self.ca.save()
 
         response = self.app.get(self.add_url, user=self.user.username)
@@ -1265,6 +1322,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 cert.ca.get_authority_key_identifier_extension(),
                 self.basic_constraints(),
                 self.crl_distribution_points(full_name=[uri(self.ca.crl_url)]),
+                self.ca.sign_certificate_policies,
                 self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
                 self.subject_alternative_name(dns(cn)),
                 self.subject_key_identifier(cert),

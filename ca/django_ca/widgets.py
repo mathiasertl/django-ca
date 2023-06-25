@@ -352,6 +352,58 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         return ca_issuers, ocsp, value.critical
 
 
+class CertificatePoliciesWidget(ExtensionWidget):
+    """Widget for a :py:class:`~cg:cryptography.x509.CertificatePolicies` extension."""
+
+    oid = ExtensionOID.CERTIFICATE_POLICIES
+    extension_widgets = (
+        forms.TextInput(),  # policy identifier
+        forms.Textarea(attrs={"rows": 3}),  # practice statement
+        forms.Textarea(attrs={"rows": 3}),  # explicit text
+    )
+    help_texts = (
+        "",
+        _(
+            "A pointers (e.g. URLs) to a certification practice statement (CPS). Separate multiple pointers "
+            "with a newline."
+        ),
+        _("A textual statement that can be displayed to the user"),
+    )
+    labels = (
+        _("Policy Identifier"),
+        _("Certificate Practice Statement(s)"),
+        _("Explicit Text"),
+    )
+
+    def decompress(
+        self, value: Optional[x509.Extension[x509.CertificatePolicies]]
+    ) -> Tuple[str, str, str, bool]:
+        if value is None:
+            return "", "", "", EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
+
+        ext_value = value.value
+        if len(ext_value) > 1:  # pragma: no cover  # ruled out by the admin interface
+            raise ValueError("This widget only supports a single certificate policy.")
+
+        policy_information = ext_value[0]
+        practice_statement: List[str] = []
+        explicit_text = ""
+        for policy_qualifier in policy_information.policy_qualifiers:
+            if isinstance(policy_qualifier, str):
+                practice_statement.append(policy_qualifier)
+            else:  # UserNotice object
+                if policy_qualifier.notice_reference:  # pragma: no cover  # ruled out by the admin interface
+                    raise ValueError("This widget does not support notice references.")
+                explicit_text = policy_qualifier.explicit_text
+
+        return (
+            policy_information.policy_identifier.dotted_string,
+            "\n".join(practice_statement),
+            explicit_text,
+            value.critical,
+        )
+
+
 class CRLDistributionPointsWidget(DistributionPointWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
 

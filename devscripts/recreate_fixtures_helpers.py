@@ -322,7 +322,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
     ca_names = [v["name"] for k, v in data.items() if v.get("type") == "ca"]
 
     # sort ca_names so that any children are created last
-    ca_names = sorted(ca_names, key=lambda n: data[n].get("parent", ""))  # type: ignore[no-any-return]
+    ca_names = sorted(ca_names, key=lambda n: data[n].get("parent", ""))
     ca_instances = []
 
     for name in ca_names:

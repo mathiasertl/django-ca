@@ -17,6 +17,8 @@ import textwrap
 from typing import Any
 from unittest import mock
 
+from cryptography import x509
+
 from django.conf import settings
 from django.test import TestCase
 
@@ -375,6 +377,54 @@ Certificate extensions for signed certificates:
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
 * Issuer Alternative Name: None
+
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+
+{pub[pem]}""",
+    "root-sign-options": """* Name: {name}
+* Enabled: Yes
+* Subject: {subject_str}
+* Serial: {serial_colons}
+* Issuer: {issuer_str}
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* HPKP pin: {hpkp}
+
+Certificate Authority information:
+* Certificate authority is a root CA.
+* Children:
+  * {children[0][0]} ({children[0][1]})
+* Maximum levels of sub-CAs (path length): {path_length_text}
+* Path to private key:
+  {key_path}
+
+ACMEv2 support:
+* Enabled: False
+
+Certificate extensions:
+* Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+* Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+* Key Usage{key_usage_critical}:
+{key_usage_text}
+* Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+Certificate extensions for signed certificates:
+* Certificate Revocation List (CRL): {crl_url}
+* Issuer URL: {issuer_url}
+* OCSP URL: {ocsp_url}
+* Issuer Alternative Name: None
+* Certificate Policies:
+  * Policy Identifier: 1.2.3
+    Policy Qualifiers:
+    * https://cps.example.com
+    * User Notice:
+      * Explicit Text: explicit-text
 
 Digest:
   SHA-256: {sha256}
@@ -1483,6 +1533,26 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         data["key_path"] = self.cas["root"].private_key_path
         self.assertMultiLineEqual(stdout, expected["root"].format(**data))
         self.assertEqual(stderr, "")
+
+    @override_tmpcadir()
+    def test_sign_options(self) -> None:
+        """Test options for signing certificates."""
+        ca = self.cas["root"]
+        ca.sign_certificate_policies = self.certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                policy_qualifiers=[
+                    "https://cps.example.com",
+                    x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+                ],
+            )
+        )
+        ca.save()
+
+        stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
+        self.assertEqual(stderr, "")
+        data = self.get_cert_context("root")
+        self.assertMultiLineEqual(stdout, expected["root-sign-options"].format(**data))
 
     def test_wrap_digest(self) -> None:
         """Test wrapping the digest."""

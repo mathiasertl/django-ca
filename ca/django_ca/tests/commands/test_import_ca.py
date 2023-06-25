@@ -189,6 +189,10 @@ class ImportCATest(TestCaseMixin, TestCase):
                 f"--sign-issuer-alternative-name={ian}",
                 f"--sign-crl-full-name={crl1}",
                 f"--sign-crl-full-name={crl2}",
+                # Certificate Policies extension
+                "--sign-policy-identifier=1.2.3",
+                "--sign-certification-practice-statement=https://cps.example.com",
+                "--sign-user-notice=explicit-text",
                 name,
                 key_path,
                 pem_path,
@@ -202,6 +206,19 @@ class ImportCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.ocsp_url, ocsp_responder)
         self.assertEqual(ca.issuer_alt_name, f"URI:{ian}")
         self.assertEqual(ca.crl_url, f"{crl1}\n{crl2}")
+        # Certificate Policies extension
+        self.assertEqual(
+            ca.sign_certificate_policies,
+            self.certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                    policy_qualifiers=[
+                        "https://cps.example.com",
+                        x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+                    ],
+                )
+            ),
+        )
 
     @override_tmpcadir()
     def test_permission_denied(self) -> None:

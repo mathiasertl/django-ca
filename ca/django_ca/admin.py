@@ -361,6 +361,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                     "issuer_url",
                     "ocsp_url",
                     "issuer_alt_name",
+                    "sign_certificate_policies",
                 ],
             },
         ),
@@ -1047,7 +1048,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     continue
 
                 # Add any extension from the profile currently not changeable in the web interface
-                extensions[oid] = ext
+                extensions[oid] = ext  # pragma: no cover  # all extensions should be handled above!
 
             ca: CertificateAuthority = data["ca"]
 

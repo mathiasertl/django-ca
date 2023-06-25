@@ -185,10 +185,18 @@ class AcmeTestCaseMixin(TestCaseMixin):
         with mock.patch("django_ca.models.get_random_string", return_value=slug):
             yield slug
 
-    def post(self, url: str, data: Any, **kwargs: str) -> "HttpResponse":
+    def post(
+        self, url: str, data: Any, content_type: str = "application/jose+json", **extra: str
+    ) -> "HttpResponse":
         """Make a post request with some ACME specific default data."""
-        kwargs.setdefault("content_type", "application/jose+json")
-        return self.client.post(url, json.dumps(data), follow=False, secure=False, **kwargs)
+        return self.client.post(
+            url,
+            json.dumps(data),
+            content_type=content_type,
+            follow=False,
+            secure=False,
+            **extra,  # type: ignore[arg-type]  # mypy 1.4.1 confuses this with header arg
+        )
 
 
 class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar]):

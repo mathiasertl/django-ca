@@ -290,3 +290,6 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             help="URL of an OCSP responder. --ocsp-url is a legacy option name and will be removed in"
             "django-ca 1.27.",
         )
+        self.add_certificate_policies_group(  # type: ignore[attr-defined]  # defined in BaseCommand
+            group, "foo", dest="sign_certificate_policies", allow_any_policy=True, prefix="sign-"
+        )
