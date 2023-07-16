@@ -30,6 +30,7 @@ from django_ca.constants import (
     KEY_USAGE_NAMES,
     REVOCATION_REASONS,
 )
+from django_ca.extensions.utils import certificate_policies_is_simple
 from django_ca.utils import ADMIN_SUBJECT_OIDS, format_general_name
 
 log = logging.getLogger(__name__)
@@ -382,8 +383,10 @@ class CertificatePoliciesWidget(ExtensionWidget):
             return "", "", "", EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
 
         ext_value = value.value
-        if len(ext_value) > 1:  # pragma: no cover  # ruled out by the admin interface
-            raise ValueError("This widget only supports a single certificate policy.")
+
+        # COVERAGE NOTE: ruled out by the admin interface
+        if certificate_policies_is_simple(ext_value) is False:  # pragma: no cover
+            raise ValueError("This widget only supports a simple certificate policy values.")
 
         policy_information = ext_value[0]
         practice_statement: List[str] = []
@@ -392,8 +395,6 @@ class CertificatePoliciesWidget(ExtensionWidget):
             if isinstance(policy_qualifier, str):
                 practice_statement.append(policy_qualifier)
             else:  # UserNotice object
-                if policy_qualifier.notice_reference:  # pragma: no cover  # ruled out by the admin interface
-                    raise ValueError("This widget does not support notice references.")
                 explicit_text = policy_qualifier.explicit_text
 
         return (

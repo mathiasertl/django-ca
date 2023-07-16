@@ -56,7 +56,7 @@ from django_object_actions import DjangoObjectActions
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
 from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
-from django_ca.extensions.utils import extension_as_admin_html
+from django_ca.extensions.utils import certificate_policies_is_simple, extension_as_admin_html
 from django_ca.forms import (
     CertificateAuthorityForm,
     CreateCertificateForm,
@@ -396,14 +396,14 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         "name",
         "serial_field",
     ]
-    readonly_fields = [
+    readonly_fields = (
         "serial_field",
         "pub_pem",
         "parent",
         "cn_display",
         "expires",
         "hpkp_pin",
-    ]
+    )
     x509_fieldset_index = 3
 
     def has_add_permission(self, request: HttpRequest) -> bool:
@@ -414,9 +414,18 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         self, request: HttpRequest, obj: Optional[CertificateAuthority] = None
     ) -> FieldSets:
         """Collapse the "Revocation" section unless the certificate is revoked."""
-        fieldsets = super().get_fieldsets(request, obj=obj)
+        fieldsets = list(copy.deepcopy(super().get_fieldsets(request, obj=obj)))
+
+        if obj is None:  # pragma: no cover  # we never add certificate authorities, so it's never None
+            return fieldsets
+
+        sign_certificate_policies = obj.sign_certificate_policies
+        if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
+            detail_fields = fieldsets[1][1]["fields"]
+            sign_certificate_policies_index = detail_fields.index("sign_certificate_policies")
+            detail_fields[sign_certificate_policies_index] = "sign_certificate_policies_readonly"
+
         if ca_settings.CA_ENABLE_ACME:
-            fieldsets = list(copy.deepcopy(fieldsets))
             fieldsets.insert(
                 1,
                 (
@@ -432,6 +441,31 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             )
 
         return fieldsets
+
+    def get_readonly_fields(  # type: ignore[override]
+        self, request: HttpRequest, obj: Optional[CertificateAuthority] = None
+    ) -> Union[List[str], Tuple[Any, ...]]:
+        fields = tuple(super().get_readonly_fields(request, obj=obj))
+        if obj is None:  # pragma: no cover  # we never add certificate authorities, so it's never None
+            return fields
+
+        sign_certificate_policies = obj.sign_certificate_policies
+        if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
+            fields = fields + ("sign_certificate_policies_readonly",)
+        return fields
+
+    def sign_certificate_policies_readonly(self, obj: CertificateAuthority) -> str:
+        """Display the sign_certificate_policies_readonly as read-only field."""
+        # COVERAGE NOTE: This function is only called for complex certificate policy extensions, hence it is
+        # never None here.
+        if obj.sign_certificate_policies is None:  # pragma: no cover
+            return ""
+        return extension_as_admin_html(
+            obj.sign_certificate_policies,
+            extra_context={
+                "warning": _("This extension is to complex to be modified in the admin interface.")
+            },
+        )
 
     class Media:
         css = {

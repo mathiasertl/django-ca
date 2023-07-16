@@ -11,6 +11,12 @@ ChangeLog
 ************
 
 * Drop support for cryptography 37 and cryptography 39, acme 2.4.0 and celery 5.1.
+* Add support for configuring certificate authorities to automatically include a Certificate Policy extension
+  when signing certificates.
+
+Backwards incompatible changes
+==============================
+
 * Passing ``ECC`` and ``EdDSA`` as key types (e.g when using :command:`manage.py init_ca`) was removed. Use
   ``EC`` and ``Ed25519`` instead. The old names where deprecated since 1.23.0.
 * Using comma-separated lists for the `--key-usage``, ``--extended-key-usage`` and ``--tls-feature``

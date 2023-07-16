@@ -15,6 +15,9 @@
 
 from http import HTTPStatus
 
+from cryptography import x509
+from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
+
 from django.test import Client, TestCase, override_settings
 
 from django_ca.models import CertificateAuthority
@@ -36,6 +39,41 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
     def test_change_view_with_acme(self) -> None:
         """Basic tests but with ACME support disabled."""
         self.test_change_view()
+
+    def test_complex_sign_certificate_policies(self) -> None:
+        """Test that complex Certificate Policy extensions are read-only."""
+        ca = self.cas["root"]
+
+        # This test is only meaningful if the CA does **not** have the Certificate Policies extension in its
+        # own extensions. We (can) only test for the used template after viewing, and the template would be
+        # used for that extension.
+        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.x509_extensions)
+
+        ca.sign_certificate_policies = self.certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[
+                    x509.UserNotice(
+                        explicit_text=None,
+                        notice_reference=x509.NoticeReference(organization="org", notice_numbers=[1]),
+                    )
+                ],
+            ),
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER,
+                policy_qualifiers=[
+                    x509.UserNotice(
+                        explicit_text=None,
+                        notice_reference=x509.NoticeReference(organization="org2", notice_numbers=[1]),
+                    )
+                ],
+            ),
+        )
+        ca.save()
+        response = self.get_change_view(ca)
+        self.assertChangeResponse(response, ca)
+        templates = [t.name for t in response.templates]
+        self.assertIn("django_ca/admin/extensions/2.5.29.32.html", templates)
 
 
 class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCase):

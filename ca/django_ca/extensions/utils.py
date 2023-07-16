@@ -14,7 +14,7 @@
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
 import typing
-from typing import Dict, Iterator, List, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
@@ -28,13 +28,47 @@ from django_ca.typehints import ExtensionMapping
 from django_ca.utils import add_colons, bytes_to_hex, int_to_hex
 
 
-def extension_as_admin_html(extension: x509.Extension[x509.ExtensionType]) -> str:
+def extension_as_admin_html(
+    extension: x509.Extension[x509.ExtensionType], extra_context: Optional[Dict[str, Any]] = None
+) -> str:
     """Convert an extension to HTML code suitable for the admin interface."""
+
     template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
     if isinstance(extension.value, x509.UnrecognizedExtension):
         template = "django_ca/admin/extensions/unrecognized_extension.html"
 
-    return render_to_string([template], context={"extension": extension, "x509": x509})
+    context = {"extension": extension, "x509": x509}
+    if extra_context is not None:
+        context.update(extra_context)
+
+    return render_to_string(template, context=context)
+
+
+def certificate_policies_is_simple(value: x509.CertificatePolicies) -> bool:
+    """Check if a Certificate Policies extension is "simple".
+
+    The extension is considered simple if it contains a single Policy Information, and that policy information
+    contains no notice references and at most one explicit text.
+    """
+    if len(value) > 1:
+        return False
+
+    policy_information = value[0]
+    has_explicit_text = False
+
+    if not policy_information.policy_qualifiers:
+        return True
+
+    for policy_qualifier in policy_information.policy_qualifiers:
+        if isinstance(policy_qualifier, str):
+            continue  # we support multiple - no need to keep track
+
+        if policy_qualifier.notice_reference:
+            return False
+        if has_explicit_text:
+            return False
+        has_explicit_text = True
+    return True
 
 
 def key_usage_items(value: x509.KeyUsage) -> Iterator[str]:
