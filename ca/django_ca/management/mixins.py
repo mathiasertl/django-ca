@@ -28,6 +28,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django_ca import ca_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.management import actions
+from django_ca.management.actions import IntegerRangeAction
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.typehints import ActionsContainer, AllowedHashTypes, ParsableKeyType
 from django_ca.utils import add_colons, validate_public_key_parameters
@@ -246,6 +247,27 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             dest="acme_requires_contact",
             action="store_true",
             help="Require email address during ACME account registration.",
+        )
+
+    def add_ocsp_group(self, parser: CommandParser) -> None:
+        """Add arguments for automatic OCSP configuration."""
+        group = parser.add_argument_group(
+            "OCSP responder configuration",
+            "Options for how the automatically configured OCSP responder behaves.",
+        )
+        group.add_argument(
+            "--ocsp-responder-key-validity",
+            action=IntegerRangeAction,
+            min=1,
+            metavar="DAYS",
+            help="How long (*in days*) automatically generated OCSP responder certificates are valid.",
+        )
+        group.add_argument(
+            "--ocsp-response-validity",
+            action=IntegerRangeAction,
+            min=600,
+            metavar="SECONDS",
+            help="How long (*in seconds*) OCSP responses are valid (default: 86400).",
         )
 
     def add_ca_args(self, parser: ActionsContainer) -> None:

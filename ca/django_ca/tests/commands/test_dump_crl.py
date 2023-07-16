@@ -218,6 +218,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertE2ECommandError(
             ["dump_crl", f"--ca={root.serial}", "--include-issuing-distribution-point"],
             b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
+            b"",
         )
 
     @override_tmpcadir()

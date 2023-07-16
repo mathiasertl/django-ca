@@ -63,6 +63,8 @@ Note that the private key will be copied to the directory configured by the CA_D
             help="Password for the private key.",
         )
 
+        self.add_acme_group(parser)
+        self.add_ocsp_group(parser)
         self.add_ca_args(parser)
 
         parser.add_argument("name", help="Human-readable name of the CA")
@@ -88,6 +90,9 @@ Note that the private key will be copied to the directory configured by the CA_D
         # Certificate Policies extension
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # OCSP responder configuration
+        ocsp_responder_key_validity: Optional[int],
+        ocsp_response_validity: Optional[int],
         **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):
@@ -129,6 +134,21 @@ Note that the private key will be copied to the directory configured by the CA_D
             crl_url="\n".join(sign_crl_full_name),
             sign_certificate_policies=sign_certificate_policies_ext,
         )
+
+        # Set OCSP responder options
+        if ocsp_responder_key_validity is not None:
+            ca.ocsp_responder_key_validity = ocsp_responder_key_validity
+        if ocsp_response_validity is not None:
+            ca.ocsp_response_validity = ocsp_response_validity
+
+        # Set ACME options
+        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
+            for param in ["acme_enabled", "acme_requires_contact"]:
+                if options[param] is not None:
+                    setattr(ca, param, options[param])
+
+            if acme_profile := options["acme_profile"]:
+                ca.acme_profile = acme_profile
 
         # load public key
         try:

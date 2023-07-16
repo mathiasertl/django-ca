@@ -41,7 +41,14 @@ import requests_mock
 from freezegun import freeze_time
 
 from django_ca import ca_settings, tasks
-from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
+from django_ca.models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+)
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.utils import ca_storage, get_crl_cache_key
@@ -175,6 +182,21 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
         for ca in self.cas.values():
             self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
             self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_repsonder_key_validity(self) -> None:
+        """Test that the ocsp_responder_key_validity field works."""
+
+        ca = self.cas["root"]
+        qs = Certificate.objects.filter(profile="ocsp", ca=ca)
+        ca.ocsp_responder_key_validity = 10
+        ca.save()
+        self.assertFalse(qs.exists())
+
+        tasks.generate_ocsp_key(ca.serial)
+        cert = qs.get()
+        self.assertEqual(cert.expires, timestamps["everything_valid"] + timedelta(days=10))
 
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):

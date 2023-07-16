@@ -14,6 +14,7 @@
 """Test the init_ca management command."""
 
 import io
+import re
 import typing
 from datetime import timedelta
 from typing import Any, List, Optional, Tuple
@@ -606,6 +607,34 @@ class InitCATest(TestCaseMixin, TestCase):
 
         with self.assertCommandError(r"^unknown-profile: Profile is not defined\.$"):
             self.init_ca(name="test", acme_profile="unknown-profile")
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_ocsp_responder_arguments(self) -> None:
+        """Test ACME arguments."""
+
+        ca = self.init_ca_e2e(
+            "Test CA",
+            "/CN=ocsp-responder.example.com",
+            "--ocsp-responder-key-validity=10",
+            "--ocsp-response-validity=3600",
+        )
+
+        self.assertEqual(ca.ocsp_responder_key_validity, 10)
+        self.assertEqual(ca.ocsp_response_validity, 3600)
+
+    @override_tmpcadir()
+    def test_invalid_ocsp_responder_arguments(self) -> None:
+        """Test naming an unknown profile."""
+
+        self.assertE2EError(
+            ["init_ca", "/CN=example.com", "--ocsp-responder-key-validity=0"],
+            stderr=re.compile(r"--ocsp-responder-key-validity: DAYS must be equal or greater then 1\."),
+        )
+
+        self.assertE2EError(
+            ["init_ca", "/CN=example.com", "--ocsp-response-validity=10"],
+            stderr=re.compile(r"--ocsp-response-validity: SECONDS must be equal or greater then 600\."),
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ec(self) -> None:

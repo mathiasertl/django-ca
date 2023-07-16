@@ -64,7 +64,6 @@ class Profile:
         <Profile: example>
     """
 
-    # pylint: disable=too-many-instance-attributes
     algorithm: Optional[AllowedHashTypes] = None
     extensions: Dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]]
 

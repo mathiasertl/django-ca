@@ -154,12 +154,16 @@ and if you decide to add such URLs, you also have to actually run that service, 
 connect.
 
 If you have correctly configured :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>`, you can use an
-OCSP responder *almost* out of the box, the only thing you have to do is *regularly* create OCSP responder
-keys:
+OCSP responder out of the box, if you use the docker compose. If you installed from source or you have
+*regularly* create OCSP responder keys (e.g. via a CRON job):
 
 .. code-block:: console
 
    $ python manage.py regenerate_ocsp_keys
+
+How can configure how long certificates will be valid via the ``--ocsp-responder-key-validity`` argument when
+creating/editing a certificate authority. You can also configure how long responses are valid via the
+``--ocsp-response-validity``.
 
 .. _cli_cas_extensions:
 

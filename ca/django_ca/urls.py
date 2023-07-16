@@ -27,21 +27,11 @@ register_converter(converters.SerialConverter, "serial")
 
 urlpatterns = [
     path("issuer/<hex:serial>.der", views.GenericCAIssuersView.as_view(), name="issuer"),
-    path("ocsp/<hex:serial>/cert/", views.GenericOCSPView.as_view(expires=3600), name="ocsp-cert-post"),
+    path("ocsp/<hex:serial>/cert/", views.GenericOCSPView.as_view(), name="ocsp-cert-post"),
+    path("ocsp/<hex:serial>/cert/<base64:data>", views.GenericOCSPView.as_view(), name="ocsp-cert-get"),
+    path("ocsp/<hex:serial>/ca/", views.GenericOCSPView.as_view(ca_ocsp=True), name="ocsp-ca-post"),
     path(
-        "ocsp/<hex:serial>/cert/<base64:data>",
-        views.GenericOCSPView.as_view(expires=3600),
-        name="ocsp-cert-get",
-    ),
-    path(
-        "ocsp/<hex:serial>/ca/",
-        views.GenericOCSPView.as_view(ca_ocsp=True, expires=86400),
-        name="ocsp-ca-post",
-    ),
-    path(
-        "ocsp/<hex:serial>/ca/<base64:data>",
-        views.GenericOCSPView.as_view(ca_ocsp=True, expires=86400),
-        name="ocsp-ca-get",
+        "ocsp/<hex:serial>/ca/<base64:data>", views.GenericOCSPView.as_view(ca_ocsp=True), name="ocsp-ca-get"
     ),
     path("crl/<hex:serial>/", views.CertificateRevocationListView.as_view(), name="crl"),
     path("crl/ca/<hex:serial>/", views.CertificateRevocationListView.as_view(scope="ca"), name="ca-crl"),

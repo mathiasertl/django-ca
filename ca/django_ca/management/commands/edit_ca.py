@@ -39,6 +39,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         self.add_general_args(parser, default=None)
         self.add_ca(parser, "ca", allow_disabled=True)
         self.add_acme_group(parser)
+        self.add_ocsp_group(parser)
         self.add_ca_args(parser)
 
         group = parser.add_mutually_exclusive_group()
@@ -53,7 +54,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             "--disable", action="store_false", dest="enabled", help="Disable the certificate authority."
         )
 
-    def handle(
+    def handle(  # pylint: disable=too-many-arguments
         self,
         ca: CertificateAuthority,
         sign_ca_issuer: str,
@@ -64,6 +65,9 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         # Certificate Policies extension
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # OCSP responder configuration
+        ocsp_responder_key_validity: Optional[int],
+        ocsp_response_validity: Optional[int],
         **options: Any,
     ) -> None:
         if sign_ca_issuer:
@@ -103,5 +107,11 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 if acme_profile not in ca_settings.CA_PROFILES:
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 ca.acme_profile = acme_profile
+
+        # Set OCSP responder options
+        if ocsp_responder_key_validity is not None:
+            ca.ocsp_responder_key_validity = ocsp_responder_key_validity
+        if ocsp_response_validity is not None:
+            ca.ocsp_response_validity = ocsp_response_validity
 
         ca.save()

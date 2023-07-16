@@ -228,6 +228,10 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
+    def get_expires(self, now: datetime) -> datetime:
+        """Get the timestamp when the OCSP response expires."""
+        return now + timedelta(seconds=self.expires)
+
     def http_response(self, data: bytes, status: int = HTTPStatus.OK) -> HttpResponse:
         """Get an HTTP OCSP response with given status and data."""
         return HttpResponse(data, status=status, content_type="application/ocsp-response")
@@ -287,7 +291,7 @@ class OCSPView(View):
 
         now = datetime.utcnow()
         builder = ocsp.OCSPResponseBuilder()
-        expires = now + timedelta(seconds=self.expires)
+        expires = self.get_expires(now)
         builder = builder.add_response(
             cert=cert.pub.loaded,
             issuer=ca.pub.loaded,
@@ -346,6 +350,9 @@ class GenericOCSPView(OCSPView):
 
     def get_ca(self) -> CertificateAuthority:
         return self.auto_ca
+
+    def get_expires(self, now: datetime) -> datetime:
+        return now + timedelta(seconds=self.auto_ca.ocsp_response_validity)
 
     def get_responder_key_data(self) -> bytes:
         serial = self.auto_ca.serial.replace(":", "")

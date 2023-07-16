@@ -691,10 +691,7 @@ class OCSPWithoutTimezoneSupportTestView(OCSPTestViewMixin, TestCase):
 class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
     """Test generic OCSP view."""
 
-    load_cas = (
-        "root",
-        "child",
-    )
+    load_cas = ("root", "child")
     load_certs = ("child-cert",)
 
     @override_tmpcadir()
@@ -714,10 +711,32 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # URL config sets expires to 3600
-        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=3600)
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=86400)
 
         priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key(key_size=1024)
         self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        # URL config sets expires to 3600
+        self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=86400)
+
+    @override_tmpcadir()
+    def test_ocsp_response_validity(self) -> None:
+        """Test a custom OCSP response validity."""
+
+        self.ca.ocsp_response_validity = 3600
+        self.ca.save()
+        priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key()
+        self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
+
+        url = reverse(
+            "django_ca:ocsp-cert-get",
+            kwargs={
+                "serial": self.ca.serial,
+                "data": base64.b64encode(req1).decode("utf-8"),
+            },
+        )
         response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 

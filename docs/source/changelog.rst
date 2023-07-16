@@ -13,6 +13,9 @@ ChangeLog
 * Drop support for cryptography 37 and cryptography 39, acme 2.4.0 and celery 5.1.
 * Add support for configuring certificate authorities to automatically include a Certificate Policy extension
   when signing certificates.
+* Add support for configuring how long automatically generated OCSP responder certificates are valid.
+* Add support for configuring how long OCSP responses of the automatically configured OCSP responder will be
+  valid (fixes `issue 102 <https://github.com/mathiasertl/django-ca/issues/102>`_).
 
 Backwards incompatible changes
 ==============================

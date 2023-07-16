@@ -162,6 +162,15 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertTrue(self.ca.acme_requires_contact)  # state unchanged
 
     @override_tmpcadir()
+    def test_ocsp_responder_arguments(self) -> None:
+        """Test ACME arguments."""
+
+        self.edit_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
+
+        self.assertEqual(self.ca.ocsp_responder_key_validity, 10)
+        self.assertEqual(self.ca.ocsp_response_validity, 3600)
+
+    @override_tmpcadir()
     def test_invalid_acme_profile(self) -> None:
         """Test setting an invalid ACME profile."""
         self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)

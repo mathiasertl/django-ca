@@ -250,6 +250,8 @@ class CertificateAuthorityManager(
         acme_profile: Optional[str] = None,
         openssh_ca: bool = False,
         sign_certificate_policies: Optional[x509.Extension[x509.CertificatePolicies]] = None,
+        ocsp_responder_key_validity: Optional[int] = None,
+        ocsp_response_validity: Optional[int] = None,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
@@ -326,6 +328,10 @@ class CertificateAuthorityManager(
             Set to ``True`` if you want to use this to use this CA for signing OpenSSH certs.
         sign_certificate_policies : :py:class:`~cg:cryptography.x509.Extension`, optional
             Add the given Certificate Policies extension when signing certificates.
+        ocsp_responder_key_validity : int, optional
+            How long (in days) OCSP responder keys should be valid.
+        ocsp_response_validity : int, optional
+            How long (in seconds) OCSP responses should be valid.
 
         Raises
         ------
@@ -440,6 +446,8 @@ class CertificateAuthorityManager(
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
             sign_certificate_policies=sign_certificate_policies,
+            ocsp_responder_key_validity=ocsp_responder_key_validity,
+            ocsp_response_validity=ocsp_response_validity,
         )
 
         private_key = generate_private_key(key_size, key_type, elliptic_curve)
@@ -478,7 +486,7 @@ class CertificateAuthorityManager(
         if issuer_alt_name is not None:
             serialized_ian = ",".join(format_general_name(name) for name in issuer_alt_name.value)
 
-        ca = self.model(
+        ca: CertificateAuthority = self.model(
             name=name,
             issuer_url=issuer_url,
             issuer_alt_name=serialized_ian,
@@ -493,6 +501,13 @@ class CertificateAuthorityManager(
             acme_requires_contact=acme_requires_contact,
             sign_certificate_policies=sign_certificate_policies,
         )
+
+        # Set fields with a default value
+        if ocsp_responder_key_validity is not None:
+            ca.ocsp_responder_key_validity = ocsp_responder_key_validity
+        if ocsp_response_validity is not None:
+            ca.ocsp_response_validity = ocsp_response_validity
+
         ca.update_certificate(certificate)
 
         if password is None:

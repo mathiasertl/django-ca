@@ -48,7 +48,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.core.validators import URLValidator
+from django.core.validators import MinValueValidator, URLValidator
 from django.db import models
 from django.http import HttpRequest
 from django.urls import reverse
@@ -584,6 +584,22 @@ class CertificateAuthority(X509CertMixin):
         blank=True, verbose_name="Terms of Service", help_text=_("URL to Terms of Service for this CA")
     )
 
+    # OCSP configuration
+    ocsp_responder_key_validity = models.PositiveSmallIntegerField(
+        _("OCSP responder key validity"),
+        default=3,
+        validators=[MinValueValidator(1)],
+        help_text=_("How long <strong>(in days)</strong> OCSP responder keys may be valid."),
+    )
+    ocsp_response_validity = models.PositiveIntegerField(
+        _("OCSP response validity"),
+        default=86400,
+        validators=[MinValueValidator(600)],
+        help_text=_(
+            "How long <strong>(in seconds)</strong> OCSP responses may be considered valid by the client."
+        ),
+    )
+
     # ACMEv2 fields
     acme_enabled = models.BooleanField(
         default=False,
@@ -892,7 +908,7 @@ class CertificateAuthority(X509CertMixin):
     def generate_ocsp_key(  # pylint: disable=too-many-locals
         self,
         profile: str = "ocsp",
-        expires: Expires = 3,
+        expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
         password: Optional[Union[str, bytes]] = None,
         key_size: Optional[int] = None,
@@ -947,7 +963,11 @@ class CertificateAuthority(X509CertMixin):
             usually automatically invoked on a regular basis.
         """
 
-        expires = parse_expires(expires)
+        if expires is None:
+            expires = datetime.now(tz=tz.utc) + timedelta(days=self.ocsp_responder_key_validity)
+        else:
+            expires = parse_expires(expires)
+
         safe_serial = self.serial.replace(":", "")
 
         if password is None:

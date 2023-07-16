@@ -22,7 +22,7 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, AnyStr, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest import mock
 from urllib.parse import quote
 
@@ -375,18 +375,48 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.assertTrue(post_sig.called is post)
 
     def assertE2ECommandError(  # pylint: disable=invalid-name
-        self, cmd: typing.Sequence[str], stdout: bytes = b"", stderr: bytes = b""
+        self,
+        cmd: typing.Sequence[str],
+        stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+        stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
     ) -> None:
         """Assert that the passed command raises a CommandError with the given message."""
-        actual_stdout = io.BytesIO()
-        actual_stderr = io.BytesIO()
+        if isinstance(stdout, str):  # pragma: no cover
+            stdout = "CommandError: " + stdout + "\n"
+        elif isinstance(stdout, bytes):  # pragma: no cover
+            stdout = b"CommandError: " + stdout + b"\n"
+        self.assertE2EError(cmd, stdout=stdout, stderr=stderr, code=1)
 
-        stdout = b"CommandError: " + stdout + b"\n"
+    def assertE2EError(  # pylint: disable=invalid-name
+        self,
+        cmd: typing.Sequence[str],
+        stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+        stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+        code: int = 2,
+    ) -> None:
+        """Assert an error was through in an e2e command."""
+        if isinstance(stdout, str) or (isinstance(stdout, re.Pattern) and isinstance(stdout.pattern, str)):
+            actual_stdout = io.StringIO()
+        else:
+            actual_stdout = io.BytesIO()  # type: ignore[assignment]
 
-        with self.assertRaisesRegex(SystemExit, r"^1$"):
+        if isinstance(stderr, str) or (isinstance(stderr, re.Pattern) and isinstance(stderr.pattern, str)):
+            actual_stderr = io.StringIO()
+        else:
+            actual_stderr = io.BytesIO()  # type: ignore[assignment]
+
+        with self.assertSystemExit(code):
             self.cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
-        self.assertEqual(stdout, actual_stdout.getvalue())
-        self.assertEqual(stderr, actual_stderr.getvalue())
+
+        if isinstance(stdout, (str, bytes)):
+            self.assertEqual(stdout, actual_stdout.getvalue())
+        else:
+            self.assertRegex(actual_stdout.getvalue(), stdout)  # type: ignore[misc]  # pragma: no cover
+
+        if isinstance(stderr, (str, bytes)):
+            self.assertEqual(stderr, actual_stderr.getvalue())
+        else:
+            self.assertRegex(actual_stderr.getvalue(), stderr)  # type: ignore[misc]
 
     def assertExtensions(  # pylint: disable=invalid-name
         self,

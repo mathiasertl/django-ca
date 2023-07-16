@@ -182,7 +182,7 @@ good-names = [
 max-args = 10
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes = 10
+max-attributes = 20
 
 # Maximum number of branch for function / method body (see R0912).
 max-branches = 20

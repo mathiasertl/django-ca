@@ -33,6 +33,17 @@ from django_ca.tests.base.mixins import TestCaseMixin
 class ImportCATest(TestCaseMixin, TestCase):
     """Test the import_ca management command."""
 
+    def import_ca(self, *args: str) -> CertificateAuthority:
+        """Shortcut for running the import_ca command."""
+        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
+        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
+
+        out, err = self.cmd_e2e(["import_ca", self.hostname] + list(args) + [key_path, pem_path])
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+
+        return CertificateAuthority.objects.get(name=self.hostname)
+
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
     def test_basic(self) -> None:
@@ -172,36 +183,24 @@ class ImportCATest(TestCaseMixin, TestCase):
     def test_sign_options(self) -> None:
         """Test setting the sign options."""
 
-        name = "testname"
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
         ca_issuer = "http://issuer.example.com"
         ocsp_responder = "http://ocsp.example.com"
         crl1 = "http://crl1.example.com"
         crl2 = "http://crl2.example.com"
         ian = "http://ian.example.com"
 
-        out, err = self.cmd_e2e(
-            [
-                "import_ca",
-                f"--sign-ca-issuer={ca_issuer}",
-                f"--sign-ocsp-responder={ocsp_responder}",
-                f"--sign-issuer-alternative-name={ian}",
-                f"--sign-crl-full-name={crl1}",
-                f"--sign-crl-full-name={crl2}",
-                # Certificate Policies extension
-                "--sign-policy-identifier=1.2.3",
-                "--sign-certification-practice-statement=https://cps.example.com",
-                "--sign-user-notice=explicit-text",
-                name,
-                key_path,
-                pem_path,
-            ]
+        ca = self.import_ca(
+            f"--sign-ca-issuer={ca_issuer}",
+            f"--sign-ocsp-responder={ocsp_responder}",
+            f"--sign-issuer-alternative-name={ian}",
+            f"--sign-crl-full-name={crl1}",
+            f"--sign-crl-full-name={crl2}",
+            # Certificate Policies extension
+            "--sign-policy-identifier=1.2.3",
+            "--sign-certification-practice-statement=https://cps.example.com",
+            "--sign-user-notice=explicit-text",
         )
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
 
-        ca = CertificateAuthority.objects.get(name=name)
         self.assertEqual(ca.issuer_url, ca_issuer)
         self.assertEqual(ca.ocsp_url, ocsp_responder)
         self.assertEqual(ca.issuer_alt_name, f"URI:{ian}")
@@ -219,6 +218,24 @@ class ImportCATest(TestCaseMixin, TestCase):
                 )
             ),
         )
+
+    @override_tmpcadir()
+    def test_acme_arguments(self) -> None:
+        """Test ACME arguments."""
+
+        ca = self.import_ca("--acme-enable", "--acme-contact-optional", "--acme-profile=client")
+        self.assertTrue(ca.acme_enabled)
+        self.assertEqual(ca.acme_profile, "client")
+        self.assertFalse(ca.acme_requires_contact)
+
+    @override_tmpcadir()
+    def test_ocsp_responder_arguments(self) -> None:
+        """Test ACME arguments."""
+
+        ca = self.import_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
+
+        self.assertEqual(ca.ocsp_responder_key_validity, 10)
+        self.assertEqual(ca.ocsp_response_validity, 3600)
 
     @override_tmpcadir()
     def test_permission_denied(self) -> None:

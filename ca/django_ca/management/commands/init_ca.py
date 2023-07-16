@@ -216,6 +216,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         )
 
         self.add_acme_group(parser)
+        self.add_ocsp_group(parser)
 
         self.add_authority_information_access_group(parser, ("--ca-ocsp-url",), ("--ca-issuer-url",))
         self.add_basic_constraints_group(parser)
@@ -296,6 +297,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # Certificate Policies extension
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # OCSP responder configuration
+        ocsp_responder_key_validity: Optional[int],
+        ocsp_response_validity: Optional[int],
         **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
@@ -476,6 +480,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 terms_of_service=tos,
                 extensions=extensions.values(),
                 sign_certificate_policies=sign_certificate_policies_ext,
+                ocsp_response_validity=ocsp_response_validity,
+                ocsp_responder_key_validity=ocsp_responder_key_validity,
                 **kwargs,
             )
         except Exception as ex:  # pragma: no cover

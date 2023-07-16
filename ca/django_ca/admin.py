@@ -366,6 +366,10 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             },
         ),
         (
+            _("OCSP responder configuration"),
+            {"fields": ["ocsp_responder_key_validity", "ocsp_response_validity"]},
+        ),
+        (
             _("Certificate"),
             {
                 "fields": ["serial_field", "pub_pem", "expires"],
@@ -404,7 +408,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         "expires",
         "hpkp_pin",
     )
-    x509_fieldset_index = 3
+    x509_fieldset_index = 4
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
@@ -427,7 +431,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
 
         if ca_settings.CA_ENABLE_ACME:
             fieldsets.insert(
-                1,
+                2,
                 (
                     _("ACME"),
                     {
