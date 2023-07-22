@@ -198,6 +198,13 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
         cert = qs.get()
         self.assertEqual(cert.expires, timestamps["everything_valid"] + timedelta(days=10))
 
+    @override_tmpcadir()
+    @freeze_time(timestamps["everything_valid"])
+    def test_no_renewal_required(self) -> None:
+        """Test that keys are not renewed and None is returned in this case."""
+        self.assertIsNotNone(tasks.generate_ocsp_key(self.ca.serial))
+        self.assertIsNone(tasks.generate_ocsp_key(self.ca.serial))
+
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""

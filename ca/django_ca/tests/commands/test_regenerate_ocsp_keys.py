@@ -156,6 +156,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "key_type": "RSA",
                         "elliptic_curve": None,
                         "password": None,
+                        "force": False,
                     },
                 ),
                 {},
@@ -203,7 +204,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         excludes = list(Certificate.objects.all().values_list("pk", flat=True))
 
         # write again
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"])
+        stdout, stderr = self.cmd("regenerate_ocsp_keys", certs["root"]["serial"], force=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)

@@ -191,10 +191,10 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 86100,
     },
     "generate-ocsp-keys": {
-        # schedule is three days minus five minutes, since keys expire after
-        # three days by default.
+        # Attempt to regenerate OCSP responder certificates every hour. Certificates are only regenerated if
+        # they expire in the near future.
         "task": "django_ca.tasks.generate_ocsp_keys",
-        "schedule": 258900,
+        "schedule": 3600,
     },
     "acme-cleanup": {
         # ACME cleanup runs once a day

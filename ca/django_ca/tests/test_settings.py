@@ -72,6 +72,12 @@ class SettingsTestCase(TestCase):
         with mock.patch.dict("sys.modules", celery=None), self.settings(CA_USE_CELERY=False):
             self.assertFalse(ca_settings.CA_USE_CELERY)
 
+    def test_ocsp_repsonder_certificate_renewal(self) -> None:
+        """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
+
+        with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL=600):
+            self.assertEqual(ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))
+
 
 class DefaultCATestCase(TestCase):
     """Test the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting."""
@@ -246,4 +252,13 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
         """Test using an invalid subject key"""
         with self.assertImproperlyConfigured(r"^invalid: Unknown attribute type\.$"):
             with self.settings(CA_DEFAULT_SUBJECT=[("invalid", "wrong")]):
+                pass
+
+    def test_invalid_ocsp_repsonder_certificate_renewal(self) -> None:
+        """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
+
+        with self.assertImproperlyConfigured(
+            r"^CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int\.$"
+        ):
+            with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL="600"):
                 pass

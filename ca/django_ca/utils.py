@@ -1103,7 +1103,6 @@ def read_file(path: str) -> bytes:
     stream = ca_storage.open(path)
 
     try:
-        # NOTE: In the python:3.9-rc-alpine3.10 Docker image, this is marked as a missed branch :-(
         data: bytes = stream.read()  # pragma: no branch
         return data
     finally:

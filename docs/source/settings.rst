@@ -309,6 +309,18 @@ CA_OCSP_URLS
 
    Configuration for OCSP responders. See :doc:`ocsp` for more information.
 
+.. _settings-ca-ocsp-responder-certificate-renewal:
+
+CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
+   Default: ``timedelta(days=1)``
+
+   Regenerate OCSP keys if they expire within the given ``timedelta``. This setting can also be an integer, in
+   which case it is read as seconds until a certificate expires.
+
+   Note that the OCSP responder certificate validity (that you can configure for each certificate authority
+   via the ``--ocsp-responder-key-validity`` option) should be higher then the value configured here, or you
+   will end up with expired OCSP responder certificates.
+
 .. _settings-ca-passwords:
 
 CA_PASSWORDS

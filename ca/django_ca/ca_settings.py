@@ -17,7 +17,7 @@ import os
 import re
 import typing
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -326,6 +326,15 @@ CA_FILE_STORAGE_KWARGS = getattr(
         "directory_permissions_mode": 0o700,
     },
 )
+
+# CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL was added in 1.26.0
+CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Union[timedelta] = getattr(
+    settings, "CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL", timedelta(days=1)
+)
+if isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, int):
+    CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = timedelta(seconds=CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL)
+elif not isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta):
+    raise ImproperlyConfigured("CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int.")
 
 CA_FILE_STORAGE_URL = "https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later"
 

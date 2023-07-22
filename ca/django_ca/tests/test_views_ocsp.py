@@ -697,7 +697,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
     @override_tmpcadir()
     def test_cert_get(self) -> None:
         """Test getting OCSP responses."""
-        priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key()
+        priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key()  # type: ignore[misc]
         self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
 
         url = reverse(
@@ -712,9 +712,6 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
 
         # URL config sets expires to 3600
         self.assertOCSP(response, requested=[self.cert], nonce=req1_nonce, ocsp_cert=ocsp_cert, expires=86400)
-
-        priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key(key_size=1024)
-        self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
         response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -727,7 +724,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
 
         self.ca.ocsp_response_validity = 3600
         self.ca.save()
-        priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key()
+        priv_path, _cert_path, ocsp_cert = self.ca.generate_ocsp_key()  # type: ignore[misc]
         self.ocsp_private_key = asymmetric.load_private_key(ca_storage.path(priv_path))
 
         url = reverse(

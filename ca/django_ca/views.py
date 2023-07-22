@@ -359,9 +359,7 @@ class GenericOCSPView(OCSPView):
         return read_file(f"ocsp/{serial}.key")
 
     def get_responder_cert(self) -> x509.Certificate:
-        serial = self.auto_ca.serial.replace(":", "")
-        data = read_file(f"ocsp/{serial}.pem")
-        return load_pem_x509_certificate(data)
+        return self.auto_ca.ocsp_responder_certificate
 
 
 class GenericCAIssuersView(View):

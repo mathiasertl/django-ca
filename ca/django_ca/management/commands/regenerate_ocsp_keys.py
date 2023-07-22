@@ -49,6 +49,12 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             action=ExpiresAction,
             help="Sign the certificate for DAYS days (default: %(default)s)",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Force regeneration of OCSP responder certificates.",
+        )
         parser.add_argument("--quiet", action="store_true", default=False, help="Do not output warnings.")
 
         self.add_algorithm(parser)
@@ -64,7 +70,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(
+    def handle(  # pylint: disable=too-many-arguments
         self,
         serials: Iterable[str],
         profile: Optional[str],
@@ -75,6 +81,7 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
         elliptic_curve: Optional[ec.EllipticCurve],
         password: Optional[bytes],
         quiet: bool,
+        force: bool,
         **options: Any,
     ) -> None:
         profile = profile or "ocsp"
@@ -137,4 +144,5 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
                 key_type=ca_key_type,
                 elliptic_curve=elliptic_curve_name,
                 password=password,
+                force=force,
             )
