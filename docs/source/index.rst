@@ -35,6 +35,7 @@ Welcome to django-ca's documentation!
    Command-line interface: certificate management <cli/certs>
    web_interface
    acme
+   rest_api
    profiles
    crl
    ocsp

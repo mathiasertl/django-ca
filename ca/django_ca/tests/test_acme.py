@@ -69,7 +69,7 @@ class URLPatternTestCase(TestCase):
         with self.assertRaisesRegex(NoReverseMatch, msg):
             reverse(name, args=args, kwargs=kwargs)
 
-    @override_settings(CA_ENABLE_ACME=False)
+    @override_settings(CA_ENABLE_ACME=False, CA_ENABLE_REST_API=False)
     def test_disabled(self) -> None:
         """Test that resolving URLs does **NOT** work if disabled."""
         with self.reload_urlconf():

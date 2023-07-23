@@ -116,6 +116,7 @@ exclude = [
 ]
 plugins = [
     "mypy_django_plugin.main",
+    "pydantic.mypy",
 ]
 
 [[tool.mypy.overrides]]

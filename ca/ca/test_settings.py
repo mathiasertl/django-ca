@@ -284,6 +284,7 @@ if not os.path.exists(GECKODRIVER_PATH) and not SKIP_SELENIUM_TESTS:
     )
 
 CA_USE_CELERY = False
+CA_ENABLE_REST_API = True
 
 CA_PASSWORDS = {
     _fixture_data["certs"]["pwd"]["serial"]: _fixture_data["certs"]["pwd"]["password"].encode("utf-8"),

@@ -138,6 +138,7 @@ INSTALLED_APPS = [
 ]
 CA_CUSTOM_APPS: List[str] = []
 CA_DEFAULT_HOSTNAME = None
+CA_ENABLE_REST_API = False
 
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver
 CA_ENABLE_CLICKJACKING_PROTECTION = True
@@ -252,7 +253,7 @@ for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJA
 
     if key == "ALLOWED_HOSTS":
         globals()[key] = value.split()
-    elif key in ("CA_USE_CELERY", "CA_ENABLE_ACME"):
+    elif key in ("CA_USE_CELERY", "CA_ENABLE_ACME", "CA_ENABLE_REST_API"):
         globals()[key] = _parse_bool(value)
     else:
         globals()[key] = value
@@ -276,6 +277,8 @@ if not SECRET_KEY:
             SECRET_KEY = stream.read()
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
+if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
+    INSTALLED_APPS.append("ninja")
 
 
 def _set_db_setting(name: str, env_name: str, default: Optional[str] = None) -> None:

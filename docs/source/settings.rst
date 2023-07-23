@@ -270,6 +270,13 @@ CA_DIR
    Where the root certificate is stored. The default is a ``files`` directory in the same location as your
    ``manage.py`` file.
 
+.. _settings-ca-enable-rest-api:
+
+CA_ENABLE_REST_API
+   Default: ``False``
+
+   Set to ``True`` to enable the :doc:`experimental REST API <rest_api>`.
+
 .. _settings-ca-file-storage:
 
 CA_FILE_STORAGE

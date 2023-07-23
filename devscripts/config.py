@@ -71,7 +71,7 @@ def get_project_config() -> Dict[str, Any]:
 
     cfg["docker"][
         "metavar"
-    ] = "default|python:{%s-%s}-alpine{%s-%s}" % (  # pylint: disable=consider-using-f-string
+    ] = "default|python:{%s-%s}-alpine{%s-%s}" % (
         cfg["python-major"][0],
         cfg["python-major"][-1],
         cfg["alpine"][0],

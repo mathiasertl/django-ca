@@ -327,6 +327,8 @@ CA_FILE_STORAGE_KWARGS = getattr(
     },
 )
 
+CA_ENABLE_REST_API: bool = getattr(settings, "CA_ENABLE_REST_API", False)
+
 # CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL was added in 1.26.0
 CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Union[timedelta] = getattr(
     settings, "CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL", timedelta(days=1)

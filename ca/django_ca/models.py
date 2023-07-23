@@ -1422,6 +1422,15 @@ class Certificate(X509CertMixin):
         default=False, help_text=_("If this certificate was automatically generated.")
     )
 
+    class Meta:
+        permissions = (
+            ("revoke_certificate", "Can revoke a certificate"),
+            ("sign_certificate", "Can sign a certificate"),
+        )
+
+    def __str__(self) -> str:
+        return self.cn
+
     @property
     def bundle(self) -> List[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
@@ -1433,9 +1442,6 @@ class Certificate(X509CertMixin):
         """Get the root CA for this certificate."""
 
         return self.ca.root
-
-    def __str__(self) -> str:
-        return self.cn
 
 
 class AcmeAccount(DjangoCAModel):

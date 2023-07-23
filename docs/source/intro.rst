@@ -8,7 +8,7 @@ Features:
 
 #. Set up a secure local certificate authority in just a few minutes.
 #. Certificate revocation via CRLs and OCSP.
-#. Certificate issuance via ACMEv2, command line or web interface.
+#. Certificate issuance via ACMEv2, command line, web interface or REST API.
 #. Management via command line and/or via Django's admin interface.
 #. Get email notifications about certificates about to expire.
 #. Written in Python 3.8+, Django 3.2+ and cryptography 40.0+.

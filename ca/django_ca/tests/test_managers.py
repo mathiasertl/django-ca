@@ -481,7 +481,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca,
                 csr=certs["root-cert"]["csr"]["parsed"],
                 profile=False,  # type: ignore[arg-type] # what we're testing
-                subject=f"CN={common_name}",
+                subject=self.subject,
                 add_crl_url=False,
                 add_ocsp_url=False,
                 add_issuer_url=False,

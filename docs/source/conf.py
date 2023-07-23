@@ -81,6 +81,7 @@ extensions = [
     "celery.contrib.sphinx",
     "numpydoc",
     "sphinx_jinja",
+    "sphinxcontrib.openapi",
     "django_ca_sphinx",
 ]
 
