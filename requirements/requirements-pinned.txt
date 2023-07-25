@@ -6,7 +6,7 @@ asn1crypto==1.5.1
 async-timeout==4.0.2
 billiard==4.1.0
 celery==5.3.1
-certifi==2023.5.7
+certifi==2023.7.22
 cffi==1.15.1
 charset-normalizer==3.2.0
 click==8.1.6
