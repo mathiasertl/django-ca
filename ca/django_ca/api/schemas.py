@@ -15,15 +15,22 @@
 
 import abc
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional, Union
 
 from ninja import Field, ModelSchema, Schema
+
+from cryptography.x509.oid import ExtensionOID
 
 from django_ca import ca_settings, constants
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 
 DATETIME_EXAMPLE = "2023-07-30T10:06:35Z"
+
+
+class SubjectAlternativeNameSchema(Schema):
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
+    value: List[str]
 
 
 class X509BaseSchema(ModelSchema, abc.ABC):
@@ -136,6 +143,9 @@ class SignCertificateSchema(Schema):
     expires: Optional[datetime] = Field(
         description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
         example=DATETIME_EXAMPLE,
+    )
+    extensions: Optional[Dict[str, Union[SubjectAlternativeNameSchema]]] = Field(
+        default=None, example={"subject_alternative_name": {"value": ["DNS:example.com", "IP:127.0.0.1"]}}
     )
     profile: Optional[str] = Field(
         description="Issue the certificate with the given profile.",

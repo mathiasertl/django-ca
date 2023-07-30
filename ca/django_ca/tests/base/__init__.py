@@ -14,6 +14,7 @@
 """TestCase base classes that preload some data and add common helper methods."""
 
 import inspect
+import ipaddress
 import json
 import os
 import re
@@ -22,7 +23,7 @@ import tempfile
 import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Dict, Iterable, Iterator, Tuple
+from typing import Any, Dict, Iterable, Iterator, Tuple, Union
 from unittest.mock import patch
 
 import cryptography
@@ -381,6 +382,13 @@ def dns(name: str) -> x509.DNSName:  # just a shortcut
 def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.UniformResourceIdentifier`."""
     return x509.UniformResourceIdentifier(url)
+
+
+def ip(
+    name: Union[ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network]
+) -> x509.IPAddress:  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509.IPAddress`."""
+    return x509.IPAddress(name)
 
 
 def rdn(

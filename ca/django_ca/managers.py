@@ -561,6 +561,7 @@ class CertificateManager(
         subject: Optional[x509.Name] = None,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
+        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
         **kwargs: Any,
     ) -> "Certificate":
         """Create and sign a new certificate based on the given profile.
@@ -590,7 +591,9 @@ class CertificateManager(
         elif not isinstance(profile, Profile):
             raise TypeError("profile must be of type django_ca.profiles.Profile.")
 
-        cert = profile.create_cert(ca, csr, subject=subject, expires=expires, algorithm=algorithm, **kwargs)
+        cert = profile.create_cert(
+            ca, csr, subject=subject, expires=expires, algorithm=algorithm, extensions=extensions, **kwargs
+        )
 
         obj = self.model(ca=ca, csr=LazyCertificateSigningRequest(csr), profile=profile.name)
         obj.update_certificate(cert)
