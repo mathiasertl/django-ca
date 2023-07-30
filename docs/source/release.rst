@@ -28,7 +28,7 @@ setup::
 
    $ python -m venv venv
    $ venv/bin/pip install -U pip setuptools wheel
-   $ venv/bin/pip install -e .[celery,redis,psycopg3,yaml]
+   $ venv/bin/pip install -e .[api,celery,redis,psycopg3,yaml]
    $ venv/bin/pip freeze | grep -v django-ca > requirements/requirements-pinned.txt
 
 ... and then copy that file to the archive::
