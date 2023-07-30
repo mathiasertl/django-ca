@@ -30,6 +30,7 @@ server {
     include /etc/nginx/conf.d/include.d/headers.conf;
 
     include /etc/nginx/conf.d/include.d/acme.conf;
+    include /etc/nginx/conf.d/include.d/api.conf;
     include /etc/nginx/conf.d/include.d/admin.conf;
     include /etc/nginx/conf.d/include.d/ca.conf;
 

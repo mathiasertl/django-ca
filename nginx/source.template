@@ -32,6 +32,7 @@ server {
     include /opt/django-ca/src/django-ca/nginx/include.d/headers.conf;
 
     include /opt/django-ca/src/django-ca/nginx/include.d/acme.conf;
+    include /opt/django-ca/src/django-ca/nginx/include.d/api.conf;
     include /opt/django-ca/src/django-ca/nginx/include.d/ca.conf;
 
     location /admin/ {

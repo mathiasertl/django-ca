@@ -24,7 +24,7 @@ Welcome to django-ca's documentation!
    ... as Django app <quickstart_as_app>
    ... from source <quickstart_from_source>
    ... with docker <docker>
-   ... with docker-compose <quickstart_docker_compose>
+   ... with docker compose <quickstart_docker_compose>
 
 .. toctree::
    :maxdepth: 1
