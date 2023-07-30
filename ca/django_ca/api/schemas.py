@@ -29,6 +29,8 @@ DATETIME_EXAMPLE = "2023-07-30T10:06:35Z"
 
 
 class SubjectAlternativeNameSchema(Schema):
+    """Schema for a Subject Alternative Name extension."""
+
     critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
     value: List[str]
 

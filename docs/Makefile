@@ -18,7 +18,7 @@ source/_files/docker-compose.yml:
 	cp ../docker-compose.yml source/_files/
 
 source/_files/openapi.json:
-	python ../ca/manage.py export_openapi_schema --api django_ca.api.endpoints.api > source/_files/openapi.json
+	DJANGO_SETTINGS_MODULE=ca.test_settings python ../ca/manage.py export_openapi_schema --api django_ca.api.endpoints.api > source/_files/openapi.json
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

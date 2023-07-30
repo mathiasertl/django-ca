@@ -141,6 +141,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     "django_object_actions",
     "django_ca",
+    "ninja",
 )
 
 TEMPLATES = [

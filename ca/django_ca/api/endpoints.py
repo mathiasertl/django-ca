@@ -40,7 +40,6 @@ from django_ca.extensions import parse_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.typehints import ExtensionDict
 
 api = NinjaAPI(title="django-ca API", version=__version__, urls_namespace="django_ca:api")
 
@@ -94,14 +93,15 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
     profile = profiles[data.profile]
     subject = x509.Name.from_rfc4514_string(data.subject)
     algorithm = expires = None
+    extensions: List[x509.Extension[x509.ExtensionType]] = []
+
     if data.algorithm is not None:
         algorithm = constants.HASH_ALGORITHM_TYPES[data.algorithm]()
     if data.expires is not None:
         expires = data.expires
     if data.extensions is not None:
-        extensions: List[x509.Extension[x509.ExtensionType]] = []
         for key, extension_data in data.extensions.items():
-            extensions.append(parse_extension(key, extension_data.dict()))
+            extensions.append(parse_extension(key, extension_data.dict()))  # type: ignore[arg-type]
 
     cert = Certificate.objects.create_cert(
         ca,

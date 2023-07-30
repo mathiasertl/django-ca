@@ -141,7 +141,6 @@ class SignCertificateTestCase(APITestCaseMixin, TestCase):
 
         # Test extensions
         extensions = cert.x509_extensions
-        print(extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME])
         self.assertEqual(
             extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             self.subject_alternative_name(
