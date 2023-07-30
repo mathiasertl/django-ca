@@ -1,5 +1,5 @@
 # modules imported in devscripts/
-GitPython==3.1.31
+GitPython==3.1.32
 Jinja2==3.1.2
 PyYAML==6.0.1
 # sphinx_rtd_theme==1.2.2 requires Sphinx<7:

@@ -69,9 +69,7 @@ def get_project_config() -> Dict[str, Any]:
     if "default" not in _alpine_images:
         _alpine_images.append("default")
 
-    cfg["docker"][
-        "metavar"
-    ] = "default|python:{%s-%s}-alpine{%s-%s}" % (
+    cfg["docker"]["metavar"] = "default|python:{%s-%s}-alpine{%s-%s}" % (
         cfg["python-major"][0],
         cfg["python-major"][-1],
         cfg["alpine"][0],
