@@ -246,6 +246,7 @@ class CertificateAuthorityManager(
         website: str = "",
         terms_of_service: str = "",
         acme_enabled: bool = False,
+        acme_registration: bool = True,
         acme_requires_contact: bool = True,
         acme_profile: Optional[str] = None,
         openssh_ca: bool = False,
@@ -255,11 +256,11 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
-        .. versionchanged:: 1.25.0
+        .. versionchanged:: 1.26.0
 
-           * The `permitted_subtrees` and `excluded_subtrees` subtrees are deprecated and will be removed in
-             ``django-ca==1.26.0``. Pass a :py:class:`~cg:cryptography.x509.NameConstraints` extension in
-             `extensions` instead.
+           * The `permitted_subtrees` and `excluded_subtrees` subtrees where removed. Pass a
+             :py:class:`~cg:cryptography.x509.NameConstraints` extension in `extensions` instead.
+           * Added the `acme_registration` option.
 
         Parameters
         ----------
@@ -319,7 +320,10 @@ class CertificateAuthorityManager(
         terms_of_service : str, optional
             URL to the terms of service for the CA.
         acme_enabled : bool, optional
-            Set to ``True`` to enable ACME support for this CA.
+            Set to ``True`` to enable ACMEv2 support for this CA.
+        acme_registration : bool, optional
+            Whether to allow ACMEv2 clients to register new ACMEv2 accounts (if support is enabled in the
+            first place). By default, account registration is enabled.
         acme_profile : str, optional
             The profile to use when issuing certificates via ACMEv2. Defaults to the CA_DEFAULT_PROFILE.
         acme_requires_contact : bool, optional
@@ -431,7 +435,7 @@ class CertificateAuthorityManager(
             expires=expires,
             parent=parent,
             subject=subject,
-            pathlen=path_length,
+            path_length=path_length,
             issuer_url=issuer_url,
             issuer_alt_name=issuer_alt_name,
             crl_url=crl_url,
@@ -443,6 +447,7 @@ class CertificateAuthorityManager(
             website=website,
             terms_of_service=terms_of_service,
             acme_enabled=acme_enabled,
+            acme_registration=acme_registration,
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
             sign_certificate_policies=sign_certificate_policies,
@@ -497,6 +502,7 @@ class CertificateAuthorityManager(
             website=website,
             terms_of_service=terms_of_service,
             acme_enabled=acme_enabled,
+            acme_registration=acme_registration,
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
             sign_certificate_policies=sign_certificate_policies,

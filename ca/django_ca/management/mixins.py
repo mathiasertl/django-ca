@@ -226,6 +226,21 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--acme-disable", dest="acme_enabled", action="store_false", help="Disable ACMEv2 support."
         )
 
+        registration_group = group.add_mutually_exclusive_group()
+        registration_group.add_argument(
+            "--acme-enable-account-registration",
+            dest="acme_registration",
+            action="store_true",
+            default=None,
+            help="Enable registration of new accounts for ACME clients.",
+        )
+        registration_group.add_argument(
+            "--acme-disable-account-registration",
+            dest="acme_registration",
+            action="store_false",
+            help="Disable registration of new accounts for ACME clients.",
+        )
+
         group.add_argument(
             "--acme-profile",
             metavar="PROFILE",

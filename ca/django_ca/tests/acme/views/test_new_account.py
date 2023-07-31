@@ -190,17 +190,23 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
         )
 
     @override_tmpcadir()
+    def test_account_registration_disabled(self) -> None:
+        """Test that you cannot create a new account if registration is disabled."""
+        self.ca.acme_registration = False
+        self.ca.save()
+
+        resp = self.acme(self.url, self.message)
+        self.assertEqual(resp.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertUnauthorized(resp, "Account registration is disabled.")
+        self.assertEqual(AcmeAccount.objects.count(), 0)
+
+    @override_tmpcadir()
     def test_contacts_required(self) -> None:
         """Test failing to create an account if contact is required."""
         self.ca.acme_requires_contact = True
         self.ca.save()
 
-        resp = self.acme(
-            self.url,
-            acme.messages.Registration(
-                terms_of_service_agreed=True,
-            ),
-        )
+        resp = self.acme(self.url, acme.messages.Registration(terms_of_service_agreed=True))
         self.assertEqual(resp.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertUnauthorized(resp, "Must provide at least one contact address.")
         self.assertEqual(AcmeAccount.objects.count(), 0)
@@ -209,13 +215,10 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     def test_unsupported_contact(self) -> None:
         """Test that creating an account with a phone number fails."""
 
-        resp = self.acme(
-            self.url,
-            acme.messages.Registration(
-                contact=("tel:1234567", self.contact),
-                terms_of_service_agreed=True,
-            ),
+        message = acme.messages.Registration(
+            contact=("tel:1234567", self.contact), terms_of_service_agreed=True
         )
+        resp = self.acme(self.url, message)
         self.assertEqual(resp.status_code, HTTPStatus.BAD_REQUEST)
         self.assertAcmeProblem(
             resp,

@@ -437,6 +437,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                     {
                         "fields": [
                             "acme_enabled",
+                            "acme_registration",
                             "acme_profile",
                             "acme_requires_contact",
                         ],

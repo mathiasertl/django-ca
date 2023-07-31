@@ -25,6 +25,7 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
+from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base import certs, mock_cadir, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -94,6 +95,11 @@ class ImportCATest(TestCaseMixin, TestCase):
             if data["key_type"] not in ("EC", "Ed25519", "Ed448"):
                 self.assertEqual(key.key_size, data["key_size"])
             self.assertEqual(ca.serial, data["serial"])
+
+            self.assertIs(ca.acme_enabled, False)
+            self.assertIs(ca.acme_registration, True)
+            self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+            self.assertIs(ca.acme_requires_contact, True)
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -223,14 +229,20 @@ class ImportCATest(TestCaseMixin, TestCase):
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
 
-        ca = self.import_ca("--acme-enable", "--acme-contact-optional", "--acme-profile=client")
-        self.assertTrue(ca.acme_enabled)
+        ca = self.import_ca(
+            "--acme-enable",
+            "--acme-disable-account-registration",
+            "--acme-contact-optional",
+            "--acme-profile=client",
+        )
+        self.assertIs(ca.acme_enabled, True)
         self.assertEqual(ca.acme_profile, "client")
-        self.assertFalse(ca.acme_requires_contact)
+        self.assertIs(ca.acme_requires_contact, False)
+        self.assertIs(ca.acme_registration, False)
 
     @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:
-        """Test ACME arguments."""
+        """Test OCSP responder arguments."""
 
         ca = self.import_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
 

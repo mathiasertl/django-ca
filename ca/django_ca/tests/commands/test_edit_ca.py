@@ -125,25 +125,34 @@ class EditCATestCase(TestCaseMixin, TestCase):
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
 
-        self.assertFalse(self.ca.acme_enabled)  # initial state
+        # Test initial state
+        self.assertIs(self.ca.acme_enabled, False)
+        self.assertIs(self.ca.acme_registration, True)
         self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertTrue(self.ca.acme_requires_contact)  # initial state
+        self.assertIs(self.ca.acme_requires_contact, True)
 
-        self.edit_ca("--acme-enable", "--acme-contact-optional", "--acme-profile=client")
-        self.assertTrue(self.ca.acme_enabled)
+        # change all settings
+        self.edit_ca(
+            "--acme-enable",
+            "--acme-disable-account-registration",
+            "--acme-contact-optional",
+            "--acme-profile=client",
+        )
+        self.assertIs(self.ca.acme_enabled, True)
+        self.assertIs(self.ca.acme_registration, False)
         self.assertEqual(self.ca.acme_profile, "client")
-        self.assertFalse(self.ca.acme_requires_contact)
+        self.assertIs(self.ca.acme_requires_contact, False)
 
         # Try mutually exclusive arguments
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.edit_ca("--acme-enable", "--acme-disable")
         self.assertEqual(excm.exception.args, (2,))
-        self.assertTrue(self.ca.acme_enabled)  # state unchanged
+        self.assertIs(self.ca.acme_enabled, True)  # state unchanged
 
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.edit_ca("--acme-contact-optional", "--acme-contact-required")
         self.assertEqual(excm.exception.args, (2,))
-        self.assertFalse(self.ca.acme_requires_contact)  # state unchanged
+        self.assertIs(self.ca.acme_requires_contact, False)  # state unchanged
 
         # Try switching both settings
         self.edit_ca("--acme-disable", "--acme-contact-required")
@@ -154,12 +163,12 @@ class EditCATestCase(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.edit_ca("--acme-enable", "--acme-disable")
         self.assertEqual(excm.exception.args, (2,))
-        self.assertFalse(self.ca.acme_enabled)  # state unchanged
+        self.assertIs(self.ca.acme_enabled, False)  # state unchanged
 
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.edit_ca("--acme-contact-optional", "--acme-contact-required")
         self.assertEqual(excm.exception.args, (2,))
-        self.assertTrue(self.ca.acme_requires_contact)  # state unchanged
+        self.assertIs(self.ca.acme_requires_contact, True)  # state unchanged
 
     @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:

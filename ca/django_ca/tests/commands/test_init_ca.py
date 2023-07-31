@@ -252,6 +252,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         # test acme properties
         self.assertFalse(ca.acme_enabled)
+        self.assertTrue(ca.acme_registration)
         self.assertTrue(ca.acme_requires_contact)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -581,25 +582,36 @@ class InitCATest(TestCaseMixin, TestCase):
             "Test CA",
             "/CN=acme.example.com",
             "--acme-enable",
+            "--acme-disable-account-registration",
             "--acme-contact-optional",
             "--acme-profile=client",
         )
 
-        self.assertTrue(ca.acme_enabled)
+        self.assertIs(ca.acme_enabled, True)
+        self.assertIs(ca.acme_registration, False)
         self.assertEqual(ca.acme_profile, "client")
-        self.assertFalse(ca.acme_requires_contact)
+        self.assertIs(ca.acme_requires_contact, False)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False)
     def test_disabled_acme_arguments(self) -> None:
         """Test that ACME options don't work when ACME is disabled."""
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-enable"])
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-enable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-contact-optional"])
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-disable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=acme.example.com", "--acme-profile=client"])
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-disable-account-registration"])
+
+        with self.assertSystemExit(2):
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-enable-account-registration"])
+
+        with self.assertSystemExit(2):
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-contact-optional"])
+
+        with self.assertSystemExit(2):
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-profile=client"])
 
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:

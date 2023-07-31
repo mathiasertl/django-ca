@@ -606,6 +606,11 @@ class CertificateAuthority(X509CertMixin):
         verbose_name=_("Enable ACME"),
         help_text=_("Whether it is possible to use ACME for this CA."),
     )
+    acme_registration = models.BooleanField(
+        default=True,
+        verbose_name=_("ACME account registration."),
+        help_text=_("Allow ACME clients to register new accounts."),
+    )
     acme_profile = models.CharField(
         blank=False,
         default=default_profile,

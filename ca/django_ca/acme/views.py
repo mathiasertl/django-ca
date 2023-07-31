@@ -563,10 +563,13 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
         #   and provide the URL of that account in the Location header field.
         try:
             # NOTE: Filter for thumbprint too b/c index for the field should speed up lookups.
-            account = AcmeAccount.objects.get(thumbprint=thumbprint, pem=pem)
+            account = AcmeAccount.objects.get(ca=self.ca, thumbprint=thumbprint, pem=pem)
             return AcmeResponseAccount(self.request, account)
         except AcmeAccount.DoesNotExist:
             pass
+
+        if self.ca.acme_registration is False:
+            raise AcmeUnauthorized(message="Account registration is disabled.")
 
         if self.ca.acme_requires_contact and not message.emails:
             # NOTE: RFC 8555 does not specify an error code in this case

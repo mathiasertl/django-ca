@@ -126,7 +126,7 @@ module = [
     #   https://github.com/docker/docker-py/issues/2796
     "docker",
     "enchant.tokenize",
-    "httpcore",
+    "httpcore.*",
     # psycopg and psycopg_c are not installed in isolated mypy envs (tox, ...)
     "psycopg",
     "psycopg_c",

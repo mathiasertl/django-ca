@@ -447,7 +447,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
             # These settings are only there if ACME is enabled
-            for opt in ["acme_enabled", "acme_requires_contact"]:
+            for opt in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
                 if options[opt] is not None:
                     kwargs[opt] = options[opt]
 

@@ -105,6 +105,9 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
     )
     sign_certificate_policies = fields.CertificatePoliciesField(required=False)
 
+    class Meta:
+        labels = {"acme_registration": _("Account registration")}
+
 
 class CreateCertificateBaseForm(CertificateModelForm):
     """Base class for forms that create a certificate.

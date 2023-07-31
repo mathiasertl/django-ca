@@ -10,7 +10,8 @@ ChangeLog
 1.26.0 (TBR)
 ************
 
-* Add experimental support for a :doc:`rest_api`.
+* Add experimental support for a :doc:`REST API <rest_api>` (fixes `issue 107
+  <https://github.com/mathiasertl/django-ca/issues/107>`_).
 * Add support for configuring certificate authorities to automatically include a Certificate Policy extension
   when signing certificates.
 * Add support for configuring how long automatically generated OCSP responder certificates are valid.

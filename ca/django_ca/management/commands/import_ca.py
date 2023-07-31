@@ -143,7 +143,7 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         # Set ACME options
         if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
-            for param in ["acme_enabled", "acme_requires_contact"]:
+            for param in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
                 if options[param] is not None:
                     setattr(ca, param, options[param])
 
