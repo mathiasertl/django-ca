@@ -60,14 +60,12 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         group = group.add_mutually_exclusive_group()
         group.add_argument(
             "--path-length",
-            "--pathlen",  # remove in django-ca==1.26.0
             default=0,
             type=int,
             help="Maximum number of intermediate CAs (default: %(default)s).",
         )
         group.add_argument(
             "--no-path-length",
-            "--no-pathlen",  # remove in django-ca==1.26.0
             action="store_const",
             const=None,
             dest="path_length",
