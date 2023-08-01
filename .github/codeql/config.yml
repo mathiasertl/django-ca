@@ -1,4 +1,4 @@
 paths:
   - ca
 paths-ignore:
-  - '**/test_*.py'
+  - ca/django_ca/tests
