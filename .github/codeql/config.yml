@@ -1,5 +1,4 @@
 paths:
   - ca
 paths-ignore:
-  - src/node_modules
-  - '**test_*.py'
+  - '**/test_*.py'
