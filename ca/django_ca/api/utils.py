@@ -12,9 +12,22 @@
 # <http://www.gnu.org/licenses/>.
 
 """API utility functions."""
+import typing
+from typing import Any, Optional
+
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 from django.http import Http404
 
-from django_ca.models import CertificateAuthority
+from django_ca.models import Certificate, CertificateAuthority
+
+if typing.TYPE_CHECKING:
+    from django.contrib.auth.models import User
+else:
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
 
 
 def get_certificate_authority(serial: str, expired: bool = False) -> CertificateAuthority:
@@ -27,3 +40,68 @@ def get_certificate_authority(serial: str, expired: bool = False) -> Certificate
         return qs.get(serial=serial)
     except CertificateAuthority.DoesNotExist as ex:
         raise Http404(f"{serial}: Certificate authority not found.") from ex
+
+
+@transaction.atomic
+def create_api_user(
+    username: str,
+    password: str,
+    view_certificateauthority: bool = True,
+    sign_certificate: bool = True,
+    view_certificate: bool = True,
+    revoke_certificate: bool = True,
+    **extra_fields: Any,
+) -> User:
+    """Create an API user capable of using the REST API.
+
+    By default, the user will be able to perform all actions provided by the API.
+
+    Note that *unlike* :py:meth:`~django:django.contrib.auth.models.UserManager.create_user`, the `password`
+    argument is the second argument and mandatory. You can still pass an `email` address as keyword argument.
+
+    >>> create_api_user("username", "password", revoke_certificate=False, email="user@example.com")
+
+    Parameters
+    ----------
+
+    username : str
+        The username for the API user.
+    password : str
+        The password for the API user.
+    view_certificateauthority : bool, optional
+        If the user is able to list/view certificate authorities via the API.
+    sign_certificate : bool, optional
+        If the user is able to sign new certificates via the API.
+    view_certificate : bool, optional
+        If the user is able to list/view existing certificates via the API.
+    revoke_certificate : bool, optional
+        If the user is able to revoke certificates via the API.
+    **extra_fields
+        Any additional keyword arguments are passed to
+        :py:meth:`~django:django.contrib.auth.models.UserManager.create_user`.
+    """
+    ca_content_type = ContentType.objects.get_for_model(CertificateAuthority)
+    cert_content_type = ContentType.objects.get_for_model(Certificate)
+
+    user = User.objects.create_user(username, password=password, **extra_fields)
+
+    permissions = []
+    if view_certificateauthority is True:
+        permissions.append(
+            Permission.objects.get(codename="view_certificateauthority", content_type=ca_content_type)
+        )
+    if sign_certificate is True:
+        permissions.append(
+            Permission.objects.get(codename="sign_certificate", content_type=cert_content_type)
+        )
+    if view_certificate is True:
+        permissions.append(
+            Permission.objects.get(codename="view_certificate", content_type=cert_content_type)
+        )
+    if revoke_certificate is True:
+        permissions.append(
+            Permission.objects.get(codename="revoke_certificate", content_type=cert_content_type)
+        )
+    user.user_permissions.add(*permissions)
+
+    return user

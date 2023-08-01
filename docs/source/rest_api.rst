@@ -35,6 +35,37 @@ Enable the API
 
 To enable the API, you need to set the :ref:`settings-ca-enable-rest-api` setting to ``True``.
 
+****************************
+Authentication/Authorization
+****************************
+
+The API uses standard Django users with HTTP Basic Authentication for *authentication* and Django permissions
+are used for *authorization*.
+
+The easiest way to add an API user is via the admin interface in the browser. Different permissions are
+required per endpoint:
+
+============================== ===============================================================================
+Required permission            endpoints
+============================== ===============================================================================
+Can view Certificate Authority * ``GET /api/ca/`` - List available certificate authorities
+                               * ``GET /api/ca/{serial}/`` - View certificate authority
+Can sign Certificate           ``POST /api/ca/{serial}/sign/`` - Sign a certificate
+Can view Certificate           * ``GET /ca/{serial}/certs/`` - List certificates
+                               * ``GET /ca/{serial}/certs/{certificate_serial}/`` - View certificate
+Can revoke Certificate         ``POST /ca/{serial}/revoke/{certificate_serial}/`` - Revoke certificate
+============================== ===============================================================================
+
+If you do not use the admin interface, Django unfortunately does not provide an out-of-the box command to
+create users, so you have to create them via :command:`manage.py shell` with our small helper function
+:py:func:`~django_ca.api.utils.create_api_user`:
+
+.. code-block:: python
+
+    >>> from django_ca.api.utils import create_api_user
+    >>> create_api_user('api-username', password='api-password')
+
+
 *****************
 API documentation
 *****************
@@ -47,3 +78,9 @@ Below is the documentation for the current version (note that responses are curr
 `this bug <https://github.com/sphinx-contrib/openapi/issues/107>`_):
 
 .. openapi:: /_files/openapi.json
+
+*****************
+Utility functions
+*****************
+
+.. autofunction:: django_ca.api.utils.create_api_user
