@@ -18,6 +18,7 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 from ninja import Field, ModelSchema, Schema
+from pydantic import root_validator, validator
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -25,6 +26,7 @@ from cryptography.x509.oid import ExtensionOID
 from django_ca import ca_settings, constants
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.typehints import SerializedDistributionPoint
 
 DATETIME_EXAMPLE = "2023-07-30T10:06:35Z"
 
@@ -37,7 +39,12 @@ class AuthorityInformationAccessValueSchema(Schema):
 
 
 class AuthorityInformationAccessSchema(Schema):
-    """Schema for the Authority Information Access extension."""
+    """Schema for the Authority Information Access extension.
+
+    This extension is usually derived from the certificate authority signing the extension and not specified
+    via the API. If given via the API, the `issuers` and `ocsp` fields will replace the respective field of
+    the extension from the certificate authority.
+    """
 
     critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
     value: AuthorityInformationAccessValueSchema
@@ -72,7 +79,10 @@ class CertificatePoliciesSchema(Schema):
 
 
 class CRLDistributionPointSchema(Schema):
-    """ "Schema for a CRL Distribution Point."""
+    """Schema for a CRL Distribution Point.
+
+    Note that in practice, this usually is just a single `full_name` with a URL pointing to the CRL.
+    """
 
     full_name: Optional[List[str]] = Field(example=["URI:http://crl.example.com"])
     relative_name: Optional[str]
@@ -81,9 +91,26 @@ class CRLDistributionPointSchema(Schema):
         example=["unspecified", "superseded", "cessationOfOperation"]
     )
 
+    @root_validator
+    def check_full_or_relative_name(  # pylint: disable=no-self-argument  # -> pydantic
+        cls, values: SerializedDistributionPoint
+    ) -> SerializedDistributionPoint:
+        """Validate that the distribution point has either a full_name OR a relative_name."""
+        full_name = values.get("full_name")
+        relative_name = values.get("relative_name")
+        if full_name and relative_name:
+            raise ValueError("Distribution point must contain either full_name OR relative_name.")
+        if not full_name and not relative_name:
+            raise ValueError("Distribution point must contain one of full_name OR relative_name.")
+        return values
+
 
 class CRLDistributionPointsSchema(Schema):
-    """Schema for the CRL Distribution Points extension."""
+    """Schema for the CRL Distribution Points extension.
+
+    This extension is usually derived from the certificate authority signing the extension and not specified
+    via the API. If given via the API, it will replace any the extension from the certificate authority.
+    """
 
     critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS]
     value: List[CRLDistributionPointSchema]
@@ -107,7 +134,20 @@ class KeyUsageSchema(Schema):
     """Schema for the Key Usage extension."""
 
     critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE]
-    value: List[str] = Field(example=["digitalSignature", "keyEncipherment"])
+    value: List[str] = Field(
+        example=["digitalSignature", "keyEncipherment"], enum=sorted(constants.KEY_USAGE_NAMES.values())
+    )
+
+    @validator("value")
+    def validate_key_usage(  # pylint: disable=no-self-argument  # -> pydantic
+        cls, values: List[str]
+    ) -> List[str]:
+        """Make sure that only valid key usages are sent."""
+        valid_values = tuple(constants.KEY_USAGE_NAMES.values())
+        for key_usage in values:
+            if key_usage not in valid_values:
+                raise ValueError(f"{key_usage}: Invalid key usage.")
+        return values
 
 
 class OCSPNoCheckSchema(Schema):
