@@ -85,11 +85,19 @@ class X509BaseSchema(ModelSchema, abc.ABC):
 class CertificateAuthoritySchema(X509BaseSchema):
     """Schema for serializing a certificate authority."""
 
-    name: str = Field("The human-readable name of the certificate authority.")
+    name: str = Field(description="The human-readable name of the certificate authority.")
+    can_sign_certificates: bool = Field(
+        description="If the certificate authority can be used to sign certificates via the API."
+    )
 
     class Config(X509BaseSchema.Config):  # pylint: disable=missing-class-docstring
         model = CertificateAuthority
         model_fields = sorted(X509BaseSchema.Config.model_fields + ["name"])
+
+    @staticmethod
+    def resolve_can_sign_certificates(obj: CertificateAuthority) -> bool:
+        """Strip microseconds from the attribute."""
+        return obj.key_exists
 
 
 class CertificateAuthorityFilterSchema(Schema):

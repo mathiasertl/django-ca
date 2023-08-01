@@ -37,6 +37,7 @@ class CertificateAuthorityDetailTestCase(APITestCaseMixin, TestCase):
         super().setUp()
         cert = certs["root"]
         self.expected_response = {
+            "can_sign_certificates": False,
             "created": self.iso_format(self.ca.created),
             "name": "root",
             "not_after": self.iso_format(self.ca.expires),

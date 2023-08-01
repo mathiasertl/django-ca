@@ -95,6 +95,12 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
     algorithm = expires = None
     extensions: List[x509.Extension[x509.ExtensionType]] = []
 
+    if ca.key_exists is False:
+        raise HttpError(
+            HTTPStatus.BAD_REQUEST,
+            "This certificate authority can not be used to sign certificates via the API.",
+        )
+
     if data.algorithm is not None:
         algorithm = constants.HASH_ALGORITHM_TYPES[data.algorithm]()
     if data.expires is not None:
