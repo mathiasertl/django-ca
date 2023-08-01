@@ -13,7 +13,7 @@
 
 """API utility functions."""
 import typing
-from typing import Any, Optional
+from typing import Any
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -23,7 +23,7 @@ from django.http import Http404
 from django_ca.models import Certificate, CertificateAuthority
 
 if typing.TYPE_CHECKING:
-    from django.contrib.auth.models import User
+    from django.contrib.auth.models import User  # pylint: disable=imported-auth-user
 else:
     from django.contrib.auth import get_user_model
 

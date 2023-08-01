@@ -858,6 +858,18 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return profiles
 
+    def distribution_point(
+        self,
+        full_name: Optional[Iterable[x509.GeneralName]] = None,
+        relative_name: Optional[x509.RelativeDistinguishedName] = None,
+        reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
+    ) -> x509.DistributionPoint:
+        """Shortcut for generating a single distribution point."""
+        return x509.DistributionPoint(
+            full_name=full_name, relative_name=relative_name, reasons=reasons, crl_issuer=crl_issuer
+        )
+
     def extended_key_usage(
         self, *usages: x509.ObjectIdentifier, critical: bool = False
     ) -> x509.Extension[x509.ExtendedKeyUsage]:

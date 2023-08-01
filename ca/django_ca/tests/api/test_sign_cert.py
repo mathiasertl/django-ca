@@ -18,8 +18,9 @@ from datetime import timedelta
 from http import HTTPStatus
 from typing import Any
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.test import TestCase
 from django.urls import reverse_lazy
@@ -27,10 +28,10 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.models import Certificate
 from django_ca.tests.api.mixins import APITestCaseMixin
-from django_ca.tests.base import certs, dns, ip, override_tmpcadir, timestamps
+from django_ca.tests.base import certs, dns, ip, override_tmpcadir, rdn, timestamps, uri
 
 if typing.TYPE_CHECKING:
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
@@ -124,7 +125,54 @@ class SignCertificateTestCase(APITestCaseMixin, TestCase):
             {
                 "csr": certs["root-cert"]["csr"]["pem"],
                 "subject": "CN=api.example.com",
-                "extensions": {"subject_alternative_name": {"value": ["DNS:example.com", "IP:127.0.0.1"]}},
+                "extensions": {
+                    "authority_information_access": {
+                        "value": {
+                            "issuers": ["http://api.issuer.example.com"],
+                            "ocsp": ["http://api.ocsp.example.com"],
+                        },
+                    },
+                    "certificate_policies": {
+                        "value": [
+                            {"policy_identifier": "1.1.1"},
+                            {
+                                "policy_identifier": "1.3.3",
+                                "policy_qualifiers": [
+                                    "A policy qualifier as a string",
+                                    {
+                                        "explicit_text": "An explicit text",
+                                        "notice_reference": {
+                                            "organization": "some org",
+                                            "notice_numbers": [1, 2, 3],
+                                        },
+                                    },
+                                ],
+                            },
+                        ]
+                    },
+                    "crl_distribution_points": {
+                        "value": [
+                            {"full_name": ["http://api.crl1.example.com"]},
+                            {
+                                "full_name": ["http://api.crl2.example.com"],
+                                "crl_issuer": ["http://api.crl2.example.com"],
+                                "reasons": ["keyCompromise"],
+                            },
+                            {"relative_name": "/CN=example.com"},
+                        ]
+                    },
+                    "extended_key_usage": {"value": ["serverAuth", "1.2.3"]},
+                    "freshest_crl": {"value": [{"full_name": ["http://api.freshest-crl.example.com"]}]},
+                    "key_usage": {"value": ["keyEncipherment"]},
+                    "ocsp_no_check": {},
+                    "subject_alternative_name": {
+                        "critical": not constants.EXTENSION_DEFAULT_CRITICAL[
+                            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+                        ],
+                        "value": ["DNS:example.com", "IP:127.0.0.1"],
+                    },
+                    "tls_feature": {"value": ["OCSPMustStaple"]},
+                },
             }
         )
         self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
@@ -141,11 +189,97 @@ class SignCertificateTestCase(APITestCaseMixin, TestCase):
 
         # Test extensions
         extensions = cert.x509_extensions
+
+        # Test Authority Information Access extension
+        self.assertEqual(
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            self.authority_information_access(
+                ca_issuers=[uri("http://api.issuer.example.com")], ocsp=[uri("http://api.ocsp.example.com")]
+            ),
+        )
+
+        # Test Certificate Policies extension
+        self.assertEqual(
+            extensions[ExtensionOID.CERTIFICATE_POLICIES],
+            self.certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.1.1"), policy_qualifiers=None
+                ),
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.3.3"),
+                    policy_qualifiers=[
+                        "A policy qualifier as a string",
+                        x509.UserNotice(
+                            notice_reference=x509.NoticeReference(
+                                organization="some org", notice_numbers=[1, 2, 3]
+                            ),
+                            explicit_text="An explicit text",
+                        ),
+                    ],
+                ),
+            ),
+        )
+
+        # Test CRL Distribution Points extension
+        self.assertEqual(
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            x509.Extension(
+                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                critical=False,
+                value=x509.CRLDistributionPoints(
+                    [
+                        self.distribution_point(full_name=[uri("http://api.crl1.example.com")]),
+                        self.distribution_point(
+                            full_name=[uri("http://api.crl2.example.com")],
+                            crl_issuer=[uri("http://api.crl2.example.com")],
+                            reasons=frozenset([x509.ReasonFlags.key_compromise]),
+                        ),
+                        self.distribution_point(relative_name=rdn([(NameOID.COMMON_NAME, "example.com")])),
+                    ]
+                ),
+            ),
+        )
+
+        # Test Extended Key Usage extension
+        self.assertEqual(
+            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
+            self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH, x509.ObjectIdentifier("1.2.3")),
+        )
+
+        # Test Freshest CRL extension
+        self.assertEqual(
+            extensions[ExtensionOID.FRESHEST_CRL],
+            x509.Extension(
+                oid=ExtensionOID.FRESHEST_CRL,
+                critical=False,
+                value=x509.FreshestCRL(
+                    [
+                        self.distribution_point(full_name=[uri("http://api.freshest-crl.example.com")]),
+                    ]
+                ),
+            ),
+        )
+
+        # Test Key Usage extension
+        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_encipherment=True))
+
+        # Test OCSPNoCheck extension
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+
+        # Test Subject Alternative Name extension
         self.assertEqual(
             extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             self.subject_alternative_name(
-                dns("example.com"), ip(ipaddress.IPv4Address("127.0.0.1")), dns("api.example.com")
+                dns("example.com"),
+                ip(ipaddress.IPv4Address("127.0.0.1")),
+                dns("api.example.com"),
+                critical=True,
             ),
+        )
+
+        # Test TLSFeature extension
+        self.assertEqual(
+            extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
         )
 
     @freeze_time(timestamps["everything_expired"])

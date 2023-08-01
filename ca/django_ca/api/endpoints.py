@@ -87,7 +87,11 @@ def view_certificate_authority(request: WSGIRequest, serial: str) -> Certificate
     tags=["Certificates"],
 )
 def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSchema) -> Certificate:
-    """Sign a certificate."""
+    """Sign a certificate.
+
+    The `extensions` value is completely optional and allows you to add additional extensions to the
+    certificate. Usually extensions are defined either by the CA or by the named profile.
+    """
     csr = x509.load_pem_x509_csr(data.csr.encode())
     ca = get_certificate_authority(serial)
     profile = profiles[data.profile]
@@ -105,9 +109,11 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
         algorithm = constants.HASH_ALGORITHM_TYPES[data.algorithm]()
     if data.expires is not None:
         expires = data.expires
+
     if data.extensions is not None:
-        for key, extension_data in data.extensions.items():
-            extensions.append(parse_extension(key, extension_data.dict()))  # type: ignore[arg-type]
+        for extension_key, extension_data in data.extensions:
+            if extension_data is not None:
+                extensions.append(parse_extension(extension_key, extension_data.dict()))
 
     cert = Certificate.objects.create_cert(
         ca,

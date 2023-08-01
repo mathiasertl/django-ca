@@ -15,10 +15,11 @@
 
 import abc
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from ninja import Field, ModelSchema, Schema
 
+from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
 from django_ca import ca_settings, constants
@@ -28,11 +29,119 @@ from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 DATETIME_EXAMPLE = "2023-07-30T10:06:35Z"
 
 
+class AuthorityInformationAccessValueSchema(Schema):
+    """Schema for the Authority Information Access extension value."""
+
+    issuers: Optional[List[str]] = Field(example=["URI:https://example.com/issuer"])
+    ocsp: Optional[List[str]] = Field(example=["URI:https://example.com/ocsp"])
+
+
+class AuthorityInformationAccessSchema(Schema):
+    """Schema for the Authority Information Access extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
+    value: AuthorityInformationAccessValueSchema
+
+
+class NoticeReferenceSchema(Schema):
+    """Schema for a Notice Reference."""
+
+    organization: Optional[str]
+    notice_numbers: List[int]
+
+
+class UserNoticeSchema(Schema):
+    """Schema for a User Notice."""
+
+    notice_reference: Optional[NoticeReferenceSchema]
+    explicit_text: Optional[str]
+
+
+class PolicySchema(Schema):
+    """Schema for a certificate policy."""
+
+    policy_identifier: str = Field(example="1.2.3.4")
+    policy_qualifiers: Optional[List[Union[str, UserNoticeSchema]]]
+
+
+class CertificatePoliciesSchema(Schema):
+    """Schema for the Certificate Policies extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
+    value: List[PolicySchema]
+
+
+class CRLDistributionPointSchema(Schema):
+    """ "Schema for a CRL Distribution Point."""
+
+    full_name: Optional[List[str]] = Field(example=["URI:http://crl.example.com"])
+    relative_name: Optional[str]
+    crl_issuer: Optional[List[str]] = Field(example=["URI:http://crl-issuers.example.com"])
+    reasons: Optional[List[x509.ReasonFlags]] = Field(
+        example=["unspecified", "superseded", "cessationOfOperation"]
+    )
+
+
+class CRLDistributionPointsSchema(Schema):
+    """Schema for the CRL Distribution Points extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+    value: List[CRLDistributionPointSchema]
+
+
+class ExtendedKeyUsageSchema(Schema):
+    """Schema for the Extended Key Usage extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.EXTENDED_KEY_USAGE]
+    value: List[str] = Field(example=["serverAuth", "clientAuth"])
+
+
+class FreshestCRLSchema(Schema):
+    """Schema for the Freshest CRL extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.FRESHEST_CRL]
+    value: List[CRLDistributionPointSchema]
+
+
+class KeyUsageSchema(Schema):
+    """Schema for the Key Usage extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE]
+    value: List[str] = Field(example=["digitalSignature", "keyEncipherment"])
+
+
+class OCSPNoCheckSchema(Schema):
+    """Schema for the OCSP No Check extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.OCSP_NO_CHECK]
+
+
 class SubjectAlternativeNameSchema(Schema):
     """Schema for a Subject Alternative Name extension."""
 
     critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
-    value: List[str]
+    value: List[str] = Field(example=["DNS:example.com", "IP:127.0.0.1"])
+
+
+class TLSFeatureSchema(Schema):
+    """Schema for the TLS Feature extension."""
+
+    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.TLS_FEATURE]
+    value: List[str] = Field(example=["OCSPMustStaple"])
+
+
+class ExtensionsSchema(Schema):
+    """Schema for all extensions that may be added via the API."""
+
+    authority_information_access: Optional[AuthorityInformationAccessSchema]
+    certificate_policies: Optional[CertificatePoliciesSchema]
+    crl_distribution_points: Optional[CRLDistributionPointsSchema]
+    extended_key_usage: Optional[ExtendedKeyUsageSchema]
+    freshest_crl: Optional[CRLDistributionPointsSchema]
+    key_usage: Optional[KeyUsageSchema]
+    ocsp_no_check: Optional[OCSPNoCheckSchema]
+    subject_alternative_name: Optional[SubjectAlternativeNameSchema]
+    tls_feature: Optional[TLSFeatureSchema]
 
 
 class X509BaseSchema(ModelSchema, abc.ABC):
@@ -154,8 +263,8 @@ class SignCertificateSchema(Schema):
         description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
         example=DATETIME_EXAMPLE,
     )
-    extensions: Optional[Dict[str, Union[SubjectAlternativeNameSchema]]] = Field(
-        default=None, example={"subject_alternative_name": {"value": ["DNS:example.com", "IP:127.0.0.1"]}}
+    extensions: Optional[ExtensionsSchema] = Field(
+        default=None, description="**Optional** additional extensions to add to the certificate."
     )
     profile: Optional[str] = Field(
         description="Issue the certificate with the given profile.",

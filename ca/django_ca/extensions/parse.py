@@ -221,11 +221,16 @@ def _parse_extended_key_usage(value: Iterable[Union[str, x509.ObjectIdentifier]]
     usages: List[x509.ObjectIdentifier] = []
     for unparsed in value:
         if isinstance(unparsed, str):
-            usages.append(mapping[unparsed])
+            try:
+                usages.append(mapping[unparsed])
+            except KeyError:
+                usages.append(x509.ObjectIdentifier(unparsed))
         else:
             usages.append(unparsed)
 
-    return x509.ExtendedKeyUsage(usages=sorted(usages, key=lambda u: EXTENDED_KEY_USAGE_NAMES[u]))
+    return x509.ExtendedKeyUsage(
+        usages=sorted(usages, key=lambda u: EXTENDED_KEY_USAGE_NAMES.get(u, u.dotted_string))
+    )
 
 
 def _parse_freshest_crl(
