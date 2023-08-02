@@ -21,6 +21,7 @@ from ninja.errors import HttpError
 
 from cryptography import x509
 
+from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import Http404, HttpResponse
 
@@ -30,6 +31,7 @@ from django_ca.api.errors import Forbidden
 from django_ca.api.schemas import (
     CertificateAuthorityFilterSchema,
     CertificateAuthoritySchema,
+    CertificateAuthorityUpdateSchema,
     CertificateFilterSchema,
     CertificateSchema,
     RevokeCertificateSchema,
@@ -77,6 +79,33 @@ def list_certificate_authorities(
 def view_certificate_authority(request: WSGIRequest, serial: str) -> CertificateAuthority:
     """Retrieve details of the certificate authority with the given serial."""
     return get_certificate_authority(serial, expired=True)  # You can *view* expired CAs
+
+
+@api.put(
+    "/ca/{serial:serial}/",
+    response=CertificateAuthoritySchema,
+    auth=BasicAuth("django_ca.change_certificateauthority"),
+    summary="Update certificate authority",
+    tags=["Certificate authorities"],
+)
+def update_certificate_authority(
+    request: WSGIRequest, serial: str, data: CertificateAuthorityUpdateSchema
+) -> CertificateAuthority:
+    """Update a certificate authority.
+
+    All request body fields are optional, so you can also update only individual fields.
+    """
+    ca = get_certificate_authority(serial, expired=True)
+    for attr, value in data.dict(exclude_unset=True).items():
+        setattr(ca, attr, value)
+
+    try:
+        ca.full_clean()
+    except ValidationError as ex:
+        raise HttpError(HTTPStatus.BAD_REQUEST, ex.message_dict) from ex  # type: ignore[arg-type]
+
+    ca.save()
+    return ca
 
 
 @api.post(

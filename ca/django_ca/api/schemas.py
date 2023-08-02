@@ -15,173 +15,16 @@
 
 import abc
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Optional
 
 from ninja import Field, ModelSchema, Schema
-from pydantic import root_validator, validator
-
-from cryptography import x509
-from cryptography.x509.oid import ExtensionOID
 
 from django_ca import ca_settings, constants
+from django_ca.api.extension_schemas import DATETIME_EXAMPLE, ExtensionsSchema
 from django_ca.constants import ReasonFlags
+from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
-from django_ca.typehints import SerializedDistributionPoint
-
-DATETIME_EXAMPLE = "2023-07-30T10:06:35Z"
-
-
-class AuthorityInformationAccessValueSchema(Schema):
-    """Schema for the Authority Information Access extension value."""
-
-    issuers: Optional[List[str]] = Field(example=["URI:https://example.com/issuer"])
-    ocsp: Optional[List[str]] = Field(example=["URI:https://example.com/ocsp"])
-
-
-class AuthorityInformationAccessSchema(Schema):
-    """Schema for the Authority Information Access extension.
-
-    This extension is usually derived from the certificate authority signing the extension and not specified
-    via the API. If given via the API, the `issuers` and `ocsp` fields will replace the respective field of
-    the extension from the certificate authority.
-    """
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
-    value: AuthorityInformationAccessValueSchema
-
-
-class NoticeReferenceSchema(Schema):
-    """Schema for a Notice Reference."""
-
-    organization: Optional[str]
-    notice_numbers: List[int]
-
-
-class UserNoticeSchema(Schema):
-    """Schema for a User Notice."""
-
-    notice_reference: Optional[NoticeReferenceSchema]
-    explicit_text: Optional[str]
-
-
-class PolicySchema(Schema):
-    """Schema for a certificate policy."""
-
-    policy_identifier: str = Field(example="1.2.3.4")
-    policy_qualifiers: Optional[List[Union[str, UserNoticeSchema]]]
-
-
-class CertificatePoliciesSchema(Schema):
-    """Schema for the Certificate Policies extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
-    value: List[PolicySchema]
-
-
-class CRLDistributionPointSchema(Schema):
-    """Schema for a CRL Distribution Point.
-
-    Note that in practice, this usually is just a single `full_name` with a URL pointing to the CRL.
-    """
-
-    full_name: Optional[List[str]] = Field(example=["URI:http://crl.example.com"])
-    relative_name: Optional[str]
-    crl_issuer: Optional[List[str]] = Field(example=["URI:http://crl-issuers.example.com"])
-    reasons: Optional[List[x509.ReasonFlags]] = Field(
-        example=["unspecified", "superseded", "cessationOfOperation"]
-    )
-
-    @root_validator
-    def check_full_or_relative_name(  # pylint: disable=no-self-argument  # -> pydantic
-        cls, values: SerializedDistributionPoint
-    ) -> SerializedDistributionPoint:
-        """Validate that the distribution point has either a full_name OR a relative_name."""
-        full_name = values.get("full_name")
-        relative_name = values.get("relative_name")
-        if full_name and relative_name:
-            raise ValueError("Distribution point must contain either full_name OR relative_name.")
-        if not full_name and not relative_name:
-            raise ValueError("Distribution point must contain one of full_name OR relative_name.")
-        return values
-
-
-class CRLDistributionPointsSchema(Schema):
-    """Schema for the CRL Distribution Points extension.
-
-    This extension is usually derived from the certificate authority signing the extension and not specified
-    via the API. If given via the API, it will replace any the extension from the certificate authority.
-    """
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS]
-    value: List[CRLDistributionPointSchema]
-
-
-class ExtendedKeyUsageSchema(Schema):
-    """Schema for the Extended Key Usage extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.EXTENDED_KEY_USAGE]
-    value: List[str] = Field(example=["serverAuth", "clientAuth"])
-
-
-class FreshestCRLSchema(Schema):
-    """Schema for the Freshest CRL extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.FRESHEST_CRL]
-    value: List[CRLDistributionPointSchema]
-
-
-class KeyUsageSchema(Schema):
-    """Schema for the Key Usage extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE]
-    value: List[str] = Field(
-        example=["digitalSignature", "keyEncipherment"], enum=sorted(constants.KEY_USAGE_NAMES.values())
-    )
-
-    @validator("value")
-    def validate_key_usage(  # pylint: disable=no-self-argument  # -> pydantic
-        cls, values: List[str]
-    ) -> List[str]:
-        """Make sure that only valid key usages are sent."""
-        valid_values = tuple(constants.KEY_USAGE_NAMES.values())
-        for key_usage in values:
-            if key_usage not in valid_values:
-                raise ValueError(f"{key_usage}: Invalid key usage.")
-        return values
-
-
-class OCSPNoCheckSchema(Schema):
-    """Schema for the OCSP No Check extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.OCSP_NO_CHECK]
-
-
-class SubjectAlternativeNameSchema(Schema):
-    """Schema for a Subject Alternative Name extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
-    value: List[str] = Field(example=["DNS:example.com", "IP:127.0.0.1"])
-
-
-class TLSFeatureSchema(Schema):
-    """Schema for the TLS Feature extension."""
-
-    critical: bool = constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.TLS_FEATURE]
-    value: List[str] = Field(example=["OCSPMustStaple"])
-
-
-class ExtensionsSchema(Schema):
-    """Schema for all extensions that may be added via the API."""
-
-    authority_information_access: Optional[AuthorityInformationAccessSchema]
-    certificate_policies: Optional[CertificatePoliciesSchema]
-    crl_distribution_points: Optional[CRLDistributionPointsSchema]
-    extended_key_usage: Optional[ExtendedKeyUsageSchema]
-    freshest_crl: Optional[CRLDistributionPointsSchema]
-    key_usage: Optional[KeyUsageSchema]
-    ocsp_no_check: Optional[OCSPNoCheckSchema]
-    subject_alternative_name: Optional[SubjectAlternativeNameSchema]
-    tls_feature: Optional[TLSFeatureSchema]
+from django_ca.typehints import SerializedExtension
 
 
 class X509BaseSchema(ModelSchema, abc.ABC):
@@ -231,17 +74,54 @@ class X509BaseSchema(ModelSchema, abc.ABC):
         return obj.updated.replace(microsecond=0)
 
 
-class CertificateAuthoritySchema(X509BaseSchema):
-    """Schema for serializing a certificate authority."""
+class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
+    """Base schema for certificate authorities.
+
+    Contains all fields that can be read or updated.
+    """
 
     name: str = Field(description="The human-readable name of the certificate authority.")
+
+    class Config:  # pylint: disable=missing-class-docstring
+        model = CertificateAuthority
+        model_fields = [
+            "name",
+            "caa_identity",
+            "website",
+            "terms_of_service",
+            "crl_url",
+            "issuer_url",
+            "ocsp_url",
+            "issuer_alt_name",
+            "sign_certificate_policies",
+            "ocsp_responder_key_validity",
+            "ocsp_response_validity",
+            "acme_enabled",
+            "acme_registration",
+            "acme_profile",
+            "acme_requires_contact",
+        ]
+
+    @staticmethod
+    def resolve_sign_certificate_policies(obj: CertificateAuthority) -> Optional[SerializedExtension]:
+        """Convert cryptography extensions to JSON serializable objects."""
+        if obj.sign_certificate_policies is None:
+            return None
+        return serialize_extension(obj.sign_certificate_policies)
+
+
+class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema):
+    """Schema for serializing a certificate authority."""
+
     can_sign_certificates: bool = Field(
         description="If the certificate authority can be used to sign certificates via the API."
     )
 
     class Config(X509BaseSchema.Config):  # pylint: disable=missing-class-docstring
         model = CertificateAuthority
-        model_fields = sorted(X509BaseSchema.Config.model_fields + ["name"])
+        model_fields = sorted(
+            X509BaseSchema.Config.model_fields + CertificateAuthorityBaseSchema.Config.model_fields
+        )
 
     @staticmethod
     def resolve_can_sign_certificates(obj: CertificateAuthority) -> bool:
@@ -253,6 +133,19 @@ class CertificateAuthorityFilterSchema(Schema):
     """Filter-schema for listing certificate authorities."""
 
     expired: bool = Field(default=False, description="Include expired CAs.")
+
+
+class CertificateAuthorityUpdateSchema(CertificateAuthorityBaseSchema):
+    """Schema for updating certificate authorities."""
+
+    # TYPE NOTE: model_fields_optional does not capture explicitly named fields, so we repeat this
+    # with Optional[str], which is an incompatible override
+    name: Optional[str] = Field(  # type: ignore[assignment]
+        description="The human-readable name of the certificate authority.", required=False
+    )
+
+    class Config(CertificateAuthorityBaseSchema.Config):  # pylint: disable=missing-class-docstring
+        model_fields_optional = "__all__"
 
 
 class CertificateSchema(X509BaseSchema):

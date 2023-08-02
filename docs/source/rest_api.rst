@@ -45,16 +45,17 @@ are used for *authorization*.
 The easiest way to add an API user is via the admin interface in the browser. Different permissions are
 required per endpoint:
 
-============================== ===============================================================================
-Required permission            endpoints
-============================== ===============================================================================
-Can view Certificate Authority * ``GET /api/ca/`` - List available certificate authorities
-                               * ``GET /api/ca/{serial}/`` - View certificate authority
-Can sign Certificate           ``POST /api/ca/{serial}/sign/`` - Sign a certificate
-Can view Certificate           * ``GET /ca/{serial}/certs/`` - List certificates
-                               * ``GET /ca/{serial}/certs/{certificate_serial}/`` - View certificate
-Can revoke Certificate         ``POST /ca/{serial}/revoke/{certificate_serial}/`` - Revoke certificate
-============================== ===============================================================================
+================================ =============================================================================
+Required permission              endpoints
+================================ =============================================================================
+Can view Certificate Authority   * ``GET /api/ca/`` - List available certificate authorities
+                                 * ``GET /api/ca/{serial}/`` - View certificate authority
+Can change Certificate Authority * ``PUT /api/ca/{serial}/`` - Update certificate authority
+Can sign Certificate             ``POST /api/ca/{serial}/sign/`` - Sign a certificate
+Can view Certificate             * ``GET /ca/{serial}/certs/`` - List certificates
+                                 * ``GET /ca/{serial}/certs/{certificate_serial}/`` - View certificate
+Can revoke Certificate           ``POST /ca/{serial}/revoke/{certificate_serial}/`` - Revoke certificate
+================================ =============================================================================
 
 If you do not use the admin interface, Django unfortunately does not provide an out-of-the box command to
 create users, so you have to create them via :command:`manage.py shell` with our small helper function

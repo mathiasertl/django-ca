@@ -47,6 +47,7 @@ def create_api_user(
     username: str,
     password: str,
     view_certificateauthority: bool = True,
+    change_certificateauthority: bool = True,
     sign_certificate: bool = True,
     view_certificate: bool = True,
     revoke_certificate: bool = True,
@@ -70,6 +71,8 @@ def create_api_user(
         The password for the API user.
     view_certificateauthority : bool, optional
         If the user is able to list/view certificate authorities via the API.
+    change_certificateauthority : bool, optional
+        If the user is able to update certificate authorities via the API.
     sign_certificate : bool, optional
         If the user is able to sign new certificates via the API.
     view_certificate : bool, optional
@@ -89,6 +92,10 @@ def create_api_user(
     if view_certificateauthority is True:
         permissions.append(
             Permission.objects.get(codename="view_certificateauthority", content_type=ca_content_type)
+        )
+    if change_certificateauthority is True:
+        permissions.append(
+            Permission.objects.get(codename="change_certificateauthority", content_type=ca_content_type)
         )
     if sign_certificate is True:
         permissions.append(

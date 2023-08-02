@@ -29,6 +29,7 @@ class CreateUserTestCase(TestCase):
         self.assertEqual(user.username, "username")
         self.assertIs(user.check_password("foobar"), True)
         self.assertIs(user.has_perm("django_ca.view_certificateauthority"), True)
+        self.assertIs(user.has_perm("django_ca.change_certificateauthority"), True)
         self.assertIs(user.has_perm("django_ca.view_certificate"), True)
         self.assertIs(user.has_perm("django_ca.sign_certificate"), True)
         self.assertIs(user.has_perm("django_ca.revoke_certificate"), True)
@@ -47,6 +48,7 @@ class CreateUserTestCase(TestCase):
             "username",
             "foobar",
             view_certificateauthority=False,
+            change_certificateauthority=False,
             sign_certificate=False,
             view_certificate=False,
             revoke_certificate=False,
@@ -55,6 +57,7 @@ class CreateUserTestCase(TestCase):
         self.assertIs(user.check_password("foobar"), True)
 
         self.assertIs(user.has_perm("django_ca.view_certificateauthority"), False)
+        self.assertIs(user.has_perm("django_ca.change_certificateauthority"), False)
         self.assertIs(user.has_perm("django_ca.view_certificate"), False)
         self.assertIs(user.has_perm("django_ca.sign_certificate"), False)
         self.assertIs(user.has_perm("django_ca.revoke_certificate"), False)

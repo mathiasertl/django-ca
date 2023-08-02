@@ -36,16 +36,30 @@ class ListCertificateAuthorityTestCase(APITestCaseMixin, TestCase):
         cert = certs["root"]
         self.expected_response = [
             {
+                "acme_enabled": False,
+                "acme_profile": "webserver",
+                "acme_registration": True,
+                "acme_requires_contact": True,
+                "caa_identity": "",
                 "can_sign_certificates": False,
                 "created": self.iso_format(self.ca.created),
+                "crl_url": self.ca.crl_url,
+                "issuer_alt_name": "",
+                "issuer_url": self.ca.issuer_url,
                 "not_after": self.iso_format(self.ca.expires),
                 "not_before": self.iso_format(self.ca.valid_from),
+                "ocsp_responder_key_validity": 3,
+                "ocsp_response_validity": 86400,
+                "ocsp_url": self.ca.ocsp_url,
                 "name": "root",
                 "pem": cert["pub"]["pem"],
                 "revoked": False,
                 "serial": cert["serial"],
+                "sign_certificate_policies": None,
                 "subject": x509_name(cert["subject"]).rfc4514_string(),
+                "terms_of_service": "",
                 "updated": self.iso_format(self.ca.updated),
+                "website": "",
             }
         ]
 
