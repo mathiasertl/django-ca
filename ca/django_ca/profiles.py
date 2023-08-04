@@ -183,6 +183,7 @@ class Profile:
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
+        *,
         subject: Optional[x509.Name] = None,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
@@ -202,6 +203,10 @@ class Profile:
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, csr, subject=x509_name('/CN=example.com'))  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
+
+        .. versionchanged:: 1.26.0
+
+           All optional arguments have to be passed as keyword arguments.
 
         The function will add CRL, OCSP, Issuer and IssuerAlternativeName URLs based on the CA if the profile
         has the *add_crl_url*, *add_ocsp_url* and *add_issuer_url* and *add_issuer_alternative_name* values
