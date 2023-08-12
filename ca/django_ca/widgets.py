@@ -11,10 +11,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 """Form widgets for django-ca admin interface."""
-
+import json
 import logging
 import typing
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -31,7 +31,7 @@ from django_ca.constants import (
     REVOCATION_REASONS,
 )
 from django_ca.extensions.utils import certificate_policies_is_simple
-from django_ca.utils import ADMIN_SUBJECT_OIDS, format_general_name
+from django_ca.utils import format_general_name
 
 log = logging.getLogger(__name__)
 
@@ -102,6 +102,56 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
         return ctx
 
 
+class KeyValueWidget(forms.MultiWidget):
+    """Dynamic widget for key/value pairs."""
+
+    template_name = "django_ca/admin/key_value.html"
+
+    def __init__(
+        self, key_choices: Sequence[Tuple[str, str]], attrs: Optional[Dict[str, str]] = None
+    ) -> None:
+        field_widgets = [
+            forms.HiddenInput(),
+            forms.Select(choices=key_choices, attrs=attrs),
+            forms.TextInput(attrs=attrs),
+        ]
+        super().__init__(field_widgets, attrs=attrs)
+
+    def decompress(self, value: Optional[x509.Name]) -> Tuple[Optional[str], None, None]:
+        if value is None:
+            return None, None, None
+
+        # TYPEHINT NOTE: attr.value may be a bytes value, but this does not really happen in practice
+        encoded_name: List[Dict[str, str]] = [
+            {"key": attr.oid.dotted_string, "value": attr.value} for attr in value  # type: ignore[dict-item]
+        ]
+        return json.dumps(encoded_name), None, None
+
+    def get_context(self, name: str, value: Any, attrs: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        context = super().get_context(name, value, attrs)
+
+        # Remove the name as the widgets only serve as template for new key/value rows. If they had a name,
+        # the browser would submit values and get them back from Django as values for the template fields in
+        # case of a form error.
+        del context["widget"]["subwidgets"][1]["name"]
+        del context["widget"]["subwidgets"][2]["name"]
+
+        return context
+
+    class Media:
+        js = ("django_ca/admin/js/key_value.js",)
+        css = {"all": ("django_ca/admin/css/key_value.css",)}
+
+
+class SubjectWidget(KeyValueWidget):
+    """Specialized version of the KeyValueWidget for a certificate subject."""
+
+    template_name = "django_ca/admin/subject.html"
+
+    class Media:
+        css = {"all": ("django_ca/admin/css/subject.css",)}
+
+
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
     """SelectMultiple field that uses the DjangoCaWidgetMixin."""
 
@@ -147,7 +197,7 @@ class CriticalInput(LabeledCheckboxInput):
     css_classes = ("critical",)
     template_name = "django_ca/forms/widgets/critical.html"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         self.oid = kwargs.pop("oid")
         super().__init__(label=_("critical"), wrapper_classes=("critical",))
 
@@ -157,37 +207,28 @@ class CriticalInput(LabeledCheckboxInput):
         return ctx
 
 
-class LabeledTextInput(widgets.TextInput):
-    """CheckboxInput widget that adds a label and wraps everything in a <span />.
-
-    This is necessary because widgets in MultiValueFields don't render with a label."""
-
-    template_name = "django_ca/forms/widgets/labeledtextinput.html"
-
-    def __init__(self, label: str, *args: Any, **kwargs: Any):
-        self.label = label
-        super().__init__(*args, **kwargs)
-
-    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
-        ctx = super().get_context(*args, **kwargs)
-        ctx["widget"]["label"] = self.label
-        ctx["widget"]["cssid"] = self.label.lower().replace(" ", "-")
-        return ctx
-
-    class Media:
-        css = {
-            "all": ("django_ca/admin/css/labeledtextinput.css",),
-        }
-
-
-class SubjectTextInput(LabeledTextInput):
-    """Widget used in :py:class:`~django_ca.widgets.SubjectWidget`."""
-
-    template_name = "django_ca/forms/widgets/subjecttextinput.html"
-
-
 class ProfileWidget(widgets.Select):
-    """Widget for profile selection."""
+    """Widget for profile selection.
+
+    This widget depends on the HTML having a script element with the profile-data id present somewhere in the
+    DOM tree. To achieve this, add to the context::
+
+        >>> context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
+
+    And then use this in HTML::
+
+        <head>
+            {{ profiles|json_script:"profile-data" }}
+            ...
+        </head>
+
+    In admin pages, use the ``extrahead`` block::
+
+        {% block extrahead %}{{ block.super }}
+        {{ profiles|json_script:"profile-data" }}
+        {% endblock %}
+
+    """
 
     template_name = "django_ca/forms/widgets/profile.html"
 
@@ -204,35 +245,7 @@ class ProfileWidget(widgets.Select):
             "django_ca/admin/js/extensions.js",
             "django_ca/admin/js/profilewidget.js",
         )
-
-
-class CustomMultiWidget(widgets.MultiWidget):  # pylint: disable=abstract-method; decompress() in subclasses
-    """Wraps the multi widget into a <p> element (base class for other widgets)."""
-
-    template_name = "django_ca/forms/widgets/custommultiwidget.html"
-
-
-class SubjectWidget(CustomMultiWidget):
-    """Widget for a :py:class:`~django_ca.subject.Subject`."""
-
-    def __init__(self, attrs: Optional[Dict[str, str]] = None) -> None:
-        _widgets = (
-            SubjectTextInput(label=_("Country"), attrs={"placeholder": "2 character country code"}),
-            SubjectTextInput(label=_("State")),
-            SubjectTextInput(label=_("Location")),
-            SubjectTextInput(label=_("Organization")),
-            SubjectTextInput(label=_("Organizational Unit")),
-            SubjectTextInput(label=_("CommonName"), attrs={"required": True}),
-            SubjectTextInput(label=_("E-Mail")),
-        )
-        super().__init__(_widgets, attrs)
-
-    def decompress(self, value: Optional[x509.Name]) -> List[str]:
-        if not value:
-            return ["" for attr in ADMIN_SUBJECT_OIDS]
-
-        attr_mapping = {attr.oid: attr.value for attr in value}
-        return [attr_mapping.get(oid, "") for oid in ADMIN_SUBJECT_OIDS]  # type: ignore[misc]
+        css = {"all": ("django_ca/admin/css/profile.css",)}
 
 
 class GeneralNamesWidget(Textarea):

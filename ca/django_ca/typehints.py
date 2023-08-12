@@ -102,7 +102,14 @@ SerializedExtension = typing.TypedDict(
         "value": Any,
     },
 )
-SerializedName = List[Tuple[str, str]]
+SerializedObjectIdentifier = typing.TypedDict(
+    "SerializedObjectIdentifier",
+    {
+        "oid": str,
+        "value": str,
+    },
+)
+SerializedName = List[SerializedObjectIdentifier]
 SerializedProfile = typing.TypedDict(
     "SerializedProfile",
     {

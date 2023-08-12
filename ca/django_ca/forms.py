@@ -15,8 +15,9 @@
 
 import typing
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
@@ -120,7 +121,11 @@ class CreateCertificateBaseForm(CertificateModelForm):
         help_text=_("Password for the private key. If not given, the private key must be unencrypted."),
     )
     expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
-    subject = fields.SubjectField(label="Subject", required=True)
+    subject = fields.SubjectField(
+        label=_("Subject"),
+        required=False,
+        key_choices=[(oid.dotted_string, name) for oid, name in constants.NAME_OID_NAMES.items()],
+    )
     subject_alternative_name = fields.SubjectAlternativeNameField(
         required=False,
         help_text=_("""Coma-separated list of alternative names for the certificate."""),
@@ -215,10 +220,14 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
         expires = data.get("expires")
         ca: CertificateAuthority = data["ca"]
-        password = data.get("password")
-        subject = data.get("subject")
-        algorithm = data.get("algorithm")
-        subject_alternative_name, cn_in_san = data.get("subject_alternative_name", (None, False))
+        password = typing.cast(Optional[str], data.get("password"))
+        subject = typing.cast(Optional[x509.Name], data.get("subject"))
+        algorithm = typing.cast(Optional[hashes.HashAlgorithm], data.get("algorithm"))
+        subject_alternative_name, include_common_name = data.get("subject_alternative_name", (None, False))
+
+        subject_alternative_name = typing.cast(
+            Optional[x509.Extension[x509.SubjectAlternativeName]], subject_alternative_name
+        )
 
         # Load the CA to test the password
         try:
@@ -244,21 +253,31 @@ class CreateCertificateBaseForm(CertificateModelForm):
                 % {"key_type": ca.key_type},
             )
 
-        if cn_in_san and subject:  # subject is None if user does not enter *anything*
-            # NOTE: subject MUST have a common name at this point: If the user did not enter one, it would
-            # have been rejected by SubjectField already.
-            cname = next(attr for attr in subject if attr.oid == NameOID.COMMON_NAME)  # pragma: no branch
+        common_names: List[x509.NameAttribute] = []
+        if subject is not None:
+            common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
 
-            try:
-                parse_general_name(cname.value)
-            except ValueError:
-                self.add_error(
-                    "subject_alternative_name",
-                    _(
-                        "The CommonName cannot be parsed as general name. Either change the "
-                        "CommonName or do not include it."
-                    ),
-                )
+        # If the user decided to include any Common Names in the Subject Alternative Name extension, we check
+        # that they can be parsed as general name.
+        if include_common_name:
+            for common_name in common_names:
+                try:
+                    parse_general_name(common_name.value)  # type: ignore[arg-type]
+                except ValueError:
+                    self.add_error(
+                        "subject_alternative_name",
+                        _(
+                            "The CommonName cannot be parsed as general name. Either change the "
+                            "CommonName or do not include it."
+                        ),
+                    )
+
+        # Make sure that we have at least a Common Name *or* a Subject Alternative Name extension.
+        if subject is not None and not common_names and not subject_alternative_name:
+            self.add_error(
+                "subject_alternative_name",
+                "Subject Alternative Name is required if the subject does not contain a Common Name.",
+            )
 
         if ca and expires and ca.expires.date() < expires:
             stamp = ca.expires.strftime("%Y-%m-%d")

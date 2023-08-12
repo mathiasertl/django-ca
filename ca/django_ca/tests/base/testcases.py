@@ -68,17 +68,19 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
         """Find an element by its tag (e.g. "body")."""
         return self.selenium.find_element(by=By.TAG_NAME, value=tag)
 
-    def login(self, username: str = "admin", password: str = "admin") -> None:
+    @classmethod
+    def login(cls, username: str = "admin", password: str = "admin") -> None:
         """Login the given user."""
-        self.selenium.get(f"{self.live_server_url}{reverse('admin:login')}")
-        self.find("#id_username").send_keys(username)
-        self.find("#id_password").send_keys(password)
-        self.find('input[type="submit"]').click()
-        self.wait_for_page_load()
+        cls.selenium.get(f"{cls.live_server_url}{reverse('admin:login')}")
+        cls.selenium.find_element(By.ID, "id_username").send_keys(username)
+        cls.selenium.find_element(By.ID, "id_password").send_keys(password)
+        cls.selenium.find_element(By.CSS_SELECTOR, 'input[type="submit"]').click()
+        cls.wait_for_page_load()
 
-    def wait_for_page_load(self, wait: int = 2) -> None:
+    @classmethod
+    def wait_for_page_load(cls, wait: int = 2) -> None:
         """Wait for the page to load."""
-        WebDriverWait(self.selenium, wait).until(
+        WebDriverWait(cls.selenium, wait).until(
             lambda driver: driver.find_element(by=By.TAG_NAME, value="body")
         )
 

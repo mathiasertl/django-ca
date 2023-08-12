@@ -1295,8 +1295,9 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         """Shortcut for the changelist URL of the model under test."""
         return self.model.admin_changelist_url
 
+    @classmethod
     def create_superuser(
-        self, username: str = "admin", password: str = "admin", email: str = "user@example.com"
+        cls, username: str = "admin", password: str = "admin", email: str = "user@example.com"
     ) -> User:
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)

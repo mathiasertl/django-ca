@@ -1,7 +1,43 @@
+document.addEventListener('DOMContentLoaded', function() {
+    var profile_elem = document.querySelector("#profile-data");
+    var profile_data = null;
+
+    if (! profile_elem) {
+        // poor mans debugging at least telling us what we forgot
+        console.log("profile widget: select#profile-data not found, see ProfileWidget class description.");
+    } else {
+        var profile_data = JSON.parse(profile_elem.textContent);
+    }
+
+    document.querySelectorAll(".profile-widget-wrapper").forEach((wrapper) => {
+        var select = wrapper.querySelector("select");
+        var help = wrapper.querySelector("p.profile-desc");
+
+        // Update description text when selection is updated
+        select.addEventListener('change', (event) => {
+            var value = select.value;
+
+            // safeguard in case profile data wasn't loaded
+            if (! profile_data) {
+                return;
+            }
+
+            var profile = profile_data[value];
+
+            // Update description
+            var description = profile.description;
+            if (description) {
+                help.textContent = description;
+            } else {
+                help.textContent = "";  // profiles don't need to have a description
+            }
+        });
+    });
+});
+
 django.jQuery(document).ready(function() {
     var ca_profiles;
     var profile_url = django.jQuery('meta[name="get-profiles-url"]').attr('content');
-    console.log(profile_url);
 
     django.jQuery.get(profile_url).done(function(data) {
         ca_profiles = data;
@@ -11,34 +47,8 @@ django.jQuery(document).ready(function() {
     });
 
 
-    // This should be set in the form via initial
-    //var initial_profile = django.jQuery(profile_selector).val();
-
     django.jQuery('.profile-widget-wrapper select').change(function() {
-        if (this.value == '') {
-            django.jQuery('.profile-widget-wrapper .profile-desc').hide();
-            return;  // do nothing if we don't select a profile
-        }
-
         var profile = ca_profiles[this.value];
-        var subject = profile.subject;
-
-        // update subject input field
-        django.jQuery.each({
-            "C": django.jQuery('.field-subject #country input'),
-            "ST": django.jQuery('.field-subject #state input'),
-            "L": django.jQuery('.field-subject #location input'),
-            "O": django.jQuery('.field-subject #organization input'),
-            "OU": django.jQuery('.field-subject #organizational-unit input'),
-            "CN": django.jQuery('.field-subject #commonname input'),
-            "emailAddress": django.jQuery('.field-subject #e-mail input'),
-        }, function(key, input) {
-            django.jQuery.each(subject, function(index, value) {
-                if (value[0] === key) {
-                    input.val(value[1]);
-                }
-            });
-        });
 
         // set whether to include the CommonName in the subjectAltName
         cn_in_san = '.field-subject_alternative_name .labeled-checkbox input';
@@ -49,10 +59,5 @@ django.jQuery(document).ready(function() {
         }
 
         update_extensions(profile.extensions);
-
-        // update description
-        console.log('description', profile.description)
-        django.jQuery('.profile-widget-wrapper .profile-desc').show();
-        django.jQuery('.profile-widget-wrapper .profile-desc').text(profile.description);
     });
 });

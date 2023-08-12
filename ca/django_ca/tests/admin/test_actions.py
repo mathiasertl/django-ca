@@ -13,6 +13,7 @@
 
 """Test cases to test various admin actions."""
 
+import json
 import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
@@ -20,7 +21,7 @@ from http import HTTPStatus
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from unittest import mock
 
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -426,15 +427,13 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         return {
             "ca": self.cert.ca.pk,
             "profile": "webserver",
-            "subject_5": self.cert.cn,
+            "subject_0": json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
             "subject_alternative_name_1": True,
             "algorithm": "SHA-256",
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
             "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],
             "key_usage_1": True,
-            "extended_key_usage_0": [
-                "serverAuth",
-            ],
+            "extended_key_usage_0": ["serverAuth"],
             "extended_key_usage_1": False,
             "tls_feature_0": [],
             "tls_feature_1": False,

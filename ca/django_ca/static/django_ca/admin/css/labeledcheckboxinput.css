@@ -17,6 +17,10 @@ span.labeled-checkbox {
     display: block;
 }
 
+span.labeled-checkbox input {
+    display: inline;
+}
+
 span.labeled-checkbox label {
     display: inline;
     float: none;

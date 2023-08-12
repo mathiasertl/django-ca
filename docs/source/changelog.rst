@@ -17,6 +17,8 @@ ChangeLog
 * Add support for configuring how long automatically generated OCSP responder certificates are valid.
 * Add support for configuring how long OCSP responses of the automatically configured OCSP responder will be
   valid (fixes `issue 102 <https://github.com/mathiasertl/django-ca/issues/102>`_).
+* The web interface now allows creating certificates with arbitrary or even empty subjects (fixes `issue 77
+  <https://github.com/mathiasertl/django-ca/issues/77>`_).
 
 Backwards incompatible changes
 ==============================

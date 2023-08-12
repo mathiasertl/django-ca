@@ -75,17 +75,6 @@ MULTIPLE_OIDS = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, Nam
 NAME_CASE_MAPPINGS = {k.upper(): v for k, v in constants.NAME_OID_TYPES.items()}
 
 
-ADMIN_SUBJECT_OIDS = (
-    NameOID.COUNTRY_NAME,
-    NameOID.STATE_OR_PROVINCE_NAME,
-    NameOID.LOCALITY_NAME,
-    NameOID.ORGANIZATION_NAME,
-    NameOID.ORGANIZATIONAL_UNIT_NAME,
-    NameOID.COMMON_NAME,
-    NameOID.EMAIL_ADDRESS,
-)
-
-
 def sort_name(name: x509.Name) -> x509.Name:
     """Returns the subject in the correct order for a x509 subject."""
     try:
@@ -170,19 +159,19 @@ def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> Se
     Examples::
 
         >>> serialize_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
-        [('CN', 'example.com')]
+        [{'oid': '2.5.4.3', 'value': 'example.com'}]
         >>> serialize_name(x509.RelativeDistinguishedName([
         ...     x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT'),
         ...     x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
         ... ]))
-        [('C', 'AT'), ('CN', 'example.com')]
+        [{'oid': '2.5.4.6', 'value': 'AT'}, {'oid': '2.5.4.3', 'value': 'example.com'}]
     """
     items: SerializedName = []
     for attr in name:
         value = attr.value
         if isinstance(value, bytes):
             value = bytes_to_hex(value)
-        items.append((constants.NAME_OID_NAMES[attr.oid], value))
+        items.append({"oid": attr.oid.dotted_string, "value": value})
     return items
 
 
@@ -1033,7 +1022,7 @@ def parse_key_curve(value: str) -> ec.EllipticCurve:
     ----------
 
     value : str
-        The name of the curve (case insensitive).
+        The name of the curve (case-insensitive).
 
     Returns
     -------

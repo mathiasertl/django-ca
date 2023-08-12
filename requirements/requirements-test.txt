@@ -7,4 +7,3 @@ oscrypto==1.3.0
 pyOpenSSL>=19
 pyrfc3339==1.1
 requests-mock==1.11.0
-selenium==4.10.0

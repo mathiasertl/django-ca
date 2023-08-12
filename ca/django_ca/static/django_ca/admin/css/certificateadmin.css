@@ -19,21 +19,3 @@ div.field-csr textarea {
     min-width: 540px;
     font-family: monospace;
 }
-div.field-keyUsage select {
-    min-width: 300px;
-}
-div.field-extendedKeyUsage select {
-    min-width: 375px;
-}
-
-#id_subjectAltName {
-    min-width: 540px;
-}
-
-/* style from-csr */
-.field-subject .from-csr {
-    color: #999;
-    font-size: 11px;
-    padding-left: 5px;
-    display: none;
-}

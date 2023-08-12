@@ -1,0 +1,28 @@
+/* h3 and list have special styling, basically reset them here for a more natural look. */
+.key-value-field .subject-input-chapter h3 {
+    padding-left: 0;
+}
+.key-value-field .subject-input-chapter ul {
+    margin-left: 1.5em;
+}
+.key-value-field .subject-input-chapter li {
+    list-style: inherit;
+}
+
+/* Style the copy texts like links */
+.key-value-field .subject-input-chapter span.inline-text-button {
+     cursor: pointer;
+     color: blue;
+     text-decoration: underline;
+}
+
+/* CSR-specific styles */
+.key-value-field .subject-input-chapter.csr .has-content,
+.key-value-field .subject-input-chapter.csr .no-content {
+    display: none;
+}
+
+/* On resign, hide the CSR value (because we prefill the subject anyway) */
+body.django-ca-action-resign .key-value-field .subject-input-chapter.csr {
+    display: none;
+}

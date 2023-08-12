@@ -162,7 +162,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             prof.serialize(),
             {
                 "cn_in_san": True,
-                "subject": [("CN", self.hostname)],
+                "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}],
                 "description": desc,
                 "extensions": {
                     EXTENSION_KEYS[ExtensionOID.BASIC_CONSTRAINTS]: {

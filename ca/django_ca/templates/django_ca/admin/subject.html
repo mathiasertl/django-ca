@@ -1,0 +1,60 @@
+{% extends "django_ca/admin/key_value.html" %}
+{% load i18n %}
+
+{% block templates %}
+<template class="subject-input-element-template">
+    <li class="subject-input-element">
+        {% translate "<span class='oid'></span>: <span class='value'></span>" %}
+    </li>
+</template>
+{% endblock %}
+
+{% block after-add-row-button %}
+<div class="subject-input-chapter profile" data-value="[]">
+    <h3>{% translate "Subject defined by profile" %}</h3>
+    <div class="has-content">
+        <p>{% translate "The profile defines this subject fragment:" %}</p>
+        <ul>
+        </ul>
+        <p>
+            {% blocktranslate trimmed %}
+            <span class="copy-button inline-text-button">Copy the profile subject</span>, discarding any other
+            fields.
+            {% endblocktranslate %}
+        </p>
+    </div>
+    <div class="no-content">
+        <p>{% translate "The profile defines no subject." %}</p>
+        <p>
+            {% blocktranslate trimmed %}
+            <span class="clear-button inline-text-button">Clear the subject</span> to match.
+            {% endblocktranslate %}
+        </p>
+    </div>
+</div>
+<div class="subject-input-chapter csr" data-value="[]">
+    <h3>{% translate "Subject from CSR" %}</h3>
+    <div class="no-csr">
+        <p>{% translate "Paste a valid CSR above to show values." %}</p>
+    </div>
+    <div class="has-content">
+        <p>{% translate "The CSR defines this subject fragment:" %}</p>
+        <ul>
+        </ul>
+        <p>
+            {% blocktranslate trimmed %}
+            <span class="copy-button inline-text-button">Copy the CSR subject</span>, discarding any other
+            fields.
+            {% endblocktranslate %}
+        </p>
+    </div>
+    <div class="no-content">
+        <p>{% translate "The CSR defines no subject." %}</p>
+        <p>
+            {% blocktranslate trimmed %}
+            <span class="clear-button inline-text-button">Clear the subject</span> to match.
+            {% endblocktranslate %}
+        </p>
+    </div>
+</div>
+{% endblock %}

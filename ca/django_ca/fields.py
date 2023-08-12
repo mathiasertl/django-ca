@@ -15,16 +15,16 @@
 
 import abc
 import typing
-from typing import Any, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type, Union
 
 from cryptography import x509
-from cryptography.x509.oid import AuthorityInformationAccessOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings, widgets
+from django_ca import ca_settings, constants, utils, widgets
 from django_ca.constants import (
     EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES,
     EXTENDED_KEY_USAGE_NAMES,
@@ -33,7 +33,8 @@ from django_ca.constants import (
 )
 from django_ca.extensions import get_extension_name
 from django_ca.typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
-from django_ca.utils import ADMIN_SUBJECT_OIDS, parse_general_name
+from django_ca.utils import parse_general_name
+from django_ca.widgets import KeyValueWidget, SubjectWidget
 
 if typing.TYPE_CHECKING:
     from django_ca.modelfields import LazyCertificateSigningRequest
@@ -59,9 +60,8 @@ class CertificateSigningRequestField(forms.CharField):
         if not kwargs.get("help_text"):  # pragma: no branch
             kwargs["help_text"] = _(
                 """The Certificate Signing Request (CSR) in PEM format. To create a new one:
-<span class="shell">openssl genrsa -out hostname.key 4096
-openssl req -new -key hostname.key -out hostname.csr -utf8 -batch \\
-                     -subj '/CN=hostname/emailAddress=root@hostname'
+<span class="shell">openssl genrsa -out priv.pem 4096
+openssl req -new -key priv.pem -out csr.pem -utf8 -batch -subj '/CN=example.com'
 </span>"""
             )
         if not kwargs.get("widget"):  # pragma: no branch # we never pass a custom widget
@@ -117,24 +117,71 @@ class ObjectIdentifierField(forms.CharField):
             ) from ex
 
 
-class SubjectField(forms.MultiValueField):
-    """A MultiValue field for a :py:class:`~django_ca.subject.Subject`."""
+class KeyValueField(forms.MultiValueField):
+    """Dynamic Key/Value field."""
 
-    required_oids = (NameOID.COMMON_NAME,)
+    widget_class = KeyValueWidget
 
-    def __init__(self, **kwargs: Any) -> None:
-        fields = tuple(forms.CharField(required=v in self.required_oids) for v in ADMIN_SUBJECT_OIDS)
+    def __init__(self, key_choices: Sequence[Tuple[str, str]], **kwargs: Any) -> None:
+        fields = [
+            forms.JSONField(required=True),
+            # These two just serve as template for key/value rows
+            forms.ChoiceField(choices=key_choices, required=False),
+            forms.CharField(required=False),
+        ]
 
-        # NOTE: do not pass initial here as this is done on webserver invocation
-        #       This screws up tests.
-        kwargs.setdefault("widget", widgets.SubjectWidget)
-        super().__init__(fields=fields, require_all_fields=False, **kwargs)
+        kwargs["require_all_fields"] = False  # ... or we'd require values in the template
 
-    def compress(self, data_list: List[str]) -> x509.Name:
-        # list comprehension is to filter empty fields
-        return x509.Name(
-            [x509.NameAttribute(oid, value) for oid, value in zip(ADMIN_SUBJECT_OIDS, data_list) if value]
-        )
+        super().__init__(fields, **kwargs)
+        self.widget = self.widget_class(key_choices=key_choices, attrs={"class": "key-value-input"})
+
+    def compress(
+        self, data_list: Tuple[List[Dict[str, str]], str, str]
+    ) -> Optional[List[Dict[str, str]]]:  # pragma: no cover  # This class is never used directly so far
+        if not data_list or not data_list[0]:
+            return None
+        return data_list[0]
+
+
+class SubjectField(KeyValueField):
+    """Specialized version of KeyValue field for a certificate subject."""
+
+    widget_class = SubjectWidget
+
+    def compress(  # type: ignore[override]
+        self, data_list: Tuple[List[Dict[str, str]], str, str]
+    ) -> x509.Name:
+        # Empty list happens when you press submit on a completely empty form
+        if not data_list or not data_list[0]:
+            return x509.Name([])
+
+        values = data_list[0]
+        errors = []
+        attributes: List[x509.NameAttribute] = []
+        found_oids: Set[x509.ObjectIdentifier] = set()
+        for oid_dict in values:
+            try:
+                oid = x509.ObjectIdentifier(oid_dict["key"])
+
+                # Check for duplicate OIDs that should not occur more than once
+                if oid in found_oids and oid not in utils.MULTIPLE_OIDS:
+                    oid_name = constants.NAME_OID_NAMES[oid]
+                    errors.append(_("%(oid)s: OID cannot occur more then once.") % {"oid": oid_name})
+                else:
+                    found_oids.add(oid)
+
+                attr = x509.NameAttribute(oid=oid, value=oid_dict["value"])
+            except Exception as ex:  # pylint: disable=broad-exception-caught  # docs don't specify class
+                # Creating the NameAttribute failed (e.g. a country code that does *not* have two characters)
+                errors.append(str(ex))
+            else:
+                attributes.append(attr)
+
+        if errors:
+            raise forms.ValidationError(errors)
+
+        name = x509.Name(attributes)
+        return name
 
 
 class GeneralNamesField(forms.CharField):
@@ -186,7 +233,7 @@ class RelativeDistinguishedNameField(forms.CharField):
 class ReasonsField(forms.MultipleChoiceField):
     """MultipleChoice field for :py:class:`~cg:cryptography.x509.ReasonFlags`.
 
-    .. NOTE::
+    .. note::
 
        This field does NOT convert to x509.ReasonFlags itself but uses string values instead. The choice
        field always returns invalid choice errors otherwise.

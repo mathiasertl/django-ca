@@ -62,6 +62,8 @@ class Command(DevCommand):
     def handle(self, args: argparse.Namespace) -> None:
         if not args.selenium:
             os.environ["SKIP_SELENIUM_TESTS"] = "y"
+        if not args.virtual_display:
+            os.environ["VIRTUAL_DISPLAY"] = "n"
 
         self.setup_django()
 
@@ -73,9 +75,6 @@ class Command(DevCommand):
         sys.path.insert(0, str(config.DOCS_DIR / "source"))
 
         # pylint: enable=import-outside-toplevel
-
-        if not args.virtual_display:
-            os.environ["VIRTUAL_DISPLAY"] = "n"
 
         # Set up warnings
         warnings.filterwarnings(action="always")  # print all warnings

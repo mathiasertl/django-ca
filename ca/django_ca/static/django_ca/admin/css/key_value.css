@@ -1,0 +1,43 @@
+.key-value-field .key-value-template {
+    display: none;
+}
+
+.key-value-field .draggable-handle {
+    margin-right: 0.5em;
+    cursor: grab;
+}
+
+.key-value-field .draggable-handle.dragging {
+    cursor: grabbing;
+}
+
+.key-value-field .key-value-row {
+    margin: 0;
+}
+
+.key-value-field button {
+    height: 1.7rem;
+    line-height: 0.9375rem;
+    padding: 5px 8px;
+}
+
+.key-value-field .key-value-row.drop-target {
+    border-bottom: 2px dashed #333; /* You can adjust the style and color */
+    padding-bottom: 1em;
+    margin-bottom: 1em;
+}
+
+.key-value-field .key-value-row select,
+.key-value-field .key-value-row input,
+.key-value-field .key-value-row button {
+    margin: 0 0 0.5em 0;
+    height: 1.875rem;
+    box-sizing: border-box;
+}
+
+.key-value-field .key-value-row.drop-target select,
+.key-value-field .key-value-row.drop-target input,
+.key-value-field .key-value-row.drop-target button
+{
+    margin-bottom: 0;
+}

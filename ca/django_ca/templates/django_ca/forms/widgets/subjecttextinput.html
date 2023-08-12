@@ -1,9 +1,0 @@
-{% extends "django_ca/forms/widgets/labeledtextinput.html" %}
-{% load i18n %}
-{% block labeledtextinput-after %}
-<span id="from-csr-{{ widget.cssid }}" class="from-csr">
-  {% trans "from CSR:" %}
-  <span class="from-csr-value"></span>
-  <a href="" class="from-csr-copy">{% trans "(Copy)" %}</a>
-</span>
-{% endblock %}

@@ -1,0 +1,6 @@
+.profile-desc {
+    /* Overwrite margins set by the base CSS. */
+    padding-top: 4px !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}

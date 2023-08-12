@@ -14,14 +14,17 @@
 """Test cases for adding certificates via the admin interface."""
 
 import html
+import json
 import typing
 import unittest
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.conf import settings
 from django.test import TestCase
@@ -34,17 +37,17 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
-from django_ca import ca_settings, constants
+from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.extensions import serialize_extension
 from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
-from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
+from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.typehints import SerializedExtension
-from django_ca.utils import MULTIPLE_OIDS, ca_storage, x509_name
+from django_ca.utils import ca_storage, x509_name
 
 if typing.TYPE_CHECKING:
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
@@ -66,8 +69,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-
         self.default_expires = (datetime.now(tz=tz.utc) + self.expires(3)).strftime("%Y-%m-%d")
+        self.default_subject = json.dumps(
+            [
+                {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+            ]
+        )
 
     def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
         """Add certificate based on given name with given CA."""
@@ -80,8 +88,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": algorithm,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -235,50 +247,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.add_cert("test-ed448-add.example.com", self.cas["ed448"], algorithm="")
 
     @override_tmpcadir()
-    def test_required_subject(self) -> None:
-        """Test that we have to enter a complete subject value."""
-        ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
-        cert_count = Certificate.objects.all().count()
-
-        with self.assertCreateCertSignals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": ca.pk,
-                    "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_alternative_name_1": True,
-                    "algorithm": "SHA-256",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
-                    "key_usage_0": [
-                        "digital_signature",
-                        "key_agreement",
-                    ],
-                    "key_usage_1": True,
-                    "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
-                    ],
-                    "extended_key_usage_1": False,
-                    "tls_feature_0": ["status_request", "status_request_v2"],
-                    "tls_feature_1": False,
-                },
-            )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(response.context["adminform"].form.errors, {"subject": ["Enter a complete value."]})
-        self.assertEqual(cert_count, Certificate.objects.all().count())
-
-    @override_tmpcadir()
     def test_empty_subject(self) -> None:
-        """Test passing an empty subject."""
+        """Test passing an empty subject with a subject alternative name."""
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
-        cert_count = Certificate.objects.all().count()
 
-        with self.assertCreateCertSignals(False, False):
+        with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -286,12 +260,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject_0": "",
-                    "subject_1": "",
-                    "subject_2": "",
-                    "subject_3": "",
-                    "subject_4": "",
-                    "subject_5": "",
-                    "subject_6": "",
+                    "subject_alternative_name_0": self.hostname,
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -309,14 +278,72 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "tls_feature_1": False,
                 },
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(response.context["adminform"].form.errors, {"subject": ["This field is required."]})
-        self.assertEqual(cert_count, Certificate.objects.all().count())
+        self.assertRedirects(response, self.changelist_url)
+
+        cert: Certificate = Certificate.objects.get(cn="")
+        self.assertPostIssueCert(post, cert)
+        self.assertEqual(cert.subject, x509.Name([]))
+        self.assertEqual(
+            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(dns(self.hostname)),
+        )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_add_no_common_name(self) -> None:
-        """Test posting no common name but some other name components."""
+    def test_subject_with_multiple_org_units(self) -> None:
+        """Test creating a certificate with multiple Org Units (which is allowed)."""
+
+        ca = self.cas["root"]
+        csr = certs["root-cert"]["csr"]["pem"]
+
+        with self.assertCreateCertSignals() as (pre, post):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": csr,
+                    "ca": ca.pk,
+                    "profile": "webserver",
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-1"},
+                            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-2"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                        ]
+                    ),
+                    "subject_alternative_name_1": True,
+                    "algorithm": "SHA-256",
+                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "key_usage_0": [],
+                    "key_usage_1": True,
+                    "extended_key_usage_0": [],
+                    "extended_key_usage_1": False,
+                    "tls_feature_0": [],
+                    "tls_feature_1": False,
+                },
+            )
+        self.assertRedirects(response, self.changelist_url)
+
+        cert: Certificate = Certificate.objects.get(cn=self.hostname)
+        self.assertPostIssueCert(post, cert)
+        self.assertEqual(
+            cert.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                    x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-1"),
+                    x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-2"),
+                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
+                ]
+            ),
+        )
+        self.assertEqual(
+            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.subject_alternative_name(dns(self.hostname)),
+        )
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    def test_add_no_common_name_and_no_subject_alternative_name(self) -> None:
+        """Test posting a subject with no common name and no subject alternative name."""
 
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -329,13 +356,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "AT",
-                    "subject_1": "",
-                    "subject_2": "",
-                    "subject_3": "",
-                    "subject_4": "",
-                    "subject_5": "",
-                    "subject_6": "",
+                    "subject_0": json.dumps([{"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"}]),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -355,8 +376,91 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(response.context["adminform"].form.errors, {"subject": ["Enter a complete value."]})
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {
+                "subject_alternative_name": [
+                    "Subject Alternative Name is required if the subject does not contain a Common Name."
+                ]
+            },
+        )
         self.assertEqual(cert_count, Certificate.objects.all().count())
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    def test_subject_with_multiple_country_codes(self) -> None:
+        """Test creating a certificate with multiple country codes (which is not allowed)."""
+
+        ca = self.cas["root"]
+        csr = certs["root-cert"]["csr"]["pem"]
+
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": csr,
+                    "ca": ca.pk,
+                    "profile": "webserver",
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                        ]
+                    ),
+                    "subject_alternative_name_1": True,
+                    "algorithm": "SHA-256",
+                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "key_usage_0": [],
+                    "key_usage_1": True,
+                    "extended_key_usage_0": [],
+                    "extended_key_usage_1": False,
+                    "tls_feature_0": [],
+                    "tls_feature_1": False,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertFalse(response.context["adminform"].form.is_valid())
+        self.assertEqual(
+            response.context["adminform"].form.errors, {"subject": ["C: OID cannot occur more then once."]}
+        )
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    def test_subject_with_invalid_country_code(self) -> None:
+        """Test creating a certificate with an invalid country code."""
+
+        ca = self.cas["root"]
+        csr = certs["root-cert"]["csr"]["pem"]
+
+        with self.assertCreateCertSignals(False, False):
+            response = self.client.post(
+                self.add_url,
+                data={
+                    "csr": csr,
+                    "ca": ca.pk,
+                    "profile": "webserver",
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "FOO"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                        ]
+                    ),
+                    "subject_alternative_name_1": True,
+                    "algorithm": "SHA-256",
+                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "key_usage_0": [],
+                    "key_usage_1": True,
+                    "extended_key_usage_0": [],
+                    "extended_key_usage_1": False,
+                    "tls_feature_0": [],
+                    "tls_feature_1": False,
+                },
+            )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertFalse(response.context["adminform"].form.is_valid())
+        self.assertEqual(
+            response.context["adminform"].form.errors,
+            {"subject": ["Country name must be a 2 character country code"]},
+        )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add_no_key_usage(self) -> None:
@@ -373,8 +477,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_0": san,
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
@@ -424,8 +532,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -455,8 +567,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -487,8 +603,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -559,8 +679,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": "whatever",
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -603,8 +727,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": "-----BEGIN CERTIFICATE REQUEST-----\nwrong-----END CERTIFICATE REQUEST-----",
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -646,8 +774,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": expires.strftime("%Y-%m-%d"),
@@ -690,8 +822,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": expires.strftime("%Y-%m-%d"),
@@ -734,8 +870,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "US",
-                    "subject_5": cname,
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,  # cn_in_san
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -773,7 +913,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": certs["ed448-cert"]["csr"]["pem"],
                     "ca": self.cas["ed448"].pk,
                     "profile": "webserver",
-                    "subject_5": self.hostname,
+                    "subject_0": json.dumps(
+                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                    ),
                     "algorithm": "SHA-256",  # this is what we test
                     "expires": self.default_expires,
                 },
@@ -792,7 +934,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": certs["ed25519-cert"]["csr"]["pem"],
                     "ca": self.cas["ed25519"].pk,
                     "profile": "webserver",
-                    "subject_5": self.hostname,
+                    "subject_0": json.dumps(
+                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                    ),
                     "algorithm": "SHA-256",  # this is what we test
                     "expires": self.default_expires,
                 },
@@ -811,7 +955,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": certs["dsa-cert"]["csr"]["pem"],
                     "ca": self.cas["dsa"].pk,
                     "profile": "webserver",
-                    "subject_5": self.hostname,
+                    "subject_0": json.dumps(
+                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                    ),
                     "algorithm": "SHA-512",  # this is what we test
                     "expires": self.default_expires,
                 },
@@ -830,7 +976,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": certs["root-cert"]["csr"]["pem"],
                     "ca": self.cas["root"].pk,
                     "profile": "webserver",
-                    "subject_5": self.hostname,
+                    "subject_0": json.dumps(
+                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                    ),
                     "algorithm": "",  # this is what we test
                     "expires": self.default_expires,
                 },
@@ -842,8 +990,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_add_invalid_oid(self) -> None:
-        """Test posting no common name but some other name components."""
+    def test_certificate_policies_with_invalid_oid(self) -> None:
+        """Test posting a certificate policies extension with an invalid OID."""
 
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
@@ -856,13 +1004,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject_0": "AT",
-                    "subject_1": "",
-                    "subject_2": "",
-                    "subject_3": "",
-                    "subject_4": "",
-                    "subject_5": self.hostname,
-                    "subject_6": "",
+                    "subject_0": json.dumps(
+                        [
+                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                        ]
+                    ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -952,7 +1099,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
 
 @unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")
-class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumTestCase):
+class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumTestCase):
     """Some Selenium based test cases to test the client side javascript code."""
 
     load_cas = "__usable__"
@@ -965,7 +1112,7 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             return serialize_extension(profile.extensions[oid])  # type: ignore[arg-type]
         return {"value": default, "critical": EXTENSION_DEFAULT_CRITICAL[oid]}
 
-    def assertProfile(  # pylint: disable=invalid-name,too-many-locals
+    def assertProfile(  # pylint: disable=invalid-name
         self,
         profile_name: str,
         ku_select: Select,
@@ -974,7 +1121,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         eku_critical: WebElement,
         tf_select: Select,
         tf_critical: WebElement,
-        subject: Dict[str, WebElement],
         cn_in_san: WebElement,
     ) -> None:
         """Assert that the admin form equals the given profile."""
@@ -998,24 +1144,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
 
         self.assertEqual(profile.cn_in_san, cn_in_san.is_selected())
 
-        for key, field in subject.items():
-            oid = constants.NAME_OID_TYPES[key]
-            value = field.get_attribute("value")
-
-            if profile.subject is None or profile.subject is False:
-                attrs: List[Union[str, bytes]] = [""]
-            else:
-                attrs = [attr.value for attr in profile.subject.get_attributes_for_oid(oid)]
-
-            # OIDs that can occur multiple times are stored as list in subject, so we wrap it
-            if not attrs:
-                attrs = [""]
-
-            if constants.NAME_OID_TYPES[key] in MULTIPLE_OIDS:
-                self.assertEqual([value], attrs)
-            else:
-                self.assertEqual(value, attrs[0])
-
     def clear_form(
         self,
         ku_select: Select,
@@ -1024,7 +1152,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         eku_critical: WebElement,
         tf_select: Select,
         tf_critical: WebElement,
-        subject: Dict[str, WebElement],
         cn_in_san: WebElement,
     ) -> None:
         """Clear the form."""
@@ -1045,40 +1172,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             tf_critical.click()
         if cn_in_san.is_selected():
             cn_in_san.click()
-        for field in subject.values():
-            field.clear()
-
-    @override_tmpcadir()
-    def test_paste_csr_test(self) -> None:
-        """Test that pasting a CSR shows text next to subject input fields."""
-        self.login()
-
-        self.selenium.get(f"{self.live_server_url}{self.add_url}")
-
-        cert = certs["all-extensions"]
-        csr = self.find("textarea#id_csr")
-        csr.send_keys(cert["csr"]["pem"])
-
-        subject_fields = {
-            "C": self.find(".field-subject #country"),
-            "ST": self.find(".field-subject #state"),
-            "L": self.find(".field-subject #location"),
-            "O": self.find(".field-subject #organization"),
-            "OU": self.find(".field-subject #organizational-unit"),
-            "CN": self.find(".field-subject #commonname"),
-            "emailAddress": self.find(".field-subject #e-mail"),
-        }
-
-        for key, elem in subject_fields.items():
-            input_elem = elem.find_element(By.CSS_SELECTOR, "input")
-            csr_copy = elem.find_element(By.CSS_SELECTOR, ".from-csr-copy")
-            from_csr = elem.find_element(By.CSS_SELECTOR, ".from-csr-value")
-            self.assertEqual(from_csr.text, cert["csr_subject"][key])
-
-            # click the 'copy' button
-            csr_copy.click()
-
-            self.assertEqual(from_csr.text, input_elem.get_attribute("value"))
 
     @override_tmpcadir()
     def test_select_profile(self) -> None:
@@ -1095,15 +1188,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
         tf_select = Select(self.find("select#id_tls_feature_0"))
         tf_critical = self.find("input#id_tls_feature_1")
 
-        subject_fields = {
-            "C": self.find(".field-subject #country input"),
-            "ST": self.find(".field-subject #state input"),
-            "L": self.find(".field-subject #location input"),
-            "O": self.find(".field-subject #organization input"),
-            "OU": self.find(".field-subject #organizational-unit input"),
-            "CN": self.find(".field-subject #commonname input"),
-            "emailAddress": self.find(".field-subject #e-mail input"),
-        }
         cn_in_san = self.find("input#id_subject_alternative_name_1")
 
         # test that the default profile is preselected
@@ -1120,7 +1204,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             eku_critical,
             tf_select,
             tf_critical,
-            subject_fields,
             cn_in_san,
         )
 
@@ -1133,7 +1216,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
                 eku_critical,
                 tf_select,
                 tf_critical,
-                subject_fields,
                 cn_in_san,
             )
 
@@ -1150,7 +1232,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
                 eku_critical,
                 tf_select,
                 tf_critical,
-                subject_fields,
                 cn_in_san,
             )
 
@@ -1172,10 +1253,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
             if not cn_in_san.is_selected():
                 cn_in_san.click()
 
-            for field in subject_fields.values():
-                field.clear()
-                field.send_keys("testdata")
-
             # select empty element in profile select, then select profile again
             select.select_by_value(ca_settings.CA_DEFAULT_PROFILE)
             self.clear_form(
@@ -1185,7 +1262,6 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
                 eku_critical,
                 tf_select,
                 tf_critical,
-                subject_fields,
                 cn_in_san,
             )
             option.click()
@@ -1199,9 +1275,299 @@ class AddCertificateSeleniumTestCase(CertificateModelAdminTestCaseMixin, Seleniu
                 eku_critical,
                 tf_select,
                 tf_critical,
-                subject_fields,
                 cn_in_san,
             )
+
+
+@unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")
+class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
+    """Test the Subject input field."""
+
+    @override_tmpcadir(CA_PROFILES={"webserver": {"subject": [["C", "AT"], ["ST", "Vienna"]]}})
+    def test_subject_field(self) -> None:
+        """Test core functionality of the subject field."""
+        self.initialize()
+
+        # Expected initial subject based on the CA_PROFILES setting set in the decorator
+        expected_initial_subject = [
+            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+        ]
+
+        # Test the initial state
+        self.assertEqual(self.value, expected_initial_subject)
+        self.assertEqual(self.displayed_value, expected_initial_subject)
+
+        # Add a row and confirm that it's initially empty and the field is thus not yet modified
+        self.key_value_field.find_element(By.CLASS_NAME, "add-row-btn").click()
+        self.assertNotModified()
+        new_select = Select(self.key_value_list.find_elements(By.CSS_SELECTOR, "select")[-1])
+        new_input = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")[-1]
+        self.assertEqual(new_select.all_selected_options, [])
+        self.assertEqual(new_input.get_attribute("value"), "")
+
+        # Enter a value. This marks the field as modified, but the hidden input is *not* updated, as there is
+        # no key/OID selected yet
+        new_input.send_keys(self.hostname)
+        self.assertModified()
+        self.assertEqual(self.value, expected_initial_subject)
+
+        # Now select common name, and the subject is also updated
+        new_select.select_by_value(NameOID.COMMON_NAME.dotted_string)
+        new_subject = expected_initial_subject + [
+            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}
+        ]
+        self.assertEqual(self.value, new_subject)
+        self.assertEqual(self.displayed_value, new_subject)  # just to be sure
+
+        # Remove the second row, check the update
+        self.key_value_list.find_elements(By.CSS_SELECTOR, ".remove-row-btn")[1].click()
+        new_subject.pop(1)
+        self.assertEqual(len(new_subject), 2)
+        self.assertEqual(self.value, new_subject)
+        self.assertEqual(self.displayed_value, new_subject)
+
+    @override_tmpcadir()
+    def test_csr_integration(self) -> None:
+        """Test that pasting a CSR shows text next to subject input fields."""
+        self.initialize()
+
+        initial_subject = [
+            {"key": "2.5.4.6", "value": "AT"},
+            {"key": "2.5.4.8", "value": "Vienna"},
+            {"key": "2.5.4.7", "value": "Vienna"},
+            {"key": "2.5.4.10", "value": "Django CA"},
+            {"key": "2.5.4.11", "value": "Django CA Testsuite"},
+        ]
+        csr_subject = [
+            {"key": "2.5.4.6", "value": "AT"},
+            {"key": "2.5.4.8", "value": "csr.Vienna"},
+            {"key": "2.5.4.7", "value": "csr.Vienna"},
+            {"key": "2.5.4.10", "value": "csr.Example"},
+            {"key": "2.5.4.11", "value": "csr.Example OU"},
+            {"key": "2.5.4.3", "value": "csr.all-extensions.example.com"},
+            {"key": "1.2.840.113549.1.9.1", "value": "csr.user@example.com"},
+        ]
+
+        # Elements of the CSR chapter
+        csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
+        no_csr = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr .no-csr")
+        has_content = self.key_value_field.find_element(
+            By.CSS_SELECTOR, ".subject-input-chapter.csr .has-content"
+        )
+        no_content = self.key_value_field.find_element(
+            By.CSS_SELECTOR, ".subject-input-chapter.csr .no-content"
+        )
+
+        # Check that the right parts of the CSR chapter is displayed
+        self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
+        self.assertIs(has_content.is_displayed(), False)
+        self.assertIs(no_content.is_displayed(), False)
+
+        cert = certs["all-extensions"]
+        csr = self.find("textarea#id_csr")
+        csr.send_keys(cert["csr"]["pem"])
+
+        # Make sure that the displayed subject has not changed
+        self.assertNotModified()
+        self.assertEqual(self.value, initial_subject)
+
+        # check the JSON value from the chapter
+        self.assertEqual(
+            json.loads(csr_chapter.get_attribute("data-value")), csr_subject  # type: ignore[arg-type]
+        )
+
+        # check that the right chapter is displayed
+        self.assertIs(no_csr.is_displayed(), False)
+        self.assertIs(has_content.is_displayed(), True)
+        self.assertIs(no_content.is_displayed(), False)
+
+        # Check the li element inside
+        lis = has_content.find_elements(By.TAG_NAME, "li")
+        self.assertEqual(len(lis), len(csr_subject))
+        self.assertEqual(lis[0].text, "C: AT")  # just testing the first one, the rest are hopefully fine
+
+        # Click the copy button and validate that the subject is set
+        csr_chapter.find_element(By.CSS_SELECTOR, ".copy-button").click()
+        self.assertModified()
+        self.assertEqual(self.value, csr_subject)
+        self.assertEqual(self.displayed_value, csr_subject)
+
+    @override_tmpcadir()
+    def test_paste_csr_no_subject(self) -> None:
+        """Test that pasting a CSR shows text next to subject input fields."""
+        self.initialize()
+
+        # Create a CSR with no subject
+        key = certs["all-extensions"]["key"]["parsed"]
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(key, hashes.SHA256())
+        csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
+
+        # Elements of the CSR chapter
+        csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
+        no_csr = csr_chapter.find_element(By.CSS_SELECTOR, ".no-csr")
+        has_content = csr_chapter.find_element(By.CSS_SELECTOR, ".has-content")
+        no_content = csr_chapter.find_element(By.CSS_SELECTOR, ".no-content")
+
+        # send all but the first character to the CSR input field
+        self.find("textarea#id_csr").send_keys(csr_pem)
+
+        # Check that the right parts of the CSR chapter is displayed
+        self.assertIs(no_csr.is_displayed(), False)
+        self.assertIs(has_content.is_displayed(), False)
+        self.assertIs(no_content.is_displayed(), True)
+        self.assertNotModified()
+
+        # Click the clear button and validate that the subject is cleared
+        csr_chapter.find_element(By.CSS_SELECTOR, ".clear-button").click()
+        self.assertModified()
+        self.assertEqual(self.value, [])
+        self.assertEqual(self.displayed_value, [])
+
+    @override_tmpcadir()
+    def test_paste_csr_missing_delimiters(self) -> None:
+        """Test that pasting a CSR shows text next to subject input fields."""
+        self.initialize()
+
+        cert = certs["all-extensions"]
+        csr = self.find("textarea#id_csr")
+
+        # Elements of the CSR chapter
+        chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
+        no_csr = chapter.find_element(By.CSS_SELECTOR, ".no-csr")
+        has_content = chapter.find_element(By.CSS_SELECTOR, ".has-content")
+        no_content = chapter.find_element(By.CSS_SELECTOR, ".no-content")
+
+        # send all but the first character to the CSR input field
+        csr.send_keys(cert["csr"]["pem"][1:])
+
+        # Check that the right parts of the CSR chapter is displayed
+        self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
+        self.assertIs(has_content.is_displayed(), False)
+        self.assertIs(no_content.is_displayed(), False)
+        self.assertNotModified()
+
+    @override_tmpcadir()
+    def test_paste_invalid_csr(self) -> None:
+        """Test that pasting a CSR shows text next to subject input fields."""
+        self.initialize()
+
+        csr = self.find("textarea#id_csr")
+
+        # Elements of the CSR chapter
+        chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
+        no_csr = chapter.find_element(By.CSS_SELECTOR, ".no-csr")
+        has_content = chapter.find_element(By.CSS_SELECTOR, ".has-content")
+        no_content = chapter.find_element(By.CSS_SELECTOR, ".no-content")
+
+        # send all but the first character to the CSR input field
+        csr.send_keys("-----BEGIN CERTIFICATE REQUEST-----\nXXX\n-----END CERTIFICATE REQUEST-----")
+
+        # Check that the right parts of the CSR chapter is displayed
+        self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
+        self.assertIs(has_content.is_displayed(), False)
+        self.assertIs(no_content.is_displayed(), False)
+        self.assertNotModified()
+
+    @override_tmpcadir(
+        CA_DEFAULT_PROFILE="webserver",
+        CA_DEFAULT_SUBJECT=[],
+        CA_PROFILES={
+            "webserver": {"subject": [["C", "AT"], ["ST", "Vienna"], ["OU", "webserver"]]},
+            "client": {"subject": [["C", "AT"], ["ST", "Vienna"], ["OU", "client"]]},
+            "no-subject": {},
+        },
+    )
+    def test_profile_integation(self) -> None:
+        """Test core functionality of the subject field."""
+        self.initialize()
+
+        # Expected initial subject based on the CA_PROFILES setting set in the decorator
+        webserver_subject = [
+            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "webserver"},
+        ]
+        client_subject = [
+            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "client"},
+        ]
+
+        # Elements of the profile chapter
+        chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.profile")
+        has_content = chapter.find_element(By.CSS_SELECTOR, ".has-content")
+        no_content = chapter.find_element(By.CSS_SELECTOR, ".no-content")
+
+        # Test the initial state (webserver subject, since it's the default profile
+        self.assertNotModified()
+        self.assertChapterHasValue(chapter, webserver_subject)
+        self.assertEqual(self.value, webserver_subject)
+        self.assertEqual(self.displayed_value, webserver_subject)
+        self.assertIs(has_content.is_displayed(), True)
+        self.assertIs(no_content.is_displayed(), False)
+
+        profile_select = Select(self.selenium.find_element(By.ID, "id_profile"))
+
+        # Select the different profile. Since the field is not yet modified, new values are taken
+        profile_select.select_by_value("client")
+        self.assertNotModified()
+        self.assertChapterHasValue(chapter, client_subject)
+        self.assertEqual(self.value, client_subject)
+        self.assertEqual(self.displayed_value, client_subject)
+        self.assertIs(has_content.is_displayed(), True)
+        self.assertIs(no_content.is_displayed(), False)
+
+        # Change one field and check modification
+        st_input = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")[1]
+        st_input.clear()
+        st_input.send_keys("Styria")
+        new_subject = deepcopy(client_subject)
+        new_subject[1]["value"] = "Styria"
+        self.assertModified()
+        self.assertEqual(self.value, new_subject)
+        self.assertEqual(self.displayed_value, new_subject)
+
+        # Switch back to the old profile. Since you made changes, it's not automatically updated
+        profile_select.select_by_value("webserver")
+        self.assertModified()
+        self.assertChapterHasValue(chapter, webserver_subject)
+        self.assertEqual(self.value, new_subject)
+        self.assertEqual(self.displayed_value, new_subject)
+
+        # Copy the profile subject and check the state
+        chapter.find_element(By.CLASS_NAME, "copy-button").click()
+        self.assertNotModified()
+        self.assertChapterHasValue(chapter, webserver_subject)
+        self.assertEqual(self.value, webserver_subject)
+        self.assertEqual(self.displayed_value, webserver_subject)
+        self.assertIs(has_content.is_displayed(), True)
+        self.assertIs(no_content.is_displayed(), False)
+
+        # Modify subject again (so that we can check the modified flag of the clear button)
+        st_input = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")[1]
+        st_input.clear()
+        st_input.send_keys("Styria")
+        new_subject[2]["value"] = "webserver"
+        self.assertModified()
+        self.assertEqual(self.value, new_subject)
+        self.assertEqual(self.displayed_value, new_subject)
+
+        # Switch to the profile with no subject and check the state
+        profile_select.select_by_value("no-subject")
+        self.assertModified()
+        self.assertChapterHasValue(chapter, [])
+        self.assertEqual(self.value, new_subject)
+        self.assertEqual(self.displayed_value, new_subject)
+        self.assertIs(has_content.is_displayed(), False)
+        self.assertIs(no_content.is_displayed(), True)
+
+        # Click the clear button
+        chapter.find_element(By.CLASS_NAME, "clear-button").click()
+        self.assertNotModified()
+        self.assertChapterHasValue(chapter, [])
+        self.assertEqual(self.value, [])
+        self.assertEqual(self.displayed_value, [])
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -1231,7 +1597,9 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # Fill in the bare minimum fields
         form = response.forms["certificate_form"]
         form["csr"] = certs["child-cert"]["csr"]["pem"]
-        form["subject_5"] = "test-empty-form.example.com"
+        form["subject_0"] = json.dumps(
+            [{"key": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
+        )
         form["expires"] = (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m-%d")
 
         # Submit the form
@@ -1261,7 +1629,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
         form["csr"] = certs["child-cert"]["csr"]["pem"]
-        form["subject_5"] = self.hostname
+        form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 
@@ -1307,7 +1675,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
         form["csr"] = certs["child-cert"]["csr"]["pem"]
-        form["subject_5"] = cn
+        form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 
@@ -1409,7 +1777,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # profile field
         form["profile"] = "everything"
         form["csr"] = certs["child-cert"]["csr"]["pem"]
-        form["subject_5"] = cn
+        form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 
@@ -1524,7 +1892,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # profile field
         form["profile"] = "everything"
         form["csr"] = certs["child-cert"]["csr"]["pem"]
-        form["subject_5"] = cn
+        form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit()
         response = response.follow()
         self.assertEqual(response.status_code, 200)

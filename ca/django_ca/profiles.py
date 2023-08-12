@@ -17,7 +17,7 @@ import typing
 import warnings
 from datetime import datetime, timedelta
 from threading import local
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -179,7 +179,7 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    def create_cert(  # pylint: disable=too-many-arguments
+    def create_cert(
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -600,6 +600,10 @@ class Profiles:
 
         self._profiles.profiles[name] = get_profile(name)
         return typing.cast(Profile, self._profiles.profiles[name])
+
+    def __iter__(self) -> Iterator[Profile]:
+        for name in ca_settings.CA_PROFILES:
+            yield self[name]
 
     def _reset(self) -> None:
         self._profiles = local()

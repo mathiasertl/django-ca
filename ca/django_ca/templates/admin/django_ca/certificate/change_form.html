@@ -1,6 +1,8 @@
 {% extends "django_object_actions/change_form.html" %}
 {% load django_ca i18n admin_urls %}
 
+{% block bodyclass %}{{ block.super }}{% if django_ca_action %} django-ca-action-{{ django_ca_action }}{% endif %}{% endblock %}
+
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>

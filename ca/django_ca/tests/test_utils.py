@@ -753,7 +753,7 @@ class SerializeName(TestCase):
         """Test passing a standard Name."""
         self.assertEqual(
             serialize_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])),
-            [("CN", "example.com")],
+            [{"oid": "2.5.4.3", "value": "example.com"}],
         )
         self.assertEqual(
             serialize_name(
@@ -764,7 +764,7 @@ class SerializeName(TestCase):
                     ]
                 )
             ),
-            [("C", "AT"), ("CN", "example.com")],
+            [{"oid": "2.5.4.6", "value": "AT"}, {"oid": "2.5.4.3", "value": "example.com"}],
         )
 
     @unittest.skipIf(settings.CRYPTOGRAPHY_VERSION < (37, 0), "cg<36 does not yet have bytes.")
@@ -773,7 +773,9 @@ class SerializeName(TestCase):
         name = x509.Name(
             [x509.NameAttribute(NameOID.X500_UNIQUE_IDENTIFIER, b"example.com", _type=_ASN1Type.BitString)]
         )
-        self.assertEqual(serialize_name(name), [("x500UniqueIdentifier", "65:78:61:6D:70:6C:65:2E:63:6F:6D")])
+        self.assertEqual(
+            serialize_name(name), [{"oid": "2.5.4.45", "value": "65:78:61:6D:70:6C:65:2E:63:6F:6D"}]
+        )
 
 
 class Power2TestCase(TestCase):

@@ -18,6 +18,7 @@
 
 import copy
 import functools
+import json
 import logging
 import typing
 from datetime import date, datetime, timezone as tz
@@ -847,6 +848,12 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         extra_context["profiles_url"] = reverse(f"admin:{self.profiles_view_name}")
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
         extra_context["ca_details_url"] = reverse(f"admin:{self.ca_details_view_name}")
+        extra_context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
+
+        extra_context["oid_names"] = {
+            oid.dotted_string: name for oid, name in constants.NAME_OID_NAMES.items()
+        }
+
         return super().add_view(
             request,
             form_url=form_url,
@@ -866,15 +873,16 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             raise PermissionDenied
 
         try:
-            csr = x509.load_pem_x509_csr(request.POST["csr"].encode("ascii"))
-        except Exception as e:  # pylint: disable=broad-except; docs don't list possible exceptions
-            return JsonResponse({"message": str(e)}, status=HTTPStatus.BAD_REQUEST)
+            raw_csr = json.loads(request.body)["csr"]
+            csr = x509.load_pem_x509_csr(raw_csr.encode("ascii"))
+        except Exception as ex:  # pylint: disable=broad-except; docs don't list possible exceptions
+            return JsonResponse({"message": str(ex)}, status=HTTPStatus.BAD_REQUEST)
 
-        # TODO: support CSRs with multiple OIDs (from django_ca.utils.MULTIPLE_OIDS)
-        subject = {constants.NAME_OID_NAMES[s.oid]: s.value for s in csr.subject}
+        subject = [{"key": s.oid.dotted_string, "value": s.value} for s in csr.subject]
         return JsonResponse({"subject": subject})
 
     def get_urls(self) -> List[URLPattern]:
+        # Remove the delete action from the URLs
         # Remove the delete action from the URLs
         urls = super().get_urls()
 
@@ -917,6 +925,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             "title": _("Resign %s for %s") % (obj._meta.verbose_name, obj),
             "original_obj": obj,
             "object_action": _("Resign"),
+            "profiles": {profile.name: profile.serialize() for profile in profiles},
+            "oid_names": {oid.dotted_string: name for oid, name in constants.NAME_OID_NAMES.items()},
+            "django_ca_action": "resign",
         }
 
         return self.changeform_view(request, extra_context=context)

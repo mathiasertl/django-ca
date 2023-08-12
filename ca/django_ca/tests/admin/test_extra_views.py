@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import NameOID
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -61,9 +62,15 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test a basic CSR info retrieval."""
         for cert_data in [v for v in certs.values() if v["type"] == "cert" and v["cat"] == "generated"]:
-            response = self.client.post(self.url, data={"csr": cert_data["csr"]["pem"]})
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json(), {"subject": cert_data["csr_subject"]})
+            response = self.client.post(
+                self.url, data=json.dumps({"csr": cert_data["csr"]["pem"]}), content_type="application/json"
+            )
+            self.assertEqual(response.status_code, 200, response.json())
+            csr_subject = cert_data["csr"]["parsed"].subject
+            self.assertEqual(
+                response.json(),
+                {"subject": [{"key": s.oid.dotted_string, "value": s.value} for s in csr_subject]},
+            )
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
@@ -71,44 +78,53 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             (f, "AT" if f in ("C", "jurisdictionCountryName") else f"test-{f}")
             for f in constants.NAME_OID_NAMES.values()
         ]
-        subject_strs = [f"{k}={v}" for k, v in subject]
+        subject_strs = [f"{k}={v}" for k, v in sorted(subject)]
         csr = self.create_csr("/".join(subject_strs))[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
 
-        response = self.client.post(self.url, data={"csr": csr_pem})
-        self.assertEqual(response.status_code, 200)
-        expected = {
-            "C": "AT",
-            "CN": "test-CN",
-            "DC": "test-DC",
-            "L": "test-L",
-            "O": "test-O",
-            "OU": "test-OU",
-            "ST": "test-ST",
-            "emailAddress": "test-emailAddress",
-            "businessCategory": "test-businessCategory",
-            "dnQualifier": "test-dnQualifier",
-            "generationQualifier": "test-generationQualifier",
-            "givenName": "test-givenName",
-            "inn": "test-inn",
-            "jurisdictionCountryName": "AT",
-            "jurisdictionLocalityName": "test-jurisdictionLocalityName",
-            "jurisdictionStateOrProvinceName": "test-jurisdictionStateOrProvinceName",
-            "ogrn": "test-ogrn",
-            "postalAddress": "test-postalAddress",
-            "postalCode": "test-postalCode",
-            "pseudonym": "test-pseudonym",
-            "serialNumber": "test-serialNumber",
-            "sn": "test-sn",
-            "snils": "test-snils",
-            "street": "test-street",
-            "title": "test-title",
-            "uid": "test-uid",
-            "unstructuredName": "test-unstructuredName",
-            "x500UniqueIdentifier": "test-x500UniqueIdentifier",
-        }
+        response = self.client.post(
+            self.url, data=json.dumps({"csr": csr_pem}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+        expected = [
+            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"key": NameOID.COMMON_NAME.dotted_string, "value": "test-CN"},
+            {"key": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-DC"},
+            {"key": NameOID.LOCALITY_NAME.dotted_string, "value": "test-L"},
+            {"key": NameOID.ORGANIZATION_NAME.dotted_string, "value": "test-O"},
+            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "test-OU"},
+            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-ST"},
+            {"key": NameOID.BUSINESS_CATEGORY.dotted_string, "value": "test-businessCategory"},
+            {"key": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
+            {"key": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
+            {"key": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
+            {"key": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
+            {"key": NameOID.INN.dotted_string, "value": "test-inn"},
+            {"key": NameOID.JURISDICTION_COUNTRY_NAME.dotted_string, "value": "AT"},
+            {
+                "key": NameOID.JURISDICTION_LOCALITY_NAME.dotted_string,
+                "value": "test-jurisdictionLocalityName",
+            },
+            {
+                "key": NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME.dotted_string,
+                "value": "test-jurisdictionStateOrProvinceName",
+            },
+            {"key": NameOID.OGRN.dotted_string, "value": "test-ogrn"},
+            {"key": NameOID.POSTAL_ADDRESS.dotted_string, "value": "test-postalAddress"},
+            {"key": NameOID.POSTAL_CODE.dotted_string, "value": "test-postalCode"},
+            {"key": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
+            {"key": NameOID.SERIAL_NUMBER.dotted_string, "value": "test-serialNumber"},
+            {"key": NameOID.SURNAME.dotted_string, "value": "test-sn"},
+            {"key": NameOID.SNILS.dotted_string, "value": "test-snils"},
+            {"key": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
+            {"key": NameOID.TITLE.dotted_string, "value": "test-title"},
+            {"key": NameOID.USER_ID.dotted_string, "value": "test-uid"},
+            {"key": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
+            {"key": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "test-x500UniqueIdentifier"},
+        ]
         if settings.CRYPTOGRAPHY_VERSION >= (41, 0):  # pragma: only cg>=41.0
-            expected["initials"] = "test-initials"
+            expected.insert(12, {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"})
+
         self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})
 
     def test_bad_request(self) -> None:
@@ -259,10 +275,7 @@ class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         enduser_desc = "A certificate for an enduser, allows client authentication, code and email signing."
 
-        # Cast elements of subject to list, since actual data is coming from JSON
-        expected_subject = [
-            [k, v] for k, v in serialize_name(ca_settings.CA_DEFAULT_SUBJECT)  # type: ignore[arg-type]
-        ]
+        expected_subject = serialize_name(ca_settings.CA_DEFAULT_SUBJECT)  # type: ignore[arg-type]
 
         self.assertEqual(
             response.json(),

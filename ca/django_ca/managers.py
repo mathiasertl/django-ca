@@ -558,7 +558,7 @@ class CertificateManager(
         def revoked(self) -> "CertificateQuerySet":
             ...
 
-    def create_cert(
+    def create_cert(  # pylint: disable=too-many-arguments
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
