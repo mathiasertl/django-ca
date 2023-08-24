@@ -1,0 +1,12 @@
+{% load i18n %}
+<span class="django-ca-extension">
+    <div class="django-ca-extension-value">
+        <ul>
+            {% for key, value in name %}
+            <li>{{ key }}: {{ value }}</li>
+            {% empty %}
+            {% translate "Empty name" %}
+            {% endfor %}
+        </ul>
+    </div>
+</span>

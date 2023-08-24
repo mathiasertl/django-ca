@@ -19,6 +19,8 @@ ChangeLog
   valid (fixes `issue 102 <https://github.com/mathiasertl/django-ca/issues/102>`_).
 * The web interface now allows creating certificates with arbitrary or even empty subjects (fixes `issue 77
   <https://github.com/mathiasertl/django-ca/issues/77>`_).
+* The certificate subject is now displayed as a unambiguous list instead of a string. The issuer is now also
+  shown in the same way.
 
 Backwards incompatible changes
 ==============================
