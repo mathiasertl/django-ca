@@ -75,7 +75,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
         subject = [
-            (f, "AT" if f in ("C", "jurisdictionCountryName") else f"test-{f}")
+            (f, "AT" if f in ("countryName", "jurisdictionCountryName") else f"test-{f}")
             for f in constants.NAME_OID_NAMES.values()
         ]
         subject_strs = [f"{k}={v}" for k, v in sorted(subject)]
@@ -87,15 +87,11 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
         self.assertEqual(response.status_code, 200, response.json())
         expected = [
-            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.COMMON_NAME.dotted_string, "value": "test-CN"},
-            {"key": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-DC"},
-            {"key": NameOID.LOCALITY_NAME.dotted_string, "value": "test-L"},
-            {"key": NameOID.ORGANIZATION_NAME.dotted_string, "value": "test-O"},
-            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "test-OU"},
-            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-ST"},
             {"key": NameOID.BUSINESS_CATEGORY.dotted_string, "value": "test-businessCategory"},
+            {"key": NameOID.COMMON_NAME.dotted_string, "value": "test-commonName"},
+            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
             {"key": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
+            {"key": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-domainComponent"},
             {"key": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
             {"key": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
             {"key": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
@@ -109,21 +105,25 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 "key": NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME.dotted_string,
                 "value": "test-jurisdictionStateOrProvinceName",
             },
+            {"key": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
             {"key": NameOID.OGRN.dotted_string, "value": "test-ogrn"},
+            {"key": NameOID.ORGANIZATION_NAME.dotted_string, "value": "test-organizationName"},
+            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "test-organizationalUnitName"},
             {"key": NameOID.POSTAL_ADDRESS.dotted_string, "value": "test-postalAddress"},
             {"key": NameOID.POSTAL_CODE.dotted_string, "value": "test-postalCode"},
             {"key": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
             {"key": NameOID.SERIAL_NUMBER.dotted_string, "value": "test-serialNumber"},
-            {"key": NameOID.SURNAME.dotted_string, "value": "test-sn"},
             {"key": NameOID.SNILS.dotted_string, "value": "test-snils"},
+            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-stateOrProvinceName"},
             {"key": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
+            {"key": NameOID.SURNAME.dotted_string, "value": "test-surname"},
             {"key": NameOID.TITLE.dotted_string, "value": "test-title"},
             {"key": NameOID.USER_ID.dotted_string, "value": "test-uid"},
             {"key": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
             {"key": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "test-x500UniqueIdentifier"},
         ]
         if settings.CRYPTOGRAPHY_VERSION >= (41, 0):  # pragma: only cg>=41.0
-            expected.insert(12, {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"})
+            expected.insert(8, {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"})
 
         self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})
 

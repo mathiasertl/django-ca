@@ -1056,9 +1056,9 @@ class X509NameTestCase(TestCase):
 
     def test_multiple_other(self) -> None:
         """Test multiple other tokens (only OUs work)."""
-        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "C" fields$'):
+        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "countryName" fields$'):
             x509_name("/C=AT/C=DE")
-        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "CN" fields$'):
+        with self.assertRaisesRegex(ValueError, '^Subject contains multiple "commonName" fields$'):
             x509_name("/CN=AT/CN=FOO")
 
 

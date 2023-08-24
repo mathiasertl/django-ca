@@ -142,7 +142,9 @@ def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> st
             return val
         return '"' + val.replace('"', r"\"").replace(r"\\", r"\\\\") + '"'
 
-    items = [(constants.NAME_OID_NAMES[s.oid], s.value) for s in subject]
+    items = [
+        (constants.NAME_OID_SHORTCUTS.get(s.oid, constants.NAME_OID_NAMES[s.oid]), s.value) for s in subject
+    ]
 
     values = "/".join([f"{k}={_format_value(v)}" for k, v in items])  # type: ignore[arg-type]
     return f"/{values}"

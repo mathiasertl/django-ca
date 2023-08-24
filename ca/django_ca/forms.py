@@ -121,11 +121,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         help_text=_("Password for the private key. If not given, the private key must be unencrypted."),
     )
     expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
-    subject = fields.SubjectField(
-        label=_("Subject"),
-        required=False,
-        key_choices=[(oid.dotted_string, name) for oid, name in constants.NAME_OID_NAMES.items()],
-    )
+    subject = fields.SubjectField(label=_("Subject"), required=False)
     subject_alternative_name = fields.SubjectAlternativeNameField(
         required=False,
         help_text=_("""Coma-separated list of alternative names for the certificate."""),

@@ -851,7 +851,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         extra_context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
 
         extra_context["oid_names"] = {
-            oid.dotted_string: name for oid, name in constants.NAME_OID_NAMES.items()
+            oid.dotted_string: name for oid, name in constants.NAME_OID_DISPLAY_NAMES.items()
         }
 
         return super().add_view(
@@ -926,7 +926,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             "original_obj": obj,
             "object_action": _("Resign"),
             "profiles": {profile.name: profile.serialize() for profile in profiles},
-            "oid_names": {oid.dotted_string: name for oid, name in constants.NAME_OID_NAMES.items()},
+            "oid_names": {oid.dotted_string: name for oid, name in constants.NAME_OID_DISPLAY_NAMES.items()},
             "django_ca_action": "resign",
         }
 

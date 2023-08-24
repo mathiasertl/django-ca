@@ -148,6 +148,10 @@ class SubjectField(KeyValueField):
 
     widget_class = SubjectWidget
 
+    def __init__(self, **kwargs: Any) -> None:
+        key_choices = [(oid.dotted_string, name) for oid, name in constants.NAME_OID_DISPLAY_NAMES.items()]
+        super().__init__(key_choices=key_choices, **kwargs)
+
     def compress(  # type: ignore[override]
         self, data_list: Tuple[List[Dict[str, str]], str, str]
     ) -> x509.Name:
@@ -165,8 +169,8 @@ class SubjectField(KeyValueField):
 
                 # Check for duplicate OIDs that should not occur more than once
                 if oid in found_oids and oid not in utils.MULTIPLE_OIDS:
-                    oid_name = constants.NAME_OID_NAMES[oid]
-                    errors.append(_("%(oid)s: OID cannot occur more then once.") % {"oid": oid_name})
+                    oid_name = constants.NAME_OID_DISPLAY_NAMES[oid]
+                    errors.append(_("%(attr)s: Attribute cannot occur more then once.") % {"attr": oid_name})
                 else:
                     found_oids.add(oid)
 

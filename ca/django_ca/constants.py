@@ -340,10 +340,10 @@ NAME_OID_NAMES = MappingProxyType(
     {
         **{
             NameOID.BUSINESS_CATEGORY: "businessCategory",
-            NameOID.COMMON_NAME: "CN",
-            NameOID.COUNTRY_NAME: "C",
+            NameOID.COMMON_NAME: "commonName",
+            NameOID.COUNTRY_NAME: "countryName",
             NameOID.DN_QUALIFIER: "dnQualifier",
-            NameOID.DOMAIN_COMPONENT: "DC",
+            NameOID.DOMAIN_COMPONENT: "domainComponent",
             NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
             NameOID.GENERATION_QUALIFIER: "generationQualifier",
             NameOID.GIVEN_NAME: "givenName",
@@ -351,18 +351,18 @@ NAME_OID_NAMES = MappingProxyType(
             NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
             NameOID.JURISDICTION_LOCALITY_NAME: "jurisdictionLocalityName",
             NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
-            NameOID.LOCALITY_NAME: "L",
+            NameOID.LOCALITY_NAME: "localityName",
             NameOID.OGRN: "ogrn",  # undocumented
-            NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
-            NameOID.ORGANIZATION_NAME: "O",
+            NameOID.ORGANIZATIONAL_UNIT_NAME: "organizationalUnitName",
+            NameOID.ORGANIZATION_NAME: "organizationName",
             NameOID.POSTAL_ADDRESS: "postalAddress",
             NameOID.POSTAL_CODE: "postalCode",
             NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519
             NameOID.SERIAL_NUMBER: "serialNumber",
             NameOID.SNILS: "snils",  # undocumented
-            NameOID.STATE_OR_PROVINCE_NAME: "ST",
+            NameOID.STATE_OR_PROVINCE_NAME: "stateOrProvinceName",
             NameOID.STREET_ADDRESS: "street",
-            NameOID.SURNAME: "sn",
+            NameOID.SURNAME: "surname",
             NameOID.TITLE: "title",
             NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
             NameOID.USER_ID: "uid",
@@ -372,19 +372,42 @@ NAME_OID_NAMES = MappingProxyType(
     }
 )
 
+
+NAME_OID_SHORTCUTS = MappingProxyType(
+    {
+        NameOID.COMMON_NAME: "CN",
+        NameOID.COUNTRY_NAME: "C",
+        NameOID.DOMAIN_COMPONENT: "DC",
+        NameOID.LOCALITY_NAME: "L",
+        NameOID.ORGANIZATIONAL_UNIT_NAME: "OU",
+        NameOID.ORGANIZATION_NAME: "O",
+        NameOID.STATE_OR_PROVINCE_NAME: "ST",
+        NameOID.SURNAME: "SN",
+    }
+)
+
+# Internal constant with full display names if there is a shortcut, e.g. "commonName (C)"
+NAME_OID_DISPLAY_NAMES = MappingProxyType(
+    {
+        k: (f"{v} ({NAME_OID_SHORTCUTS[k]})" if k in NAME_OID_SHORTCUTS else v)
+        for k, v in NAME_OID_NAMES.items()
+    }
+)
+
 #: Map NameOID names to cryptography NameOID objects. This variant adds all RFC 4519 aliases as well.
 NAME_OID_TYPES = MappingProxyType(
     {
         **{v: k for k, v in NAME_OID_NAMES.items()},
         **{
-            "commonName": NameOID.COMMON_NAME,
-            "countryName": NameOID.COUNTRY_NAME,
-            "domainComponent": NameOID.DOMAIN_COMPONENT,
-            "localityName": NameOID.LOCALITY_NAME,
-            "organizationName": NameOID.ORGANIZATION_NAME,
-            "organizationalUnitName": NameOID.ORGANIZATIONAL_UNIT_NAME,
+            "CN": NameOID.COMMON_NAME,
+            "C": NameOID.COUNTRY_NAME,
+            "DC": NameOID.DOMAIN_COMPONENT,
+            "L": NameOID.LOCALITY_NAME,
+            "O": NameOID.ORGANIZATION_NAME,
+            "OU": NameOID.ORGANIZATIONAL_UNIT_NAME,
+            "ST": NameOID.STATE_OR_PROVINCE_NAME,
             "streetAddress": NameOID.STREET_ADDRESS,  # not specified in RFC 4519, but consistent with others
-            "surname": NameOID.SURNAME,
+            "SN": NameOID.SURNAME,
             "userid": NameOID.USER_ID,
         },
     }

@@ -421,7 +421,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
-            response.context["adminform"].form.errors, {"subject": ["C: OID cannot occur more then once."]}
+            response.context["adminform"].form.errors,
+            {"subject": ["countryName (C): Attribute cannot occur more then once."]},
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -1385,7 +1386,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         # Check the li element inside
         lis = has_content.find_elements(By.TAG_NAME, "li")
         self.assertEqual(len(lis), len(csr_subject))
-        self.assertEqual(lis[0].text, "C: AT")  # just testing the first one, the rest are hopefully fine
+        self.assertEqual(lis[0].text, "countryName (C): AT")  # just testing the first one
 
         # Click the copy button and validate that the subject is set
         csr_chapter.find_element(By.CSS_SELECTOR, ".copy-button").click()
