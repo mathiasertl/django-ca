@@ -132,7 +132,6 @@ def _create_csr(
 
 def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict[str, Any]) -> None:
     data["serial"] = cert.serial
-    data["hpkp"] = cert.hpkp_pin
     data["valid_from"] = cert.pub.loaded.not_valid_before.strftime(TIMEFORMAT)
     data["valid_until"] = cert.pub.loaded.not_valid_after.strftime(TIMEFORMAT)
 
@@ -244,7 +243,6 @@ def _update_contrib(
         "serial": cert.serial,
         "subject": serialize_name(cert.subject),
         "subject_str": format_name(cert.subject),
-        "hpkp": cert.hpkp_pin,
         "md5": cert.get_fingerprint(hashes.MD5()),
         "sha1": cert.get_fingerprint(hashes.SHA1()),
         "sha256": cert.get_fingerprint(hashes.SHA256()),

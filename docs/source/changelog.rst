@@ -32,6 +32,8 @@ Backwards incompatible changes
   favor of ``--path-length`` and ``-no-path-length``. The old options where deprecated since 1.24.0.
 * Using comma-separated lists for the `--key-usage``, ``--extended-key-usage`` and ``--tls-feature``
   command-line options was removed. The old format was deprecated since 1.24.0.
+* Remove support for `HTTP Public Key Pinning <https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning>`_, as it
+  is obsolete.
 
 .. _changelog-1.25.0:
 

@@ -16,7 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/topics/db/models/
 """
 
-import base64
 import hashlib
 import itertools
 import json
@@ -392,21 +391,6 @@ class X509CertMixin(DjangoCAModel):
             revoked_cert = revoked_cert.add_extension(x509.InvalidityDate(compromised), critical=False)
 
         return revoked_cert.build()
-
-    @property
-    def hpkp_pin(self) -> str:
-        """The HPKP public key pin for this certificate.
-
-        Inspired by https://github.com/luisgf/hpkp-python/blob/master/hpkp.py.
-
-        .. seealso:: https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning
-        """
-
-        public_key_raw = self.pub.loaded.public_key().public_bytes(
-            encoding=Encoding.DER, format=PublicFormat.SubjectPublicKeyInfo
-        )
-        public_key_hash = hashlib.sha256(public_key_raw).digest()
-        return base64.b64encode(public_key_hash).decode("utf-8")
 
     @property
     def issuer(self) -> x509.Name:

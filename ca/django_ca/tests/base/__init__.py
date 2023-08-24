@@ -135,7 +135,6 @@ certs["multiple_ous"] = {
     "valid_until": "2028-08-01 23:59:59",
     "ca": "root",
     "serial": "7DD9FE07CFA81EB7107967FBA78934C6",
-    "hpkp": "AjyBzOjnxk+pQtPBUEhwfTXZu1uH9PVExb8bxWQ68vo=",
     "md5": "A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9",
     "sha1": "85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F",
     "sha256": "83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B",  # noqa: E501
@@ -160,7 +159,6 @@ certs["cloudflare_1"] = {
     "valid_until": "2019-01-24 23:59:59",
     "ca": "root",
     "serial": "92529ABD85F0A6A4D6C53FD1C91011C1",
-    "hpkp": "bkunFfRSda4Yhz7UlMUaalgj0Gcus/9uGVp19Hceczg=",
     "md5": "D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A",
     "sha1": "71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3",
     "sha256": "1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1",  # NOQA

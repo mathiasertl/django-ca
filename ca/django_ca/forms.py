@@ -83,15 +83,6 @@ class X509CertMixinAdminForm(X509CertMixinModelForm):
             'Certificate bundle: <a href="%s?format=PEM">as PEM</a>'
         ) % (url, url, bundle_url)
 
-    class Meta:
-        help_texts = {
-            "hpkp_pin": _(
-                """SHA-256 HPKP pin of this certificate. See also
-<a href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>
-on Wikipedia."""
-            ),
-        }
-
 
 class CertificateAuthorityForm(X509CertMixinAdminForm):
     """Admin form for :py:class:`django_ca.models.CertificateAuthority`."""

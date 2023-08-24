@@ -34,7 +34,6 @@ expected = {
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -65,7 +64,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -96,7 +94,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -127,7 +124,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -158,7 +154,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -189,7 +184,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -220,7 +214,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -251,7 +244,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -282,7 +274,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -313,7 +304,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -344,7 +334,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -373,7 +362,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -404,7 +392,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -419,7 +406,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -467,7 +453,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -530,7 +515,6 @@ Watchers:
 Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
-HPKP pin: {hpkp}
 
 {pub[pem]}""".format(
                         status=status, **self.get_cert_context(key)
@@ -547,7 +531,6 @@ HPKP pin: {hpkp}
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: {status}
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -589,7 +572,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: {status}
-* HPKP pin: {hpkp}
 * No watchers
 
 Digest:
@@ -635,7 +617,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Revoked
-* HPKP pin: {hpkp}
 * No watchers
 
 Digest:
@@ -665,7 +646,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * Watchers:
   * user@example.com
 
@@ -712,7 +692,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -773,7 +752,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -814,7 +792,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:
@@ -856,7 +833,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 * No watchers
 
 Certificate extensions:

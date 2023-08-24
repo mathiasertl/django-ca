@@ -1144,20 +1144,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             for algo_name, algorithm in algorithms.items():
                 self.assertEqual(cert.get_fingerprint(algorithm), certs[name][algo_name])
 
-    def test_hpkp_pin(self) -> None:
-        """Test getting a HPKP pin for a certificate."""
-        # get hpkp pins using
-        #   openssl x509 -in cert1.pem -pubkey -noout \
-        #       | openssl rsa -pubin -outform der \
-        #       | openssl dgst -sha256 -binary | base64
-        for name, ca in self.cas.items():
-            self.assertEqual(ca.hpkp_pin, certs[name]["hpkp"])
-            self.assertIsInstance(ca.hpkp_pin, str)
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.hpkp_pin, certs[name]["hpkp"])
-            self.assertIsInstance(cert.hpkp_pin, str)
-
     def test_jwk(self) -> None:
         """Test JWK property."""
         for name, ca in self.cas.items():

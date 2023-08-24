@@ -56,7 +56,6 @@ body.app-django_ca .django-ca-extension .django-ca-extension-value li {
  */
 table#result_list td.field-serial_field,
 div.field-serial_field div.readonly,
-div.field-hpkp_pin div.readonly,
 div.field-authority_key_identifier div.readonly p,
 body.app-django_ca .django-ca-serial,
 div.field-subject_key_identifier div.readonly

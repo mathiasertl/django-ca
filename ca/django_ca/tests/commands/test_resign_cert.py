@@ -53,7 +53,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         # assert various properties
         self.assertEqual(new_ca, new.ca)
         self.assertEqual(issuer, new.issuer)
-        self.assertEqual(old.hpkp_pin, new.hpkp_pin)
 
     def assertEqualExt(  # pylint: disable=invalid-name
         self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None

@@ -555,7 +555,6 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         self.stdout.write(f"* Valid from: {cert.not_before.isoformat(' ')}")
         self.stdout.write(f"* Valid until: {cert.not_after.isoformat(' ')}")
         self.output_status(cert)
-        self.stdout.write(f"* HPKP pin: {cert.hpkp_pin}")
 
     def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:
         """Output digest and PEM in footer."""

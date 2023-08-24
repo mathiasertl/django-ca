@@ -68,7 +68,6 @@
                     }
                 ]
             },
-            "hpkp": "NCYcWkjEF4SqufL0IJK79VaDfQXAJNMum+aUDy8q21Q=",
             "inhibit_any_policy": {
                 "critical": true,
                 "value": 1
@@ -252,7 +251,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "26ZsGODkj/0+u2Tk6bXgwITX/9bgQF4751AIFGCXWKU=",
             "issuer_alternative_name": {
                 "critical": true,
                 "value": [
@@ -392,7 +390,6 @@
             "csr_subject": {
                 "CN": "csr.child.example.com"
             },
-            "hpkp": "47J9/gQZ1KaXn1TGcQeurgAovX8zqOdaNJfwTvxvbrg=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der",
             "key_der_filename": "child.key.der",
             "key_filename": "child.key",
@@ -482,7 +479,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "FEh+NSUC4SmaGFur8iyWP7FU5E9r68MDy2ujcr5Wj74=",
             "key_der_filename": "child-cert.key.der",
             "key_filename": "child-cert.key",
             "key_size": 2048,
@@ -555,7 +551,6 @@
             "cat": "sphinx-contrib",
             "cn": "COMODO RSA Certification Authority",
             "csr_filename": false,
-            "hpkp": "grX4Ta9HpZx6tSHkmCrvpApTQGo67CYDnvprLg5yRME=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -662,7 +657,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "klO23nT2ehFDXCfx3eHTDRESMz3asj1muO+4aIdjiuY=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -772,7 +766,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "bTIDs2BP+exj0Br1kf1f4PZ476zQfCBCZTSqb25lqrU=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -868,7 +861,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "Fbr/5aSOo4KRal8YE49t4lc76IOnK/oto9NWV1cSKWM=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -977,7 +969,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "ZRGoMzOoATnxPnQO7vjOu0ZBXa428XzyXnQY7lyzUGY=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1104,7 +1095,6 @@
             "cat": "sphinx-contrib",
             "cn": "DigiCert High Assurance EV Root CA",
             "csr_filename": false,
-            "hpkp": "WoiWRyIOVNa9ihaBciRSC7XHjliYS9VwUGOIud4PB18=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1167,7 +1157,6 @@
             "cat": "sphinx-contrib",
             "cn": "DigiCert Global Root CA",
             "csr_filename": false,
-            "hpkp": "r/mIkG3eEpVdm+u/ko/cwxzOMo1bk4TyHIlByibiA5E=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1266,7 +1255,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "k2v657xBsOVe1PQRwOsHsw3bsGT2VzIqz5K+59sNQws=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1377,7 +1365,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "Nxb4Nfj74p7Wely6CjIzuuWK+x1tYYSyLVKzY2+HZdQ=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1542,7 +1529,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "5kJvNEMw0KjrCAu7eXY5HZdvyCS13BbA0VJG1RSP91w=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1649,7 +1635,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "zV3zwL2pzmJAEf/GAgRWkVUC/vvbZ1Fo3S/jES25tYg=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1752,7 +1737,6 @@
             "csr_subject": {
                 "CN": "csr.dsa.example.com"
             },
-            "hpkp": "vu71xGet3vm0qyYVMiwqiMjg3iZesfqDoBmEwT4DPSo=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669.der",
             "key_der_filename": "dsa.key.der",
             "key_filename": "dsa.key",
@@ -1841,7 +1825,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "A2vcwAEX1Q7+cP33rTvY3HJScZomomNWJIRaF4XFubo=",
             "key_der_filename": "dsa-cert.key.der",
             "key_filename": "dsa-cert.key",
             "key_size": 2048,
@@ -1914,7 +1897,6 @@
             "cat": "sphinx-contrib",
             "cn": "DST Root CA X3",
             "csr_filename": false,
-            "hpkp": "Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -1973,7 +1955,6 @@
             "csr_subject": {
                 "CN": "csr.ec.example.com"
             },
-            "hpkp": "GxqniuB+qIE+dKgJSaONVuymC/au9amyO1lc8AS2Cro=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/4F214CE0D8313B64F889CA09F8938CE1298F4C52.der",
             "key_der_filename": "ec.key.der",
             "key_filename": "ec.key",
@@ -2061,7 +2042,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "6xbo5amFnKxoOyq9LD3ytH7WnU+z4IOTf1S06caHw7w=",
             "key_der_filename": "ec-cert.key.der",
             "key_filename": "ec-cert.key",
             "key_type": "EC",
@@ -2144,7 +2124,6 @@
             "csr_subject": {
                 "CN": "csr.ed25519.example.com"
             },
-            "hpkp": "rclYQ4EkXZvzOGjxok0NxcqrZplfHCo+8Fg2GXOrmXg=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/1C7835ABCFD9AA8241042B9E86A66468A3C8244E.der",
             "key_der_filename": "ed25519.key.der",
             "key_filename": "ed25519.key",
@@ -2232,7 +2211,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "v5g9sK/SD/5DvwyWfJi3od9Qw4BHiTi7bf+HbPI/QjQ=",
             "key_der_filename": "ed25519-cert.key.der",
             "key_filename": "ed25519-cert.key",
             "key_type": "Ed25519",
@@ -2315,7 +2293,6 @@
             "csr_subject": {
                 "CN": "csr.ed448.example.com"
             },
-            "hpkp": "JGB1r/XXzvzPPjW2lqM03noTghb9cM4Zt2vKriNngYQ=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/778A8A8D9EB551877643A9F3A8449CF32589FDB8.der",
             "key_der_filename": "ed448.key.der",
             "key_filename": "ed448.key",
@@ -2403,7 +2380,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "0/PtLCgSRump4LD/q2DUmQMxMLPvG4NVNh8Zmd4ErV8=",
             "key_der_filename": "ed448-cert.key.der",
             "key_filename": "ed448-cert.key",
             "key_type": "Ed448",
@@ -2481,7 +2457,6 @@
             "cat": "sphinx-contrib",
             "cn": "GeoTrust Global CA",
             "csr_filename": false,
-            "hpkp": "h6801m+z8v3zbgkRHpq6L29Esgfzhj89C1SyUCOQmqU=",
             "key_filename": false,
             "key_type": "RSA",
             "md5": "F7:75:AB:29:FB:51:4E:B7:77:5E:FF:05:3C:99:8E:F5",
@@ -2526,7 +2501,6 @@
             "cat": "sphinx-contrib",
             "cn": "GlobalSign Root CA",
             "csr_filename": false,
-            "hpkp": "K87oWBWM9UZfyddvDfoxL+8lpNyoUB2ptGtn0fv6G2Q=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -2617,7 +2591,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "PL1/TTDEe9Cm2lb2X0tixyQC7zaPREm/V0IHJscTCmw=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -2718,7 +2691,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "f/nWtFuX1vY2xz4pS1scSun2yQKfU+EcwPtjDf3RWnc=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -2788,7 +2760,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "iie1VXtL7HzAMF+/PVPR9xzT80kQxdZeJ+zduCB3uj0=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -2875,7 +2846,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "8Rw90Ej3Ttt8RRkrg+WYDS9n7IS03bk5bjP/UXPtaY8=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -2988,7 +2958,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "bMn7LIWXVHhW2erMLLZu1IgAapzMB/Km8xsY5MG0Bvo=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3112,7 +3081,6 @@
             "cat": "sphinx-contrib",
             "cn": "Go Daddy Root Certificate Authority - G2",
             "csr_filename": false,
-            "hpkp": "Ko8tivDrEjiY90yGasP6ZpBU4jwXvHqVvQI0GS3GNdA=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3214,7 +3182,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "f8NnEFZxQ4ExFOhSN7EiFWtiudZQVD2oY60uauV/n78=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3313,7 +3280,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "apUC+pEOtmlitwjvZvGfdxT7TeI0TwBVSLyvmwcanOs=",
             "key_filename": false,
             "key_type": "EC",
             "key_usage": {
@@ -3377,7 +3343,6 @@
             "cat": "sphinx-contrib",
             "cn": "IdenTrust Commercial Root CA 1",
             "csr_filename": false,
-            "hpkp": "B+hU8mp8vTiZJ6oEG/7xts0h3RQ4GK2UfcZVqeWH/og=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3471,7 +3436,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3574,7 +3538,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "goD/MpIWQ3dPzw2F7t3Tv+5kbYcDWqIdzAX6VmmwT4Q=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3665,7 +3628,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3757,7 +3719,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "0U93M5YkrZgWdy+bHbDxlrV0mZ3qeSE3XAPfysn6zvA=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -3831,7 +3792,6 @@
             "csr_subject": {
                 "CN": "csr.no-extensions.example.com"
             },
-            "hpkp": "0y6FnWeVg58dV09RY7qWgXMe/blgDhORQYh+Se0YUF0=",
             "key_der_filename": "no-extensions.key.der",
             "key_filename": "no-extensions.key",
             "key_size": 2048,
@@ -3904,7 +3864,6 @@
                     "clientAuth"
                 ]
             },
-            "hpkp": "Lyq5B/Q/NjWiaLBpHgGKuVCavUkfROn3GPya4LUkQ+Q=",
             "key_der_filename": "profile-client.key.der",
             "key_filename": "profile-client.key",
             "key_size": 2048,
@@ -4016,7 +3975,6 @@
                     "emailProtection"
                 ]
             },
-            "hpkp": "SjtFownQ2f/s6/eQl4efw/rgiSXBC97OiTUFJtvqRkU=",
             "key_der_filename": "profile-enduser.key.der",
             "key_filename": "profile-enduser.key",
             "key_size": 2048,
@@ -4119,7 +4077,6 @@
                     "OCSPSigning"
                 ]
             },
-            "hpkp": "fmgjMtqspzHZm4Fn2aJw1y+X3o3wNBGL2t4/NSHCsvo=",
             "key_der_filename": "profile-ocsp.key.der",
             "key_filename": "profile-ocsp.key",
             "key_size": 2048,
@@ -4210,7 +4167,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "GQwU1GLU1aUoJdALkwBEOe5faA9spkgXgN+HxQmmz3E=",
             "key_der_filename": "profile-server.key.der",
             "key_filename": "profile-server.key",
             "key_size": 2048,
@@ -4322,7 +4278,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "33gbyscLPSTBRvCgTUJoHdy8mRDKhdXaDgOJxs2GLJw=",
             "key_der_filename": "profile-webserver.key.der",
             "key_filename": "profile-webserver.key",
             "key_size": 2048,
@@ -4407,7 +4362,6 @@
             "csr_subject": {
                 "CN": "csr.pwd.example.com"
             },
-            "hpkp": "+LfDtqY2RKwAGRR40eHCxMnG71VzD10cmrBgYqsjSIA=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/16E09FA62B5807A1E498653A740EB33F75873F9C.der",
             "key_der_filename": "pwd.key.der",
             "key_filename": "pwd.key",
@@ -4497,7 +4451,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "Iqtl20TZYvir/MaZuNmnLQS2lxMzPFSjPQ38OLUUwWU=",
             "key_der_filename": "pwd-cert.key.der",
             "key_filename": "pwd-cert.key",
             "key_size": 2048,
@@ -4605,7 +4558,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "6X0iNAQtPIjXKEVcqZBwyMcRwq1yW60549axatu3oDE=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -4702,7 +4654,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "GxWRn6n+DPxOg1MQ4NIuiifDeP6xAZmQj09sysVe3Kg=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -4777,7 +4728,6 @@
             "csr_subject": {
                 "CN": "csr.root.example.com"
             },
-            "hpkp": "OfMQVNzWUTEbiU4y6hBSbqYzl+gXqXVA/JcTm/CRy64=",
             "issuer_url": "http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der",
             "key_der_filename": "root.key.der",
             "key_filename": "root.key",
@@ -4865,7 +4815,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "JsTxGWy9F1+G6bakcMcDqsMwCGc6gG8mXYl4ffup1K4=",
             "key_der_filename": "root-cert.key.der",
             "key_filename": "root-cert.key",
             "key_size": 2048,
@@ -4977,7 +4926,6 @@
                 ]
             },
             "csr_filename": false,
-            "hpkp": "nwDSX8WPqNCwewH20Ii61odFmXsG26cfVtvaZtJMdQw=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -5091,7 +5039,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "PPRuMZCWOEsxk0MRRVrLq+0LUc6Vr7ZNbLImo3j6Jbw=",
             "issuer_alternative_name": {
                 "critical": false,
                 "value": [
@@ -5213,7 +5160,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "12Xvsp/UARSvsegw28qNEoPpkIZhf/GLB61LpY57AWY=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -5318,7 +5264,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "a4ZdugD6/djNUu/7ZVp1XwXT4roNa2nCqwZh8sQAiLI=",
             "issuer_alternative_name": {
                 "critical": false,
                 "value": [
@@ -5418,7 +5363,6 @@
             },
             "cn": "StartCom Certification Authority",
             "csr_filename": false,
-            "hpkp": "5C8kvU039KouVrl52D0eZSGf4Onjo4Khs8tmyTlV3nU=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -5530,7 +5474,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "baHWPQeCjK/t6GB+okH73C13ZXVDr2QAVt6jQTsq2Ys=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {
@@ -5638,7 +5581,6 @@
                     "serverAuth"
                 ]
             },
-            "hpkp": "CVh3pDfinD9gWBwlE8skQUqcUBzNgOv3tMqcMotLXeY=",
             "key_filename": false,
             "key_type": "RSA",
             "key_usage": {

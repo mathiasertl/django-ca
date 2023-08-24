@@ -34,7 +34,6 @@ expected = {
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -75,7 +74,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -116,7 +114,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -157,7 +154,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Parent: {parent_name} ({parent_serial_colons})
@@ -202,7 +198,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -244,7 +239,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -276,7 +270,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -306,7 +299,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -352,7 +344,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -391,7 +382,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -439,7 +429,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -477,7 +466,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -517,7 +505,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -555,7 +542,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -593,7 +579,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -635,7 +620,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -683,7 +667,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -729,7 +712,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -767,7 +749,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -813,7 +794,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -861,7 +841,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -899,7 +878,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -945,7 +923,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -991,7 +968,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1029,7 +1005,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1077,7 +1052,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1125,7 +1099,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1171,7 +1144,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1217,7 +1189,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1263,7 +1234,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1311,7 +1281,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1359,7 +1328,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1399,7 +1367,6 @@ Digest:
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
-* HPKP pin: {hpkp}
 
 Certificate Authority information:
 * Certificate authority is a root CA.
