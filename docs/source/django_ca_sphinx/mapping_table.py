@@ -17,10 +17,10 @@
 """
 
 from collections.abc import Mapping
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from docutils.statemachine import StringList
-from sphinx.ext.autodoc import DataDocumenter, ObjectMembers
+from sphinx.ext.autodoc import DataDocumenter, ObjectMember
 from tabulate import tabulate
 
 from cryptography import x509
@@ -39,8 +39,9 @@ class MappingDocumentor(DataDocumenter):
     # attribute that gets documented via the :members: directive.
     priority = DataDocumenter.priority - 10
 
-    def get_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:
-        return False, []  # type: ignore[return-value]
+    def get_object_members(self, want_all: bool) -> Tuple[bool, List[ObjectMember]]:
+        """Overwritten from base class"""
+        return False, []
 
     @classmethod
     def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:

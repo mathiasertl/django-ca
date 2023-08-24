@@ -46,7 +46,7 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
             cls.vdisplay = Display(visible=False, size=(1024, 768))
             cls.vdisplay.start()
 
-        service = Service(settings.GECKODRIVER_PATH, log_path=settings.GECKODRIVER_LOG_PATH)
+        service = Service(settings.GECKODRIVER_PATH, log_output=settings.GECKODRIVER_LOG_PATH)
         cls.selenium = Firefox(service=service)
 
     @classmethod

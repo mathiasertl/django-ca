@@ -35,6 +35,14 @@ Backwards incompatible changes
 * Remove support for `HTTP Public Key Pinning <https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning>`_, as it
   is obsolete.
 
+Deprecation notices
+===================
+
+* This is the last release to support Django 4.1.
+* This is the last release to support cryptography 40.
+* This is the last release to support acme 2.5.0.
+* This is the last release to support celery 5.2.
+
 .. _changelog-1.25.0:
 
 *******************
