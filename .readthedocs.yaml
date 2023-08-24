@@ -10,6 +10,7 @@ build:
     python: "3.10"
   jobs:
     pre_build:
+      - cp docker-compose.yml docs/source/_files/docker-compose.yml
       - make -C docs source/_files/openapi.json
 
 # Build documentation in the docs/ directory with Sphinx
