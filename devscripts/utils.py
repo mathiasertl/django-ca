@@ -16,7 +16,9 @@
 import datetime
 import io
 import os
+import random
 import shlex
+import string
 import subprocess
 import tempfile
 import time
@@ -202,7 +204,12 @@ def git_archive(ref: str, destination: str) -> Path:
 
     `ref` may be any valid git reference, usually a git tag.
     """
-    destination = os.path.join(destination, f"django-ca-{ref}")
+
+    # Add a random suffix to the export destination to improve build isolation (e.g. Docker Compose will use
+    # that directory name as a name for Docker images/containers).
+    random_suffix = "".join(random.choice(string.ascii_lowercase) for i in range(12))
+    destination = os.path.join(destination, f"django-ca-{ref}-{random_suffix}")
+
     if not os.path.exists(destination):
         os.makedirs(destination)
 
