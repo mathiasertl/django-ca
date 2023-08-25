@@ -111,10 +111,11 @@ for template in [
     "admin/django_ca/certificate/add_form.html",
     "admin/django_ca/certificate/change_form.html",
     "admin/django_ca/certificate/revoke_form.html",
+    "admin/django_ca/certificateauthority/change_form.html",
     "django_ca/admin/extensions/base/base.html",
+    "django_ca/admin/extensions/missing.html",
     "django_ca/admin/submit_line.html",
     "django_ca/forms/widgets/profile.html",
-    "django_ca/forms/widgets/subjecttextinput.html",
 ]:
     try:
         get_template(template)
