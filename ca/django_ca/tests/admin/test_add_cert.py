@@ -1479,7 +1479,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
             "no-subject": {},
         },
     )
-    def test_profile_integation(self) -> None:
+    def test_profile_integration(self) -> None:
         """Test core functionality of the subject field."""
         self.initialize()
 

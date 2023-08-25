@@ -45,7 +45,7 @@ KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": CertificateIssuerPr
 CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest})
 _PubDict = typing.TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
 
-# Regex used by certbot to split PEM-encodied certificate chains/bundles as of 2022-01-23. See also:
+# Regex used by certbot to split PEM-encoded certificate chains/bundles as of 2022-01-23. See also:
 # 	https://github.com/certbot/certbot/blob/master/certbot/certbot/crypto_util.py
 CERT_PEM_REGEX = re.compile(
     b"""-----BEGIN CERTIFICATE-----\r?
@@ -361,7 +361,7 @@ timestamps["after_child"] = timestamps["base"] + timedelta(days=4)
 timestamps["ca_certs_valid"] = timestamps["base"] + timedelta(days=7)
 timestamps["profile_certs_valid"] = timestamps["base"] + timedelta(days=12)
 
-# When creating fixutres, latest valid_from of any generated cert is 20 days, we need to be after that
+# When creating fixtures, latest valid_from of any generated cert is 20 days, we need to be after that
 timestamps["everything_valid"] = timestamps["base"] + timedelta(days=23)
 timestamps["everything_valid_naive"] = timezone.make_naive(timestamps["everything_valid"])
 timestamps["cas_expired"] = timestamps["base"] + timedelta(days=731, seconds=3600)

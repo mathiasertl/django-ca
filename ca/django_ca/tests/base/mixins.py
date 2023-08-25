@@ -177,7 +177,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
         self, issuer: CertificateAuthority, cert: X509CertMixin
     ) -> None:
-        """Test the key identifier of the AuthorityKeyIdentifier extenion of `cert`."""
+        """Test the key identifier of the AuthorityKeyIdentifier extension of `cert`."""
         actual = typing.cast(
             x509.AuthorityKeyIdentifier, cert.x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
         )
@@ -214,7 +214,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         crl : bytes
             The raw CRL
         expected : list
-            List of CAs/certs to be expected in this CRL
+            CAs/certs to be expected in this CRL.
         signer
         expires
         algorithm
