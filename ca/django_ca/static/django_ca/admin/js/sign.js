@@ -110,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Append a row for each key/value pair based on the template
             data.forEach((obj) => {
                 var li_node = li_template.content.cloneNode(true);
-                li_node.querySelector(".oid").innerHTML = oid_names[obj.key];
-                li_node.querySelector(".value").innerHTML = obj.value;
+                li_node.querySelector(".oid").textContent = oid_names[obj.key];
+                li_node.querySelector(".value").textContent = obj.value;
 
                 ul.insertBefore(li_node, null);
             });
