@@ -37,6 +37,24 @@ else
     export DJANGO_CA_SECRET_KEY
 fi
 
+# Synchronize NGINX configuration to ${NGINX_TEMPLATES_DIR} (used by Docker Compose to update configuration).
+if [ -n "${NGINX_TEMPLATE}" ]; then
+    # This directory is a Docker volume mapped to /etc/nginx/templates/ in Docker Compose
+    NGINX_TEMPLATE_DIR=/var/lib/django-ca/nginx/templates/
+
+    NGINX_TEMPLATE_SOURCE="/usr/src/django-ca/nginx/${NGINX_TEMPLATE}.template"
+
+    if [ -r "${NGINX_TEMPLATE_SOURCE}" ]; then
+        mkdir -p ${NGINX_TEMPLATE_DIR}/include.d/
+        cp -pf "${NGINX_TEMPLATE_SOURCE}" ${NGINX_TEMPLATE_DIR}default.conf.template
+        cp -pf /usr/src/django-ca/nginx/include.d/*.conf ${NGINX_TEMPLATE_DIR}/include.d/
+    else
+        echo "${NGINX_TEMPLATE}: NGINX template not found."
+        exit 1
+    fi
+fi
+
+# Wait for connections to be up (in this case the database), as the subsequent commands require access to it
 if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
     for conn in ${WAIT_FOR_CONNECTIONS}; do
         conn=${conn/:/ }

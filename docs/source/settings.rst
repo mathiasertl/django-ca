@@ -516,10 +516,62 @@ configure PostgreSQL:
    $ docker run -e POSTGRES_PASSWORD=... mathiasertl/django-ca
 
 POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
-   Access details to a PostgreSQL database.
+   Access details to a PostgreSQL database. See the `Docker image documentation
+   <https://hub.docker.com/_/postgres>`__ for more information.
 
 MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
-   Access details to a MySQL database.
+   Access details to a MySQL database. See the `Docker image documentation <https://hub.docker.com/_/mysql>`__
+   for more information.
+
+.. _settings-global-environment-variables-nginx:
+
+NGINX
+=====
+
+The :file:`docker-compose.yml` file provided by the project uses environment variables to parameterize the
+NGINX configuration. Except for ``NGINX_TEMPLATE``, these environment variables are *not* used by
+**django-ca** itself, but only by the NGINX container itself. As usual, you have to set these variables in
+your :file:`.env` file, for example:
+
+.. code-block:: bash
+   :caption: .env
+
+   # NGINX TLS configuration
+   NGINX_TEMPLATE=tls
+   NGINX_PRIVATE_KEY=/etc/certs/live/ca.example.com/privkey.pem
+   NGINX_PUBLIC_KEY=/etc/certs/live/ca.example.com/fullchain.pem
+
+NGINX_HOST
+   Default: value of ``DJANGO_CA_CA_DEFAULT_HOSTNAME``
+
+   The hostname used by the web server. Internally, this is used in the `server_name
+   <http://nginx.org/en/docs/http/server_names.html>`_ directive. The default is to use the value of
+   ``DJANGO_CA_CA_DEFAULT_HOSTNAME``, so you usually do *not* have to configure this variable.
+
+NGINX_HTTPS_PORT
+   Default: ``443``
+
+   The HTTPS port to use for HTTPS connections. This is only used if you use ``NGINX_TEMPLATE=tls``.
+
+NGINX_PORT
+   Default: ``80``
+
+   The HTTP port to use for HTTP connections.
+
+NGINX_PRIVATE_KEY
+   Path to the TLS private key. This is only used if you use ``NGINX_TEMPLATE=tls``.
+
+NGINX_PUBLIC_KEY
+   Path to the TLS public key. This is only used if you use ``NGINX_TEMPLATE=tls``.
+
+NGINX_TEMPLATE
+   Default: ``default``
+
+   The configuration template to use. There are currently only two templates provided by **django-ca**:
+
+   * ``default``: The "simple" default configuration, providing all access via plain HTTP.
+   * ``tls``: A configuration that includes TLS configuration. It requires that you also set
+     ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY``.
 
 .. _settings-global-environment-variables-systemd:
 

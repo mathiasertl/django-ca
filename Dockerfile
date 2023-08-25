@@ -1,5 +1,6 @@
-# syntax = docker/dockerfile:1.4.3
+# syntax = docker/dockerfile:1.6.0
 # https://hub.docker.com/r/docker/dockerfile
+# https://docs.docker.com/build/dockerfile/release-notes/
 ARG IMAGE=python:3.11-alpine3.18
 
 FROM $IMAGE as base
@@ -106,7 +107,7 @@ COPY --from=build /install /usr/local
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \
-             /var/lib/django-ca/shared && \
+             /var/lib/django-ca/shared /var/lib/django-ca/nginx/templates/ && \
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./

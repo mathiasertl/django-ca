@@ -34,7 +34,6 @@ debian-releases = [
 ubuntu-releases = [
     "focal",
     "jammy",
-    "kinetic",
     "lunar",
 ]
 

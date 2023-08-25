@@ -57,13 +57,6 @@ bind to port 80 (HTTP).
 Get configuration
 *****************
 
-.. WARNING::
-
-   **Upgrading from before django-ca 1.19?** Please see the :ref:`update notes <update_119>` before
-   proceeding.
-
-   Note that the files for older versions in the documentation for 1.19 or later have already been updated.
-
 Docker-compose needs a configuration file, :download:`docker-compose.yml </_files/docker-compose.yml>`. You
 can also download the file for other versions `from github
 <https://github.com/mathiasertl/django-ca/blob/master/docker-compose.yml>`_.
@@ -85,8 +78,6 @@ Version                                                Redis PostgreSQL  NGINX
 :download:`1.22.0 </_files/1.22.0/docker-compose.yml>` 7     12          1.20
 :download:`1.21.0 </_files/1.21.0/docker-compose.yml>` 6     12          1.20
 :download:`1.20.0 </_files/1.20.0/docker-compose.yml>` 6     12          1.20
-:download:`1.19.0 </_files/1.19.0/docker-compose.yml>` 6     12          1.20
-:download:`1.18.0 </_files/1.18.0/docker-compose.yml>` 6     12          1.18
 ====================================================== ===== =========== =====
 
 Add ``docker-compose.override.yml``

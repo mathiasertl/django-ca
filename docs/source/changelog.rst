@@ -21,6 +21,8 @@ ChangeLog
   <https://github.com/mathiasertl/django-ca/issues/77>`_).
 * The certificate subject is now displayed as a unambiguous list instead of a string. The issuer is now also
   shown in the same way.
+* Fix NGINX configuration updates when using Docker Compose. The previous setup did not update configuration
+  on update if parts of it changed.
 
 Backwards incompatible changes
 ==============================

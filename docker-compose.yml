@@ -68,7 +68,7 @@ services:
             - frontend_ca_dir:/var/lib/django-ca/certs/
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-            - nginx_config:/usr/src/django-ca/nginx/
+            - nginx_templates:/var/lib/django-ca/nginx/templates/
         environment:
             DJANGO_CA_ALLOWED_HOSTS:
             DJANGO_CA_CA_DEFAULT_CA:
@@ -78,6 +78,8 @@ services:
             DJANGO_CA_SECRET_KEY:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
+            # Instruct the startup script to copy nginx configuration template
+            NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
             POSTGRES_DB:
             POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
@@ -95,7 +97,6 @@ services:
 
     webserver:
         image: nginx:1.24-alpine
-        command: /bin/sh -c "envsubst < /etc/nginx/conf.d/${NGINX_TEMPLATE:-default}.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
         depends_on:
             frontend:
                 condition: service_healthy
@@ -111,7 +112,7 @@ services:
             - frontend
             - public
         volumes:
-            - nginx_config:/etc/nginx/conf.d/
+            - nginx_templates:/etc/nginx/templates/
             - static:/usr/share/nginx/html/static/
 
 volumes:
@@ -121,7 +122,7 @@ volumes:
     frontend_ca_dir:
     shared_ca_dir:
     ocsp_key_dir:
-    nginx_config:
+    nginx_templates:
     pgdata:
     redis:
 
