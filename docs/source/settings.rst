@@ -515,11 +515,11 @@ configure PostgreSQL:
    $ docker run -e POSTGRES_PASSWORD=... postgres
    $ docker run -e POSTGRES_PASSWORD=... mathiasertl/django-ca
 
-POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+POSTGRES_DB, POSTGRES_DB_FILE, POSTGRES_USER, POSTGRES_USER_FILE, POSTGRES_PASSWORD, POSTGRES_PASSWORD_FILE
    Access details to a PostgreSQL database. See the `Docker image documentation
    <https://hub.docker.com/_/postgres>`__ for more information.
 
-MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+MYSQL_DATABASE, MYSQL_DATABASE_FILE, MYSQL_USER, MYSQL_USER_FILE, MYSQL_PASSWORD, MYSQL_PASSWORD_FILE
    Access details to a MySQL database. See the `Docker image documentation <https://hub.docker.com/_/mysql>`__
    for more information.
 

@@ -295,7 +295,10 @@ def _set_db_setting(name: str, env_name: str, default: Optional[str] = None) -> 
 
 
 # use POSTGRES_* environment variables from the postgres Docker image
-if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql_psycopg2":
+if DATABASES["default"]["ENGINE"] in (
+    "django.db.backends.postgresql_psycopg2",
+    "django.db.backends.postgresql",
+):
     _set_db_setting("PASSWORD", "POSTGRES_PASSWORD", default="postgres")
     _set_db_setting("USER", "POSTGRES_USER", default="postgres")
     _set_db_setting("NAME", "POSTGRES_DB", default=DATABASES["default"].get("USER"))

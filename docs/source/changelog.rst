@@ -23,6 +23,8 @@ ChangeLog
   shown in the same way.
 * Fix NGINX configuration updates when using Docker Compose. The previous setup did not update configuration
   on update if parts of it changed.
+* Fix `POSTGRES_` configuration environment variables when using the default PostgreSQL backend. It previously
+  only worked for an old, outdated alias name.
 
 Backwards incompatible changes
 ==============================
