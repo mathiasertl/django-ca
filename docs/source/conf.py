@@ -82,6 +82,7 @@ extensions = [
     "numpydoc",
     "sphinx_jinja",
     "sphinxcontrib.openapi",
+    "sphinxcontrib.jquery",
     "django_ca_sphinx",
 ]
 
