@@ -72,12 +72,12 @@ bundled third-party Docker images.
 ====================================================== ===== =========== =====
 Version                                                Redis PostgreSQL  NGINX
 ====================================================== ===== =========== =====
+:download:`1.26.0 </_files/1.26.0/docker-compose.yml>` 7     12          1.24
 :download:`1.25.0 </_files/1.25.0/docker-compose.yml>` 7     12          1.24
 :download:`1.24.0 </_files/1.24.0/docker-compose.yml>` 7     12          1.23
 :download:`1.23.0 </_files/1.23.0/docker-compose.yml>` 7     12          1.23
 :download:`1.22.0 </_files/1.22.0/docker-compose.yml>` 7     12          1.20
 :download:`1.21.0 </_files/1.21.0/docker-compose.yml>` 6     12          1.20
-:download:`1.20.0 </_files/1.20.0/docker-compose.yml>` 6     12          1.20
 ====================================================== ===== =========== =====
 
 Add ``docker-compose.override.yml``
