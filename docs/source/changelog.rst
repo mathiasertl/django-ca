@@ -25,6 +25,7 @@ ChangeLog
   on update if parts of it changed.
 * Fix `POSTGRES_` configuration environment variables when using the default PostgreSQL backend. It previously
   only worked for an old, outdated alias name.
+* The admin interface can now be disabled via the :ref:`ENABLE_ADMIN <settings-enable-admin>` setting.
 
 Backwards incompatible changes
 ==============================

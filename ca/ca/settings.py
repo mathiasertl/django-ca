@@ -131,8 +131,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admin",
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
     "django_object_actions",
     "django_ca",
 ]
@@ -142,6 +140,9 @@ CA_ENABLE_REST_API = False
 
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver
 CA_ENABLE_CLICKJACKING_PROTECTION = True
+
+# Enable the admin interface
+ENABLE_ADMIN = True
 
 TEMPLATES = [
     {
@@ -253,7 +254,7 @@ for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJA
 
     if key == "ALLOWED_HOSTS":
         globals()[key] = value.split()
-    elif key in ("CA_USE_CELERY", "CA_ENABLE_ACME", "CA_ENABLE_REST_API"):
+    elif key in ("CA_USE_CELERY", "CA_ENABLE_ACME", "CA_ENABLE_REST_API", "ENABLE_ADMIN"):
         globals()[key] = _parse_bool(value)
     else:
         globals()[key] = value
@@ -275,6 +276,10 @@ if not SECRET_KEY:
     if SECRET_KEY_FILE and os.path.exists(SECRET_KEY_FILE):
         with open(SECRET_KEY_FILE, encoding="utf-8") as stream:
             SECRET_KEY = stream.read()
+
+# Remove django.contrib.admin if the admin interface is not enabled.
+if ENABLE_ADMIN is not True and "django.contrib.admin" in INSTALLED_APPS:
+    INSTALLED_APPS.remove("django.contrib.admin")
 
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:

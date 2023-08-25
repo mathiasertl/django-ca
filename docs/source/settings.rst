@@ -412,6 +412,13 @@ CA_CUSTOM_APPS
    The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
    override that setting instead.
 
+.. _settings-enable-admin:
+
+ENABLE_ADMIN
+   Default: ``True``
+
+   Set to ``False`` to disable the default Django admin interface. The interface is enabled by default.
+
 CA_ENABLE_CLICKJACKING_PROTECTION
    Default: ``True``
 
