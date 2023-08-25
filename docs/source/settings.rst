@@ -154,13 +154,15 @@ CA_DEFAULT_HOSTNAME
    setting *must not* include the protocol, as OCSP always uses HTTP (not HTTPS) and this setting might be
    used for other values in the future.
 
+   .. include:: include/change_settings_warning.rst
+
    .. WARNING::
 
       If you change this setting, CRLs configured to contain only CA revocation information (that is, to check
       if an intermediate CA *itself* was revoked) are no longer strictly valid. However, few if any
       implementations actually implement validation for this.
 
-      If you change this setting, you should configure django-ca to continue using the old URLs.
+      If you change this setting, you should configure django-ca to continue serving the old URLs.
 
    Example value: ``"ca.example.com"``.
 
@@ -425,6 +427,8 @@ CA_ENABLE_CLICKJACKING_PROTECTION
 
 CA_URL_PATH
    Default: ``django_ca/``
+
+   .. include:: include/change_settings_warning.rst
 
    To URL path to use for ACMEv2, OCSP, CRL and the API, but *not* the admin interface.
 

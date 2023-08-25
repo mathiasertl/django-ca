@@ -168,10 +168,9 @@ the symlink:
 And then simply create a minimal :file:`/etc/django-ca/10-localsettings.yaml` - but you can override any other
 setting here as well:
 
-.. literalinclude:: /_files/from-source/localsettings.yaml
-   :language: yaml
+.. template-include:: yaml include/quickstart_from_source/localsettings.yaml.jinja
    :caption: /etc/django-ca/10-localsettings.yaml
-   :name: /etc/django-ca/10-localsettings.yaml
+   :context: quickstart-from-source
 
 Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
 for more YAML configuration examples.

@@ -397,6 +397,8 @@ jinja_contexts = {
     "requirements-in-docker-compose": {},
     "requirements-from-source": {},
     "guide-source-where-to-go": {
+        "ca_default_hostname": _ca_default_hostname,
+        "ca_url_path": "",
         "shared": False,
         "guide": "from-source",
         "manage": "django-ca",
@@ -415,6 +417,7 @@ jinja_contexts = {
     },
     "quickstart-with-docker-compose": {
         "ca_default_hostname": _ca_default_hostname,
+        "ca_url_path": "",
         "postgres_host": "db",
         "postgres_password": "mysecretpassword",
         "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
@@ -425,8 +428,20 @@ jinja_contexts = {
         "validation": False,  # True when run as automatic validation
         "sphinx": True,  # Yes, we render for Sphinx documentation
     },
-    "guide-as-app-where-to-go": {"shared": False, "guide": "as-app", "manage": "manage.py"},
+    "quickstart-from-source": {
+        "ca_default_hostname": _ca_default_hostname,
+        "ca_url_path": "",
+    },
+    "guide-as-app-where-to-go": {
+        "ca_default_hostname": _ca_default_hostname,
+        "ca_url_path": "ca/",
+        "shared": False,
+        "guide": "as-app",
+        "manage": "manage.py",
+    },
     "guide-docker-compose-where-to-go": {
+        "ca_default_hostname": _ca_default_hostname,
+        "ca_url_path": "",
         "shared": True,
         "guide": "with-docker-compose",
         "manage": "docker compose exec backend manage",

@@ -196,9 +196,9 @@ def _test_connectivity(standalone_dir: Path) -> int:
             errors += 1
     if errors == 0:
         return ok("Tested connectivity.")
-    else:
-        err("Error testing network connectivity")
-        return errors
+
+    err("Error testing network connectivity")
+    return errors
 
 
 def _sign_certificates(csr: str) -> str:
@@ -241,6 +241,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements,t
     _tls_cert_root = "/etc/certs/"
     context = {
         "ca_default_hostname": _ca_default_hostname,
+        "ca_url_path": "",
         "postgres_host": "db",  # name in compose file
         "postgres_password": "random-password",
         "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
