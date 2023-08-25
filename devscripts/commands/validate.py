@@ -14,9 +14,11 @@
 
 import argparse
 import importlib
+import sys
 from types import ModuleType
 
 from devscripts.commands import DevCommand
+from devscripts.out import err
 
 
 class Command(DevCommand):
@@ -75,9 +77,9 @@ class Command(DevCommand):
         release = self.django_ca.__version__
 
         if args.subcommand == "docker":
-            submodule.validate(release=release, prune=args.docker_prune, build=args.build)
+            errors = submodule.validate(release=release, prune=args.docker_prune, build=args.build)
         elif args.subcommand == "docker-compose":
-            submodule.validate(
+            errors = submodule.validate(
                 release=release,
                 prune=args.docker_prune,
                 build=args.build,
@@ -86,6 +88,10 @@ class Command(DevCommand):
                 acme=args.acme,
             )
         elif args.subcommand == "wheel":
-            submodule.validate(release)
+            errors = submodule.validate(release)
         else:
-            submodule.validate()
+            errors = submodule.validate()
+
+        if errors:
+            err(f"{errors} found, see above log output for details.")
+            sys.exit(1)
