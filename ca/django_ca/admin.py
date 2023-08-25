@@ -878,8 +878,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         try:
             raw_csr = json.loads(request.body)["csr"]
             csr = x509.load_pem_x509_csr(raw_csr.encode("ascii"))
-        except Exception as ex:  # pylint: disable=broad-except; docs don't list possible exceptions
-            return JsonResponse({"message": str(ex)}, status=HTTPStatus.BAD_REQUEST)
+        except Exception:  # pylint: disable=broad-except; docs don't list possible exceptions
+            return JsonResponse({"message": "Cannot parse CSR."}, status=HTTPStatus.BAD_REQUEST)
 
         subject = [{"key": s.oid.dotted_string, "value": s.value} for s in csr.subject]
         return JsonResponse({"subject": subject})
