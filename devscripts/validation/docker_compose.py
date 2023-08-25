@@ -185,12 +185,20 @@ def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
 def _test_connectivity(standalone_dir: Path) -> int:
     standalone_dest = "/usr/src/django-ca/ca/"
     cwd_basename = os.path.basename(os.getcwd())
+    errors = 0
 
     for typ in ["backend", "frontend"]:
         container = f"{cwd_basename}-{typ}-1"
         docker_cp(str(standalone_dir / "test-connectivity.py"), container, standalone_dest)
-        _compose_exec(typ, "./test-connectivity.py")
-    return ok("Tested connectivity.")
+
+        proc = _compose_exec(typ, "./test-connectivity.py")
+        if proc.returncode != 0:
+            errors += 1
+    if errors == 0:
+        return ok("Tested connectivity.")
+    else:
+        err("Error testing network connectivity")
+        return errors
 
 
 def _sign_certificates(csr: str) -> str:
@@ -314,7 +322,9 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements,t
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
 
                 utils.run(["docker", "compose", "down"], capture_output=True)
-                utils.run(["docker", "compose", "up", "-d"], capture_output=True)
+                utils.run(
+                    ["docker", "compose", "up", "-d"], env={"DJANGO_CA_VERSION": release}, capture_output=True
+                )
                 ok("Restarted docker containers.")
 
                 # Finally some manual testing
@@ -478,7 +488,8 @@ def validate(
 ) -> int:
     """Validate the docker compose file (and the tutorial)."""
     print("Validating docker compose setup...")
-    build_docker_image(release=release, prune=prune, build=build)
+    tag = build_docker_image(release=release, prune=prune, build=build)
+    info(f"Using {tag} as docker image.")
 
     errors = 0
 
