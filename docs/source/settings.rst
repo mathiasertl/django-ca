@@ -398,7 +398,7 @@ Project settings
 ****************
 
 Project settings are available if you use the full **django-ca** project (including if you use the Docker
-container or via docker-compose). The settings are _not_ prefixed with ``CA_``, because they configure how
+container or via docker-compose). Most settings are _not_ prefixed with ``CA_``, because they configure how
 Django itself works.
 
 As any other setting, they can be set by using environment variables prefixed with ``DJANGO_CA_`` (Example: To
@@ -412,12 +412,6 @@ CA_CUSTOM_APPS
    The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
    override that setting instead.
 
-.. _settings-enable-admin:
-
-ENABLE_ADMIN
-   Default: ``True``
-
-   Set to ``False`` to disable the default Django admin interface. The interface is enabled by default.
 
 CA_ENABLE_CLICKJACKING_PROTECTION
    Default: ``True``
@@ -426,6 +420,23 @@ CA_ENABLE_CLICKJACKING_PROTECTION
    <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
    ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
    already set by the web server.
+
+.. _settings-ca-url-path:
+
+CA_URL_PATH
+   Default: ``django_ca/``
+
+   To URL path to use for ACMEv2, OCSP, CRL and the API, but *not* the admin interface.
+
+   If you use **django-ca** as app, the effect of this setting is achieved by the URL path given in your root
+   URL conf.
+
+.. _settings-enable-admin:
+
+ENABLE_ADMIN
+   Default: ``True``
+
+   Set to ``False`` to disable the default Django admin interface. The interface is enabled by default.
 
 .. _settings-log-format:
 

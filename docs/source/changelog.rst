@@ -25,6 +25,8 @@ ChangeLog
   on update if parts of it changed.
 * Fix `POSTGRES_` configuration environment variables when using the default PostgreSQL backend. It previously
   only worked for an old, outdated alias name.
+* The root URL path can now be configured via the :ref:`CA_URL_PATH <settings-ca-url-path>` setting. This
+  allows you to use shorter URLs (that is, without the ``django_ca/`` prefix).
 * The admin interface can now be disabled via the :ref:`ENABLE_ADMIN <settings-enable-admin>` setting.
 
 Backwards incompatible changes

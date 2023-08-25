@@ -20,7 +20,7 @@ from django.urls import include, path
 admin.autodiscover()
 
 urlpatterns = [
-    path("django_ca/", include("django_ca.urls")),
+    path(getattr(settings, "CA_URL_PATH", "django_ca/"), include("django_ca.urls")),
 ]
 
 if getattr(settings, "ENABLE_ADMIN", True):

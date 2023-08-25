@@ -48,6 +48,7 @@ if [ -n "${NGINX_TEMPLATE}" ]; then
         mkdir -p ${NGINX_TEMPLATE_DIR}/include.d/
         cp -pf "${NGINX_TEMPLATE_SOURCE}" ${NGINX_TEMPLATE_DIR}default.conf.template
         cp -pf /usr/src/django-ca/nginx/include.d/*.conf ${NGINX_TEMPLATE_DIR}/include.d/
+        cp -pf /usr/src/django-ca/nginx/include.d/*.conf.template ${NGINX_TEMPLATE_DIR}/include.d/
     else
         echo "${NGINX_TEMPLATE}: NGINX template not found."
         exit 1

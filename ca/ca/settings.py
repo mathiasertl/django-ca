@@ -136,6 +136,7 @@ INSTALLED_APPS = [
 ]
 CA_CUSTOM_APPS: List[str] = []
 CA_DEFAULT_HOSTNAME = None
+CA_URL_PATH = "django_ca/"
 CA_ENABLE_REST_API = False
 
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver

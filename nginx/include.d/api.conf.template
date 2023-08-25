@@ -1,0 +1,4 @@
+location /${DJANGO_CA_CA_URL_PATH}api/ {
+    uwsgi_pass django_ca_frontend;
+    include /etc/nginx/uwsgi_params;
+}
