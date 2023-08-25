@@ -213,10 +213,14 @@ document.addEventListener('DOMContentLoaded', function() {
     addModifiedEventListenersToAllRows();
 
     // Load the initial data into the profile subject input chapter
-    loadDataToSubjectInputChapter(
-        profile_subject_input_chapter,
-        profile_data[profile_select.value].subject.map(({oid: key, value}) => ({value, key}))
-    );
+    if (profile_data[profile_select.value].subject) {
+        loadDataToSubjectInputChapter(
+            profile_subject_input_chapter,
+            profile_data[profile_select.value].subject.map(({oid: key, value}) => ({value, key}))
+        );
+    } else {
+        loadDataToSubjectInputChapter(profile_subject_input_chapter, []);
+    }
 
     // If you copy the full subject from the profile, it is again "not modified" by definition
     profile_subject_input_chapter.querySelectorAll(".inline-text-button").forEach((button) => {
