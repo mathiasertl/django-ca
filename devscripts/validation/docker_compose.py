@@ -459,7 +459,13 @@ def test_acme(release: str, image: str) -> int:
 
 
 def validate(
-    release: str, prune: bool, build: bool, tutorial: bool = True, update: bool = True, acme: bool = True
+    release: str,
+    prune: bool,
+    build: bool,
+    tutorial: bool = True,
+    update: bool = True,
+    acme: bool = True,
+    acme_dist: Optional[str] = None,
 ) -> int:
     """Validate the docker compose file (and the tutorial)."""
     print("Validating docker compose setup...")
@@ -475,10 +481,13 @@ def validate(
 
     if acme and errors == 0:
         cfg = config.get_project_config()
-        for dist in cfg["debian-releases"]:
-            errors += test_acme(release, f"debian:{dist}")
-        for dist in cfg["ubuntu-releases"]:
-            errors += test_acme(release, f"ubuntu:{dist}")
+        if acme_dist is not None:
+            errors += test_acme(release, acme_dist)
+        else:
+            for dist in cfg["debian-releases"]:
+                errors += test_acme(release, f"debian:{dist}")
+            for dist in cfg["ubuntu-releases"]:
+                errors += test_acme(release, f"ubuntu:{dist}")
 
     return errors
 

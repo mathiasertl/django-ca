@@ -67,6 +67,9 @@ class Command(DevCommand):
         compose_parser.add_argument(
             "--no-acme", dest="acme", default=True, action="store_false", help="Do not test ACMEv2."
         )
+        compose_parser.add_argument(
+            "--acme-dist", metavar="DIST", help="Test ACMEv2 only with DIST (example: ubuntu:jammy)."
+        )
         subcommands.add_parser("wheel")
 
     def handle(self, args: argparse.Namespace) -> None:
@@ -86,6 +89,7 @@ class Command(DevCommand):
                 tutorial=args.tutorial,
                 update=args.update,
                 acme=args.acme,
+                acme_dist=args.acme_dist,
             )
         elif args.subcommand == "wheel":
             errors = submodule.validate(release)
