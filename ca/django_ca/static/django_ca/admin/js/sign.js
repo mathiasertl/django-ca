@@ -171,6 +171,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var csr_textarea = document.querySelector('.field-csr textarea');
     if (csr_textarea) { // not set on the resign form
         document.querySelector('.field-csr textarea').addEventListener('input', async (event) => {
+            // No data is fetched yet
+            event.target.dataset.fetched = "false"
+
             var input = event.target;
             var value = input.value.trim();
 
@@ -194,11 +197,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const csr_data = await csr_response.json();
             const subject = csr_data["subject"];
 
+
             // No need to do anything if the CSR has an empty subject
             if (subject.length === 0) {
                 csr_subject_input_chapter.querySelector(".no-csr").style.display = "none";
                 csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
                 csr_subject_input_chapter.querySelector(".no-content").style.display = "block";
+
+                // Set the data-fetched property, so that Selenium tests can wait for completion.
+                input.dataset.fetched = "true"
                 return;
             }
 
@@ -206,6 +213,9 @@ document.addEventListener('DOMContentLoaded', function() {
             csr_subject_input_chapter.querySelector(".no-csr").style.display = "none";
             csr_subject_input_chapter.querySelector(".has-content").style.display = "block";
             csr_subject_input_chapter.querySelector(".no-content").style.display = "none";
+
+            // Set the data-fetched property, so that Selenium tests can wait for completion.
+            input.dataset.fetched = "true"
         });
     }
 

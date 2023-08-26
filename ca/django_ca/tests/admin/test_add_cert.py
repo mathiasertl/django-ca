@@ -35,6 +35,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.wait import WebDriverWait
 from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
 from django_ca import ca_settings
@@ -1412,6 +1413,12 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
         # send all but the first character to the CSR input field
         self.find("textarea#id_csr").send_keys(csr_pem)
+
+        # Wait for the CSR results to be fetched
+        WebDriverWait(self.selenium, 2, poll_frequency=0.1).until(
+            lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
+            "data-fetched for CSR was not set.",
+        )
 
         # Check that the right parts of the CSR chapter is displayed
         self.assertIs(no_csr.is_displayed(), False)

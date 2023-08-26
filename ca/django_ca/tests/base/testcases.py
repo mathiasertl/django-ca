@@ -78,9 +78,9 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
         cls.wait_for_page_load()
 
     @classmethod
-    def wait_for_page_load(cls, wait: int = 2) -> None:
+    def wait_for_page_load(cls, timeout: int = 2, poll_frequency: float = 0.1) -> None:
         """Wait for the page to load."""
-        WebDriverWait(cls.selenium, wait).until(
+        WebDriverWait(cls.selenium, timeout, poll_frequency=poll_frequency).until(
             lambda driver: driver.find_element(by=By.TAG_NAME, value="body")
         )
 
