@@ -13,7 +13,7 @@ ChangeLog
 Backwards incompatible changes
 ==============================
 
-* Drop support for ``cryptography==40.x``, ``acme==1.25.0`` and ``celery==5.2.x``.
+* Drop support for ``Django==4.1``, ``cryptography==40.x``, ``acme==1.25.0`` and ``celery==5.2.x``.
 
 .. _changelog-1.26.0:
 

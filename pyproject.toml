@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.8.17", "3.9.17", "3.10.12", "3.11.4"]
 # https://www.djangoproject.com/download/
-django = ["3.2.20", "4.1.10", "4.2.4"]
+django = ["3.2.20", "4.2.4"]
 cryptography = ["41.0.3"]
 acme = ["2.6.0"]
 josepy = ["1.13.0"]
