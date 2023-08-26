@@ -38,7 +38,6 @@ CANONICAL_PYPI_NAMES = {
     "acme": "acme",
     "cryptography": "cryptography",
     "django": "Django",
-    "josepy": "josepy",
 }
 
 TOX_ENV_SHORT_NAMES = {
@@ -129,12 +128,11 @@ def check_tox(project_config: Dict[str, Any]) -> int:
     # Check that there is a testenv listing all versions
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}-josepy{%s}" % (
+    expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
         ",".join(project_config["django-map"]),
         ",".join(project_config["cryptography-map"]),
         ",".join(project_config["acme-map"]),
-        ",".join(project_config["josepy-map"]),
     )
 
     # pylint: enable=consider-using-f-string
@@ -143,7 +141,7 @@ def check_tox(project_config: Dict[str, Any]) -> int:
         errors += err(f"Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
-    for component in ["django", "cryptography", "acme", "josepy"]:
+    for component in ["django", "cryptography", "acme"]:
         # First, check if there are any leftover conditional settings for this component
         short_name = TOX_ENV_SHORT_NAMES.get(component, component)
         errors += simple_diff(

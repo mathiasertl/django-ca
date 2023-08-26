@@ -61,8 +61,6 @@ def get_project_config() -> Dict[str, Any]:
     cfg["cryptography-major"] = [minor_to_major(cgver) for cgver in cfg["cryptography"]]
     cfg["acme-map"] = {minor_to_major(acmever): acmever for acmever in cfg["acme"]}
     cfg["acme-major"] = [minor_to_major(acmever) for acmever in cfg["acme"]]
-    cfg["josepy-map"] = {minor_to_major(josepyver): josepyver for josepyver in cfg["josepy"]}
-    cfg["josepy-major"] = [minor_to_major(josepyver) for josepyver in cfg["josepy"]]
 
     cfg["docker"] = full_config["django-ca"].setdefault("docker", {})
     _alpine_images = cfg["docker"].setdefault("alpine-images", [])
