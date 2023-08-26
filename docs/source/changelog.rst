@@ -4,6 +4,18 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.27.0:
+
+************
+1.27.0 (TBR)
+************
+
+Backwards incompatible changes
+==============================
+
+* Drop support for ``acme==1.25.0``.
+* Drop support for ``celery==5.2.x``.
+
 .. _changelog-1.26.0:
 
 *******************
