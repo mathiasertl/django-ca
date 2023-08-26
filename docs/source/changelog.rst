@@ -23,7 +23,7 @@ ChangeLog
   shown in the same way.
 * Fix NGINX configuration updates when using Docker Compose. The previous setup did not update configuration
   on update if parts of it changed.
-* Fix `POSTGRES_` configuration environment variables when using the default PostgreSQL backend. It previously
+* Fix ``POSTGRES_`` configuration environment variables when using the default PostgreSQL backend. It previously
   only worked for an old, outdated alias name.
 * The root URL path can now be configured via the :ref:`CA_URL_PATH <settings-ca-url-path>` setting. This
   allows you to use shorter URLs (that is, without the ``django_ca/`` prefix).
@@ -38,7 +38,7 @@ Backwards incompatible changes
   ``EC`` and ``Ed25519`` instead. The old names where deprecated since 1.23.0.
 * Removed support for the old ``--pathlen`` and ``--no-pathlen`` options for :command:`manage.py init_ca` in
   favor of ``--path-length`` and ``-no-path-length``. The old options where deprecated since 1.24.0.
-* Using comma-separated lists for the `--key-usage``, ``--extended-key-usage`` and ``--tls-feature``
+* Using comma-separated lists for the ``--key-usage``, ``--extended-key-usage`` and ``--tls-feature``
   command-line options was removed. The old format was deprecated since 1.24.0.
 * Remove support for `HTTP Public Key Pinning <https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning>`_, as it
   is obsolete.
