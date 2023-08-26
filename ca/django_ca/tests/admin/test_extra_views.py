@@ -25,7 +25,6 @@ from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPri
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
-from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -95,6 +94,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"key": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
             {"key": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
             {"key": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
+            {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"},
             {"key": NameOID.INN.dotted_string, "value": "test-inn"},
             {"key": NameOID.JURISDICTION_COUNTRY_NAME.dotted_string, "value": "AT"},
             {
@@ -122,8 +122,6 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"key": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
             {"key": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "test-x500UniqueIdentifier"},
         ]
-        if settings.CRYPTOGRAPHY_VERSION >= (41, 0):  # pragma: only cg>=41.0
-            expected.insert(8, {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"})
 
         self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})
 

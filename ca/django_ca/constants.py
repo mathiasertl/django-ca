@@ -338,37 +338,35 @@ LOG_ENTRY_TYPE_KEYS = MappingProxyType(
 #: Map OID objects to IDs used in subject strings
 NAME_OID_NAMES = MappingProxyType(
     {
-        **{
-            NameOID.BUSINESS_CATEGORY: "businessCategory",
-            NameOID.COMMON_NAME: "commonName",
-            NameOID.COUNTRY_NAME: "countryName",
-            NameOID.DN_QUALIFIER: "dnQualifier",
-            NameOID.DOMAIN_COMPONENT: "domainComponent",
-            NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
-            NameOID.GENERATION_QUALIFIER: "generationQualifier",
-            NameOID.GIVEN_NAME: "givenName",
-            NameOID.INN: "inn",  # undocumented
-            NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
-            NameOID.JURISDICTION_LOCALITY_NAME: "jurisdictionLocalityName",
-            NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
-            NameOID.LOCALITY_NAME: "localityName",
-            NameOID.OGRN: "ogrn",  # undocumented
-            NameOID.ORGANIZATIONAL_UNIT_NAME: "organizationalUnitName",
-            NameOID.ORGANIZATION_NAME: "organizationName",
-            NameOID.POSTAL_ADDRESS: "postalAddress",
-            NameOID.POSTAL_CODE: "postalCode",
-            NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519
-            NameOID.SERIAL_NUMBER: "serialNumber",
-            NameOID.SNILS: "snils",  # undocumented
-            NameOID.STATE_OR_PROVINCE_NAME: "stateOrProvinceName",
-            NameOID.STREET_ADDRESS: "street",
-            NameOID.SURNAME: "surname",
-            NameOID.TITLE: "title",
-            NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
-            NameOID.USER_ID: "uid",
-            NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
-        },
-        **({NameOID.INITIALS: "initials"} if hasattr(NameOID, "INITIALS") else {}),  # added in cg==41
+        NameOID.BUSINESS_CATEGORY: "businessCategory",
+        NameOID.COMMON_NAME: "commonName",
+        NameOID.COUNTRY_NAME: "countryName",
+        NameOID.DN_QUALIFIER: "dnQualifier",
+        NameOID.DOMAIN_COMPONENT: "domainComponent",
+        NameOID.EMAIL_ADDRESS: "emailAddress",  # not specified in RFC 4519
+        NameOID.GENERATION_QUALIFIER: "generationQualifier",
+        NameOID.GIVEN_NAME: "givenName",
+        NameOID.INITIALS: "initials",  # new in cryptography==41
+        NameOID.INN: "inn",  # undocumented
+        NameOID.JURISDICTION_COUNTRY_NAME: "jurisdictionCountryName",
+        NameOID.JURISDICTION_LOCALITY_NAME: "jurisdictionLocalityName",
+        NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: "jurisdictionStateOrProvinceName",
+        NameOID.LOCALITY_NAME: "localityName",
+        NameOID.OGRN: "ogrn",  # undocumented
+        NameOID.ORGANIZATIONAL_UNIT_NAME: "organizationalUnitName",
+        NameOID.ORGANIZATION_NAME: "organizationName",
+        NameOID.POSTAL_ADDRESS: "postalAddress",
+        NameOID.POSTAL_CODE: "postalCode",
+        NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519
+        NameOID.SERIAL_NUMBER: "serialNumber",
+        NameOID.SNILS: "snils",  # undocumented
+        NameOID.STATE_OR_PROVINCE_NAME: "stateOrProvinceName",
+        NameOID.STREET_ADDRESS: "street",
+        NameOID.SURNAME: "surname",
+        NameOID.TITLE: "title",
+        NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
+        NameOID.USER_ID: "uid",
+        NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
     }
 )
 
