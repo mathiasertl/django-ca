@@ -13,6 +13,11 @@ ChangeLog
 Backwards incompatible changes
 ==============================
 
+* Removed support for the old ``--issuer-url``, ``--issuer-alt-name``, ``--crl-url`` and ``--ocsp-url``
+  options for :command:`manage.py init_ca`, :command:`manage.py edit_ca` and :command:`manage.py import_ca` in
+  favor of ``--sign-ca-issuer``, ``--sign-issuer-alternative-name``, ``--sign-crl-full-name`` and
+  ``--sign-ocsp-responder``.
+* Support for non-standard algorithm names in profile settings was removed.
 * Drop support for ``Django==4.1``, ``cryptography==40.x``, ``acme==1.25.0`` and ``celery==5.2.x``.
 
 .. _changelog-1.26.0:
@@ -34,8 +39,8 @@ Backwards incompatible changes
   shown in the same way.
 * Fix NGINX configuration updates when using Docker Compose. The previous setup did not update configuration
   on update if parts of it changed.
-* Fix ``POSTGRES_`` configuration environment variables when using the default PostgreSQL backend. It previously
-  only worked for an old, outdated alias name.
+* Fix ``POSTGRES_`` configuration environment variables when using the default PostgreSQL backend. It
+  previously only worked for an old, outdated alias name.
 * The root URL path can now be configured via the :ref:`CA_URL_PATH <settings-ca-url-path>` setting. This
   allows you to use shorter URLs (that is, without the ``django_ca/`` prefix).
 * The admin interface can now be disabled by setting the new :ref:`ENABLE_ADMIN <settings-enable-admin>`

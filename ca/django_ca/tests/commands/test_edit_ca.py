@@ -65,10 +65,10 @@ class EditCATestCase(TestCaseMixin, TestCase):
             [
                 "edit_ca",
                 self.ca.serial,
-                f"--issuer-url={self.issuer}",
-                f"--issuer-alt-name={self.ian}",
-                f"--ocsp-url={self.ocsp_url}",
-                f"--crl-url={crl}",
+                f"--sign-ca-issue={self.issuer}",
+                f"--sign-issuer-alternative-name={self.ian}",
+                f"--sign-ocsp-responder={self.ocsp_url}",
+                f"--sign-crl-full-name={crl}",
                 # Certificate Policies extension
                 "--sign-policy-identifier=1.2.3",
                 "--sign-certification-practice-statement=https://cps.example.com",
@@ -214,7 +214,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
         ca.save()
 
         # we can also change nothing at all
-        stdout, stderr = self.cmd("edit_ca", self.ca.serial, enabled=True, crl_url=None)
+        stdout, stderr = self.cmd("edit_ca", self.ca.serial, enabled=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 

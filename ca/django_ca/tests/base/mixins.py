@@ -52,7 +52,6 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from django_ca import ca_settings, constants
 from django_ca.constants import ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA127Warning
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import (
@@ -531,12 +530,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)
         ):
             self.assertTrue(key.key_size > 0)
-
-    @contextmanager
-    def assertRemovedIn127Warning(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
-        """Assert that a RemovedInDjangoCA127Warning is thrown."""
-        with self.assertWarnsRegex(RemovedInDjangoCA127Warning, msg):
-            yield
 
     def assertRevoked(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, reason: Optional[str] = None, compromised: Optional[datetime] = None

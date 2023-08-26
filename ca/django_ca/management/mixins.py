@@ -294,38 +294,30 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         )
         group.add_argument(
             "--sign-ca-issuer",
-            "--issuer-url",  # pragma: only django-ca<1.27
             metavar="NAME",
             action=actions.URLAction,
             default="",
-            help="URL to the certificate of your CA (in DER format). --issuer-url is a legacy option name "
-            "and will be removed in django-ca 1.27.",
+            help="URL to the certificate of your CA (in DER format).",
         )
         group.add_argument(
             "--sign-issuer-alternative-name",
-            "--issuer-alt-name",
             metavar="NAME",
             action=actions.AlternativeNameLegacyAction,
             extension_type=x509.IssuerAlternativeName,
-            help="URL to the homepage of your CA. --issuer-alt-name is a legacy option name "
-            "and will be removed in django-ca 1.27.",
+            help="URL to the homepage of your CA.",
         )
         group.add_argument(
             "--sign-crl-full-name",
-            "--crl-url",
             action=actions.MultipleURLAction,
             metavar="NAME",
-            help="URL to a certificate revocation list. Can be given multiple times. --crl-url is a legacy "
-            "option name and will be removed in django-ca 1.27.",
+            help="URL to a certificate revocation list.",
         )
         group.add_argument(
             "--sign-ocsp-responder",
-            "--ocsp-url",
             metavar="NAME",
             default="",
             action=actions.URLAction,
-            help="URL of an OCSP responder. --ocsp-url is a legacy option name and will be removed in"
-            "django-ca 1.27.",
+            help="URL of an OCSP responder.",
         )
         self.add_certificate_policies_group(  # type: ignore[attr-defined]  # defined in BaseCommand
             group, "foo", dest="sign_certificate_policies", allow_any_policy=True, prefix="sign-"

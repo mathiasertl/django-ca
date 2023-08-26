@@ -766,6 +766,11 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             self.create_cert(prof, ca, csr)
         self.assertEqual(pre.call_count, 0)
 
+    def test_unknown_signature_hash_algorithm(self) -> None:
+        """Test passing an unknown hash algorithm."""
+        with self.assertRaisesRegex(ValueError, r"^foo: Unknown hash algorithm\.$"):
+            Profile("wrong-algorithm", algorithm="foo")
+
     @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
     def test_no_valid_subject(self) -> None:
         """Test case where no subject at all could be determined."""
@@ -774,22 +779,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         prof = Profile("test")
         with self.assertRaisesRegex(ValueError, r"^Cannot determine subject for certificate\.$"):
             self.create_cert(prof, ca, csr)
-
-    def test_deprecated_hash_algorithms(self) -> None:
-        """Test deprecated hash algorithm values."""
-
-        msg = (
-            r"^Support for non-standard hash algorithm names is deprecated and will be removed in "
-            r"django-ca 1\.27\.0\.$"
-        )
-        with self.assertRemovedIn127Warning(msg):
-            Profile("sha256", algorithm="sha256")
-
-        with self.assertRemovedIn127Warning(msg):
-            Profile("sha256", algorithm="SHA256")
-
-        with self.assertRaisesRegex(ValueError, r"^Unknown hash algorithm: foo$"):
-            Profile("sha256", algorithm="foo")
 
     def test_str(self) -> None:
         """Test str()."""

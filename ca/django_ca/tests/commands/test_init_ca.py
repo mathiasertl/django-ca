@@ -216,10 +216,10 @@ class InitCATest(TestCaseMixin, TestCase):
             "--algorithm=SHA-256",  # hashes.SHA256(),
             "--key-type=EC",
             "--expires=720",
-            "--issuer-url=http://issuer.ca.example.com",
-            "--issuer-alt-name=http://ian.ca.example.com",
-            "--crl-url=http://crl.example.com",
-            "--ocsp-url=http://ocsp.example.com",
+            "--sign-ca-issuer=http://issuer.ca.example.com",
+            "--sign-issuer-alternative-name=http://ian.ca.example.com",
+            "--sign-crl-full-name=http://crl.example.com",
+            "--sign-ocsp-responder=http://ocsp.example.com",
             f"--caa={caa}",
             f"--website={website}",
             f"--tos={tos}",
@@ -570,7 +570,10 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test that we can set multiple IssuerAlternativeName values."""
         name = "test_multiple_ians"
         ca = self.init_ca_e2e(
-            name, "--issuer-alt-name=example.com", "--issuer-alt-name=https://example.com", f"/CN={name}"
+            name,
+            "--sign-issuer-alternative-name=example.com",
+            "--sign-issuer-alternative-name=https://example.com",
+            f"/CN={name}",
         )
         self.assertEqual(ca.issuer_alt_name, "DNS:example.com,URI:https://example.com")
 
