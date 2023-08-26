@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.26.0:
 
-************
-1.26.0 (TBR)
-************
+*******************
+1.26.0 (2023-08-26)
+*******************
 
 * Add experimental support for a :doc:`REST API <rest_api>` (fixes `issue 107
   <https://github.com/mathiasertl/django-ca/issues/107>`_).
@@ -27,7 +27,8 @@ ChangeLog
   only worked for an old, outdated alias name.
 * The root URL path can now be configured via the :ref:`CA_URL_PATH <settings-ca-url-path>` setting. This
   allows you to use shorter URLs (that is, without the ``django_ca/`` prefix).
-* The admin interface can now be disabled via the :ref:`ENABLE_ADMIN <settings-enable-admin>` setting.
+* The admin interface can now be disabled by setting the new :ref:`ENABLE_ADMIN <settings-enable-admin>`
+  setting to ``False``.
 
 Backwards incompatible changes
 ==============================
