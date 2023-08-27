@@ -1,6 +1,6 @@
 # Dockerfile to test wheels in an isolated environment
 
-ARG IMAGE=python:3.10
+ARG IMAGE
 FROM $IMAGE as build
 WORKDIR /work/
 
@@ -22,8 +22,12 @@ RUN python -m build
 # Do a twine check (Note that this is extremely minimal)
 RUN twine check --strict dist/*
 
-FROM $IMAGE
+FROM $IMAGE as test
 WORKDIR /work/
 ADD setup.cfg ./
 ADD devscripts/standalone/test-imports.py devscripts/standalone/test-imports.py
 COPY --from=build /work/dist/* dist/
+
+FROM $IMAGE
+COPY --from=build /work/dist/* /work/dist/
+CMD cp /work/dist/* /dist/

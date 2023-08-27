@@ -80,6 +80,7 @@ def validate(release: str) -> None:
             path=str(config.ROOT_DIR),
             dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel"),
             buildargs={"IMAGE": f"python:{pyver}"},
+            target="test",
         )
 
         # get cache dir in image

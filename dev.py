@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser(description="Helper-script for various tasks du
 parser.add_argument("-q", "--quiet", default=False, action="store_true", help="Do not display commands.")
 commands = parser.add_subparsers(dest="command")
 
+add_command(commands, "build")
 add_command(commands, "clean")
 add_command(commands, "code-quality")
 add_command(commands, "coverage")
