@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 import yaml
-from setuptools.config.setupcfg import read_configuration
+from setuptools.config.pyprojecttoml import read_configuration
 from termcolor import colored
 
 from devscripts import config
@@ -168,16 +168,18 @@ def check_tox(project_config: Dict[str, Any]) -> int:
     return errors
 
 
-def check_setup_cfg(project_config: Dict[str, Any]) -> int:
+def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
     """Check setup.cfg"""
-    check_path("setup.cfg")
+    check_path("pyproject.toml")
     errors = 0
 
-    setup_config = read_configuration(os.path.join(config.ROOT_DIR, "setup.cfg"))
+    project_configuration = read_configuration(os.path.join(config.ROOT_DIR, "pyproject.toml"))
 
     # parse data from setup.cfg
-    classifiers = setup_config["metadata"]["classifiers"]
-    install_requires = setup_config["options"]["install_requires"]
+    classifiers = project_configuration["project"]["classifiers"]
+
+    # Get requirements - split everything after the first comma, to allow excluding single versions
+    install_requires = [s.split(",")[0] for s in project_configuration["project"]["dependencies"]]
 
     # validate that we have the proper language/django classifiers
     pyver_cfs = [
@@ -198,7 +200,7 @@ def check_setup_cfg(project_config: Dict[str, Any]) -> int:
             errors += err(f"Django {djver} classifier not found.")
 
     expected_py_req = f">={project_config['python-major'][0]}"
-    actual_py_req = setup_config["options"]["python_requires"]
+    actual_py_req = project_configuration["project"]["requires-python"]
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
@@ -206,9 +208,13 @@ def check_setup_cfg(project_config: Dict[str, Any]) -> int:
     if expected_django_req not in install_requires:
         errors += err(f"{expected_django_req}: Expected Django requirement not found.")
 
-    # expected_cg_req = f"cryptography>={project_config['cryptography-major'][0]}"
-    # if expected_cg_req not in install_requires:
-    #    errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
+    expected_cg_req = f"cryptography>={project_config['cryptography-major'][0]}"
+    if expected_cg_req not in install_requires:
+        errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
+
+    expected_acme_req = f"acme>={project_config['acme'][0]}"
+    if expected_acme_req not in install_requires:
+        errors += err(f"{expected_acme_req}: Expected acme requirement not found.")
 
     return errors
 
@@ -270,7 +276,7 @@ def validate_main() -> int:
 
     total_errors = check(check_github_actions_tests, project_config)
     total_errors += check(check_tox, project_config)
-    total_errors += check(check_setup_cfg, project_config)
+    total_errors += check(check_pyproject_toml, project_config)
     total_errors += check(check_test_settings, project_config)
     total_errors += check(check_intro, project_config)
     total_errors += check(check_readme, project_config)

@@ -33,10 +33,7 @@ import argparse
 import os
 import sys
 
-try:
-    from setuptools.config.setupcfg import read_configuration
-except ImportError:  # pragma: only py<3.8
-    from setuptools.config import read_configuration
+from setuptools.config.pyprojecttoml import read_configuration
 
 import django
 from django.conf import settings
@@ -47,8 +44,8 @@ SRC_DIR = os.path.join(ROOT_DIR, "ca")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-setup_cfg = read_configuration(os.path.join(ROOT_DIR, "setup.cfg"))
-ALL_EXTRAS = list(setup_cfg["options"]["extras_require"])
+configuration = read_configuration(os.path.join(ROOT_DIR, "pyproject.toml"))
+ALL_EXTRAS = list(configuration["project"]["optional-dependencies"])
 
 parser = argparse.ArgumentParser("Test imports.")
 extra_group = parser.add_mutually_exclusive_group()
@@ -153,16 +150,24 @@ if args.extra:
 else:
     print("No extras checked.")
 
-if "celery" in args.extra:
-    from django_ca import tasks
-if "redis" in args.extra:
-    import hiredis
-    import redis
-if "mysql" in args.extra:
-    import MySQLdb
-if "postgres" in args.extra:
-    try:
-        import psycopg
-        import psycopg_c
-    except ImportError:
-        import psycopg2
+for extra in args.extra:
+    if extra == "api":
+        from django_ca.api import endpoints
+    elif extra == "celery":
+        from django_ca import tasks
+    elif extra == "redis":
+        import hiredis
+        import redis
+    elif extra == "mysql":
+        import MySQLdb
+    elif extra in ("postgres", "psycopg3"):
+        # Temporary situation until psycopg3 becomes mandatory
+        try:
+            import psycopg
+            import psycopg_c
+        except ImportError:
+            import psycopg2
+    elif extra == "yaml":
+        from yaml import safe_load
+    else:
+        raise ValueError(f"{extra}: Unknown extra encountered.")

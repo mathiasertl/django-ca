@@ -1,6 +1,5 @@
 build==0.10.0
 twine==4.0.2
 wheel==0.41.2
-# >=39.2: version added in setup.cfg
-# >= 61: Add setuptools.config.setupcfg.read_configuration
-setuptools>=61
+# See pyproject.toml for reasoning for required minimum version
+setuptools>=68.1

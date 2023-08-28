@@ -19,7 +19,7 @@ import time
 from typing import Any
 
 import docker
-from setuptools.config.setupcfg import read_configuration
+from setuptools.config.pyprojecttoml import read_configuration
 
 from devscripts import config, utils
 from devscripts.out import info
@@ -37,6 +37,8 @@ def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subpr
 
     commands = [
         "python -m venv /tmp/venv",
+        # NOTE: We require at least setuptools>=68.1 for reading package configuration from pyproject.toml
+        f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} -U pip setuptools>=68.1",
         f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} {wheel}",
         f"/tmp/venv/bin/python {command}",
     ]
@@ -70,7 +72,7 @@ def validate(release: str) -> None:
     host_pip_cache = subprocess.run(
         ["pip", "cache", "dir"], check=True, capture_output=True, text=True
     ).stdout.strip()
-    setup_cfg = read_configuration(config.ROOT_DIR / "setup.cfg")
+    project_configuration = read_configuration(config.ROOT_DIR / "pyproject.toml")
 
     for pyver in project_config["python-major"]:
         info(f"Testing with Python {pyver}.", indent="  ")
@@ -86,7 +88,7 @@ def validate(release: str) -> None:
         # get cache dir in image
         run(release, image.id, host_pip_cache)
 
-        for extra in list(setup_cfg["options"]["extras_require"]):
+        for extra in list(project_configuration["project"]["optional-dependencies"]):
             info(f"Test extra: {extra}", indent="    ")
             run(release, image.id, host_pip_cache, extra=extra)
 

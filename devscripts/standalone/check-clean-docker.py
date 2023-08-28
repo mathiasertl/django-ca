@@ -53,7 +53,6 @@ patterns = [
     "MANIFEST*",
     "pyproject.toml",
     "requirements*",
-    "setup.cfg",
     "setup.py",
     "tox.ini",
 ]

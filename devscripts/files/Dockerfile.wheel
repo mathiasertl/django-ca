@@ -12,7 +12,7 @@ ADD requirements/requirements-dist.txt ./
 RUN pip install -r requirements-dist.txt
 
 # Add files necessary to build the wheel
-ADD LICENSE MANIFEST.in README.md setup.cfg setup.py pyproject.toml ./
+ADD LICENSE MANIFEST.in README.md setup.py pyproject.toml ./
 ADD docs/source/intro.rst docs/source/
 ADD ca/django_ca ca/django_ca
 
@@ -24,7 +24,7 @@ RUN twine check --strict dist/*
 
 FROM $IMAGE as test
 WORKDIR /work/
-ADD setup.cfg ./
+ADD pyproject.toml ./
 ADD devscripts/standalone/test-imports.py devscripts/standalone/test-imports.py
 COPY --from=build /work/dist/* dist/
 

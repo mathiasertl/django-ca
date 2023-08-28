@@ -23,7 +23,7 @@ COPY requirements/ requirements/
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
 COPY ca/django_ca/__init__.py ca/django_ca/
-COPY setup.cfg setup.py pyproject.toml ./
+COPY pyproject.toml ./
 COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
@@ -87,12 +87,11 @@ RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localse
 # Test that imports are working
 RUN cp -a /install/* /usr/local/
 RUN python devscripts/standalone/clean.py
-COPY setup.cfg ./
-RUN DJANGO_CA_SECRET_KEY=dummy devscripts/standalone/test-imports.py
+RUN DJANGO_CA_SECRET_KEY=dummy devscripts/standalone/test-imports.py --all-extras
 
 # Finally, clean up to minimize the image
 RUN python devscripts/standalone/clean.py
-RUN rm -rf setup.py setup.cfg pyproject.toml docs/
+RUN rm -rf pyproject.toml docs/
 RUN python devscripts/standalone/check-clean-docker.py --ignore-devscripts
 RUN rm -rf devscripts/
 

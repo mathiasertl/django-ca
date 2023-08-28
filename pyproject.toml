@@ -1,8 +1,8 @@
 [build-system]
 # Minimum requirements for the build system to execute (PEP-518)
-# >=39.2: version added in setup.cfg
-# >= 61: Add setuptools.config.setupcfg.read_configuration
-requires = ["setuptools>=61", "wheel"]
+# >= 61: Add pyproject.toml support and setuptools.config.setupcfg.read_configuration
+# >= 68.1: "Promote pyproject.toml’s [tool.setuptools] out of beta." in the ChangeLog
+requires = ["setuptools>=68.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [django-ca.release]
@@ -53,6 +53,77 @@ standalone-scripts = [
     "devscripts/standalone/clean.py",
     "devscripts/standalone/check-clean-docker.py",
 ]
+
+[project]
+# Valid keys: https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+name = "django-ca"
+authors = [
+    {name = "Mathias Ertl", email = "mati@er.tl"},
+]
+description = "A Django app providing a TLS certificate authority."
+# "
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+
+# Dynamic metadata, further specified in the tool.setuptools.dynamic section below
+dynamic = ["version", "readme"]
+
+# Dependency information
+requires-python = ">=3.8"
+dependencies = [
+    "Django>=3.2,!=4.0.*,!=4.1.*",
+    "acme>=2.6.0",
+    "asn1crypto>=1.5",
+    "cryptography>=41.0",
+    "django-object-actions>=4.0.0",
+    "dnspython>=2.3",
+    "idna>=3.2",
+    "josepy>=1.13.0",
+    "packaging",
+    "requests",
+]
+
+[project.optional-dependencies]
+api = ["django-ninja==0.22.2"]
+redis = [
+    "hiredis>=2.0.0",
+    "redis>=4.3",
+]
+celery = ["celery>=5.3"]
+mysql = [
+    # https://github.com/PyMySQL/mysqlclient/issues/620
+    "mysqlclient<2.2"
+]
+postgres = ["psycopg2>2.8"]
+psycopg3 = [
+    "psycopg[c,pool]",
+    "Django>=4.2",
+]
+yaml = ["PyYAML>=6.0.0"]
+
+[project.urls]
+Homepage = "https://github.com/mathiasertl/django-ca/"
+Documentation = "https://django-ca.readthedocs.io/"
+Source = "https://github.com/mathiasertl/django-ca/"
+Issues = "https://github.com/mathiasertl/django-ca/issues"
+Changelog = "https://django-ca.readthedocs.io/en/latest/changelog.html"
+
 
 [tool.black]
 line-length = 110
@@ -300,3 +371,14 @@ django = ["django"]
 django-addon = ["django_object_actions"]
 crypto = ["cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
 test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock", "webtest"]
+
+[tool.setuptools.dynamic]
+version = {attr = "django_ca.VERSION"}
+# NOTE: readme is equivalent to long_description in setup.cfg
+readme = {file = ["docs/source/intro.rst"], content-type = "text/x-rst"}
+
+[tool.setuptools.packages.find]
+where = ["ca"]
+include = ["django_ca*"]
+exclude = ["django_ca.tests*"]
+
