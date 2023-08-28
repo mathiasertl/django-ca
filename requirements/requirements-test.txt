@@ -2,8 +2,6 @@
 PyVirtualDisplay==3.0
 django-webtest==1.9.10
 freezegun==1.2.2
-ocspbuilder==0.10.2
-oscrypto==1.3.0
-pyOpenSSL>=19
+pyOpenSSL>=23
 pyrfc3339==1.1
 requests-mock==1.11.0

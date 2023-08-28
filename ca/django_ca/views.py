@@ -296,7 +296,7 @@ class OCSPView(View):
             cert=cert.pub.loaded,
             issuer=ca.pub.loaded,
             # The algorithm used must be the same as in the request, or "openssl ocsp" won't be able to
-            # determine the status
+            # determine the status (verified: NOT the hash algorithm of the requested certificate).
             algorithm=ocsp_req.hash_algorithm,
             cert_status=status,
             this_update=now,
@@ -305,8 +305,7 @@ class OCSPView(View):
             revocation_reason=cert.get_revocation_reason(),
         ).responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
 
-        # Add the responder cert to the response, necessary because we (so far) always use delegate
-        # certificates
+        # Add the responder/delegate certificate to the response
         builder = builder.certificates([responder_cert])
 
         # Add OCSP nonce if present
@@ -316,7 +315,12 @@ class OCSPView(View):
         except ExtensionNotFound:
             pass
 
+        # The hash algorithm may be different from the signature hash algorithm of the responder certificate,
+        # but must be None for Ed448/Ed25519 certificates. Since delegate certificates are ephemeral anyway,
+        # configuring the hash algorithm is not supported, instead the user is expected to generate new keys
+        # with a different private key type or hash algorithm if desired.
         response = builder.sign(responder_key, responder_cert.signature_hash_algorithm)
+
         return self.http_response(response.public_bytes(Encoding.DER))
 
 
