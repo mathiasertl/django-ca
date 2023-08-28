@@ -39,7 +39,7 @@ class CertificatePoliciesIsSimpleTestCase(TestCase):
     def policy_information(
         self,
         *policy_qualifiers: Union[str, x509.UserNotice],
-        policy_identifier: x509.ObjectIdentifier = CertificatePoliciesOID.ANY_POLICY
+        policy_identifier: x509.ObjectIdentifier = CertificatePoliciesOID.ANY_POLICY,
     ) -> x509.PolicyInformation:
         """Create a Policy Information object from the given policy qualifiers."""
         return x509.PolicyInformation(

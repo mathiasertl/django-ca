@@ -79,7 +79,7 @@ class CertificateAuthorityDetailTestCase(APITestCaseMixin, TestCase):
                 },
                 "subject": x509_name(cert["subject"]).rfc4514_string(),
                 "updated": self.iso_format(timestamps["everything_valid"]),
-            }
+            },
         )
 
     def default_request(self, payload: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> "HttpResponse":

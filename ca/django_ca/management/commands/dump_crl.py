@@ -81,7 +81,7 @@ class Command(BinaryCommand):
         include_issuing_distribution_point: Optional[bool],
         password: Optional[bytes],
         expires: int,
-        **options: Any
+        **options: Any,
     ) -> None:
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
