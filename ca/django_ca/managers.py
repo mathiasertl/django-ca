@@ -63,7 +63,12 @@ if typing.TYPE_CHECKING:
         Certificate,
         CertificateAuthority,
     )
-    from django_ca.querysets import AcmeAccountQuerySet, CertificateAuthorityQuerySet, CertificateQuerySet
+    from django_ca.querysets import (
+        AcmeAccountQuerySet,
+        AcmeAuthorizationQuerySet,
+        CertificateAuthorityQuerySet,
+        CertificateQuerySet,
+    )
 
     AcmeAccountManagerBase = models.Manager[AcmeAccount]
     AcmeAuthorizationManagerBase = models.Manager[AcmeAuthorization]
@@ -667,6 +672,26 @@ class AcmeOrderManager(AcmeOrderManagerBase):
 
 class AcmeAuthorizationManager(AcmeAuthorizationManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeAuthorization`."""
+
+    if typing.TYPE_CHECKING:
+        # See CertificateManagerMixin for description on this branch
+        #
+        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+
+        def account(self, account: "AcmeAccount") -> "AcmeAuthorizationQuerySet":
+            ...
+
+        def dns(self) -> "AcmeAuthorizationQuerySet":
+            ...
+
+        def names(self) -> List[str]:
+            ...
+
+        def url(self) -> "AcmeAuthorizationQuerySet":
+            ...
+
+        def viewable(self) -> "AcmeAuthorizationQuerySet":
+            ...
 
 
 class AcmeChallengeManager(AcmeChallengeManagerBase):

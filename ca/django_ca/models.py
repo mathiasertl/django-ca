@@ -1548,6 +1548,11 @@ class AcmeOrder(DjangoCAModel):
 
     objects = AcmeOrderManager.from_queryset(AcmeOrderQuerySet)()
 
+    if typing.TYPE_CHECKING:
+        # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
+        # See also: https://github.com/typeddjango/django-stubs/issues/1354
+        authorizations: "models.manager.RelatedManager[AcmeAuthorization]"
+
     account = models.ForeignKey(AcmeAccount, on_delete=models.CASCADE, related_name="orders")
     slug = models.SlugField(unique=True, default=acme_slug)
 
@@ -1651,7 +1656,7 @@ class AcmeAuthorization(DjangoCAModel):
         (STATUS_REVOKED, _("Revoked")),
     )
 
-    objects = AcmeAuthorizationManager.from_queryset(AcmeAuthorizationQuerySet)()
+    objects: AcmeAuthorizationManager = AcmeAuthorizationManager.from_queryset(AcmeAuthorizationQuerySet)()
 
     order = models.ForeignKey(AcmeOrder, on_delete=models.CASCADE, related_name="authorizations")
     slug = models.SlugField(unique=True, default=acme_slug)
