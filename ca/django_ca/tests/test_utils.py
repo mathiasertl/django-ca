@@ -552,6 +552,15 @@ class ParseGeneralNameTest(TestCase):
             self.assertOtherName(typ, "2110052214Z", b"\x17\r211005220104Z")
         self.assertOtherName("NULL", "", b"\x05\x00")
 
+    def test_othername_format_errors(self) -> None:
+        """Test various otherName formats."""
+        with self.assertRaisesRegex(ValueError, r"^Incorrect otherName format: no_asn1_data$"):
+            parse_general_name("otherName:no_asn1_data")
+        with self.assertRaisesRegex(ValueError, r"^Incorrect otherName format: no_dotted_string;asn1_value$"):
+            parse_general_name("otherName:no_dotted_string;asn1_value")
+        with self.assertRaisesRegex(ValueError, r"^Incorrect otherName format: 1.2.3;no_asn1_data$"):
+            parse_general_name("otherName:1.2.3;no_asn1_data")
+
     def test_othername_errors(self) -> None:
         """Test some error conditions."""
         with self.assertRaises(ValueError):
