@@ -13,11 +13,20 @@
 
 
 """Test utility functions."""
+import doctest
 
+import pytest
 
 from django.test import TestCase
 
-from django_ca.api.utils import create_api_user
+from django_ca.api import utils
+
+
+@pytest.mark.django_db(transaction=True)
+def test_doctests() -> None:
+    """Test doctests in the module."""
+    failures, _tests = doctest.testmod(utils)
+    assert failures == 0
 
 
 class CreateUserTestCase(TestCase):
@@ -25,7 +34,7 @@ class CreateUserTestCase(TestCase):
 
     def test_create_basic_user(self) -> None:
         """Test creating a minimal user"""
-        user = create_api_user("username", "foobar")
+        user = utils.create_api_user("username", "foobar")
         self.assertEqual(user.username, "username")
         self.assertIs(user.check_password("foobar"), True)
         self.assertIs(user.has_perm("django_ca.view_certificateauthority"), True)
@@ -37,14 +46,14 @@ class CreateUserTestCase(TestCase):
     def test_additional_properties(self) -> None:
         """Test passing additional properties."""
 
-        user = create_api_user("username", "foobar", email="user@example.com")
+        user = utils.create_api_user("username", "foobar", email="user@example.com")
         self.assertEqual(user.username, "username")
         self.assertIs(user.check_password("foobar"), True)
         self.assertEqual(user.email, "user@example.com")
 
     def test_no_permissions(self) -> None:
         """Create a user, but rule out all permissions."""
-        user = create_api_user(
+        user = utils.create_api_user(
             "username",
             "foobar",
             view_certificateauthority=False,

@@ -49,8 +49,8 @@ services:
                     - ca.example.com
     certbot:
         build: 
-            context: .
-            dockerfile: ca/django_ca/tests/fixtures/Dockerfile.certbot
+            context: devscripts/files/
+            dockerfile: devscripts/files/Dockerfile.certbot
 
         hostname: certbot
         # enable terminal: https://stackoverflow.com/a/39150040

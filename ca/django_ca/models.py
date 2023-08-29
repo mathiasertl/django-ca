@@ -1595,7 +1595,7 @@ class AcmeOrder(DjangoCAModel):
 
             >>> from acme import messages
             >>> identifier = messages.Identifier(typ=messages.IDENTIFIER_FQDN, value='example.com')
-            >>> order.add_authorizations([identifier])
+            >>> order.add_authorizations([identifier])  # doctest: +SKIP
 
         Parameters
         ----------

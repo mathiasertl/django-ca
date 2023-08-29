@@ -346,6 +346,27 @@ ignore-imports = "yes"
 # Minimum lines number of a similarity.
 min-similarity-lines = 16
 
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "ca.test_settings"
+addopts = [
+    "--doctest-plus",
+    "--cov=ca/django_ca/",
+    "--cov-report=html:docs/build/coverage/",
+    "--cov-fail-under=100",
+]
+pythonpath = "docs/source/"
+testpaths = "ca/django_ca/"
+filterwarnings = [
+    "always",
+    "error:::django_ca",
+    "error:::django",
+    "error:::cryptography",
+    "error:::acme",
+    "error:::josepy",
+    "ignore:The USE_L10N setting is deprecated.:django.utils.deprecation.RemovedInDjango50Warning",
+    "ignore:django.core.files.storage.get_storage_class is deprecated:django.utils.deprecation.RemovedInDjango51Warning",
+]
+
 [tool.ruff]
 select = ["E", "F", "I", "G", "DJ"]
 extend-exclude = ["migrations", "stubs"]

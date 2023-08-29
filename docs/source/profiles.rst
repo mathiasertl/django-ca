@@ -38,7 +38,8 @@ You can use a profile when signing certificates:
 * In the :doc:`Python API </python/intro>`::
 
       >>> from django_ca.models import Certificate
-      >>> Certificate.objects.create_cert(ca, csr, profile='client')
+      >>> from django_ca.profiles import profiles
+      >>> Certificate.objects.create_cert(ca, csr, profile=profiles['client'])
 
   or by even defining a temporary profile just for this certificate::
 

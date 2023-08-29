@@ -10,7 +10,11 @@ the ``webserver`` profile::
 
    # Note: "csr" is a predefined variable, see https://cryptography.io/en/latest/x509/tutorial/
    >>> from django_ca.models import Certificate
-   >>> Certificate.objects.create_cert(ca, csr, 'webserver', subject='/CN=example.com')
+   >>> from cryptography import x509
+   >>> from cryptography.x509.oid import NameOID
+   >>> from django_ca.profiles import profiles
+   >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
+   >>> Certificate.objects.create_cert(ca, csr, profile=profiles['webserver'], subject=subject)
    <Certificate: example.com>
 
 But you can also create your own profile manually to create a special type of certificate::
@@ -18,20 +22,9 @@ But you can also create your own profile manually to create a special type of ce
    >>> from django_ca.models import CertificateAuthority
    >>> profile = Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
    >>> ca = CertificateAuthority.objects.first()
-   >>> profile.create_cert(ca, csr, subject='/CN=example.com')
+   >>> profile.create_cert(ca, csr, subject=subject)
    <Certificate(subject=<Name(C=AT,CN=example.com)>, ...)>
 
-You can also access profiles using ``profiles.profiles``, create a copy and update the copy::
-
-   >>> from django_ca.profiles import profiles
-   >>> profile = profiles['webserver'].copy()
-   >>> cert = Certificate.objects.create_cert(ca, csr, profile=profile, subject='/CN=example.com')
-   >>> cert.subject_alternative_name
-   <SubjectAlternativeName: ['DNS:example.com'], critical=False>
-   >>> profile.cn_in_san = False
-   >>> cert = Certificate.objects.create_cert(ca, csr, profile=profile, subject='/CN=example.com')
-   >>> cert.subject_alternative_name is None
-   True
 
 .. autoclass:: django_ca.profiles.Profile
    :members:

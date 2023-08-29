@@ -14,13 +14,12 @@
 """Test cases for django-ca actions."""
 
 import argparse
-import doctest
 import os
 import sys
 from datetime import timedelta
 from io import StringIO
-from typing import Any, List, Optional
-from unittest import TestLoader, TestSuite, mock
+from typing import Any, List
+from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -35,19 +34,6 @@ from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, dns, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
-
-
-def load_tests(  # pylint: disable=unused-argument
-    loader: TestLoader, tests: TestSuite, ignore: Optional[str] = None
-) -> TestSuite:
-    """Load doctests"""
-
-    # Trick so that every doctest in module gets completely new argument parser
-    def set_up(self: Any) -> None:
-        self.globs["parser"] = argparse.ArgumentParser()
-
-    tests.addTests(doctest.DocTestSuite("django_ca.management.actions", setUp=set_up))
-    return tests
 
 
 class ParserTestCaseMixin(TestCaseMixin):

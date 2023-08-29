@@ -30,8 +30,8 @@ from django_ca.tests.base import certs, dns, rdn, uri
 from django_ca.tests.base.mixins import TestCaseMixin, TestCaseProtocol
 from django_ca.typehints import CRLExtensionType, ParsableDistributionPoint, ParsablePolicyInformation
 
-_TestValueDict = typing.TypedDict(
-    "_TestValueDict",
+_ExtensionExampleDict = typing.TypedDict(
+    "_ExtensionExampleDict",
     {
         "admin_html": str,
         "serialized": Any,
@@ -42,14 +42,14 @@ _TestValueDict = typing.TypedDict(
 
 
 # pylint: disable-next=inherit-non-class; False positive
-class TestValueDict(_TestValueDict, total=False):
+class ExtensionExampleDict(_ExtensionExampleDict, total=False):
     """Value used to define generic test cases."""
 
     serialized_alternatives: List[Any]
     extension_type_alternatives: List[x509.ExtensionType]
 
 
-TestValues = Dict[str, TestValueDict]
+TestValues = Dict[str, ExtensionExampleDict]
 
 
 class ExtensionTestCaseMixin(TestCaseProtocol):

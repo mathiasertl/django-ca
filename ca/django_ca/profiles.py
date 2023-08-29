@@ -49,6 +49,9 @@ from django_ca.utils import (
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
+# Skip doctests in pytest(-doctestplus), as test_profiles manually loads these tests with extra context.
+__doctest_skip__ = ["*"]
+
 
 class Profile:
     """A certificate profile defining properties and extensions of a certificate.
@@ -189,8 +192,11 @@ class Profile:
         This function is the core function used to create x509 certificates. In its simplest form, you only
         need to pass a ca, a CSR and a subject to get a valid certificate::
 
+            >>> from cryptography import x509
+            >>> from cryptography.x509.oid import NameOID
+            >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
             >>> profile = get_profile('webserver')
-            >>> profile.create_cert(ca, csr, subject=x509_name('/CN=example.com'))  # doctest: +ELLIPSIS
+            >>> profile.create_cert(ca, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
 
         .. versionchanged:: 1.26.0

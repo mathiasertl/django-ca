@@ -213,7 +213,10 @@ class ProfileWidget(widgets.Select):
     This widget depends on the HTML having a script element with the profile-data id present somewhere in the
     DOM tree. To achieve this, add to the context::
 
-        >>> context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
+        def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+            ctx = super().get_context(*args, **kwargs)
+            ctx["profiles"] = {profile.name: profile.serialize() for profile in profiles}
+            return ctx
 
     And then use this in HTML::
 

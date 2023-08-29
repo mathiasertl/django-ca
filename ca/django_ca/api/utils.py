@@ -29,6 +29,9 @@ else:
 
     User = get_user_model()
 
+# Skip doctests in pytest(-doctestplus), as api/tests_utils.py manually loads tests with database access.
+__doctest_skip__ = ["*"]
+
 
 def get_certificate_authority(serial: str, expired: bool = False) -> CertificateAuthority:
     """Get a certificate authority from the given serial."""
@@ -61,6 +64,7 @@ def create_api_user(
     argument is the second argument and mandatory. You can still pass an `email` address as keyword argument.
 
     >>> create_api_user("username", "password", revoke_certificate=False, email="user@example.com")
+    <User: username>
 
     Parameters
     ----------

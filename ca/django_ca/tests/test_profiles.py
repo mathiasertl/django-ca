@@ -34,10 +34,6 @@ from django_ca.tests.base import certs, dns, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-@unittest.skipIf(  # https://github.com/pyca/cryptography/issues/6363
-    settings.CRYPTOGRAPHY_VERSION >= (35, 0), "cg>=35.0 has broken subject name strings"
-)
 class DocumentationTestCase(TestCaseMixin, TestCase):
     """Test sphinx docs."""
 
@@ -61,12 +57,16 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         # pylint: disable=import-outside-toplevel; we need the top-level module
         from django_ca import profiles as profiles_mod
 
-        doctest.testmod(profiles_mod, globs=self.get_globs())
+        failures, _tests = doctest.testmod(profiles_mod, globs=self.get_globs())
+        self.assertEqual(failures, 0, f"{failures} doctests failed, see above for output.")
 
     @override_tmpcadir()
     def test_python_intro(self) -> None:
         """Test python/profiles.rst."""
-        doctest.testfile("../../../docs/source/python/profiles.rst", globs=self.get_globs())
+        failures, _tests = doctest.testfile(
+            "../../../docs/source/python/profiles.rst", globs=self.get_globs()
+        )
+        self.assertEqual(failures, 0, f"{failures} doctests failed, see above for output.")
 
 
 class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
