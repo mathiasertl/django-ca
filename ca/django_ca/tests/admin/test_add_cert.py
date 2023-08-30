@@ -21,14 +21,13 @@ from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any
 
-import pytest
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
 
+import pytest
 from django_webtest import WebTestMixin
 from freezegun import freeze_time
 from selenium.common.exceptions import NoSuchElementException

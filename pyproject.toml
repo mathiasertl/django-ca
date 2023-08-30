@@ -168,7 +168,16 @@ known_crypto = [
 ]
 known_django = "django"
 known_django_addon = "django_object_actions"
-known_test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock", "webtest"]
+known_test = [
+    "django_webtest",
+    "freezegun",
+    "pytest",
+    "pytest_cov",
+    "pyvirtualdisplay",
+    "requests_mock",
+    "selenium",
+    "webtest",
+]
 known_first_party = ["django_ca", "ca"]
 sections = [
     "FUTURE", "STDLIB", "THIRDPARTY", "CRYPTO", "DJANGO", "DJANGO_ADDON",
@@ -395,7 +404,16 @@ combine-as-imports = true
 django = ["django"]
 django-addon = ["django_object_actions"]
 crypto = ["cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
-test = ["freezegun", "selenium", "django_webtest", "pyvirtualdisplay", "requests_mock", "webtest"]
+test = [
+    "django_webtest",
+    "freezegun",
+    "pytest",
+    "pytest_cov",
+    "pyvirtualdisplay",
+    "requests_mock",
+    "selenium",
+    "webtest",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "django_ca.VERSION"}

@@ -15,9 +15,9 @@
 """Test utility functions."""
 import doctest
 
-import pytest
-
 from django.test import TestCase
+
+import pytest
 
 from django_ca.api import utils
 

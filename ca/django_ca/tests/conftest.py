@@ -21,14 +21,15 @@ from typing import Any, List, Tuple
 import coverage
 import packaging
 import pkg_resources
-import pytest
 from _pytest.config.argparsing import Parser
-from pytest_cov.plugin import CovPlugin
 
 import cryptography
 
 import django
 from django.conf import settings
+
+import pytest
+from pytest_cov.plugin import CovPlugin
 
 if typing.TYPE_CHECKING:
     from _pytest.config import Config as PytestConfig
@@ -157,7 +158,7 @@ def pytest_configure(config: "PytestConfig") -> None:
 
     skip_selenium = config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS
 
-    if config.getoption("--no-virtual-display"):
+    if config.getoption("--no-virtual-display"):  # pragma: no cover
         os.environ["VIRTUAL_DISPLAY"] = "n"
 
     # Add a header to log important software versions

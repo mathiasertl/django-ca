@@ -197,8 +197,6 @@ class Command(DevCommand):
         if not os.path.exists(ca_settings.CA_DIR):
             os.makedirs(ca_settings.CA_DIR)
 
-        # NOTE: We pass SKIP_SELENIUM_TESTS=y as environment, because otherwise test_settings will complain
-        #       that the driver isn't there, when in fact we're not running any tests.
         # NOTE: Invoke dev.py as a subscript, because recreate-fixtures **requires**
         #       DJANGO_SETTINGS_MODULE=ca.test_settings (b/c it writes to the database and this script writes
         #       the same certs, so you'd get a UniqueConstraint error. The test test_settings use an in-memory
@@ -216,8 +214,7 @@ class Command(DevCommand):
                 "--ca-validity=3650",
                 "--cert-validity=732",
                 f"--dest={ca_settings.CA_DIR}",
-            ],
-            env=dict(os.environ, SKIP_SELENIUM_TESTS="y"),
+            ]
         )
         with open(os.path.join(ca_settings.CA_DIR, "cert-data.json"), encoding="utf-8") as stream:
             fixture_data = json.load(stream)

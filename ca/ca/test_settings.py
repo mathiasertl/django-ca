@@ -261,7 +261,10 @@ RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
 # some argparse commands depend on the terminal size.
 os.environ["COLUMNS"] = "80"
 
-GECKODRIVER_PATH = os.path.join(ROOT_DIR, "contrib", "selenium", "geckodriver")
+if "GECKOWEBDRIVER" in os.environ:
+    GECKODRIVER_PATH = os.path.join(os.environ["GECKOWEBDRIVER"], "geckodriver")
+else:
+    GECKODRIVER_PATH = os.path.join(ROOT_DIR, "contrib", "selenium", "geckodriver")
 
 if "TOX_ENV_DIR" in os.environ:
     GECKODRIVER_LOG_PATH = os.path.join(os.environ["TOX_ENV_DIR"], "geckodriver.log")
