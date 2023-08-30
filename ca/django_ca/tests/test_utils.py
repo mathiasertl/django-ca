@@ -35,6 +35,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings, constants, utils
@@ -327,29 +328,28 @@ class RelativeNameTestCase(TestCase):
         self.assertEqual(x509_relative_name("/CN=example.com"), rdn([(NameOID.COMMON_NAME, "example.com")]))
 
 
-class ValidateEmailTestCase(TestCase):
+@pytest.mark.parametrize(
+    "email,validated",
+    [("user@example.com", "user@example.com"), ("user@exämple.com", "user@xn--exmple-cua.com")],
+)
+def test_validate_email(email: str, validated: str) -> None:
     """Test :py:func:`django_ca.utils.validate_email`."""
+    assert validate_email(email) == validated
 
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertEqual(validate_email("user@example.com"), "user@example.com")
 
-    def test_i18n(self) -> None:
-        """Test i18n domain."""
-        self.assertEqual(validate_email("user@exämple.com"), "user@xn--exmple-cua.com")
-
-    def test_invalid_domain(self) -> None:
-        """Test with an invalid domain."""
-        with self.assertRaisesRegex(ValueError, "^Invalid domain: example.com$"):
-            validate_email("user@example com")
-
-    def test_no_at(self) -> None:
-        """Test without "@"."""
-        with self.assertRaisesRegex(ValueError, "^Invalid email address: user$"):
-            validate_email("user")
-
-        with self.assertRaisesRegex(ValueError, "^Invalid email address: example.com$"):
-            validate_email("example.com")
+@pytest.mark.parametrize(
+    "email,error",
+    [
+        ("user@example com", "^Invalid domain: example.com$"),
+        ("user", "^Invalid email address: user$"),
+        ("example.com", "^Invalid email address: example.com$"),
+        ("@example.com", "^@example.com: node part is empty$"),
+    ],
+)
+def test_validate_email_errors(email: str, error: str) -> None:
+    """Test errors for :py:func:`django_ca.utils.validate_email`."""
+    with pytest.raises(ValueError, match=error):
+        validate_email(email)
 
 
 class ValidateHostnameTestCase(TestCase):

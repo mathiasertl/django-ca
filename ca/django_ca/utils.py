@@ -434,18 +434,20 @@ def validate_email(addr: str) -> str:
 
     This function raises ``ValueError`` if the email address is not valid.
 
-    >>> validate_email('foo@bar.com')
-    'foo@bar.com'
-    >>> validate_email('foo@bar com')
-    Traceback (most recent call last):
-        ...
-    ValueError: Invalid domain: bar com
+    >>> validate_email("user@example.com")
+    'user@example.com'
+    >>> validate_email("user@exämple.com")
+    'user@xn--exmple-cua.com'
 
     """
     if "@" not in addr:
         raise ValueError(f"Invalid email address: {addr}")
 
     node, domain = addr.rsplit("@", 1)
+
+    if not node:
+        raise ValueError(f"{addr}: node part is empty")
+
     try:
         domain = idna.encode(domain).decode("utf-8")
     except idna.IDNAError as e:
