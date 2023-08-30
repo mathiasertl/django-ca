@@ -22,7 +22,7 @@ import pytest
 from django_ca.api import utils
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_doctests() -> None:
     """Test doctests in the module."""
     failures, _tests = doctest.testmod(utils)
