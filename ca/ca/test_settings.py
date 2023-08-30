@@ -255,34 +255,20 @@ NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
 NEWEST_ACME = ACME_VERSION == NEWEST_ACME_VERSION
 NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NEWEST_ACME
 
-# Skip selenium by default if python, cryptography and acme are NOT the newest version, but test for every
-# Django version.
-DEFAULT_SKIP_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
-
-# For Selenium test cases
-SKIP_SELENIUM_TESTS = (
-    os.environ.get("SKIP_SELENIUM_TESTS", "n" if DEFAULT_SKIP_SELENIUM_TESTS else "y").lower().strip() == "y"
-)
+# Only run Selenium tests if we use the newest Python, cryptography and acme.
+RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
 
 # Set COLUMNS, which is used by argparse to determine the terminal width. If this is not set, the output of
 # some argparse commands depend on the terminal size.
 os.environ["COLUMNS"] = "80"
 
-VIRTUAL_DISPLAY = os.environ.get("VIRTUAL_DISPLAY", "y").lower().strip() == "y"
-if "GECKOWEBDRIVER" in os.environ:
-    GECKODRIVER_PATH = os.path.join(os.environ["GECKOWEBDRIVER"], "geckodriver")
-else:
-    GECKODRIVER_PATH = os.path.join(ROOT_DIR, "contrib", "selenium", "geckodriver")
+GECKODRIVER_PATH = os.path.join(ROOT_DIR, "contrib", "selenium", "geckodriver")
+
 if "TOX_ENV_DIR" in os.environ:
     GECKODRIVER_LOG_PATH = os.path.join(os.environ["TOX_ENV_DIR"], "geckodriver.log")
 else:
     GECKODRIVER_LOG_PATH = os.path.join(ROOT_DIR, "geckodriver.log")
 
-if not os.path.exists(GECKODRIVER_PATH) and not SKIP_SELENIUM_TESTS:
-    raise ImproperlyConfigured(
-        f"Please download geckodriver to {GECKODRIVER_PATH}: "
-        "https://selenium-python.readthedocs.io/installation.html#drivers"
-    )
 
 CA_USE_CELERY = False
 CA_ENABLE_REST_API = True

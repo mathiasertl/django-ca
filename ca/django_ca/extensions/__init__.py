@@ -45,6 +45,7 @@ CERTIFICATE_EXTENSIONS = tuple(
 def get_extension_name(oid: x509.ObjectIdentifier) -> str:
     """Function to get the name of an extension from the extensions OID.
 
+    >>> from cryptography.x509.oid import ExtensionOID
     >>> get_extension_name(ExtensionOID.BASIC_CONSTRAINTS)
     'Basic Constraints'
     >>> get_extension_name(x509.ObjectIdentifier("1.2.3"))

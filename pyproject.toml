@@ -354,7 +354,10 @@ addopts = [
     "--cov-report=html:docs/build/coverage/",
     "--cov-fail-under=100",
 ]
-pythonpath = "docs/source/"
+pythonpath = [
+    "ca",
+    "docs/source/"
+]
 testpaths = "ca/django_ca/"
 filterwarnings = [
     "always",
@@ -363,8 +366,8 @@ filterwarnings = [
     "error:::cryptography",
     "error:::acme",
     "error:::josepy",
-    "ignore:The USE_L10N setting is deprecated.:django.utils.deprecation.RemovedInDjango50Warning",
-    "ignore:django.core.files.storage.get_storage_class is deprecated:django.utils.deprecation.RemovedInDjango51Warning",
+    "ignore:The USE_L10N setting is deprecated.::django",
+    "ignore:django.core.files.storage.get_storage_class is deprecated::django",
 ]
 
 [tool.ruff]

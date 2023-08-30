@@ -22,6 +22,8 @@ from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any
 
+import pytest
+
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import ExtensionOID, NameOID
@@ -1100,7 +1102,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
 
-@unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")
+@pytest.mark.selenium
 class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumTestCase):
     """Some Selenium based test cases to test the client side javascript code."""
 
@@ -1281,7 +1283,7 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
             )
 
 
-@unittest.skipIf(settings.SKIP_SELENIUM_TESTS, "Selenium tests skipped.")
+@pytest.mark.selenium
 class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
     """Test the Subject input field."""
 

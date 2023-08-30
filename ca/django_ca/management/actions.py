@@ -79,6 +79,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], 
 class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
     """Action for giving an algorithm.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--algorithm', action=AlgorithmAction)  # doctest: +ELLIPSIS
     AlgorithmAction(...)
     >>> parser.parse_args(['--algorithm', 'SHA-256'])  # doctest: +ELLIPSIS
@@ -150,6 +151,7 @@ class ExpiresAction(SingleValueAction[str, timedelta]):
 
     NOTE: str(timedelta) is different in python 3.6, so only outputting days here
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--expires', action=ExpiresAction)  # doctest: +ELLIPSIS
     ExpiresAction(...)
     >>> parser.parse_args(['--expires', '3']).expires.days
@@ -172,6 +174,7 @@ class ExpiresAction(SingleValueAction[str, timedelta]):
 class FormatAction(SingleValueAction[str, Encoding]):
     """Action for giving an encoding (DER/PEM).
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--format', action=FormatAction)  # doctest: +ELLIPSIS
     FormatAction(...)
     >>> parser.parse_args(['--format', 'DER'])
@@ -189,6 +192,7 @@ class FormatAction(SingleValueAction[str, Encoding]):
 class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
     """Action to parse an elliptic curve value.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--elliptic-curve', action=EllipticCurveAction)  # doctest: +ELLIPSIS
     EllipticCurveAction(...)
     >>> parser.parse_args(['--elliptic-curve', 'secp256r1'])  # doctest: +ELLIPSIS
@@ -209,6 +213,7 @@ class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
 class IntegerRangeAction(SingleValueAction[int, int]):
     """An int action with an optional min/max value.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--size', action=IntegerRangeAction, min=0, max=10)  # doctest: +ELLIPSIS
     IntegerRangeAction(...)
     >>> parser.parse_args(['--size', '5'])
@@ -241,6 +246,7 @@ class IntegerRangeAction(SingleValueAction[int, int]):
 class KeySizeAction(SingleValueAction[str, int]):
     """Action for adding a keysize, an integer that must be a power of two (2048, 4096, ...).
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--size', action=KeySizeAction)  # doctest: +ELLIPSIS
     KeySizeAction(...)
     >>> parser.parse_args(['--size', '4096'])
@@ -271,6 +277,7 @@ class KeySizeAction(SingleValueAction[str, int]):
 class MultipleURLAction(argparse.Action):
     """Action for multiple URLs.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--url', action=MultipleURLAction)  # doctest: +ELLIPSIS
     MultipleURLAction(...)
     >>> parser.parse_args(['--url', 'https://example.com', '--url', 'https://example.net'])
@@ -303,6 +310,7 @@ class PasswordAction(argparse.Action):
 
     If the cli does not pass an argument value, the action prompt the user for a password.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--password', action=PasswordAction)  # doctest: +ELLIPSIS
     PasswordAction(...)
     >>> parser.parse_args(['--password', 'secret'])
@@ -335,6 +343,7 @@ class CertificationPracticeStatementAction(argparse.Action):
 
     The action verifies that the given value is a URI.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--pi', action=PolicyIdentifierAction)  # doctest: +ELLIPSIS
     PolicyIdentifierAction(...)
     >>> parser.add_argument(
@@ -381,6 +390,7 @@ class PolicyIdentifierAction(argparse.Action):
     The `allow_any_policy` argument allows adding the ``anyPolicy`` (OID "2.5.29.32.0") policy can be added.
     This is the case for certificate authorities.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--pi', action=PolicyIdentifierAction)  # doctest: +ELLIPSIS
     PolicyIdentifierAction(...)
     >>> parser.parse_args(['--pi', '1.2.3']).pi  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -429,6 +439,7 @@ class PolicyIdentifierAction(argparse.Action):
 class ReasonAction(SingleValueAction[str, ReasonFlags]):
     """Action to select a revocation reason.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--reason', action=ReasonAction)  # doctest: +ELLIPSIS
     ReasonAction(...)
     >>> parser.parse_args(['--reason', 'key_compromise'])
@@ -451,6 +462,7 @@ class NameAction(SingleValueAction[str, x509.Name]):
 
     Note that this action does *not* take care of sorting the subject in any way.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--name', action=NameAction)  # doctest: +ELLIPSIS
     NameAction(...)
     >>> parser.parse_args(["--name", "/CN=example.com"])
@@ -467,6 +479,7 @@ class NameAction(SingleValueAction[str, x509.Name]):
 class URLAction(SingleValueAction[str, str]):
     """Action to pass a single valid URL.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--url', action=URLAction)  # doctest: +ELLIPSIS
     URLAction(...)
     >>> parser.parse_args(['--url', 'https://example.com'])
@@ -493,6 +506,7 @@ class UserNoticeAction(argparse.Action):
 
     The action verifies that the given value is no longer then 200 characters (RFC 5280, section 4.2.1.4).
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--pi', action=PolicyIdentifierAction)  # doctest: +ELLIPSIS
     PolicyIdentifierAction(...)
     >>> parser.add_argument('--notice', action=UserNoticeAction, dest="pi")  # doctest: +ELLIPSIS
@@ -569,6 +583,7 @@ class AlternativeNameLegacyAction(CryptographyExtensionAction[AlternativeNameExt
 class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
     """Action for AlternativeName extensions.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument(
     ...     '--subject-alternative-name',
     ...     action=AlternativeNameAction,
@@ -612,6 +627,7 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
     match the `dest` argument to produce one extension:
 
     >>> from cryptography.x509.oid import AuthorityInformationAccessOID
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument(
     ...     "--ocsp-responder",
     ...     action=AuthorityInformationAccessAction,
@@ -664,6 +680,7 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
 class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage]):
     """Action for parsing an ExtendedKeyUsage extension.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--extended-key-usage', action=ExtendedKeyUsageAction)  # doctest: +ELLIPSIS
     ExtendedKeyUsageAction(...)
     >>> args = parser.parse_args(["--extended-key-usage", "serverAuth", "clientAuth"])
@@ -709,6 +726,7 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
 class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
     """Action for parsing a KeyUsage extension.
 
+    >>> parser = argparse.ArgumentParser()
     >>> parser.add_argument('--key-usage', action=KeyUsageAction)  # doctest: +ELLIPSIS
     KeyUsageAction(...)
     >>> args = parser.parse_args(['--key-usage', 'keyCertSign'])

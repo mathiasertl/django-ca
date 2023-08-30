@@ -1,15 +1,19 @@
+import os
 import sys
 import typing
 from typing import Tuple
 
 import coverage
 import packaging
+import pkg_resources
 import pytest
+from _pytest.config.argparsing import Parser
 from pytest_cov.plugin import CovPlugin
 
 import cryptography
 
 import django
+from django.conf import settings
 
 
 def exclude_versions(
@@ -114,7 +118,53 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
         exclude_versions(cov, "cryptography", this_version, ver, version_str)
 
 
+def pytest_addoption(parser: Parser) -> None:
+    parser.addoption("--no-selenium", action="store_true", default=False, help="Do not run selenium tests.")
+    parser.addoption(
+        "--no-virtual-display",
+        action="store_true",
+        default=False,
+        help="Do not run tests in virtual display.",
+    )
+
+
 def pytest_configure(config):
     cov_plugin: CovPlugin = config.pluginmanager.get_plugin("_cov")
-    cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
-    setup_pragmas(cov)
+    cov: coverage.Coverage = cov_plugin.cov_controller.cov
+    combining_cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
+    setup_pragmas(combining_cov)
+
+    config.addinivalue_line("markers", "selenium: mark tests that use selenium")
+
+    skip_selenium = config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS
+
+    # Add a header to log important software versions
+    print("Testing with:")
+    print("* Python: ", sys.version.replace("\n", ""))
+    # pylint: disable-next=not-an-iterable  # false positive
+    installed_versions = {p.project_name: p.version for p in pkg_resources.working_set}
+    for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
+        print(f"* {pkg}: {installed_versions[pkg]}")
+    print(f"* Selenium tests: {not skip_selenium}")
+
+    if not os.path.exists(settings.GECKODRIVER_PATH) and settings.RUN_SELENIUM_TESTS:
+        raise pytest.UsageError(
+            f"Please download geckodriver to {settings.GECKODRIVER_PATH}: "
+            "https://selenium-python.readthedocs.io/installation.html#drivers"
+        )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS:
+        if config.getoption("--no-selenium"):
+            reason = "--no-selenium was passed"
+        else:
+            reason = "Not using the newest Python/cryptography/acme."
+
+        skip_selenium = pytest.mark.skip(reason=reason)
+        for item in items:
+            if "selenium" in item.keywords:
+                item.add_marker(skip_selenium)
+
+    if config.getoption("--no-virtual-display"):
+        os.environ["VIRTUAL_DISPLAY"] = "n"

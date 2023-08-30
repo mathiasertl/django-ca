@@ -12,6 +12,9 @@
 # <http://www.gnu.org/licenses/>.
 
 """Some common base classes for test cases."""
+import os
+
+import pytest
 
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -39,10 +42,8 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        if settings.SKIP_SELENIUM_TESTS:
-            return
 
-        if settings.VIRTUAL_DISPLAY:
+        if os.environ.get("VIRTUAL_DISPLAY") != "n":
             cls.vdisplay = Display(visible=False, size=(1024, 768))
             cls.vdisplay.start()
 
@@ -51,13 +52,10 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
 
     @classmethod
     def tearDownClass(cls) -> None:
-        if settings.SKIP_SELENIUM_TESTS:
-            super().tearDownClass()
-            return
-
         cls.selenium.quit()
-        if settings.VIRTUAL_DISPLAY:
+        if os.environ.get("VIRTUAL_DISPLAY") != "n":
             cls.vdisplay.stop()
+
         super().tearDownClass()
 
     def find(self, selector: str) -> WebElement:
