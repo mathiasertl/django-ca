@@ -49,4 +49,4 @@ jobs:
         run: python dev.py init-demo
 
       - name: Run tests
-        run: pytest -v --cov-report term-missing
+        run: pytest -v --cov-report term-missing --durations=20

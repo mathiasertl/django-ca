@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Mixin classes for admin view test cases."""
+
 import json
 from typing import Any, Dict, List, Tuple
 

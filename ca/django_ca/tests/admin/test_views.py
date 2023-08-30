@@ -13,176 +13,124 @@
 
 """Base test cases for admin views and CertificateAdmin tests."""
 
-import typing
-from http import HTTPStatus
-from typing import Dict, Iterable, Iterator, Tuple
-
 import django
-from django.test import TestCase
+from django.contrib.auth.models import User  # pylint: disable=[imported-auth-user]  # needed for typehints
+from django.test.client import Client
 from django.urls import reverse
 
+import pytest
 from freezegun import freeze_time
+from pytest_django.asserts import assertContains, assertInHTML, assertRedirects
 
+from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, Watcher
-from django_ca.tests.admin.base import CertificateAdminTestCaseMixin
 from django_ca.tests.base import timestamps
-from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
-
-if typing.TYPE_CHECKING:
-    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
+from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
+from django_ca.tests.base.typehints import HttpResponse
 
 
-@freeze_time(timestamps["everything_valid"])
-class CertificateAdminViewTestCase(
-    CertificateAdminTestCaseMixin, StandardAdminViewTestCaseMixin[Certificate], TestCase
-):
-    """Tests for the Certificate ModelAdmin class."""
+def assert_cert_change_response(response: HttpResponse, cert: Certificate) -> None:
+    """Specialized version of assert_change_response with features unique to certificates."""
+    assert_change_response(response, media_css=(("django_ca/admin/css/base.css", "all"),))
+    assert response.request["PATH_INFO"] == cert.admin_change_url
 
-    load_cas = "__usable__"
-    load_certs = "__usable__"
-    model = Certificate
+    prefix = f"admin:{cert._meta.app_label}_{cert._meta.model_name}"
+    url = reverse(f"{prefix}_download", kwargs={"pk": cert.pk})
+    bundle_url = reverse(f"{prefix}_download_bundle", kwargs={"pk": cert.pk})
+    text = response.content.decode()
+    pem = cert.pub.pem.replace("\n", "<br>")  # newlines are replaced with <br> by Django
+    assertInHTML(f"<div class='readonly'>{pem}</div>", text, 1)
+    assertInHTML(f"<a href='{url}?format=PEM'>as PEM</a>", text, 1)
+    assertInHTML(f"<a href='{url}?format=DER'>as DER</a>", text, 1)
+    assertInHTML(f"<a href='{bundle_url}?format=PEM'>as PEM</a>", text, 1)
 
-    def assertChangeResponse(
-        self, response: "HttpResponse", obj: Certificate, status: int = HTTPStatus.OK
-    ) -> None:
-        super().assertChangeResponse(response, obj=obj, status=status)
 
-        prefix = f"admin:{obj._meta.app_label}_{obj._meta.model_name}"
-        url = reverse(f"{prefix}_download", kwargs={"pk": obj.pk})
-        bundle_url = reverse(f"{prefix}_download_bundle", kwargs={"pk": obj.pk})
-        text = response.content.decode()
-        pem = obj.pub.pem.replace("\n", "<br>")  # newlines are replaced with HTML linebreaks by Django
-        self.assertInHTML(f"<div class='readonly'>{pem}</div>", text, 1)
-        self.assertInHTML(f"<a href='{url}?format=PEM'>as PEM</a>", text, 1)
-        self.assertInHTML(f"<a href='{url}?format=DER'>as DER</a>", text, 1)
-        self.assertInHTML(f"<a href='{bundle_url}?format=PEM'>as PEM</a>", text, 1)
+@pytest.mark.django_db
+def test_change_view(admin_client: Client, interesting_cert: Certificate) -> None:
+    """Test the basic change view for interesting certificates."""
+    response = admin_client.get(interesting_cert.admin_change_url)
+    assert_cert_change_response(response, interesting_cert)
 
-    def get_changelists(
-        self,
-    ) -> Iterator[Tuple[Iterable[Certificate], Dict[str, str]]]:
-        # yield various different result sets for different filters and times
-        with self.freeze_time("everything_valid"):
-            yield self.model.objects.all(), {}
-            yield self.model.objects.all(), {"status": "valid"}
-            yield self.model.objects.all(), {"status": "all"}
-            yield [], {"status": "expired"}
-            yield [], {"status": "revoked"}
-
-            yield [], {"auto": "auto"}
-            yield self.model.objects.all(), {"auto": "all"}
-
-        with self.freeze_time("ca_certs_expired"):
-            yield self.model.objects.all(), {"status": "all"}
-            yield [
-                self.certs["profile-client"],
-                self.certs["profile-server"],
-                self.certs["profile-webserver"],
-                self.certs["profile-enduser"],
-                self.certs["profile-ocsp"],
-                self.certs["no-extensions"],
-                self.certs["all-extensions"],
-                self.certs["alt-extensions"],
-            ], {}
-            yield [
-                self.certs["root-cert"],
-                self.certs["pwd-cert"],
-                self.certs["ec-cert"],
-                self.certs["ed25519-cert"],
-                self.certs["ed448-cert"],
-                self.certs["dsa-cert"],
-                self.certs["child-cert"],
-            ], {"status": "expired"}
-            yield [], {"status": "revoked"}
-
-        with self.freeze_time("everything_expired"):
-            yield [], {}  # default view shows nothing - everything is expired
-            yield self.model.objects.all(), {"status": "all"}
-            yield self.model.objects.all(), {"status": "expired"}
-
-        # load all certs (including 3rd party certs) and view with status_all
-        with self.freeze_time("everything_valid"):
-            self.load_named_cas("__all__")
-            self.load_named_certs("__all__")
-            yield self.model.objects.all(), {"status": "all"}
-
-            # now revoke all certs, to test that filter
-            self.model.objects.update(revoked=True)
-            yield self.model.objects.all(), {"status": "all"}
-            yield self.model.objects.all(), {"status": "revoked"}
-            yield [], {}  # default shows nothing - everything expired
-
-            # unrevoke all certs, but set one of them as auto-generated
-            self.model.objects.update(revoked=False)
-            self.certs["profile-ocsp"].autogenerated = True
-            self.certs["profile-ocsp"].save()
-
-            yield [self.certs["profile-ocsp"]], {"auto": "auto"}
-            yield self.model.objects.all(), {"auto": "all", "status": "all"}
-
-    def test_change_view(self) -> None:
-        self.load_named_cas("__all__")
-        self.load_named_certs("__all__")
-        super().test_change_view()
-
-    def test_revoked(self) -> None:
-        """View a revoked certificate (fieldset should be collapsed)."""
-        self.obj.revoke()
-        response = self.client.get(self.change_url())
-        self.assertChangeResponse(response, obj=self.obj)
-
-        if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
-            # django 4.2 added the flex-container class
-            html = """
-                <div class="flex-container fieldBox field-revoked">
-                    <label>Revoked:</label>
-                    <div class="readonly">
-                        <img src="/static/admin/img/icon-yes.svg" alt="True">
-                    </div>
+    if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
+        # django 4.2 added the flex-container class
+        html = """
+            <div class="flex-container fieldBox field-revoked">
+                <label>Revoked:</label>
+                <div class="readonly">
+                    <img src="/static/admin/img/icon-no.svg" alt="False">
                 </div>
-            """
-        else:
-            # django<4.2 did not yet have the flex-container class
-            html = """
-                <div class="fieldBox field-revoked">
-                    <label>Revoked:</label>
-                    <div class="readonly">
-                        <img src="/static/admin/img/icon-yes.svg" alt="True">
-                    </div>
+            </div>"""
+    else:
+        # django<4.2 did not yet have the flex-container class
+        html = """
+            <div class="fieldBox field-revoked">
+                <label>Revoked:</label>
+                <div class="readonly">
+                    <img src="/static/admin/img/icon-no.svg" alt="False">
                 </div>
-            """
+            </div>"""
 
-        self.assertContains(response, text=html, html=True)
+    assertContains(response, text=html, html=True)  # type: ignore[arg-type]
 
-    def test_no_san(self) -> None:
-        """Test viewing a certificate with no extensions."""
-        cert = self.certs["no-extensions"]
-        response = self.client.get(cert.admin_change_url)
-        self.assertChangeResponse(response, obj=cert)
 
-        if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
-            # django 4.2 added the flex-container div
-            html = """
-                <div class="form-row field-oid_2_5_29_17">
-                    <div>
-                        <div class="flex-container">
-                            <label>Subject Alternative Name:</label>
-                            <div class="readonly">
-                                <span class="django-ca-extension">
-                                    <div class="django-ca-extension-value">
-                                        &lt;Not present&gt;
-                                    </div>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+def test_change_watchers(admin_client: Client, root_cert: Certificate) -> None:
+    """Test changing watchers.
+
+    NOTE: This only tests standard Django functionality, BUT save_model() has special handling when
+    creating a new object (=sign a new cert). So we have to test saving a cert that already exists for
+    code coverage.
+    """
+    watcher = Watcher.objects.create(name="User", mail="user@example.com")
+    response = admin_client.post(root_cert.admin_change_url, data={"watchers": [watcher.pk]})
+
+    assert response.status_code == 302
+    assertRedirects(response, root_cert.admin_changelist_url)  # type: ignore[arg-type]
+    assert list(root_cert.watchers.all()) == [watcher]
+
+
+def test_change_view_with_revoked_certificate(admin_client: Client, child_cert: Certificate) -> None:
+    """View a revoked certificate (fieldset should be collapsed)."""
+    child_cert.revoke()
+    response = admin_client.get(child_cert.admin_change_url)
+    assert_cert_change_response(response, child_cert)
+
+    if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
+        # django 4.2 added the flex-container class
+        html = """
+            <div class="flex-container fieldBox field-revoked">
+                <label>Revoked:</label>
+                <div class="readonly">
+                    <img src="/static/admin/img/icon-yes.svg" alt="True">
                 </div>
-            """
+            </div>
+        """
+    else:
+        # django<4.2 did not yet have the flex-container class
+        html = """
+            <div class="fieldBox field-revoked">
+                <label>Revoked:</label>
+                <div class="readonly">
+                    <img src="/static/admin/img/icon-yes.svg" alt="True">
+                </div>
+            </div>
+        """
 
-        else:  # pragma: only django<4.2
-            # django<4.2 did not yet have the flex-container div
-            html = """
-                <div class="form-row field-oid_2_5_29_17">
-                    <div>
+    assertContains(response, text=html, html=True)  # type: ignore[arg-type]
+
+
+def test_change_view_with_no_subject_alternative_name(
+    admin_client: Client, no_extensions: Certificate
+) -> None:
+    """Test viewing a certificate with no extensions."""
+    response = admin_client.get(no_extensions.admin_change_url)
+    assert_cert_change_response(response, no_extensions)
+
+    if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
+        # django 4.2 added the flex-container div
+        html = """
+            <div class="form-row field-oid_2_5_29_17">
+                <div>
+                    <div class="flex-container">
                         <label>Subject Alternative Name:</label>
                         <div class="readonly">
                             <span class="django-ca-extension">
@@ -193,21 +141,73 @@ class CertificateAdminViewTestCase(
                         </div>
                     </div>
                 </div>
-            """
+            </div>"""
 
-        self.assertContains(response, text=html, html=True)
+    else:  # pragma: only django<4.2
+        # django<4.2 did not yet have the flex-container div
+        html = """
+            <div class="form-row field-oid_2_5_29_17">
+                <div>
+                    <label>Subject Alternative Name:</label>
+                    <div class="readonly">
+                        <span class="django-ca-extension">
+                            <div class="django-ca-extension-value">
+                                &lt;Not present&gt;
+                            </div>
+                        </span>
+                    </div>
+                </div>
+            </div>"""
 
-    def test_change_watchers(self) -> None:
-        """Test changing watchers.
+    assertContains(response, text=html, html=True)  # type: ignore[arg-type]
 
-        NOTE: This only tests standard Django functionality, BUT save_model() has special handling when
-        creating a new object (=sign a new cert). So we have to test saving a cert that already exists for
-        code coverage.
-        """
 
-        watcher = Watcher.objects.create(name="User", mail="user@example.com")
-        response = self.client.post(self.change_url(), data={"watchers": [watcher.pk]})
+@freeze_time(timestamps["everything_valid"])
+def test_changelist_autogenerated_filter(admin_client: Client, root_cert: Certificate) -> None:
+    """Test :py:class:`~django_ca.admin.AutoGeneratedFilter`."""
+    response = admin_client.get(Certificate.admin_changelist_url)
+    assert_changelist_response(response, root_cert)
+    response = admin_client.get(Certificate.admin_changelist_url, {"auto": "auto"})
+    assert_changelist_response(response)
+    response = admin_client.get(Certificate.admin_changelist_url, {"auto": "all"})
+    assert_changelist_response(response, root_cert)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.changelist_url)
-        self.assertEqual(list(self.obj.watchers.all()), [watcher])
+    # Mark the certificate as auto-generated:
+    root_cert.autogenerated = True
+    root_cert.save()
+
+    response = admin_client.get(Certificate.admin_changelist_url)
+    assert_changelist_response(response)
+    response = admin_client.get(Certificate.admin_changelist_url, {"auto": "auto"})
+    assert_changelist_response(response, root_cert)
+    response = admin_client.get(Certificate.admin_changelist_url, {"auto": "all"})
+    assert_changelist_response(response, root_cert)
+
+
+def test_changelist_status_filter(
+    admin_user: User, admin_client: Client, root_cert: Certificate, child_cert: Certificate
+) -> None:
+    """Test :py:class:`~django_ca.admin.StatusListFilter`."""
+    child_cert.revoke(ReasonFlags.unspecified)
+    child_cert.save()
+
+    with freeze_time(timestamps["everything_valid"]):
+        response = admin_client.get(Certificate.admin_changelist_url)
+        assert_changelist_response(response, root_cert)
+        response = admin_client.get(Certificate.admin_changelist_url, {"status": "expired"})
+        assert_changelist_response(response)
+        response = admin_client.get(Certificate.admin_changelist_url, {"status": "revoked"})
+        assert_changelist_response(response, child_cert)
+        response = admin_client.get(Certificate.admin_changelist_url, {"status": "all"})
+        assert_changelist_response(response, root_cert, child_cert)
+
+    with freeze_time(timestamps["everything_expired"]):
+        admin_client.force_login(admin_user)
+        response = admin_client.get(Certificate.admin_changelist_url)
+        assert_changelist_response(response)
+        response = admin_client.get(Certificate.admin_changelist_url, {"status": "expired"})
+        assert_changelist_response(response, root_cert)
+        response = admin_client.get(Certificate.admin_changelist_url, {"status": "revoked"})
+        assert_changelist_response(response, child_cert)
+        response = admin_client.get(Certificate.admin_changelist_url, {"status": "all"})
+        assert_changelist_response(response, root_cert, child_cert)

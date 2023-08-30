@@ -12,129 +12,34 @@
 # <http://www.gnu.org/licenses/>.
 
 """pytest configuration."""
-
 import os
 import sys
 import typing
-from typing import Any, List, Tuple
+from typing import Any, Iterator, List
 
 import coverage
-import packaging
 import pkg_resources
-from _pytest.config.argparsing import Parser
 
-import cryptography
-
-import django
 from django.conf import settings
 
 import pytest
+from _pytest.config.argparsing import Parser
 from pytest_cov.plugin import CovPlugin
+
+from django_ca.models import Certificate
+from django_ca.tests.base.conftest_helpers import (
+    fixture_data,
+    generate_ca_fixture,
+    generate_cert_fixture,
+    generate_csr_fixture,
+    generate_pub_fixture,
+    setup_pragmas,
+)
 
 if typing.TYPE_CHECKING:
     from _pytest.config import Config as PytestConfig
-
-
-def exclude_versions(
-    cov: coverage.Coverage,
-    software: str,
-    current_version: Tuple[int, int],
-    pragma_version: Tuple[int, int],
-    version_str: str,
-) -> None:
-    """
-    Parameters
-    ----------
-    cov : coverage object
-    software : str
-    current_version
-        The currently used version.
-    pragma_version
-        The version to add pragmas for.
-    version_str:
-        Same as `version` but as ``str``.
-    """
-
-    if current_version == pragma_version:
-        cov.exclude(f"pragma: only {software}>{version_str}")
-        cov.exclude(f"pragma: only {software}<{version_str}")
-
-        cov.exclude(f"pragma: {software}<{version_str} branch")
-        cov.exclude(f"pragma: {software}!={version_str}")
-
-        # branches
-        cov.exclude(f"pragma: {software}>={version_str}", which="partial")
-        cov.exclude(f"pragma: {software}<={version_str}", which="partial")
-
-        # completely exclude pragma branches that just don't match.
-        # For example, when running python 3.9:
-        #
-        # if sys.version_info[:2] > (3, 9):  # pragma: py>3.9 branch
-        #     print("Only python 3.10 or later")
-        #
-        # --> just completely exclude the block, as it is never executed
-        cov.exclude(f"pragma: {software}>{version_str} branch")
-        cov.exclude(f"pragma: {software}<{version_str} branch")
-    else:
-        cov.exclude(f"pragma: only {software}=={version_str}")
-        cov.exclude(f"pragma: {software}!={version_str}", which="partial")
-
-        if current_version < pragma_version:
-            cov.exclude(f"pragma: only {software}>={version_str}")
-            cov.exclude(f"pragma: only {software}>{version_str}")
-
-            # Branches that run in the current version
-            cov.exclude(f"pragma: {software}<{version_str} branch", which="partial")
-            cov.exclude(f"pragma: {software}<={version_str} branch", which="partial")
-
-            # Completely exclude branches only used in *newer* versions. For example, if you use Python 3.8:
-            #
-            # if sys.version_info[:2] > (3, 9):  # pragma: py>3.9 branch
-            #     print("Only python 3.9 or later")
-            #
-            # --> The branch is never executed on Python 3.8.
-            cov.exclude(f"pragma: {software}>{version_str} branch")
-            cov.exclude(f"pragma: {software}>={version_str} branch")
-
-        if current_version > pragma_version:
-            cov.exclude(f"pragma: only {software}<={version_str}")
-            cov.exclude(f"pragma: only {software}<{version_str}")
-
-            # Branches that run in the current version
-            cov.exclude(f"pragma: {software}>{version_str} branch", which="partial")
-            cov.exclude(f"pragma: {software}>={version_str} branch", which="partial")
-
-            # Completely exclude branches only used in *older* versions. For example, if you use Python 3.9:
-            #
-            # if sys.version_info[:2] < (3, 9):  # pragma: py<3.9 branch
-            #     print("Only before Python 3.9")
-            #
-            # --> The branch is never executed on Python 3.9.
-            cov.exclude(f"pragma: {software}<{version_str} branch")
-            cov.exclude(f"pragma: {software}<={version_str} branch")
-
-
-def setup_pragmas(cov: coverage.Coverage) -> None:
-    """Setup pragmas to allow coverage exclusion based on Python/django/cryptography version."""
-
-    # exclude python version specific code
-    py_versions = [(3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14)]
-    for version in py_versions:
-        version_str = ".".join([str(v) for v in version])
-        exclude_versions(cov, "py", sys.version_info[:2], version, version_str)
-
-    # exclude django-version specific code
-    django_versions = [(3, 2), (4, 1), (4, 2), (5, 0), (5, 1)]
-    for version in django_versions:
-        version_str = ".".join([str(v) for v in version])
-        exclude_versions(cov, "django", django.VERSION[:2], version, version_str)
-
-    # exclude cryptography-version specific code
-    this_version = typing.cast(Tuple[int, int], packaging.version.parse(cryptography.__version__).release[:2])
-    cryptography_versions = [(37, 0), (38, 0), (39, 0), (40, 0), (41, 0), (42, 0), (43, 0), (44, 0)]
-    for ver in cryptography_versions:
-        version_str = ".".join([str(v) for v in ver])
-        exclude_versions(cov, "cryptography", this_version, ver, version_str)
+    from _pytest.fixtures import SubRequest
+    from _pytest.python import Metafunc
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -189,3 +94,53 @@ def pytest_collection_modifyitems(config: "PytestConfig", items: List[Any]) -> N
         for item in items:
             if "selenium" in item.keywords:
                 item.add_marker(skip_selenium)
+
+
+def pytest_generate_tests(metafunc: "Metafunc") -> None:
+    """Pytest hook used for parametrizing fixtures."""
+    if "interesting_cert" in metafunc.fixturenames:
+        metafunc.parametrize("interesting_cert", interesting_certificate_names, indirect=True)
+
+
+@pytest.fixture()
+def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
+    """Parametrized fixture for "interesting" certificates.
+
+    A function using this fixture will be called once for each interesting certificate.
+    """
+    yield request.getfixturevalue(request.param.replace("-", "_"))
+
+
+# CAs that can be used for signing certificates
+usable_ca_names = [
+    name for name, conf in fixture_data["certs"].items() if conf["type"] == "ca" and conf.get("key_filename")
+]
+unusable_ca_names = [
+    name
+    for name, conf in fixture_data["certs"].items()
+    if conf["type"] == "ca" and name not in usable_ca_names
+]
+all_ca_names = usable_ca_names + unusable_ca_names
+
+usable_cert_names = [
+    name
+    for name, conf in fixture_data["certs"].items()
+    if conf["type"] == "cert" and conf["cat"] == "generated"
+]
+unusable_cert_names = [
+    name
+    for name, conf in fixture_data["certs"].items()
+    if conf["type"] == "cert" and name not in usable_ca_names
+]
+interesting_certificate_names = ["child-cert", "all-extensions", "alt-extensions", "no-extensions"]
+all_cert_names = usable_cert_names + unusable_cert_names
+
+# Dynamically inject repetitive fixtures:
+#   https://github.com/pytest-dev/pytest/issues/2424
+for name in usable_ca_names:
+    globals()[name] = generate_ca_fixture(name)
+for name in usable_ca_names + usable_cert_names:
+    globals()[f"{name.replace('-', '_')}_pub"] = generate_pub_fixture(name)
+for name in usable_cert_names:
+    globals()[f"{name.replace('-', '_')}_csr"] = generate_csr_fixture(name)
+    globals()[name.replace("-", "_")] = generate_cert_fixture(name)

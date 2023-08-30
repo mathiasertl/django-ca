@@ -169,10 +169,12 @@ known_crypto = [
 known_django = "django"
 known_django_addon = "django_object_actions"
 known_test = [
+    "_pytest",
     "django_webtest",
     "freezegun",
     "pytest",
     "pytest_cov",
+    "pytest_django",
     "pyvirtualdisplay",
     "requests_mock",
     "selenium",
@@ -408,10 +410,12 @@ django = ["django"]
 django-addon = ["django_object_actions"]
 crypto = ["cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
 test = [
+    "_pytest",
     "django_webtest",
     "freezegun",
     "pytest",
     "pytest_cov",
+    "pytest_django",
     "pyvirtualdisplay",
     "requests_mock",
     "selenium",

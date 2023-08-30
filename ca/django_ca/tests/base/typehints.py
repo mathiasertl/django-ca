@@ -18,6 +18,11 @@ from typing import Any, Dict
 
 from django_ca.models import DjangoCAModel
 
+if typing.TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
+else:
+    from django.http import HttpResponse
+
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 
 
@@ -46,3 +51,6 @@ class FixtureData(typing.TypedDict):
     """Fixture data loaded/stored from JSON."""
 
     certs: Dict[str, CertFixtureData]
+
+
+__all__ = ["HttpResponse"]
