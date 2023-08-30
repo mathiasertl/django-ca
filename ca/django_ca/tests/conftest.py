@@ -170,7 +170,7 @@ def pytest_configure(config: "PytestConfig") -> None:
         print(f"* {pkg}: {installed_versions[pkg]}")
     print(f"* Selenium tests: {not skip_selenium}")
 
-    if not os.path.exists(settings.GECKODRIVER_PATH) and settings.RUN_SELENIUM_TESTS:  # pragma: no cover
+    if not os.path.exists(settings.GECKODRIVER_PATH) and not skip_selenium:  # pragma: no cover
         raise pytest.UsageError(
             f"{settings.GECKODRIVER_PATH}: Please download geckodriver to {settings.GECKODRIVER_PATH}: "
             "https://selenium-python.readthedocs.io/installation.html#drivers"

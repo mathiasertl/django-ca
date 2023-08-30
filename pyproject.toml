@@ -44,8 +44,8 @@ excludes = [
 # Files known to be stand-alone scripts (-> they include a shebang line)
 standalone-scripts = [
     "ca/manage.py",
-    "ca/django_ca/tests/fixtures/django-ca-dns-clean.py",
-    "ca/django_ca/tests/fixtures/django-ca-dns-auth.py",
+    "devscripts/files/django-ca-dns-clean.py",
+    "devscripts/files/django-ca-dns-auth.py",
     "devscripts/standalone/validate-testdata.py",
     "devscripts/standalone/test-imports.py",
     "devscripts/standalone/test-connectivity.py",
@@ -208,6 +208,7 @@ module = [
     # psycopg and psycopg_c are not installed in isolated mypy envs (tox, ...)
     "psycopg",
     "psycopg_c",
+    "pytest.*",
     "pytest_cov.*",
     "requests.packages.urllib3.response",
     # semantic-version==2.10.0 does not have typehints. See also:

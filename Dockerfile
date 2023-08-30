@@ -53,9 +53,8 @@ COPY setup.py dev.py ./
 COPY --chown=django-ca:django-ca ca/ ca/
 
 # Create some files/directories that we need later on
-RUN touch .coverage
 RUN mkdir -p /var/lib/django-ca/
-RUN chown django-ca:django-ca .coverage /var/lib/django-ca/ /usr/src/django-ca/ca
+RUN chown django-ca:django-ca /var/lib/django-ca/ /usr/src/django-ca/ca
 
 # From here on, we run as normal user
 USER django-ca:django-ca
@@ -66,7 +65,9 @@ COPY docs/source/ docs/source/
 # Run linters and unit tests
 COPY devscripts/ devscripts/
 ARG FAIL_UNDER=100
-RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER
+ENV COVERAGE_FILE=/tmp/.coverage
+RUN pytest -h
+RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium
 
 ###############
 # Build stage #
@@ -96,7 +97,7 @@ RUN python devscripts/standalone/check-clean-docker.py --ignore-devscripts
 RUN rm -rf devscripts/
 
 # Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
-COPY --from=test /usr/src/django-ca/.coverage /tmp
+COPY --from=test /usr/src/django-ca/docs/build/coverage/ /tmp
 
 ###############
 # final stage #
