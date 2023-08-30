@@ -14,7 +14,6 @@
 """Test :py:mod:`django_ca.profiles`."""
 
 import doctest
-import unittest
 from datetime import timedelta
 from typing import Any, Dict
 
@@ -22,7 +21,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID, NameOID
 
-from django.conf import settings
 from django.test import TestCase, override_settings
 
 from django_ca import ca_settings

@@ -14,8 +14,6 @@
 """Some common base classes for test cases."""
 import os
 
-import pytest
-
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import TestCase

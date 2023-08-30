@@ -16,7 +16,6 @@
 import html
 import json
 import typing
-import unittest
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
@@ -28,7 +27,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import ExtensionOID, NameOID
 
-from django.conf import settings
 from django.test import TestCase
 
 from django_webtest import WebTestMixin

@@ -1,7 +1,22 @@
+# This file is part of django-ca (https://github.com/mathiasertl/django-ca).
+#
+# django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# django-ca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along with django-ca. If not, see
+# <http://www.gnu.org/licenses/>.
+
+"""pytest configuration."""
+
 import os
 import sys
 import typing
-from typing import Tuple
+from typing import Any, List, Tuple
 
 import coverage
 import packaging
@@ -14,6 +29,9 @@ import cryptography
 
 import django
 from django.conf import settings
+
+if typing.TYPE_CHECKING:
+    from _pytest.config import Config as PytestConfig
 
 
 def exclude_versions(
@@ -119,6 +137,7 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
 
 
 def pytest_addoption(parser: Parser) -> None:
+    """Add some pytest options."""
     parser.addoption("--no-selenium", action="store_true", default=False, help="Do not run selenium tests.")
     parser.addoption(
         "--no-virtual-display",
@@ -128,15 +147,18 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: "PytestConfig") -> None:
+    """Output libraries, configure coverage pragmas."""
     cov_plugin: CovPlugin = config.pluginmanager.get_plugin("_cov")
-    cov: coverage.Coverage = cov_plugin.cov_controller.cov
-    combining_cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
-    setup_pragmas(combining_cov)
+    cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
+    setup_pragmas(cov)
 
     config.addinivalue_line("markers", "selenium: mark tests that use selenium")
 
     skip_selenium = config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS
+
+    if config.getoption("--no-virtual-display"):
+        os.environ["VIRTUAL_DISPLAY"] = "n"
 
     # Add a header to log important software versions
     print("Testing with:")
@@ -147,14 +169,15 @@ def pytest_configure(config):
         print(f"* {pkg}: {installed_versions[pkg]}")
     print(f"* Selenium tests: {not skip_selenium}")
 
-    if not os.path.exists(settings.GECKODRIVER_PATH) and settings.RUN_SELENIUM_TESTS:
+    if not os.path.exists(settings.GECKODRIVER_PATH) and settings.RUN_SELENIUM_TESTS:  # pragma: no cover
         raise pytest.UsageError(
-            f"Please download geckodriver to {settings.GECKODRIVER_PATH}: "
+            f"{settings.GECKODRIVER_PATH}: Please download geckodriver to {settings.GECKODRIVER_PATH}: "
             "https://selenium-python.readthedocs.io/installation.html#drivers"
         )
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: "PytestConfig", items: List[Any]) -> None:  # pragma: no cover
+    """Mark Selenium tests as skipped if appropriate."""
     if config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS:
         if config.getoption("--no-selenium"):
             reason = "--no-selenium was passed"
@@ -165,6 +188,3 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "selenium" in item.keywords:
                 item.add_marker(skip_selenium)
-
-    if config.getoption("--no-virtual-display"):
-        os.environ["VIRTUAL_DISPLAY"] = "n"

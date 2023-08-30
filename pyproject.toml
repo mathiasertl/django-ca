@@ -199,6 +199,7 @@ module = [
     # psycopg and psycopg_c are not installed in isolated mypy envs (tox, ...)
     "psycopg",
     "psycopg_c",
+    "pytest_cov.*",
     "requests.packages.urllib3.response",
     # semantic-version==2.10.0 does not have typehints. See also:
     #   https://github.com/rbarrois/python-semanticversion/issues/138

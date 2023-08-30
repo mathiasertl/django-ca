@@ -66,7 +66,7 @@ COPY docs/source/ docs/source/
 # Run linters and unit tests
 COPY devscripts/ devscripts/
 ARG FAIL_UNDER=100
-RUN python dev.py coverage --format=text --fail-under=$FAIL_UNDER
+RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER
 
 ###############
 # Build stage #

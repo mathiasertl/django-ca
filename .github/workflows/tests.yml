@@ -39,15 +39,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "cryptography==${{ matrix.cryptography-version }}" > constraints.txt
-          echo "django==${{ matrix.django-version }}" >> constraints.txt
           pip install -U pip setuptools wheel
-          pip install -c constraints.txt -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt
+          pip install -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt django==${{ matrix.django-version }} cryptography==${{ matrix.cryptography-version }}
 
       - name: Install program
         run: pip install -e .
 
+      - name: Initialize demo
+        run: python dev.py init-demo
+
       - name: Run tests
-        run: |
-          python dev.py init-demo
-          pytest -v
+        run: pytest -v --cov-report term-missing
