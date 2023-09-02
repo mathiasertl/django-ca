@@ -44,6 +44,7 @@ class ListCertificateAuthorityTestCase(APITestCaseMixin, TestCase):
                 "can_sign_certificates": False,
                 "created": self.iso_format(self.ca.created),
                 "crl_url": self.ca.crl_url,
+                "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in cert["issuer"]],
                 "issuer_alt_name": "",
                 "issuer_url": self.ca.issuer_url,
                 "not_after": self.iso_format(self.ca.expires),
@@ -56,7 +57,10 @@ class ListCertificateAuthorityTestCase(APITestCaseMixin, TestCase):
                 "revoked": False,
                 "serial": cert["serial"],
                 "sign_certificate_policies": None,
-                "subject": x509_name(cert["subject"]).rfc4514_string(),
+                "subject": [
+                    {"oid": attr.oid.dotted_string, "value": attr.value}
+                    for attr in x509_name(cert["subject"])
+                ],
                 "terms_of_service": "",
                 "updated": self.iso_format(self.ca.updated),
                 "website": "",

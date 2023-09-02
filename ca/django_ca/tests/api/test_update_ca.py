@@ -68,6 +68,7 @@ class CertificateAuthorityDetailTestCase(APITestCaseMixin, TestCase):
             **{
                 "can_sign_certificates": False,
                 "created": self.iso_format(self.ca.created),
+                "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in cert["issuer"]],
                 "not_after": self.iso_format(self.ca.expires),
                 "not_before": self.iso_format(self.ca.valid_from),
                 "pem": cert["pub"]["pem"],
@@ -77,7 +78,10 @@ class CertificateAuthorityDetailTestCase(APITestCaseMixin, TestCase):
                     "critical": constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES],
                     "value": [{"policy_identifier": "1.1.1", "policy_qualifiers": None}],
                 },
-                "subject": x509_name(cert["subject"]).rfc4514_string(),
+                "subject": [
+                    {"oid": attr.oid.dotted_string, "value": attr.value}
+                    for attr in x509_name(cert["subject"])
+                ],
                 "updated": self.iso_format(timestamps["everything_valid"]),
             },
         )

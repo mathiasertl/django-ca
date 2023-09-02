@@ -14,10 +14,13 @@
 """Pydantic Schemas for the API."""
 
 import abc
+import base64
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional, Union
 
 from ninja import Field, ModelSchema, Schema
+
+from cryptography.x509.oid import NameOID
 
 from django_ca import ca_settings, constants
 from django_ca.api.extension_schemas import DATETIME_EXAMPLE, ExtensionsSchema
@@ -25,6 +28,24 @@ from django_ca.constants import ReasonFlags
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.typehints import SerializedExtension
+
+
+class NameAttributeSchema(Schema):
+    """docstring for class"""
+
+    oid: str = Field(
+        title="OID",
+        description="The attribute OID as dotted string.",
+        example=NameOID.COMMON_NAME.dotted_string,
+    )
+
+    value: Union[str, bytes] = Field(
+        description="The value of the attribute.",
+    )
+
+    class Config:  # pylint: disable=missing-class-docstring
+        # NOTE: json_encoders does not seem to do anything if there is a Union[] annotation
+        json_encoders = {bytes: lambda v: base64.b64encode(v).decode()}  # pragma: no cover
 
 
 class X509BaseSchema(ModelSchema, abc.ABC):
@@ -42,10 +63,8 @@ class X509BaseSchema(ModelSchema, abc.ABC):
         example="-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
     )
     serial: str = Field(description="Serial (in hex) of the certificate.", example="ABC...0123")
-    subject: str = Field(
-        description="The subject as RFC 4514 formatted string.",
-        example="CN=example.com,O=Example,ST=Vienna,C=AT",
-    )
+    subject: List[NameAttributeSchema] = Field(description="The subject as list of name attributes.")
+    issuer: List[NameAttributeSchema] = Field(description="The issuer as list of name attributes.")
     revoked: bool = Field(description="If the certificate was revoked.", example=False)
     updated: datetime = Field(description="When the certificate was last updated.", example=DATETIME_EXAMPLE)
 
@@ -54,22 +73,27 @@ class X509BaseSchema(ModelSchema, abc.ABC):
         model_fields = sorted(["created", "revoked", "serial", "updated"])
 
     @staticmethod
-    def resolve_created(obj: CertificateAuthority) -> datetime:
+    def resolve_created(obj: X509CertMixin) -> datetime:
         """Strip microseconds from the attribute."""
         return obj.created.replace(microsecond=0)
 
     @staticmethod
-    def resolve_pem(obj: CertificateAuthority) -> str:
+    def resolve_pem(obj: X509CertMixin) -> str:
         """Convert the public certificate to its PEM format"""
         return obj.pub.pem
 
     @staticmethod
-    def resolve_subject(obj: CertificateAuthority) -> str:
+    def resolve_subject(obj: X509CertMixin) -> List[NameAttributeSchema]:
         """Convert the subject to its RFC 4514 representation."""
-        return obj.subject.rfc4514_string()
+        return [NameAttributeSchema(oid=attr.oid.dotted_string, value=attr.value) for attr in obj.subject]
 
     @staticmethod
-    def resolve_updated(obj: CertificateAuthority) -> datetime:
+    def resolve_issuer(obj: X509CertMixin) -> List[NameAttributeSchema]:
+        """Convert the issuer to its serialized representation."""
+        return [NameAttributeSchema(oid=attr.oid.dotted_string, value=attr.value) for attr in obj.issuer]
+
+    @staticmethod
+    def resolve_updated(obj: X509CertMixin) -> datetime:
         """Strip microseconds from the attribute."""
         return obj.updated.replace(microsecond=0)
 
@@ -204,10 +228,7 @@ class SignCertificateSchema(Schema):
         default=ca_settings.CA_DEFAULT_PROFILE,
         enum=sorted(ca_settings.CA_PROFILES),
     )
-    subject: str = Field(
-        description="The subject as RFC 4514 formatted string.",
-        example="CN=example.com,O=Example,ST=Vienna,C=AT",
-    )
+    subject: List[NameAttributeSchema] = Field(description="The subject as list of name attributes.")
 
 
 class RevokeCertificateSchema(Schema):

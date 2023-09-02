@@ -124,7 +124,9 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
     csr = x509.load_pem_x509_csr(data.csr.encode())
     ca = get_certificate_authority(serial)
     profile = profiles[data.profile]
-    subject = x509.Name.from_rfc4514_string(data.subject)
+    subject = x509.Name(
+        [x509.NameAttribute(oid=x509.ObjectIdentifier(attr.oid), value=attr.value) for attr in data.subject]
+    )
     algorithm = expires = None
     extensions: List[x509.Extension[x509.ExtensionType]] = []
 
