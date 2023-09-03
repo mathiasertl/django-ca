@@ -220,10 +220,11 @@ class SignCertificateSchema(Schema):
         description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
         example=DATETIME_EXAMPLE,
     )
-    extensions: Optional[ExtensionsSchema] = Field(
-        default=None, description="**Optional** additional extensions to add to the certificate."
+    extensions: ExtensionsSchema = Field(
+        default_factory=ExtensionsSchema,
+        description="**Optional** additional extensions to add to the certificate.",
     )
-    profile: Optional[str] = Field(
+    profile: str = Field(
         description="Issue the certificate with the given profile.",
         default=ca_settings.CA_DEFAULT_PROFILE,
         enum=sorted(ca_settings.CA_PROFILES),

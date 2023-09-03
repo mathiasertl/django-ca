@@ -301,7 +301,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         msg: Optional[str] = None,
     ) -> None:
         """Type equality function for x509.AuthorityInformationAccess."""
-        self.assertEqual(list(first), list(second), msg=msg)
+
+        def sorter(ad: x509.AccessDescription) -> Tuple[str, str]:
+            return ad.access_method.dotted_string, ad.access_location.value
+
+        self.assertEqual(sorted(first, key=sorter), sorted(second, key=sorter), msg=msg)
 
     def assertCryptographyExtensionEqual(  # pylint: disable=invalid-name
         self,
