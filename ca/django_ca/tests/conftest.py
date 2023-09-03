@@ -12,34 +12,44 @@
 # <http://www.gnu.org/licenses/>.
 
 """pytest configuration."""
+
+# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
+
+import base64
 import os
 import sys
-import typing
-from typing import Any, Iterator, List
+from pathlib import Path
+from typing import Any, Iterator, List, Type
+from unittest.mock import patch
 
 import coverage
 import pkg_resources
 
 from django.conf import settings
+from django.test.client import Client
 
 import pytest
+from _pytest.config import Config as PytestConfig
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import SubRequest
+from _pytest.python import Metafunc
 from pytest_cov.plugin import CovPlugin
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate
+from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
     fixture_data,
     generate_ca_fixture,
     generate_cert_fixture,
     generate_csr_fixture,
+    generate_csr_pem_fixture,
     generate_pub_fixture,
+    generate_usable_ca_fixture,
     setup_pragmas,
 )
-
-if typing.TYPE_CHECKING:
-    from _pytest.config import Config as PytestConfig
-    from _pytest.fixtures import SubRequest
-    from _pytest.python import Metafunc
+from django_ca.tests.base.typehints import User
+from django_ca.utils import ca_storage
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -111,6 +121,51 @@ def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
     yield request.getfixturevalue(request.param.replace("-", "_"))
 
 
+@pytest.fixture()
+def user(
+    db: None,  # pylint: disable=unused-argument,invalid-name  # required for database access
+    django_user_model: Type["User"],
+) -> "User":
+    """Fixture for a basic Django user with no extra permissions."""
+    username = "user"
+
+    try:
+        user = django_user_model.objects.get_by_natural_key(username)
+    except django_user_model.DoesNotExist:
+        user = django_user_model.objects.create_user(username=username, password="password")
+    return user
+
+
+# Not yet used:
+# @pytest.fixture()
+# def user_client(db: None, user: "User") -> Client:
+#     """A Django test client logged in as a normal user."""
+#
+#     client = Client()
+#     client.force_login(user)
+#     return client
+
+
+@pytest.fixture()
+def api_client(client: Client, user: "User") -> Client:
+    """HTTP client with HTTP basic authentication for the user."""
+    credentials = base64.b64encode(user.username.encode("utf-8") + b":password").decode()
+    client.defaults["HTTP_AUTHORIZATION"] = "Basic " + credentials
+    return client
+
+
+@pytest.fixture()
+def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrapper]:
+    """Fixture to create a temporary CA dir."""
+    settings.CA_DIR = str(tmp_path)
+
+    # Reset profiles, so that they are loaded again on first access
+    profiles._reset()  # pylint: disable=protected-access
+
+    with patch.object(ca_storage, "location", tmp_path), patch.object(ca_storage, "_location", tmp_path):
+        yield settings
+
+
 # CAs that can be used for signing certificates
 usable_ca_names = [
     name for name, conf in fixture_data["certs"].items() if conf["type"] == "ca" and conf.get("key_filename")
@@ -139,8 +194,10 @@ all_cert_names = usable_cert_names + unusable_cert_names
 #   https://github.com/pytest-dev/pytest/issues/2424
 for name in usable_ca_names:
     globals()[name] = generate_ca_fixture(name)
+    globals()[f"usable_{name}"] = generate_usable_ca_fixture(name)
 for name in usable_ca_names + usable_cert_names:
     globals()[f"{name.replace('-', '_')}_pub"] = generate_pub_fixture(name)
 for name in usable_cert_names:
     globals()[f"{name.replace('-', '_')}_csr"] = generate_csr_fixture(name)
+    globals()[f"{name.replace('-', '_')}_csr_pem"] = generate_csr_pem_fixture(name)
     globals()[name.replace("-", "_")] = generate_cert_fixture(name)

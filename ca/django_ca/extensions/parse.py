@@ -153,17 +153,8 @@ def _parse_authority_information_access(
     value: ParsableAuthorityInformationAccess,
 ) -> x509.AuthorityInformationAccess:
     access_descriptions: List[x509.AccessDescription] = []
-    issuers: Optional[ParsableGeneralNameList] = value.get("issuers")
-    if issuers is None:
-        issuers = []
 
-    for name in issuers:
-        access_descriptions.append(
-            x509.AccessDescription(
-                access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                access_location=parse_general_name(name),
-            )
-        )
+    # NOTE: OCSP is first because OID is lexicographically smaller
     ocsp: Optional[ParsableGeneralNameList] = value.get("ocsp")
     if ocsp is None:
         ocsp = []
@@ -171,6 +162,17 @@ def _parse_authority_information_access(
         access_descriptions.append(
             x509.AccessDescription(
                 access_method=AuthorityInformationAccessOID.OCSP,
+                access_location=parse_general_name(name),
+            )
+        )
+
+    issuers: Optional[ParsableGeneralNameList] = value.get("issuers")
+    if issuers is None:
+        issuers = []
+    for name in issuers:
+        access_descriptions.append(
+            x509.AccessDescription(
+                access_method=AuthorityInformationAccessOID.CA_ISSUERS,
                 access_location=parse_general_name(name),
             )
         )

@@ -731,6 +731,7 @@ class CertificateAuthority(X509CertMixin):
 
         access_descriptions = []
         # TODO: use get_authority_information_access_extension() but it does not yet split lines
+        # NOTE: OCSP is first because OID is lexicographically smaller
         if self.ocsp_url:
             ocsp = [parse_general_name(name) for name in self.ocsp_url.splitlines()]
             access_descriptions += [

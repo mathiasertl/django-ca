@@ -19,9 +19,13 @@ from typing import Any, Dict
 from django_ca.models import DjangoCAModel
 
 if typing.TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractUser as User
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 else:
+    from django.contrib.auth import get_user_model
     from django.http import HttpResponse
+
+    User = get_user_model()
 
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 
@@ -53,4 +57,4 @@ class FixtureData(typing.TypedDict):
     certs: Dict[str, CertFixtureData]
 
 
-__all__ = ["HttpResponse"]
+__all__ = ["HttpResponse", "User"]

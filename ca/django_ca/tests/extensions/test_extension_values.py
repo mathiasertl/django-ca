@@ -268,8 +268,8 @@ class AuthorityInformationAccessTestCase(ExtensionTestCaseMixin, TestCase):
             "admin_html": f"CA Issuers:<ul><li>URI:{uri2}</li></ul> OCSP:<ul><li>URI:{uri1}</li></ul>",
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
-                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
                     x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
+                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
                 ]
             ),
             "serialized": {"ocsp": [f"URI:{uri1}"], "issuers": [f"URI:{uri2}"]},
@@ -301,10 +301,10 @@ OCSP:
             },
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
-                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
-                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri4)),
                     x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
                     x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2)),
+                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
+                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri4)),
                 ]
             ),
             "text": f"CA Issuers:\n  * URI:{uri3}\n  * URI:{uri4}\nOCSP:\n  * URI:{uri1}\n  * URI:{uri2}",

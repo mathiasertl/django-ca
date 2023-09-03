@@ -14,23 +14,28 @@
 """Helpers for pytest conftest."""
 import json
 import os
+import shutil
 import sys
 import typing
-from typing import Iterator, Optional, Tuple
+from typing import Any, Iterator, Optional, Tuple
 
 import coverage
 import packaging
 
 import cryptography
 from cryptography import x509
+from cryptography.hazmat.primitives import serialization
 
 import django
 from django.conf import settings
+from django.urls import reverse
 
 import pytest
 from _pytest.fixtures import SubRequest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.utils import int_to_hex
 
 
 def exclude_versions(
@@ -155,11 +160,26 @@ def generate_csr_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certifi
     return fixture
 
 
-def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator[CertificateAuthority]]:
+def generate_csr_pem_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator[str]]:
+    """Generate fixture for a loaded CSR (root_cert_csr, ...)."""
+
+    @pytest.fixture(scope="session")
+    def fixture(request: "SubRequest") -> Iterator[str]:
+        sanitized_name = name.replace("-", "_")
+        csr = request.getfixturevalue(f"{sanitized_name}_csr")
+        yield csr.public_bytes(serialization.Encoding.PEM).decode("utf-8")
+
+    return fixture
+
+
+def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Iterator[CertificateAuthority]]:
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture()
-    def fixture(request: "SubRequest") -> Iterator[CertificateAuthority]:
+    def fixture(
+        request: "SubRequest",
+        db: Any,  # pylint: disable=unused-argument,invalid-name  # usefixtures does not work for fixtures
+    ) -> Iterator[CertificateAuthority]:
         data = fixture_data["certs"][name]
         pub = request.getfixturevalue(f"{name}_pub")
 
@@ -169,6 +189,22 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator[C
             parent = request.getfixturevalue(parent_name)
 
         yield load_ca(name, pub, parent)
+
+    return fixture
+
+
+def generate_usable_ca_fixture(
+    name: str,
+) -> typing.Callable[["SubRequest", SettingsWrapper], Iterator[CertificateAuthority]]:
+    """Function to generate CA fixtures (root, child, ...)."""
+
+    @pytest.fixture()
+    def fixture(request: "SubRequest", tmpcadir: SettingsWrapper) -> Iterator[CertificateAuthority]:
+        ca = request.getfixturevalue(name)  # load the CA into the database
+        data = fixture_data["certs"][name]
+        shutil.copy(os.path.join(settings.FIXTURES_DIR, data["key_filename"]), tmpcadir.CA_DIR)
+
+        yield ca
 
     return fixture
 
@@ -201,9 +237,23 @@ def load_csr(name: str) -> x509.CertificateSigningRequest:
         return x509.load_pem_x509_csr(stream.read())
 
 
-def load_ca(name: str, pub: x509.Certificate, parent: Optional[CertificateAuthority]) -> CertificateAuthority:
+def load_ca(
+    name: str, pub: x509.Certificate, parent: Optional[CertificateAuthority], **kwargs: Any
+) -> CertificateAuthority:
     """Load a CA."""
-    ca = CertificateAuthority(name=name, private_key_path=f"{name}.key", parent=parent)
+    # Set default URLs
+    serial = int_to_hex(pub.serial_number)
+    hostname = settings.CA_DEFAULT_HOSTNAME
+
+    crl_path = reverse("django_ca:crl", kwargs={"serial": serial})
+    ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": serial})
+    issuer_path = reverse("django_ca:issuer", kwargs={"serial": serial})
+
+    kwargs.setdefault("crl_url", f"http://{hostname}{crl_path}")
+    kwargs.setdefault("issuer_url", f"http://{hostname}{issuer_path}")
+    kwargs.setdefault("ocsp_url", f"http://{hostname}{ocsp_path}")
+
+    ca = CertificateAuthority(name=name, private_key_path=f"{name}.key", parent=parent, **kwargs)
     ca.update_certificate(pub)  # calculates serial etc
     ca.save()
     return ca
