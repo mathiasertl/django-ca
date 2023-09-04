@@ -23,7 +23,7 @@ from datetime import timedelta
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase, override_settings
@@ -259,7 +259,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 ca=self.ca,
                 subject=self.subject,
                 cn_in_san=False,
-                subject_alternative_name=self.subject_alternative_name(dns("example.com")).value,
+                subject_alternative_name=subject_alternative_name(dns("example.com")).value,
                 stdin=stdin,
             )
 
@@ -273,7 +273,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stderr, "")
         self.assertEqual(
             cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(dns("example.com")),
+            subject_alternative_name(dns("example.com")),
         )
 
     @override_tmpcadir()
@@ -319,7 +319,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                subject_alternative_name=self.subject_alternative_name(dns(self.hostname)).value,
+                subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
                 stdin=stdin,
             )
         self.assertEqual(stderr, "")
@@ -349,7 +349,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 "sign_cert",
                 ca=self.ca,
                 cn_in_san=False,
-                subject_alternative_name=self.subject_alternative_name(dns(self.hostname)).value,
+                subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
                 stdin=stdin,
                 subject=subject,
             )
@@ -634,7 +634,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
-            self.subject_alternative_name(uri("https://example.net"), dns("example.org"), dns(self.hostname)),
+            subject_alternative_name(uri("https://example.net"), dns("example.org"), dns(self.hostname)),
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -645,7 +645,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                subject_alternative_name=self.subject_alternative_name(dns(self.hostname)).value,
+                subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
                 stdin=stdin,
             )
 
@@ -658,7 +658,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stderr, "")
         actual = cert.x509_extensions
         self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -672,7 +672,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Giving no password raises a CommandError
         stdin = self.csr_pem.encode()
-        san = self.subject_alternative_name(dns("example.com"))
+        san = subject_alternative_name(dns("example.com"))
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
         ), self.assertCreateCertSignals(False, False):
@@ -704,7 +704,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Giving no password raises a CommandError
         stdin = io.StringIO(self.csr_pem)
-        san = self.subject_alternative_name(dns("example.com"))
+        san = subject_alternative_name(dns("example.com"))
         with self.assertCommandError(self.re_false_password), self.assertCreateCertSignals(False, False):
             self.cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=stdin)
 

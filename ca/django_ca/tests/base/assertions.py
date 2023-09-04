@@ -51,7 +51,7 @@ def assert_changelist_response(response: "HttpResponse", *objects: models.Model)
     assert "admin/change_list.html" in templates
 
 
-def assert_css(response: "HttpResponse", path: str, media: str) -> None:
+def assert_css(response: "HttpResponse", path: str, media: str = "all") -> None:
     """Assert that the HTML from the given response includes the mentioned CSS."""
     if django.VERSION[:2] <= (4, 0):  # pragma: only django<4.1
         css = f'<link href="{static(path)}" type="text/css" media="{media}" rel="stylesheet" />'

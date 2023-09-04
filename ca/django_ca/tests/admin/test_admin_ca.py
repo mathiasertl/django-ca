@@ -21,6 +21,7 @@ from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
 from django.test import Client, TestCase, override_settings
 
 from django_ca.models import CertificateAuthority
+from django_ca.tests.base.assertions import assert_change_response
 from django_ca.tests.base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
 
 
@@ -71,7 +72,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
         )
         ca.save()
         response = self.get_change_view(ca)
-        self.assertChangeResponse(response, ca)
+        assert_change_response(response)
         templates = [t.name for t in response.templates]
         self.assertIn("django_ca/admin/extensions/2.5.29.32.html", templates)
 

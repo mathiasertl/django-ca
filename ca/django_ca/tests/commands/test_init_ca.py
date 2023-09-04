@@ -387,7 +387,7 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test Subject Alternative Name extension
         self.assertEqual(
             extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(dns("san.example.com"), uri("https://san.example.net")),
+            subject_alternative_name(dns("san.example.com"), uri("https://san.example.net")),
         )
 
     @override_tmpcadir()

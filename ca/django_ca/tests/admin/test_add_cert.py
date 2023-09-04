@@ -45,6 +45,7 @@ from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.assertions import assert_css
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -182,8 +183,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         templates = [t.name for t in response.templates]
         self.assertIn("admin/django_ca/certificate/change_form.html", templates)
         self.assertIn("admin/change_form.html", templates)
-        self.assertCSS(response, "django_ca/admin/css/base.css")
-        self.assertCSS(response, "django_ca/admin/css/certificateadmin.css")
+        assert_css(response, "django_ca/admin/css/base.css")
+        assert_css(response, "django_ca/admin/css/certificateadmin.css")
         return response
 
     @override_tmpcadir()
@@ -300,7 +301,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.subject, x509.Name([]))
         self.assertEqual(
             cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(dns(self.hostname)),
+            subject_alternative_name(dns(self.hostname)),
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -353,7 +354,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
         self.assertEqual(
             cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(dns(self.hostname)),
+            subject_alternative_name(dns(self.hostname)),
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -527,7 +528,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.csr.pem, csr)
 
         # Some extensions are not set
-        self.assertExtensions(cert, [self.subject_alternative_name(dns(san), dns(cname))])
+        self.assertExtensions(cert, [subject_alternative_name(dns(san), dns(cname))])
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -659,7 +660,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         self.assertEqual(
             cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(dns(cname)),
+            subject_alternative_name(dns(cname)),
         )
         self.assertExtensions(
             cert,

@@ -28,6 +28,7 @@ from django_ca.models import (
     CertificateAuthority,
 )
 from django_ca.tests.base import override_tmpcadir
+from django_ca.tests.base.assertions import assert_changelist_response
 from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 
@@ -146,14 +147,14 @@ class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], TestCase):
     @override_tmpcadir()
     def test_expired_filter(self) -> None:
         """Test the "expired" list filter."""
-        self.assertChangelistResponse(
+        assert_changelist_response(
             self.client.get(f"{self.changelist_url}?expired=0"), self.order1, self.order2
         )
-        self.assertChangelistResponse(self.client.get(f"{self.changelist_url}?expired=1"))
+        assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=1"))
 
         with self.freeze_time("everything_expired"):
-            self.assertChangelistResponse(self.client.get(f"{self.changelist_url}?expired=0"))
-            self.assertChangelistResponse(
+            assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=0"))
+            assert_changelist_response(
                 self.client.get(f"{self.changelist_url}?expired=1"), self.order1, self.order2
             )
 

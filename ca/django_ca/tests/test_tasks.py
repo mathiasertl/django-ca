@@ -51,6 +51,7 @@ from django_ca.models import (
 )
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.tests.base.utils import subject_alternative_name
 from django_ca.utils import ca_storage, get_crl_cache_key
 
 
@@ -564,7 +565,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(x509.DNSName(self.hostname)),
+            subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
@@ -591,7 +592,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
+            subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertIn(self.acme_cert.cert.cn, [self.hostname, hostname2])
@@ -615,7 +616,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(x509.DNSName(self.hostname)),
+            subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
@@ -644,7 +645,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
             self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(x509.DNSName(self.hostname)),
+            subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)

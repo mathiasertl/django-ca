@@ -1033,7 +1033,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             )
 
         # Create a cert with some weirder SANs to test that too
-        san = self.subject_alternative_name(
+        san = subject_alternative_name(
             x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
             x509.RFC822Name("user@example.com"),
             x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
@@ -1045,7 +1045,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             extensions=[san],
         )
 
-        expected_san = self.subject_alternative_name(
+        expected_san = subject_alternative_name(
             x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
             x509.RFC822Name("user@example.com"),
             x509.IPAddress(ipaddress.IPv6Address("fd00::1")),

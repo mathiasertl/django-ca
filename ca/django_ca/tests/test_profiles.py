@@ -202,7 +202,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
-            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
+            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
         )
 
     @override_tmpcadir()
@@ -225,7 +225,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 subject=x509.Name([country_name]),
                 algorithm=hashes.SHA256(),
                 expires=timedelta(days=30),
-                extensions=[self.subject_alternative_name(dns(self.hostname))],
+                extensions=[subject_alternative_name(dns(self.hostname))],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.cn, self.hostname)
@@ -333,7 +333,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
-            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
+            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
         )
 
         # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
@@ -344,13 +344,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 csr,
                 subject=self.subject,
                 cn_in_san=True,
-                extensions=[self.subject_alternative_name(dns(self.hostname))],
+                extensions=[subject_alternative_name(dns(self.hostname))],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
-            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
+            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
         )
 
         # test that cn_in_san=True with a SAN that does NOT yet contain the CN, so it's added
@@ -361,7 +361,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 csr,
                 subject=self.subject,
                 cn_in_san=True,
-                extensions=[self.subject_alternative_name(dns(self.hostname + ".added"))],
+                extensions=[subject_alternative_name(dns(self.hostname + ".added"))],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
@@ -369,20 +369,20 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.subject_alternative_name(dns(self.hostname + ".added"), dns(self.hostname)),
+                subject_alternative_name(dns(self.hostname + ".added"), dns(self.hostname)),
             ],
         )
 
         # test that the first SAN is added as CN if we don't have A CN
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
-                prof, ca, csr, cn_in_san=True, extensions=[self.subject_alternative_name(dns(self.hostname))]
+                prof, ca, csr, cn_in_san=True, extensions=[subject_alternative_name(dns(self.hostname))]
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, subject)
         self.assertExtensions(
             cert,
-            [ca.get_authority_key_identifier_extension(), self.subject_alternative_name(dns(self.hostname))],
+            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
         )
 
     @override_tmpcadir()
@@ -750,7 +750,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
         prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
-        san = self.subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
+        san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with self.mockSignal(pre_sign_cert) as pre:
             self.create_cert(prof, ca, csr, cn_in_san=True, extensions=[san])

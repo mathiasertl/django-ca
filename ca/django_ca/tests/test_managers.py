@@ -42,6 +42,7 @@ from django_ca.tests.base.utils import (
     name_constraints,
     ocsp_no_check,
     precert_poison,
+    subject_alternative_name,
     tls_feature,
 )
 
@@ -440,7 +441,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(self.ca, self.csr, subject=self.subject)
         self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(cert, [self.subject_alternative_name(dns(self.hostname))])
+        self.assertExtensions(cert, [subject_alternative_name(dns(self.hostname))])
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_explicit_profile(self) -> None:
@@ -450,7 +451,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
                 self.ca, self.csr, subject=self.subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
         self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(cert, [self.subject_alternative_name(dns(self.hostname))])
+        self.assertExtensions(cert, [subject_alternative_name(dns(self.hostname))])
 
     @override_tmpcadir()
     def test_cryptography_extensions(self) -> None:
@@ -464,7 +465,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                self.subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name(dns(self.hostname)),
                 expected_key_usage,
                 extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
             ],

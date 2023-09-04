@@ -33,7 +33,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
-import django
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
@@ -43,7 +42,6 @@ from django.core.management import ManagementUtility, call_command
 from django.core.management.base import CommandError
 from django.db import models
 from django.dispatch.dispatcher import Signal
-from django.templatetags.static import static
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
@@ -63,8 +61,9 @@ from django_ca.signals import (
     pre_sign_cert,
 )
 from django_ca.tests.base import certs, timestamps, uri
+from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import basic_constraints, certificate_policies, subject_alternative_name
+from django_ca.tests.base.utils import basic_constraints, certificate_policies
 from django_ca.utils import add_colons, ca_storage, parse_general_name
 
 if typing.TYPE_CHECKING:
@@ -888,12 +887,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Subject containing a common name that is unique for the test case."""
         return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
-    def subject_alternative_name(
-        self, *names: x509.GeneralName, critical: bool = False
-    ) -> x509.Extension[x509.SubjectAlternativeName]:
-        """Shortcut for getting a SubjectAlternativeName extension."""
-        return subject_alternative_name(*names, critical=critical)
-
     @classmethod
     def expires(cls, days: int) -> timedelta:
         """Get a timestamp `days` from now."""
@@ -1121,40 +1114,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self.assertEqual(response["Content-Disposition"], f"attachment; filename={filename}")
         self.assertEqual(response.content.decode("utf-8"), expected_content)
 
-    def assertCSS(self, response: "HttpResponse", path: str) -> None:  # pylint: disable=invalid-name
-        """Assert that the HTML from the given response includes the mentioned CSS."""
-        if django.VERSION[:2] <= (4, 0):  # pragma: only django<4.1
-            css = f'<link href="{static(path)}" type="text/css" media="all" rel="stylesheet" />'
-        else:  # pragma: only django>=4.1
-            css = f'<link href="{static(path)}" media="all" rel="stylesheet" />'
-        self.assertInHTML(css, response.content.decode("utf-8"), 1)
-
-    def assertChangeResponse(  # pylint: disable=invalid-name,unused-argument # obj is unused
-        self, response: "HttpResponse", obj: DjangoCAModelTypeVar, status: int = HTTPStatus.OK
-    ) -> None:
-        """Assert that the passed response is a model change view."""
-        self.assertEqual(response.status_code, status)
-        templates = [t.name for t in response.templates]
-        self.assertIn("admin/change_form.html", templates)
-        self.assertIn("admin/base.html", templates)
-
-        for css in self.media_css:
-            self.assertCSS(response, css)
-
-    def assertChangelistResponse(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", *objects: models.Model, status: int = HTTPStatus.OK
-    ) -> None:
-        """Assert that the passed response is a model changelist view."""
-        self.assertEqual(response.status_code, status)
-        self.assertCountEqual(response.context["cl"].result_list, objects)
-
-        templates = [t.name for t in response.templates]
-        self.assertIn("admin/base.html", templates)
-        self.assertIn("admin/change_list.html", templates)
-
-        for css in self.media_css:
-            self.assertCSS(response, css)
-
     def assertRequiresLogin(  # pylint: disable=invalid-name
         self, response: "HttpResponse", **kwargs: Any
     ) -> None:
@@ -1230,12 +1189,12 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
     def test_changelist_view(self) -> None:
         """Test that the changelist view works."""
         for qs, data in self.get_changelists():
-            self.assertChangelistResponse(self.get_changelist_view(data), *qs)
+            assert_changelist_response(self.get_changelist_view(data), *qs)
 
     def test_change_view(self) -> None:
         """Test that the change view works for all instances."""
         for obj in self.model.objects.all():
-            self.assertChangeResponse(self.get_change_view(obj), obj)
+            assert_change_response(self.get_change_view(obj))
 
 
 class AcmeValuesMixin:
