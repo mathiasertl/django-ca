@@ -46,6 +46,21 @@ from django_ca.profiles import Profile, profiles
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.testcases import SeleniumTestCase
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    basic_constraints,
+    certificate_policies,
+    crl_distribution_points,
+    distribution_point,
+    extended_key_usage,
+    freshest_crl,
+    issuer_alternative_name,
+    key_usage,
+    ocsp_no_check,
+    subject_alternative_name,
+    subject_key_identifier,
+    tls_feature,
+)
 from django_ca.typehints import SerializedExtension
 from django_ca.utils import ca_storage, x509_name
 
@@ -133,12 +148,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
-                self.key_usage(digital_signature=True, key_agreement=True),
-                self.ocsp_no_check(),
-                self.subject_alternative_name(dns(cname)),
-                self.tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
-                self.certificate_policies(
+                extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+                key_usage(digital_signature=True, key_agreement=True),
+                ocsp_no_check(),
+                subject_alternative_name(dns(cname)),
+                tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
+                certificate_policies(
                     x509.PolicyInformation(
                         policy_identifier=x509.ObjectIdentifier("1.2.3"),
                         policy_qualifiers=[
@@ -234,7 +249,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         field = form.fields["ocsp_no_check"]
         bound_field = field.get_bound_field(form, "ocsp_no_check")
-        self.assertEqual(bound_field.initial, self.ocsp_no_check(critical=True))
+        self.assertEqual(bound_field.initial, ocsp_no_check(critical=True))
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add(self) -> None:
@@ -649,9 +664,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                self.subject_alternative_name(dns(cname)),
-                self.key_usage(digital_signature=True, key_agreement=True),
-                self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+                subject_alternative_name(dns(cname)),
+                key_usage(digital_signature=True, key_agreement=True),
+                extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
             ],
         )
         self.assertEqual(cert.ca, ca)
@@ -1619,8 +1634,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
             cert.sorted_extensions,
             [
                 cert.ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_key_identifier(cert),
+                basic_constraints(),
+                subject_key_identifier(cert),
             ],
         )
 
@@ -1644,14 +1659,14 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.assertEqual(
             cert.sorted_extensions,
             [
-                self.authority_information_access(
+                authority_information_access(
                     ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.crl_distribution_points(full_name=[uri(self.ca.crl_url)]),
-                self.subject_alternative_name(dns(self.hostname)),
-                self.subject_key_identifier(cert),
+                basic_constraints(),
+                crl_distribution_points(distribution_point(full_name=[uri(self.ca.crl_url)])),
+                subject_alternative_name(dns(self.hostname)),
+                subject_key_identifier(cert),
             ],
         )
 
@@ -1691,16 +1706,16 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.assertEqual(
             cert.sorted_extensions,
             [
-                self.authority_information_access(
+                authority_information_access(
                     ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.crl_distribution_points(full_name=[uri(self.ca.crl_url)]),
+                basic_constraints(),
+                crl_distribution_points(distribution_point(full_name=[uri(self.ca.crl_url)])),
                 self.ca.sign_certificate_policies,
-                self.issuer_alternative_name(uri(self.ca.issuer_alt_name)),
-                self.subject_alternative_name(dns(cn)),
-                self.subject_key_identifier(cert),
+                issuer_alternative_name(uri(self.ca.issuer_alt_name)),
+                subject_alternative_name(dns(cn)),
+                subject_key_identifier(cert),
             ],
         )
 
@@ -1794,7 +1809,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.assertEqual(
             cert.sorted_extensions,
             [
-                self.authority_information_access(
+                authority_information_access(
                     ca_issuers=[uri("http://profile.issuers.example.com")],
                     ocsp=[
                         uri("http://profile.ocsp.example.com"),
@@ -1803,40 +1818,38 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                     critical=True,
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.crl_distribution_points(
-                    full_name=[uri("http://crl.profile.example.com")],
-                    crl_issuer=[uri("http://crl-issuer.profile.example.com")],
-                    critical=True,
-                ),
-                x509.Extension(
-                    oid=ExtensionOID.CERTIFICATE_POLICIES,
-                    critical=True,
-                    value=x509.CertificatePolicies(
-                        [
-                            x509.PolicyInformation(
-                                policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
-                                policy_qualifiers=["text1"],
-                            )
-                        ]
+                basic_constraints(),
+                crl_distribution_points(
+                    distribution_point(
+                        full_name=[uri("http://crl.profile.example.com")],
+                        crl_issuer=[uri("http://crl-issuer.profile.example.com")],
                     ),
+                    critical=True,
                 ),
-                self.extended_key_usage(
+                certificate_policies(
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"), policy_qualifiers=["text1"]
+                    ),
+                    critical=True,
+                ),
+                extended_key_usage(
                     ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
                 ),
-                self.freshest_crl(
-                    [uri("http://freshest-crl.profile.example.com")],
-                    crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
+                freshest_crl(
+                    distribution_point(
+                        full_name=[uri("http://freshest-crl.profile.example.com")],
+                        crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
+                    ),
                     critical=True,
                 ),
-                self.issuer_alternative_name(
+                issuer_alternative_name(
                     uri("http://ian1.example.com"), uri("http://ian2.example.com"), critical=True
                 ),
-                self.key_usage(key_agreement=True, key_cert_sign=True),
-                self.ocsp_no_check(critical=True),
-                self.subject_alternative_name(dns(cn)),
-                self.subject_key_identifier(cert),
-                self.tls_feature(x509.TLSFeatureType.status_request, critical=True),
+                key_usage(key_agreement=True, key_cert_sign=True),
+                ocsp_no_check(critical=True),
+                subject_alternative_name(dns(cn)),
+                subject_key_identifier(cert),
+                tls_feature(x509.TLSFeatureType.status_request, critical=True),
             ],
         )
 
@@ -1911,7 +1924,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
             cert.sorted_extensions,
             [
                 cert.ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
+                basic_constraints(),
                 x509.Extension(
                     oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
                     critical=True,
@@ -1937,7 +1950,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                     crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
                     critical=True,
                 ),
-                self.subject_alternative_name(dns(cn)),
-                self.subject_key_identifier(cert),
+                subject_alternative_name(dns(cn)),
+                subject_key_identifier(cert),
             ],
         )

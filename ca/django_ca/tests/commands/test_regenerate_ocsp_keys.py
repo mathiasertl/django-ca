@@ -27,6 +27,7 @@ from django.test import TestCase
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import authority_information_access
 from django_ca.utils import add_colons, ca_storage
 
 
@@ -84,7 +85,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         )
 
         ca_issuers = uri(ca.issuer_url)
-        self.assertEqual(aia, self.authority_information_access(ca_issuers=[ca_issuers]))
+        self.assertEqual(aia, authority_information_access(ca_issuers=[ca_issuers]))
 
         return priv, cert
 

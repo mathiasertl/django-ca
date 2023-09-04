@@ -14,10 +14,12 @@
 """Utility functions used in testing."""
 import typing
 from datetime import datetime
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+
+from django_ca.models import X509CertMixin
 
 
 def authority_information_access(
@@ -47,6 +49,17 @@ def authority_information_access(
     return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=critical, value=value)
 
 
+def basic_constraints(
+    ca: bool = False, path_length: Optional[int] = None, critical: bool = True
+) -> x509.Extension[x509.BasicConstraints]:
+    """Shortcut for getting a BasicConstraints extension."""
+    return x509.Extension(
+        oid=ExtensionOID.BASIC_CONSTRAINTS,
+        critical=critical,
+        value=x509.BasicConstraints(ca=ca, path_length=path_length),
+    )
+
+
 def certificate_policies(
     *policies: x509.PolicyInformation, critical: bool = False
 ) -> x509.Extension[x509.CertificatePolicies]:
@@ -56,7 +69,7 @@ def certificate_policies(
     )
 
 
-def crl_distribution_point(
+def crl_distribution_points(
     *distribution_points: x509.DistributionPoint, critical: bool = False
 ) -> x509.Extension[x509.CRLDistributionPoints]:
     """Shortcut for getting a CRLDistributionPoint extension."""
@@ -99,6 +112,17 @@ def iso_format(value: datetime, timespec: str = "seconds") -> str:
     return value.isoformat(timespec=timespec).replace("+00:00", "Z")
 
 
+def issuer_alternative_name(
+    *names: x509.GeneralName, critical: bool = False
+) -> x509.Extension[x509.IssuerAlternativeName]:
+    """Shortcut for getting a IssuerAlternativeName extension."""
+    return x509.Extension(
+        oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+        critical=critical,
+        value=x509.IssuerAlternativeName(names),
+    )
+
+
 def key_usage(**usages: bool) -> x509.Extension[x509.KeyUsage]:
     """Shortcut for getting a KeyUsage extension."""
     critical = usages.pop("critical", True)
@@ -114,9 +138,27 @@ def key_usage(**usages: bool) -> x509.Extension[x509.KeyUsage]:
     return x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=critical, value=x509.KeyUsage(**usages))
 
 
+def name_constraints(
+    permitted: Optional[Iterable[x509.GeneralName]] = None,
+    excluded: Optional[Iterable[x509.GeneralName]] = None,
+    critical: bool = True,
+) -> x509.Extension[x509.NameConstraints]:
+    """Shortcut for getting a NameConstraints extension."""
+    return x509.Extension(
+        oid=ExtensionOID.NAME_CONSTRAINTS,
+        value=x509.NameConstraints(permitted_subtrees=permitted, excluded_subtrees=excluded),
+        critical=critical,
+    )
+
+
 def ocsp_no_check(critical: bool = False) -> x509.Extension[x509.OCSPNoCheck]:
     """Shortcut for getting a OCSPNoCheck extension."""
     return x509.Extension(oid=ExtensionOID.OCSP_NO_CHECK, critical=critical, value=x509.OCSPNoCheck())
+
+
+def precert_poison() -> x509.Extension[x509.PrecertPoison]:
+    """Shortcut for getting a PrecertPoison extension."""
+    return x509.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison())
 
 
 def subject_alternative_name(
@@ -128,6 +170,17 @@ def subject_alternative_name(
         critical=critical,
         value=x509.SubjectAlternativeName(names),
     )
+
+
+def subject_key_identifier(
+    cert: Union[X509CertMixin, x509.Certificate]
+) -> x509.Extension[x509.SubjectKeyIdentifier]:
+    """Shortcut for getting a SubjectKeyIdentifier extension."""
+    if isinstance(cert, X509CertMixin):
+        cert = cert.pub.loaded
+
+    ski = x509.SubjectKeyIdentifier.from_public_key(cert.public_key())
+    return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
 
 
 def tls_feature(*features: x509.TLSFeatureType, critical: bool = False) -> x509.Extension[x509.TLSFeature]:

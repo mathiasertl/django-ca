@@ -60,6 +60,15 @@ from django_ca.models import (
 )
 from django_ca.tests.base import CERT_PEM_REGEX, certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    basic_constraints,
+    crl_distribution_points,
+    distribution_point,
+    issuer_alternative_name,
+    subject_alternative_name,
+    subject_key_identifier,
+)
 from django_ca.utils import ca_storage, get_crl_cache_key, x509_name
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
@@ -677,14 +686,13 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertEqual(
             self.ca.extensions_for_certificate,
             {
-                ExtensionOID.AUTHORITY_INFORMATION_ACCESS: self.authority_information_access(
-                    ca_issuers=[uri(self.ca.issuer_url)],
-                    ocsp=[uri(self.ca.ocsp_url)],
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS: authority_information_access(
+                    ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
                 ),
-                ExtensionOID.CRL_DISTRIBUTION_POINTS: self.crl_distribution_points([uri(self.ca.crl_url)]),
-                ExtensionOID.ISSUER_ALTERNATIVE_NAME: self.issuer_alternative_name(
-                    uri(self.ca.issuer_alt_name)
+                ExtensionOID.CRL_DISTRIBUTION_POINTS: crl_distribution_points(
+                    distribution_point([uri(self.ca.crl_url)])
                 ),
+                ExtensionOID.ISSUER_ALTERNATIVE_NAME: issuer_alternative_name(uri(self.ca.issuer_alt_name)),
             },
         )
 
@@ -733,7 +741,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertIsNone(ca.sign_certificate_policies)
 
         # Try setting an invalid extension type
-        ca.sign_certificate_policies = self.basic_constraints()
+        ca.sign_certificate_policies = basic_constraints()
         with self.assertValidationError(
             {"sign_certificate_policies": ["Expected an instance of CertificatePolicies."]}
         ):
@@ -795,13 +803,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertExtensionDict(
             cert,
             [
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                    critical=False,
-                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
-                ),
-                self.subject_alternative_name(dns(cn)),
-                self.basic_constraints(),
+                subject_key_identifier(cert),
+                subject_alternative_name(dns(cn)),
+                basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
         )
@@ -847,11 +851,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
                 csr,
                 subject=subject,
                 cn_in_san=False,
-                extensions=[self.basic_constraints(critical=False), ski, aki],
+                extensions=[basic_constraints(critical=False), ski, aki],
             )
 
         self.assertBasicCert(cert)
-        self.assertExtensionDict(cert, [ski, self.basic_constraints(critical=False), aki])
+        self.assertExtensionDict(cert, [ski, basic_constraints(critical=False), aki])
 
     @override_tmpcadir()
     @freeze_time(timestamps["everything_valid"])
@@ -860,7 +864,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(dns("example.net"))
+        san = subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=False, extensions=[san])
 
@@ -868,13 +872,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertExtensionDict(
             cert,
             [
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                    critical=False,
-                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
-                ),
+                subject_key_identifier(cert),
                 san,
-                self.basic_constraints(),
+                basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
         )
@@ -886,7 +886,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(dns("example.net"))
+        san = subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
 
@@ -894,13 +894,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertExtensionDict(
             cert,
             [
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                    critical=False,
-                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
-                ),
-                self.subject_alternative_name(dns("example.net"), dns(cn)),
-                self.basic_constraints(),
+                subject_key_identifier(cert),
+                subject_alternative_name(dns("example.net"), dns(cn)),
+                basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
         )
@@ -912,7 +908,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(dns(cn))
+        san = subject_alternative_name(dns(cn))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
 
@@ -920,13 +916,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertExtensionDict(
             cert,
             [
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                    critical=False,
-                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
-                ),
+                subject_key_identifier(cert),
                 san,
-                self.basic_constraints(),
+                basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
         )
@@ -938,7 +930,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "foo..bar*"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        san = self.subject_alternative_name(dns("example.net"))
+        san = subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject, cn_in_san=True, extensions=[san])
 
@@ -946,13 +938,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertExtensionDict(
             cert,
             [
-                x509.Extension(
-                    oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                    critical=False,
-                    value=x509.SubjectKeyIdentifier.from_public_key(cert.public_key()),
-                ),
+                subject_key_identifier(cert),
                 san,
-                self.basic_constraints(),
+                basic_constraints(),
                 self.ca.get_authority_key_identifier_extension(),
             ],
         )
@@ -964,7 +952,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         msg = r"^This function cannot be used to create a Certificate Authority\.$"
         with self.assertSignCertSignals(pre=False, post=False), self.assertRaisesRegex(ValueError, msg):
-            self.ca.sign(csr, subject=subject, extensions=[self.basic_constraints(ca=True)])
+            self.ca.sign(csr, subject=subject, extensions=[basic_constraints(ca=True)])
 
 
 class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):

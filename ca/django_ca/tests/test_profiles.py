@@ -30,6 +30,14 @@ from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
 from django_ca.tests.base import certs, dns, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    basic_constraints,
+    issuer_alternative_name,
+    ocsp_no_check,
+    subject_alternative_name,
+    subject_key_identifier,
+)
 
 
 class DocumentationTestCase(TestCaseMixin, TestCase):
@@ -103,7 +111,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             "test",
             subject=[("C", "AT"), ("CN", self.hostname)],
             extensions={
-                "ocsp_no_check": self.ocsp_no_check(),
+                "ocsp_no_check": ocsp_no_check(),
             },
         )
         self.assertEqual(prof1, prof2)
@@ -113,7 +121,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         prof = Profile("test", extensions={"ocsp_no_check": None})
         self.assertEqual(
             prof.extensions,
-            {ExtensionOID.OCSP_NO_CHECK: None, ExtensionOID.BASIC_CONSTRAINTS: self.basic_constraints()},
+            {ExtensionOID.OCSP_NO_CHECK: None, ExtensionOID.BASIC_CONSTRAINTS: basic_constraints()},
         )
         self.assertIsNone(prof.serialize()["extensions"]["ocsp_no_check"])
 
@@ -226,8 +234,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.issuer_alternative_name(uri(ca.issuer_alt_name)),
-                self.subject_alternative_name(dns(self.hostname)),
+                issuer_alternative_name(uri(ca.issuer_alt_name)),
+                subject_alternative_name(dns(self.hostname)),
             ],
         )
 
@@ -256,10 +264,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         self.assertExtensions(
             cert,
             [
-                self.subject_key_identifier(cert),
+                subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
+                basic_constraints(),
+                subject_alternative_name(dns(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -282,8 +290,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
+                basic_constraints(),
+                subject_alternative_name(dns(self.hostname)),
             ],
         )
 
@@ -295,7 +303,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         prof = Profile("example", subject=[("C", "AT")], extensions={"ocsp_no_check": None})
 
         with self.mockSignal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[self.ocsp_no_check()])
+            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
         self.assertEqual(pre.call_count, 1)
         self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.x509_extensions)
 
@@ -407,8 +415,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.subject_alternative_name(dns(self.hostname)),
+                basic_constraints(),
+                subject_alternative_name(dns(self.hostname)),
                 ski,
             ],
             expect_defaults=False,
@@ -447,9 +455,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
+                basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                self.subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name(dns(self.hostname)),
                 added_crldp,
             ],
             expect_defaults=False,
@@ -493,7 +501,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca.save()
 
         added_ian_uri = uri("https://ian.cert.example.com")
-        added_ian = self.issuer_alternative_name(added_ian_uri)
 
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
@@ -505,7 +512,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_ocsp_url=False,
                 add_issuer_url=False,
                 add_issuer_alternative_name=True,
-                extensions=[added_ian],
+                extensions=[issuer_alternative_name(added_ian_uri)],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, self.subject)
@@ -515,10 +522,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
+                basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                self.subject_alternative_name(dns(self.hostname)),
-                self.issuer_alternative_name(added_ian_uri),
+                subject_alternative_name(dns(self.hostname)),
+                issuer_alternative_name(added_ian_uri),
             ],
             expect_defaults=False,
         )
@@ -539,9 +546,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         cert_issuers2 = uri("https://issuer2.cert.example.com")
         cert_ocsp = uri("https://ocsp.cert.example.com")
 
-        added_aia = self.authority_information_access(
-            ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp]
-        )
+        added_aia = authority_information_access(ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp])
 
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
@@ -564,10 +569,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
+                basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                self.subject_alternative_name(dns(self.hostname)),
-                self.authority_information_access(
+                subject_alternative_name(dns(self.hostname)),
+                authority_information_access(
                     ca_issuers=[cert_issuers, cert_issuers2],
                     ocsp=[cert_ocsp],
                 ),
@@ -589,7 +594,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
-                extensions=[self.ocsp_no_check()],
+                extensions=[ocsp_no_check()],
             )
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, self.subject)
@@ -597,9 +602,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                self.basic_constraints(),
-                self.ocsp_no_check(),
-                self.subject_alternative_name(dns(self.hostname)),
+                basic_constraints(),
+                ocsp_no_check(),
+                subject_alternative_name(dns(self.hostname)),
             ],
         )
 
@@ -611,7 +616,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             "example",
             subject=[],
             extensions={
-                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: self.authority_information_access(
+                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
                     ca_issuers=[uri("http://issuer.example.com/issuer")],
                 )
@@ -625,7 +630,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         csr = certs["child-cert"]["csr"]["parsed"]
 
-        expected_authority_information_access = self.authority_information_access(
+        expected_authority_information_access = authority_information_access(
             ocsp=[uri("http://ocsp.example.com/expected")],
             ca_issuers=[uri("http://issuer.example.com/expected")],
         )
@@ -657,7 +662,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             "example",
             subject=[],
             extensions={
-                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: self.authority_information_access(
+                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
                     ca_issuers=[uri("http://issuer.example.com/issuer")],
                 )
@@ -682,7 +687,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_issuer_url=True,
                 add_ocsp_url=True,
                 extensions=[
-                    self.authority_information_access(
+                    authority_information_access(
                         ocsp=[uri("http://ocsp.example.com/expected")],
                     )
                 ],
@@ -693,7 +698,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         extensions = cert.x509_extensions
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ocsp=[uri("http://ocsp.example.com/expected")],
                 ca_issuers=[uri("http://issuer.example.com/ca")],
             ),
@@ -710,7 +715,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_issuer_url=True,
                 add_ocsp_url=True,
                 extensions=[
-                    self.authority_information_access(
+                    authority_information_access(
                         ca_issuers=[uri("http://issuer.example.com/expected")],
                     )
                 ],
@@ -721,7 +726,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         extensions = cert.x509_extensions
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ocsp=[uri("http://ocsp.example.com/ca")],
                 ca_issuers=[uri("http://issuer.example.com/expected")],
             ),

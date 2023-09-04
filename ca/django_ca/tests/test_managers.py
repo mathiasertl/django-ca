@@ -32,6 +32,18 @@ from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    basic_constraints,
+    crl_distribution_points,
+    distribution_point,
+    extended_key_usage,
+    key_usage,
+    name_constraints,
+    ocsp_no_check,
+    precert_poison,
+    tls_feature,
+)
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
@@ -129,11 +141,13 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(
             child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
+            authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
         )
         self.assertEqual(
             child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri(f"http://{host}{self.reverse('ca-crl', serial=ca.serial)}")]),
+            crl_distribution_points(
+                distribution_point([uri(f"http://{host}{self.reverse('ca-crl', serial=ca.serial)}")])
+            ),
         )
 
         name = "grandchild"
@@ -146,12 +160,12 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         expected_issuers = [uri(f"http://{host}{self.reverse('issuer', serial=child.serial)}")]
         self.assertEqual(
             grandchild.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
+            authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
         )
         self.assertEqual(
             grandchild.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points(
-                [uri(f"http://{host}{self.reverse('ca-crl', serial=child.serial)}")]
+            crl_distribution_points(
+                distribution_point([uri(f"http://{host}{self.reverse('ca-crl', serial=child.serial)}")])
             ),
         )
 
@@ -172,13 +186,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_extra_extensions(self) -> None:
         """Test creating a CA with extra extensions."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        tls_feature = self.tls_feature(x509.TLSFeatureType.status_request)
-        name_constraints = self.name_constraints(permitted=[dns(".com")])
         extensions: List[x509.Extension[x509.ExtensionType]] = [
-            tls_feature,
-            self.ocsp_no_check(),
-            name_constraints,
-            self.precert_poison(),
+            tls_feature(x509.TLSFeatureType.status_request),
+            ocsp_no_check(),
+            name_constraints(permitted=[dns(".com")]),
+            precert_poison(),
             self.ext(x509.InhibitAnyPolicy(3)),
         ]
 
@@ -188,8 +200,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.subject, subject)
 
         expected = extensions + [
-            self.basic_constraints(ca=True),
-            self.key_usage(crl_sign=True, key_cert_sign=True),
+            basic_constraints(ca=True),
+            key_usage(crl_sign=True, key_cert_sign=True),
             self.ext(x509.InhibitAnyPolicy(3)),
         ]
         self.assertExtensions(ca, expected)
@@ -205,9 +217,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         # Pass no OCSP URIs
         passed_extensions: List[x509.Extension[x509.ExtensionType]] = [
-            self.authority_information_access(
-                ca_issuers=[uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")]
-            ),
+            authority_information_access(ca_issuers=[uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")]),
         ]
 
         with self.assertCreateCASignals():
@@ -219,7 +229,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ca_issuers=[uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
                 ocsp=[uri(f"http://{host}{ocsp_path}")],
             ),
@@ -227,7 +237,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         # Pass no CA Issuers
         passed_extensions = [
-            self.authority_information_access(
+            authority_information_access(
                 ocsp=[uri("https://example.com/ocsp/{OCSP_PATH}")],
             ),
         ]
@@ -241,7 +251,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ca_issuers=[uri(f"http://{host}{ca_issuer_path}")],
                 ocsp=[uri(f"https://example.com/ocsp{ocsp_path}")],
             ),
@@ -253,11 +263,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         parent = self.load_ca("root")
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         passed_extensions: List[x509.Extension[x509.ExtensionType]] = [
-            self.authority_information_access(
+            authority_information_access(
                 [uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")],
                 [uri("https://example.com/ocsp/{OCSP_PATH}")],
             ),
-            self.crl_distribution_points([uri("http://example.com/crl/{CRL_PATH}")]),
+            crl_distribution_points(distribution_point([uri("http://example.com/crl/{CRL_PATH}")])),
         ]
 
         with self.assertCreateCASignals():
@@ -272,7 +282,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 [uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
                 [uri(f"https://example.com/ocsp{ocsp_path}")],
             ),
@@ -280,7 +290,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(
             extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri(f"http://example.com/crl{crl_path}")]),
+            crl_distribution_points(distribution_point([uri(f"http://example.com/crl{crl_path}")])),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -288,8 +298,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Test passing extensions with values that cannot be formatted."""
         parent = self.load_ca("root")
 
-        aia = self.authority_information_access([dns("ca-issuer.example.com")], [dns("ocsp.example.com")])
-        crldp = self.crl_distribution_points([dns("crl.example.com")])
+        aia = authority_information_access([dns("ca-issuer.example.com")], [dns("ocsp.example.com")])
+        crldp = crl_distribution_points(distribution_point([dns("crl.example.com")]))
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         passed_extensions: List[x509.Extension[x509.ExtensionType]] = [aia, crldp]
 
@@ -331,9 +341,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init("with-extra", subject, extensions=None)
         self.assertEqual(ca.subject, subject)
-        self.assertExtensions(
-            ca, [self.basic_constraints(ca=True), self.key_usage(crl_sign=True, key_cert_sign=True)]
-        )
+        self.assertExtensions(ca, [basic_constraints(ca=True), key_usage(crl_sign=True, key_cert_sign=True)])
 
     @override_tmpcadir()
     def test_acme_parameters(self) -> None:
@@ -447,18 +455,18 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_cryptography_extensions(self) -> None:
         """Test passing readable extensions."""
-        key_usage = self.key_usage(key_cert_sign=True, key_encipherment=True)
+        expected_key_usage = key_usage(key_cert_sign=True, key_encipherment=True)
         with self.assertCreateCertSignals():
             cert = Certificate.objects.create_cert(
-                self.ca, self.csr, subject=self.subject, extensions=[key_usage]
+                self.ca, self.csr, subject=self.subject, extensions=[expected_key_usage]
             )
         self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
                 self.subject_alternative_name(dns(self.hostname)),
-                key_usage,
-                self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
+                expected_key_usage,
+                extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
             ],
         )
 

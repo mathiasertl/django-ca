@@ -40,6 +40,7 @@ from django_ca.models import (
 )
 from django_ca.tests.base import override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.tests.base.utils import basic_constraints, key_usage
 from django_ca.utils import x509_name
 
 
@@ -102,10 +103,10 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         # verify X509 properties
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True, path_length=0)
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
         )
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, key_cert_sign=True)
+            ca.x509_extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True)
         )
         for oid in [
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
@@ -123,7 +124,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.init(
             name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
         )
-        self.assertEqual(ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True))
+        self.assertEqual(ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True))
 
         ca = CertificateAuthority.objects.init(
             path_length=0,
@@ -132,7 +133,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             subject=x509_name("CN=ca.example.com"),
         )
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True, path_length=0)
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
         )
 
         ca = CertificateAuthority.objects.init(
@@ -142,7 +143,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             subject=x509_name("CN=ca.example.com"),
         )
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(ca=True, path_length=2)
+            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=2)
         )
 
     @override_tmpcadir()
@@ -200,7 +201,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         # verify X509 properties
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.KEY_USAGE], self.key_usage(crl_sign=True, key_cert_sign=True)
+            ca.x509_extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True)
         )
 
         for oid in [

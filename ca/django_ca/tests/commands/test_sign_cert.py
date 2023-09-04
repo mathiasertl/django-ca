@@ -36,6 +36,18 @@ from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    certificate_policies,
+    crl_distribution_points,
+    distribution_point,
+    extended_key_usage,
+    issuer_alternative_name,
+    key_usage,
+    ocsp_no_check,
+    subject_alternative_name,
+    tls_feature,
+)
 from django_ca.utils import ca_storage
 
 
@@ -68,13 +80,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         actual = cert.x509_extensions
         self.assertEqual(
             actual[ExtensionOID.KEY_USAGE],
-            self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
+            key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
         )
         self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
         )
         self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
@@ -115,15 +127,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
             self.assertEqual(
                 actual[ExtensionOID.KEY_USAGE],
-                self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
+                key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
             )
             self.assertEqual(
-                actual[ExtensionOID.EXTENDED_KEY_USAGE],
-                self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
+                actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
             )
             self.assertEqual(
-                actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-                self.subject_alternative_name(dns(self.hostname)),
+                actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
             )
             self.assertIssuer(ca, cert)
             self.assertAuthorityKeyIdentifier(ca, cert)
@@ -148,13 +158,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         actual = cert.x509_extensions
         self.assertEqual(
             actual[ExtensionOID.KEY_USAGE],
-            self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
+            key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
         )
         self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
         )
         self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir()
@@ -405,49 +415,23 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test Authority Information Access extension
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=False,
-                value=x509.AuthorityInformationAccess(
-                    [
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.OCSP,
-                            access_location=uri("http://ocsp.example.com/1"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.OCSP,
-                            access_location=uri("http://ocsp.example.com/2"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                            access_location=uri("http://issuer.example.com/1"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                            access_location=uri("http://issuer.example.com/2"),
-                        ),
-                    ]
-                ),
+            authority_information_access(
+                ocsp=[uri("http://ocsp.example.com/1"), uri("http://ocsp.example.com/2")],
+                ca_issuers=[uri("http://issuer.example.com/1"), uri("http://issuer.example.com/2")],
             ),
         )
 
         # Test Certificate Policies extension
         self.assertEqual(
             extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            x509.Extension(
-                oid=ExtensionOID.CERTIFICATE_POLICIES,
-                critical=False,
-                value=x509.CertificatePolicies(
-                    policies=[
-                        x509.PolicyInformation(
-                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                            policy_qualifiers=[
-                                "https://example.com/cps/",
-                                x509.UserNotice(notice_reference=None, explicit_text="user notice text"),
-                            ],
-                        )
-                    ]
-                ),
+            certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                    policy_qualifiers=[
+                        "https://example.com/cps/",
+                        x509.UserNotice(notice_reference=None, explicit_text="user notice text"),
+                    ],
+                )
             ),
         )
 
@@ -460,30 +444,30 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH),
+            extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH),
         )
 
         # Test Issuer Alternative Name extension
         self.assertEqual(
             extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            self.issuer_alternative_name(dns("ian-cert.example.com"), uri("http://ian-cert.example.com")),
+            issuer_alternative_name(dns("ian-cert.example.com"), uri("http://ian-cert.example.com")),
         )
 
         # Test Key Usage extension
-        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True))
+        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], key_usage(key_cert_sign=True))
 
         # Test OCSP No Check extension
-        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check())
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], ocsp_no_check())
 
         # Test Subject Alternative Name extension
         self.assertEqual(
             extensions[x509.SubjectAlternativeName.oid],
-            self.subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
+            subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
         )
 
         # Test TLSFeature extension
         self.assertEqual(
-            extensions[ExtensionOID.TLS_FEATURE], self.tls_feature(x509.TLSFeatureType.status_request)
+            extensions[ExtensionOID.TLS_FEATURE], tls_feature(x509.TLSFeatureType.status_request)
         )
 
     @override_tmpcadir()
@@ -540,20 +524,15 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test Certificate Policies extension
         self.assertEqual(
             extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            x509.Extension(
-                oid=ExtensionOID.CERTIFICATE_POLICIES,
-                critical=True,
-                value=x509.CertificatePolicies(
-                    policies=[
-                        x509.PolicyInformation(
-                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                            policy_qualifiers=[
-                                "https://example.com/cps/",
-                                x509.UserNotice(notice_reference=None, explicit_text="user notice text"),
-                            ],
-                        )
-                    ]
+            certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                    policy_qualifiers=[
+                        "https://example.com/cps/",
+                        x509.UserNotice(notice_reference=None, explicit_text="user notice text"),
+                    ],
                 ),
+                critical=True,
             ),
         )
 
@@ -568,21 +547,19 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, critical=True),
+            extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, critical=True),
         )
 
         # Test Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.KEY_USAGE], self.key_usage(key_cert_sign=True, critical=False)
-        )
+        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], key_usage(key_cert_sign=True, critical=False))
 
         # Test OCSP No Check extension
-        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], self.ocsp_no_check(critical=True))
+        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], ocsp_no_check(critical=True))
 
         # Test Subject Alternative Name extension (NOTE: Common Name is automatically appended).
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
-            self.subject_alternative_name(uri("https://example.net"), dns(self.hostname), critical=True),
+            subject_alternative_name(uri("https://example.net"), dns(self.hostname), critical=True),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -618,7 +595,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test AuthorityInformationAccess extension
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ca_issuers=[uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
                 ocsp=[uri(f"https://example.com/ocsp{ocsp_path}")],
             ),
@@ -627,8 +604,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test CRL Distribution Points extension
         self.assertEqual(
             extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points(
-                [uri(f"http://example.com/crl{crl_path}"), uri(f"http://example.net/crl{crl_path}")]
+            crl_distribution_points(
+                distribution_point(
+                    [uri(f"http://example.com/crl{crl_path}"), uri(f"http://example.net/crl{crl_path}")]
+                )
             ),
         )
 
@@ -749,13 +728,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         actual = cert.x509_extensions
         self.assertEqual(
             actual[ExtensionOID.KEY_USAGE],
-            self.key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
+            key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
         )
         self.assertEqual(
-            actual[ExtensionOID.EXTENDED_KEY_USAGE], self.extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
+            actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
         )
         self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], self.subject_alternative_name(dns(self.hostname))
+            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir()

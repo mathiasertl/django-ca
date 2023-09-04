@@ -38,6 +38,19 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    basic_constraints,
+    certificate_policies,
+    crl_distribution_points,
+    distribution_point,
+    extended_key_usage,
+    issuer_alternative_name,
+    key_usage,
+    name_constraints,
+    ocsp_no_check,
+    subject_alternative_name,
+)
 from django_ca.utils import get_crl_cache_key, int_to_hex, x509_name
 
 
@@ -131,10 +144,10 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertExtensions(
             cert,
             [
-                self.ocsp_no_check(),
-                self.extended_key_usage(ExtendedKeyUsageOID.OCSP_SIGNING),
-                self.key_usage(digital_signature=True, content_commitment=True, key_encipherment=True),
-                self.authority_information_access(ca_issuers=[uri(ca.issuer_url)]),
+                ocsp_no_check(),
+                extended_key_usage(ExtendedKeyUsageOID.OCSP_SIGNING),
+                key_usage(digital_signature=True, content_commitment=True, key_encipherment=True),
+                authority_information_access(ca_issuers=[uri(ca.issuer_url)]),
             ],
             signer=ca,
         )
@@ -303,7 +316,7 @@ class InitCATest(TestCaseMixin, TestCase):
         extensions = ca.x509_extensions
 
         # Test BasicConstraints extension
-        self.assertEqual(extensions[ExtensionOID.BASIC_CONSTRAINTS], self.basic_constraints(True, 3))
+        self.assertEqual(extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(True, 3))
         self.assertEqual(ca.path_length, 3)
         self.assertEqual(ca.max_path_length, 3)
         self.assertTrue(ca.allows_intermediate_ca)
@@ -311,7 +324,7 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test Certificate Policies extension
         self.assertEqual(
             extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            self.certificate_policies(
+            certificate_policies(
                 x509.PolicyInformation(
                     policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
                     policy_qualifiers=[
@@ -332,7 +345,7 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            self.extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+            extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
         )
 
         # Test Inhibit anyPolicy extension
@@ -346,19 +359,19 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test Issuer Alternative Name extension
         self.assertEqual(
             extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            self.issuer_alternative_name(dns("ian.example.com")),
+            issuer_alternative_name(dns("ian.example.com")),
         )
 
         # Test Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
-            self.key_usage(key_cert_sign=True, digital_signature=True),
+            key_usage(key_cert_sign=True, digital_signature=True),
         )
 
         # Test Name Constraints extension
         self.assertEqual(
             extensions[ExtensionOID.NAME_CONSTRAINTS],
-            self.name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
+            name_constraints(permitted=[dns(".com")], excluded=[dns(".net")], critical=True),
         )
 
         # Test Policy Constraints extension
@@ -421,7 +434,7 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test Extended Key Usage extension
         self.assertEqual(
             extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            self.extended_key_usage(
+            extended_key_usage(
                 ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
             ),
         )
@@ -429,15 +442,13 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test KeyUsage extension
         self.assertEqual(
             extensions[ExtensionOID.KEY_USAGE],
-            self.key_usage(key_cert_sign=True, digital_signature=True, critical=False),
+            key_usage(key_cert_sign=True, digital_signature=True, critical=False),
         )
 
         # Test Subject Alternative Name extension
         self.assertEqual(
             extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            self.subject_alternative_name(
-                dns("san.example.com"), uri("https://san.example.net"), critical=True
-            ),
+            subject_alternative_name(dns("san.example.com"), uri("https://san.example.net"), critical=True),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -464,7 +475,7 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test AuthorityInformationAccess extension
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ca_issuers=[uri(f"https://example.com/ca-issuer{ca_issuer_path}")],
                 ocsp=[uri(f"https://example.com/ocsp{ocsp_path}")],
             ),
@@ -473,8 +484,10 @@ class InitCATest(TestCaseMixin, TestCase):
         # Test CRL Distribution Points extension
         self.assertEqual(
             extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points(
-                [uri(f"http://example.com/crl{crl_path}"), uri(f"http://example.net/crl{crl_path}")]
+            crl_distribution_points(
+                distribution_point(
+                    [uri(f"http://example.com/crl{crl_path}"), uri(f"http://example.net/crl{crl_path}")]
+                )
             ),
         )
 
@@ -691,7 +704,7 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = self.init_ca_e2e(name, "--permit-name", "DNS:.com", f"/CN={name}")
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
-            self.name_constraints(permitted=[dns(".com")], critical=True),
+            name_constraints(permitted=[dns(".com")], critical=True),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -702,7 +715,7 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = self.init_ca_e2e(name, "--exclude-name", "DNS:.com", f"/CN={name}")
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
-            self.name_constraints(excluded=[dns(".com")], critical=True),
+            name_constraints(excluded=[dns(".com")], critical=True),
         )
 
     @override_settings(USE_TZ=False)
@@ -803,7 +816,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 name="Child",
                 parent=parent,
                 crl_full_names=[crl_full_name],
-                authority_information_access=self.authority_information_access(
+                authority_information_access=authority_information_access(
                     ocsp=[uri("http://passed.ca.ocsp.example.com")]
                 ).value,
             )
@@ -828,7 +841,7 @@ class InitCATest(TestCaseMixin, TestCase):
         ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": parent.serial})
         self.assertEqual(
             child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ca_issuers=[uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{ca_issuer_path}")],
                 ocsp=[uri("http://passed.ca.ocsp.example.com")],
             ),
@@ -1074,11 +1087,11 @@ class InitCATest(TestCaseMixin, TestCase):
         ca_crl_urlpath = self.reverse("ca-crl", serial=root.serial)
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri(f"http://{hostname}{ca_crl_urlpath}")]),
+            crl_distribution_points(distribution_point([uri(f"http://{hostname}{ca_crl_urlpath}")])),
         )
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            self.authority_information_access(
+            authority_information_access(
                 ca_issuers=[uri(f"http://{hostname}/django_ca/issuer/{root.serial}.der")],
                 ocsp=[uri(f"http://{hostname}/django_ca/ocsp/{root.serial}/ca/")],
             ),
@@ -1124,7 +1137,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
         actual = ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
-        expected = self.authority_information_access(
+        expected = authority_information_access(
             [uri(issuer_uri_one), uri(issuer_uri_two)], [uri(ocsp_uri_one), uri(ocsp_uri_two)]
         )
         self.assertEqual(actual, expected)
@@ -1150,23 +1163,21 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_root_ca_ocsp_responder(self) -> None:
         """Test that you cannot create a root CA with a OCSP responder."""
 
-        authority_information_access = self.authority_information_access(ocsp=[uri("http://example.com")])
+        aia = authority_information_access(ocsp=[uri("http://example.com")])
         with self.assertCommandError(
             r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"
         ), self.assertCreateCASignals(False, False):
-            self.init_ca(name="foobar", authority_information_access=authority_information_access.value)
+            self.init_ca(name="foobar", authority_information_access=aia.value)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_issuer(self) -> None:
         """Test that you cannot create a root CA with a CA issuer field."""
 
-        authority_information_access = self.authority_information_access(
-            ca_issuers=[uri("http://example.com")]
-        )
+        aia = authority_information_access(ca_issuers=[uri("http://example.com")])
         with self.assertCommandError(
             r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"
         ), self.assertCreateCASignals(False, False):
-            self.init_ca(name="foobar", authority_information_access=authority_information_access.value)
+            self.init_ca(name="foobar", authority_information_access=aia.value)
 
     @override_tmpcadir()
     def test_small_key_size(self) -> None:

@@ -34,6 +34,7 @@ from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, dns, override_tmpcadir, uri
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import key_usage
 
 
 class ParserTestCaseMixin(TestCaseMixin):
@@ -337,11 +338,11 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         namespace = self.parser.parse_args(["--key-usage", "keyCertSign"])
-        self.assertEqual(self.key_usage(key_cert_sign=True, critical=False).value, namespace.key_usage)
+        self.assertEqual(key_usage(key_cert_sign=True, critical=False).value, namespace.key_usage)
 
         namespace = self.parser.parse_args(["--key-usage", "keyCertSign", "keyAgreement"])
         self.assertEqual(
-            self.key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
+            key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
         )
 
     def test_invalid_values(self) -> None:

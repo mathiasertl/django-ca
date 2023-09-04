@@ -64,15 +64,7 @@ from django_ca.signals import (
 )
 from django_ca.tests.base import certs, timestamps, uri
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import (
-    authority_information_access,
-    certificate_policies,
-    extended_key_usage,
-    key_usage,
-    ocsp_no_check,
-    subject_alternative_name,
-    tls_feature,
-)
+from django_ca.tests.base.utils import basic_constraints, certificate_policies, subject_alternative_name
 from django_ca.utils import add_colons, ca_storage, parse_general_name
 
 if typing.TYPE_CHECKING:
@@ -464,7 +456,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         if expect_defaults is True:
             if isinstance(cert, Certificate):
-                expected.setdefault(ExtensionOID.BASIC_CONSTRAINTS, self.basic_constraints(ca=False))
+                expected.setdefault(ExtensionOID.BASIC_CONSTRAINTS, basic_constraints(ca=False))
             if signer is not None:  # pragma: no branch
                 expected.setdefault(
                     ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -602,25 +594,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with self.assertRaises(ValidationError) as cmex:
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
-
-    def authority_information_access(
-        self,
-        ca_issuers: Optional[Iterable[x509.GeneralName]] = None,
-        ocsp: Optional[Iterable[x509.GeneralName]] = None,
-        critical: bool = False,
-    ) -> x509.Extension[x509.AuthorityInformationAccess]:
-        """Shortcut for getting a AuthorityInformationAccess extension."""
-        return authority_information_access(ca_issuers, ocsp, critical)
-
-    def basic_constraints(
-        self, ca: bool = False, path_length: Optional[int] = None, critical: bool = True
-    ) -> x509.Extension[x509.BasicConstraints]:
-        """Shortcut for getting a BasicConstraints extension."""
-        return x509.Extension(
-            oid=ExtensionOID.BASIC_CONSTRAINTS,
-            critical=critical,
-            value=x509.BasicConstraints(ca=ca, path_length=path_length),
-        )
 
     @property
     def ca_certs(self) -> Iterator[Tuple[str, Certificate]]:
@@ -849,12 +822,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return profiles
 
-    def extended_key_usage(
-        self, *usages: x509.ObjectIdentifier, critical: bool = False
-    ) -> x509.Extension[x509.ExtendedKeyUsage]:
-        """Shortcut for getting an ExtendedKeyUsage extension."""
-        return extended_key_usage(*usages, critical=critical)
-
     def ext(
         self, value: x509.ExtensionType, critical: Optional[bool] = None
     ) -> x509.Extension[x509.ExtensionType]:
@@ -916,41 +883,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         name = re.sub("[^a-z0-9.-]", "-", name)
         return f"{name}.example.com"
 
-    def issuer_alternative_name(
-        self, *names: x509.GeneralName, critical: bool = False
-    ) -> x509.Extension[x509.IssuerAlternativeName]:
-        """Shortcut for getting a IssuerAlternativeName extension."""
-        return x509.Extension(
-            oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-            critical=critical,
-            value=x509.IssuerAlternativeName(names),
-        )
-
-    def key_usage(self, **usages: bool) -> x509.Extension[x509.KeyUsage]:
-        """Shortcut for getting a KeyUsage extension."""
-        return key_usage(**usages)
-
-    def name_constraints(
-        self,
-        permitted: Optional[Iterable[x509.GeneralName]] = None,
-        excluded: Optional[Iterable[x509.GeneralName]] = None,
-        critical: bool = True,
-    ) -> x509.Extension[x509.NameConstraints]:
-        """Shortcut for getting a NameConstraints extension."""
-        return x509.Extension(
-            oid=ExtensionOID.NAME_CONSTRAINTS,
-            value=x509.NameConstraints(permitted_subtrees=permitted, excluded_subtrees=excluded),
-            critical=critical,
-        )
-
-    def ocsp_no_check(self, critical: bool = False) -> x509.Extension[x509.OCSPNoCheck]:
-        """Shortcut for getting a OCSPNoCheck extension."""
-        return ocsp_no_check(critical=critical)
-
-    def precert_poison(self) -> x509.Extension[x509.PrecertPoison]:
-        """Shortcut for getting a PrecertPoison extension."""
-        return x509.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison())
-
     @property
     def subject(self) -> x509.Name:
         """Subject containing a common name that is unique for the test case."""
@@ -961,17 +893,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> x509.Extension[x509.SubjectAlternativeName]:
         """Shortcut for getting a SubjectAlternativeName extension."""
         return subject_alternative_name(*names, critical=critical)
-
-    def subject_key_identifier(self, cert: X509CertMixin) -> x509.Extension[x509.SubjectKeyIdentifier]:
-        """Shortcut for getting a SubjectKeyIdentifier extension."""
-        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
-        return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
-
-    def tls_feature(
-        self, *features: x509.TLSFeatureType, critical: bool = False
-    ) -> x509.Extension[x509.TLSFeature]:
-        """Shortcut for getting a TLSFeature extension."""
-        return tls_feature(*features, critical=critical)
 
     @classmethod
     def expires(cls, days: int) -> timedelta:

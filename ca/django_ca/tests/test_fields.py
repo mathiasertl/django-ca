@@ -29,6 +29,14 @@ from django_ca import ca_settings, fields
 from django_ca.constants import KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.tests.base import rdn
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    extended_key_usage,
+    issuer_alternative_name,
+    key_usage,
+    ocsp_no_check,
+    tls_feature,
+)
 
 D1 = "example.com"
 D2 = "example.net"
@@ -61,14 +69,12 @@ class AuthorityInformationAccessField(TestCase, TestCaseMixin):
         self.assertFieldOutput(
             fields.AuthorityInformationAccessField,
             {
-                (D1, "", False): self.authority_information_access([DNS1], [], critical=False),
-                (D1, "", True): self.authority_information_access([DNS1], [], critical=True),
-                ("", D1, False): self.authority_information_access([], [DNS1], critical=False),
-                (D1, D2, True): self.authority_information_access([DNS1], [DNS2], critical=True),
-                (D1, D2, False): self.authority_information_access([DNS1], [DNS2], critical=False),
-                (f"{D1}\n{D3}", D2, True): self.authority_information_access(
-                    [DNS1, DNS3], [DNS2], critical=True
-                ),
+                (D1, "", False): authority_information_access([DNS1], [], critical=False),
+                (D1, "", True): authority_information_access([DNS1], [], critical=True),
+                ("", D1, False): authority_information_access([], [DNS1], critical=False),
+                (D1, D2, True): authority_information_access([DNS1], [DNS2], critical=True),
+                (D1, D2, False): authority_information_access([DNS1], [DNS2], critical=False),
+                (f"{D1}\n{D3}", D2, True): authority_information_access([DNS1, DNS3], [DNS2], critical=True),
                 ("", "", True): None,
                 ("", "", False): None,
             },
@@ -281,16 +287,14 @@ class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):
         self.assertFieldOutput(
             fields.ExtendedKeyUsageField,
             {
-                (("serverAuth",), True): self.extended_key_usage(
-                    ExtendedKeyUsageOID.SERVER_AUTH, critical=True
-                ),
+                (("serverAuth",), True): extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH, critical=True),
                 (
                     (
                         "clientAuth",
                         "serverAuth",
                     ),
                     True,
-                ): self.extended_key_usage(
+                ): extended_key_usage(
                     ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
                 ),
             },
@@ -307,8 +311,8 @@ class IssuerAlternativeNameFieldTestCase(TestCase, TestCaseMixin):
         self.assertFieldOutput(
             fields.IssuerAlternativeNameField,
             {
-                (D1, True): self.issuer_alternative_name(DNS1, critical=True),
-                (D1, False): self.issuer_alternative_name(DNS1, critical=False),
+                (D1, True): issuer_alternative_name(DNS1, critical=True),
+                (D1, False): issuer_alternative_name(DNS1, critical=False),
                 ("", False): None,
                 ("", True): None,
             },
@@ -326,9 +330,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         """Test field output."""
         self.assertFieldOutput(
             fields.KeyUsageField,
-            {
-                (("crl_sign",), True): self.key_usage(crl_sign=True),
-            },
+            {(("crl_sign",), True): key_usage(crl_sign=True)},
             {},
             empty_value=None,
         )
@@ -352,7 +354,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
             choices = profile["extensions"]["key_usage"]["value"]
             choices = [key_usage_choices[choice] for choice in choices]
 
-            ext = self.key_usage(**{choice: True for choice in choices})
+            ext = key_usage(**{choice: True for choice in choices})
             html = field.widget.render("unused", ext)
 
             for choice, text in self.field_class.choices:
@@ -370,8 +372,8 @@ class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):
         self.assertFieldOutput(
             fields.OCSPNoCheckField,
             {
-                (True, True): self.ocsp_no_check(critical=True),
-                (True, False): self.ocsp_no_check(critical=False),
+                (True, True): ocsp_no_check(critical=True),
+                (True, False): ocsp_no_check(critical=False),
                 (False, False): None,
                 (False, True): None,
             },
@@ -390,14 +392,12 @@ class TLSFeatureTestCase(TestCase, TestCaseMixin):
             {
                 ((), False): None,
                 ((), True): None,
-                (("status_request",), False): self.tls_feature(x509.TLSFeatureType.status_request),
-                (("status_request", "status_request_v2"), False): self.tls_feature(
+                (("status_request",), False): tls_feature(x509.TLSFeatureType.status_request),
+                (("status_request", "status_request_v2"), False): tls_feature(
                     x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2
                 ),
-                (("status_request",), True): self.tls_feature(
-                    x509.TLSFeatureType.status_request, critical=True
-                ),
-                (("status_request", "status_request_v2"), True): self.tls_feature(
+                (("status_request",), True): tls_feature(x509.TLSFeatureType.status_request, critical=True),
+                (("status_request", "status_request_v2"), True): tls_feature(
                     x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2, critical=True
                 ),
             },

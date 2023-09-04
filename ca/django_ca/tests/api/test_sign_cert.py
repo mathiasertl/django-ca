@@ -42,7 +42,7 @@ from django_ca.tests.base.typehints import HttpResponse, User
 from django_ca.tests.base.utils import (
     authority_information_access,
     certificate_policies,
-    crl_distribution_point,
+    crl_distribution_points,
     distribution_point,
     extended_key_usage,
     freshest_crl,
@@ -112,7 +112,7 @@ def test_sign_ca_values(
     )
 
     # Test CRL Distribution Points extension
-    assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_point(
+    assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
         distribution_point(full_name=[uri(usable_root.crl_url)])
     )
 
@@ -261,7 +261,7 @@ def test_sign_certificate_with_extensions(
     )
 
     # Test CRL Distribution Points extension
-    assert exts[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_point(
+    assert exts[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
         distribution_point(full_name=[uri("http://api.crl1.example.com")]),
         distribution_point(
             full_name=[uri("http://api.crl2.example.com")],
