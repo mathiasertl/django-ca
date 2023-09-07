@@ -32,9 +32,11 @@ from django.urls import reverse
 
 import pytest
 from _pytest.fixtures import SubRequest
+from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base import timestamps
 from django_ca.utils import int_to_hex
 
 
@@ -188,7 +190,10 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
         if parent_name := data.get("parent"):
             parent = request.getfixturevalue(parent_name)
 
-        yield load_ca(name, pub, parent)
+        with freeze_time(timestamps["everything_valid"]):
+            ca = load_ca(name, pub, parent)
+
+        yield ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
     return fixture
 
@@ -220,7 +225,10 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
         csr = request.getfixturevalue(f"{sanitized_name}_csr")
         pub = request.getfixturevalue(f"{sanitized_name}_pub")
 
-        yield load_cert(ca, csr, pub, data.get("profile", ""))
+        with freeze_time(timestamps["everything_valid"]):
+            cert = load_cert(ca, csr, pub, data.get("profile", ""))
+
+        yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
     return fixture
 

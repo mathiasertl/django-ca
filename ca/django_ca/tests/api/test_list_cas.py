@@ -10,97 +10,90 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
+#
+# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the view to list certificate authorities."""
 from http import HTTPStatus
+from typing import Any, Dict, List, Optional, Tuple, Type
 
-from django.test import TestCase
+from django.db.models import Model
+from django.test.client import Client
 from django.urls import reverse_lazy
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.api.mixins import APITestCaseMixin
-from django_ca.tests.base import certs, timestamps
-from django_ca.utils import x509_name
+from django_ca.tests.api.conftest import ListResponse
+from django_ca.tests.api.mixins import APIPermissionTestBase
+from django_ca.tests.base import timestamps
+from django_ca.tests.base.typehints import HttpResponse
+
+path = reverse_lazy("django_ca:api:list_certificate_authorities")
 
 
-class ListCertificateAuthorityTestCase(APITestCaseMixin, TestCase):
-    """Test the view to list certificate authorities."""
+@pytest.fixture(scope="module")
+def api_permission() -> Tuple[Type[Model], str]:
+    """Fixture for the permission required by this view."""
+    return CertificateAuthority, "view_certificateauthority"
 
-    path = reverse_lazy("django_ca:api:list_certificate_authorities")
-    required_permission = (CertificateAuthority, "view_certificateauthority")
 
-    def setUp(self) -> None:
-        super().setUp()
-        cert = certs["root"]
-        self.expected_response = [
-            {
-                "acme_enabled": False,
-                "acme_profile": "webserver",
-                "acme_registration": True,
-                "acme_requires_contact": True,
-                "caa_identity": "",
-                "can_sign_certificates": False,
-                "created": self.iso_format(self.ca.created),
-                "crl_url": self.ca.crl_url,
-                "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in cert["issuer"]],
-                "issuer_alt_name": "",
-                "issuer_url": self.ca.issuer_url,
-                "not_after": self.iso_format(self.ca.expires),
-                "not_before": self.iso_format(self.ca.valid_from),
-                "ocsp_responder_key_validity": 3,
-                "ocsp_response_validity": 86400,
-                "ocsp_url": self.ca.ocsp_url,
-                "name": "root",
-                "pem": cert["pub"]["pem"],
-                "revoked": False,
-                "serial": cert["serial"],
-                "sign_certificate_policies": None,
-                "subject": [
-                    {"oid": attr.oid.dotted_string, "value": attr.value}
-                    for attr in x509_name(cert["subject"])
-                ],
-                "terms_of_service": "",
-                "updated": self.iso_format(self.ca.updated),
-                "website": "",
-            }
-        ]
+@pytest.fixture()
+def expected_response(root_response: Dict[str, Any]) -> ListResponse:
+    """Fixture for the regular response expected from this API view."""
+    return [root_response]
 
-    def test_empty_list_view(self) -> None:
-        """Test the request with no certificate authorities (empty list view)."""
-        CertificateAuthority.objects.all().delete()
-        response = self.default_request()
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), [])
 
-    @freeze_time(timestamps["everything_valid"])
-    def test_list_view(self) -> None:
-        """Test an ordinary list view."""
-        response = self.default_request()
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), self.expected_response, response.json())
+def request(client: Client, data: Optional[Dict[str, str]] = None) -> HttpResponse:
+    """Make a default request to the view under test."""
+    return client.get(path, data=data)
 
-    @freeze_time(timestamps["everything_expired"])
-    def test_expired_certificate_authorities_are_excluded(self) -> None:
-        """Test that expired CAs are excluded by default."""
-        response = self.default_request()
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), [])
 
-    @freeze_time(timestamps["everything_expired"])
-    def test_expired_filter(self) -> None:
-        """Test that expired CAs are excluded by default."""
-        response = self.default_request({"expired": "1"})
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), self.expected_response, response.json())
+def test_empty_list_view(api_client: Client) -> None:
+    """Test the request with no certificate authorities (empty list view)."""
+    CertificateAuthority.objects.all().delete()
+    response = request(api_client)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == []
 
-    @freeze_time(timestamps["everything_valid"])
-    def test_disabled_ca(self) -> None:
-        """Test that a disabled CA is *not* included."""
-        self.ca.enabled = False
-        self.ca.save()
 
-        response = self.default_request()
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), [], response.json())
+@freeze_time(timestamps["everything_valid"])
+def test_list_view(api_client: Client, expected_response: ListResponse) -> None:
+    """Test an ordinary list view."""
+    response = request(api_client)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == expected_response, response.json()
+
+
+@freeze_time(timestamps["everything_expired"])
+def test_expired_certificate_authorities_are_excluded(api_client: Client) -> None:
+    """Test that expired CAs are excluded by default."""
+    response = request(api_client)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == [], response.json()
+
+
+@freeze_time(timestamps["everything_expired"])
+def test_expired_filter(api_client: Client, expected_response: ListResponse) -> None:
+    """Test that expired CAs are excluded by default."""
+    response = request(api_client, {"expired": "1"})
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == expected_response, response.json()
+
+
+@freeze_time(timestamps["everything_valid"])
+def test_disabled_ca(api_client: Client, root: CertificateAuthority) -> None:
+    """Test that a disabled CA is *not* included."""
+    root.enabled = False
+    root.save()
+
+    response = request(api_client)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == [], response.json()
+
+
+class TestPermissions(APIPermissionTestBase):
+    """Test permissions for this view."""
+
+    path = path

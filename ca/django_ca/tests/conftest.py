@@ -10,12 +10,11 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
+#
+# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """pytest configuration."""
 
-# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
-
-import base64
 import os
 import sys
 from pathlib import Path
@@ -26,7 +25,6 @@ import coverage
 import pkg_resources
 
 from django.conf import settings
-from django.test.client import Client
 
 import pytest
 from _pytest.config import Config as PytestConfig
@@ -144,14 +142,6 @@ def user(
 #     client = Client()
 #     client.force_login(user)
 #     return client
-
-
-@pytest.fixture()
-def api_client(client: Client, user: "User") -> Client:
-    """HTTP client with HTTP basic authentication for the user."""
-    credentials = base64.b64encode(user.username.encode("utf-8") + b":password").decode()
-    client.defaults["HTTP_AUTHORIZATION"] = "Basic " + credentials
-    return client
 
 
 @pytest.fixture()
