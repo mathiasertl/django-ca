@@ -279,3 +279,4 @@ def load_cert(
 
 with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
     fixture_data = json.load(cert_data_stream)
+certs = fixture_data["certs"]

@@ -10,7 +10,7 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
-#
+
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the list-view for certificates."""
@@ -29,12 +29,10 @@ from django_ca.models import Certificate
 from django_ca.tests.api.conftest import ListResponse
 from django_ca.tests.api.mixins import APIPermissionTestBase
 from django_ca.tests.base import timestamps
-from django_ca.tests.base.conftest_helpers import fixture_data
+from django_ca.tests.base.conftest_helpers import certs
 from django_ca.tests.base.utils import iso_format
 
-path = reverse_lazy(
-    "django_ca:api:list_certificates", kwargs={"serial": fixture_data["certs"]["root"]["serial"]}
-)
+path = reverse_lazy("django_ca:api:list_certificates", kwargs={"serial": certs["root"]["serial"]})
 
 
 @pytest.fixture(scope="module")

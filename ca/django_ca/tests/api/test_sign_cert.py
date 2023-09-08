@@ -11,9 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Test the signing certificates via the API."""
-
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
+
+"""Test the signing certificates via the API."""
 
 import ipaddress
 from datetime import timedelta
@@ -35,7 +35,8 @@ from freezegun import freeze_time
 from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.api.mixins import APIPermissionTestBase
-from django_ca.tests.base import certs, dns, ip, rdn, timestamps, uri
+from django_ca.tests.base import dns, ip, rdn, timestamps, uri
+from django_ca.tests.base.conftest_helpers import certs
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import (
     authority_information_access,

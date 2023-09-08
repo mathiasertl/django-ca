@@ -10,7 +10,7 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
-#
+
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the view to list certificate authorities."""
