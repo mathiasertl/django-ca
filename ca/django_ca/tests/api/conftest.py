@@ -15,7 +15,7 @@
 
 """pytest configuration for API tests."""
 import base64
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Tuple, Type
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -25,7 +25,7 @@ from django.test.client import Client
 import pytest
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.typehints import HttpResponse, User
+from django_ca.tests.base.typehints import User
 from django_ca.tests.base.utils import iso_format
 
 DetailResponse = Dict[str, Any]

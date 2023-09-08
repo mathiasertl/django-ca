@@ -15,7 +15,7 @@
 
 """Test the view to list certificate authorities."""
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 from django.db.models import Model
 from django.test.client import Client
