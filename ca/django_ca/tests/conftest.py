@@ -37,14 +37,14 @@ from pytest_django.fixtures import SettingsWrapper
 from django_ca.models import Certificate
 from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
-    fixture_data,
     generate_ca_fixture,
     generate_cert_fixture,
-    generate_csr_fixture,
-    generate_csr_pem_fixture,
     generate_pub_fixture,
     generate_usable_ca_fixture,
+    interesting_certificate_names,
     setup_pragmas,
+    usable_ca_names,
+    usable_cert_names,
 )
 from django_ca.tests.base.typehints import User
 from django_ca.utils import ca_storage
@@ -157,28 +157,6 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
 
 
 # CAs that can be used for signing certificates
-usable_ca_names = [
-    name for name, conf in fixture_data["certs"].items() if conf["type"] == "ca" and conf.get("key_filename")
-]
-unusable_ca_names = [
-    name
-    for name, conf in fixture_data["certs"].items()
-    if conf["type"] == "ca" and name not in usable_ca_names
-]
-all_ca_names = usable_ca_names + unusable_ca_names
-
-usable_cert_names = [
-    name
-    for name, conf in fixture_data["certs"].items()
-    if conf["type"] == "cert" and conf["cat"] == "generated"
-]
-unusable_cert_names = [
-    name
-    for name, conf in fixture_data["certs"].items()
-    if conf["type"] == "cert" and name not in usable_ca_names
-]
-interesting_certificate_names = ["child-cert", "all-extensions", "alt-extensions", "no-extensions"]
-all_cert_names = usable_cert_names + unusable_cert_names
 
 # Dynamically inject repetitive fixtures:
 #   https://github.com/pytest-dev/pytest/issues/2424
@@ -188,6 +166,4 @@ for name in usable_ca_names:
 for name in usable_ca_names + usable_cert_names:
     globals()[f"{name.replace('-', '_')}_pub"] = generate_pub_fixture(name)
 for name in usable_cert_names:
-    globals()[f"{name.replace('-', '_')}_csr"] = generate_csr_fixture(name)
-    globals()[f"{name.replace('-', '_')}_csr_pem"] = generate_csr_pem_fixture(name)
     globals()[name.replace("-", "_")] = generate_cert_fixture(name)

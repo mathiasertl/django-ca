@@ -24,7 +24,6 @@ import packaging
 
 import cryptography
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
 
 import django
 from django.conf import settings
@@ -152,28 +151,6 @@ def generate_pub_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certifi
     return fixture
 
 
-def generate_csr_fixture(name: str) -> typing.Callable[[], Iterator[x509.CertificateSigningRequest]]:
-    """Generate fixture for a loaded CSR (root_cert_csr, ...)."""
-
-    @pytest.fixture(scope="session")
-    def fixture() -> Iterator[x509.CertificateSigningRequest]:
-        yield load_csr(name)
-
-    return fixture
-
-
-def generate_csr_pem_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator[str]]:
-    """Generate fixture for a loaded CSR (root_cert_csr, ...)."""
-
-    @pytest.fixture(scope="session")
-    def fixture(request: "SubRequest") -> Iterator[str]:
-        sanitized_name = name.replace("-", "_")
-        csr = request.getfixturevalue(f"{sanitized_name}_csr")
-        yield csr.public_bytes(serialization.Encoding.PEM).decode("utf-8")
-
-    return fixture
-
-
 def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Iterator[CertificateAuthority]]:
     """Function to generate CA fixtures (root, child, ...)."""
 
@@ -222,11 +199,10 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
         sanitized_name = name.replace("-", "_")
         data = fixture_data["certs"][name]
         ca = request.getfixturevalue(data["ca"])
-        csr = request.getfixturevalue(f"{sanitized_name}_csr")
         pub = request.getfixturevalue(f"{sanitized_name}_pub")
 
         with freeze_time(timestamps["everything_valid"]):
-            cert = load_cert(ca, csr, pub, data.get("profile", ""))
+            cert = load_cert(ca, certs[name]["csr"]["pem"], pub, data.get("profile", ""))
 
         yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
@@ -237,12 +213,6 @@ def load_pub(name: str) -> x509.Certificate:
     """Load a public key from file."""
     with open(os.path.join(settings.FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
         return x509.load_der_x509_certificate(stream.read())
-
-
-def load_csr(name: str) -> x509.CertificateSigningRequest:
-    """Load a CSR from file."""
-    with open(os.path.join(settings.FIXTURES_DIR, f"{name}.csr"), "rb") as stream:
-        return x509.load_pem_x509_csr(stream.read())
 
 
 def load_ca(
@@ -267,6 +237,16 @@ def load_ca(
     return ca
 
 
+def _load_certificate_signing_requests() -> None:
+    for name in usable_cert_names:
+        with open(os.path.join(settings.FIXTURES_DIR, f"{name}.csr"), "rb") as stream:
+            pem_bytes = stream.read()
+        certs[name]["csr"] = {
+            "der": x509.load_pem_x509_csr(pem_bytes),
+            "pem": pem_bytes.decode("utf-8"),
+        }
+
+
 def load_cert(
     ca: CertificateAuthority, csr: x509.CertificateSigningRequest, pub: x509.Certificate, profile: str = ""
 ) -> Certificate:
@@ -280,3 +260,30 @@ def load_cert(
 with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
     fixture_data = json.load(cert_data_stream)
 certs = fixture_data["certs"]
+
+# Define various classes of certificates
+usable_ca_names = [
+    name for name, conf in fixture_data["certs"].items() if conf["type"] == "ca" and conf.get("key_filename")
+]
+unusable_ca_names = [
+    name
+    for name, conf in fixture_data["certs"].items()
+    if conf["type"] == "ca" and name not in usable_ca_names
+]
+all_ca_names = usable_ca_names + unusable_ca_names
+
+usable_cert_names = [
+    name
+    for name, conf in fixture_data["certs"].items()
+    if conf["type"] == "cert" and conf["cat"] == "generated"
+]
+unusable_cert_names = [
+    name
+    for name, conf in fixture_data["certs"].items()
+    if conf["type"] == "cert" and name not in usable_ca_names
+]
+interesting_certificate_names = ["child-cert", "all-extensions", "alt-extensions", "no-extensions"]
+all_cert_names = usable_cert_names + unusable_cert_names
+
+# Load CSRs into certs
+_load_certificate_signing_requests()
