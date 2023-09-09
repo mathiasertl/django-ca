@@ -24,6 +24,7 @@ import packaging
 
 import cryptography
 from cryptography import x509
+from cryptography.hazmat.primitives import serialization
 
 import django
 from django.conf import settings
@@ -247,6 +248,18 @@ def _load_certificate_signing_requests() -> None:
         }
 
 
+def _load_public_keys() -> None:
+    for name in usable_ca_names + usable_cert_names:
+        with open(os.path.join(settings.FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
+            der_bytes = stream.read()
+        certificate = x509.load_der_x509_certificate(der_bytes)
+        certs[name]["pub"] = {
+            "der": der_bytes,
+            "loaded": x509.load_der_x509_certificate(der_bytes),
+            "pem": certificate.public_bytes(serialization.Encoding.PEM).decode("utf-8"),
+        }
+
+
 def load_cert(
     ca: CertificateAuthority, csr: x509.CertificateSigningRequest, pub: x509.Certificate, profile: str = ""
 ) -> Certificate:
@@ -285,5 +298,6 @@ unusable_cert_names = [
 interesting_certificate_names = ["child-cert", "all-extensions", "alt-extensions", "no-extensions"]
 all_cert_names = usable_cert_names + unusable_cert_names
 
-# Load CSRs into certs
+# Load CSRs/public keys into certs
 _load_certificate_signing_requests()
+_load_public_keys()
