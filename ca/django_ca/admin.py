@@ -169,7 +169,7 @@ class CertificateMixin(
 
         # get object in question
         try:
-            obj = self.model.objects.get(pk=pk)
+            obj = self.model._default_manager.get(pk=pk)
         except self.model.DoesNotExist as ex:
             raise Http404 from ex
 

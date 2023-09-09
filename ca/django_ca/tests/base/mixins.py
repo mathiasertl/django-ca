@@ -1092,7 +1092,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         super().setUp()
         self.user = self.create_superuser()
         self.client.force_login(self.user)
-        self.obj = self.model.objects.first()  # type: ignore[assignment] # TODO: get rid of this
+        self.obj = self.model._default_manager.all()[0]
 
     @property
     def add_url(self) -> str:
@@ -1160,7 +1160,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
 
     def get_objects(self) -> Iterable[DjangoCAModelTypeVar]:
         """Get list of objects for defined for this test."""
-        return self.model.objects.all()
+        return self.model._default_manager.all()
 
     def get_url(self, obj: DjangoCAModelTypeVar) -> str:
         """Get URL for the given object for this test case."""
@@ -1180,11 +1180,11 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.
         """
-        yield self.model.objects.all(), {}
+        yield self.model._default_manager.all(), {}
 
     def test_model_count(self) -> None:
         """Test that the implementing TestCase actually creates some instances."""
-        self.assertGreater(self.model.objects.all().count(), 0)
+        self.assertGreater(self.model._default_manager.all().count(), 0)
 
     def test_changelist_view(self) -> None:
         """Test that the changelist view works."""
@@ -1193,7 +1193,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
     def test_change_view(self) -> None:
         """Test that the change view works for all instances."""
-        for obj in self.model.objects.all():
+        for obj in self.model._default_manager.all():
             assert_change_response(self.get_change_view(obj))
 
 
