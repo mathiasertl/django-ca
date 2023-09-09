@@ -1091,7 +1091,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         super().setUp()
         self.user = self.create_superuser()
         self.client.force_login(self.user)
-        self.obj = self.model._default_manager.all()[0]
+        self.obj = self.model._default_manager.first()  # type: ignore[assignment]
 
     @property
     def add_url(self) -> str:

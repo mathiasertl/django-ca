@@ -98,8 +98,10 @@ def encode_url(url: str) -> str:
     parsed = urlparse(url)
     if parsed.hostname and parsed.port:
         hostname = idna.encode(parsed.hostname).decode("utf-8")
+        # pylint: disable-next=protected-access  # no public API for this
         parsed = parsed._replace(netloc=f"{hostname}:{parsed.port}")
     else:
+        # pylint: disable-next=protected-access  # no public API for this
         parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode("utf-8"))
     return parsed.geturl()
 
@@ -693,7 +695,7 @@ def generate_private_key(
 
 
 def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
-    r"""Parse a general name from user input.
+    """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
 
@@ -1089,7 +1091,7 @@ def read_file(path: str) -> bytes:
 
 
 def split_str(val: str, sep: str) -> Iterator[str]:
-    r"""Split a character on the given set of characters.
+    """Split a character on the given set of characters.
 
     Example::
 

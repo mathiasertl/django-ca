@@ -26,7 +26,7 @@ Documentation is available at https://django-ca.readthedocs.org/.
 3. Certificate issuance via ACMEv2, command line or web interface.
 4. Management via command line and/or via Django's admin interface.
 5. Get email notifications about certificates about to expire.
-6. Written in Python 3.8+, Django 3.2+ and cryptography 41+.
+6. Written in Python 3.8+, Django 3.2+ and cryptography 41.0+.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 

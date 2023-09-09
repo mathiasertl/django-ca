@@ -90,7 +90,7 @@ dependencies = [
     "Django>=3.2,!=4.0.*,!=4.1.*",
     "acme>=2.6.0",
     "asn1crypto>=1.5",
-    "cryptography>=41",
+    "cryptography>=41.0",
     "django-object-actions>=4.0.0",
     "dnspython>=2.3",
     "idna>=3.2",
@@ -399,6 +399,7 @@ ignore = [
     "D104",  # Missing docstring in public package
     "D105",  # Missing docstring in magic method
     "D106",  # Missing docstring in public nested class
+    "D301",  # Use `r"""` if any backslashes in a docstring - incompatible with doctests!
     "D401",  # First line of docstring should be in imperative mood
 ]
 

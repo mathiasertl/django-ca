@@ -1,8 +1,5 @@
 -r requirements-dev-common.txt
-django-stubs==4.2.3
 -r requirements-test.txt
-# mypy==1.5.0 breaks django-stubs==4.2.3:
-#   https://github.com/typeddjango/django-stubs/issues/1648
 mypy==1.5.1
 django-stubs==4.2.4
 types-docutils==0.20.0.3

@@ -16,6 +16,7 @@
 import josepy as jose
 from acme import fields, messages
 
+# pylint: disable-next=protected-access  # no public API for this
 identifiers_decoder = messages.Order._fields["identifiers"].fdec
 
 

@@ -40,11 +40,6 @@ def minor_to_major(version: str) -> str:
     return ".".join(version.split(".", 2)[:2])
 
 
-def cryptography_major_version(version: str) -> str:
-    """Get the major version of cryptography (where only the major release is relevant)."""
-    return version.split(".")[0]
-
-
 def get_project_config() -> Dict[str, Any]:
     """Get project configuration from pyproject.toml."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
@@ -63,7 +58,7 @@ def get_project_config() -> Dict[str, Any]:
     cfg["django-map"] = {minor_to_major(djver): djver for djver in cfg["django"]}
     cfg["django-major"] = [minor_to_major(djver) for djver in cfg["django"]]
     cfg["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in cfg["cryptography"]}
-    cfg["cryptography-major"] = [cryptography_major_version(cgver) for cgver in cfg["cryptography"]]
+    cfg["cryptography-major"] = [minor_to_major(cgver) for cgver in cfg["cryptography"]]
     cfg["acme-map"] = {minor_to_major(acmever): acmever for acmever in cfg["acme"]}
     cfg["acme-major"] = [minor_to_major(acmever) for acmever in cfg["acme"]]
 
