@@ -107,9 +107,9 @@ def check_github_actions_tests(project_config: Dict[str, Any]) -> int:
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
     errors = simple_diff("Python versions", matrix["python-version"], list(project_config["python-map"]))
-    errors += simple_diff("Django versions", matrix["django-version"], project_config["django"])
+    errors += simple_diff("Django versions", matrix["django-version"], project_config["django-major"])
     errors += simple_diff(
-        "cryptography versions", matrix["cryptography-version"], project_config["cryptography"]
+        "cryptography versions", matrix["cryptography-version"], project_config["cryptography-major"]
     )
     return errors
 
@@ -131,7 +131,7 @@ def check_tox(project_config: Dict[str, Any]) -> int:
     expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
         ",".join(project_config["django-map"]),
-        ",".join(project_config["cryptography-map"]),
+        ",".join(project_config["cryptography-major"]),
         ",".join(project_config["acme-map"]),
     )
 
@@ -147,10 +147,10 @@ def check_tox(project_config: Dict[str, Any]) -> int:
         errors += simple_diff(
             f"{component} conditional dependencies present",
             [e for e in tox_env_reqs if e.startswith(short_name)],
-            [f"{short_name}{major}" for major in project_config[f"{component}-map"]],
+            [f"{short_name}{major}" for major in project_config[f"{component}-major"]],
         )
 
-        for major, minor in project_config[f"{component}-map"].items():
+        for major in project_config[f"{component}-major"]:
             name = f"{short_name}{major}"
             try:
                 actual = tox_env_reqs[name]
@@ -158,7 +158,7 @@ def check_tox(project_config: Dict[str, Any]) -> int:
                 errors += err(f"{name}: Conditional dependency not found.")
                 continue
 
-            expected = f"{CANONICAL_PYPI_NAMES[component]}=={minor}"
+            expected = f"{CANONICAL_PYPI_NAMES[component]}~={major}"
             if name not in tox_env_reqs:
                 continue  # handled in simple-diff above
 

@@ -13,8 +13,8 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.8", "3.9", "3.10", "3.11" ]
-        django-version: [ "3.2.20", "4.2.4" ]
-        cryptography-version: [ "41.0.3" ]
+        django-version: [ "3.2", "4.2" ]
+        cryptography-version: [ "41" ]
 
     env:
       DJANGO_CA_SECRET_KEY: dummy
@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip setuptools wheel
-          pip install -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt django==${{ matrix.django-version }} cryptography==${{ matrix.cryptography-version }}
+          pip install -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }}
 
       - name: Install program
         run: pip install -e .

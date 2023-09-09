@@ -8,5 +8,5 @@ pytest-cov==4.1.0
 pytest-django==4.5.2
 pytest-doctestplus==1.0.0
 pytest-random-order==1.1.0
-pytest==7.4.0
+pytest==7.4.2
 requests-mock==1.11.0

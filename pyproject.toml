@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.8.17", "3.9.17", "3.10.12", "3.11.4"]
 # https://www.djangoproject.com/download/
-django = ["3.2.20", "4.2.4"]
+django = ["3.2.20", "4.2.5"]
 cryptography = ["41.0.3"]
 acme = ["2.6.0"]
 
@@ -90,7 +90,7 @@ dependencies = [
     "Django>=3.2,!=4.0.*,!=4.1.*",
     "acme>=2.6.0",
     "asn1crypto>=1.5",
-    "cryptography>=41.0",
+    "cryptography>=41",
     "django-object-actions>=4.0.0",
     "dnspython>=2.3",
     "idna>=3.2",
