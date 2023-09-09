@@ -60,7 +60,6 @@ class TestBasic(TestCaseMixin, TestCase):
 
     def test_missing_celery(self) -> None:
         """Test that we work even if celery is not installed."""
-
         # negative assertion to make sure that the IsInstance assertion below is actually meaningful
         self.assertNotIsInstance(tasks.cache_crl, types.FunctionType)
 
@@ -75,7 +74,6 @@ class TestBasic(TestCaseMixin, TestCase):
 
     def test_run_task(self) -> None:
         """Test our run_task wrapper."""
-
         # run_task() without celery
         with self.settings(CA_USE_CELERY=False), self.patch("django_ca.tasks.cache_crls") as task_mock:
             tasks.run_task(tasks.cache_crls)
@@ -94,7 +92,6 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test caching with a specific serial."""
-
         enc_cls = Encoding.DER
 
         for ca in self.cas.values():
@@ -137,7 +134,6 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_expired"])
     def test_cache_all_crls_expired(self) -> None:
         """Test that nothing is cashed if all CAs are expired."""
-
         tasks.cache_crls()
 
         for ca in self.cas.values():
@@ -147,14 +143,12 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_password(self) -> None:
         """Test creating a CRL for a CA where we have no password."""
-
         msg = r"^Password was not given but private key is encrypted$"
         with self.settings(CA_PASSWORDS={}), self.assertRaisesRegex(TypeError, msg):
             tasks.cache_crl(self.cas["pwd"].serial)
 
     def test_no_private_key(self) -> None:
         """Test creating a CRL for a CA where no private key is available."""
-
         with self.assertRaises(FileNotFoundError):
             tasks.cache_crl(self.cas["pwd"].serial)
 
@@ -168,7 +162,6 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_single(self) -> None:
         """Test creating a single key."""
-
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
@@ -177,7 +170,6 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_all(self) -> None:
         """Test creating all keys."""
-
         tasks.generate_ocsp_keys()
 
         for ca in self.cas.values():
@@ -188,7 +180,6 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_repsonder_key_validity(self) -> None:
         """Test that the ocsp_responder_key_validity field works."""
-
         ca = self.cas["root"]
         qs = Certificate.objects.filter(profile="ocsp", ca=ca)
         ca.ocsp_responder_key_validity = 10
@@ -267,19 +258,16 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         token: Optional[str] = None,
     ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock the client fullfilling the challenge."""
-
         raise NotImplementedError
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
-
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
 
     def test_unknown_challenge(self) -> None:
         """Test invoking task with an unknown challenge."""
-
         AcmeChallenge.objects.all().delete()
         with self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
@@ -288,7 +276,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def test_status_not_processing(self) -> None:
         """Test invoking task where the status is not "processing"."""
-
         self.chall.status = AcmeChallenge.STATUS_PENDING
         self.chall.save()
 
@@ -311,7 +298,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
-
         with self.mock_challenge(content=b"wrong answer"), self.assertLogs(
             "django_ca.tasks", "DEBUG"
         ) as logcm:
@@ -326,7 +312,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def test_unsupported_challenge(self) -> None:
         """Test what happens when challenge type is not supported."""
-
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
 
@@ -345,7 +330,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def test_basic(self) -> None:
         """Test validation actually working."""
-
         with self.mock_challenge():
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertValid()
@@ -357,7 +341,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def test_multiple_auths(self) -> None:
         """If other authentications exist that are not in the valid state, order does not become valid."""
-
         AcmeAuthorization.objects.create(
             order=self.order, type=AcmeAuthorization.TYPE_DNS, value="other.example.com"
         )
@@ -409,7 +392,6 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
 
     def test_response_not_ok(self) -> None:
         """Test the server not returning a HTTP status code 200."""
-
         with self.mock_challenge(status=HTTPStatus.NOT_FOUND):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
@@ -450,7 +432,6 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         token: Optional[str] = None,
     ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
-
         dns.resolver.reset_default_resolver()
         challenge = challenge or self.chall
         domain = self.auth.value
@@ -520,14 +501,12 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
-
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
         self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
 
     def test_unknown_certificate(self) -> None:
         """Test invoking task with an unknown cert."""
-
         AcmeCertificate.objects.all().delete()
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
@@ -538,7 +517,6 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_unusable_cert(self) -> None:
         """Test invoking task where the order is not usable."""
-
         self.order.status = AcmeChallenge.STATUS_VALID  # usually would mean: already issued
         self.order.save()
 
@@ -552,7 +530,6 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test basic certificate issuance."""
-
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
@@ -579,7 +556,6 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     @override_tmpcadir()
     def test_two_hostnames(self) -> None:
         """Test setting two hostnames."""
-
         hostname2 = "example.net"
         AcmeAuthorization.objects.create(order=self.order, value=hostname2)
 
@@ -698,7 +674,6 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_acme_disabled(self) -> None:
         """Test task when ACME is disabled."""
-
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             with self.freeze_time(timezone.now() + timedelta(days=3)):
                 tasks.acme_cleanup()

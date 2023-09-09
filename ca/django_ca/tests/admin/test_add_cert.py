@@ -307,7 +307,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_subject_with_multiple_org_units(self) -> None:
         """Test creating a certificate with multiple Org Units (which is allowed)."""
-
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
@@ -360,7 +359,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add_no_common_name_and_no_subject_alternative_name(self) -> None:
         """Test posting a subject with no common name and no subject alternative name."""
-
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
@@ -405,7 +403,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_subject_with_multiple_country_codes(self) -> None:
         """Test creating a certificate with multiple country codes (which is not allowed)."""
-
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
@@ -444,7 +441,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_subject_with_invalid_country_code(self) -> None:
         """Test creating a certificate with an invalid country code."""
-
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
 
@@ -870,8 +866,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_invalid_cn_in_san(self) -> None:
-        """Test that if you submit a CommonName that is not parsable as SubjectAlternativeName, but check "CN
-        in SAN", an error is thrown.
+        """Test error with a CommonName that is not parsable as SubjectAlternativeName, but check "CN in SAN".
 
         .. seealso:: https://github.com/mathiasertl/django-ca/issues/62
         """
@@ -921,7 +916,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_invalid_signature_hash_algorithm(self) -> None:
         """Test adding a certificate with an invalid signature hash algorithm."""
-
         # Test with Ed448 CA
         with self.assertCreateCertSignals(False, False):
             response = self.client.post(
@@ -1009,7 +1003,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_certificate_policies_with_invalid_oid(self) -> None:
         """Test posting a certificate policies extension with an invalid OID."""
-
         ca = self.cas["root"]
         csr = certs["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
@@ -1141,7 +1134,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         cn_in_san: WebElement,
     ) -> None:
         """Assert that the admin form equals the given profile."""
-
         profile = profiles[profile_name]
 
         ku_expected = self.get_expected(profile, ExtensionOID.KEY_USAGE, [])
@@ -1193,7 +1185,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
     @override_tmpcadir()
     def test_select_profile(self) -> None:
         """Test that selecting the profile modifies the extensions."""
-
         self.login()
 
         self.selenium.get(f"{self.live_server_url}{self.add_url}")

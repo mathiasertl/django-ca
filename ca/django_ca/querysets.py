@@ -130,12 +130,10 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
 
         Raises
         ------
-
         :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`
             When the CA named by :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` is either not found, disabled
             or not currently valid. Or, if the setting is not set, no CA is currently usable.
         """
-
         if ca_settings.CA_DEFAULT_CA:
             now = timezone.now()
 
@@ -181,7 +179,6 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
 
     def revoked(self) -> "CertificateAuthorityQuerySet":
         """Return revoked certificates."""
-
         return self.filter(revoked=True)
 
     def usable(self) -> "CertificateAuthorityQuerySet":
@@ -202,12 +199,10 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
 
     def not_yet_valid(self) -> "CertificateQuerySet":
         """Return certificates that are not yet valid."""
-
         return self.filter(revoked=False, valid_from__gt=timezone.now())
 
     def valid(self) -> "CertificateQuerySet":
         """Return valid certificates."""
-
         return self.currently_valid().filter(revoked=False)
 
     def expired(self) -> "CertificateQuerySet":
@@ -219,7 +214,6 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
 
     def revoked(self) -> "CertificateQuerySet":
         """Return revoked certificates."""
-
         return self.filter(revoked=True)
 
 

@@ -195,12 +195,10 @@ class CertificateMixin(
 
     def download_view(self, request: HttpRequest, pk: int) -> HttpResponse:
         """A view that allows the user to download a certificate in PEM or DER/ASN1 format."""
-
         return self._download_response(request, pk)
 
     def download_bundle_view(self, request: HttpRequest, pk: int) -> HttpResponse:
         """A view that allows the user to download a certificate bundle in PEM format."""
-
         return self._download_response(request, pk, bundle=True)
 
     @property
@@ -210,7 +208,6 @@ class CertificateMixin(
 
     def profiles_view(self, request: HttpRequest) -> JsonResponse:
         """Returns profiles."""
-
         if not self.has_change_permission(request):
             # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
             raise PermissionDenied
@@ -273,7 +270,6 @@ class CertificateMixin(
 
     def output_template(self, obj: X509CertMixinTypeVar, oid: x509.ObjectIdentifier) -> str:
         """Render extension for the given object."""
-
         ext = obj.x509_extensions.get(oid)
 
         if ext is None:
@@ -762,7 +758,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     def get_changeform_initial_data(self, request: HttpRequest) -> Dict[str, Any]:
         """Get initial data based on default profile.
 
-        When resigning a certificate, get initial data from the certificate."""
+        When resigning a certificate, get initial data from the certificate.
+        """
         data: Dict[str, Any] = super().get_changeform_initial_data(request)
 
         hash_algorithm_name = ""
@@ -870,7 +867,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     def csr_details_view(self, request: HttpRequest) -> JsonResponse:
         """Returns details of a CSR request."""
-
         if not request.user.is_staff or not self.has_change_permission(request):
             # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
             raise PermissionDenied
@@ -911,7 +907,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     def resign(self, request: HttpRequest, obj: Certificate) -> HttpResponse:
         """View for resigning an existing certificate."""
-
         if not self.has_view_permission(request, obj) or not self.has_add_permission(request):
             # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
             raise PermissionDenied
@@ -1173,7 +1168,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
         search_fields = ("contact",)
 
         def first_contact(self, obj: AcmeAccount) -> str:
-            """return the first contact address."""
+            """Return the first contact address."""
             return str(obj)
 
         first_contact.short_description = _("Contact")  # type: ignore[attr-defined] # django standard

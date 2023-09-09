@@ -104,7 +104,8 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
 class CreateCertificateBaseForm(CertificateModelForm):
     """Base class for forms that create a certificate.
 
-    This is used by forms for creating a new certificate and resigning an existing one."""
+    This is used by forms for creating a new certificate and resigning an existing one.
+    """
 
     password = forms.CharField(
         widget=forms.PasswordInput,

@@ -31,7 +31,7 @@ from django_ca.typehints import SerializedExtension
 
 
 class NameAttributeSchema(Schema):
-    """docstring for class"""
+    """docstring for class."""
 
     oid: str = Field(
         title="OID",
@@ -79,7 +79,7 @@ class X509BaseSchema(ModelSchema, abc.ABC):
 
     @staticmethod
     def resolve_pem(obj: X509CertMixin) -> str:
-        """Convert the public certificate to its PEM format"""
+        """Convert the public certificate to its PEM format."""
         return obj.pub.pem
 
     @staticmethod

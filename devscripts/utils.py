@@ -186,7 +186,6 @@ def docker_exec(container: str, *args: str) -> "subprocess.CompletedProcess[Any]
 @contextmanager
 def tmpdir() -> Iterator[str]:
     """Context manager to temporarily change the working directory to a temporary directory."""
-
     with tempfile.TemporaryDirectory() as tmp_directory, chdir(tmp_directory):
         yield tmp_directory
 
@@ -204,7 +203,6 @@ def git_archive(ref: str, destination: str) -> Path:
 
     `ref` may be any valid git reference, usually a git tag.
     """
-
     # Add a random suffix to the export destination to improve build isolation (e.g. Docker Compose will use
     # that directory name as a name for Docker images/containers).
     random_suffix = "".join(random.choice(string.ascii_lowercase) for i in range(12))
@@ -234,7 +232,6 @@ def create_signed_cert(
 
     .. seealso:: https://letsencrypt.org/docs/certificates-for-localhost/
     """
-
     with open(signer_private_key_path, "rb") as stream:
         signer_private_key = typing.cast(
             CertificateIssuerPrivateKeyTypes, load_pem_private_key(stream.read(), password)

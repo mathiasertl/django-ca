@@ -83,7 +83,6 @@ class AcmeCertificateViewTestCase(
         NOTE: should not really happen, as the order is marked as valid, the certificate is also set in one
         transaction.
         """
-
         self.acmecert.cert = None
         self.acmecert.save()
         resp = self.acme(self.url, self.message, kid=self.kid)

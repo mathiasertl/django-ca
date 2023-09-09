@@ -64,7 +64,6 @@ def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subpr
 
 def validate(release: str) -> None:
     """Main validation entry function."""
-
     info("Testing Python wheel...")
     project_config = config.get_project_config()
     client = docker.from_env()

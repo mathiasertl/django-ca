@@ -57,7 +57,9 @@ CERT_PEM_REGEX = re.compile(
 
 
 # pylint: disable-next=inherit-non-class; False positive
-class PubDict(_PubDict, total=False):  # pylint: disable=missing-class-docstring
+class PubDict(_PubDict, total=False):
+    """TypedDict for the pub key of certs."""
+
     der: bytes
 
 

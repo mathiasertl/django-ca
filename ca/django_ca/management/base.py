@@ -103,7 +103,6 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def dump(self, path: str, data: bytes) -> None:
         """Dump `data` to `path` (``-`` means stdout)."""
-
         if path == "-":
             self.stdout.write(data, ending=b"")
         else:
@@ -366,7 +365,6 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         additional_option_strings: Tuple[str, ...] = tuple(),
     ) -> None:
         """Add argument group for the Subject Alternative Name extension."""
-
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
         description = "This extension lists the names (usually domain names) that a certificate is valid for."
         if description_suffix:
@@ -463,7 +461,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
 
     def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""
-
         group = parser.add_argument_group("Certificate subject", self.subject_help)
 
         # NOTE: Don't set the default value here because it would mask the user not setting anything at all.
@@ -484,7 +481,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         **options: Any,
     ) -> None:
         """Additional tests for validity of some options."""
-
         parsed_expires = profile.get_expires(expires)
 
         if ca.expires < parsed_expires:
@@ -536,7 +532,7 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         return "\n".join(lines)
 
     def output_status(self, cert: X509CertMixin) -> None:
-        """Output certificate status"""
+        """Output certificate status."""
         now = datetime.now(tz.utc)
         if cert.revoked:
             self.stdout.write("* Status: Revoked")

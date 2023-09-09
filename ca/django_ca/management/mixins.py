@@ -68,7 +68,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-
         parser
         arg : str, optional
         help_text : str, optional
@@ -97,7 +96,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_format(self, parser: CommandParser) -> None:
         """Add the -f/--format option."""
-
         parser.add_argument(
             "-f",
             "--format",
@@ -133,7 +131,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
     def print_extension(self, ext: x509.Extension[x509.ExtensionType]) -> None:
         """Print extension to stdout."""
-
         ext_name = get_extension_name(ext.oid)
         if ext.critical:
             self.stdout.write(f"* {ext_name} (critical):")
@@ -181,13 +178,11 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-
         parser : CommandParser
         default : str, optional
             Default value for arguments. Pass ``None`` if you want to be able to know if the value was passed
             or not.
         """
-
         group = parser.add_argument_group("General", "General information about the CA.")
         group.add_argument("--caa", default=default, metavar="NAME", help="CAA record for this CA.")
         group.add_argument(
@@ -208,7 +203,6 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_acme_group(self, parser: CommandParser) -> None:
         """Add arguments for ACMEv2."""
-
         if not ca_settings.CA_ENABLE_ACME:
             return
 
@@ -287,7 +281,6 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_ca_args(self, parser: ActionsContainer) -> None:
         """Add CA arguments."""
-
         group = parser.add_argument_group(
             "X509 v3 certificate extensions for signed certificates",
             "Extensions added when signing certificates.",

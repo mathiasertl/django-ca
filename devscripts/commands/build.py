@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-# pylint: disable=missing-module-docstring  # covered in class docstring
+"""Command to build various build artifacts."""
 
 from devscripts.commands import DevSubCommand
 

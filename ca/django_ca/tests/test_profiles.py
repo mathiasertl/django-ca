@@ -152,7 +152,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
     def test_serialize(self) -> None:
         """Test profile serialization."""
-
         desc = "foo bar"
         key_usage = ["digital_signature"]
         prof = Profile(
@@ -424,7 +423,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
     @override_tmpcadir()
     def test_add_distribution_point_with_ca_crldp(self) -> None:
-        """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
+        """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
         prof = Profile("example", subject=[])
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -465,8 +464,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
     @override_tmpcadir()
     def test_with_algorithm(self) -> None:
-        """Test a profile that manually overrides the algorithm"""
-
+        """Test a profile that manually overrides the algorithm."""
         root = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
 
@@ -532,7 +530,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
     @override_tmpcadir()
     def test_merge_authority_information_access_existing_values(self) -> None:
-        """Pass a custom distribution point when creating the cert, which matches ca.crl_url"""
+        """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
         prof = Profile("example", subject=[])
         ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
         csr = certs["child-cert"]["csr"]["parsed"]
@@ -656,8 +654,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
     @override_tmpcadir()
     def test_partial_authority_information_access_override(self) -> None:
-        """Test partial overwriting of the Authority Information Access extension"""
-
+        """Test partial overwriting of the Authority Information Access extension."""
         prof = Profile(
             "example",
             subject=[],

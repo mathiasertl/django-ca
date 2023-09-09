@@ -179,7 +179,6 @@ class ConsoleIncludeDirective(CodeBlock):
     @property
     def content(self) -> typing.List[str]:
         """Actually render the template."""
-
         include = self.options.get("include")
         if not include:
             raise ValueError("No include specified.")

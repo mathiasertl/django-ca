@@ -86,7 +86,6 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
     def test_revoked(self) -> None:
         """Test revoking a cert that is already revoked."""
-
         self.assertFalse(self.cert.revoked)
 
         with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
@@ -111,7 +110,6 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
     def test_compromised_with_naive_datetime(self) -> None:
         """Test passing a naive datetime (which is an error)."""
-
         now = datetime.now()
         with self.assertCommandError(rf"{now.isoformat()}: Timestamp requires a timezone\."):
             self.cmd("revoke_cert", self.cert.serial, compromised=now)
@@ -119,7 +117,6 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
     def test_compromised_with_future_datetime(self) -> None:
         """Test passing a datetime in the future (which is an error)."""
-
         now = datetime.now(tz=tz.utc).replace(microsecond=0) + timedelta(days=1)
         iso_format = re.escape(now.isoformat())  # tz-aware iso 8601 timestamp has regex special characters
         with self.assertCommandError(rf"{iso_format}: Timestamp must be in the past\."):

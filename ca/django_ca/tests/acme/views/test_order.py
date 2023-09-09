@@ -52,7 +52,6 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
     @override_tmpcadir()
     def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
-
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
@@ -74,8 +73,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
 
     @override_tmpcadir()
     def test_valid_cert(self) -> None:
-        """Test viewing an order with a valid certificate"""
-
+        """Test viewing an order with a valid certificate."""
         self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
@@ -104,7 +102,6 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
         *should* always be true at the same time.
         """
-
         self.order.status = AcmeOrder.STATUS_VALID
         self.order.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
@@ -132,7 +129,6 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
         *should* always be true at the same time.
         """
-
         self.order.status = AcmeOrder.STATUS_PROCESSING
         self.order.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
@@ -155,8 +151,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
 
     @override_tmpcadir()
     def test_wrong_account(self) -> None:
-        """Test viewing for the wrong account"""
-
+        """Test viewing for the wrong account."""
         account = AcmeAccount.objects.create(
             ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
         )
@@ -169,7 +164,6 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
     @override_tmpcadir()
     def test_not_found(self) -> None:
         """Test viewing an order that simply does not exist."""
-
         account = AcmeAccount.objects.create(
             ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
         )
@@ -186,7 +180,6 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
 
         We have to mock this, as at present this is not usually done.
         """
-
         with self.patch(
             "django_ca.acme.views.AcmeOrderView.acme_request", side_effect=AcmeUnauthorized(message="foo")
         ):

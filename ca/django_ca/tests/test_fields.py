@@ -94,7 +94,6 @@ class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
 
     def test_field_output(self) -> None:
         """Test field output."""
-
         for critical in [True, False]:
             self.assertFieldOutput(
                 fields.CRLDistributionPointField,
@@ -272,7 +271,6 @@ class GeneralNamesFieldTest(TestCase, FieldTestCaseMixin):
 
     def test_whitespace(self) -> None:
         """Test that empty lines are completely ignored and return an empty value."""
-
         self.assertRequiredError("  ")
         self.assertRequiredError("\n")
         self.assertRequiredError("\n  \n")

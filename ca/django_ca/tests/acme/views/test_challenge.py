@@ -54,13 +54,12 @@ class AcmeChallengeViewTestCase(
 
     @property
     def url(self) -> str:
-        """Get default generic url"""
+        """Get default generic url."""
         return self.get_url(serial=self.challenge.serial, slug=self.challenge.slug)
 
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Basic test for creating an account via ACME."""
-
         with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
 
@@ -89,7 +88,6 @@ class AcmeChallengeViewTestCase(
     @override_tmpcadir()
     def test_no_state_change(self) -> None:
         """Test challenge endpoint when no state change is triggered (e.g. already valid)."""
-
         self.challenge.status = AcmeChallenge.STATUS_VALID
         self.challenge.save()
         self.authz.status = AcmeAuthorization.STATUS_VALID
@@ -121,7 +119,6 @@ class AcmeChallengeViewTestCase(
     @override_tmpcadir()
     def test_not_found(self) -> None:
         """Basic test for creating an account via ACME."""
-
         url = self.get_url(serial=self.challenge.serial, slug="abc")
         with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(url, self.message, kid=self.kid)

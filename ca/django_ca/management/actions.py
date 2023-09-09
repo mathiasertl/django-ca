@@ -60,7 +60,6 @@ class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], 
 
         Parameters
         ----------
-
         value : str
             The value passed by the command line.
         """
@@ -221,7 +220,6 @@ class IntegerRangeAction(SingleValueAction[int, int]):
 
     Parameters
     ----------
-
     min: int, Optional
         The optional minimum value.
     max: int, Optional

@@ -58,7 +58,6 @@ class TemplateDirective(CodeBlock):
     @property
     def content(self) -> typing.List[str]:
         """Actually render the template."""
-
         template = self.jinja_env.get_template(self.arguments[1])
         context_name = self.options.get("context")
 

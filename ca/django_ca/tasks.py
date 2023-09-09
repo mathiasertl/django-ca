@@ -57,7 +57,6 @@ except ImportError:
 
     def shared_task(func: FuncTypeVar) -> "Proxy[FuncTypeVar]":
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
-
         # We do not yet need this, but might come in handy in the future:
         # func.delay = lambda *a, **kw: func(*a, **kw)
         # func.apply_async = lambda *a, **kw: func(*a, **kw)
@@ -118,7 +117,6 @@ def generate_ocsp_key(
     The task returns the private and public key paths and the *primary key* of the generated certificate if
     a new certificate was generated, otherwise it returns ``None``.
     """
-
     ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
 
     parsed_expires: Optional[timedelta] = None
@@ -330,7 +328,6 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 @transaction.atomic
 def acme_cleanup() -> None:
     """Cleanup expired ACME orders."""
-
     if not ca_settings.CA_ENABLE_ACME:
         # NOTE: Since this task does only cleanup, log message is only info.
         log.info("ACME is not enabled, not doing anything.")

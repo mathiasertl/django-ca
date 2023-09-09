@@ -261,6 +261,9 @@ good-names = [
     "k",
 ]
 
+[tool.pylint.classes]
+exclude-protected = ["_default_manager"]
+
 [tool.pylint.design]
 # Maximum number of arguments for function / method (see R0913).
 max-args = 10
@@ -386,9 +389,18 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = ["E", "F", "I", "G", "DJ"]
+select = ["D", "E", "F", "I", "G", "DJ"]
 extend-exclude = ["migrations", "stubs"]
 line-length = 110
+ignore = [
+    "D101",  # Missing docstring in public class
+    "D102",  # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
+    "D105",  # Missing docstring in magic method
+    "D106",  # Missing docstring in public nested class
+    "D401",  # First line of docstring should be in imperative mood
+]
 
 [tool.ruff.isort]
 section-order = [
@@ -421,6 +433,9 @@ test = [
     "selenium",
     "webtest",
 ]
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
 
 [tool.setuptools.dynamic]
 version = {attr = "django_ca.VERSION"}

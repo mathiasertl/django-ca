@@ -40,7 +40,6 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
     def list_ca(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list line for a given CA."""
-
         text = f"{indent}{add_colons(ca.serial)} - {ca.name}"
         if ca.enabled is False:
             text += " (disabled)"
@@ -49,7 +48,6 @@ class Command(BaseCommand):  # pylint: disable=missing-class-docstring
 
     def list_children(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list lines for children of the given CA."""
-
         children = list(enumerate(self.qs(ca.children.all()), 1))
         for index, child in children:
             if index == len(children):  # last element

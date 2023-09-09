@@ -71,7 +71,6 @@ def cn(common_name: str) -> x509.Name:
 
 def test_initial_state(env: str) -> None:
     """Test the expected initial state of the database."""
-
     # Make sure that migrations where run
     try:
         CertificateAuthority.objects.all().exists()

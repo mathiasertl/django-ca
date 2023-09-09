@@ -43,7 +43,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Basic test for creating an account via ACME."""
-
         self.assertEqual(AcmeAccount.objects.count(), 0)
         with self.mock_slug() as slug:
             resp = self.acme(self.url, self.message)
@@ -127,7 +126,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_no_contact(self) -> None:
         """Basic test for creating an account via ACME."""
-
         self.ca.acme_requires_contact = False
         self.ca.save()
 
@@ -160,7 +158,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_multiple_contacts(self) -> None:
         """Test for creating an account with multiple email addresses."""
-
         contact_2 = "mailto:user@example.net"
         with self.mock_slug() as slug:
             resp = self.acme(
@@ -214,7 +211,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_unsupported_contact(self) -> None:
         """Test that creating an account with a phone number fails."""
-
         message = acme.messages.Registration(
             contact=("tel:1234567", self.contact), terms_of_service_agreed=True
         )
@@ -231,7 +227,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_invalid_email(self) -> None:
         """Test that creating an account with a phone number fails."""
-
         resp = self.acme(
             self.url,
             acme.messages.Registration(
@@ -299,7 +294,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_no_tos_agreed_flag(self) -> None:
         """Test not sending the terms_of_service_agreed flag."""
-
         self.assertEqual(AcmeAccount.objects.count(), 0)
         message = self.get_message(contact=(self.contact,))
         self.assertIsNone(message.terms_of_service_agreed)  # type: ignore[union-attr]
@@ -332,7 +326,6 @@ class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registr
     @override_tmpcadir()
     def test_only_existing_does_not_exist(self) -> None:
         """Test making an only_existing request for an account that does not exist."""
-
         # test only_return existing:
         resp = self.acme(
             self.url,

@@ -159,7 +159,7 @@ class AcmeResponseNotFound(AcmeResponseError):
 
 
 class AcmeResponseBadNonce(AcmeResponseError):
-    """
+    """ACME response when a bad nonce was submitted.
 
     .. seealso:: RFC 8555, section 6.5:
 

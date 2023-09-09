@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+"""Sphinx configuration."""
+
 import os
 import sys
 from typing import Any, Dict, List
@@ -543,4 +545,5 @@ def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
 
 
 def setup(app: Sphinx) -> None:
+    """Add hook functions to Sphinx hooks."""
     app.connect("doctree-read", resolve_canonical_names)

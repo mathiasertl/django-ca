@@ -80,7 +80,6 @@ class AcmeTestCaseMixin(TestCaseMixin):
 
     def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
         """Override to set a default for `hostname`."""
-
         if not hostname:  # pragma: no branch
             hostname = self.SERVER_NAME
         return super().absolute_uri(name, hostname=hostname, **kwargs)
@@ -165,7 +164,6 @@ class AcmeTestCaseMixin(TestCaseMixin):
 
         Returns
         -------
-
         nonce : bytes
             The decoded bytes of the nonce.
         """
@@ -180,7 +178,6 @@ class AcmeTestCaseMixin(TestCaseMixin):
     @contextmanager
     def mock_slug(self) -> Iterator[str]:
         """Mock random slug generation, yields the static value."""
-
         slug = get_random_string(length=12)
         with mock.patch("django_ca.models.get_random_string", return_value=slug):
             yield slug
@@ -238,7 +235,6 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         The `payload_cb` parameter is an optional callback that will receive the message data before being
         serialized to JSON.
         """
-
         if nonce is None:
             nonce = self.get_nonce()
         if cert is None:
@@ -287,7 +283,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     @override_tmpcadir()
     def test_internal_server_error(self) -> None:
-        """Test raising an uncaught exception -> Internal server error"""
+        """Test raising an uncaught exception -> Internal server error."""
         view = "django.views.generic.base.View.dispatch"
         msg = f"{self.url} mock-exception"
         with mock.patch(view, side_effect=Exception(msg)), self.assertLogs() as logcm:
@@ -342,7 +338,6 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     @override_tmpcadir()
     def test_jwk_and_kid(self) -> None:
         """Test sending both a jwk and a kid, which are supposed to be mutually exclusive."""
-
         sign = acme.jws.Signature.sign
 
         def sign_mock(*args, **kwargs):  # type: ignore[no-untyped-def]
@@ -391,11 +386,10 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
     @override_tmpcadir()
     def test_neither_jwk_nor_kid(self) -> None:
         """Test sending neither a jwk and a kid."""
-
         sign = acme.jws.Signature.sign
 
         def sign_mock(*args, **kwargs):  # type: ignore[no-untyped-def]
-            """Mock function so that JWS has neither jwk nor kid"""
+            """Mock function so that JWS has neither jwk nor kid."""
             kwargs.pop("kid")
             kwargs["include_jwk"] = False
             return sign(*args, **kwargs)
@@ -406,14 +400,12 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     def test_invalid_json(self) -> None:
         """Test sending invalid JSON to the server."""
-
         resp = self.client.post(self.url, "{", content_type="application/jose+json")
         self.assertMalformed(resp, "Could not parse JWS token.")
 
     @override_tmpcadir()
     def test_wrong_url(self) -> None:
         """Test sending the wrong URL."""
-
         kid = self.kid if self.requires_kid else None
         with self.patch("django.http.request.HttpRequest.build_absolute_uri", return_value="foo"):
             if self.post_as_get:

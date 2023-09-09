@@ -36,7 +36,6 @@ class EditCATestCase(TestCaseMixin, TestCase):
 
     def edit_ca(self, *args: str) -> None:
         """Shortcut for calling the edit_ca management command."""
-
         stdout, stderr = self.cmd_e2e(["edit_ca", self.ca.serial] + list(args))
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -45,7 +44,6 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test command with e2e cli argument parsing."""
-
         stdout, stderr = self.cmd_e2e(
             ["edit_ca", self.ca.serial, f"--caa={self.caa}", f"--website={self.website}", f"--tos={self.tos}"]
         )
@@ -124,7 +122,6 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
-
         # Test initial state
         self.assertIs(self.ca.acme_enabled, False)
         self.assertIs(self.ca.acme_registration, True)
@@ -173,7 +170,6 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:
         """Test ACME arguments."""
-
         self.edit_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
 
         self.assertEqual(self.ca.ocsp_responder_key_validity, 10)
@@ -193,7 +189,6 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_acme_disabled(self) -> None:
         """Test ACME arguments do not work when ACME support is disabled."""
-
         with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
             self.edit_ca("--acme-enable")
         self.assertEqual(excm.exception.args, (2,))

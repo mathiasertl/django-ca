@@ -131,7 +131,6 @@ def test_minimal_update(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
     """Test updating only one field."""
-
     # update expected response to what is currently in the DB, except what we actually change
     for field in payload:
         if field == "ocsp_responder_key_validity":
@@ -152,7 +151,6 @@ def test_validation(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
     """Test updating only one field."""
-
     for field in payload:
         if field == "ocsp_responder_key_validity":
             expected_response[field] = 10

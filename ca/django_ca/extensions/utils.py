@@ -32,7 +32,6 @@ def extension_as_admin_html(
     extension: x509.Extension[x509.ExtensionType], extra_context: Optional[Dict[str, Any]] = None
 ) -> str:
     """Convert an extension to HTML code suitable for the admin interface."""
-
     template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
     if isinstance(extension.value, x509.UnrecognizedExtension):
         template = "django_ca/admin/extensions/unrecognized_extension.html"

@@ -1430,7 +1430,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir(USE_TZ=True)
     def test_with_timezone_support(self) -> None:
-        """Test viewing certificate with USE_TZ=True"""
+        """Test viewing certificate with USE_TZ=True."""
         self.assertTrue(settings.USE_TZ)
 
         stdout, stderr = self.cmd("view_ca", self.ca.serial, wrap=False)
@@ -1523,7 +1523,6 @@ class ViewCATestCase(TestCaseMixin, TestCase):
 
     def test_wrap_digest(self) -> None:
         """Test wrapping the digest."""
-
         data = self.get_cert_context("root")
         sha256 = data["sha256"]
         sha512 = data["sha512"]

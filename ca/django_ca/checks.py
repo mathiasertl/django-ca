@@ -34,7 +34,6 @@ _UNSUPPORTED_BACKENDS = (
 @checks.register(checks.Tags.caches, deploy=True)  # type: ignore[type-var]
 def check_cache(app_configs: Optional[List[AppConfig]], **kwargs: Any) -> List[checks.CheckMessage]:
     """Check that a cache is configured and issue a warning if the cache is not a shared cache."""
-
     # only run checks if manage.py check is run with no app labels (== all) or the django_ca app label
     if app_configs is not None and not [config for config in app_configs if config.name == "django_ca"]:
         return []

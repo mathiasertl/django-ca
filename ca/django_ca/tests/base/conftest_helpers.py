@@ -47,7 +47,8 @@ def exclude_versions(
     pragma_version: Tuple[int, int],
     version_str: str,
 ) -> None:
-    """
+    """Add pragmas to exclude lines of code if specific versions of `software` are *not* installed.
+
     Parameters
     ----------
     cov : coverage object
@@ -59,7 +60,6 @@ def exclude_versions(
     version_str:
         Same as `version` but as ``str``.
     """
-
     if current_version == pragma_version:
         cov.exclude(f"pragma: only {software}>{version_str}")
         cov.exclude(f"pragma: only {software}<{version_str}")
@@ -121,7 +121,6 @@ def exclude_versions(
 
 def setup_pragmas(cov: coverage.Coverage) -> None:
     """Setup pragmas to allow coverage exclusion based on Python/django/cryptography version."""
-
     # exclude python version specific code
     py_versions = [(3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14)]
     for version in py_versions:

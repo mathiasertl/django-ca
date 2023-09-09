@@ -144,7 +144,6 @@ def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
 
     This only tests the CRL for the root CA. It's the test suites job to test the views in more detail.
     """
-
     with open(cert_file, "rb") as stream:
         cert = x509.load_pem_x509_certificate(stream.read())
 

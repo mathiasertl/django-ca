@@ -561,7 +561,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir()
     def test_cache_crls_algorithm(self) -> None:
         """Test passing an explicit hash algorithm."""
-
         crl_profiles = self.crl_profiles
         for config in crl_profiles.values():
             config["encodings"] = [
@@ -602,7 +601,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir()
     def test_generate_ocsp_key(self) -> None:
         """Test generate_ocsp_key()."""
-
         for name, ca in self.usable_cas:
             with self.generate_ocsp_key(ca) as (key, cert):
                 self.assertIsInstance(key, type(ca.key()), name)
@@ -610,7 +608,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir(CA_DEFAULT_ELLIPTIC_CURVE="secp192r1")
     def test_generate_ocsp_responder_certificate_for_ec_ca(self) -> None:
         """Test generate_ocsp_key() with elliptic curve based certificate authority."""
-
         # EC key for an EC based CA should inherit the key
         with self.generate_ocsp_key(self.cas["ec"], key_type="EC") as (key, cert):
             key = typing.cast(ec.EllipticCurvePrivateKey, key)
@@ -641,7 +638,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir()
     def test_regenerate_ocsp_responder_certificate(self) -> None:
         """Test regenerating an OCSP responder certificate that is due to expire soon."""
-
         with freeze_time(timestamps["everything_valid"]) as frozen_time:
             # TYPEHINT NOTE: We know that the certificate was not yet generated here
             _, _, ocsp_responder_certificate = self.ca.generate_ocsp_key()  # type: ignore[misc]
@@ -676,7 +672,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
 
     def test_extensions_for_certificiate(self) -> None:
         """Test extensions_for_certificate property."""
-
         self.ca.issuer_alt_name = "http://ian.example.com"
         self.ca.issuer_url = "http://issuer.example.com"
         self.ca.ocsp_url = "http://ocsp.example.com"
@@ -789,7 +784,6 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
     @freeze_time(timestamps["everything_valid"])
     def test_simple(self) -> None:
         """Test the simplest invocation of the function."""
-
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
@@ -947,7 +941,6 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
 
     def test_create_ca(self) -> None:
         """Try passing a BasicConstraints extension that allows creating a CA."""
-
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         msg = r"^This function cannot be used to create a Certificate Authority\.$"
@@ -1158,7 +1151,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
 
     def test_jwk_with_unsupported_algorithm(self) -> None:
         """Test the ValueError raised if called with an unsupported algorithm."""
-
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
             self.certs["ed448-cert"].jwk  # pylint: disable=pointless-statement
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
@@ -1521,7 +1513,6 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_unique_together(self) -> None:
         """Test that a thumbprint must be unique for the given CA."""
-
         msg = r"^UNIQUE constraint failed: django_ca_acmeaccount\.ca_id, django_ca_acmeaccount\.thumbprint$"
         with transaction.atomic(), self.assertRaisesRegex(IntegrityError, msg):
             AcmeAccount.objects.create(ca=self.account1.ca, thumbprint=self.account1.thumbprint)
@@ -1532,7 +1523,6 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     @override_settings(ALLOWED_HOSTS=["kid-test.example.net"])
     def test_set_kid(self) -> None:
         """Test set_kid()."""
-
         hostname = settings.ALLOWED_HOSTS[0]
         req = RequestFactory().get("/foobar", HTTP_HOST=hostname)
         self.account1.set_kid(req)
@@ -1656,7 +1646,6 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_identifier(self) -> None:
         """Test the identifier property."""
-
         self.assertEqual(
             self.auth1.identifier, messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.auth1.value)
         )
@@ -1666,14 +1655,12 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_identifier_unknown_type(self) -> None:
         """Test that an identifier with an unknown type raises a ValueError."""
-
         self.auth1.type = "foo"
         with self.assertRaisesRegex(ValueError, r"^Unknown identifier type: foo$"):
             self.auth1.identifier  # pylint: disable=pointless-statement; access to prop raises exception
 
     def test_subject_alternative_name(self) -> None:
         """Test the subject_alternative_name property."""
-
         self.assertEqual(self.auth1.subject_alternative_name, "dns:example.com")
         self.assertEqual(self.auth2.subject_alternative_name, "dns:example.net")
 
@@ -1745,7 +1732,6 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_acme_validated(self) -> None:
         """Test acme_validated property."""
-
         # preconditions for checks (might change them in setUp without realising it might affect this test)
         self.assertNotEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
         self.assertIsNone(self.chall.validated)
@@ -1791,7 +1777,6 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_get_challenge(self) -> None:
         """Test the get_challenge() function."""
-
         body = self.chall.get_challenge(RequestFactory().get("/"))
         self.assertIsInstance(body, messages.ChallengeBody)
         self.assertEqual(body.chall, self.chall.acme_challenge)

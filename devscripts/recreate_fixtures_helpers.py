@@ -13,7 +13,8 @@
 
 """The recreate-fixtures sub-command recreates the entire test fixture data.
 
-The test suite should be sufficiently modular to still run without errors after running this command."""
+The test suite should be sufficiently modular to still run without errors after running this command.
+"""
 
 import importlib
 import json

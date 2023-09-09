@@ -54,14 +54,12 @@ if typing.TYPE_CHECKING:
         models.BinaryField[Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
         typing.Generic[DecodableTypeVar, WrapperTypeVar],
     ):
-        # pylint: disable=missing-class-docstring
-        pass
+        """Base class for binary fields with generics for type checking."""
 
 else:
 
     class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar, WrapperTypeVar]):
-        # pylint: disable=missing-class-docstring
-        pass
+        """Generic class for binary fields at runtime."""
 
 
 class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta):
@@ -114,10 +112,10 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
         """The stored value parsed into a cryptography object."""
 
     def encode(self, encoding: Encoding) -> bytes:
-        """
+        """Encode the handled object with the given encoding.
+
         Parameters
         ----------
-
         encoding : attr of :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
             The format to return, defaults to ``Encoding.PEM``.
         """
@@ -127,12 +125,12 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
 
     @property
     def der(self) -> bytes:
-        """This field in its raw DER representation."""
+        """The handled object in its raw DER representation."""
         return self._bytes
 
     @property
     def pem(self) -> str:
-        """This CSR as str-encoded PEM."""
+        """The handled object as str-encoded PEM."""
         return self.loaded.public_bytes(Encoding.PEM).decode()
 
 
@@ -149,7 +147,7 @@ class LazyCertificateSigningRequest(
 
     @property
     def loaded(self) -> x509.CertificateSigningRequest:
-        """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
+        """The CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
         if self._loaded is None:
             self._loaded = x509.load_der_x509_csr(self._bytes)
         return self._loaded
@@ -166,7 +164,7 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
 
     @property
     def loaded(self) -> x509.Certificate:
-        """This CSR as :py:class:`cg:cryptography.x509.CertificateSigningRequest`."""
+        """The certificate as :py:class:`cg:cryptography.x509.Certificate`."""
         if self._loaded is None:
             self._loaded = x509.load_der_x509_certificate(self._bytes)
         return self._loaded

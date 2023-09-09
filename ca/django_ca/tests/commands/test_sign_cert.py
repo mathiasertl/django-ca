@@ -94,7 +94,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_with_bundle(self) -> None:
         """Test outputting the whole certificate bundle."""
-
         stdin = self.csr_pem.encode()
         stdout, stderr = self.cmd("sign_cert", bundle=True, ca=self.ca, subject=self.subject, stdin=stdin)
         cert = Certificate.objects.get()
@@ -104,7 +103,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
-
         for name, ca in self.cas.items():
             stdin = certs[f"{name}-cert"]["csr"]["pem"].encode()
 
@@ -207,7 +205,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_subject_sort(self) -> None:
         """Test that subject is sorted on the command line."""
-
         cname = "subject-sort.example.com"
         subject = f"/CN={cname}/C=AT"
         stdin = self.csr_pem.encode()
@@ -361,7 +358,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_extensions(self) -> None:
         """Test setting extensions for the signed certificate."""
-
         self.ca.crl_url = "http://ca.crl.example.com"
         self.ca.issuer_alt_name = "http://ian.example.com"
         self.ca.save()
@@ -565,7 +561,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_add_extensions_with_formatting(self) -> None:
         """Test adding various extensions."""
-
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
@@ -614,7 +609,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_multiple_sans(self) -> None:
         """Test passing multiple SubjectAlternativeName instances."""
-
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
@@ -820,7 +814,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_add_any_policy(self) -> None:
         """Test adding the anyPolicy, which is an error for end-entity certificates."""
-
         cmdline = [
             "sign_cert",
             "--subject=/CN=example.com",

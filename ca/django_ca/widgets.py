@@ -167,7 +167,8 @@ class TextInput(DjangoCaWidgetMixin, widgets.TextInput):
 class LabeledCheckboxInput(CheckboxInput):
     """CheckboxInput widget that adds a label and wraps everything in a <span />.
 
-    This is necessary because widgets in MultiValueFields don't render with a label."""
+    This is necessary because widgets in MultiValueFields don't render with a label.
+    """
 
     template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 

@@ -20,8 +20,7 @@ VersionTuple = Union[Tuple[int, int, int], Tuple[int, int, int, str, int]]
 
 
 def get_semantic_version(version: Optional[VersionTuple] = None) -> semantic_version.Version:
-    """Function to get the last git release."""
-
+    """Get the last django-ca release."""
     if version is None:
         # PYLINT NOTE: import django_ca only here so that it is not imported before coverage tests start
         import django_ca  # pylint: disable=import-outside-toplevel

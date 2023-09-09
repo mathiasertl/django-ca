@@ -64,14 +64,13 @@ class CompletenessTestCase(TestCase):
 
         .. seealso:: https://stackoverflow.com/a/3862957
         """
-
         return set(cls.__subclasses__()).union(
             [s for c in cls.__subclasses__() for s in self.get_subclasses(c)]
         )
 
     @property
     def supported_hash_algorithms(self) -> typing.Set[Type[hashes.HashAlgorithm]]:
-        """Get list of supported hash algorithms"""
+        """Get list of supported hash algorithms."""
         subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
 
         # filter out hash algorithms that are not supported right now due to them having a digest size as
@@ -104,7 +103,6 @@ class CompletenessTestCase(TestCase):
         The point of this test is that it fails if a new cryptography version adds new curves, thus allowing
         us to detect if the constant becomes out of date.
         """
-
         # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
         #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
         subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]

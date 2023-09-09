@@ -40,7 +40,7 @@ class MappingDocumentor(DataDocumenter):
     priority = DataDocumenter.priority - 10
 
     def get_object_members(self, want_all: bool) -> Tuple[bool, List[ObjectMember]]:
-        """Overwritten from base class"""
+        """Overwritten from base class."""
         return False, []
 
     @classmethod

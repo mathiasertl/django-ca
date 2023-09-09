@@ -52,7 +52,6 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         Note: freeze time because we verify the certificate here.
         """
-
         cas = {
             name: data for name, data in certs.items() if data["type"] == "ca" and data.get("key_filename")
         }
@@ -108,7 +107,6 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         Note: freeze time because we verify the certificate here.
         """
-
         cas = {
             name: data
             for name, data in certs.items()
@@ -161,7 +159,6 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         Note: freeze time because we verify the certificate here.
         """
-
         name = "testname"
         password = b"testpassword"
         key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
@@ -188,7 +185,6 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_sign_options(self) -> None:
         """Test setting the sign options."""
-
         ca_issuer = "http://issuer.example.com"
         ocsp_responder = "http://ocsp.example.com"
         crl1 = "http://crl1.example.com"
@@ -228,7 +224,6 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
-
         ca = self.import_ca(
             "--acme-enable",
             "--acme-disable-account-registration",
@@ -243,7 +238,6 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:
         """Test OCSP responder arguments."""
-
         ca = self.import_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
 
         self.assertEqual(ca.ocsp_responder_key_validity, 10)
@@ -252,7 +246,6 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_permission_denied(self) -> None:
         """Test importing a CA when we can't ready one of the files."""
-
         name = "testname"
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
         key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
@@ -271,7 +264,6 @@ class ImportCATest(TestCaseMixin, TestCase):
 
     def test_create_cadir(self) -> None:
         """Test importing a CA when the directory does not yet exist."""
-
         name = "testname"
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
         key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
@@ -283,7 +275,6 @@ class ImportCATest(TestCaseMixin, TestCase):
 
     def test_create_cadir_permission_denied(self) -> None:
         """Test importing a CA when the directory does not yet exist and we cannot create it."""
-
         name = "testname"
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
         key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
@@ -298,7 +289,6 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_bogus_pub(self) -> None:
         """Test importing a CA with a bogus public key."""
-
         name = "testname"
         pem_path = os.path.join(settings.FIXTURES_DIR, __file__)
         key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_der_filename"])
@@ -309,7 +299,6 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_priv(self) -> None:
         """Test importing a CA with a bogus private key."""
-
         name = "testname"
         pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_der_filename"])
         key_path = os.path.join(settings.FIXTURES_DIR, __file__)

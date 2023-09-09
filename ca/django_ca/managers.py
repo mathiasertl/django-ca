@@ -269,7 +269,6 @@ class CertificateAuthorityManager(
 
         Parameters
         ----------
-
         name : str
             The name of the CA. This is a human-readable string and is used for administrative purposes only.
         subject : :py:class:`cg:cryptography.x509.Name`
@@ -344,7 +343,6 @@ class CertificateAuthorityManager(
 
         Raises
         ------
-
         ValueError
             For various cases of wrong input data (e.g. ``key_size`` not being the power of two).
         PermissionError
@@ -584,7 +582,6 @@ class CertificateManager(
 
         Parameters
         ----------
-
         ca : :py:class:`~django_ca.models.CertificateAuthority`
             The certificate authority to sign the certificate with.
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
@@ -619,7 +616,6 @@ class CertificateManager(
         password : bool, optional
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         """
-
         # Get the profile object if none was passed
         if profile is None:
             profile = profiles[None]

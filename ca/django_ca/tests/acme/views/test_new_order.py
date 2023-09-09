@@ -51,7 +51,6 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
     @override_tmpcadir()
     def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
-
         with self.mock_slug() as slug:
             resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
@@ -155,7 +154,6 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
     @override_tmpcadir()
     def test_no_identifiers(self) -> None:
         """Test sending no identifiers."""
-
         resp = self.acme(self.url, acme.messages.NewOrder(), kid=self.kid)
         self.assertMalformed(resp, "The following fields are required: identifiers")
 
@@ -173,7 +171,6 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
     @override_tmpcadir()
     def test_invalid_not_before_after(self) -> None:
         """Test invalid not_before/not_after dates."""
-
         past = timezone.now() - timedelta(days=1)
         resp = self.acme(self.url, self.get_message(not_before=past), kid=self.kid)
         self.assertMalformed(resp, "Certificate cannot be valid before now.")

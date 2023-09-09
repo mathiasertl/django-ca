@@ -101,7 +101,6 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
 
     def test_multiple_emails(self) -> None:
         """Test setting multiple emails."""
-
         email1 = "mailto:user.updated.1@example.com"
         email2 = "mailto:user.updated.2@example.com"
         message = self.get_message(contact=(email1, email2))
@@ -125,7 +124,6 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
 
     def test_deactivate_with_email(self) -> None:
         """Test that a deactivation message does not allow you to configure emails too."""
-
         email = "mailto:user.updated@example.com"
         message = self.get_message(status="deactivated", contact=(email,))
         resp = self.acme(self.url, message, kid=self.kid)
@@ -148,7 +146,6 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
 
     def test_agree_tos(self) -> None:
         """Test updating the agreement to the terms of service."""
-
         self.account.terms_of_service_agreed = False
         self.account.save()
 
@@ -174,7 +171,6 @@ class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messag
 
     def test_malformed(self) -> None:
         """Test updating something we cannot update."""
-
         message = self.get_message()
         resp = self.acme(self.url, message, kid=self.kid)
         self.assertMalformed(resp, "Only contact information can be updated.")

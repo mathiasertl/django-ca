@@ -74,7 +74,6 @@ ChangeLog
 
     def pre_tag_checks(self, release: str) -> "Repo":
         """Perform checks that can be done before we even tag the repository."""
-
         docker_compose = importlib.import_module("devscripts.validation.docker_compose")
 
         repo = typing.cast("Repo", self.git.Repo(str(config.ROOT_DIR)))

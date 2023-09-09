@@ -186,7 +186,6 @@ def format_general_name(name: x509.GeneralName) -> str:
     >>> format_general_name(x509.IPAddress(ipaddress.IPv4Address('127.0.0.1')))
     'IP:127.0.0.1'
     """
-
     if isinstance(name, x509.DirectoryName):
         value = format_name(name.value)
     else:
@@ -226,14 +225,12 @@ def add_colons(value: str, pad: str = "0") -> str:
 
     Parameters
     ----------
-
     value : str
         The string to add colons to
     pad : str, optional
         If not an empty string, pad the string so that the last element always has two characters. The default
         is ``"0"``.
     """
-
     if len(value) % 2 == 1 and pad:
         value = f"{pad}{value}"
 
@@ -300,12 +297,11 @@ def sanitize_serial(value: str) -> str:
     user input. Internally, serials are stored in upper case and without ``:`` and leading zeros, but user
     output adds at least ``:``.
 
-    Examples:
-
+    Examples
+    --------
         >>> sanitize_serial('01:aB')
         '1AB'
     """
-
     serial = value.upper().replace(":", "")
     if serial != "0":
         serial = serial.lstrip("0")
@@ -348,7 +344,6 @@ def parse_name_x509(name: ParsableName) -> Tuple[x509.NameAttribute, ...]:
         # openssl x509 -in cert.pem -noout -subject -nameopt compat
         /C=AT/L=Vienna/CN=example.com
     """
-
     if isinstance(name, str):
         # TYPE NOTE: mypy detects t.split() as Tuple[str, ...] and does not recognize the maxsplit parameter
         name = tuple(tuple(t.split("=", 1)) for t in split_str(name.strip(), "/"))  # type: ignore[misc]
@@ -425,7 +420,6 @@ def x509_relative_name(name: ParsableName) -> x509.RelativeDistinguishedName:
     >>> x509_relative_name('/CN=example.com')
     <RelativeDistinguishedName(CN=example.com)>
     """
-
     return x509.RelativeDistinguishedName(parse_name_x509(name))
 
 
@@ -466,7 +460,6 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
     Parameters
     ----------
-
     hostname : str
         The hostname to validate.
     allow_port : bool, optional
@@ -474,7 +467,6 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 
     Raises
     ------
-
     ValueError
         If hostname or port are not valid.
 
@@ -547,7 +539,6 @@ def validate_private_key_parameters(
         ...
     ValueError: 4000: Key size must be a power of two
     """
-
     if key_type not in constants.PARSABLE_KEY_TYPES:
         raise ValueError(f"{key_type}: Unknown key type")
 
@@ -665,7 +656,6 @@ def generate_private_key(
 
     Parameters
     ----------
-
     key_size : int
         The size of the private key. The value is  ignored if ``key_type`` is not ``"DSA"`` or ``"RSA"``.
     key_type : {'RSA', 'DSA', 'EC', 'Ed25519', 'Ed448'}
@@ -676,11 +666,9 @@ def generate_private_key(
 
     Returns
     -------
-
     key
         A private key of the appropriate type.
     """
-
     # NOTE: validate_private_key_parameters() is repetitively moved into the if statements so that mypy
     #   detects the right types.
     if key_type == "DSA":
@@ -705,7 +693,7 @@ def generate_private_key(
 
 
 def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
-    """Parse a general name from user input.
+    r"""Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
 
@@ -915,19 +903,16 @@ def parse_hash_algorithm(value: Union[Type[AllowedHashTypes], ParsableHash] = No
 
     Parameters
     ----------
-
     value : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
         The value to parse, the function description on how possible values are used.
 
     Returns
     -------
-
     algorithm
         A :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
 
     Raises
     ------
-
     ValueError
         If an unknown object is passed or if ``value`` does not name a known algorithm
     """
@@ -988,7 +973,6 @@ def parse_expires(expires: Expires = None) -> datetime:
 
     This function always returns a timezone-aware datetime object with UTC as a timezone.
     """
-
     now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
 
     if isinstance(expires, int):
@@ -1023,19 +1007,16 @@ def parse_key_curve(value: str) -> ec.EllipticCurve:
 
     Parameters
     ----------
-
     value : str
         The name of the curve (case-insensitive).
 
     Returns
     -------
-
     curve
         An :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
 
     Raises
     ------
-
     ValueError
         If the named curve is not supported.
     """
@@ -1051,14 +1032,12 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
 
     Parameters
     ----------
-
     expires : datetime
         When this certificate is supposed to expire, as a timezone-aware datetime object.
     serial : int, optional
         Serial for the certificate. If not passed, a serial will be randomly generated using
         :py:func:`~cg:cryptography.x509.random_serial_number`.
     """
-
     now = datetime.now(tz.utc).replace(second=0, microsecond=0)
 
     # NOTE: Explicitly passing a serial is used when creating a CA, where we want to add extensions where the
@@ -1110,7 +1089,7 @@ def read_file(path: str) -> bytes:
 
 
 def split_str(val: str, sep: str) -> Iterator[str]:
-    """Split a character on the given set of characters.
+    r"""Split a character on the given set of characters.
 
     Example::
 
@@ -1134,7 +1113,6 @@ def split_str(val: str, sep: str) -> Iterator[str]:
 
     Parameters
     ----------
-
     val : str
         The string to split.
     sep: str
@@ -1149,7 +1127,6 @@ def split_str(val: str, sep: str) -> Iterator[str]:
 
 def get_crl_cache_key(serial: str, encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
     """Get the cache key for a CRL with the given parameters."""
-
     return f"crl_{serial}_{encoding.name}_{scope}"
 
 

@@ -29,7 +29,6 @@ class BasicAuth(HttpBasicAuth):
 
     Parameters
     ----------
-
     permission : str
         The permission that the user needs to have in order to pass authn/authz checks.
     """

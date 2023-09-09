@@ -56,7 +56,6 @@ class QuerySetTestCaseMixin(TestCaseMixin):
     @contextmanager
     def attr(self, obj: models.Model, attr: str, value: Any) -> Iterator[None]:
         """Context manager to temporarily set an attribute for an object."""
-
         original = getattr(obj, attr)
         try:
             setattr(obj, attr, value)
@@ -120,7 +119,6 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_path_length(self) -> None:
         """Test path_length parameter in manager."""
-
         ca = CertificateAuthority.objects.init(
             name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
         )
@@ -170,8 +168,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_openssh_ca(self) -> None:
-        """Test OpenSSH CA support"""
-
+        """Test OpenSSH CA support."""
         ca_name = "OpenSSH CA"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "openssh.example.com")])
 
@@ -291,7 +288,6 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
 
     def test_validity(self) -> None:
         """Test validity filter."""
-
         with freeze_time(timestamps["everything_valid"]):
             self.assertQuerySet(Certificate.objects.expired())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
@@ -369,7 +365,6 @@ class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
-
         self.assertQuerySet(AcmeAccount.objects.viewable(), self.account, self.account2)
 
         with self.attr(self.account, "status", AcmeAccount.STATUS_REVOKED):
@@ -399,7 +394,6 @@ class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
-
         self.assertQuerySet(AcmeOrder.objects.viewable(), self.order)
 
         with self.attr(self.order.account, "status", AcmeAccount.STATUS_REVOKED):
@@ -428,7 +422,6 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
-
         self.assertQuerySet(AcmeAuthorization.objects.viewable(), self.auth)
 
         with self.attr(self.order.account, "status", AcmeAccount.STATUS_REVOKED):
@@ -454,7 +447,6 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
-
         self.assertQuerySet(AcmeChallenge.objects.viewable(), self.chall)
 
         with self.attr(self.order.account, "status", AcmeAccount.STATUS_REVOKED):
@@ -480,7 +472,6 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
-
         # none by default because we need a valid order and cert
         self.assertQuerySet(AcmeCertificate.objects.viewable())
 

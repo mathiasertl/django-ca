@@ -11,7 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""
+"""Custom **django-ca** signals.
+
 **django-ca** adds a few custom Django signals to important events to let you execute custom actions when
 these events happen. Please see `Django's documentation on signals
 <https://docs.djangoproject.com/en/dev/ref/signals/>`_ for further information on how to use signals.

@@ -53,7 +53,6 @@ def optional(
     value: Optional[T], formatter: Optional[typing.Callable[[T], str]] = None, fallback: str = ""
 ) -> str:
     """Small function to get a value if set or a fallback."""
-
     if not value:
         return fallback
     if callable(formatter):
@@ -241,14 +240,12 @@ cas: Dict[str, CertInfo] = {
 
 def ref_as_str(ref: x509.NoticeReference) -> str:
     """Convert a CertificatePolicies reference to a str."""
-
     numbers = [str(n) for n in ref.notice_numbers]
     return f"{ref.organization}: {', '.join(numbers)}"
 
 
 def policy_as_str(policy: Union[str, x509.UserNotice]) -> str:
     """Convert a CertificatePolicies policy to a str."""
-
     if isinstance(policy, str):
         return policy
     if policy.explicit_text is None and policy.notice_reference is None:
@@ -263,7 +260,6 @@ def policy_as_str(policy: Union[str, x509.UserNotice]) -> str:
 
 def update_cert_data(prefix: str, dirname: str, cert_data: Dict[str, CertInfo], name_header: str) -> None:
     """Update certificate/ca data."""
-
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
@@ -481,7 +477,6 @@ def update_cert_data(prefix: str, dirname: str, cert_data: Dict[str, CertInfo], 
 
 def update_crl_data() -> None:  # pylint: disable=too-many-locals
     """Update CRL data."""
-
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
     from django_ca.utils import bytes_to_hex, format_general_name, format_name
 

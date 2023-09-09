@@ -699,13 +699,11 @@ DistributionPoint:
             self.assertInHTML(admin_html, mark_safe(actual), msg_prefix=msg_prefix)
 
     def test_cas_as_html(self) -> None:
-        """Test output of CAs"""
-
+        """Test output of CAs."""
         for name, ca in self.cas.items():
             self.assertAdminHTML(name, ca)
 
     def test_certs_as_html(self) -> None:
-        """Test output of CAs"""
-
+        """Test output of CAs."""
         for name, cert in self.certs.items():
             self.assertAdminHTML(name, cert)

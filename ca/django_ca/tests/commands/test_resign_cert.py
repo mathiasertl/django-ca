@@ -582,7 +582,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     )
     def test_set_profile(self) -> None:
         """Test getting the certificate from the profile."""
-
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial, "--server"])
         self.assertEqual(stderr, "")
@@ -598,7 +597,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     )
     def test_cert_profile(self) -> None:
         """Test passing a profile."""
-
         self.cert.profile = "server"
         self.cert.save()
 
@@ -654,7 +652,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_invalid_algorithm(self) -> None:
         """Test manually specifying an invalid algorithm."""
-
         ed448_ca = self.load_ca("ed448")
         with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
             self.cmd("resign_cert", self.cert.serial, ca=ed448_ca, algorithm=hashes.SHA512())
@@ -665,7 +662,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     )
     def test_missing_cert_profile(self) -> None:
         """Test resigning a certificate with a profile that doesn't exist."""
-
         self.cert.profile = "profile-gone"
         self.cert.save()
 

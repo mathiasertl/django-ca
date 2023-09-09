@@ -68,7 +68,6 @@ def create_api_user(
 
     Parameters
     ----------
-
     username : str
         The username for the API user.
     password : str

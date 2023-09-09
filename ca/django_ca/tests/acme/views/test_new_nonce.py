@@ -42,7 +42,6 @@ class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
 
     def test_get_nonce(self) -> None:
         """Test that getting multiple nonces returns unique nonces."""
-
         nonces = []
         for _i in range(1, 5):
             response = self.client.head(self.url)
@@ -55,7 +54,6 @@ class AcmeNewNonceViewTestCase(TestCaseMixin, TestCase):
 
     def test_get_request(self) -> None:
         """RFC 8555, section 7.2 also specifies a GET request."""
-
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
         self.assertEqual(len(response["replay-nonce"]), 43)

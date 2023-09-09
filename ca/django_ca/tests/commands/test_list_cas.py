@@ -93,7 +93,6 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 
     def test_no_cas(self) -> None:
         """Test the command if no CAs are defined."""
-
         CertificateAuthority.objects.all().delete()
         stdout, stderr = self.cmd("list_cas")
         self.assertEqual(stdout, "")
@@ -101,14 +100,12 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Basic test of the command."""
-
         stdout, stderr = self.cmd("list_cas")
         self.assertOutput(stdout, EXPECTED)
         self.assertEqual(stderr, "")
 
     def test_disabled(self) -> None:
         """Test the command if some CA is disabled."""
-
         self.ca.enabled = False
         self.ca.save()
 
@@ -122,7 +119,6 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 
         NOTE: freeze_time b/c we create some fake CA objects and order in the tree depends on validity.
         """
-
         stdout, stderr = self.cmd("list_cas", tree=True)
         self.assertEqual(
             stdout,

@@ -242,7 +242,6 @@ class OCSPView(View):
 
     def process_ocsp_request(self, data: bytes) -> HttpResponse:
         """Process OCSP request data."""
-
         try:
             ocsp_req = ocsp.load_der_ocsp_request(data)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here

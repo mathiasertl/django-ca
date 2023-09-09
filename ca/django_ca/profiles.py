@@ -213,7 +213,6 @@ class Profile:
 
         Parameters
         ----------
-
         ca : :py:class:`~django_ca.models.CertificateAuthority`
             The CA to sign the certificate with.
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
@@ -251,11 +250,9 @@ class Profile:
 
         Returns
         -------
-
         cryptography.x509.Certificate
             The signed certificate.
         """
-
         # Get overrides values from profile if not passed as parameter
         if cn_in_san is None:
             cn_in_san = self.cn_in_san
@@ -478,7 +475,6 @@ class Profile:
         * Adds an IssuerAlternativeName if add_issuer_alternative_name is True
 
         """
-
         ca_extensions = ca.extensions_for_certificate
 
         # client can set its own AuthorityKeyIdentifier extension (currently used for the alt-extensions
@@ -566,7 +562,6 @@ def get_profile(name: Optional[str] = None) -> Profile:
 
     Parameters
     ----------
-
     name : str, optional
         The name of the profile. If ``None``, the profile configured by
         :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` is used.

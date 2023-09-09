@@ -25,7 +25,6 @@ def parse_acme_csr(value: str) -> x509.CertificateSigningRequest:
 
     Returns
     -------
-
     :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
         The CSR as used by cryptography.
     """

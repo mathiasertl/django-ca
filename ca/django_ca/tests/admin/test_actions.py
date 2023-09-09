@@ -235,7 +235,6 @@ class AdminChangeActionTestCaseMixin(
 
     def test_is_staff_is_required(self) -> None:
         """Test that action requires is_staff, even if the user has the right permissions."""
-
         self.user.is_superuser = self.user.is_staff = False
         self.user.save()
         self.user.user_permissions.add(Permission.objects.get(codename="change_certificate"))
@@ -463,7 +462,6 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     @override_tmpcadir()
     def test_no_profile(self) -> None:
         """Test that resigning a cert with no stored profile stores the default profile."""
-
         self.cert.profile = ""
         self.cert.save()
         response = self.app.get(self.get_url(self.cert), user=self.user.username)

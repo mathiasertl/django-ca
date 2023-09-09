@@ -59,7 +59,6 @@ class AcmeAuthorizationViewTestCase(
     @override_tmpcadir()
     def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
-
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
@@ -110,7 +109,6 @@ class AcmeAuthorizationViewTestCase(
     @override_tmpcadir()
     def test_valid_auth(self) -> None:
         """Test fetching a valid auth object."""
-
         self.authz.get_challenges()  # creates challenges in the first place
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()
@@ -160,7 +158,6 @@ class AcmeAuthorizationViewTestCase(
 
         This test case is useful because the ACME message class does not tolerate empty lists.
         """
-
         self.authz.get_challenges()  # creates challenges in the first place
         self.authz.status = AcmeAuthorization.STATUS_VALID
         self.authz.save()

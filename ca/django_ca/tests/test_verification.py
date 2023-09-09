@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""This test module validates certificates using the openssl command line tool."""
+"""Validate certificates using the openssl command line tool."""
 
 import os
 import shlex
@@ -44,7 +44,6 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         expected: Optional[List[x509.GeneralName]] = None,
     ) -> None:
         """Assert that the full name of the CRL matches `expected`."""
-
         idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
         self.assertEqual(idp.full_name, expected)
 
@@ -206,7 +205,6 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
     def test_ca_default_hostname(self) -> None:
         """Test that CA_DEFAULT_HOSTNAME does not lead to problems."""
-
         ca = self.init_ca("root")
         # Root CAs have no CRLDistributionPoints
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
@@ -279,7 +277,6 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
     def test_intermediate_ca_default_hostname(self) -> None:
         """Test that a changing CA_DEFAULT_HOSTNAME does not lead to problems."""
-
         root = self.init_ca("Root", path_length=2)
         child = self.init_ca("Child", parent=root, path_length=1)
         grandchild = self.init_ca("Grandchild", parent=child)

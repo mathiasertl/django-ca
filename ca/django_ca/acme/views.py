@@ -94,7 +94,6 @@ class ContactValidationMixin:
 
     def validate_contacts(self, message: messages.Registration) -> None:
         """Validate the contact information for this message."""
-
         for contact in message.contact:
             if contact.startswith(messages.Registration.email_prefix):
                 addr = contact[len(messages.Registration.email_prefix) :]
@@ -135,7 +134,7 @@ class ContactValidationMixin:
 
 class AcmeDirectory(View):
     """
-    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory>`__
+    `Equivalent LE URL <https://acme-v02.api.letsencrypt.org/directory>`__.
 
     .. seealso:: `RFC 8555, section 7.1.1 <https://tools.ietf.org/html/rfc8555#section-7.1.1>`_
     """
@@ -205,7 +204,6 @@ class AcmeGetNonceViewMixin:
 
     def get_nonce(self) -> str:
         """Get a random Nonce and add it to the cache."""
-
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.json_util.encode_b64jose(data)
         cache.set(self.get_cache_key(nonce), 0)
@@ -277,7 +275,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
         .. seealso:: https://tools.ietf.org/html/rfc8288
         """
-
         kwargs["index"] = reverse("django_ca:acme-directory", kwargs={"serial": self.kwargs["serial"]})
         response["Link"] = ", ".join(
             f'<{self.request.build_absolute_uri(v)}>;rel="{k}"' for k, v in kwargs.items()
@@ -672,7 +669,7 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
 
 
 class AcmeAccountOrdersView(AcmeBaseView):
-    """View showing orders for an account (not yet implemented)"""
+    """View showing orders for an account (not yet implemented)."""
 
     # TODO: implement this view
     def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:  # pragma: no cover
@@ -817,7 +814,6 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
 
     def validate_csr(self, message: CertificateRequest, authorizations: Iterable[AcmeAuthorization]) -> str:
         """Parse and validate the CSR, returns the PEM as str."""
-
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
         # The only public attribute or function is the wrapped object. We encode it back to get the regular
         # PEM.
@@ -1096,7 +1092,6 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         This function handles the special authorization requirements for this request (they can be signed by
         either the account key pair or the certificate key pair).
         """
-
         certs = Certificate.objects.filter(ca=self.ca).currently_valid()
 
         # If the request is signed with the certificate key (and not the account), a JWK is set for this

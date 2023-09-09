@@ -589,7 +589,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, errors: Dict[str, List[str]]
     ) -> Iterator[None]:
         """Context manager to assert that a ValidationError is thrown."""
-
         with self.assertRaises(ValidationError) as cmex:
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
@@ -786,7 +785,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def certificate_policies(
         self, *policies: x509.PolicyInformation, critical: bool = False
     ) -> x509.Extension[x509.CertificatePolicies]:
-        """Shortcut for getting a Certificate Policy extension"""
+        """Shortcut for getting a Certificate Policy extension."""
         return certificate_policies(*policies, critical=critical)
 
     def crl_distribution_points(
@@ -824,7 +823,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def ext(
         self, value: x509.ExtensionType, critical: Optional[bool] = None
     ) -> x509.Extension[x509.ExtensionType]:
-        """Shortcut to get a x509.Extension object from the given ExtensionType"""
+        """Shortcut to get a x509.Extension object from the given ExtensionType."""
         if critical is None:  # pragma: no branch
             critical = constants.EXTENSION_DEFAULT_CRITICAL[value.oid]
         return x509.Extension(oid=value.oid, critical=critical, value=value)

@@ -79,7 +79,6 @@ class URLPatternTestCase(TestCase):
 
     def test_enabled(self) -> None:
         """Test that resolving URLs work if enabled."""
-
         reverse("django_ca:acme-directory")
         reverse("django_ca:acme-directory", kwargs={"serial": "AB:CD"})
         reverse("django_ca:acme-new-nonce", kwargs={"serial": "AB:CD"})
@@ -90,13 +89,11 @@ class TestConstantsTestCase(TestCase):
 
     def test_status_enum(self) -> None:
         """Test that the Status Enum is equivalent to the main ACME library."""
-
         expected = list(acme.messages.Status.POSSIBLE_NAMES) + ["expired"]
         self.assertCountEqual(expected, [s.value for s in Status])
 
     def test_identifier_enum(self) -> None:
         """Test that the IdentifierType Enum is equivalent to the main ACME library."""
-
         actual = list(acme.messages.IdentifierType.POSSIBLE_NAMES)
         self.assertCountEqual(actual, [s.value for s in IdentifierType])
 
@@ -221,7 +218,6 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
     def test_nxdomain(self) -> None:
         """Test validating a domain where the record simply does not exist."""
-
         with self.resolve(side_effect=resolver.NXDOMAIN) as resolve, self.assertLogMessages(
             f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist."
         ):

@@ -95,7 +95,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_basic(self, accept_naive: bool = False) -> None:
         """Basic test for creating an account via ACME."""
-
         with self.patch("django_ca.acme.views.run_task") as mockcm:
             resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
@@ -133,7 +132,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_wrong_account(self) -> None:
         """Test an order for a different account."""
-
         account = AcmeAccount.objects.create(
             ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
         )
@@ -148,7 +146,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_not_ready(self) -> None:
         """Test an order that is not yet ready."""
-
         self.order.status = AcmeOrder.STATUS_INVALID
         self.order.save()
 
@@ -162,7 +159,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_invalid_auth(self) -> None:
         """Test an order where one of the authentications is not valid."""
-
         self.authz.status = AcmeAuthorization.STATUS_INVALID
         self.authz.save()
 
@@ -175,8 +171,7 @@ class AcmeOrderFinalizeViewTestCase(
 
     @override_tmpcadir()
     def test_csr_invalid_signature(self) -> None:
-        """Test posting a CSR with an invalid signature"""
-
+        """Test posting a CSR with an invalid signature."""
         # create property mock for CSR object.
         # We mock parse_acme_csr below because the actual class returned depends on the backend in use
         csr_mock = mock.MagicMock()
@@ -193,7 +188,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_bad_algorithm(self) -> None:
         """Test posting a CSR with a bad algorithm."""
-
         with open(os.path.join(settings.FIXTURES_DIR, "md5.csr.pem"), "rb") as stream:
             signed_csr = x509.load_pem_x509_csr(stream.read())
 
@@ -213,7 +207,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_valid_subject(self) -> None:
         """Test posting a CSR where the CommonName was in the order."""
-
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(
@@ -250,7 +243,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_subject_no_cn(self) -> None:
         """Test posting a CSR that has a subject but no common name."""
-
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(
@@ -287,7 +279,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_subject_no_domain(self) -> None:
         """Test posting a CSR where the CommonName is not a domain name."""
-
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(
@@ -309,7 +300,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_subject_not_in_order(self) -> None:
         """Test posting a CSR where the CommonName was not in the order."""
-
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(
@@ -331,7 +321,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_no_san(self) -> None:
         """Test posting a CSR with no SubjectAlternativeName extension."""
-
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
@@ -346,7 +335,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_different_names(self) -> None:
         """Test posting a CSR with different names in the SubjectAlternativeName extesion."""
-
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
@@ -365,7 +353,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_unparsable_csr(self) -> None:
         """Test passing a completely unparsable CSR."""
-
         with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
             "django_ca.acme.views.AcmeOrderFinalizeView.message_cls.encode", side_effect=[b"foo"]
         ), self.assertLogs():
@@ -376,7 +363,6 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_invalid_version(self) -> None:
         """Test passing a completely unparsable CSR."""
-
         # It's difficult to create a CSR with an invalid version, so we just mock the parsing function raising
         # the exception instead.
         with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(

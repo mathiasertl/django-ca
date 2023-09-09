@@ -67,7 +67,6 @@ class DevCommand:
 
     def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
         """Default argparse entry point."""
-
         for mod_name, pip_name in self.modules:
             mod = importlib.import_module(mod_name)
             setattr(self, mod_name, mod)
@@ -189,7 +188,6 @@ def add_command(cmd_subparser: "argparse._SubParsersAction[argparse.ArgumentPars
 
     The function expects to find ``Command`` class to be defined in `devscripts.{name}`.
     """
-
     mod_name = name.replace("-", "_")
     mod = importlib.import_module(f"devscripts.commands.{mod_name}")
     cmd = mod.Command()

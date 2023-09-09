@@ -13,7 +13,6 @@
 
 """Test ACME certificate revocation."""
 
-import typing
 import unittest
 from http import HTTPStatus
 from typing import Any
@@ -32,10 +31,8 @@ from django_ca.constants import ReasonFlags
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.typehints import HttpResponse
 from django_ca.utils import get_cert_builder
-
-if typing.TYPE_CHECKING:
-    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -74,7 +71,7 @@ class AcmeCertificateRevocationViewTestCase(
 
     @override_tmpcadir()
     def test_wrong_jwk_or_kid(self) -> None:
-        """This test makes no sense here, as we accept both JWK and JID."""
+        """Test makes no sense here, as we accept both JWK and JID."""
 
     def test_basic(self) -> None:
         """Test a very basic certificate revocation."""
@@ -88,7 +85,7 @@ class AcmeCertificateRevocationViewTestCase(
 
     @override_settings(USE_TZ=False)
     def test_basic_with_use_tz_false(self) -> None:
-        """Test revocation with timezone support disabled (USE_TZ=False)"""
+        """Test revocation with timezone support disabled (USE_TZ=False)."""
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
 
@@ -134,7 +131,6 @@ class AcmeCertificateRevocationViewTestCase(
     @override_tmpcadir()
     def test_wrong_certificate(self) -> None:
         """Test sending a different certificate with the same serial."""
-
         # Create a clone of the existing certificate with the same serial number
         pkey = certs["root-cert"]["csr"]["parsed"].public_key()
         builder = get_cert_builder(self.cert.expires, serial=self.cert.pub.loaded.serial_number)
@@ -249,5 +245,7 @@ class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationView
 
     @unittest.skip("Not applicable.")
     def test_jwk_and_kid(self) -> None:
-        """Already tested in the immediate base class and does not make sense here: The test sets KID to a
-        value, but the point of the whole class is to have *no* KID."""
+        """Not applicable: Already tested in the immediate base class and does not make sense here.
+
+        The test sets KID to a value, but the point of the whole class is to have *no* KID.
+        """

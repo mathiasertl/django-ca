@@ -337,7 +337,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_extensions(self) -> None:
         """Test passing no extensions."""
-
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init("with-extra", subject, extensions=None)
@@ -360,7 +359,6 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
     def test_unknown_profile(self) -> None:
         """Test creating a certificate authority with a profile that doesn't exist."""
-
         with self.assertRaisesRegex(ValueError, r"^foobar: Profile is not defined\.$"):
             CertificateAuthority.objects.init("wrong", self.subject, acme_profile="foobar")
 

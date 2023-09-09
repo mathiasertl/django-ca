@@ -47,7 +47,6 @@ class ParserTestCaseMixin(TestCaseMixin):
         self, args: List[str], expected: str, **kwargs: Any
     ) -> str:
         """Assert that given args throw a parser error."""
-
         kwargs.setdefault("script", self.script)
         expected = expected.format(**kwargs)
 
@@ -72,13 +71,11 @@ class AlternativeNameLegacyAction(ParserTestCaseMixin, TestCase):
 
     def assertValue(self, namespace: argparse.Namespace, value: Any) -> None:  # pylint: disable=invalid-name
         """Assert a given extension value."""
-
         extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)
         self.assertEqual(namespace.alt, extension)
 
     def test_basic(self) -> None:
         """Test basic functionality."""
-
         namespace = self.parser.parse_args([])
         self.assertEqual(namespace.alt, None)
 

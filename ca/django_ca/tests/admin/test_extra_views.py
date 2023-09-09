@@ -166,7 +166,6 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_basic(self) -> None:
         """Test fetching CA with all kinds of URLs."""
-
         self.ca.issuer_url = "http://issuer.child.example.com"
         self.ca.ocsp_url = "http://ocsp.child.example.com"
         self.ca.crl_url = "http://crl.child.example.com"
@@ -228,7 +227,6 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_empty_ca(self) -> None:
         """Test fetching CA with no URLs."""
-
         self.ca.issuer_url = ""
         self.ca.ocsp_url = ""
         self.ca.crl_url = ""
@@ -250,7 +248,6 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_unusable_ca(self) -> None:
         """Test fetching CA with no URLs."""
-
         self.ca.issuer_url = ""
         self.ca.ocsp_url = ""
         self.ca.crl_url = ""

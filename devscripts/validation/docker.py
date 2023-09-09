@@ -98,7 +98,6 @@ def docker_cp(src: str, container: str, dest: str) -> None:
 
 def build_docker_image(release: str, prune: bool = True, build: bool = True) -> str:
     """Build the docker image."""
-
     if prune:
         utils.run(["docker", "system", "prune", "-af"], capture_output=True)
 

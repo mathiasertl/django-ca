@@ -73,7 +73,6 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
 
     def test_full_conversion(self) -> None:
         """Test conversion with all optional timestamps set."""
-
         now = timestamps["everything_valid_naive"]
         self.ca.revoked_date = now
         self.ca.compromised = now
@@ -126,7 +125,6 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
 
     def test_no_confirmation(self) -> None:
         """Test that nothing happens if the user doesn't give confirmation."""
-
         self.assertEqual(self.ca.created, timestamps["everything_valid_naive"])
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="no"):
             out, err = self.cmd("convert_timestamps")

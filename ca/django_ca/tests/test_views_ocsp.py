@@ -371,7 +371,6 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
 
     def test_raises_exception(self) -> None:
         """Generic test if the handling function throws any uncaught exception."""
-
         exception_str = f"{__name__}.{self.__class__.__name__}.test_raises_exception"
         ex = Exception(exception_str)
 
@@ -477,7 +476,6 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
     @override_tmpcadir()
     def test_ca_ocsp(self) -> None:
         """Make a CA OCSP request."""
-
         # req1 has serial for self.cert hard-coded, so we update the child CA to contain data for self.cert
         ca = self.cas["child"]
         ca.serial = self.cert.serial
@@ -529,7 +527,6 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
     @override_tmpcadir()
     def test_unknown_ca(self) -> None:
         """Try requesting an unknown CA in a CA OCSP view."""
-
         data = base64.b64encode(req1).decode("utf-8")
         with self.assertLogs() as logcm:
             response = self.client.get(reverse("get-ca", kwargs={"data": data}))

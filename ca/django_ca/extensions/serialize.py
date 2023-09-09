@@ -219,7 +219,6 @@ def serialize_extension(extension: x509.Extension[x509.ExtensionType]) -> Serial
     This is the inverse of :py:func:`~django_ca.extensions.parse_extension` and is used to serialize
     extension information for API calls in the admin interface.
     """
-
     value = _serialize_extension(extension.value)
     serialized: SerializedExtension = {"critical": extension.critical, "value": value}
     return serialized

@@ -14,7 +14,8 @@
 """Extension classes wrapping various X.509 extensions.
 
 The classes in this module wrap cryptography extensions, but allow adding/removing values, creating extensions
-in a more pythonic manner and provide access functions."""
+in a more pythonic manner and provide access functions.
+"""
 
 from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
@@ -52,7 +53,6 @@ def get_extension_name(oid: x509.ObjectIdentifier) -> str:
     'Unknown extension (1.2.3)'
 
     """
-
     if oid in EXTENSION_NAMES:
         return EXTENSION_NAMES[oid]
 

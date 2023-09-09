@@ -33,7 +33,7 @@ class CreateUserTestCase(TestCase):
     """Test create_api_user()."""
 
     def test_create_basic_user(self) -> None:
-        """Test creating a minimal user"""
+        """Test creating a minimal user."""
         user = utils.create_api_user("username", "foobar")
         self.assertEqual(user.username, "username")
         self.assertIs(user.check_password("foobar"), True)
@@ -45,7 +45,6 @@ class CreateUserTestCase(TestCase):
 
     def test_additional_properties(self) -> None:
         """Test passing additional properties."""
-
         user = utils.create_api_user("username", "foobar", email="user@example.com")
         self.assertEqual(user.username, "username")
         self.assertIs(user.check_password("foobar"), True)

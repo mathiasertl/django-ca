@@ -297,7 +297,6 @@ class ParseNameX509TestCase(TestCase):
 
     def test_aliases(self) -> None:
         """Test aliases (commonName vs. CN etc)."""
-
         self.assertSubject(
             "commonName=example.com/surname=Ertl/userid=0",
             (
@@ -413,7 +412,6 @@ class GeneratePrivateKeyTestCase(TestCase):
 
     def test_dsa_default_key_size(self) -> None:
         """Test the default DSA key size."""
-
         key = generate_private_key(None, "DSA", None)
         self.assertIsInstance(key, dsa.DSAPrivateKey)
         self.assertEqual(key.key_size, ca_settings.CA_DEFAULT_KEY_SIZE)
@@ -452,7 +450,7 @@ class ParseGeneralNameTest(TestCase):
         self.assertEqual(parse_general_name("ip:fd00::32"), x509.IPAddress(ipaddress.ip_address("fd00::32")))
 
     def test_ipv6_network(self) -> None:
-        """Test parsing an IPv6 network,"""
+        """Test parsing an IPv6 network,."""
         self.assertEqual(parse_general_name("fd00::0/32"), x509.IPAddress(ipaddress.ip_network("fd00::0/32")))
         self.assertEqual(
             parse_general_name("ip:fd00::0/32"), x509.IPAddress(ipaddress.ip_network("fd00::0/32"))
@@ -630,7 +628,7 @@ class ParseGeneralNameTest(TestCase):
             parse_general_name("ip:1.2.3.4/24")
 
     def test_unparsable(self) -> None:
-        """test some unparsable domains."""
+        """Test some unparsable domains."""
         with self.assertRaisesRegex(ValueError, r"^Could not parse name: http://ex ample\.com$"):
             parse_general_name("http://ex ample.com")
         with self.assertRaisesRegex(ValueError, r"^Could not parse DNS name in URL: http://ex ample\.com$"):
@@ -684,7 +682,6 @@ class ParseHashAlgorithm(TestCase):
 
     def test_disallowed_type(self) -> None:
         """Test passing types that are not valid as signature hash algorithms."""
-
         with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
             parse_hash_algorithm(hashes.SM3)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
@@ -1038,7 +1035,6 @@ class SanitizeSerialTestCase(TestCase):
 
     def test_invalid_input(self) -> None:
         """Test some input that raises an exception."""
-
         with self.assertRaisesRegex(ValueError, r"^ABCXY: Serial has invalid characters$"):
             utils.sanitize_serial("ABCXY")
 
@@ -1201,7 +1197,6 @@ class GetCertBuilderTestCase(TestCase):
     @override_settings(CA_DEFAULT_EXPIRES=100)
     def test_basic(self) -> None:
         """Basic tests."""
-
         # pylint: disable=protected-access; only way to test builder attributes
         after = datetime(2020, 10, 23, 11, 21, tzinfo=tz.utc)
         builder = get_cert_builder(after)
@@ -1212,7 +1207,6 @@ class GetCertBuilderTestCase(TestCase):
     @freeze_time("2021-01-23 14:42:11.1234")
     def test_datetime(self) -> None:
         """Basic tests."""
-
         expires = datetime.now(tz.utc) + timedelta(days=10)
         self.assertNotEqual(expires.second, 0)
         self.assertNotEqual(expires.microsecond, 0)
@@ -1253,7 +1247,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
     """Test :py:func:`django_ca.utils.validate_private_key_parameters`."""
 
     def test_default_parameters(self) -> None:
-        """Test that default values are returned"""
+        """Test that default values are returned."""
         self.assertEqual(
             (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("RSA", None, None)
         )
@@ -1350,7 +1344,6 @@ class SplitStrTestCase(TestCase):
 
     def test_start_end_delimiters(self) -> None:
         """Test what happens when the delimiter is at the start/end of the string."""
-
         self.assertCountEqual(split_str("foo/", "/"), ["foo"])
         self.assertCountEqual(split_str("/foo", "/"), ["foo"])
         self.assertCountEqual(split_str("/foo/", "/"), ["foo"])
@@ -1377,7 +1370,6 @@ class SplitStrTestCase(TestCase):
 
     def test_escape(self) -> None:
         """Test the escape char."""
-
         self.assertCountEqual(split_str(r"foo\/bar", "/"), ["foo/bar"])
         self.assertCountEqual(split_str(r"foo\\/bar", "/"), ["foo\\", "bar"])
 
@@ -1390,7 +1382,6 @@ class SplitStrTestCase(TestCase):
 
     def test_escaping_non_special_characters(self) -> None:
         """Test how a backslash in front of a non-special character behaves."""
-
         # Backslash in front of normal character in unquoted string - the backslash is ignored
         self.assertCountEqual(split_str(r"foo\xbar", "/"), ["fooxbar"])
 
@@ -1406,7 +1397,6 @@ class SplitStrTestCase(TestCase):
 
     def test_escaped_delimiters(self) -> None:
         """Test escaping delimiters."""
-
         # No quotes, single backslash preceeding "/" --> "/" is escaped
         self.assertCountEqual(split_str(r"foo\/bar", "/"), ["foo/bar"])
 
@@ -1429,7 +1419,6 @@ class SplitStrTestCase(TestCase):
 
     def test_quote_errors(self) -> None:
         """Try messing with some quotation errors."""
-
         with self.assertRaises(ValueError):
             list(split_str(r"foo'bar", "/"))
         with self.assertRaises(ValueError):
@@ -1441,7 +1430,6 @@ class SplitStrTestCase(TestCase):
 
     def test_commenters(self) -> None:
         """Test that default comment characters play no special role."""
-
         self.assertCountEqual(split_str("foo#bar", "/"), ["foo#bar"])
         self.assertCountEqual(split_str("foo/#bar", "/"), ["foo", "#bar"])
         self.assertCountEqual(split_str("foo#/bar", "/"), ["foo#", "bar"])
@@ -1450,7 +1438,6 @@ class SplitStrTestCase(TestCase):
 
     def test_wordchars(self) -> None:
         """Test that non-wordchars also work properly."""
-
         # From the docs: If whitespace_split is set to True, this will have no effect.
         self.assertCountEqual(split_str("foo=bar/what=ever", "/"), ["foo=bar", "what=ever"])
 

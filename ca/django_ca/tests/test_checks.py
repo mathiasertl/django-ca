@@ -27,7 +27,6 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
 
     def test_no_cache(self) -> None:
         """Test check if no caches are configured."""
-
         app_config = apps.get_app_config("django_ca")
         expected = checks.Error(
             "django-ca requires a (shared) cache to be configured.",
@@ -44,7 +43,6 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
 
     def test_loc_mem_cache(self) -> None:
         """Test what happens if LocMemCache is used."""
-
         app_config = apps.get_app_config("django_ca")
         expected = checks.Warning(
             "django-ca requires a shared cache like Redis or Memcached unless the application server uses only a single process.",  # NOQA: E501
@@ -71,7 +69,6 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
 
     def test_redis_cache(self) -> None:
         """Test if redis cache backend is used."""
-
         app_config = apps.get_app_config("django_ca")
         setting = {
             "default": {

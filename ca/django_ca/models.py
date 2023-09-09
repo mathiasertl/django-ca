@@ -150,7 +150,6 @@ def json_validator(value: Union[str, bytes, bytearray]) -> None:
 
 def pem_validator(value: str) -> None:
     """Validator that ensures a value is a valid PEM public certificate."""
-
     if not value.startswith("-----BEGIN PUBLIC KEY-----\n"):
         raise ValidationError(_("Not a valid PEM."))
     if not value.endswith("\n-----END PUBLIC KEY-----"):
@@ -337,7 +336,6 @@ class X509CertMixin(DjangoCAModel):
 
         Parameters
         ----------
-
         ext : str
             The filename extension to use (e.g. ``"pem"``).
         bundle : bool, optional
@@ -359,13 +357,11 @@ class X509CertMixin(DjangoCAModel):
 
         Raises
         ------
-
         ValueError
             If the certificate is not revoked.
 
         Returns
         -------
-
         :py:class:`~cg:cryptography.x509.RevokedCertificate`
         """
         if self.revoked is False:
@@ -407,7 +403,6 @@ class X509CertMixin(DjangoCAModel):
            This property will raise `ValueError` if called for a public key based on those algorithms. The
            issue is addressed in `this pull request <https://github.com/certbot/josepy/pull/98>`_.
         """
-
         public_key = self.pub.loaded.public_key()
 
         try:
@@ -440,7 +435,6 @@ class X509CertMixin(DjangoCAModel):
 
         Parameters
         ----------
-
         reason : :py:class:`~django_ca.constants.ReasonFlags`, optional
             The reason for revocation, defaults to ``ReasonFlags.unspecified``.
         compromised : datetime, optional
@@ -672,7 +666,6 @@ class CertificateAuthority(X509CertMixin):
 
            Support for passing a custom hash algorithm to this function was removed.
         """
-
         password = password or self.get_password()
 
         for config in deepcopy(ca_settings.CA_CRL_PROFILES).values():
@@ -715,7 +708,6 @@ class CertificateAuthority(X509CertMixin):
         self,
     ) -> Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
         """Get a list of extensions to use for the certificate."""
-
         extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
 
         if self.sign_certificate_policies is not None:
@@ -789,7 +781,6 @@ class CertificateAuthority(X509CertMixin):
 
         Parameters
         ----------
-
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The certificate signing request to sign.
         subject : :class:`~cg:cryptography.x509.Name`
@@ -807,7 +798,6 @@ class CertificateAuthority(X509CertMixin):
         password : str or bytes, optional
             Password for loading the private key of the CA, if any.
         """
-
         if algorithm is None:
             algorithm = self.algorithm
 
@@ -945,7 +935,6 @@ class CertificateAuthority(X509CertMixin):
 
         Parameters
         ----------
-
         profile : str, optional
             The profile to use for generating the certificate. The default is ``"ocsp"``.
         expires : int or datetime, optional
@@ -972,7 +961,6 @@ class CertificateAuthority(X509CertMixin):
             expire within :ref:`CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
             <settings-ca-ocsp-responder-certificate-renewal>`.
         """
-
         now = datetime.now(tz=tz.utc)
 
         if force is False:
@@ -1116,7 +1104,6 @@ class CertificateAuthority(X509CertMixin):
 
     def get_authority_key_identifier_extension(self) -> x509.Extension[x509.AuthorityKeyIdentifier]:
         """Get the AuthorityKeyIdentifier extension to use in certificates signed by this CA."""
-
         return x509.Extension(
             critical=False,
             oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -1160,7 +1147,6 @@ class CertificateAuthority(X509CertMixin):
 
         Parameters
         ----------
-
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
         algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
@@ -1188,7 +1174,6 @@ class CertificateAuthority(X509CertMixin):
 
         Returns
         -------
-
         bytes
             The CRL in the requested format.
         """
@@ -1307,7 +1292,6 @@ class CertificateAuthority(X509CertMixin):
     @property
     def path_length(self) -> Optional[int]:
         """The ``path_length`` attribute of the ``BasicConstraints`` extension."""
-
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.BasicConstraints)
         except x509.ExtensionNotFound:  # pragma: no cover - extension should always be present
@@ -1321,7 +1305,6 @@ class CertificateAuthority(X509CertMixin):
         This value is either ``None``, if this and all parent CAs don't have a ``path_length`` attribute, or
         an ``int`` if any parent CA has the attribute.
         """
-
         if self.parent is None:
             return self.path_length
 
@@ -1337,7 +1320,6 @@ class CertificateAuthority(X509CertMixin):
     @property
     def allows_intermediate_ca(self) -> bool:
         """Whether this CA allows creating intermediate CAs."""
-
         max_path_length = self.max_path_length
         return max_path_length is None or max_path_length > 0
 
@@ -1358,7 +1340,6 @@ class CertificateAuthority(X509CertMixin):
     @property
     def root(self) -> "CertificateAuthority":
         """Get the root CA for this CA."""
-
         if self.parent is None:
             return self
 
@@ -1424,13 +1405,11 @@ class Certificate(X509CertMixin):
     @property
     def bundle(self) -> List[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
-
         return [typing.cast(X509CertMixin, self)] + typing.cast(List[X509CertMixin], self.ca.bundle)
 
     @property
     def root(self) -> CertificateAuthority:
         """Get the root CA for this certificate."""
-
         return self.ca.root
 
 

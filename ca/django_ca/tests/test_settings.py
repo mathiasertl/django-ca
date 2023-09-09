@@ -74,7 +74,6 @@ class SettingsTestCase(TestCase):
 
     def test_ocsp_repsonder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
-
         with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL=600):
             self.assertEqual(ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))
 
@@ -114,7 +113,7 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
                 pass
 
     def test_default_name_order(self) -> None:
-        """Test invalid values for a default name order"""
+        """Test invalid values for a default name order."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_NAME_ORDER: setting must be a tuple\.$"):
             with self.settings(CA_DEFAULT_NAME_ORDER=True):
                 pass
@@ -230,7 +229,7 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
             )
 
     def test_empty_iterable(self) -> None:
-        """Test that an empty list is normalized to None"""
+        """Test that an empty list is normalized to None."""
         with self.settings(CA_DEFAULT_SUBJECT=[]):
             self.assertIsNone(ca_settings.CA_DEFAULT_SUBJECT)
         with self.settings(CA_DEFAULT_SUBJECT=tuple()):
@@ -249,14 +248,13 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
             self.assertEqual(ca_settings.CA_DEFAULT_SUBJECT, name)
 
     def test_invalid_key(self) -> None:
-        """Test using an invalid subject key"""
+        """Test using an invalid subject key."""
         with self.assertImproperlyConfigured(r"^invalid: Unknown attribute type\.$"):
             with self.settings(CA_DEFAULT_SUBJECT=[("invalid", "wrong")]):
                 pass
 
     def test_invalid_ocsp_repsonder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
-
         with self.assertImproperlyConfigured(
             r"^CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int\.$"
         ):

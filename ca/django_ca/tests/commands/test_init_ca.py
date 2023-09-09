@@ -59,7 +59,6 @@ class InitCATest(TestCaseMixin, TestCase):
 
     def init_ca(self, **kwargs: Any) -> Tuple[str, str]:
         """Run a basic init_ca command."""
-
         stdout = io.StringIO()
         stderr = io.StringIO()
         name = kwargs.pop("name", "Test CA")
@@ -99,7 +98,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @freeze_time(timestamps["everything_valid"])
     def test_basic(self) -> None:
         """Basic tests for the command."""
-
         name = "test_basic"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name)
@@ -166,7 +164,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_settings(USE_TZ=False)
     def test_basic_without_timezone_support(self) -> None:
         """Basic test without timezone support."""
-
         return self.test_basic()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -216,7 +213,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self) -> None:
         """Test most arguments."""
-
         hostname = "example.com"
         website = f"https://{hostname}"
         tos = f"{website}/tos/"
@@ -271,7 +267,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_add_extensions(self) -> None:
         """Test adding various extensions."""
-
         ca = self.init_ca_e2e(
             "extensions",
             "/CN=extensions.example.com",
@@ -393,7 +388,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_add_extensions_with_non_default_critical(self) -> None:
         """Test setting non-default critical values."""
-
         ca = self.init_ca_e2e(
             "extensions",
             "/CN=extensions.example.com",
@@ -539,7 +533,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_sign_extensions(self) -> None:
         """Test adding extensions for signed certificates."""
-
         root = self.load_ca("root")
 
         ca = self.init_ca_e2e(
@@ -593,7 +586,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
-
         ca = self.init_ca_e2e(
             "Test CA",
             "/CN=acme.example.com",
@@ -632,14 +624,12 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:
         """Test naming an unknown profile."""
-
         with self.assertCommandError(r"^unknown-profile: Profile is not defined\.$"):
             self.init_ca(name="test", acme_profile="unknown-profile")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ocsp_responder_arguments(self) -> None:
         """Test ACME arguments."""
-
         ca = self.init_ca_e2e(
             "Test CA",
             "/CN=ocsp-responder.example.com",
@@ -653,7 +643,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_invalid_ocsp_responder_arguments(self) -> None:
         """Test naming an unknown profile."""
-
         self.assertE2EError(
             ["init_ca", "/CN=example.com", "--ocsp-responder-key-validity=0"],
             stderr=re.compile(r"--ocsp-responder-key-validity: DAYS must be equal or greater then 1\."),
@@ -667,7 +656,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_ec(self) -> None:
         """Test creating an ECC CA."""
-
         name = "test_ec"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
@@ -682,7 +670,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_dsa_private_key(self) -> None:
         """Test creating a certificate authority with a DSA private key."""
-
         name = "test_dsa"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(
@@ -699,7 +686,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_permitted(self) -> None:
         """Test the NameConstraints extension with 'permitted'."""
-
         name = "test_permitted"
         ca = self.init_ca_e2e(name, "--permit-name", "DNS:.com", f"/CN={name}")
         self.assertEqual(
@@ -710,7 +696,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_excluded(self) -> None:
         """Test the NameConstraints extension with 'excluded'."""
-
         name = "test_excluded"
         ca = self.init_ca_e2e(name, "--exclude-name", "DNS:.com", f"/CN={name}")
         self.assertEqual(
@@ -721,13 +706,11 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_settings(USE_TZ=False)
     def test_arguments_without_timezone_support(self) -> None:
         """Test arguments without timezone support."""
-
         self.test_arguments()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_path_length(self) -> None:
         """Test creating a CA with no path length."""
-
         name = "test_no_path_length"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name, path_length=None)
@@ -747,7 +730,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_empty_subject_fields(self) -> None:
         """Test creating a CA with empty subject fields."""
-
         name = "test_empty_subject_fields"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.cmd("init_ca", name, f"/L=/CN={self.hostname}")
@@ -772,7 +754,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_cn(self) -> None:
         """Test creating a CA with no CommonName."""
-
         name = "test_no_cn"
         subject = "/ST=/L=/O=/OU=smth"
         error = r"^Subject must contain a common name \(/CN=...\)\.$"
@@ -787,7 +768,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self) -> None:
         """Test creating a CA and an intermediate CA."""
-
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name="Parent", path_length=1)
         self.assertEqual(out, "")
@@ -850,7 +830,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self) -> None:  # pylint: disable=too-many-statements
         """Test intermediate path length checks."""
-
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name="default")
         self.assertEqual(out, "")
@@ -949,7 +928,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_expires_override(self) -> None:
         """Test that if we request an expiry after that of the parent, we override to that of the parent."""
-
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name="Parent", path_length=1)
         self.assertEqual(out, "")
@@ -992,7 +970,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, USE_TZ=False)
     def test_expires_override_with_use_tz_false(self) -> None:
         """Test silently limiting expiry if USE_TZ=False."""
-
         self.init_ca(name="Parent", path_length=1, expires=timedelta(days=100))
         parent = CertificateAuthority.objects.get(name="Parent")
 
@@ -1004,7 +981,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_password(self) -> None:
         """Test creating a CA with a password."""
-
         password = b"testpassword"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name="Parent", password=password, path_length=1)
@@ -1100,7 +1076,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_default_hostname(self) -> None:
         """Disable default hostname via the command line."""
-
         name = "ca"
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name=name, default_hostname=False)
@@ -1145,7 +1120,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_invalid_public_key_parameters(self) -> None:
         """Test passing invalid public key parameters."""
-
         msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
         with self.assertCommandError(msg), self.assertCreateCASignals(False, False):
             self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm=hashes.SHA256())
@@ -1153,7 +1127,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self) -> None:
         """Test that you cannot create a CA with a CRL URL."""
-
         with self.assertCommandError(
             r"^CRLs cannot be used to revoke root CAs\.$"
         ), self.assertCreateCASignals(False, False):
@@ -1162,7 +1135,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_ocsp_responder(self) -> None:
         """Test that you cannot create a root CA with a OCSP responder."""
-
         aia = authority_information_access(ocsp=[uri("http://example.com")])
         with self.assertCommandError(
             r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"
@@ -1172,7 +1144,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_issuer(self) -> None:
         """Test that you cannot create a root CA with a CA issuer field."""
-
         aia = authority_information_access(ca_issuers=[uri("http://example.com")])
         with self.assertCommandError(
             r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"
@@ -1182,7 +1153,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_small_key_size(self) -> None:
         """Test creating a key with a key size that is too small."""
-
         with self.assertCommandError(r"^256: Key size must be least 1024 bits$"), self.assertCreateCASignals(
             False, False
         ):
@@ -1191,7 +1161,6 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_key_not_power_of_two(self) -> None:
         """Test creating a key with invalid key size."""
-
         with self.assertCommandError(r"^2049: Key size must be a power of two$"), self.assertCreateCASignals(
             False, False
         ):

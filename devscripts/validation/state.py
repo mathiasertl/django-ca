@@ -169,7 +169,7 @@ def check_tox(project_config: Dict[str, Any]) -> int:
 
 
 def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
-    """Check setup.cfg"""
+    """Check setup.cfg."""
     check_path("pyproject.toml")
     errors = 0
 
@@ -220,7 +220,7 @@ def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
 
 
 def check_test_settings(project_config: Dict[str, Any]) -> int:
-    """Check test_settings.py"""
+    """Check test_settings.py."""
     relpath = Path("ca/ca/test_settings.py")
     fullpath = config.ROOT_DIR / relpath
     check_path(relpath)
