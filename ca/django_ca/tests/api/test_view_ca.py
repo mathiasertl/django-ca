@@ -13,79 +13,57 @@
 
 """Test the detail-view for a CA."""
 from http import HTTPStatus
+from typing import Any, Dict, Tuple, Type
 
-from django.test import TestCase
+from django.db.models import Model
+from django.test import Client
 from django.urls import reverse_lazy
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.api.mixins import APITestCaseMixin
-from django_ca.tests.base import certs, timestamps
-from django_ca.utils import x509_name
+from django_ca.tests.api.mixins import APIPermissionTestBase
+from django_ca.tests.base import timestamps
+from django_ca.tests.base.conftest_helpers import certs
+
+path = reverse_lazy("django_ca:api:view_certificate_authority", kwargs={"serial": certs["root"]["serial"]})
 
 
-class CertificateAuthorityDetailTestCase(APITestCaseMixin, TestCase):
-    """Test the view to list certificate authorities."""
+@pytest.fixture(scope="module")
+def api_permission() -> Tuple[Type[Model], str]:
+    """Fixture for the permission required by this view."""
+    return CertificateAuthority, "view_certificateauthority"
 
-    path = reverse_lazy(
-        "django_ca:api:view_certificate_authority", kwargs={"serial": certs["root"]["serial"]}
-    )
-    required_permission = (CertificateAuthority, "view_certificateauthority")
 
-    def setUp(self) -> None:
-        super().setUp()
-        cert = certs["root"]
-        self.expected_response = {
-            "acme_enabled": False,
-            "acme_profile": "webserver",
-            "acme_registration": True,
-            "acme_requires_contact": True,
-            "caa_identity": "",
-            "can_sign_certificates": False,
-            "created": self.iso_format(self.ca.created),
-            "crl_url": self.ca.crl_url,
-            "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in cert["issuer"]],
-            "issuer_alt_name": "",
-            "issuer_url": self.ca.issuer_url,
-            "name": "root",
-            "not_after": self.iso_format(self.ca.expires),
-            "not_before": self.iso_format(self.ca.valid_from),
-            "ocsp_responder_key_validity": 3,
-            "ocsp_response_validity": 86400,
-            "ocsp_url": self.ca.ocsp_url,
-            "pem": cert["pub"]["pem"],
-            "revoked": False,
-            "serial": cert["serial"],
-            "subject": [
-                {"oid": attr.oid.dotted_string, "value": attr.value} for attr in x509_name(cert["subject"])
-            ],
-            "sign_certificate_policies": None,
-            "terms_of_service": "",
-            "updated": self.iso_format(self.ca.updated),
-            "website": "",
-        }
+@freeze_time(timestamps["everything_valid"])
+def test_view(api_client: Client, root_response: Dict[str, Any]) -> None:
+    """Test an ordinary view."""
+    response = api_client.get(path)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == root_response, response.json()
 
-    @freeze_time(timestamps["everything_valid"])
-    def test_view(self) -> None:
-        """Test an ordinary view."""
-        response = self.default_request()
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), self.expected_response, response.json())
 
-    @freeze_time(timestamps["everything_expired"])
-    def test_view_expired_ca(self) -> None:
-        """Test that we can view an expired CA."""
-        response = self.default_request({"expired": "1"})
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.json())
-        self.assertEqual(response.json(), self.expected_response, response.json())
+@freeze_time(timestamps["everything_expired"])
+def test_view_expired_ca(api_client: Client, root_response: Dict[str, Any]) -> None:
+    """Test that we can view an expired CA."""
+    response = api_client.get(path)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == root_response, response.json()
 
-    @freeze_time(timestamps["everything_valid"])
-    def test_disabled_ca(self) -> None:
-        """Test that a disabled CA is *not* viewable."""
-        self.ca.enabled = False
-        self.ca.save()
 
-        response = self.default_request()
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND, response.json())
-        self.assertEqual(response.json(), {"detail": "Not Found"}, response.json())
+@freeze_time(timestamps["everything_valid"])
+def test_disabled_ca(root: CertificateAuthority, api_client: Client) -> None:
+    """Test that a disabled CA is *not* viewable."""
+    root.enabled = False
+    root.save()
+
+    response = api_client.get(path)
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.content
+    assert response.json() == {"detail": "Not Found"}, response.json()
+
+
+class TestPermissions(APIPermissionTestBase):
+    """Test permissions for this view."""
+
+    path = path

@@ -15,8 +15,6 @@
 """Test utility functions."""
 import doctest
 
-from django.test import TestCase
-
 import pytest
 
 from django_ca.api import utils
@@ -29,43 +27,45 @@ def test_doctests() -> None:
     assert failures == 0
 
 
-class CreateUserTestCase(TestCase):
-    """Test create_api_user()."""
+@pytest.mark.django_db
+def test_create_basic_user() -> None:
+    """Test creating a minimal user."""
+    user = utils.create_api_user("username", "foobar")
+    assert user.username == "username"
+    assert user.check_password("foobar") is True
+    assert user.has_perm("django_ca.view_certificateauthority") is True
+    assert user.has_perm("django_ca.change_certificateauthority") is True
+    assert user.has_perm("django_ca.view_certificate") is True
+    assert user.has_perm("django_ca.sign_certificate") is True
+    assert user.has_perm("django_ca.revoke_certificate") is True
 
-    def test_create_basic_user(self) -> None:
-        """Test creating a minimal user."""
-        user = utils.create_api_user("username", "foobar")
-        self.assertEqual(user.username, "username")
-        self.assertIs(user.check_password("foobar"), True)
-        self.assertIs(user.has_perm("django_ca.view_certificateauthority"), True)
-        self.assertIs(user.has_perm("django_ca.change_certificateauthority"), True)
-        self.assertIs(user.has_perm("django_ca.view_certificate"), True)
-        self.assertIs(user.has_perm("django_ca.sign_certificate"), True)
-        self.assertIs(user.has_perm("django_ca.revoke_certificate"), True)
 
-    def test_additional_properties(self) -> None:
-        """Test passing additional properties."""
-        user = utils.create_api_user("username", "foobar", email="user@example.com")
-        self.assertEqual(user.username, "username")
-        self.assertIs(user.check_password("foobar"), True)
-        self.assertEqual(user.email, "user@example.com")
+@pytest.mark.django_db
+def test_additional_properties() -> None:
+    """Test passing additional properties."""
+    user = utils.create_api_user("username", "foobar", email="user@example.com")
+    assert user.username == "username"
+    assert user.check_password("foobar") is True
+    assert user.email == "user@example.com"
 
-    def test_no_permissions(self) -> None:
-        """Create a user, but rule out all permissions."""
-        user = utils.create_api_user(
-            "username",
-            "foobar",
-            view_certificateauthority=False,
-            change_certificateauthority=False,
-            sign_certificate=False,
-            view_certificate=False,
-            revoke_certificate=False,
-        )
-        self.assertEqual(user.username, "username")
-        self.assertIs(user.check_password("foobar"), True)
 
-        self.assertIs(user.has_perm("django_ca.view_certificateauthority"), False)
-        self.assertIs(user.has_perm("django_ca.change_certificateauthority"), False)
-        self.assertIs(user.has_perm("django_ca.view_certificate"), False)
-        self.assertIs(user.has_perm("django_ca.sign_certificate"), False)
-        self.assertIs(user.has_perm("django_ca.revoke_certificate"), False)
+@pytest.mark.django_db
+def test_no_permissions() -> None:
+    """Create a user, but rule out all permissions."""
+    user = utils.create_api_user(
+        "username",
+        "foobar",
+        view_certificateauthority=False,
+        change_certificateauthority=False,
+        sign_certificate=False,
+        view_certificate=False,
+        revoke_certificate=False,
+    )
+    assert user.username == "username"
+    assert user.check_password("foobar") is True
+
+    assert user.has_perm("django_ca.view_certificateauthority") is False
+    assert user.has_perm("django_ca.change_certificateauthority") is False
+    assert user.has_perm("django_ca.view_certificate") is False
+    assert user.has_perm("django_ca.sign_certificate") is False
+    assert user.has_perm("django_ca.revoke_certificate") is False
