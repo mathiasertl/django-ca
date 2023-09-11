@@ -29,7 +29,7 @@ from freezegun import freeze_time
 
 from django_ca import constants
 from django_ca.models import CertificateAuthority
-from django_ca.tests.api.mixins import APIPermissionTestBase
+from django_ca.tests.api.conftest import APIPermissionTestBase
 from django_ca.tests.base import timestamps
 from django_ca.tests.base.conftest_helpers import certs
 from django_ca.tests.base.typehints import HttpResponse

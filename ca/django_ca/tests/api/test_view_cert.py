@@ -23,7 +23,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.api.mixins import APIPermissionTestBase
+from django_ca.tests.api.conftest import APIPermissionTestBase
 from django_ca.tests.base import certs, timestamps
 
 path = reverse_lazy(

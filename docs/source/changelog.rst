@@ -10,6 +10,8 @@ ChangeLog
 1.27.0 (TBR)
 ************
 
+* Add support for Python 3.12.
+
 Backwards incompatible changes
 ==============================
 

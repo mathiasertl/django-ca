@@ -1179,11 +1179,8 @@ class CertificateAuthority(X509CertMixin):
         """
         # pylint: disable=too-many-locals; It's not easy to create a CRL. Sorry.
 
-        if settings.USE_TZ is True:
-            now = timezone.now()
-            now_naive = timezone.make_naive(now, tz.utc)
-        else:
-            now_naive = now = datetime.utcnow()
+        now = datetime.now(tz=tz.utc)
+        now_naive = now.replace(tzinfo=None)
 
         # Default to the algorithm used by the certificate authority itself (None in case of Ed448/Ed25519
         # based certificate authorities).
@@ -1234,7 +1231,12 @@ class CertificateAuthority(X509CertMixin):
             # sorry, nothing we support right now
             only_contains_attribute_certs = True
 
-        for cert in self.get_crl_certs(scope, now):
+        if settings.USE_TZ is True:
+            crl_certificates = self.get_crl_certs(scope, now)
+        else:
+            crl_certificates = self.get_crl_certs(scope, now_naive)
+
+        for cert in crl_certificates:
             builder = builder.add_revoked_certificate(cert.get_revocation())
 
         # Validate that the user has selected a usable algorithm

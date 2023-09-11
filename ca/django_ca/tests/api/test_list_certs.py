@@ -26,8 +26,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca.models import Certificate
-from django_ca.tests.api.conftest import ListResponse
-from django_ca.tests.api.mixins import APIPermissionTestBase
+from django_ca.tests.api.conftest import APIPermissionTestBase, ListResponse
 from django_ca.tests.base import timestamps
 from django_ca.tests.base.conftest_helpers import certs
 from django_ca.tests.base.utils import iso_format

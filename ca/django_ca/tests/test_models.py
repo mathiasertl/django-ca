@@ -767,8 +767,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
 
     def assertBasicCert(self, cert: x509.Certificate) -> None:  # pylint: disable=invalid-name
         """Basic assertions about the certificate."""
+        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         self.assertEqual(cert.issuer, self.ca.subject)
-        self.assertEqual(cert.not_valid_before, datetime.utcnow())
+        self.assertEqual(cert.not_valid_before, now)
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
 
@@ -784,6 +785,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
     @freeze_time(timestamps["everything_valid"])
     def test_simple(self) -> None:
         """Test the simplest invocation of the function."""
+        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         cn = "example.com"
         csr = certs["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
@@ -791,7 +793,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             cert = self.ca.sign(csr, subject=subject)
 
         self.assertBasicCert(cert)
-        self.assertEqual(cert.not_valid_after, datetime.utcnow() + ca_settings.CA_DEFAULT_EXPIRES)
+        self.assertEqual(cert.not_valid_after, now + ca_settings.CA_DEFAULT_EXPIRES)
         self.assertEqual(cert.subject, subject)
         self.assertIsInstance(cert.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertExtensionDict(

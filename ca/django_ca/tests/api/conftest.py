@@ -15,6 +15,7 @@
 
 """pytest configuration for API tests."""
 import base64
+from http import HTTPStatus
 from typing import Any, Dict, List, Tuple, Type
 
 from django.contrib.auth.models import Permission
@@ -25,7 +26,7 @@ from django.test.client import Client
 import pytest
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.typehints import User
+from django_ca.tests.base.typehints import HttpResponse, User
 from django_ca.tests.base.utils import iso_format
 
 DetailResponse = Dict[str, Any]
@@ -97,3 +98,36 @@ def root_cert_response(root_cert: Certificate) -> DetailResponse:
         "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root_cert.subject],
         "updated": iso_format(root_cert.updated),
     }
+
+
+class APIPermissionTestBase:
+    """Base class for testing permission handling in API views."""
+
+    path: str
+
+    def request(self, client: Client) -> HttpResponse:
+        """Make a default request to the view under test (non-GET requests must override this)."""
+        return client.get(self.path)
+
+    def test_request_with_no_authentication(self, client: Client) -> None:
+        """Test that a request with no authorization returns an HTTP 403 Unauthorized response."""
+        response = self.request(client)
+        assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+        assert response.json() == {"detail": "Unauthorized"}, response.json()
+
+    @pytest.mark.django_db
+    def test_user_with_wrong_password(self, user: User, client: Client) -> None:
+        """Test that a user with the wrong password gets an HTTP 403 Unauthorized response."""
+        credentials = base64.b64encode(user.username.encode() + b":wrong-password").decode()
+        client.defaults["HTTP_AUTHORIZATION"] = "Basic " + credentials
+
+        response = self.request(client)
+        assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+        assert response.json() == {"detail": "Unauthorized"}, response.json()
+
+    def test_user_with_no_permissions(self, user: User, api_client: Client) -> None:
+        """Test that a user without the required permissions gets an HTTP 401 Forbidden response."""
+        user.user_permissions.clear()
+        response = self.request(api_client)
+        assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+        assert response.json() == {"detail": "Forbidden"}, response.json()

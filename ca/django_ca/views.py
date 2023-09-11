@@ -24,7 +24,7 @@ import binascii
 import logging
 import os
 import typing
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, Optional, Union
 
@@ -288,7 +288,7 @@ class OCSPView(View):
         else:
             status = ocsp.OCSPCertStatus.GOOD
 
-        now = datetime.utcnow()
+        now = datetime.now(tz=tz.utc)
         builder = ocsp.OCSPResponseBuilder()
         expires = self.get_expires(now)
         builder = builder.add_response(
@@ -298,7 +298,7 @@ class OCSPView(View):
             # determine the status (verified: NOT the hash algorithm of the requested certificate).
             algorithm=ocsp_req.hash_algorithm,
             cert_status=status,
-            this_update=now,
+            this_update=now.replace(tzinfo=None),
             next_update=expires,
             revocation_time=cert.get_revocation_time(),
             revocation_reason=cert.get_revocation_reason(),

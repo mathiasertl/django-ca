@@ -447,7 +447,7 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
     if delay:
         freeze_now += data[name]["delta"]
     with freeze_time(freeze_now):
-        no_ext_now = datetime.utcnow()
+        no_ext_now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         pwd = data[ca.name].get("password")
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])])
 

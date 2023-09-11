@@ -20,7 +20,7 @@ import re
 import textwrap
 import typing
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, AnyStr, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest import mock
@@ -225,7 +225,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         expected = expected or []
         signer = signer or self.cas["child"]
         extensions = extensions or []
-        expires_timestamp = datetime.utcnow() + timedelta(seconds=expires)
+        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        expires_timestamp = now + timedelta(seconds=expires)
 
         if idp is not None:  # pragma: no branch
             extensions.append(idp)
@@ -248,14 +249,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
         self.assertTrue(parsed_crl.is_signature_valid(public_key))
         self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
-        self.assertEqual(parsed_crl.last_update, datetime.utcnow())
+        self.assertEqual(parsed_crl.last_update, now)
         self.assertEqual(parsed_crl.next_update, expires_timestamp)
         self.assertCountEqual(list(parsed_crl.extensions), extensions)
 
         entries = {e.serial_number: e for e in parsed_crl}
         self.assertCountEqual(entries, {c.pub.loaded.serial_number: c for c in expected})
         for entry in entries.values():
-            self.assertEqual(entry.revocation_date, datetime.utcnow())
+            self.assertEqual(entry.revocation_date, now)
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
@@ -562,7 +563,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         store = X509Store()
 
         # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
-        now = datetime.utcnow()
+        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         store.set_time(now)
 
         for elem in chain:

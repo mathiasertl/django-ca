@@ -15,7 +15,6 @@
 
 import html
 import json
-import typing
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
@@ -47,6 +46,7 @@ from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, Certifica
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.assertions import assert_css
 from django_ca.tests.base.testcases import SeleniumTestCase
+from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
@@ -64,9 +64,6 @@ from django_ca.tests.base.utils import (
 )
 from django_ca.typehints import SerializedExtension
 from django_ca.utils import ca_storage, x509_name
-
-if typing.TYPE_CHECKING:
-    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 @freeze_time(timestamps["after_child"])
@@ -1614,14 +1611,15 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["subject_0"] = json.dumps(
             [{"key": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
         )
-        form["expires"] = (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m-%d")
+        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        form["expires"] = (now + timedelta(days=10)).strftime("%Y-%m-%d")
 
         # Submit the form
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
         cert = Certificate.objects.get(cn="test-empty-form.example.com")
 
-        # Cert has minimal extensions, since we cleared the form  earlier
+        # Cert has minimal extensions, since we cleared the form earlier
         self.assertEqual(
             cert.sorted_extensions,
             [
