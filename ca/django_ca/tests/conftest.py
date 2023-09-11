@@ -10,11 +10,12 @@
 #
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
-#
+
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """pytest configuration."""
 
+import importlib.metadata
 import os
 import sys
 from pathlib import Path
@@ -22,7 +23,6 @@ from typing import Any, Iterator, List, Type
 from unittest.mock import patch
 
 import coverage
-import pkg_resources
 
 from django.conf import settings
 
@@ -78,7 +78,7 @@ def pytest_configure(config: "PytestConfig") -> None:
     print("Testing with:")
     print("* Python: ", sys.version.replace("\n", ""))
     # pylint: disable-next=not-an-iterable  # false positive
-    installed_versions = {p.project_name: p.version for p in pkg_resources.working_set}
+    installed_versions = {p.name: p.version for p in importlib.metadata.distributions()}
     for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
     print(f"* Selenium tests: {not skip_selenium}")

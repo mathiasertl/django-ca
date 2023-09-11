@@ -11,7 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Test some sphinx documents."""
+# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
+
+"""Test some Sphinx documentation."""
 
 import doctest
 import os
@@ -31,6 +33,7 @@ BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))
 
 @pytest.fixture()
 def globs(usable_root: CertificateAuthority, root_cert: Certificate) -> Dict[str, Any]:
+    """Fixture for global variables available to doctests."""
     return {
         "ca": usable_root,
         "ca_serial": usable_root.serial,

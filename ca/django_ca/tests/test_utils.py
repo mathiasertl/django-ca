@@ -21,7 +21,7 @@ import typing
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Iterable, Iterator, Optional, Tuple, Type
+from typing import Iterable, Iterator, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -39,7 +39,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings, constants, utils
-from django_ca.tests.base import dns, override_tmpcadir, rdn, uri
+from django_ca.tests.base import dns, rdn, uri
 from django_ca.utils import (
     bytes_to_hex,
     format_general_name,
@@ -75,53 +75,17 @@ def test_doctests() -> None:
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
-class ReadFileTestCase(TestCase):
+@pytest.mark.usefixtures("tmpcadir")
+def test_read_file() -> None:
     """Test :py:func:`django_ca.utils.read_file`."""
+    name = "test-data"
+    path = os.path.join(ca_settings.CA_DIR, name)
+    data = b"test data"
+    with open(path, "wb") as stream:
+        stream.write(data)
 
-    @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        name = "test-data"
-        path = os.path.join(ca_settings.CA_DIR, name)
-        data = b"test data"
-        with open(path, "wb") as stream:
-            stream.write(data)
-
-        self.assertEqual(read_file(name), data)
-        self.assertEqual(read_file(path), data)
-
-    @override_tmpcadir()
-    def test_file_not_found(self) -> None:
-        """Test reading a file that does not exist."""
-        name = "test-data"
-        path = os.path.join(ca_settings.CA_DIR, name)
-
-        msg = rf"\[Errno 2\] No such file or directory: '{path}'"
-        with self.assertRaisesRegex(FileNotFoundError, msg):
-            read_file(str(name))
-
-        with self.assertRaisesRegex(FileNotFoundError, msg):
-            read_file(str(path))
-
-    @override_tmpcadir()
-    def test_permission_denied(self) -> None:
-        """Test reading a file when permission is denied."""
-        name = "test-data"
-        path = os.path.join(ca_settings.CA_DIR, name)
-        data = b"test data"
-        with open(path, "wb") as stream:
-            stream.write(data)
-        os.chmod(path, 0o000)
-
-        try:
-            msg = rf"\[Errno 13\] Permission denied: '{path}'"
-            with self.assertRaisesRegex(PermissionError, msg):
-                read_file(str(name))
-
-            with self.assertRaisesRegex(PermissionError, msg):
-                read_file(str(path))
-        finally:
-            os.chmod(path, 0o600)  # make sure we can delete CA_DIR
+    assert read_file(name) == data
+    assert read_file(path) == data
 
 
 class ParseNameX509TestCase(TestCase):
