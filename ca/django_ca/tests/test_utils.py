@@ -69,12 +69,10 @@ from django_ca.utils import (
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
 
 
-def load_tests(  # pylint: disable=unused-argument
-    loader: unittest.TestLoader, tests: unittest.TestSuite, ignore: Optional[str] = None
-) -> unittest.TestSuite:
+def test_doctests() -> None:
     """Load doctests."""
-    tests.addTests(doctest.DocTestSuite(utils))
-    return tests
+    failures, _tests = doctest.testmod(utils)
+    assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 class ReadFileTestCase(TestCase):

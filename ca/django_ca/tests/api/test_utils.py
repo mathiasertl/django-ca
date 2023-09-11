@@ -24,7 +24,7 @@ from django_ca.api import utils
 def test_doctests() -> None:
     """Test doctests in the module."""
     failures, _tests = doctest.testmod(utils)
-    assert failures == 0
+    assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 @pytest.mark.django_db

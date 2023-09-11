@@ -17,6 +17,7 @@ import json
 import os
 import sys
 from importlib.metadata import version
+from pathlib import Path
 
 import packaging.version
 
@@ -27,7 +28,7 @@ import django
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT_DIR = os.path.dirname(BASE_DIR)
-DOC_DIR = os.path.join(ROOT_DIR, "docs", "source")
+DOC_DIR = Path(ROOT_DIR) / "docs" / "source"
 FIXTURES_DIR = os.path.join(BASE_DIR, "django_ca", "tests", "fixtures")
 
 DEBUG = False

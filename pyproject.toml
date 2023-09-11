@@ -365,7 +365,6 @@ min-similarity-lines = 16
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "ca.test_settings"
 addopts = [
-    "--doctest-plus",
     "--cov=ca/django_ca/",
     "--cov-report=html:docs/build/coverage/",
     "--cov-fail-under=100",

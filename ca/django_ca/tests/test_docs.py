@@ -15,47 +15,40 @@
 
 import doctest
 import os
-import unittest
 from typing import Any, Dict
 
 from cryptography import x509
 
 from django.conf import settings
-from django.test import TestCase, override_settings
 
+import pytest
+
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base import certs, override_tmpcadir
-from django_ca.tests.base.mixins import TestCaseMixin
 
 BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))
 
 
-@override_settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=1024)
-class DocumentationTestCase(TestCaseMixin, TestCase):
-    """Main testcase class."""
+@pytest.fixture()
+def globs(usable_root: CertificateAuthority, root_cert: Certificate) -> Dict[str, Any]:
+    return {
+        "ca": usable_root,
+        "ca_serial": usable_root.serial,
+        "cert": root_cert,
+        "cert_serial": root_cert.serial,
+        "csr": certs["root-cert"]["csr"]["parsed"],
+        "x509": x509,
+    }
 
-    load_cas = ("root",)
-    load_certs = ("root-cert",)
 
-    def get_globs(self) -> Dict[str, Any]:
-        """Get globs for test cases."""
-        return {
-            "ca": self.ca,
-            "ca_serial": self.ca.serial,
-            "cert": self.cert,
-            "cert_serial": self.cert.serial,
-            "csr": certs["root-cert"]["csr"]["parsed"],
-            "x509": x509,
-        }
+def test_python_intro(globs: Dict[str, Any]) -> None:
+    """Test python/intro.rst."""
+    failures, _tests = doctest.testfile(os.path.join(BASE, "python", "intro.rst"), globs=globs)
+    assert failures == 0, f"{failures} doctests failed, see above for output."
 
-    @override_tmpcadir()
-    def test_python_intro(self) -> None:
-        """Test python/intro.rst."""
-        doctest.testfile(f"{BASE}/python/intro.rst", globs=self.get_globs())
 
-    @unittest.skipIf(  # https://github.com/pyca/cryptography/issues/6363
-        settings.CRYPTOGRAPHY_VERSION < (35, 0), "cg==35.0 changed CertificateSigningRequest.__str__"
-    )
-    @override_tmpcadir()
-    def test_python_models(self) -> None:
-        """Test python/models.rst."""
-        doctest.testfile(f"{BASE}/python/models.rst", globs=self.get_globs())
+@override_tmpcadir()
+def test_python_models(globs: Dict[str, Any]) -> None:
+    """Test python/models.rst."""
+    failures, _tests = doctest.testfile(os.path.join(BASE, "python", "models.rst"), globs=globs)
+    assert failures == 0, f"{failures} doctests failed, see above for output."
