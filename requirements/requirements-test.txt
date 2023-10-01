@@ -1,6 +1,6 @@
 -r requirements-dev-common.txt
 PyVirtualDisplay==3.0
-django-webtest==1.9.10
+django-webtest==1.9.11
 freezegun==1.2.2
 pyOpenSSL>=23
 pyrfc3339==1.1

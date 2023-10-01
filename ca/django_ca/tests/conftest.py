@@ -77,7 +77,6 @@ def pytest_configure(config: "PytestConfig") -> None:
     # Add a header to log important software versions
     print("Testing with:")
     print("* Python: ", sys.version.replace("\n", ""))
-    # pylint: disable-next=not-an-iterable  # false positive
     installed_versions = {p.name: p.version for p in importlib.metadata.distributions()}
     for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
