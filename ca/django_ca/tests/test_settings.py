@@ -11,19 +11,60 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name  # does not work with fixtures
+
 """Test cases for the ``ca_settings`` module."""
 
+import typing
 from datetime import timedelta
+from importlib import import_module
+from pathlib import Path
+from typing import List, Tuple
 from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
+from django.conf import settings
 from django.test import TestCase
+
+import pytest
 
 from django_ca import ca_settings
 from django_ca.tests.base.mixins import TestCaseMixin
+
+GET_SETTINGS_FILES = typing.Callable[[Path, str], List[Tuple[str, Path]]]  # pylint: disable=invalid-name
+
+
+@pytest.fixture(scope="module")
+def get_settings_files() -> GET_SETTINGS_FILES:
+    """Fixture to import to the _get_settings_files() function."""
+    mod = import_module("ca.settings")
+    return typing.cast(GET_SETTINGS_FILES, getattr(mod, "_get_settings_files"))
+
+
+def test_no_settings_files(tmp_path: Path, get_settings_files: GET_SETTINGS_FILES) -> None:
+    """Test no settings.yaml exists and no DJANGO_CA_SETTINGS env variable set."""
+    assert get_settings_files(tmp_path, "") == []
+
+
+def test_with_settings_files(get_settings_files: GET_SETTINGS_FILES) -> None:
+    """Test a full list of settings files."""
+    base_dir = settings.FIXTURES_DIR / "settings" / "base"
+    single_file = settings.FIXTURES_DIR / "settings" / "dirs" / "single-file.yaml"
+    settings_dir = settings.FIXTURES_DIR / "settings" / "dirs" / "settings_dir"
+    settings_files = get_settings_files(base_dir, f"{single_file}:{settings_dir}")
+    assert settings_files == [
+        ("single-file.yaml", single_file.parent),
+        ("01-settings.yaml", settings_dir),
+        ("02-settings.yaml", settings_dir),
+        ("settings.yaml", base_dir / "ca"),
+    ]
+
+    # Assert that all files actually exist
+    for name, path in settings_files:
+        assert (path / name).exists() is True
 
 
 class SettingsTestCase(TestCase):

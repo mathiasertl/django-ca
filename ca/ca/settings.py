@@ -26,7 +26,6 @@ except ImportError:
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent  # ca/
-SETTINGS_YAML = BASE_DIR / "ca" / "settings.yaml"
 
 DEBUG = False
 
@@ -209,30 +208,36 @@ CELERY_BEAT_SCHEDULE = {
 
 
 # CONFIGURATION_DIRECTORY is set by the SystemD ConfigurationDirectory= directive.
-_settings_files: List[Tuple[str, "os.PathLike[str]"]] = []
 SETTINGS_DIRS = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATION_DIRECTORY", ""))
 
-for _path in [BASE_DIR / p for p in SETTINGS_DIRS.split(":")]:
-    if not _path.exists():
-        raise ImproperlyConfigured(f"{_path}: No such file or directory.")
 
-    if _path.is_dir():
-        # exclude files that don't end with '.yaml' and any directories
-        _settings_files += [
-            (_f, _path)
-            for _f in os.listdir(_path)
-            if _f.endswith(".yaml") and not os.path.isdir(os.path.join(_path, _f))
-        ]
-    else:
-        _settings_files.append((_path.name, _path.parent))
+def _get_settings_files(base_dir: Path, dirs: str) -> List[Tuple[str, Path]]:
+    settings_files: List[Tuple[str, Path]] = []
 
-_settings_files = sorted(_settings_files)
-if SETTINGS_YAML.exists():
-    _settings_files.append((SETTINGS_YAML.name, SETTINGS_YAML.parent))
+    for path in [base_dir / p for p in dirs.split(":")]:
+        if not path.exists():
+            raise ImproperlyConfigured(f"{path}: No such file or directory.")
+
+        if path.is_dir():
+            # exclude files that don't end with '.yaml' and any directories
+            settings_files += sorted(
+                [(_f.name, path) for _f in path.iterdir() if _f.suffix == ".yaml" and not _f.is_dir()]
+            )
+        else:
+            settings_files.append((path.name, path.parent))
+
+    settings_yaml = base_dir / "ca" / "settings.yaml"
+    if settings_yaml.exists():
+        settings_files.append((settings_yaml.name, settings_yaml.parent))
+
+    return settings_files
+
 
 if not _skip_local_config and yaml is not False:  # type: ignore[comparison-overlap]
+    _settings_files = _get_settings_files(BASE_DIR, SETTINGS_DIRS)
+
     for _filename, _filename_path in _settings_files:
-        _full_path = os.path.join(_path, _filename)
+        _full_path = _filename_path / _filename
         with open(_full_path, encoding="utf-8") as stream:
             data = yaml.safe_load(stream)
         if data is None:
