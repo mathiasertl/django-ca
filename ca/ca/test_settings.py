@@ -25,11 +25,11 @@ import cryptography
 
 import django
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-DOC_DIR = Path(ROOT_DIR) / "docs" / "source"
-FIXTURES_DIR = os.path.join(BASE_DIR, "django_ca", "tests", "fixtures")
+# Base paths in this project
+BASE_DIR = Path(__file__).resolve().parent.parent  # ca/
+ROOT_DIR = Path(BASE_DIR).parent  # git repository root
+DOC_DIR = ROOT_DIR / "docs" / "source"
+FIXTURES_DIR = BASE_DIR / "django_ca" / "tests" / "fixtures"
 
 DEBUG = False
 
@@ -185,7 +185,7 @@ LOGGING = {
 }
 
 # Fixture data used by test cases
-with open(os.path.join(FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as stream:
+with open(FIXTURES_DIR / "cert-data.json", encoding="utf-8") as stream:
     _fixture_data = json.load(stream)
 
 # Custom settings
