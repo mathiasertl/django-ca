@@ -13,17 +13,15 @@
 
 """Test the import_cert  management command."""
 
-import os
-
 from cryptography import x509
 
-from django.conf import settings
 from django.test import TestCase
 
 from freezegun import freeze_time
 
 from django_ca.models import Certificate
 from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -36,8 +34,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
         """Import a standard certificate."""
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root-cert"]["pub_filename"])
-        out, err = self.cmd("import_cert", pem_path, ca=self.ca)
+        out, err = self.cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -51,8 +48,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self) -> None:
         """Import a DER certificate."""
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root-cert"]["pub_der_filename"])
-        out, err = self.cmd("import_cert", pem_path, ca=self.ca)
+        out, err = self.cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")

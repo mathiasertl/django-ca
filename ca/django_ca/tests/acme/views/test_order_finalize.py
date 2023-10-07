@@ -13,8 +13,6 @@
 
 """Test AcmeOrderFinalizeView."""
 
-import os
-import typing
 from http import HTTPStatus
 from unittest import mock
 
@@ -27,7 +25,6 @@ from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from OpenSSL.crypto import X509Req
 
-from django.conf import settings
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse, reverse_lazy
 
@@ -38,9 +35,8 @@ from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps
-
-if typing.TYPE_CHECKING:
-    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
+from django_ca.tests.base.constants import FIXTURES_DIR
+from django_ca.tests.base.typehints import HttpResponse
 
 
 @freeze_time(timestamps["everything_valid"])
@@ -188,7 +184,7 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_csr_bad_algorithm(self) -> None:
         """Test posting a CSR with a bad algorithm."""
-        with open(os.path.join(settings.FIXTURES_DIR, "md5.csr.pem"), "rb") as stream:
+        with open(FIXTURES_DIR / "md5.csr.pem", "rb") as stream:
             signed_csr = x509.load_pem_x509_csr(stream.read())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -196,7 +192,7 @@ class AcmeOrderFinalizeViewTestCase(
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "md5: Insecure hash algorithm.")
 
-        with open(os.path.join(settings.FIXTURES_DIR, "sha1.csr.pem"), "rb") as stream:
+        with open(FIXTURES_DIR / "sha1.csr.pem", "rb") as stream:
             signed_csr = x509.load_pem_x509_csr(stream.read())
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:

@@ -24,8 +24,6 @@ from unittest.mock import patch
 
 import coverage
 
-from django.conf import settings
-
 import pytest
 from _pytest.config import Config as PytestConfig
 from _pytest.config.argparsing import Parser
@@ -36,6 +34,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate
 from django_ca.profiles import profiles
+from django_ca.tests.base import GECKODRIVER_PATH, RUN_SELENIUM_TESTS
 from django_ca.tests.base.conftest_helpers import (
     generate_ca_fixture,
     generate_cert_fixture,
@@ -69,7 +68,7 @@ def pytest_configure(config: "PytestConfig") -> None:
 
     config.addinivalue_line("markers", "selenium: mark tests that use selenium")
 
-    skip_selenium = config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS
+    skip_selenium = config.getoption("--no-selenium") or not RUN_SELENIUM_TESTS
 
     if config.getoption("--no-virtual-display"):  # pragma: no cover
         os.environ["VIRTUAL_DISPLAY"] = "n"
@@ -83,16 +82,16 @@ def pytest_configure(config: "PytestConfig") -> None:
         print(f"* {pkg}: {installed_versions[pkg]}")
     print(f"* Selenium tests: {not skip_selenium}")
 
-    if not os.path.exists(settings.GECKODRIVER_PATH) and not skip_selenium:  # pragma: no cover
+    if not os.path.exists(GECKODRIVER_PATH) and not skip_selenium:  # pragma: no cover
         raise pytest.UsageError(
-            f"{settings.GECKODRIVER_PATH}: Please download geckodriver to {settings.GECKODRIVER_PATH}: "
+            f"{GECKODRIVER_PATH}: Please download geckodriver to {GECKODRIVER_PATH}: "
             "https://selenium-python.readthedocs.io/installation.html#drivers"
         )
 
 
 def pytest_collection_modifyitems(config: "PytestConfig", items: List[Any]) -> None:  # pragma: no cover
     """Mark Selenium tests as skipped if appropriate."""
-    if config.getoption("--no-selenium") or not settings.RUN_SELENIUM_TESTS:
+    if config.getoption("--no-selenium") or not RUN_SELENIUM_TESTS:
         if config.getoption("--no-selenium"):
             reason = "--no-selenium was passed"
         else:

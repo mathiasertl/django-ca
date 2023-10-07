@@ -31,7 +31,6 @@ from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID, ObjectIdentifier
 
 import django
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
@@ -39,7 +38,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings, constants, utils
-from django_ca.tests.base import dns, rdn, uri
+from django_ca.tests.base import CRYPTOGRAPHY_VERSION, dns, rdn, uri
 from django_ca.utils import (
     bytes_to_hex,
     format_general_name,
@@ -735,7 +734,7 @@ class SerializeName(TestCase):
             [{"oid": "2.5.4.6", "value": "AT"}, {"oid": "2.5.4.3", "value": "example.com"}],
         )
 
-    @unittest.skipIf(settings.CRYPTOGRAPHY_VERSION < (37, 0), "cg<36 does not yet have bytes.")
+    @unittest.skipIf(CRYPTOGRAPHY_VERSION < (37, 0), "cg<36 does not yet have bytes.")
     def test_bytes(self) -> None:
         """Test names with byte values - probably never happens."""
         name = x509.Name(

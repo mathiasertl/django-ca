@@ -36,7 +36,7 @@ from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import timestamps
+from django_ca.tests.base import FIXTURES_DIR, timestamps
 from django_ca.utils import int_to_hex
 
 
@@ -184,7 +184,7 @@ def generate_usable_ca_fixture(
     def fixture(request: "SubRequest", tmpcadir: SettingsWrapper) -> Iterator[CertificateAuthority]:
         ca = request.getfixturevalue(name)  # load the CA into the database
         data = fixture_data["certs"][name]
-        shutil.copy(os.path.join(settings.FIXTURES_DIR, data["key_filename"]), tmpcadir.CA_DIR)
+        shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir.CA_DIR)
 
         yield ca
 
@@ -211,7 +211,7 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
 
 def load_pub(name: str) -> x509.Certificate:
     """Load a public key from file."""
-    with open(os.path.join(settings.FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
+    with open(os.path.join(FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
         return x509.load_der_x509_certificate(stream.read())
 
 
@@ -239,7 +239,7 @@ def load_ca(
 
 def _load_certificate_signing_requests() -> None:
     for name in usable_cert_names:
-        with open(os.path.join(settings.FIXTURES_DIR, f"{name}.csr"), "rb") as stream:
+        with open(os.path.join(FIXTURES_DIR, f"{name}.csr"), "rb") as stream:
             pem_bytes = stream.read()
         certs[name]["csr"] = {
             "der": x509.load_pem_x509_csr(pem_bytes),
@@ -249,7 +249,7 @@ def _load_certificate_signing_requests() -> None:
 
 def _load_public_keys() -> None:
     for name in usable_ca_names + usable_cert_names:
-        with open(os.path.join(settings.FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
+        with open(os.path.join(FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
             der_bytes = stream.read()
         certificate = x509.load_der_x509_certificate(der_bytes)
         certs[name]["pub"] = {
@@ -269,7 +269,7 @@ def load_cert(
     return cert
 
 
-with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
+with open(os.path.join(FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
     fixture_data = json.load(cert_data_stream)
 certs = fixture_data["certs"]
 

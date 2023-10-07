@@ -14,7 +14,6 @@
 """Some common base classes for test cases."""
 import os
 
-from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import TestCase
 from django.urls import reverse
@@ -27,6 +26,7 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
+from django_ca.tests.base.constants import GECKODRIVER_LOG_PATH, GECKODRIVER_PATH
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -34,7 +34,7 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
     """TestCase with some helper functions for Selenium."""
 
     # NOTE: coverage has weird issues all over this class
-    vdisplay: Display
+    virtual_display: Display
     selenium: WebDriver
 
     @classmethod
@@ -42,17 +42,17 @@ class SeleniumTestCase(TestCaseMixin, StaticLiveServerTestCase):  # pragma: no c
         super().setUpClass()
 
         if os.environ.get("VIRTUAL_DISPLAY") != "n":
-            cls.vdisplay = Display(visible=False, size=(1024, 768))
-            cls.vdisplay.start()
+            cls.virtual_display = Display(visible=False, size=(1024, 768))
+            cls.virtual_display.start()
 
-        service = Service(settings.GECKODRIVER_PATH, log_output=settings.GECKODRIVER_LOG_PATH)
+        service = Service(str(GECKODRIVER_PATH), log_output=str(GECKODRIVER_LOG_PATH))
         cls.selenium = Firefox(service=service)
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.selenium.quit()
         if os.environ.get("VIRTUAL_DISPLAY") != "n":
-            cls.vdisplay.stop()
+            cls.virtual_display.stop()
 
         super().tearDownClass()
 

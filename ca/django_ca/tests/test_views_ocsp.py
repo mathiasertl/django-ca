@@ -32,7 +32,6 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import OCSPExtensionOID, SignatureAlgorithmOID
 
-from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import path, re_path, reverse
 
@@ -42,13 +41,11 @@ from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, ocsp_data, override_tmpcadir, timestamps
+from django_ca.tests.base import FIXTURES_DIR, certs, ocsp_data, override_tmpcadir, timestamps
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.typehints import HttpResponse
 from django_ca.utils import ca_storage, hex_to_bytes
 from django_ca.views import OCSPView
-
-if typing.TYPE_CHECKING:
-    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
 
 # openssl ocsp -issuer django_ca/tests/fixtures/root.pem -serial <serial> \
@@ -56,14 +53,14 @@ if typing.TYPE_CHECKING:
 #
 # WHERE serial is an int: (int('0x<hex>'.replace(':', '').lower(), 0)
 def _load_req(req: str) -> bytes:
-    cert_path = os.path.join(settings.FIXTURES_DIR, "ocsp", req)
+    cert_path = os.path.join(FIXTURES_DIR, "ocsp", req)
     with open(cert_path, "rb") as stream:
         return stream.read()
 
 
 ocsp_profile = certs["profile-ocsp"]
-ocsp_key_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile["key_filename"])
-ocsp_pem_path = os.path.join(settings.FIXTURES_DIR, ocsp_profile["pub_filename"])
+ocsp_key_path = os.path.join(FIXTURES_DIR, ocsp_profile["key_filename"])
+ocsp_pem_path = os.path.join(FIXTURES_DIR, ocsp_profile["pub_filename"])
 ocsp_pem = ocsp_profile["pub"]["pem"]
 req1 = _load_req(ocsp_data["nonce"]["filename"])
 req1_nonce = hex_to_bytes(ocsp_data["nonce"]["nonce"])
@@ -582,10 +579,7 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         self.assertEqual(ocsp_response.response_status, ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
         self.assertEqual(len(logcm.output), 1)
-        if settings.CRYPTOGRAPHY_VERSION >= (35, 0):
-            self.assertIn("ValueError: error parsing asn1 value", logcm.output[0], logcm.output[0])
-        else:
-            self.assertIn("ValueError: Unable to load OCSP request", logcm.output[0])
+        self.assertIn("ValueError: error parsing asn1 value", logcm.output[0], logcm.output[0])
 
     def test_multiple(self) -> None:
         """Try making multiple OCSP requests (not currently supported)."""

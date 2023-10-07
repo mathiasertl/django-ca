@@ -15,14 +15,14 @@
 
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List
 
-from django.core.exceptions import ImproperlyConfigured
-
-try:
-    import yaml
-except ImportError:
-    yaml = False  # type: ignore[assignment]
+from ca.settings_utils import (
+    load_secret_key,
+    load_settings_from_environment,
+    load_settings_from_files,
+    update_database_setting_from_environment,
+)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent  # ca/
@@ -206,66 +206,22 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# Load settings from files
+for _setting, _value in load_settings_from_files(BASE_DIR):
+    globals()[_setting] = _value
 
-# CONFIGURATION_DIRECTORY is set by the SystemD ConfigurationDirectory= directive.
-SETTINGS_DIRS = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATION_DIRECTORY", ""))
+# Load settings from environment variables
+for _setting, _value in load_settings_from_environment():
+    globals()[_setting] = _value
 
+# Try to use POSTGRES_* and MYSQL_* environment variables to determine database access credentials.
+# These are the variables set by the standard PostgreSQL/MySQL Docker containers.
+update_database_setting_from_environment(DATABASES)
 
-def _get_settings_files(base_dir: Path, dirs: str) -> List[Tuple[str, Path]]:
-    settings_files: List[Tuple[str, Path]] = []
-
-    for path in [base_dir / p for p in dirs.split(":")]:
-        if not path.exists():
-            raise ImproperlyConfigured(f"{path}: No such file or directory.")
-
-        if path.is_dir():
-            # exclude files that don't end with '.yaml' and any directories
-            settings_files += sorted(
-                [(_f.name, path) for _f in path.iterdir() if _f.suffix == ".yaml" and not _f.is_dir()]
-            )
-        else:
-            settings_files.append((path.name, path.parent))
-
-    settings_yaml = base_dir / "ca" / "settings.yaml"
-    if settings_yaml.exists():
-        settings_files.append((settings_yaml.name, settings_yaml.parent))
-
-    return settings_files
-
-
-if not _skip_local_config and yaml is not False:  # type: ignore[comparison-overlap]
-    _settings_files = _get_settings_files(BASE_DIR, SETTINGS_DIRS)
-
-    for _filename, _filename_path in _settings_files:
-        _full_path = _filename_path / _filename
-        with open(_full_path, encoding="utf-8") as stream:
-            data = yaml.safe_load(stream)
-        if data is None:
-            pass  # silently ignore empty files
-        elif not isinstance(data, dict):
-            raise ImproperlyConfigured(f"{_full_path}: File is not a key/value mapping.")
-        else:
-            for key, value in data.items():
-                globals()[key] = value
-
-
-def _parse_bool(env_value: str) -> bool:
-    # parse an env variable that is supposed to represent a boolean value
-    return env_value.strip().lower() in ("true", "yes", "1")
-
-
-# Also use DJANGO_CA_ environment variables
-for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
-    if key == "SETTINGS":  # points to yaml files loaded above
-        continue
-
-    if key == "ALLOWED_HOSTS":
-        globals()[key] = value.split()
-    elif key in ("CA_USE_CELERY", "CA_ENABLE_ACME", "CA_ENABLE_REST_API", "ENABLE_ADMIN"):
-        globals()[key] = _parse_bool(value)
-    else:
-        globals()[key] = value
-
+# Load SECRET_KEY from a file if not already defined.
+# NOTE: This must be called AFTER load_settings_from_environment(), as this might set SECRET_KEY_FILE in the
+#       first place.
+SECRET_KEY = load_secret_key(SECRET_KEY, SECRET_KEY_FILE)
 
 if CA_ENABLE_CLICKJACKING_PROTECTION is True:
     if "django.middleware.clickjacking.XFrameOptionsMiddleware" not in MIDDLEWARE:
@@ -275,15 +231,6 @@ if CA_ENABLE_CLICKJACKING_PROTECTION is True:
 if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:
     ALLOWED_HOSTS = [CA_DEFAULT_HOSTNAME]
 
-if not SECRET_KEY:
-    # We generate SECRET_KEY on first invocation
-    if not SECRET_KEY_FILE:
-        SECRET_KEY_FILE = os.environ.get("DJANGO_CA_SECRET_KEY_FILE", "/var/lib/django-ca/secret_key")
-
-    if SECRET_KEY_FILE and os.path.exists(SECRET_KEY_FILE):
-        with open(SECRET_KEY_FILE, encoding="utf-8") as stream:
-            SECRET_KEY = stream.read()
-
 # Remove django.contrib.admin if the admin interface is not enabled.
 if ENABLE_ADMIN is not True and "django.contrib.admin" in INSTALLED_APPS:
     INSTALLED_APPS.remove("django.contrib.admin")
@@ -291,35 +238,6 @@ if ENABLE_ADMIN is not True and "django.contrib.admin" in INSTALLED_APPS:
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
     INSTALLED_APPS.append("ninja")
-
-
-def _set_db_setting(name: str, env_name: str, default: Optional[str] = None) -> None:
-    if DATABASES["default"].get(name):
-        return
-
-    if os.environ.get(env_name):
-        DATABASES["default"][name] = os.environ[env_name]
-    elif os.environ.get(f"{env_name}_FILE"):
-        with open(os.environ[f"{env_name}_FILE"], encoding="utf-8") as env_stream:
-            DATABASES["default"][name] = env_stream.read()
-    elif default is not None:
-        DATABASES["default"][name] = default
-
-
-# use POSTGRES_* environment variables from the postgres Docker image
-if DATABASES["default"]["ENGINE"] in (
-    "django.db.backends.postgresql_psycopg2",
-    "django.db.backends.postgresql",
-):
-    _set_db_setting("PASSWORD", "POSTGRES_PASSWORD", default="postgres")
-    _set_db_setting("USER", "POSTGRES_USER", default="postgres")
-    _set_db_setting("NAME", "POSTGRES_DB", default=DATABASES["default"].get("USER"))
-
-# use MYSQL_* environment variables from the mysql Docker image
-if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
-    _set_db_setting("PASSWORD", "MYSQL_PASSWORD")
-    _set_db_setting("USER", "MYSQL_USER")
-    _set_db_setting("NAME", "MYSQL_DATABASE")
 
 if LOGGING is None:
     LOGGING = {

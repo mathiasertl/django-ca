@@ -14,22 +14,10 @@
 """Test settings for the django-ca project."""
 
 import json
-import os
-import sys
-from importlib.metadata import version
 from pathlib import Path
-
-import packaging.version
-
-import cryptography
-
-import django
 
 # Base paths in this project
 BASE_DIR = Path(__file__).resolve().parent.parent  # ca/
-ROOT_DIR = Path(BASE_DIR).parent  # git repository root
-DOC_DIR = ROOT_DIR / "docs" / "source"
-FIXTURES_DIR = BASE_DIR / "django_ca" / "tests" / "fixtures"
 
 DEBUG = False
 
@@ -184,8 +172,10 @@ LOGGING = {
     },
 }
 
-# Fixture data used by test cases
-with open(FIXTURES_DIR / "cert-data.json", encoding="utf-8") as stream:
+# Load fixture data in settings as well. We cannot load it from django_ca.tests.base.constants, as that would
+# import the parent modules, which at present also "from django.conf import settings", which causes a circular
+# import situation.
+with open(BASE_DIR / "django_ca" / "tests" / "fixtures" / "cert-data.json", encoding="utf-8") as stream:
     _fixture_data = json.load(stream)
 
 # Custom settings
@@ -236,41 +226,6 @@ CA_OCSP_URLS = {
     },
 }
 CA_ENABLE_ACME = True
-
-# Newest versions of software components.
-# NOTE: These values are validated by various release scripts
-NEWEST_PYTHON_VERSION = (3, 11)
-NEWEST_CRYPTOGRAPHY_VERSION = (41, 0)
-NEWEST_DJANGO_VERSION = (4, 2)
-NEWEST_ACME_VERSION = (2, 6, 0)
-
-# Determine if we're running on the respective newest versions
-_parsed_cg_version = packaging.version.parse(cryptography.__version__).release
-CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]
-ACME_VERSION = packaging.version.parse(version("acme")).release
-
-NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
-NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
-NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
-NEWEST_ACME = ACME_VERSION == NEWEST_ACME_VERSION
-NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NEWEST_ACME
-
-# Only run Selenium tests if we use the newest Python, cryptography and acme.
-RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
-
-# Set COLUMNS, which is used by argparse to determine the terminal width. If this is not set, the output of
-# some argparse commands depend on the terminal size.
-os.environ["COLUMNS"] = "80"
-
-if "GECKOWEBDRIVER" in os.environ:
-    GECKODRIVER_PATH = os.path.join(os.environ["GECKOWEBDRIVER"], "geckodriver")
-else:
-    GECKODRIVER_PATH = os.path.join(ROOT_DIR, "contrib", "selenium", "geckodriver")
-
-if "TOX_ENV_DIR" in os.environ:
-    GECKODRIVER_LOG_PATH = os.path.join(os.environ["TOX_ENV_DIR"], "geckodriver.log")
-else:
-    GECKODRIVER_LOG_PATH = os.path.join(ROOT_DIR, "geckodriver.log")
 
 
 CA_USE_CELERY = False

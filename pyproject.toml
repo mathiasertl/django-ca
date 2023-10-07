@@ -138,7 +138,10 @@ exclude_lines = [
 ]
 
 [tool.coverage.run]
-source = ["django_ca"]
+source = [
+    "django_ca",
+    "ca.settings_utils",
+]
 branch = true
 omit = [
     "*/migrations/*",
@@ -363,6 +366,17 @@ ignore-imports = "yes"
 min-similarity-lines = 16
 
 [tool.pytest.ini_options]
+env = [
+    # Set COLUMNS, which is used by argparse to determine the terminal width. If this is not set, the output of
+    # some argparse commands depend on the terminal size.
+    "COLUMNS=80",
+    # Set DJANGO_SETTINGS_MODULE early via pytest-env. This is necessary due to a complex interaction:
+    # 1. coverage covers ca/settings_utils.py
+    # 2. coverage loads ca.settings_utils -> ca -> ca.celery - BEFORE pytest-django is set up
+    # 3. ca.celery calls os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
+    # -> when settings are loaded the first time, DJANGO_SETTINGS_MODULE is defined (as ca.settings).
+    "DJANGO_SETTINGS_MODULE=ca.test_settings",
+]
 DJANGO_SETTINGS_MODULE = "ca.test_settings"
 addopts = [
     "--cov",

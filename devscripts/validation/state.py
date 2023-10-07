@@ -20,7 +20,6 @@ import re
 import sys
 import types
 import typing
-from pathlib import Path
 from typing import Any, Dict, Union
 
 import yaml
@@ -219,27 +218,6 @@ def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
     return errors
 
 
-def check_test_settings(project_config: Dict[str, Any]) -> int:
-    """Check test_settings.py."""
-    relpath = Path("ca/ca/test_settings.py")
-    fullpath = config.ROOT_DIR / relpath
-    check_path(relpath)
-    errors = 0
-
-    test_settings = import_mod("test_settings", fullpath)
-    for component in ["python", "django", "cryptography"]:
-        config_key = f"{component}-map"
-        setting = f"NEWEST_{component.upper()}_VERSION"
-        value = getattr(test_settings, setting)
-        expected = tuple(int(e) for e in list(project_config[config_key])[-1].split("."))
-        if value == expected:
-            ok(f"{setting} = {value}")
-        else:
-            errors += err(f"{setting}: Have {value}, expected {expected}")
-
-    return errors
-
-
 def check_intro(project_config: Dict[str, Any]) -> int:
     """Check intro.rst (reused in a couple of places)."""
     errors = 0
@@ -277,7 +255,6 @@ def validate_main() -> int:
     total_errors = check(check_github_actions_tests, project_config)
     total_errors += check(check_tox, project_config)
     total_errors += check(check_pyproject_toml, project_config)
-    total_errors += check(check_test_settings, project_config)
     total_errors += check(check_intro, project_config)
     total_errors += check(check_readme, project_config)
 

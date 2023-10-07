@@ -11,60 +11,288 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-# pylint: disable=redefined-outer-name  # does not work with fixtures
 
 """Test cases for the ``ca_settings`` module."""
-
-import typing
+import os
 from datetime import timedelta
-from importlib import import_module
 from pathlib import Path
-from typing import List, Tuple
 from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
-from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 import pytest
 
+from ca.settings_utils import (
+    get_settings_files,
+    load_secret_key,
+    load_settings_from_environment,
+    load_settings_from_files,
+    update_database_setting_from_environment,
+)
 from django_ca import ca_settings
+from django_ca.tests.base import FIXTURES_DIR
 from django_ca.tests.base.mixins import TestCaseMixin
 
-GET_SETTINGS_FILES = typing.Callable[[Path, str], List[Tuple[str, Path]]]  # pylint: disable=invalid-name
 
-
-@pytest.fixture(scope="module")
-def get_settings_files() -> GET_SETTINGS_FILES:
-    """Fixture to import to the _get_settings_files() function."""
-    mod = import_module("ca.settings")
-    return typing.cast(GET_SETTINGS_FILES, getattr(mod, "_get_settings_files"))
-
-
-def test_no_settings_files(tmp_path: Path, get_settings_files: GET_SETTINGS_FILES) -> None:
+def test_no_settings_files(tmp_path: Path) -> None:
     """Test no settings.yaml exists and no DJANGO_CA_SETTINGS env variable set."""
-    assert get_settings_files(tmp_path, "") == []
+    assert not list(get_settings_files(tmp_path, ""))
 
 
-def test_with_settings_files(get_settings_files: GET_SETTINGS_FILES) -> None:
+def test_with_settings_files() -> None:
     """Test a full list of settings files."""
-    base_dir = settings.FIXTURES_DIR / "settings" / "base"
-    single_file = settings.FIXTURES_DIR / "settings" / "dirs" / "single-file.yaml"
-    settings_dir = settings.FIXTURES_DIR / "settings" / "dirs" / "settings_dir"
-    settings_files = get_settings_files(base_dir, f"{single_file}:{settings_dir}")
+    base_dir = FIXTURES_DIR / "settings" / "base"
+    single_file = FIXTURES_DIR / "settings" / "dirs" / "single-file.yaml"
+    settings_dir = FIXTURES_DIR / "settings" / "dirs" / "settings_dir"
+    settings_files = list(get_settings_files(base_dir, f"{single_file}:{settings_dir}"))
     assert settings_files == [
-        ("single-file.yaml", single_file.parent),
-        ("01-settings.yaml", settings_dir),
-        ("02-settings.yaml", settings_dir),
-        ("settings.yaml", base_dir / "ca"),
+        single_file.parent / "single-file.yaml",
+        settings_dir / "01-settings.yaml",
+        settings_dir / "02-settings.yaml",
+        base_dir / "ca" / "settings.yaml",
     ]
 
     # Assert that all files actually exist
-    for name, path in settings_files:
-        assert (path / name).exists() is True
+    for path in settings_files:
+        assert path.exists() is True
+
+
+def test_load_settings_from_files() -> None:
+    """Test loading settings from YAML files."""
+    settings_dir = FIXTURES_DIR / "settings" / "dirs" / "settings_dir"
+    single_file = FIXTURES_DIR / "settings" / "dirs" / "single-file.yaml"
+    empty_file = FIXTURES_DIR / "settings" / "dirs" / "empty-file.yaml"
+
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": f"{single_file}:{settings_dir}:{empty_file}"}):
+        assert dict(load_settings_from_files(FIXTURES_DIR)) == {
+            "SETTINGS_DIR_ONE": True,
+            "SETTINGS_DIR_TWO": True,
+            "SINGLE_FILE": True,
+            "SETTINGS_FILES": (
+                single_file.parent / "single-file.yaml",
+                settings_dir / "01-settings.yaml",
+                settings_dir / "02-settings.yaml",
+            ),
+        }
+
+
+def test_load_settings_from_files_file_does_not_exist() -> None:
+    """Test loading settings if the file does not exist."""
+    path = "/does-not-exist.yaml"
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": path}):
+        with pytest.raises(ImproperlyConfigured, match=rf"^{path}: No such file or directory\.$"):
+            dict(load_settings_from_files(FIXTURES_DIR))
+
+
+def test_load_settings_from_files_with_invalid_yaml(tmp_path: Path) -> None:
+    """Test loading settings if the file is not valid YAML."""
+    path = str(tmp_path / "invalid-file.yaml")
+    with open(path, "w", encoding="utf-8") as stream:
+        stream.write("test: 'unbalanced quote")
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": path}):
+        with pytest.raises(ImproperlyConfigured, match=rf"^{path}: Invalid YAML\.$"):
+            dict(load_settings_from_files(FIXTURES_DIR))
+
+
+def test_load_settings_from_files_with_invalid_type() -> None:
+    """Test loading settings if the file has an invalid type."""
+    path = str(FIXTURES_DIR / "settings" / "dirs" / "invalid-type.yaml")
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": path}):
+        with pytest.raises(ImproperlyConfigured, match=rf"^{path}: File is not a key/value mapping\.$"):
+            dict(load_settings_from_files(FIXTURES_DIR))
+
+
+def test_load_settings_from_files_with_pyyaml_not_installed() -> None:
+    """Test behaviour when PyYAML is not installed."""
+    with mock.patch("ca.settings_utils.yaml", False):
+        assert not dict(load_settings_from_files(FIXTURES_DIR))
+
+
+def test_load_settings_from_environment() -> None:
+    """Test loading settings from the environment."""
+    with mock.patch.dict(
+        os.environ,
+        {
+            "DJANGO_CA_SETTINGS": "ignored",
+            "DJANGO_CA_ALLOWED_HOSTS": "example.com example.net",
+            "DJANGO_CA_CA_ENABLE_ACME": "TRUE",
+            "DJANGO_CA_CA_ENABLE_REST_API": "1",
+            "DJANGO_CA_ENABLE_ADMIN": "yEs",
+            "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR",
+        },
+    ):
+        assert dict(load_settings_from_environment()) == {
+            "ALLOWED_HOSTS": ["example.com", "example.net"],
+            "CA_ENABLE_ACME": True,
+            "CA_ENABLE_REST_API": True,
+            "ENABLE_ADMIN": True,
+            "SOME_OTHER_VALUE": "FOOBAR",
+        }
+
+
+def test_update_database_setting_from_environment_with_postgres_with_defaults() -> None:
+    """Test loading database settings for PostgreSQL with default values."""
+    databases = {"default": {"ENGINE": "django.db.backends.postgresql"}}
+    with mock.patch.dict(os.environ, {}):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres",
+        "PASSWORD": "postgres",
+        "USER": "postgres",
+    }
+
+
+def test_update_database_setting_from_environment_with_postgres_with_values() -> None:
+    """Test loading database settings for PostgreSQL with values from the environment."""
+    databases = {"default": {"ENGINE": "django.db.backends.postgresql"}}
+    with mock.patch.dict(
+        os.environ,
+        {
+            "POSTGRES_PASSWORD": "custom-password",
+            "POSTGRES_USER": "custom-user",
+            "POSTGRES_DB": "custom-name",
+        },
+    ):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "custom-name",
+        "PASSWORD": "custom-password",
+        "USER": "custom-user",
+    }
+
+
+def test_update_database_setting_from_environment_with_postgres_already_configured() -> None:
+    """Test loading database settings for PostgreSQL with values already configured."""
+    databases = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "name",
+            "PASSWORD": "password",
+            "USER": "user",
+        }
+    }
+    with mock.patch.dict(
+        os.environ,
+        {
+            "POSTGRES_PASSWORD": "custom-password",
+            "POSTGRES_USER": "custom-user",
+            "POSTGRES_DB": "custom-name",
+        },
+    ):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "name",
+        "PASSWORD": "password",
+        "USER": "user",
+    }
+
+
+def test_update_database_setting_from_environment_with_postgres_with_values_from_files(
+    tmp_path: Path,
+) -> None:
+    """Test loading database settings for PostgreSQL with values from a file."""
+    databases = {"default": {"ENGINE": "django.db.backends.postgresql"}}
+    for key in ("db", "user", "password"):
+        path = str(tmp_path / key)
+        with open(path, "w", encoding="utf-8") as stream:
+            stream.write(f"custom-{key}")
+
+    with mock.patch.dict(
+        os.environ,
+        {
+            "POSTGRES_PASSWORD_FILE": str(tmp_path / "password"),
+            "POSTGRES_USER_FILE": str(tmp_path / "user"),
+            "POSTGRES_DB_FILE": str(tmp_path / "db"),
+        },
+    ):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "custom-db",
+        "PASSWORD": "custom-password",
+        "USER": "custom-user",
+    }
+
+
+def test_update_database_setting_from_environment_with_mysql_with_defaults() -> None:
+    """Test loading database settings for MySQL with no default values."""
+    databases = {"default": {"ENGINE": "django.db.backends.mysql"}}
+    with mock.patch.dict(os.environ, {}):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {"ENGINE": "django.db.backends.mysql"}
+
+
+def test_update_database_setting_from_environment_with_mysql_with_values() -> None:
+    """Test loading database settings for MySQL with values from the environment."""
+    databases = {"default": {"ENGINE": "django.db.backends.mysql"}}
+    with mock.patch.dict(
+        os.environ,
+        {
+            "MYSQL_PASSWORD": "custom-password",
+            "MYSQL_USER": "custom-user",
+            "MYSQL_DATABASE": "custom-name",
+        },
+    ):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "custom-name",
+        "PASSWORD": "custom-password",
+        "USER": "custom-user",
+    }
+
+
+def test_update_database_setting_from_environment_with_mysql_with_values_from_files(tmp_path: Path) -> None:
+    """Test loading database settings for MySQL with values from a file."""
+    databases = {"default": {"ENGINE": "django.db.backends.mysql"}}
+    for key in ("db", "user", "password"):
+        path = str(tmp_path / key)
+        with open(path, "w", encoding="utf-8") as stream:
+            stream.write(f"custom-{key}")
+
+    with mock.patch.dict(
+        os.environ,
+        {
+            "MYSQL_PASSWORD_FILE": str(tmp_path / "password"),
+            "MYSQL_USER_FILE": str(tmp_path / "user"),
+            "MYSQL_DATABASE_FILE": str(tmp_path / "db"),
+        },
+    ):
+        update_database_setting_from_environment(databases)
+    assert databases["default"] == {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "custom-db",
+        "PASSWORD": "custom-password",
+        "USER": "custom-user",
+    }
+
+
+def test_load_secret_key_already_set() -> None:
+    """Test loading a SECRET_KEY that is already set."""
+    assert load_secret_key("set", "file_path")
+
+
+def test_load_secret_key_with_secret_key_file(tmp_path: Path) -> None:
+    """Test loading a SECRET_KEY from a file."""
+    secret_key_file = tmp_path / "secret_key"
+    with open(secret_key_file, "w", encoding="utf-8") as stream:
+        stream.write("123")
+
+    assert load_secret_key(None, str(secret_key_file)) == "123"
+
+
+def test_load_secret_key_with_no_secret_key_file() -> None:
+    """Test exception when no SECRET_KEY can be determined."""
+    with pytest.raises(ImproperlyConfigured, match=r"Unable to determine SECRET_KEY\.$"):
+        load_secret_key(None, None)
 
 
 class SettingsTestCase(TestCase):
@@ -113,7 +341,7 @@ class SettingsTestCase(TestCase):
         with mock.patch.dict("sys.modules", celery=None), self.settings(CA_USE_CELERY=False):
             self.assertFalse(ca_settings.CA_USE_CELERY)
 
-    def test_ocsp_repsonder_certificate_renewal(self) -> None:
+    def test_ocsp_responder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
         with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL=600):
             self.assertEqual(ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))

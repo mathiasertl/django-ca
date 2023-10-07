@@ -21,14 +21,12 @@ from typing import Any, Dict
 
 from cryptography import x509
 
-from django.conf import settings
-
 import pytest
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, override_tmpcadir
+from django_ca.tests.base import DOC_DIR, certs, override_tmpcadir
 
-BASE = os.path.relpath(settings.DOC_DIR, os.path.dirname(__file__))
+BASE = os.path.relpath(DOC_DIR, os.path.dirname(__file__))
 
 
 @pytest.fixture()

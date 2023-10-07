@@ -35,15 +35,23 @@ from django.conf import settings
 from django.test.utils import override_settings
 from django.utils import timezone
 
-from django_ca import constants
+from django_ca.constants import EXTENSION_KEY_OIDS
 from django_ca.extensions import parse_extension
 from django_ca.profiles import profiles
+from django_ca.tests.base.constants import (
+    CRYPTOGRAPHY_VERSION,
+    DOC_DIR,
+    FIXTURES_DIR,
+    GECKODRIVER_PATH,
+    RUN_SELENIUM_TESTS,
+)
 from django_ca.utils import add_colons, ca_storage, format_name
 
 FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
 KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": CertificateIssuerPrivateKeyTypes})
 CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest})
 _PubDict = typing.TypedDict("_PubDict", {"pem": str, "parsed": x509.Certificate})
+
 
 # Regex used by certbot to split PEM-encoded certificate chains/bundles as of 2022-01-23. See also:
 # 	https://github.com/certbot/certbot/blob/master/certbot/certbot/crypto_util.py
@@ -64,7 +72,7 @@ class PubDict(_PubDict, total=False):
 
 
 def _load_key(data: Dict[Any, Any]) -> KeyDict:
-    with open(os.path.join(settings.FIXTURES_DIR, data["key_filename"]), "rb") as stream:
+    with open(os.path.join(FIXTURES_DIR, data["key_filename"]), "rb") as stream:
         raw = stream.read()
 
     parsed = serialization.load_pem_private_key(
@@ -78,7 +86,7 @@ def _load_key(data: Dict[Any, Any]) -> KeyDict:
 
 
 def _load_csr(data: Dict[Any, Any]) -> CsrDict:
-    with open(os.path.join(settings.FIXTURES_DIR, data["csr_filename"]), "rb") as stream:
+    with open(os.path.join(FIXTURES_DIR, data["csr_filename"]), "rb") as stream:
         raw = stream.read()
 
     parsed = x509.load_pem_x509_csr(raw)
@@ -90,7 +98,7 @@ def _load_csr(data: Dict[Any, Any]) -> CsrDict:
 
 def _load_pub(data: Dict[Any, Any]) -> PubDict:
     # basedir is set for certificates in docs/source/_files
-    basedir = data.get("basedir", settings.FIXTURES_DIR)
+    basedir = data.get("basedir", FIXTURES_DIR)
     path = os.path.join(basedir, data["pub_filename"])
 
     with open(path, "rb") as stream:
@@ -111,7 +119,7 @@ def _load_pub(data: Dict[Any, Any]) -> PubDict:
 
 cryptography_version = tuple(int(t) for t in cryptography.__version__.split(".")[:2])
 
-with open(os.path.join(settings.FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
+with open(os.path.join(FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
     _fixture_data = json.load(cert_data_stream)
 certs = _fixture_data.get("certs")
 
@@ -341,7 +349,7 @@ for cert_name, cert_data in certs.items():
     cert_data["valid_until_str"] = cert_data["valid_until"].replace(tzinfo=tz.utc).isoformat(" ")
 
     # parse extensions
-    for ext_key in constants.EXTENSION_KEY_OIDS:
+    for ext_key in EXTENSION_KEY_OIDS:
         if cert_data.get(ext_key):
             cert_data[f"{ext_key}_serialized"] = cert_data[ext_key]
 
@@ -423,12 +431,10 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
 
         # copy CAs
         for filename in [v["key_filename"] for v in certs.values() if v["key_filename"] is not False]:
-            shutil.copy(os.path.join(settings.FIXTURES_DIR, filename), self.options["CA_DIR"])
+            shutil.copy(os.path.join(FIXTURES_DIR, filename), self.options["CA_DIR"])
 
         # Copy OCSP public key (required for OCSP tests)
-        shutil.copy(
-            os.path.join(settings.FIXTURES_DIR, certs["profile-ocsp"]["pub_filename"]), self.options["CA_DIR"]
-        )
+        shutil.copy(os.path.join(FIXTURES_DIR, certs["profile-ocsp"]["pub_filename"]), self.options["CA_DIR"])
 
         # pylint: disable=attribute-defined-outside-init
         self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
@@ -448,3 +454,15 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         self.mock.stop()
         self.mock_.stop()
         shutil.rmtree(self.options["CA_DIR"])
+
+
+__all__ = [
+    "CRYPTOGRAPHY_VERSION",
+    "DOC_DIR",
+    "FIXTURES_DIR",
+    "GECKODRIVER_PATH",
+    "RUN_SELENIUM_TESTS",
+    "dns",
+    "rdn",
+    "uri",
+]

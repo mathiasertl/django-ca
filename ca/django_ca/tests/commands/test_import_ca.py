@@ -16,6 +16,7 @@
 import os
 import tempfile
 import typing
+from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
@@ -27,7 +28,8 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base import certs, mock_cadir, override_tmpcadir, timestamps
+from django_ca.tests.base import mock_cadir, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -36,8 +38,8 @@ class ImportCATest(TestCaseMixin, TestCase):
 
     def import_ca(self, *args: str) -> CertificateAuthority:
         """Shortcut for running the import_ca command."""
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
+        key_path = str(CERT_DATA["root"]["key_path"])
+        pem_path = str(CERT_DATA["root"]["pub_path"])
 
         out, err = self.cmd_e2e(["import_ca", self.hostname] + list(args) + [key_path, pem_path])
         self.assertEqual(out, "")
@@ -53,12 +55,12 @@ class ImportCATest(TestCaseMixin, TestCase):
         Note: freeze time because we verify the certificate here.
         """
         cas = {
-            name: data for name, data in certs.items() if data["type"] == "ca" and data.get("key_filename")
+            name: data for name, data in CERT_DATA.items() if data["type"] == "ca" and data.get("key_path")
         }
 
         for name, data in cas.items():
-            key_path = os.path.join(settings.FIXTURES_DIR, data["key_filename"])
-            pem_path = os.path.join(settings.FIXTURES_DIR, data["pub_filename"])
+            key_path = CERT_DATA[name]["key_path"]
+            pem_path = CERT_DATA[name]["pub_path"]
             out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
             self.assertEqual(out, "")
@@ -109,13 +111,13 @@ class ImportCATest(TestCaseMixin, TestCase):
         """
         cas = {
             name: data
-            for name, data in certs.items()
-            if data.get("key_der_filename") and data["type"] == "ca"
+            for name, data in CERT_DATA.items()
+            if data.get("key_der_path") and data["type"] == "ca"
         }
 
         for name, data in cas.items():
-            key_path = os.path.join(settings.FIXTURES_DIR, data["key_der_filename"])
-            pem_path = os.path.join(settings.FIXTURES_DIR, data["pub_der_filename"])
+            key_path = data["key_der_path"]
+            pem_path = data["pub_der_path"]
             out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
             self.assertEqual(out, "")
@@ -161,8 +163,8 @@ class ImportCATest(TestCaseMixin, TestCase):
         """
         name = "testname"
         password = b"testpassword"
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
+        key_path = CERT_DATA["root"]["key_path"]
+        pem_path = CERT_DATA["root"]["pub_path"]
         out, err = self.cmd("import_ca", name, key_path, pem_path, password=password)
 
         self.assertEqual(out, "")
@@ -179,8 +181,8 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         key = typing.cast(rsa.RSAPrivateKey, ca.key(password))
         self.assertIsInstance(key, rsa.RSAPrivateKey)
-        self.assertEqual(key.key_size, certs["root"]["key_size"])
-        self.assertEqual(ca.serial, certs["root"]["serial"])
+        self.assertEqual(key.key_size, CERT_DATA["root"]["key_size"])
+        self.assertEqual(ca.serial, CERT_DATA["root"]["serial"])
 
     @override_tmpcadir()
     def test_sign_options(self) -> None:
@@ -247,14 +249,14 @@ class ImportCATest(TestCaseMixin, TestCase):
     def test_permission_denied(self) -> None:
         """Test importing a CA when we can't ready one of the files."""
         name = "testname"
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
-        self.assertTrue(os.path.exists(key_path))  # just make sure that file exists
-        self.assertTrue(os.path.exists(pem_path))  # just make sure that file exists
+        key_path = CERT_DATA["root"]["key_path"]
+        pem_path = CERT_DATA["root"]["pub_path"]
+        self.assertTrue(key_path.exists())  # just make sure that file exists
+        self.assertTrue(pem_path.exists())  # just make sure that file exists
         os.chmod(settings.CA_DIR, 0o000)
 
         try:
-            serial = certs["root"]["serial"].replace(":", "")
+            serial = CERT_DATA["root"]["serial"].replace(":", "")
             error = rf"^{serial}\.key: Permission denied: Could not open file for writing$"
             with self.assertCommandError(error):
                 self.cmd("import_ca", name, key_path, pem_path)
@@ -265,8 +267,8 @@ class ImportCATest(TestCaseMixin, TestCase):
     def test_create_cadir(self) -> None:
         """Test importing a CA when the directory does not yet exist."""
         name = "testname"
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
+        key_path = CERT_DATA["root"]["key_path"]
+        pem_path = CERT_DATA["root"]["pub_path"]
 
         with tempfile.TemporaryDirectory() as tempdir:
             ca_dir = os.path.join(tempdir, "foo", "bar")
@@ -276,8 +278,8 @@ class ImportCATest(TestCaseMixin, TestCase):
     def test_create_cadir_permission_denied(self) -> None:
         """Test importing a CA when the directory does not yet exist and we cannot create it."""
         name = "testname"
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_filename"])
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_filename"])
+        key_path = CERT_DATA["root"]["key_path"]
+        pem_path = CERT_DATA["root"]["pub_path"]
 
         with tempfile.TemporaryDirectory() as tempdir:
             os.chmod(tempdir, 0o000)
@@ -290,18 +292,16 @@ class ImportCATest(TestCaseMixin, TestCase):
     def test_bogus_pub(self) -> None:
         """Test importing a CA with a bogus public key."""
         name = "testname"
-        pem_path = os.path.join(settings.FIXTURES_DIR, __file__)
-        key_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["key_der_filename"])
+        key_path = CERT_DATA["root"]["key_path"]
         with self.assertCommandError(r"^Unable to load public key\.$"):
-            self.cmd("import_ca", name, key_path, pem_path)
+            self.cmd("import_ca", name, key_path, Path(__file__).resolve())
         self.assertEqual(CertificateAuthority.objects.count(), 0)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus_priv(self) -> None:
         """Test importing a CA with a bogus private key."""
         name = "testname"
-        pem_path = os.path.join(settings.FIXTURES_DIR, certs["root"]["pub_der_filename"])
-        key_path = os.path.join(settings.FIXTURES_DIR, __file__)
+        pem_path = CERT_DATA["root"]["pub_path"]
         with self.assertCommandError(r"^Unable to load private key\.$"):
-            self.cmd("import_ca", name, key_path, pem_path)
+            self.cmd("import_ca", name, Path(__file__).resolve(), pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)
