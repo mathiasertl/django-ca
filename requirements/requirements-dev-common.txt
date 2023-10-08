@@ -4,7 +4,7 @@ Jinja2==3.1.2
 PyYAML==6.0.1
 # Sphinx 7 requires Python>3.8, but we still support Python 3.8.
 Sphinx<7
-coverage[toml]==7.3.1
+coverage[toml]==7.3.2
 django-ninja==0.22.2
 selenium==4.13.0
 semantic-version==2.10.0

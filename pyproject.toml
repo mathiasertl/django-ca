@@ -7,11 +7,11 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
-python = ["3.8.17", "3.9.17", "3.10.12", "3.11.4"]
+python = ["3.8.18", "3.9.18", "3.10.13", "3.11.6", "3.12.0"]
 # https://www.djangoproject.com/download/
 django = ["3.2.20", "4.2.5"]
-cryptography = ["41.0.3"]
-acme = ["2.6.0"]
+cryptography = ["41.0.4"]
+acme = ["2.6.0", "2.7.0"]
 
 # https://alpinelinux.org/releases/
 alpine = ["3.16", "3.17", "3.18"]
@@ -75,6 +75,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Security :: Cryptography",
     "Topic :: Security",
