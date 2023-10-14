@@ -23,13 +23,9 @@ Run these steps when you begin to create a new release:
 Pin requirements
 ================
 
-Create a file with pinned requirements, so that users can reliably reproduce a
-setup::
+Create a file with pinned requirements, so that users can reliably reproduce a setup::
 
-   $ python -m venv venv
-   $ venv/bin/pip install -U pip setuptools wheel
-   $ venv/bin/pip install -e .[api,celery,redis,psycopg3,yaml]
-   $ venv/bin/pip freeze | grep -v django-ca > requirements/requirements-pinned.txt
+   $ ./dev.py pin-requirements
 
 docker-compose
 ==============

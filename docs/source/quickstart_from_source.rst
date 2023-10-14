@@ -99,7 +99,7 @@ last command with:
 .. code-block:: console
 
    root@host:~# /opt/django-ca/venv/bin/pip install -U \
-   >     -r /opt/django-ca/src/django-ca/requirements/requirements-pinned.txt \
+   >     -r /opt/django-ca/src/django-ca/requirements-pinned.txt \
    >     -e /opt/django-ca/src/django-ca
 
 Both commands will install PostgreSQL support, but *not* install MySQL support. If you want to use MySQL,
