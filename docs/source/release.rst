@@ -31,12 +31,6 @@ setup::
    $ venv/bin/pip install -e .[api,celery,redis,psycopg3,yaml]
    $ venv/bin/pip freeze | grep -v django-ca > requirements/requirements-pinned.txt
 
-... and then copy that file to the archive::
-
-   $ mkdir docs/source/_files/$version/
-   $ cp requirements/requirements-pinned.txt \
-   >     docs/source/_files/$version/requirements.txt
-
 docker-compose
 ==============
 
