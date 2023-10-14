@@ -27,8 +27,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.tests.base import certs, override_tmpcadir, uri
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir, uri
 
 
 class CRLValidationTestCase(TestCaseMixin, TestCase):
@@ -36,7 +37,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.csr_pem = certs["root-cert"]["csr"]["pem"]  # just some CSR
+        self.csr_pem = CERT_DATA["root-cert"]["csr"]["pem"]  # just some CSR
 
     def assertFullName(  # pylint: disable=invalid-name
         self,

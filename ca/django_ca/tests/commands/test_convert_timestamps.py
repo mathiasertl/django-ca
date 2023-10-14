@@ -19,14 +19,14 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
-from django_ca.tests.base import timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 
 INPUT_PATH = "django_ca.management.commands.convert_timestamps.input"
 
 
 @override_settings(USE_TZ=False)
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
     """Test the convert_timestamps management command."""
 
@@ -40,11 +40,11 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         acme_auth = AcmeAuthorization.objects.create(order=acme_order)
         acme_challenge = AcmeChallenge.objects.create(auth=acme_auth)
 
-        self.assertEqual(self.ca.created, timestamps["everything_valid_naive"])
-        self.assertEqual(self.cert.created, timestamps["everything_valid_naive"])
-        self.assertEqual(acme_account.created, timestamps["everything_valid_naive"])
+        self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(self.cert.created, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(
-            acme_order.expires, timestamps["everything_valid_naive"] + ca_settings.ACME_ORDER_VALIDITY
+            acme_order.expires, TIMESTAMPS["everything_valid_naive"] + ca_settings.ACME_ORDER_VALIDITY
         )
         self.assertIsNone(acme_challenge.validated)
 
@@ -57,11 +57,11 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
             acme_order.refresh_from_db()
             acme_challenge.refresh_from_db()
 
-            self.assertEqual(self.ca.created, timestamps["everything_valid"])
-            self.assertEqual(self.cert.created, timestamps["everything_valid"])
-            self.assertEqual(acme_account.created, timestamps["everything_valid"])
+            self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid"])
+            self.assertEqual(self.cert.created, TIMESTAMPS["everything_valid"])
+            self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid"])
             self.assertEqual(
-                acme_order.expires, timestamps["everything_valid"] + ca_settings.ACME_ORDER_VALIDITY
+                acme_order.expires, TIMESTAMPS["everything_valid"] + ca_settings.ACME_ORDER_VALIDITY
             )
             self.assertIsNone(self.ca.revoked_date)
             self.assertIsNone(self.ca.compromised)
@@ -73,7 +73,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
 
     def test_full_conversion(self) -> None:
         """Test conversion with all optional timestamps set."""
-        now = timestamps["everything_valid_naive"]
+        now = TIMESTAMPS["everything_valid_naive"]
         self.ca.revoked_date = now
         self.ca.compromised = now
         self.ca.save()
@@ -86,15 +86,15 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         acme_auth = AcmeAuthorization.objects.create(order=acme_order)
         acme_challenge = AcmeChallenge.objects.create(auth=acme_auth, validated=now)
 
-        self.assertEqual(self.ca.created, timestamps["everything_valid_naive"])
-        self.assertEqual(self.ca.revoked_date, timestamps["everything_valid_naive"])
-        self.assertEqual(self.ca.compromised, timestamps["everything_valid_naive"])
-        self.assertEqual(self.cert.created, timestamps["everything_valid_naive"])
-        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid_naive"])
-        self.assertEqual(self.cert.compromised, timestamps["everything_valid_naive"])
-        self.assertEqual(acme_account.created, timestamps["everything_valid_naive"])
+        self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(self.ca.revoked_date, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(self.ca.compromised, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(self.cert.created, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(self.cert.revoked_date, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(self.cert.compromised, TIMESTAMPS["everything_valid_naive"])
+        self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(
-            acme_order.expires, timestamps["everything_valid_naive"] + ca_settings.ACME_ORDER_VALIDITY
+            acme_order.expires, TIMESTAMPS["everything_valid_naive"] + ca_settings.ACME_ORDER_VALIDITY
         )
         self.assertEqual(acme_order.not_before, now)
         self.assertEqual(acme_order.not_after, now)
@@ -109,28 +109,28 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
             acme_order.refresh_from_db()
             acme_challenge.refresh_from_db()
 
-            self.assertEqual(self.ca.created, timestamps["everything_valid"])
-            self.assertEqual(self.ca.revoked_date, timestamps["everything_valid"])
-            self.assertEqual(self.ca.compromised, timestamps["everything_valid"])
-            self.assertEqual(self.cert.created, timestamps["everything_valid"])
-            self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
-            self.assertEqual(self.cert.compromised, timestamps["everything_valid"])
-            self.assertEqual(acme_account.created, timestamps["everything_valid"])
+            self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid"])
+            self.assertEqual(self.ca.revoked_date, TIMESTAMPS["everything_valid"])
+            self.assertEqual(self.ca.compromised, TIMESTAMPS["everything_valid"])
+            self.assertEqual(self.cert.created, TIMESTAMPS["everything_valid"])
+            self.assertEqual(self.cert.revoked_date, TIMESTAMPS["everything_valid"])
+            self.assertEqual(self.cert.compromised, TIMESTAMPS["everything_valid"])
+            self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid"])
             self.assertEqual(
-                acme_order.expires, timestamps["everything_valid"] + ca_settings.ACME_ORDER_VALIDITY
+                acme_order.expires, TIMESTAMPS["everything_valid"] + ca_settings.ACME_ORDER_VALIDITY
             )
-            self.assertEqual(acme_order.not_before, timestamps["everything_valid"])
-            self.assertEqual(acme_order.not_after, timestamps["everything_valid"])
-            self.assertEqual(acme_challenge.validated, timestamps["everything_valid"])
+            self.assertEqual(acme_order.not_before, TIMESTAMPS["everything_valid"])
+            self.assertEqual(acme_order.not_after, TIMESTAMPS["everything_valid"])
+            self.assertEqual(acme_challenge.validated, TIMESTAMPS["everything_valid"])
 
     def test_no_confirmation(self) -> None:
         """Test that nothing happens if the user doesn't give confirmation."""
-        self.assertEqual(self.ca.created, timestamps["everything_valid_naive"])
+        self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="no"):
             out, err = self.cmd("convert_timestamps")
         self.assertIn("Aborting.", out)
         self.ca.refresh_from_db()
-        self.assertEqual(self.ca.created, timestamps["everything_valid_naive"])
+        self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
 
     def test_use_tz_is_false(self) -> None:
         """Test error when USE_TZ=False."""

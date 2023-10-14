@@ -23,10 +23,11 @@ from freezegun import freeze_time
 
 from django_ca.models import AcmeAccount, AcmeCertificate, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import CERT_PEM_REGEX, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_PEM_REGEX, TIMESTAMPS
+from django_ca.tests.base.utils import override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeCertificateViewTestCase(
     AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase
 ):

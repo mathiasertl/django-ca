@@ -30,20 +30,23 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
     crl_distribution_points,
     distribution_point,
+    dns,
     extended_key_usage,
     key_usage,
     name_constraints,
     ocsp_no_check,
+    override_tmpcadir,
     precert_poison,
     subject_alternative_name,
     tls_feature,
+    uri,
 )
 
 
@@ -371,8 +374,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(CertificateAuthority.objects.filter(name=name).count(), 0)
 
 
-@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), CA_DEFAULT_CA=certs["child"]["serial"])
-@freeze_time(timestamps["everything_valid"])
+@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), CA_DEFAULT_CA=CERT_DATA["child"]["serial"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
 
@@ -393,13 +396,13 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
         with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is disabled\.$"):
             CertificateAuthority.objects.default()
 
-    @freeze_time(timestamps["everything_expired"])
+    @freeze_time(TIMESTAMPS["everything_expired"])
     def test_expired(self) -> None:
         """Test that an exception is raised if CA is expired."""
         with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is expired\.$"):
             CertificateAuthority.objects.default()
 
-    @freeze_time(timestamps["before_everything"])
+    @freeze_time(TIMESTAMPS["before_everything"])
     def test_not_yet_valid(self) -> None:
         """Test that an exception is raised if CA is not yet valid."""
         with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is not yet valid\.$"):
@@ -413,7 +416,7 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
         self.assertEqual(CertificateAuthority.objects.default(), ca)
 
     @override_settings(CA_DEFAULT_CA="")
-    @freeze_time(timestamps["everything_expired"])
+    @freeze_time(TIMESTAMPS["everything_expired"])
     def test_default_ca_expired(self) -> None:
         """Test that exception is raised if no CA is currently valid."""
         with self.assertImproperlyConfigured(r"^No CA is currently usable\.$"):
@@ -430,7 +433,7 @@ class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
 class CreateCertTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
 
-    csr = certs["root-cert"]["csr"]["parsed"]
+    csr = CERT_DATA["root-cert"]["csr"]["parsed"]
     load_cas = ("root",)
 
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
@@ -486,7 +489,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCertSignals(False, False), self.assertRaisesRegex(TypeError, msg):
             Certificate.objects.create_cert(
                 self.ca,
-                csr=certs["root-cert"]["csr"]["parsed"],
+                csr=CERT_DATA["root-cert"]["csr"]["parsed"],
                 profile=False,  # type: ignore[arg-type] # what we're testing
                 subject=self.subject,
                 add_crl_url=False,

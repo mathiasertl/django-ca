@@ -23,7 +23,7 @@ from django.urls import reverse, reverse_lazy
 from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base import timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -39,7 +39,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
         self.ca.acme_enabled = True
         self.ca.save()
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_default(self) -> None:
         """Test the default directory view."""
         with mock.patch("secrets.token_bytes", return_value=b"foobar"):
@@ -58,7 +58,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             },
         )
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_named_ca(self) -> None:
         """Test getting directory for named CA."""
         url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
@@ -79,7 +79,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             },
         )
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_meta(self) -> None:
         """Test the meta property."""
         self.ca.website = "http://ca.example.com"
@@ -112,7 +112,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             },
         )
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_acme_default_disabled(self) -> None:
         """Test that fetching the default CA with ACME disabled doesn't work."""
         self.ca.acme_enabled = False
@@ -130,7 +130,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             },
         )
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_acme_disabled(self) -> None:
         """Test that fetching the default CA with ACME disabled doesn't work."""
         self.ca.acme_enabled = False
@@ -164,7 +164,7 @@ class DirectoryTestCase(TestCaseMixin, TestCase):
             },
         )
 
-    @freeze_time(timestamps["everything_expired"])
+    @freeze_time(TIMESTAMPS["everything_expired"])
     def test_expired_ca(self) -> None:
         """Test using default CA when all CAs are expired."""
         response = self.client.get(self.url)

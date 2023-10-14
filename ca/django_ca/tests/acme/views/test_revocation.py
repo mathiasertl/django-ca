@@ -30,12 +30,13 @@ from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
+from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import get_cert_builder
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeCertificateRevocationViewTestCase(
     AcmeWithAccountViewTestCaseMixin[acme.messages.Revocation], TestCase
 ):
@@ -80,7 +81,7 @@ class AcmeCertificateRevocationViewTestCase(
 
         self.cert.refresh_from_db()
         self.assertTrue(self.cert.revoked)
-        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
+        self.assertEqual(self.cert.revoked_date, TIMESTAMPS["everything_valid"])
         self.assertEqual(self.cert.revoked_reason, ReasonFlags.unspecified.value)
 
     @override_settings(USE_TZ=False)
@@ -91,7 +92,7 @@ class AcmeCertificateRevocationViewTestCase(
 
         self.cert.refresh_from_db()
         self.assertTrue(self.cert.revoked)
-        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid_naive"])
+        self.assertEqual(self.cert.revoked_date, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(self.cert.revoked_reason, ReasonFlags.unspecified.value)
 
     def test_reason_code(self) -> None:
@@ -102,7 +103,7 @@ class AcmeCertificateRevocationViewTestCase(
 
         self.cert.refresh_from_db()
         self.assertTrue(self.cert.revoked)
-        self.assertEqual(self.cert.revoked_date, timestamps["everything_valid"])
+        self.assertEqual(self.cert.revoked_date, TIMESTAMPS["everything_valid"])
         self.assertEqual(self.cert.revoked_reason, ReasonFlags.affiliation_changed.name)
 
     def test_already_revoked(self) -> None:
@@ -132,7 +133,7 @@ class AcmeCertificateRevocationViewTestCase(
     def test_wrong_certificate(self) -> None:
         """Test sending a different certificate with the same serial."""
         # Create a clone of the existing certificate with the same serial number
-        pkey = certs["root-cert"]["csr"]["parsed"].public_key()
+        pkey = CERT_DATA["root-cert"]["csr"]["parsed"].public_key()
         builder = get_cert_builder(self.cert.expires, serial=self.cert.pub.loaded.serial_number)
         builder = builder.public_key(pkey)
         builder = builder.issuer_name(self.ca.subject)
@@ -147,13 +148,13 @@ class AcmeCertificateRevocationViewTestCase(
 
     def test_pass_csr(self) -> None:
         """Send a CSR instead of a certificate."""
-        req = X509Req.from_cryptography(certs["root-cert"]["csr"]["parsed"])
+        req = X509Req.from_cryptography(CERT_DATA["root-cert"]["csr"]["parsed"])
         message = self.csr_class(certificate=jose.util.ComparableX509(req))
         resp = self.acme(self.url, message, kid=self.kid)
         self.assertMalformed(resp, "Could not decode 'certificate'", regex=True)
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeCertificateRevocationWithAuthorizationsViewTestCase(AcmeCertificateRevocationViewTestCase):
     """Test certificate revocation by signing the request with the compromised certificate."""
 
@@ -166,7 +167,7 @@ class AcmeCertificateRevocationWithAuthorizationsViewTestCase(AcmeCertificateRev
         )
 
     def acme(self, *args: Any, **kwargs: Any) -> "HttpResponse":
-        kwargs.setdefault("cert", certs["child-cert"]["key"]["parsed"])
+        kwargs.setdefault("cert", CERT_DATA["child-cert"]["key"]["parsed"])
         kwargs["kid"] = self.child_kid
         return super().acme(*args, **kwargs)
 
@@ -210,20 +211,20 @@ class AcmeCertificateRevocationWithAuthorizationsViewTestCase(AcmeCertificateRev
         self.assertUnauthorized(resp, "Certificate contains non-DNS subjectAlternativeNames.")
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeCertificateRevocationWithJWKViewTestCase(AcmeCertificateRevocationViewTestCase):
     """Test certificate revocation by signing the request with the compromised certificate."""
 
     requires_kid = False
 
     def acme(self, *args: Any, **kwargs: Any) -> "HttpResponse":
-        kwargs.setdefault("cert", certs[self.default_cert]["key"]["parsed"])
+        kwargs.setdefault("cert", CERT_DATA[self.default_cert]["key"]["parsed"])
         kwargs["kid"] = None
         return super().acme(*args, **kwargs)
 
     def test_wrong_signer(self) -> None:
         """Sign the request with the wrong certificate."""
-        cert = certs["root-cert"]["key"]["parsed"]
+        cert = CERT_DATA["root-cert"]["key"]["parsed"]
         resp = self.acme(self.url, self.message, cert=cert)
         self.assertUnauthorized(resp, "Request signed by the wrong certificate.")
 

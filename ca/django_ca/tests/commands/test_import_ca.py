@@ -28,9 +28,9 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base import mock_cadir, override_tmpcadir, timestamps
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import mock_cadir, override_tmpcadir
 
 
 class ImportCATest(TestCaseMixin, TestCase):
@@ -48,7 +48,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         return CertificateAuthority.objects.get(name=self.hostname)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_basic(self) -> None:
         """Test basic import command.
 
@@ -103,7 +103,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertIs(ca.acme_requires_contact, True)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_der(self) -> None:
         """Test importing a der key.
 
@@ -155,7 +155,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertEqual(ca.serial, data["serial"])
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_password(self) -> None:
         """Test importing a CA with a password for the private key.
 

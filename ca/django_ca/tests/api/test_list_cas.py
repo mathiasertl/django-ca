@@ -26,7 +26,7 @@ from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.api.conftest import APIPermissionTestBase, ListResponse
-from django_ca.tests.base import timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
 
 path = reverse_lazy("django_ca:api:list_certificate_authorities")
@@ -57,7 +57,7 @@ def test_empty_list_view(api_client: Client) -> None:
     assert response.json() == []
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_list_view(api_client: Client, expected_response: ListResponse) -> None:
     """Test an ordinary list view."""
     response = request(api_client)
@@ -65,7 +65,7 @@ def test_list_view(api_client: Client, expected_response: ListResponse) -> None:
     assert response.json() == expected_response, response.json()
 
 
-@freeze_time(timestamps["everything_expired"])
+@freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_certificate_authorities_are_excluded(api_client: Client) -> None:
     """Test that expired CAs are excluded by default."""
     response = request(api_client)
@@ -73,7 +73,7 @@ def test_expired_certificate_authorities_are_excluded(api_client: Client) -> Non
     assert response.json() == [], response.json()
 
 
-@freeze_time(timestamps["everything_expired"])
+@freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_filter(api_client: Client, expected_response: ListResponse) -> None:
     """Test that expired CAs are excluded by default."""
     response = request(api_client, {"expired": "1"})
@@ -81,7 +81,7 @@ def test_expired_filter(api_client: Client, expected_response: ListResponse) -> 
     assert response.json() == expected_response, response.json()
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_disabled_ca(api_client: Client, root: CertificateAuthority) -> None:
     """Test that a disabled CA is *not* included."""
     root.enabled = False

@@ -24,11 +24,11 @@ from freezegun import freeze_time
 
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.api.conftest import APIPermissionTestBase
-from django_ca.tests.base import certs, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 
 path = reverse_lazy(
     "django_ca:api:view_certificate",
-    kwargs={"serial": certs["root"]["serial"], "certificate_serial": certs["root-cert"]["serial"]},
+    kwargs={"serial": CERT_DATA["root"]["serial"], "certificate_serial": CERT_DATA["root-cert"]["serial"]},
 )
 
 
@@ -38,7 +38,7 @@ def api_permission() -> Tuple[Type[Model], str]:
     return Certificate, "view_certificate"
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_detail_view(api_client: Client, root_cert_response: Dict[str, Any]) -> None:
     """Test an ordinary detail view."""
     response = api_client.get(path)
@@ -46,7 +46,7 @@ def test_detail_view(api_client: Client, root_cert_response: Dict[str, Any]) -> 
     assert response.json() == root_cert_response, response.json()
 
 
-@freeze_time(timestamps["everything_expired"])
+@freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_certificate(api_client: Client, root_cert_response: Dict[str, Any]) -> None:
     """Test that we can view the certificate even if it is expired."""
     response = api_client.get(path)
@@ -54,7 +54,7 @@ def test_expired_certificate(api_client: Client, root_cert_response: Dict[str, A
     assert response.json() == root_cert_response, response.json()
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_disabled_ca(root: CertificateAuthority, api_client: Client) -> None:
     """Test that certificates for a disabled can *not* be viewed."""
     root.enabled = False

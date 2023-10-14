@@ -25,10 +25,10 @@ from freezegun import freeze_time
 
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messages.Registration], TestCase):
     """Test updating and ACME account."""
 

@@ -14,7 +14,6 @@
 """Test OCSP related views."""
 
 import base64
-import os
 import typing
 from datetime import datetime, timedelta
 from http import HTTPStatus
@@ -41,9 +40,10 @@ from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import FIXTURES_DIR, certs, ocsp_data, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.typehints import HttpResponse
+from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import ca_storage, hex_to_bytes
 from django_ca.views import OCSPView
 
@@ -53,18 +53,17 @@ from django_ca.views import OCSPView
 #
 # WHERE serial is an int: (int('0x<hex>'.replace(':', '').lower(), 0)
 def _load_req(req: str) -> bytes:
-    cert_path = os.path.join(FIXTURES_DIR, "ocsp", req)
-    with open(cert_path, "rb") as stream:
+    with open(FIXTURES_DIR / "ocsp" / req, "rb") as stream:
         return stream.read()
 
 
-ocsp_profile = certs["profile-ocsp"]
-ocsp_key_path = os.path.join(FIXTURES_DIR, ocsp_profile["key_filename"])
-ocsp_pem_path = os.path.join(FIXTURES_DIR, ocsp_profile["pub_filename"])
+ocsp_profile = CERT_DATA["profile-ocsp"]
+ocsp_key_path = ocsp_profile["key_path"]
+ocsp_pem_path = ocsp_profile["pub_path"]
 ocsp_pem = ocsp_profile["pub"]["pem"]
-req1 = _load_req(ocsp_data["nonce"]["filename"])
-req1_nonce = hex_to_bytes(ocsp_data["nonce"]["nonce"])
-req_no_nonce = _load_req(ocsp_data["no-nonce"]["filename"])
+req1 = _load_req(FIXTURES_DATA["ocsp"]["nonce"]["filename"])
+req1_nonce = hex_to_bytes(FIXTURES_DATA["ocsp"]["nonce"]["nonce"])
+req_no_nonce = _load_req(FIXTURES_DATA["ocsp"]["no-nonce"]["filename"])
 unknown_req = _load_req("unknown-serial")
 multiple_req = _load_req("multiple-serial")
 
@@ -72,7 +71,7 @@ urlpatterns = [
     path(
         "ocsp/",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert=ocsp_profile["pub_filename"],
             expires=1200,
@@ -82,9 +81,9 @@ urlpatterns = [
     path(
         "ocsp/serial/",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
-            responder_cert=certs["profile-ocsp"]["serial"],
+            responder_cert=CERT_DATA["profile-ocsp"]["serial"],
             expires=1300,
         ),
         name="post-serial",
@@ -92,7 +91,7 @@ urlpatterns = [
     path(
         "ocsp/full-pem/",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert=ocsp_pem,
             expires=1400,
@@ -102,9 +101,9 @@ urlpatterns = [
     path(
         "ocsp/loaded-cryptography/",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
-            responder_cert=certs["profile-ocsp"]["pub"]["parsed"],
+            responder_cert=CERT_DATA["profile-ocsp"]["pub"]["parsed"],
             expires=1500,
         ),
         name="post-loaded-cryptography",
@@ -112,7 +111,7 @@ urlpatterns = [
     re_path(
         r"^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert=ocsp_profile["pub_filename"],
         ),
@@ -121,7 +120,7 @@ urlpatterns = [
     re_path(
         r"^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
-            ca=certs["root"]["serial"],
+            ca=CERT_DATA["root"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert=ocsp_profile["pub_filename"],
             ca_ocsp=True,
@@ -140,7 +139,7 @@ urlpatterns = [
     re_path(
         r"^ocsp/false-key/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key="foobar",
             responder_cert=ocsp_profile["pub_filename"],
             expires=1200,
@@ -151,7 +150,7 @@ urlpatterns = [
     re_path(
         r"^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert="/false/foobar/",
         ),
@@ -160,7 +159,7 @@ urlpatterns = [
     re_path(
         r"^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert="AA:BB:CC",
         ),
@@ -169,7 +168,7 @@ urlpatterns = [
     re_path(
         r"^ocsp/false-pem-full/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
-            ca=certs["child"]["serial"],
+            ca=CERT_DATA["child"]["serial"],
             responder_key=ocsp_profile["key_filename"],
             responder_cert="-----BEGIN CERTIFICATE-----\nvery-mean!",
         ),
@@ -268,7 +267,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         self.assertIsInstance(response.responder_key_hash, bytes)  # TODO: Validate responder id
         # TODO: validate issuer_key_hash, issuer_name_hash
 
-        # Check timestamps
+        # Check TIMESTAMPS
         self.assertEqual(response.produced_at, datetime.now())
         self.assertEqual(response.this_update, datetime.now())
         self.assertEqual(response.next_update, datetime.now() + timedelta(seconds=expires))
@@ -653,18 +652,18 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
 
 
 @override_settings(ROOT_URLCONF=__name__)
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class OCSPTestView(OCSPManualViewTestCaseMixin, TestCase):
     """Test manually configured OCSPView."""
 
 
 @override_settings(ROOT_URLCONF=__name__, USE_TZ=False)
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class OCSPWithoutTimezoneSupportTestView(OCSPManualViewTestCaseMixin, TestCase):
     """Test manually configured OCSPView but with timezone support."""
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
     """Test generic OCSP view."""
 

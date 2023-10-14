@@ -49,9 +49,9 @@ from django_ca.models import (
     AcmeOrder,
     Certificate,
 )
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
-from django_ca.tests.base.utils import subject_alternative_name
+from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
 from django_ca.utils import ca_storage, get_crl_cache_key
 
 
@@ -112,7 +112,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
                 self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_cache_all_crls(self) -> None:
         """Test caching when all CAs are valid."""
         enc_cls = Encoding.DER
@@ -131,7 +131,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
             crl = x509.load_der_x509_crl(cache.get(key))
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_expired"])
+    @freeze_time(TIMESTAMPS["everything_expired"])
     def test_cache_all_crls_expired(self) -> None:
         """Test that nothing is cashed if all CAs are expired."""
         tasks.cache_crls()
@@ -153,7 +153,7 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
             tasks.cache_crl(self.cas["pwd"].serial)
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     """Test the generate_ocsp_key task."""
 
@@ -177,7 +177,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
             self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_repsonder_key_validity(self) -> None:
         """Test that the ocsp_responder_key_validity field works."""
         ca = self.cas["root"]
@@ -188,10 +188,10 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
         tasks.generate_ocsp_key(ca.serial)
         cert = qs.get()
-        self.assertEqual(cert.expires, timestamps["everything_valid"] + timedelta(days=10))
+        self.assertEqual(cert.expires, TIMESTAMPS["everything_valid"] + timedelta(days=10))
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_no_renewal_required(self) -> None:
         """Test that keys are not renewed and None is returned in this case."""
         self.assertIsNotNone(tasks.generate_ocsp_key(self.ca.serial))
@@ -350,7 +350,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         self.assertValid(AcmeOrder.STATUS_PENDING)
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
@@ -408,7 +408,7 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
         self.assertEqual(logcm.output[1], f"INFO:django_ca.tasks:{str(self.chall)} is invalid")
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
@@ -475,7 +475,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         )
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
 
@@ -496,7 +496,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
         self.acme_cert = AcmeCertificate.objects.create(
-            order=self.order, csr=certs["root-cert"]["csr"]["pem"]
+            order=self.order, csr=CERT_DATA["root-cert"]["csr"]["pem"]
         )
 
     def test_acme_disabled(self) -> None:
@@ -628,7 +628,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertEqual(self.acme_cert.cert.profile, "client")
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
 
@@ -652,7 +652,7 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
         self.acme_cert = AcmeCertificate.objects.create(
-            order=self.order, csr=certs["root-cert"]["csr"]["pem"]
+            order=self.order, csr=CERT_DATA["root-cert"]["csr"]["pem"]
         )
 
     def test_basic(self) -> None:

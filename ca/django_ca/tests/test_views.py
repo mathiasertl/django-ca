@@ -26,8 +26,9 @@ from django.urls import include, path, re_path, reverse
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.tests.base import certs, override_tmpcadir, uri
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir, uri
 from django_ca.views import CertificateRevocationListView
 
 app_name = "django_ca"
@@ -219,7 +220,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         for config in profiles.values():
             config.setdefault("OVERRIDES", {})
             config["OVERRIDES"].setdefault(ca.serial, {})
-            config["OVERRIDES"][ca.serial]["password"] = certs["pwd"]["password"]
+            config["OVERRIDES"][ca.serial]["password"] = CERT_DATA["pwd"]["password"]
 
         with override_settings(CA_CRL_PROFILES=profiles):
             ca.cache_crls()  # cache CRLs for this CA

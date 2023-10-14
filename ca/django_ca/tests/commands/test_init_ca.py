@@ -36,7 +36,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -44,12 +44,15 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     crl_distribution_points,
     distribution_point,
+    dns,
     extended_key_usage,
     issuer_alternative_name,
     key_usage,
     name_constraints,
     ocsp_no_check,
+    override_tmpcadir,
     subject_alternative_name,
+    uri,
 )
 from django_ca.utils import get_crl_cache_key, int_to_hex, x509_name
 
@@ -95,7 +98,7 @@ class InitCATest(TestCaseMixin, TestCase):
         return ca
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_basic(self) -> None:
         """Basic tests for the command."""
         name = "test_basic"
@@ -1040,7 +1043,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(key.key_size, 1024)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_default_hostname(self) -> None:
         """Test manually passing a default hostname.
 

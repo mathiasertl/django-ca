@@ -34,7 +34,6 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate
 from django_ca.profiles import profiles
-from django_ca.tests.base import GECKODRIVER_PATH, RUN_SELENIUM_TESTS
 from django_ca.tests.base.conftest_helpers import (
     generate_ca_fixture,
     generate_cert_fixture,
@@ -45,6 +44,7 @@ from django_ca.tests.base.conftest_helpers import (
     usable_ca_names,
     usable_cert_names,
 )
+from django_ca.tests.base.constants import GECKODRIVER_PATH, RUN_SELENIUM_TESTS
 from django_ca.tests.base.typehints import User
 from django_ca.utils import ca_storage
 

@@ -30,13 +30,14 @@ from freezegun import freeze_time
 from django_ca import constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.api.conftest import APIPermissionTestBase
-from django_ca.tests.base import timestamps
-from django_ca.tests.base.conftest_helpers import certs
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import certificate_policies, iso_format
 from django_ca.typehints import JSON
 
-path = reverse_lazy("django_ca:api:update_certificate_authority", kwargs={"serial": certs["root"]["serial"]})
+path = reverse_lazy(
+    "django_ca:api:update_certificate_authority", kwargs={"serial": CERT_DATA["root"]["serial"]}
+)
 
 
 def request(client: Client, payload: Optional[Dict[str, JSON]]) -> "HttpResponse":
@@ -83,20 +84,20 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
             "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
             "not_after": iso_format(root.expires),
             "not_before": iso_format(root.valid_from),
-            "pem": certs["root"]["pub"]["pem"],
+            "pem": CERT_DATA["root"]["pub"]["pem"],
             "revoked": False,
-            "serial": certs["root"]["serial"],
+            "serial": CERT_DATA["root"]["serial"],
             "sign_certificate_policies": {
                 "critical": constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES],
                 "value": [{"policy_identifier": "1.1.1", "policy_qualifiers": None}],
             },
             "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
-            "updated": iso_format(timestamps["everything_valid"]),
+            "updated": iso_format(TIMESTAMPS["everything_valid"]),
         },
     )
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_update(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -126,7 +127,7 @@ def test_update(
             assert expected == actual
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_minimal_update(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -146,7 +147,7 @@ def test_minimal_update(
     assert root.ocsp_responder_key_validity == 10
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_validation(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -166,18 +167,18 @@ def test_validation(
     assert root.ocsp_responder_key_validity == refetched_root.ocsp_responder_key_validity
 
 
-@freeze_time(timestamps["everything_expired"])
+@freeze_time(TIMESTAMPS["everything_expired"])
 def test_update_expired_ca(
     api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
     """Test that we can update an expired CA."""
-    expected_response["updated"] = iso_format(timestamps["everything_expired"])
+    expected_response["updated"] = iso_format(TIMESTAMPS["everything_expired"])
     response = request(api_client, payload)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.json() == expected_response, response.json()
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_disabled_ca(root: CertificateAuthority, api_client: Client, payload: Dict[str, Any]) -> None:
     """Test that a disabled CA is *not* updatable."""
     root.enabled = False

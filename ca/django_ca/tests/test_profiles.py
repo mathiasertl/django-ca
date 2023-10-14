@@ -28,15 +28,18 @@ from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
-from django_ca.tests.base import certs, dns, override_tmpcadir, uri
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
+    dns,
     issuer_alternative_name,
     ocsp_no_check,
+    override_tmpcadir,
     subject_alternative_name,
     subject_key_identifier,
+    uri,
 )
 
 
@@ -45,7 +48,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.ca = self.load_ca(name=certs["root"]["name"], parsed=certs["root"]["pub"]["parsed"])
+        self.ca = self.load_ca(name=CERT_DATA["root"]["name"], parsed=CERT_DATA["root"]["pub"]["parsed"])
 
     def get_globs(self) -> Dict[str, Any]:
         """Get globals for doctests."""
@@ -54,7 +57,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
             "get_profile": get_profile,
             "ca": self.ca,
             "ca_serial": self.ca.serial,
-            "csr": certs["root-cert"]["csr"]["parsed"],
+            "csr": CERT_DATA["root-cert"]["csr"]["parsed"],
         }
 
     @override_tmpcadir()
@@ -185,8 +188,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_create_cert_minimal(self) -> None:
         """Create a certificate with minimal parameters."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[])
         with self.mockSignal(pre_sign_cert) as pre:
@@ -207,10 +210,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_alternative_values(self) -> None:
         """Test overriding most values."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         ca.issuer_alt_name = "https://example.com"
         ca.save()
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
         subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
@@ -241,8 +244,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_overrides(self) -> None:
         """Test other overrides."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
         expected_subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
@@ -297,8 +300,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_none_extension(self) -> None:
         """Test passing an extension that is removed by the profile."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         prof = Profile("example", subject=[("C", "AT")], extensions={"ocsp_no_check": None})
 
         with self.mockSignal(pre_sign_cert) as pre:
@@ -309,8 +312,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_cn_in_san(self) -> None:
         """Test writing the common name into the SAN."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name(
             [
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
@@ -387,8 +390,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_override_ski(self) -> None:
         """Test overriding the subject key identifier."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         ski = x509.Extension(
             oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
             critical=False,
@@ -425,8 +428,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     def test_add_distribution_point_with_ca_crldp(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
         prof = Profile("example", subject=[])
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         # Add CRL url to CA
         ca.crl_url = "https://crl.ca.example.com"
@@ -465,8 +468,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_with_algorithm(self) -> None:
         """Test a profile that manually overrides the algorithm."""
-        root = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        root = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[], algorithm="SHA-512")
 
@@ -491,8 +494,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     def test_issuer_alternative_name_override(self) -> None:
         """Pass a custom Issuer Alternative Name which overwrites the CA value."""
         prof = Profile("example", subject=[])
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         # Add CRL url to CA
         ca.issuer_alt_name = "https://ian.ca.example.com"
@@ -532,8 +535,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     def test_merge_authority_information_access_existing_values(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
         prof = Profile("example", subject=[])
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         # Add CRL url to CA
         ca.ocsp_url = "https://ocsp.ca.example.com"
@@ -581,8 +584,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_extension_as_cryptography(self) -> None:
         """Test with a profile that has cryptography extensions."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         with self.mockSignal(pre_sign_cert) as pre:
@@ -620,13 +623,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 )
             },
         )
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
 
         ca.ocsp_url = "http://ocsp.example.com/ca"
         ca.issuer_url = "http://issuer.example.com/issuer"
         ca.save()
 
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         expected_authority_information_access = authority_information_access(
             ocsp=[uri("http://ocsp.example.com/expected")],
@@ -665,13 +668,13 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 )
             },
         )
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
 
         ca.ocsp_url = "http://ocsp.example.com/ca"
         ca.issuer_url = "http://issuer.example.com/ca"
         ca.save()
 
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         # Only pass an OCSP responder
         with self.mockSignal(pre_sign_cert) as pre:
@@ -732,8 +735,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_no_cn_no_san(self) -> None:
         """Test creating a cert with no cn in san."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", subject=[("C", "AT")])
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
@@ -744,8 +747,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_no_valid_cn_in_san(self) -> None:
         """Test what happens when the SAN has nothing usable as CN."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
@@ -756,8 +759,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_unparsable_cn(self) -> None:
         """Try creating a profile with an unparsable Common Name."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         cname = "foo bar"
 
         prof = Profile("example", subject=[("C", "AT"), ("CN", cname)])
@@ -774,8 +777,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
     def test_no_valid_subject(self) -> None:
         """Test case where no subject at all could be determined."""
-        ca = self.load_ca(name="root", parsed=certs["root"]["pub"]["parsed"])
-        csr = certs["child-cert"]["csr"]["parsed"]
+        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         prof = Profile("test")
         with self.assertRaisesRegex(ValueError, r"^Cannot determine subject for certificate\.$"):
             self.create_cert(prof, ca, csr)

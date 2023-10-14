@@ -36,9 +36,10 @@ from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, X509CertMixin
 from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AdminTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
+from django_ca.tests.base.utils import override_tmpcadir
 
 if typing.TYPE_CHECKING:
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
@@ -252,7 +253,7 @@ class AdminChangeActionTestCaseMixin(
         self.assertRedirects(response, "/admin/")
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], TestCase):
     """Test the revoke action."""
 
@@ -275,7 +276,7 @@ class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], TestCase):
             self.assertRevoked(obj)
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], TestCase):
     """Test the revoke change action."""
 
@@ -379,7 +380,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         self.assertRevoked(self.cert)
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], WebTestMixin, TestCase):
     """Test the "resign" change action."""
 

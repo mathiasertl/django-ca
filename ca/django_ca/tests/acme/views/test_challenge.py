@@ -27,10 +27,11 @@ from freezegun import freeze_time
 from django_ca.models import AcmeAuthorization, AcmeChallenge, AcmeOrder
 from django_ca.tasks import acme_validate_challenge
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.base.utils import override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeChallengeViewTestCase(
     AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TransactionTestCase
 ):

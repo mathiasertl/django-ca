@@ -24,8 +24,9 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from django_ca.models import Watcher
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 
 expected = {
     "root-cert": """* Subject: {subject_str}
@@ -583,17 +584,17 @@ Digest:
             )
             self.assertEqual(stderr, "")
 
-    @freeze_time(timestamps["before_everything"])
+    @freeze_time(TIMESTAMPS["before_everything"])
     def test_basic_not_yet_valid(self) -> None:
         """Basic tests when all certs are not yet valid."""
         self.assertBasicOutput(status="Not yet valid")
 
-    @freeze_time(timestamps["everything_expired"])
+    @freeze_time(TIMESTAMPS["everything_expired"])
     def test_basic_expired(self) -> None:
         """Basic tests when all certs are expired."""
         self.assertBasicOutput(status="Expired")
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_certs(self) -> None:
         """Test main certs."""
         for name, cert in self.usable_certs:
@@ -623,12 +624,12 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """.format(
-                **certs["child-cert"]
+                **CERT_DATA["child-cert"]
             ),
         )
         self.assertEqual(stderr, "")
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     @override_tmpcadir()
     def test_no_san_with_watchers(self) -> None:
         """Test a cert with no subjectAltNames but with watchers."""
@@ -733,13 +734,13 @@ Digest:
         context[
             "id2"
         ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"  # NOQA: E501
-        sct = """* Precertificate Signed Certificate Timestamps{sct_critical}:
-  * Precertificate ({sct_values[0][version]}):
-      Timestamp: {sct_values[0][timestamp]}
+        sct = """* Precertificate Signed Certificate Timestamps{precertificate_signed_certificate_timestamps_critical}:
+  * Precertificate ({precertificate_signed_certificate_timestamps_serialized[0][version]}):
+      Timestamp: {precertificate_signed_certificate_timestamps_serialized[0][timestamp]}
       Log ID: {id1}
-  * Precertificate ({sct_values[1][version]}):
-      Timestamp: {sct_values[1][timestamp]}
-      Log ID: {id2}""".format(
+  * Precertificate ({precertificate_signed_certificate_timestamps_serialized[1][version]}):
+      Timestamp: {precertificate_signed_certificate_timestamps_serialized[1][timestamp]}
+      Log ID: {id2}""".format(  # NOQA: E501
             **context
         )
 

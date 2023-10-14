@@ -58,16 +58,19 @@ from django_ca.models import (
     Watcher,
     X509CertMixin,
 )
-from django_ca.tests.base import CERT_PEM_REGEX, certs, dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.constants import CERT_DATA, CERT_PEM_REGEX, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
     crl_distribution_points,
     distribution_point,
+    dns,
     issuer_alternative_name,
+    override_tmpcadir,
     subject_alternative_name,
     subject_key_identifier,
+    uri,
 )
 from django_ca.utils import ca_storage, get_crl_cache_key, x509_name
 
@@ -179,7 +182,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test access to the private key."""
         for name, ca in self.usable_cas:
             self.assertTrue(ca.key_exists)
-            self.assertIsNotNone(ca.key(certs[name].get("password")))
+            self.assertIsNotNone(ca.key(CERT_DATA[name].get("password")))
 
             # test a second tome to make sure we reload the key
             with mock.patch("django_ca.utils.read_file") as patched:
@@ -190,7 +193,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             ca.private_key_path = os.path.join(ca_settings.CA_DIR, ca.private_key_path)
             self.assertTrue(ca.key_exists)
 
-            self.assertIsNotNone(ca.key(certs[name].get("password")))
+            self.assertIsNotNone(ca.key(CERT_DATA[name].get("password")))
 
             # Check again - here we have an already loaded key (also: no logging here anymore)
             # NOTE: assertLogs() fails if there are *no* log messages, so we cannot test that
@@ -217,21 +220,21 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_key_str_password(self) -> None:
         """Test accessing the private key with a string password."""
         ca = self.cas["pwd"]
-        pwd = certs["pwd"]["password"].decode("utf-8")
+        pwd = CERT_DATA["pwd"]["password"].decode("utf-8")
 
         self.assertIsNotNone(ca.key(pwd))
 
     def test_path_length(self) -> None:
         """Test the path_length attribute."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.path_length, certs[name].get("path_length"))
+            self.assertEqual(ca.path_length, CERT_DATA[name].get("path_length"))
 
     def test_root(self) -> None:
         """Test the root attribute."""
         self.assertEqual(self.cas["root"].root, self.cas["root"])
         self.assertEqual(self.cas["child"].root, self.cas["root"])
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     @override_tmpcadir()
     def test_full_crl(self) -> None:
         """Test getting the CRL for a CertificateAuthority."""
@@ -268,7 +271,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[child], crl_number=4, signer=ca, algorithm=ca.algorithm)
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     @override_tmpcadir()
     def test_intermediate_crl(self) -> None:
         """Test getting the CRL of an intermediate CA."""
@@ -300,7 +303,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.test_full_crl()
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
         ca = self.cas["root"]
@@ -319,7 +322,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertCRL(crl, expected=[child_ca], idp=idp, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_intermediate_ca_crl(self) -> None:
         """Test getting the CRL for an intermediate CA."""
         # Intermediate CAs have a DP in the CRL that has the CA url
@@ -329,7 +332,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         crl = self.ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=self.ca.algorithm)
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     @override_tmpcadir()
     def test_user_crl(self) -> None:
         """Test getting a user CRL."""
@@ -347,7 +350,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         crl = ca.get_crl(scope="user").public_bytes(Encoding.PEM)
         self.assertCRL(crl, expected=[cert], idp=idp, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     @override_tmpcadir()
     def test_attr_crl(self) -> None:
         """Test getting an Attribute CRL (always an empty list)."""
@@ -365,7 +368,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertCRL(crl, idp=idp, crl_number=1, signer=ca, algorithm=ca.algorithm)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_no_idp(self) -> None:
         """Test a CRL with no IDP."""
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
@@ -375,7 +378,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertCRL(crl, idp=None, algorithm=self.ca.algorithm)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_counter(self) -> None:
         """Test the counter for CRLs."""
         idp = self.get_idp(full_name=self.get_idp_full_name(self.ca))
@@ -388,7 +391,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         self.assertCRL(crl, idp=idp, crl_number=0, algorithm=self.ca.algorithm)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_no_auth_key_identifier(self) -> None:
         """Test getting the CRL from a CA with no AuthorityKeyIdentifier."""
 
@@ -406,7 +409,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         # Note that we still get an AKI because the value comes from the public key in this case
         self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=self.ca.algorithm)
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_get_crl_with_wrong_algorithm(self) -> None:
         """Test that we validate the algorithm if passed by the user."""
         # DSA/RSA/EC keys cannot trigger this condition, as the algorithm would default to the one used by
@@ -434,7 +437,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             self.ca.get_crl(scope="foobar").public_bytes(Encoding.PEM)  # type: ignore[arg-type]
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_cache_crls(self) -> None:
         """Test caching of CRLs."""
         crl_profiles = self.crl_profiles
@@ -590,7 +593,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_max_path_length(self) -> None:
         """Test getting the maximum path_length."""
         for name, ca in self.usable_cas:
-            self.assertEqual(ca.max_path_length, certs[name].get("max_path_length"), name)
+            self.assertEqual(ca.max_path_length, CERT_DATA[name].get("max_path_length"), name)
 
     def test_allows_intermediate(self) -> None:
         """Test checking if this CA allows intermediate CAs."""
@@ -638,7 +641,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir()
     def test_regenerate_ocsp_responder_certificate(self) -> None:
         """Test regenerating an OCSP responder certificate that is due to expire soon."""
-        with freeze_time(timestamps["everything_valid"]) as frozen_time:
+        with freeze_time(TIMESTAMPS["everything_valid"]) as frozen_time:
             # TYPEHINT NOTE: We know that the certificate was not yet generated here
             _, _, ocsp_responder_certificate = self.ca.generate_ocsp_key()  # type: ignore[misc]
 
@@ -763,7 +766,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
     """Test signing a certificiate."""
 
     load_cas = ("root", "child")
-    csr = certs["child-cert"]["csr"]["parsed"]
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
     def assertBasicCert(self, cert: x509.Certificate) -> None:  # pylint: disable=invalid-name
         """Basic assertions about the certificate."""
@@ -782,12 +785,12 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertEqual(actual, expected_dict)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_simple(self) -> None:
         """Test the simplest invocation of the function."""
         now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         cn = "example.com"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         with self.assertSignCertSignals():
             cert = self.ca.sign(csr, subject=subject)
@@ -807,11 +810,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         )
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_non_default_values(self) -> None:
         """Pass non-default parameters."""
         cn = "example.com"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         algorithm = hashes.SHA256()
         expires = datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
@@ -823,11 +826,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertIsInstance(cert.signature_hash_algorithm, hashes.SHA256)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_non_default_extensions(self) -> None:
         """Pass non-default extensions."""
         cn = "example.com"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         aki = x509.Extension(
             oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -854,11 +857,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertExtensionDict(cert, [ski, basic_constraints(critical=False), aki])
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_cn_not_in_san(self) -> None:
         """Test the cn_in_san option."""
         cn = "example.com"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         san = subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
@@ -876,11 +879,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         )
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_append_cn_to_san(self) -> None:
         """Test appending a CommonName to SubjectAlternativeName."""
         cn = "example.com"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         san = subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
@@ -898,11 +901,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         )
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_cn_already_in_san(self) -> None:
         """Test using a CommonName that is already in SubjectAlternativeName."""
         cn = "example.com"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         san = subject_alternative_name(dns(cn))
         with self.assertSignCertSignals():
@@ -920,11 +923,11 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         )
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_unparsable_cn(self) -> None:
         """Test using a CommonName that cannot be used as a SubjectAlternativeName."""
         cn = "foo..bar*"
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         san = subject_alternative_name(dns("example.net"))
         with self.assertSignCertSignals():
@@ -943,7 +946,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
 
     def test_create_ca(self) -> None:
         """Try passing a BasicConstraints extension that allows creating a CA."""
-        csr = certs["child-cert"]["csr"]["parsed"]
+        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         msg = r"^This function cannot be used to create a Certificate Authority\.$"
         with self.assertSignCertSignals(pre=False, post=False), self.assertRaisesRegex(ValueError, msg):
@@ -970,25 +973,25 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.valid_from, timezone.make_aware(certs[name]["valid_from"], tz.utc))
-            self.assertEqual(ca.expires, timezone.make_aware(certs[name]["valid_until"], tz.utc))
+            self.assertEqual(ca.valid_from, timezone.make_aware(CERT_DATA[name]["valid_from"], tz.utc))
+            self.assertEqual(ca.expires, timezone.make_aware(CERT_DATA[name]["valid_until"], tz.utc))
 
         for name, cert in self.certs.items():
-            self.assertEqual(cert.valid_from, timezone.make_aware(certs[name]["valid_from"], tz.utc))
-            self.assertEqual(cert.expires, timezone.make_aware(certs[name]["valid_until"], tz.utc))
+            self.assertEqual(cert.valid_from, timezone.make_aware(CERT_DATA[name]["valid_from"], tz.utc))
+            self.assertEqual(cert.expires, timezone.make_aware(CERT_DATA[name]["valid_until"], tz.utc))
 
     @override_settings(USE_TZ=False)
     def test_dates_without_timezone_support(self) -> None:
         """Test valid_from/valid_until dates without timezone support."""
         for name, ca in self.cas.items():
             ca.refresh_from_db()  # obj is loaded in setUp(), before decorator is active
-            self.assertEqual(ca.valid_from, certs[name]["valid_from"])
-            self.assertEqual(ca.expires, certs[name]["valid_until"])
+            self.assertEqual(ca.valid_from, CERT_DATA[name]["valid_from"])
+            self.assertEqual(ca.expires, CERT_DATA[name]["valid_until"])
 
         for name, cert in self.certs.items():
             cert.refresh_from_db()  # obj is loaded in setUp(), before decorator is active
-            self.assertEqual(cert.valid_from, certs[name]["valid_from"])
-            self.assertEqual(cert.expires, certs[name]["valid_until"])
+            self.assertEqual(cert.valid_from, CERT_DATA[name]["valid_from"])
+            self.assertEqual(cert.expires, CERT_DATA[name]["valid_until"])
 
     def test_revocation(self) -> None:
         """Test getting a revociation for a non-revoked certificate."""
@@ -1007,10 +1010,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_serial(self) -> None:
         """Test getting the serial."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.serial, certs[ca.name].get("serial"))
+            self.assertEqual(ca.serial, CERT_DATA[ca.name].get("serial"))
 
         for name, cert in self.certs.items():
-            self.assertEqual(cert.serial, certs[name].get("serial"))
+            self.assertEqual(cert.serial, CERT_DATA[name].get("serial"))
 
     @override_tmpcadir()
     def test_subject_alternative_name(self) -> None:
@@ -1018,13 +1021,13 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, ca in self.cas.items():
             self.assertEqual(
                 ca.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
-                certs[ca.name].get("subject_alternative_name"),
+                CERT_DATA[ca.name].get("subject_alternative_name"),
             )
 
         for name, cert in self.certs.items():
             self.assertEqual(
                 cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
-                certs[name].get("subject_alternative_name"),
+                CERT_DATA[name].get("subject_alternative_name"),
             )
 
         # Create a cert with some weirder SANs to test that too
@@ -1035,7 +1038,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         )
         weird_cert = self.create_cert(
             self.cas["child"],
-            certs["child-cert"]["csr"]["parsed"],
+            CERT_DATA["child-cert"]["csr"]["parsed"],
             subject=self.subject,
             extensions=[san],
         )
@@ -1121,21 +1124,21 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         }
         for name, ca in self.cas.items():
             for algo_name, algorithm in algorithms.items():
-                self.assertEqual(ca.get_fingerprint(algorithm), certs[name][algo_name])
+                self.assertEqual(ca.get_fingerprint(algorithm), CERT_DATA[name][algo_name])
 
         for name, cert in self.certs.items():
             for algo_name, algorithm in algorithms.items():
-                self.assertEqual(cert.get_fingerprint(algorithm), certs[name][algo_name])
+                self.assertEqual(cert.get_fingerprint(algorithm), CERT_DATA[name][algo_name])
 
     def test_jwk(self) -> None:
         """Test JWK property."""
         for name, ca in self.cas.items():
             # josepy does not support loading DSA/Ed448/Ed25519 keys:
             #   https://github.com/certbot/josepy/pull/98
-            if certs[name]["key_type"] in ("DSA", "Ed448", "Ed25519"):
+            if CERT_DATA[name]["key_type"] in ("DSA", "Ed448", "Ed25519"):
                 continue
 
-            if certs[name]["key_type"] == "EC":
+            if CERT_DATA[name]["key_type"] == "EC":
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKEC, name)
             else:
                 self.assertIsInstance(ca.jwk, jose.jwk.JWKRSA, name)
@@ -1143,10 +1146,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, cert in self.certs.items():
             # josepy does not support loading DSA/Ed448/Ed25519 keys:
             #   https://github.com/certbot/josepy/pull/98
-            if certs[name]["key_type"] in ("DSA", "Ed448", "Ed25519"):
+            if CERT_DATA[name]["key_type"] in ("DSA", "Ed448", "Ed25519"):
                 continue
 
-            if certs[name]["key_type"] == "EC":
+            if CERT_DATA[name]["key_type"] == "EC":
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKEC, name)
             else:
                 self.assertIsInstance(cert.jwk, jose.jwk.JWKRSA, name)
@@ -1201,7 +1204,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, ca in self.cas.items():
             self.assertEqual(
                 ca.get_authority_key_identifier().key_identifier,
-                certs[name]["subject_key_identifier"].value.key_identifier,
+                CERT_DATA[name]["subject_key_identifier"].value.key_identifier,
             )
 
         # All CAs have a subject key identifier, so we mock that this exception is not present
@@ -1214,7 +1217,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         ):
             self.assertEqual(
                 ca.get_authority_key_identifier().key_identifier,
-                certs["child"]["subject_key_identifier"].value.key_identifier,
+                CERT_DATA["child"]["subject_key_identifier"].value.key_identifier,
             )
 
     def test_get_authority_key_identifier_extension(self) -> None:
@@ -1222,7 +1225,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, ca in self.cas.items():
             ext = ca.get_authority_key_identifier_extension()
             self.assertEqual(
-                ext.value.key_identifier, certs[name]["subject_key_identifier"].value.key_identifier
+                ext.value.key_identifier, CERT_DATA[name]["subject_key_identifier"].value.key_identifier
             )
 
     def test_inconsistent_model_states(self) -> None:
@@ -1244,8 +1247,8 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
 class ModelfieldsTests(TestCaseMixin, TestCase):
     """Specialized tests for model fields."""
 
-    csr = certs["root-cert"]["csr"]
-    pub = certs["root-cert"]["pub"]
+    csr = CERT_DATA["root-cert"]["csr"]
+    pub = CERT_DATA["root-cert"]["pub"]
     load_cas = ("root",)
 
     def test_create_pem_bytes(self) -> None:
@@ -1417,7 +1420,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         """Test passing invalid values."""
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse CertificateSigningRequest$"):
             Certificate.objects.create(
-                pub=certs["child-cert"]["pub"]["parsed"],
+                pub=CERT_DATA["child-cert"]["pub"]["parsed"],
                 csr=True,
                 ca=self.ca,
                 expires=timezone.now(),
@@ -1426,7 +1429,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
 
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate$"):
             Certificate.objects.create(
-                csr=certs["child-cert"]["csr"]["parsed"],
+                csr=CERT_DATA["child-cert"]["csr"]["parsed"],
                 pub=True,
                 ca=self.ca,
                 expires=timezone.now(),
@@ -1480,7 +1483,7 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertRaisesRegex(AcmeAccount.ca.RelatedObjectDoesNotExist, r"^AcmeAccount has no ca\.$"):
             AcmeAccount().serial  # pylint: disable=expression-not-assigned
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_usable(self) -> None:
         """Test the ``usable`` property."""
         self.assertTrue(self.account1.usable)
@@ -1731,7 +1734,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r"^foo: Unsupported challenge type\.$"):
             self.chall.acme_challenge  # pylint: disable=pointless-statement
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_acme_validated(self) -> None:
         """Test acme_validated property."""
         # preconditions for checks (might change them in setUp without realising it might affect this test)
@@ -1744,12 +1747,12 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.assertIsNone(self.chall.acme_validated)  # still None (no validated timestamp)
 
         self.chall.validated = timezone.now()
-        self.assertEqual(self.chall.acme_validated, timestamps["everything_valid"])
+        self.assertEqual(self.chall.acme_validated, TIMESTAMPS["everything_valid"])
 
         # We return a UTC timestamp, even if timezone support is disabled.
         with self.settings(USE_TZ=False):
             self.chall.validated = timezone.now()
-            self.assertEqual(self.chall.acme_validated, timestamps["everything_valid"])
+            self.assertEqual(self.chall.acme_validated, TIMESTAMPS["everything_valid"])
 
     def test_encoded(self) -> None:
         """Test the encoded property."""
@@ -1817,5 +1820,5 @@ class AcmeCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_parse_csr(self) -> None:
         """Test the parse_csr property."""
-        self.acme_cert.csr = certs["root-cert"]["csr"]["pem"]
+        self.acme_cert.csr = CERT_DATA["root-cert"]["csr"]["pem"]
         self.assertIsInstance(self.acme_cert.parse_csr(), x509.CertificateSigningRequest)

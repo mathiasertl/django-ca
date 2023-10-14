@@ -22,8 +22,8 @@ from cryptography import x509
 from django.conf import settings
 from django.test import TestCase
 
-from django_ca.tests.base import override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 
 expected = {
     "ec": """* Name: {name}

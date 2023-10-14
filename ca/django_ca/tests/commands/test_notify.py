@@ -21,7 +21,7 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from django_ca.models import Watcher
-from django_ca.tests.base import timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -32,7 +32,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
     load_cas = "__usable__"
     load_certs = "__usable__"
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_no_certs(self) -> None:
         """Try notify command when all certs are still valid."""
         stdout, stderr = self.cmd("notify_expiring_certs")
@@ -40,7 +40,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 0)
 
-    @freeze_time(timestamps["ca_certs_expiring"])
+    @freeze_time(TIMESTAMPS["ca_certs_expiring"])
     def test_no_watchers(self) -> None:
         """Try expiring certs, but with no watchers."""
         # certs have no watchers by default, so we get no mails
@@ -49,7 +49,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 0)
 
-    @freeze_time(timestamps["ca_certs_expiring"])
+    @freeze_time(TIMESTAMPS["ca_certs_expiring"])
     def test_one_watcher(self) -> None:
         """Test one expiring certificate."""
         email = "user1@example.com"

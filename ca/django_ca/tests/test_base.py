@@ -23,8 +23,8 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase, override_settings
 
 from django_ca import ca_settings
-from django_ca.tests.base import override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import add_colons
 
 

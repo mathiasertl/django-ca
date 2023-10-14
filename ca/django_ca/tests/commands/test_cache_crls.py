@@ -21,8 +21,9 @@ from django.test import TestCase
 
 from freezegun import freeze_time
 
-from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import get_crl_cache_key
 
 
@@ -32,7 +33,7 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
     load_cas = "__usable__"
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_basic(self) -> None:
         """Test the basic command.
 

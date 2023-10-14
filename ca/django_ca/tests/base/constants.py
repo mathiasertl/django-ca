@@ -15,22 +15,30 @@
 
 import json
 import os
+import re
 import sys
+from datetime import datetime, timedelta, timezone as tz
 from importlib.metadata import version
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import packaging.version
 
 import cryptography
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives._serialization import Encoding
 
 import django
 
-# PYLINT NOTE: lazy import so that just importing this module has no external dependencies
+from django_ca.constants import EXTENSION_KEYS
+from django_ca.extensions import serialize_extension
+from django_ca.tests.base.typehints import CsrDict, KeyDict, PubDict
+from django_ca.utils import add_colons, format_name
+
 try:
-    import tomllib  # pylint: disable=import-outside-toplevel
+    import tomllib
 except ImportError:  # pragma: only py<3.11
-    # pylint: disable-next=import-outside-toplevel
     import tomli as tomllib  # type: ignore[no-redef]
 
 
@@ -46,11 +54,12 @@ FIXTURES_DIR = TEST_DIR / "fixtures"
 BASE_DIR = TEST_DIR.parent.parent  # ca/
 ROOT_DIR = BASE_DIR.parent  # git repository root
 
-with open(ROOT_DIR / "pyproject.toml", "rb") as stream:
-    PROJECT_CONFIG = tomllib.load(stream)
+with open(ROOT_DIR / "pyproject.toml", "rb") as pyproject_stream:
+    PROJECT_CONFIG = tomllib.load(pyproject_stream)
 
 # Paths derived from ROOT_DIR
 DOC_DIR = ROOT_DIR / "docs" / "source"
+SPHINX_FIXTURES_DIR = DOC_DIR / "_files"
 GECKODRIVER_PATH = ROOT_DIR / "contrib" / "selenium" / "geckodriver"
 
 if TOX_ENV_DIR := os.environ.get("TOX_ENV_DIR"):  # pragma: no cover
@@ -85,14 +94,318 @@ with open(FIXTURES_DIR / "cert-data.json", encoding="utf-8") as cert_data_stream
     FIXTURES_DATA = json.load(cert_data_stream)
 CERT_DATA = FIXTURES_DATA["certs"]
 
+
+# Update some data from contrib (data is not in cert-data.json, since we don't generate them)
+CERT_DATA["multiple_ous"] = {
+    "name": "multiple_ous",
+    "subject": [
+        ["C", "US"],
+        ["O", "VeriSign, Inc."],
+        ["OU", "Class 3 Public Primary Certification Authority - G2"],
+        ["OU", "(c) 1998 VeriSign, Inc. - For authorized use only"],
+        ["OU", "VeriSign Trust Network"],
+    ],
+    "subject_str": "/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network",  # noqa: E501
+    "cn": "",
+    "key_filename": False,
+    "csr_filename": False,
+    "pub_filename": os.path.join("contrib", "multiple_ous_and_no_ext.pem"),
+    "key_type": "RSA",
+    "cat": "contrib",
+    "type": "cert",
+    "valid_from": "1998-05-18 00:00:00",
+    "valid_until": "2028-08-01 23:59:59",
+    "ca": "root",
+    "serial": "7DD9FE07CFA81EB7107967FBA78934C6",
+    "md5": "A2:33:9B:4C:74:78:73:D4:6C:E7:C1:F3:8D:CB:5C:E9",
+    "sha1": "85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F",
+    "sha256": "83:CE:3C:12:29:68:8A:59:3D:48:5F:81:97:3C:0F:91:95:43:1E:DA:37:CC:5E:36:43:0E:79:C7:A8:88:63:8B",  # noqa: E501
+    "sha512": "86:20:07:9F:8B:06:80:43:44:98:F6:7A:A4:22:DE:7E:2B:33:10:9B:65:72:79:C4:EB:F3:F3:0F:66:C8:6E:89:1D:4C:6C:09:1C:83:45:D1:25:6C:F8:65:EB:9A:B9:50:8F:26:A8:85:AE:3A:E4:8A:58:60:48:65:BB:44:B6:CE",  # NOQA
+}
+CERT_DATA["cloudflare_1"] = {
+    "name": "cloudflare_1",
+    "subject": [
+        ["OU", "Domain Control Validated"],
+        ["OU", "PositiveSSL Multi-Domain"],
+        ["CN", "sni24142.cloudflaressl.com"],
+    ],
+    "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com",
+    "cn": "sni24142.cloudflaressl.com",
+    "key_filename": False,
+    "csr_filename": False,
+    "pub_filename": os.path.join("contrib", "cloudflare_1.pem"),
+    "cat": "contrib",
+    "type": "cert",
+    "key_type": "EC",
+    "valid_from": "2018-07-18 00:00:00",
+    "valid_until": "2019-01-24 23:59:59",
+    "ca": "root",
+    "serial": "92529ABD85F0A6A4D6C53FD1C91011C1",
+    "md5": "D6:76:03:E9:4F:3B:B0:F1:F7:E3:A1:40:80:8E:F0:4A",
+    "sha1": "71:BD:B8:21:80:BD:86:E8:E5:F4:2B:6D:96:82:B2:EF:19:53:ED:D3",
+    "sha256": "1D:8E:D5:41:E5:FF:19:70:6F:65:86:A9:A3:6F:DF:DE:F8:A0:07:22:92:71:9E:F1:CD:F8:28:37:39:02:E0:A1",  # NOQA
+    "sha512": "FF:03:1B:8F:11:E8:A7:FF:91:4F:B9:97:E9:97:BC:77:37:C1:A7:69:86:F3:7C:E3:BB:BB:DF:A6:4F:0E:3C:C0:7F:B5:BC:CC:BD:0A:D5:EF:5F:94:55:E9:FF:48:41:34:B8:11:54:57:DD:90:85:41:2E:71:70:5E:FA:BA:E6:EA",  # NOQA
+    "authority_information_access": {
+        "critical": False,
+        "value": {
+            "issuers": ["URI:http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt"],
+            "ocsp": ["URI:http://ocsp.comodoca4.com"],
+        },
+    },
+    "authority_key_identifier": {
+        "critical": False,
+        "value": "40:09:61:67:F0:BC:83:71:4F:DE:12:08:2C:6F:D4:D4:2B:76:3D:96",
+    },
+    "basic_constraints": {
+        "critical": True,
+        "value": {"ca": False},
+    },
+    "crl_distribution_points": {
+        "value": [
+            {
+                "full_name": [
+                    "URI:http://crl.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crl",
+                ],
+            }
+        ],
+        "critical": False,
+    },
+    "extended_key_usage": {
+        "critical": False,
+        "value": ["serverAuth", "clientAuth"],
+    },
+    "key_usage": {
+        "critical": True,
+        "value": ["digital_signature"],
+    },
+    "precert_poison": {"critical": True},
+    "subject_alternative_name": {
+        "value": [
+            "DNS:sni24142.cloudflaressl.com",
+            "DNS:*.animereborn.com",
+            "DNS:*.beglideas.ga",
+            "DNS:*.chroma.ink",
+            "DNS:*.chuckscleanings.ga",
+            "DNS:*.clipvuigiaitris.ga",
+            "DNS:*.cmvsjns.ga",
+            "DNS:*.competegraphs.ga",
+            "DNS:*.consoleprints.ga",
+            "DNS:*.copybreezes.ga",
+            "DNS:*.corphreyeds.ga",
+            "DNS:*.cyanigees.ga",
+            "DNS:*.dadpbears.ga",
+            "DNS:*.dahuleworldwides.ga",
+            "DNS:*.dailyopeningss.ga",
+            "DNS:*.daleylexs.ga",
+            "DNS:*.danajweinkles.ga",
+            "DNS:*.dancewthyogas.ga",
+            "DNS:*.darkmoosevpss.ga",
+            "DNS:*.daurat.com.ar",
+            "DNS:*.deltaberg.com",
+            "DNS:*.drjahanobgyns.ga",
+            "DNS:*.drunkgirliess.ga",
+            "DNS:*.duhiepkys.ga",
+            "DNS:*.dujuanjsqs.ga",
+            "DNS:*.dumbiseasys.ga",
+            "DNS:*.dumpsoftdrinkss.ga",
+            "DNS:*.dunhavenwoodss.ga",
+            "DNS:*.durabiliteas.ga",
+            "DNS:*.duxmangroups.ga",
+            "DNS:*.dvpdrivewayss.ga",
+            "DNS:*.dwellwizes.ga",
+            "DNS:*.dwwkouis.ga",
+            "DNS:*.entertastic.com",
+            "DNS:*.estudiogolber.com.ar",
+            "DNS:*.letsretro.team",
+            "DNS:*.maccuish.org.uk",
+            "DNS:*.madamsquiggles.com",
+            "DNS:*.sftw.ninja",
+            "DNS:*.spangenberg.io",
+            "DNS:*.timmutton.com.au",
+            "DNS:*.wyomingsexbook.com",
+            "DNS:*.ych.bid",
+            "DNS:animereborn.com",
+            "DNS:beglideas.ga",
+            "DNS:chroma.ink",
+            "DNS:chuckscleanings.ga",
+            "DNS:clipvuigiaitris.ga",
+            "DNS:cmvsjns.ga",
+            "DNS:competegraphs.ga",
+            "DNS:consoleprints.ga",
+            "DNS:copybreezes.ga",
+            "DNS:corphreyeds.ga",
+            "DNS:cyanigees.ga",
+            "DNS:dadpbears.ga",
+            "DNS:dahuleworldwides.ga",
+            "DNS:dailyopeningss.ga",
+            "DNS:daleylexs.ga",
+            "DNS:danajweinkles.ga",
+            "DNS:dancewthyogas.ga",
+            "DNS:darkmoosevpss.ga",
+            "DNS:daurat.com.ar",
+            "DNS:deltaberg.com",
+            "DNS:drjahanobgyns.ga",
+            "DNS:drunkgirliess.ga",
+            "DNS:duhiepkys.ga",
+            "DNS:dujuanjsqs.ga",
+            "DNS:dumbiseasys.ga",
+            "DNS:dumpsoftdrinkss.ga",
+            "DNS:dunhavenwoodss.ga",
+            "DNS:durabiliteas.ga",
+            "DNS:duxmangroups.ga",
+            "DNS:dvpdrivewayss.ga",
+            "DNS:dwellwizes.ga",
+            "DNS:dwwkouis.ga",
+            "DNS:entertastic.com",
+            "DNS:estudiogolber.com.ar",
+            "DNS:letsretro.team",
+            "DNS:maccuish.org.uk",
+            "DNS:madamsquiggles.com",
+            "DNS:sftw.ninja",
+            "DNS:spangenberg.io",
+            "DNS:timmutton.com.au",
+            "DNS:wyomingsexbook.com",
+            "DNS:ych.bid",
+        ]
+    },
+    "subject_key_identifier": {
+        "critical": False,
+        "value": "05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2",
+    },
+    "certificate_policies": {
+        "value": [
+            {
+                "policy_identifier": "1.3.6.1.4.1.6449.1.2.2.7",
+                "policy_qualifiers": ["https://secure.comodo.com/CPS"],
+            },
+            {"policy_identifier": "2.23.140.1.2.1"},
+        ],
+        "critical": False,
+    },
+}
+
+
+def _load_key(data: Dict[Any, Any]) -> KeyDict:
+    with open(data["key_der_path"], "rb") as stream:
+        raw = stream.read()
+
+    parsed = serialization.load_der_private_key(
+        raw, password=data.get("password"), unsafe_skip_rsa_key_validation=True
+    )
+
+    return {
+        "der": raw,
+        "pem": parsed.private_bytes(
+            Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ).decode(),
+        "parsed": parsed,  # type: ignore[typeddict-item]  # we do not support all key types
+    }
+
+
+def _load_csr(data: Dict[Any, Any]) -> CsrDict:
+    with open(FIXTURES_DIR / data["csr_filename"], "rb") as stream:
+        raw = stream.read()
+
+    parsed = x509.load_pem_x509_csr(raw)
+    return {
+        "pem": raw.decode("utf-8"),
+        "parsed": parsed,
+    }
+
+
+def _load_pub(data: Dict[str, Any]) -> PubDict:
+    if pub_der_path := data.get("pub_der_path"):
+        with open(pub_der_path, "rb") as stream:
+            der = stream.read()
+        parsed = x509.load_der_x509_certificate(der)
+        pem = parsed.public_bytes(Encoding.PEM).decode("utf-8")
+    else:
+        pub_path = data["pub_path"]
+        with open(pub_path, "rb") as stream:
+            pub_pem_bytes = stream.read()
+        parsed = x509.load_pem_x509_certificate(pub_pem_bytes)
+        pem = pub_pem_bytes.decode("utf-8")
+        der = parsed.public_bytes(Encoding.DER)
+
+    return {"pem": pem, "parsed": parsed, "der": der}
+
+
+# Augment data with various pre-computed paths
 for _name, _cert_data in CERT_DATA.items():
+    if _cert_data["cat"] == "sphinx-contrib":
+        basedir = SPHINX_FIXTURES_DIR / _cert_data["type"]
+    else:
+        basedir = FIXTURES_DIR
+
     if _key_filename := _cert_data.get("key_filename"):
-        CERT_DATA[_name]["key_path"] = FIXTURES_DIR / _cert_data["key_filename"]
+        _cert_data["key_path"] = basedir / _cert_data["key_filename"]
     if _key_der_filename := _cert_data.get("key_der_filename"):
-        CERT_DATA[_name]["key_der_path"] = FIXTURES_DIR / _cert_data["key_der_filename"]
+        _cert_data["key_der_path"] = basedir / _cert_data["key_der_filename"]
     if _pub_der_filename := _cert_data.get("pub_der_filename"):
-        CERT_DATA[_name]["pub_der_path"] = FIXTURES_DIR / _cert_data["pub_der_filename"]
+        _cert_data["pub_der_path"] = basedir / _cert_data["pub_der_filename"]
     if _password := _cert_data.get("password"):
-        CERT_DATA[_name]["password"] = _cert_data["password"].encode("utf-8")
-    CERT_DATA[_name]["pub_path"] = FIXTURES_DIR / _cert_data["pub_filename"]
-    CERT_DATA[_name]["pub_path"] = FIXTURES_DIR / _cert_data["pub_filename"]
+        _cert_data["password"] = _cert_data["password"].encode("utf-8")
+    _cert_data["pub_path"] = basedir / _cert_data["pub_filename"]
+
+    if _cert_data["type"] == "ca":
+        _cert_data.setdefault("children", [])
+        _cert_data["children"] = [(k, add_colons(v)) for k, v in _cert_data["children"]]
+
+    # Load data from files
+    # if key_filename := _cert_data["key_filename"]:
+    #    _cert_data["key"] = _load_key(key_filename, _cert_data)
+    if _cert_data.get("key_der_path"):
+        _cert_data["key"] = _load_key(_cert_data)
+    if _cert_data.get("csr_filename"):
+        _cert_data["csr"] = _load_csr(_cert_data)
+    _cert_data["pub"] = _load_pub(_cert_data)
+    _cert: x509.Certificate = _cert_data["pub"]["parsed"]
+
+    # Data derived from public key
+    _cert_data["issuer"] = _cert.issuer
+    _cert_data["issuer_str"] = format_name(_cert_data["issuer"])
+    _cert_data["serial_colons"] = add_colons(_cert_data["serial"])
+    _cert_data["valid_from"] = _cert.not_valid_before  # TODO: make tz-aware
+    _cert_data["valid_until"] = _cert.not_valid_after  # TODO: make tz-aware
+    _cert_data["valid_from_str"] = _cert.not_valid_before.replace(tzinfo=tz.utc).isoformat(" ")
+    _cert_data["valid_until_str"] = _cert.not_valid_after.replace(tzinfo=tz.utc).isoformat(" ")
+
+    for extension in _cert.extensions:
+        try:
+            key = EXTENSION_KEYS[extension.oid]
+        except KeyError:  # unknown extensions from StartSSL CA
+            continue
+        _cert_data[key] = extension
+        _cert_data[f"{key}_serialized"] = serialize_extension(extension)["value"]
+
+# Calculate some fixed timestamps that we reuse throughout the tests
+TIMESTAMPS = {
+    "base": datetime.fromisoformat(FIXTURES_DATA["timestamp"]),
+    "before_everything": datetime(1990, 1, 1, tzinfo=tz.utc),
+}
+TIMESTAMPS["before_cas"] = TIMESTAMPS["base"] - timedelta(days=1)
+TIMESTAMPS["before_child"] = TIMESTAMPS["base"] + timedelta(days=1)
+TIMESTAMPS["after_child"] = TIMESTAMPS["base"] + timedelta(days=4)
+TIMESTAMPS["ca_certs_valid"] = TIMESTAMPS["base"] + timedelta(days=7)
+TIMESTAMPS["profile_certs_valid"] = TIMESTAMPS["base"] + timedelta(days=12)
+
+# When creating fixtures, latest valid_from of any generated cert is 20 days, we need to be after that
+TIMESTAMPS["everything_valid"] = TIMESTAMPS["base"] + timedelta(days=23)
+TIMESTAMPS["everything_valid_naive"] = TIMESTAMPS["everything_valid"].astimezone(tz.utc).replace(tzinfo=None)
+TIMESTAMPS["cas_expired"] = TIMESTAMPS["base"] + timedelta(days=731, seconds=3600)
+TIMESTAMPS["ca_certs_expiring"] = CERT_DATA["root-cert"]["valid_until"] - timedelta(days=3)
+TIMESTAMPS["ca_certs_expired"] = CERT_DATA["root-cert"]["valid_until"] + timedelta(seconds=3600)
+TIMESTAMPS["profile_certs_expired"] = CERT_DATA["profile-server"]["valid_until"] + timedelta(seconds=3600)
+TIMESTAMPS["everything_expired"] = TIMESTAMPS["base"] + timedelta(days=365 * 20)
+
+# Regex used by certbot to split PEM-encoded certificate chains/bundles as of 2022-01-23. See also:
+# 	https://github.com/certbot/certbot/blob/master/certbot/certbot/crypto_util.py
+CERT_PEM_REGEX = re.compile(
+    b"""-----BEGIN CERTIFICATE-----\r?
+.+?\r?
+-----END CERTIFICATE-----\r?
+""",
+    re.DOTALL,  # DOTALL (/s) because the base64text may include newlines
+)

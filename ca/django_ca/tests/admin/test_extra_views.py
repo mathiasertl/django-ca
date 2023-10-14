@@ -34,7 +34,8 @@ from freezegun import freeze_time
 from django_ca import ca_settings, constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import serialize_name, x509_name
 
 
@@ -42,7 +43,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     """Test the CSR detail view."""
 
     url = reverse("admin:django_ca_certificate_csr_details")
-    csr_pem = certs["root-cert"]["csr"]["pem"]
+    csr_pem = CERT_DATA["root-cert"]["csr"]["pem"]
 
     @classmethod
     def create_csr(
@@ -60,7 +61,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Test a basic CSR info retrieval."""
-        for cert_data in [v for v in certs.values() if v["type"] == "cert" and v["cat"] == "generated"]:
+        for cert_data in [v for v in CERT_DATA.values() if v["type"] == "cert" and v["cat"] == "generated"]:
             response = self.client.post(
                 self.url, data=json.dumps({"csr": cert_data["csr"]["pem"]}), content_type="application/json"
             )
@@ -163,7 +164,7 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     url = reverse("admin:django_ca_certificate_ca_details")
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_basic(self) -> None:
         """Test fetching CA with all kinds of URLs."""
         self.ca.issuer_url = "http://issuer.child.example.com"
@@ -224,7 +225,7 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_empty_ca(self) -> None:
         """Test fetching CA with no URLs."""
         self.ca.issuer_url = ""

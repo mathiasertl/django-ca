@@ -29,14 +29,15 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.models import AcmeAuthorization, AcmeChallenge, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.base.utils import override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeAuthorizationViewTestCase(
     AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase
 ):
-    """Test requesting a new auhtorization."""
+    """Test requesting a new authorization."""
 
     # NOTE: type parameter not required post-as-get requests
 

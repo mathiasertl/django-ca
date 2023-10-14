@@ -22,8 +22,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.test import TestCase
 
 from django_ca import ca_settings
-from django_ca.tests.base import override_tmpcadir
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 
 
 class DumpCertTestCase(TestCaseMixin, TestCase):

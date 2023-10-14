@@ -34,12 +34,12 @@ from django_ca.acme.messages import CertificateRequest
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps
-from django_ca.tests.base.constants import FIXTURES_DIR
+from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
+from django_ca.tests.base.utils import dns, override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeOrderFinalizeViewTestCase(
     AcmeWithAccountViewTestCaseMixin[CertificateRequest], TransactionTestCase
 ):
@@ -47,7 +47,7 @@ class AcmeOrderFinalizeViewTestCase(
 
     slug = "92MPyl7jm0zw"
     url = reverse_lazy(
-        "django_ca:acme-order-finalize", kwargs={"serial": certs["root"]["serial"], "slug": slug}
+        "django_ca:acme-order-finalize", kwargs={"serial": CERT_DATA["root"]["serial"], "slug": slug}
     )
 
     def setUp(self) -> None:
@@ -59,7 +59,7 @@ class AcmeOrderFinalizeViewTestCase(
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         self.order = AcmeOrder.objects.create(
@@ -213,7 +213,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -249,7 +249,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -285,7 +285,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -306,7 +306,7 @@ class AcmeOrderFinalizeViewTestCase(
                 )
             )
             .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -320,7 +320,7 @@ class AcmeOrderFinalizeViewTestCase(
         csr = (
             x509.CertificateSigningRequestBuilder()
             .subject_name(x509.Name([]))
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:
@@ -338,7 +338,7 @@ class AcmeOrderFinalizeViewTestCase(
                 x509.SubjectAlternativeName([dns(self.hostname), dns("example.net")]),
                 critical=False,
             )
-            .sign(certs["root-cert"]["key"]["parsed"], hashes.SHA256())
+            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
 
         with self.patch("django_ca.acme.views.run_task") as mockcm:

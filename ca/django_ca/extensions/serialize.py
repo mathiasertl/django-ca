@@ -11,7 +11,15 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""``django_ca.extensions.serialize`` contains functions to serialize extensions."""
+"""``django_ca.extensions.serialize`` contains functions to serialize extensions.
+
+NOTE::
+
+    Functions in this module return values in the order as they appear in the extensions, so that the original
+    extension can be reconstructed exactly from this serialized form.
+
+TODO:: Make sure the above is actually true.
+"""
 
 import binascii
 from typing import Any, Dict, List, Optional
@@ -191,7 +199,7 @@ def _serialize_extension(  # pylint: disable=too-many-return-statements
     if isinstance(value, x509.CertificatePolicies):
         return _certificate_policies_serialized(value)
     if isinstance(value, x509.ExtendedKeyUsage):
-        return sorted([EXTENDED_KEY_USAGE_NAMES[usage] for usage in value])
+        return [EXTENDED_KEY_USAGE_NAMES[usage] for usage in value]
     if isinstance(value, x509.InhibitAnyPolicy):
         return value.skip_certs
     if isinstance(value, x509.KeyUsage):

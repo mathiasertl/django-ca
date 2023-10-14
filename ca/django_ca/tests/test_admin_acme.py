@@ -27,10 +27,10 @@ from django_ca.models import (
     AcmeOrder,
     CertificateAuthority,
 )
-from django_ca.tests.base import override_tmpcadir
 from django_ca.tests.base.assertions import assert_changelist_response
 from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
+from django_ca.tests.base.utils import override_tmpcadir
 
 PEM1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E

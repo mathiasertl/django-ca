@@ -29,23 +29,26 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority, Watcher
-from django_ca.tests.base import dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     basic_constraints,
     certificate_policies,
     crl_distribution_points,
     distribution_point,
+    dns,
     extended_key_usage,
     issuer_alternative_name,
     key_usage,
     ocsp_no_check,
+    override_tmpcadir,
     subject_alternative_name,
     tls_feature,
+    uri,
 )
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class ResignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 

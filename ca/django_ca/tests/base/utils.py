@@ -12,14 +12,26 @@
 # <http://www.gnu.org/licenses/>.
 
 """Utility functions used in testing."""
+import inspect
+import ipaddress
+import os
+import shutil
+import tempfile
 import typing
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Iterable, Optional, Union
+from typing import Any, Iterable, Iterator, Optional, Tuple, Union
+from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
+from django.test import override_settings
+
 from django_ca.models import X509CertMixin
+from django_ca.profiles import profiles
+from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
+from django_ca.utils import ca_storage
 
 
 def authority_information_access(
@@ -186,3 +198,82 @@ def subject_key_identifier(
 def tls_feature(*features: x509.TLSFeatureType, critical: bool = False) -> x509.Extension[x509.TLSFeature]:
     """Shortcut for getting a TLSFeature extension."""
     return x509.Extension(oid=ExtensionOID.TLS_FEATURE, critical=critical, value=x509.TLSFeature(features))
+
+
+FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
+
+
+def dns(name: str) -> x509.DNSName:  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509.DNSName`."""
+    return x509.DNSName(name)
+
+
+def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509.UniformResourceIdentifier`."""
+    return x509.UniformResourceIdentifier(url)
+
+
+def ip(  # pylint: disable=invalid-name  # just a shortcut
+    name: Union[ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network]
+) -> x509.IPAddress:
+    """Shortcut to get a :py:class:`cg:cryptography.x509.IPAddress`."""
+    return x509.IPAddress(name)
+
+
+def rdn(
+    name: Iterable[Tuple[x509.ObjectIdentifier, str]]
+) -> x509.RelativeDistinguishedName:  # just a shortcut
+    """Shortcut to get a :py:class:`cg:cryptography.x509.RelativeDistinguishedName`."""
+    return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
+
+
+@contextmanager
+def mock_cadir(path: str) -> Iterator[None]:
+    """Contextmanager to set the CA_DIR to a given path without actually creating it."""
+    with override_settings(CA_DIR=path), patch.object(ca_storage, "location", path), patch.object(
+        ca_storage, "_location", path
+    ):
+        yield
+
+
+class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in line with parent class
+    """Sets the CA_DIR directory to a temporary directory.
+
+    .. NOTE: This also takes any additional settings.
+    """
+
+    def __call__(self, test_func: FuncTypeVar) -> FuncTypeVar:
+        if not inspect.isfunction(test_func):
+            raise ValueError("Only functions can use override_tmpcadir()")
+        return super().__call__(test_func)  # type: ignore[return-value]  # cannot figure out what's here
+
+    def enable(self) -> None:
+        self.options["CA_DIR"] = tempfile.mkdtemp()
+
+        # copy CAs
+        for filename in [v["key_filename"] for v in CERT_DATA.values() if v["key_filename"] is not False]:
+            shutil.copy(os.path.join(FIXTURES_DIR, filename), self.options["CA_DIR"])
+
+        # Copy OCSP public key (required for OCSP tests)
+        shutil.copy(
+            os.path.join(FIXTURES_DIR, CERT_DATA["profile-ocsp"]["pub_filename"]), self.options["CA_DIR"]
+        )
+
+        # pylint: disable=attribute-defined-outside-init
+        self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
+        self.mock_ = patch.object(ca_storage, "_location", self.options["CA_DIR"])
+        # pylint: enable=attribute-defined-outside-init
+
+        # Reset profiles, so that they are loaded again on first access
+        profiles._reset()  # pylint: disable=protected-access
+
+        self.mock.start()
+        self.mock_.start()
+
+        super().enable()
+
+    def disable(self) -> None:
+        super().disable()
+        self.mock.stop()
+        self.mock_.stop()
+        shutil.rmtree(self.options["CA_DIR"])

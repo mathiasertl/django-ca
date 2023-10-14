@@ -27,7 +27,6 @@ from django.test import TestCase
 
 from django_ca import ca_settings, fields
 from django_ca.constants import KEY_USAGE_NAMES, REVOCATION_REASONS
-from django_ca.tests.base import rdn
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -35,6 +34,7 @@ from django_ca.tests.base.utils import (
     issuer_alternative_name,
     key_usage,
     ocsp_no_check,
+    rdn,
     tls_feature,
 )
 

@@ -34,8 +34,9 @@ from django.utils.crypto import get_random_string
 
 from django_ca.acme.responses import AcmeResponseUnauthorized
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug
-from django_ca.tests.base import certs, override_tmpcadir
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 
@@ -51,7 +52,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
 
     # NOTE: PEM here is the same as AcmeAccount.pem when this cert is used for account registration
     PEM = (
-        certs["root-cert"]["key"]["parsed"]
+        CERT_DATA["root-cert"]["key"]["parsed"]
         .public_key()
         .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
         .decode("utf-8")
@@ -60,7 +61,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     thumbprint = "kqtZjXqX07HbrRg220VoINzqF9QXsfIkQava3PdWM8o"
     ACCOUNT_ONE_CONTACT = "mailto:one@example.com"
     CHILD_PEM = (
-        certs["child-cert"]["key"]["parsed"]
+        CERT_DATA["child-cert"]["key"]["parsed"]
         .public_key()
         .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
         .decode("utf-8")
@@ -238,7 +239,9 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         if nonce is None:
             nonce = self.get_nonce()
         if cert is None:
-            cert = typing.cast(CertificateIssuerPrivateKeyTypes, certs[self.load_certs[0]]["key"]["parsed"])
+            cert = typing.cast(
+                CertificateIssuerPrivateKeyTypes, CERT_DATA[self.load_certs[0]]["key"]["parsed"]
+            )
         if post_kwargs is None:
             post_kwargs = {}
 

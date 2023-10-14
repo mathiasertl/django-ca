@@ -26,15 +26,16 @@ from freezegun import freeze_time
 
 from django_ca.models import AcmeAccount
 from django_ca.tests.acme.views.base import AcmeBaseViewTestCaseMixin
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.utils import override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeNewAccountViewTestCase(AcmeBaseViewTestCaseMixin[acme.messages.Registration], TestCase):
     """Test creating a new account."""
 
     contact = "mailto:user@example.com"
-    url = reverse_lazy("django_ca:acme-new-account", kwargs={"serial": certs["root"]["serial"]})
+    url = reverse_lazy("django_ca:acme-new-account", kwargs={"serial": CERT_DATA["root"]["serial"]})
     message = acme.messages.Registration(contact=(contact,), terms_of_service_agreed=True)
     message_cls = acme.messages.Registration
     requires_kid = False

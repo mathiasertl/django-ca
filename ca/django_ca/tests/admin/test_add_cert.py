@@ -43,8 +43,8 @@ from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
-from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
 from django_ca.tests.base.assertions import assert_css
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import (
@@ -53,20 +53,23 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     crl_distribution_points,
     distribution_point,
+    dns,
     extended_key_usage,
     freshest_crl,
     issuer_alternative_name,
     key_usage,
     ocsp_no_check,
+    override_tmpcadir,
     subject_alternative_name,
     subject_key_identifier,
     tls_feature,
+    uri,
 )
 from django_ca.typehints import SerializedExtension
 from django_ca.utils import ca_storage, x509_name
 
 
-@freeze_time(timestamps["after_child"])
+@freeze_time(TIMESTAMPS["after_child"])
 class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     """Tests for adding certificates."""
 
@@ -92,7 +95,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
         """Add certificate based on given name with given CA."""
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
 
         with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
@@ -215,7 +218,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertNotEqual(bound_field.initial, self.ca)
         self.assertIsInstance(bound_field.initial, CertificateAuthority)
 
-    @override_tmpcadir(CA_DEFAULT_CA=certs["child"]["serial"])
+    @override_tmpcadir(CA_DEFAULT_CA=CERT_DATA["child"]["serial"])
     def test_cas_expired(self) -> None:
         """Do a basic get request (to test CSS etc)."""
         self.ca.enabled = False
@@ -263,7 +266,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_empty_subject(self) -> None:
         """Test passing an empty subject with a subject alternative name."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
 
         with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
@@ -305,7 +308,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_subject_with_multiple_org_units(self) -> None:
         """Test creating a certificate with multiple Org Units (which is allowed)."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
 
         with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
@@ -357,7 +360,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_add_no_common_name_and_no_subject_alternative_name(self) -> None:
         """Test posting a subject with no common name and no subject alternative name."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
         with self.assertCreateCertSignals(False, False):
@@ -401,7 +404,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_subject_with_multiple_country_codes(self) -> None:
         """Test creating a certificate with multiple country codes (which is not allowed)."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
 
         with self.assertCreateCertSignals(False, False):
             response = self.client.post(
@@ -439,7 +442,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_subject_with_invalid_country_code(self) -> None:
         """Test creating a certificate with an invalid country code."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
 
         with self.assertCreateCertSignals(False, False):
             response = self.client.post(
@@ -476,7 +479,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_add_no_key_usage(self) -> None:
         """Test adding a cert with no (extended) key usage."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
         cname = "test-add2.example.com"
         san = "test-san.example.com"
 
@@ -531,7 +534,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_add_with_password(self) -> None:
         """Test adding with a password."""
         ca = self.cas["pwd"]
-        csr = certs["pwd-cert"]["csr"]["pem"]
+        csr = CERT_DATA["pwd-cert"]["csr"]["pem"]
         cname = "with-password.example.com"
 
         # first post without password
@@ -640,7 +643,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "authority_information_access_0": ca.issuer_url,
                     "authority_information_access_1": ca.ocsp_url,
                     "authority_information_access_2": False,
-                    "password": certs["pwd"]["password"].decode("utf-8"),
+                    "password": CERT_DATA["pwd"]["password"].decode("utf-8"),
                 },
             )
         self.assertRedirects(response, self.changelist_url)
@@ -773,7 +776,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_expires_in_the_past(self) -> None:
         """Test creating a cert that expires in the past."""
         ca = self.cas["root"]
-        csr = certs["pwd-cert"]["csr"]["pem"]
+        csr = CERT_DATA["pwd-cert"]["csr"]["pem"]
         cname = "test-expires-in-the-past.example.com"
         expires = datetime.now() - timedelta(days=3)
 
@@ -819,7 +822,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_expires_too_late(self) -> None:
         """Test that creating a cert that expires after the CA expires throws an error."""
         ca = self.cas["root"]
-        csr = certs["pwd-cert"]["csr"]["pem"]
+        csr = CERT_DATA["pwd-cert"]["csr"]["pem"]
         cname = "test-expires-too-late.example.com"
         expires = ca.expires + timedelta(days=3)
         correct_expires = ca.expires.strftime("%Y-%m-%d")
@@ -870,7 +873,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cname = "Foo Bar"
         error = "The CommonName cannot be parsed as general name. Either change the CommonName or do not include it."  # NOQA
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
 
         with self.assertCreateCertSignals(False, False):
             response = self.client.post(
@@ -918,7 +921,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": certs["ed448-cert"]["csr"]["pem"],
+                    "csr": CERT_DATA["ed448-cert"]["csr"]["pem"],
                     "ca": self.cas["ed448"].pk,
                     "profile": "webserver",
                     "subject_0": json.dumps(
@@ -939,7 +942,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": certs["ed25519-cert"]["csr"]["pem"],
+                    "csr": CERT_DATA["ed25519-cert"]["csr"]["pem"],
                     "ca": self.cas["ed25519"].pk,
                     "profile": "webserver",
                     "subject_0": json.dumps(
@@ -960,7 +963,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": certs["dsa-cert"]["csr"]["pem"],
+                    "csr": CERT_DATA["dsa-cert"]["csr"]["pem"],
                     "ca": self.cas["dsa"].pk,
                     "profile": "webserver",
                     "subject_0": json.dumps(
@@ -981,7 +984,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": certs["root-cert"]["csr"]["pem"],
+                    "csr": CERT_DATA["root-cert"]["csr"]["pem"],
                     "ca": self.cas["root"].pk,
                     "profile": "webserver",
                     "subject_0": json.dumps(
@@ -1001,7 +1004,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_certificate_policies_with_invalid_oid(self) -> None:
         """Test posting a certificate policies extension with an invalid OID."""
         ca = self.cas["root"]
-        csr = certs["root-cert"]["csr"]["pem"]
+        csr = CERT_DATA["root-cert"]["csr"]["pem"]
         cert_count = Certificate.objects.all().count()
 
         with self.assertCreateCertSignals(False, False):
@@ -1034,7 +1037,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
         ca = self.cas["root"]
-        csr = certs["pwd-cert"]["csr"]["pem"]
+        csr = CERT_DATA["pwd-cert"]["csr"]["pem"]
         CertificateAuthority.objects.update(enabled=False)
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
@@ -1068,7 +1071,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_add_unusable_cas(self) -> None:
         """Try adding with an unusable CA."""
         ca = self.cas["root"]
-        csr = certs["pwd-cert"]["csr"]["pem"]
+        csr = CERT_DATA["pwd-cert"]["csr"]["pem"]
         CertificateAuthority.objects.update(private_key_path="not/exist/add-unusable-cas")
 
         # check that we have some enabled CAs, just to make sure this test is really useful
@@ -1369,7 +1372,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.assertIs(has_content.is_displayed(), False)
         self.assertIs(no_content.is_displayed(), False)
 
-        cert = certs["all-extensions"]
+        cert = CERT_DATA["all-extensions"]
         csr = self.find("textarea#id_csr")
         csr.send_keys(cert["csr"]["pem"])
 
@@ -1404,7 +1407,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.initialize()
 
         # Create a CSR with no subject
-        key = certs["all-extensions"]["key"]["parsed"]
+        key = CERT_DATA["all-extensions"]["key"]["parsed"]
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(key, hashes.SHA256())
         csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
 
@@ -1440,7 +1443,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         """Test that pasting a CSR shows text next to subject input fields."""
         self.initialize()
 
-        cert = certs["all-extensions"]
+        cert = CERT_DATA["all-extensions"]
         csr = self.find("textarea#id_csr")
 
         # Elements of the CSR chapter
@@ -1581,7 +1584,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.assertEqual(self.displayed_value, [])
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestMixin, TestCase):
     """Tests for adding certificates."""
 
@@ -1607,7 +1610,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Fill in the bare minimum fields
         form = response.forms["certificate_form"]
-        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject_0"] = json.dumps(
             [{"key": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
         )
@@ -1640,7 +1643,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         """Test how saving the model behaves when profile has None-extension or SubjectAlternativeName."""
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
-        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
@@ -1686,7 +1689,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
-        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
@@ -1788,7 +1791,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # default value for form field is on import time, so override settings does not change
         # profile field
         form["profile"] = "everything"
-        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
@@ -1901,7 +1904,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # default value for form field is on import time, so override settings does not change
         # profile field
         form["profile"] = "everything"
-        form["csr"] = certs["child-cert"]["csr"]["pem"]
+        form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit()
         response = response.follow()

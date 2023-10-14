@@ -16,6 +16,9 @@
 import typing
 from typing import Any, Dict
 
+from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
+
 from django_ca.models import DjangoCAModel
 
 if typing.TYPE_CHECKING:
@@ -55,6 +58,11 @@ class FixtureData(typing.TypedDict):
     """Fixture data loaded/stored from JSON."""
 
     certs: Dict[str, CertFixtureData]
+
+
+KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": CertificateIssuerPrivateKeyTypes, "der": bytes})
+PubDict = typing.TypedDict("PubDict", {"pem": str, "parsed": x509.Certificate, "der": bytes})
+CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest})
 
 
 __all__ = ["HttpResponse", "User"]

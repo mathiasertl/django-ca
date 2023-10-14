@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Helpers for pytest conftest."""
-import json
+
 import os
 import shutil
 import sys
@@ -24,7 +24,6 @@ import packaging
 
 import cryptography
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
 
 import django
 from django.conf import settings
@@ -36,7 +35,7 @@ from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import FIXTURES_DIR, timestamps
+from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.utils import int_to_hex
 
 
@@ -159,7 +158,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
         request: "SubRequest",
         db: Any,  # pylint: disable=unused-argument,invalid-name  # usefixtures does not work for fixtures
     ) -> Iterator[CertificateAuthority]:
-        data = fixture_data["certs"][name]
+        data = CERT_DATA[name]
         pub = request.getfixturevalue(f"{name}_pub")
 
         # Load any parent
@@ -167,7 +166,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
         if parent_name := data.get("parent"):
             parent = request.getfixturevalue(parent_name)
 
-        with freeze_time(timestamps["everything_valid"]):
+        with freeze_time(TIMESTAMPS["everything_valid"]):
             ca = load_ca(name, pub, parent)
 
         yield ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
@@ -183,7 +182,7 @@ def generate_usable_ca_fixture(
     @pytest.fixture()
     def fixture(request: "SubRequest", tmpcadir: SettingsWrapper) -> Iterator[CertificateAuthority]:
         ca = request.getfixturevalue(name)  # load the CA into the database
-        data = fixture_data["certs"][name]
+        data = CERT_DATA[name]
         shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir.CA_DIR)
 
         yield ca
@@ -197,12 +196,12 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
     @pytest.fixture()
     def fixture(request: "SubRequest") -> Iterator[Certificate]:
         sanitized_name = name.replace("-", "_")
-        data = fixture_data["certs"][name]
+        data = CERT_DATA[name]
         ca = request.getfixturevalue(data["ca"])
         pub = request.getfixturevalue(f"{sanitized_name}_pub")
 
-        with freeze_time(timestamps["everything_valid"]):
-            cert = load_cert(ca, certs[name]["csr"]["pem"], pub, data.get("profile", ""))
+        with freeze_time(TIMESTAMPS["everything_valid"]):
+            cert = load_cert(ca, data["csr"]["pem"], pub, data.get("profile", ""))
 
         yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
@@ -237,28 +236,6 @@ def load_ca(
     return ca
 
 
-def _load_certificate_signing_requests() -> None:
-    for name in usable_cert_names:
-        with open(os.path.join(FIXTURES_DIR, f"{name}.csr"), "rb") as stream:
-            pem_bytes = stream.read()
-        certs[name]["csr"] = {
-            "der": x509.load_pem_x509_csr(pem_bytes),
-            "pem": pem_bytes.decode("utf-8"),
-        }
-
-
-def _load_public_keys() -> None:
-    for name in usable_ca_names + usable_cert_names:
-        with open(os.path.join(FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
-            der_bytes = stream.read()
-        certificate = x509.load_der_x509_certificate(der_bytes)
-        certs[name]["pub"] = {
-            "der": der_bytes,
-            "loaded": x509.load_der_x509_certificate(der_bytes),
-            "pem": certificate.public_bytes(serialization.Encoding.PEM).decode("utf-8"),
-        }
-
-
 def load_cert(
     ca: CertificateAuthority, csr: x509.CertificateSigningRequest, pub: x509.Certificate, profile: str = ""
 ) -> Certificate:
@@ -269,34 +246,20 @@ def load_cert(
     return cert
 
 
-with open(os.path.join(FIXTURES_DIR, "cert-data.json"), encoding="utf-8") as cert_data_stream:
-    fixture_data = json.load(cert_data_stream)
-certs = fixture_data["certs"]
-
 # Define various classes of certificates
 usable_ca_names = [
-    name for name, conf in fixture_data["certs"].items() if conf["type"] == "ca" and conf.get("key_filename")
+    name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and conf.get("key_filename")
 ]
 unusable_ca_names = [
-    name
-    for name, conf in fixture_data["certs"].items()
-    if conf["type"] == "ca" and name not in usable_ca_names
+    name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and name not in usable_ca_names
 ]
 all_ca_names = usable_ca_names + unusable_ca_names
 
 usable_cert_names = [
-    name
-    for name, conf in fixture_data["certs"].items()
-    if conf["type"] == "cert" and conf["cat"] == "generated"
+    name for name, conf in CERT_DATA.items() if conf["type"] == "cert" and conf["cat"] == "generated"
 ]
 unusable_cert_names = [
-    name
-    for name, conf in fixture_data["certs"].items()
-    if conf["type"] == "cert" and name not in usable_ca_names
+    name for name, conf in CERT_DATA.items() if conf["type"] == "cert" and name not in usable_ca_names
 ]
 interesting_certificate_names = ["child-cert", "all-extensions", "alt-extensions", "no-extensions"]
 all_cert_names = usable_cert_names + unusable_cert_names
-
-# Load CSRs/public keys into certs
-_load_certificate_signing_requests()
-_load_public_keys()

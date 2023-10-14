@@ -32,9 +32,9 @@ from django.test import TestCase, override_settings
 from django_ca.constants import ReasonFlags
 from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, dns, override_tmpcadir, uri
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import key_usage
+from django_ca.tests.base.utils import dns, key_usage, override_tmpcadir, uri
 
 
 class ParserTestCaseMixin(TestCaseMixin):
@@ -694,12 +694,12 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         for name, cert in self.certs.items():
-            args = self.parser.parse_args([certs[name]["serial"]])
+            args = self.parser.parse_args([CERT_DATA[name]["serial"]])
             self.assertEqual(args.cert, cert)
 
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
-        args = self.parser.parse_args([certs["root-cert"]["serial"][:6]])
+        args = self.parser.parse_args([CERT_DATA["root-cert"]["serial"][:6]])
         self.assertEqual(args.cert, self.certs["root-cert"])
 
     def test_missing(self) -> None:
@@ -716,7 +716,7 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
         """Test matching multiple certs with abbreviation."""
         # Manually set almost the same serial on second cert
         cert = Certificate(ca=self.cas["root"])
-        cert.update_certificate(certs["root-cert"]["pub"]["parsed"])
+        cert.update_certificate(CERT_DATA["root-cert"]["pub"]["parsed"])
         cert.serial = cert.serial[:-1] + "X"
         cert.save()
 
@@ -743,13 +743,13 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         for name, ca in self.usable_cas:
-            args = self.parser.parse_args([certs[name]["serial"]])
+            args = self.parser.parse_args([CERT_DATA[name]["serial"]])
             self.assertEqual(args.ca, ca)
 
     @override_tmpcadir()
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
-        args = self.parser.parse_args([certs["ec"]["serial"][:6]])
+        args = self.parser.parse_args([CERT_DATA["ec"]["serial"][:6]])
         self.assertEqual(args.ca, self.cas["ec"])
 
     def test_missing(self) -> None:
@@ -763,7 +763,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     def test_multiple(self) -> None:
         """Test an abbreviation matching multiple CAs."""
         ca2 = CertificateAuthority(name="child-duplicate")
-        ca2.update_certificate(certs["child"]["pub"]["parsed"])
+        ca2.update_certificate(CERT_DATA["child"]["pub"]["parsed"])
         ca2.serial = ca2.serial[:-1] + "X"
         ca2.save()
 
@@ -809,7 +809,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_password(self) -> None:
         """Test that the action works with a password-encrypted CA."""
-        args = self.parser.parse_args([certs["pwd"]["serial"]])
+        args = self.parser.parse_args([CERT_DATA["pwd"]["serial"]])
         self.assertEqual(args.ca, self.cas["pwd"])
 
 

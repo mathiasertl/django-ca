@@ -30,11 +30,12 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class DumpCRLTestCase(TestCaseMixin, TestCase):
     """Test the dump_crl management command."""
 
@@ -157,7 +158,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             "dump_crl",
             ca=ca,
             scope="user",
-            password=certs["pwd"]["password"],
+            password=CERT_DATA["pwd"]["password"],
             stdout=BytesIO(),
             stderr=BytesIO(),
         )

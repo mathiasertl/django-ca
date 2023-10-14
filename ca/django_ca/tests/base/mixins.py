@@ -60,11 +60,11 @@ from django_ca.signals import (
     pre_create_ca,
     pre_sign_cert,
 )
-from django_ca.tests.base import certs, timestamps, uri
 from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import basic_constraints, certificate_policies
-from django_ca.utils import add_colons, ca_storage, parse_general_name
+from django_ca.tests.base.utils import basic_constraints, certificate_policies, uri
+from django_ca.utils import ca_storage, parse_general_name
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -125,9 +125,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def load_named_cas(self, cas: Union[str, Tuple[str, ...]]) -> Tuple[str, ...]:
         """Load CAs by the given name."""
         if cas == "__all__":
-            cas = tuple(k for k, v in certs.items() if v.get("type") == "ca")
+            cas = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "ca")
         elif cas == "__usable__":
-            cas = tuple(k for k, v in certs.items() if v.get("type") == "ca" and v["key_filename"])
+            cas = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "ca" and v["key_filename"])
         elif isinstance(cas, str):  # pragma: no cover
             self.fail(f"{cas}: Unknown alias for load_cas.")
 
@@ -135,16 +135,18 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cas = tuple(ca for ca in cas if ca not in self.cas)
 
         # Load all CAs (sort by len() of parent so that root CAs are loaded first)
-        for name in sorted(cas, key=lambda n: len(certs[n].get("parent", ""))):
+        for name in sorted(cas, key=lambda n: len(CERT_DATA[n].get("parent", ""))):
             self.cas[name] = self.load_ca(name)
         return cas
 
     def load_named_certs(self, names: Union[str, Tuple[str, ...]]) -> Tuple[str, ...]:
         """Load certs by the given name."""
         if names == "__all__":
-            names = tuple(k for k, v in certs.items() if v.get("type") == "cert")
+            names = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "cert")
         elif names == "__usable__":
-            names = tuple(k for k, v in certs.items() if v.get("type") == "cert" and v["cat"] == "generated")
+            names = tuple(
+                k for k, v in CERT_DATA.items() if v.get("type") == "cert" and v["cat"] == "generated"
+            )
         elif isinstance(names, str):  # pragma: no cover
             self.fail(f"{names}: Unknown alias for load_certs.")
 
@@ -155,7 +157,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             try:
                 self.certs[name] = self.load_named_cert(name)
             except CertificateAuthority.DoesNotExist:  # pragma: no cover
-                self.fail(f'{certs[name]["ca"]}: Could not load CertificateAuthority.')
+                self.fail(f'{CERT_DATA[name]["ca"]}: Could not load CertificateAuthority.')
         return names
 
     def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
@@ -814,7 +816,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         for config in profiles.values():
             config.setdefault("OVERRIDES", {})
 
-            for data in [d for d in certs.values() if d.get("type") == "ca"]:
+            for data in [d for d in CERT_DATA.values() if d.get("type") == "ca"]:
                 config["OVERRIDES"][data["serial"]] = {}
                 if data.get("password"):
                     config["OVERRIDES"][data["serial"]]["password"] = data["password"]
@@ -898,11 +900,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Context manager to freeze time to a given timestamp.
 
-        If `timestamp` is a str that is in the `timestamps` dict (e.g. "everything-valid"), use that
+        If `timestamp` is a str that is in the `TIMESTAMPS` dict (e.g. "everything-valid"), use that
         timestamp.
         """
         if isinstance(timestamp, str):  # pragma: no branch
-            timestamp = timestamps[timestamp]
+            timestamp = TIMESTAMPS[timestamp]
 
         with freeze_time(timestamp) as frozen:
             yield frozen
@@ -910,7 +912,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def get_cert_context(self, name: str) -> Dict[str, Any]:
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
         ctx: Dict[str, Any] = {}
-        for key, value in sorted(certs[name].items()):
+
+        for key, value in sorted(CERT_DATA[name].items()):
             # Handle cryptography extensions
             if key == "precert_poison":
                 ctx["precert_poison"] = "* Precert Poison (critical):\n  Yes"
@@ -921,27 +924,19 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     ctx[f"{key}_critical"] = ""
 
                 ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "  ")
-            elif key == "precertificate_signed_certificate_timestamps_serialized":
-                ctx["sct_critical"] = " (critical)" if value["critical"] else ""
-                ctx["sct_values"] = []
-                for val in value["value"]:
-                    ctx["sct_values"].append(val)
-            elif key == "precertificate_signed_certificate_timestamps":
-                continue  # special extension b/c it cannot be created
             elif key == "path_length":
                 ctx[key] = value
                 ctx[f"{key}_text"] = "unlimited" if value is None else value
             else:
                 ctx[key] = value
 
-        if certs[name].get("parent"):
-            parent = certs[certs[name]["parent"]]
-            ctx["parent_name"] = parent["name"]
-            ctx["parent_serial"] = parent["serial"]
-            ctx["parent_serial_colons"] = add_colons(parent["serial"])
+        if parent := CERT_DATA[name].get("parent"):
+            ctx["parent_name"] = CERT_DATA[parent]["name"]
+            ctx["parent_serial"] = CERT_DATA[parent]["serial"]
+            ctx["parent_serial_colons"] = CERT_DATA[parent]["serial_colons"]
 
-        if certs[name]["key_filename"] is not False:
-            ctx["key_path"] = ca_storage.path(certs[name]["key_filename"])
+        if CERT_DATA[name]["key_filename"] is not False:
+            ctx["key_path"] = ca_storage.path(CERT_DATA[name]["key_filename"])
         return ctx
 
     @classmethod
@@ -956,15 +951,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Load a CA from one of the preloaded files."""
         path = f"{name}.key"
         if parsed is None:
-            parsed = certs[name]["pub"]["parsed"]
-        if parent is None and certs[name].get("parent"):
-            parent = CertificateAuthority.objects.get(name=certs[name]["parent"])
+            parsed = CERT_DATA[name]["pub"]["parsed"]
+        if parent is None and CERT_DATA[name].get("parent"):
+            parent = CertificateAuthority.objects.get(name=CERT_DATA[name]["parent"])
 
         # set some default values
-        kwargs.setdefault("issuer_alt_name", certs[name].get("issuer_alternative_name", ""))
-        kwargs.setdefault("crl_url", certs[name].get("crl_url", ""))
-        kwargs.setdefault("ocsp_url", certs[name].get("ocsp_url", ""))
-        kwargs.setdefault("issuer_url", certs[name].get("issuer_url", ""))
+        kwargs.setdefault("issuer_alt_name", CERT_DATA[name].get("issuer_alternative_name", ""))
+        kwargs.setdefault("crl_url", CERT_DATA[name].get("crl_url", ""))
+        kwargs.setdefault("ocsp_url", CERT_DATA[name].get("ocsp_url", ""))
+        kwargs.setdefault("issuer_url", CERT_DATA[name].get("issuer_url", ""))
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
         ca.update_certificate(parsed)  # calculates serial etc
@@ -974,7 +969,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @classmethod
     def load_named_cert(cls, name: str) -> Certificate:
         """Load a certificate with the given mame."""
-        data = certs[name]
+        data = CERT_DATA[name]
         ca = CertificateAuthority.objects.get(name=data["ca"])
         csr = data.get("csr", {}).get("parsed", "")
         profile = data.get("profile", "")
@@ -1062,14 +1057,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def usable_cas(self) -> Iterator[Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
         for name, ca in self.cas.items():
-            if certs[name]["key_filename"]:
+            if CERT_DATA[name]["key_filename"]:
                 yield name, ca
 
     @property
     def usable_certs(self) -> Iterator[Tuple[str, Certificate]]:
         """Yield loaded generated certificates."""
         for name, cert in self.certs.items():
-            if certs[name]["cat"] == "generated":
+            if CERT_DATA[name]["cat"] == "generated":
                 yield name, cert
 
 

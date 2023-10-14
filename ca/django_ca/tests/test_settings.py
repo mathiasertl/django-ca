@@ -35,7 +35,7 @@ from ca.settings_utils import (
     update_database_setting_from_environment,
 )
 from django_ca import ca_settings
-from django_ca.tests.base import FIXTURES_DIR
+from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.mixins import TestCaseMixin
 
 
@@ -522,7 +522,7 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_SUBJECT=[("invalid", "wrong")]):
                 pass
 
-    def test_invalid_ocsp_repsonder_certificate_renewal(self) -> None:
+    def test_invalid_ocsp_responder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
         with self.assertImproperlyConfigured(
             r"^CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int\.$"

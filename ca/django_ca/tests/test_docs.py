@@ -24,7 +24,8 @@ from cryptography import x509
 import pytest
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import DOC_DIR, certs, override_tmpcadir
+from django_ca.tests.base.constants import CERT_DATA, DOC_DIR
+from django_ca.tests.base.utils import override_tmpcadir
 
 BASE = os.path.relpath(DOC_DIR, os.path.dirname(__file__))
 
@@ -37,7 +38,7 @@ def globs(usable_root: CertificateAuthority, root_cert: Certificate) -> Dict[str
         "ca_serial": usable_root.serial,
         "cert": root_cert,
         "cert_serial": root_cert.serial,
-        "csr": certs["root-cert"]["csr"]["parsed"],
+        "csr": CERT_DATA["root-cert"]["csr"]["parsed"],
         "x509": x509,
     }
 

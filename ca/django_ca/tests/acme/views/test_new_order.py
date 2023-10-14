@@ -33,14 +33,15 @@ from django_ca import ca_settings
 from django_ca.acme.messages import NewOrder
 from django_ca.models import AcmeAuthorization, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.base import certs, override_tmpcadir, timestamps
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.utils import override_tmpcadir
 
 
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestCase):
     """Test creating a new order."""
 
-    url = reverse_lazy("django_ca:acme-new-order", kwargs={"serial": certs["root"]["serial"]})
+    url = reverse_lazy("django_ca:acme-new-order", kwargs={"serial": CERT_DATA["root"]["serial"]})
     message_cls = NewOrder
 
     def get_message(self, **kwargs: Any) -> NewOrder:

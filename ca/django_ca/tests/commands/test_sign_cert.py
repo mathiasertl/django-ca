@@ -34,25 +34,28 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base import certs, dns, override_tmpcadir, timestamps, uri
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
     certificate_policies,
     crl_distribution_points,
     distribution_point,
+    dns,
     extended_key_usage,
     issuer_alternative_name,
     key_usage,
     ocsp_no_check,
+    override_tmpcadir,
     subject_alternative_name,
     tls_feature,
+    uri,
 )
 from django_ca.utils import ca_storage
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
-@freeze_time(timestamps["everything_valid"])
+@freeze_time(TIMESTAMPS["everything_valid"])
 class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
     """Main test class for this command."""
 
@@ -61,7 +64,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
     def setUp(self) -> None:
         super().setUp()
-        self.csr_pem = certs["root-cert"]["csr"]["pem"]
+        self.csr_pem = CERT_DATA["root-cert"]["csr"]["pem"]
 
     @override_tmpcadir()
     def test_from_stdin(self) -> None:
@@ -104,9 +107,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
         for name, ca in self.cas.items():
-            stdin = certs[f"{name}-cert"]["csr"]["pem"].encode()
+            stdin = CERT_DATA[f"{name}-cert"]["csr"]["pem"].encode()
 
-            password = certs[name].get("password")
+            password = CERT_DATA[name].get("password")
 
             with self.assertCreateCertSignals() as (pre, post):
                 stdout, stderr = self.cmd(
@@ -707,7 +710,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         """Test using a DER CSR."""
         csr_path = os.path.join(ca_settings.CA_DIR, "test.csr")
         with open(csr_path, "wb") as csr_stream:
-            csr_stream.write(certs["child-cert"]["csr"]["parsed"].public_bytes(Encoding.DER))
+            csr_stream.write(CERT_DATA["child-cert"]["csr"]["parsed"].public_bytes(Encoding.DER))
 
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject=self.subject, csr=csr_path)
@@ -781,7 +784,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
 
     @override_tmpcadir()
-    @freeze_time(timestamps["everything_expired"])
+    @freeze_time(TIMESTAMPS["everything_expired"])
     def test_expired_ca(self) -> None:
         """Test signing with an expired CA."""
         stdin = io.StringIO(self.csr_pem)

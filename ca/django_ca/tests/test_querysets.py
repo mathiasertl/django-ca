@@ -38,9 +38,9 @@ from django_ca.models import (
     Certificate,
     CertificateAuthority,
 )
-from django_ca.tests.base import override_tmpcadir, timestamps
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
-from django_ca.tests.base.utils import basic_constraints, key_usage
+from django_ca.tests.base.utils import basic_constraints, key_usage, override_tmpcadir
 from django_ca.utils import x509_name
 
 
@@ -258,23 +258,23 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         """Test valid/usable/invalid filters."""
         self.load_named_cas("__usable__")
 
-        with freeze_time(timestamps["before_cas"]):
+        with freeze_time(TIMESTAMPS["before_cas"]):
             self.assertCountEqual(CertificateAuthority.objects.valid(), [])
             self.assertCountEqual(CertificateAuthority.objects.usable(), [])
             self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
 
-        with freeze_time(timestamps["before_child"]):
+        with freeze_time(TIMESTAMPS["before_child"]):
             valid = [c for c in self.cas.values() if c.name != "child"]
             self.assertCountEqual(CertificateAuthority.objects.valid(), valid)
             self.assertCountEqual(CertificateAuthority.objects.usable(), valid)
             self.assertCountEqual(CertificateAuthority.objects.invalid(), [self.cas["child"]])
 
-        with freeze_time(timestamps["after_child"]):
+        with freeze_time(TIMESTAMPS["after_child"]):
             self.assertCountEqual(CertificateAuthority.objects.valid(), self.cas.values())
             self.assertCountEqual(CertificateAuthority.objects.usable(), self.cas.values())
             self.assertCountEqual(CertificateAuthority.objects.invalid(), [])
 
-        with freeze_time(timestamps["cas_expired"]):
+        with freeze_time(TIMESTAMPS["cas_expired"]):
             self.assertCountEqual(CertificateAuthority.objects.valid(), [])
             self.assertCountEqual(CertificateAuthority.objects.usable(), [])
             self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
@@ -288,17 +288,17 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
 
     def test_validity(self) -> None:
         """Test validity filter."""
-        with freeze_time(timestamps["everything_valid"]):
+        with freeze_time(TIMESTAMPS["everything_valid"]):
             self.assertQuerySet(Certificate.objects.expired())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
             self.assertQuerySet(Certificate.objects.valid(), *self.certs.values())
 
-        with freeze_time(timestamps["everything_expired"]):
+        with freeze_time(TIMESTAMPS["everything_expired"]):
             self.assertQuerySet(Certificate.objects.expired(), *self.certs.values())
             self.assertQuerySet(Certificate.objects.not_yet_valid())
             self.assertQuerySet(Certificate.objects.valid())
 
-        with freeze_time(timestamps["before_everything"]):
+        with freeze_time(TIMESTAMPS["before_everything"]):
             self.assertQuerySet(Certificate.objects.expired())
             self.assertQuerySet(Certificate.objects.not_yet_valid(), *self.certs.values())
             self.assertQuerySet(Certificate.objects.valid())
@@ -313,7 +313,7 @@ class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
             self.certs["ed25519-cert"],
         ]
         valid = [c for c in self.certs.values() if c not in expired]
-        with freeze_time(timestamps["ca_certs_expired"]):
+        with freeze_time(TIMESTAMPS["ca_certs_expired"]):
             self.assertQuerySet(Certificate.objects.expired(), *expired)
             self.assertQuerySet(Certificate.objects.not_yet_valid())
             self.assertQuerySet(Certificate.objects.valid(), *valid)
@@ -362,7 +362,7 @@ class AcmeQuerySetTestCase(QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTe
 class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
     """Test cases for :py:class:`~django_ca.querysets.AcmeAccountQuerySet`."""
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
         self.assertQuerySet(AcmeAccount.objects.viewable(), self.account, self.account2)
@@ -379,7 +379,7 @@ class AcmeAccountQuerySetTestCase(AcmeQuerySetTestCase):
         # Test that we're back to the original state
         self.assertQuerySet(AcmeAccount.objects.viewable(), self.account, self.account2)
 
-        with freeze_time(timestamps["everything_expired"]):
+        with freeze_time(TIMESTAMPS["everything_expired"]):
             self.assertQuerySet(AcmeAccount.objects.viewable())
 
 
@@ -391,7 +391,7 @@ class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase):
         self.assertQuerySet(AcmeOrder.objects.account(self.account), self.order)
         self.assertQuerySet(AcmeOrder.objects.account(self.account2))
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
         self.assertQuerySet(AcmeOrder.objects.viewable(), self.order)
@@ -399,7 +399,7 @@ class AcmeOrderQuerysetTestCase(AcmeQuerySetTestCase):
         with self.attr(self.order.account, "status", AcmeAccount.STATUS_REVOKED):
             self.assertQuerySet(AcmeOrder.objects.viewable())
 
-        with freeze_time(timestamps["everything_expired"]):
+        with freeze_time(TIMESTAMPS["everything_expired"]):
             self.assertQuerySet(AcmeOrder.objects.viewable())
 
 
@@ -411,7 +411,7 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
         self.assertQuerySet(AcmeAuthorization.objects.account(self.account), self.auth)
         self.assertQuerySet(AcmeAuthorization.objects.account(self.account2))
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_url(self) -> None:
         """Test the url filter."""
         # pylint: disable=expression-not-assigned
@@ -419,7 +419,7 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
         with self.assertNumQueries(1):
             AcmeAuthorization.objects.url().get(pk=self.auth.pk).acme_url
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
         self.assertQuerySet(AcmeAuthorization.objects.viewable(), self.auth)
@@ -436,7 +436,7 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
         self.assertQuerySet(AcmeChallenge.objects.account(self.account), self.chall)
         self.assertQuerySet(AcmeChallenge.objects.account(self.account2))
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_url(self) -> None:
         """Test the url filter."""
         # pylint: disable=expression-not-assigned
@@ -444,7 +444,7 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
         with self.assertNumQueries(1):
             AcmeChallenge.objects.url().get(pk=self.chall.pk).acme_url
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
         self.assertQuerySet(AcmeChallenge.objects.viewable(), self.chall)
@@ -461,7 +461,7 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
         self.assertQuerySet(AcmeCertificate.objects.account(self.account), self.acme_cert)
         self.assertQuerySet(AcmeCertificate.objects.account(self.account2))
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_url(self) -> None:
         """Test the url filter."""
         # pylint: disable=expression-not-assigned
@@ -469,7 +469,7 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
         with self.assertNumQueries(1):
             AcmeCertificate.objects.url().get(pk=self.acme_cert.pk).acme_url
 
-    @freeze_time(timestamps["everything_valid"])
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
         """Test the viewable() method."""
         # none by default because we need a valid order and cert

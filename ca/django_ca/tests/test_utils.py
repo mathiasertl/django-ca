@@ -38,7 +38,8 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings, constants, utils
-from django_ca.tests.base import CRYPTOGRAPHY_VERSION, dns, rdn, uri
+from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
+from django_ca.tests.base.utils import dns, rdn, uri
 from django_ca.utils import (
     bytes_to_hex,
     format_general_name,
