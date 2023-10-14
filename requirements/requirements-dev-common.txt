@@ -6,7 +6,7 @@ PyYAML==6.0.1
 Sphinx<7
 coverage[toml]==7.3.2
 django-ninja==0.22.2
-selenium==4.13.0
+selenium==4.14.0
 semantic-version==2.10.0
 tabulate==0.9.0
 termcolor==2.3.0
