@@ -41,7 +41,7 @@ from devscripts.validation.docker import build_docker_image, docker_cp
 @contextmanager
 def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
     try:
-        utils.run(["docker", "compose", "up", "-d"], capture_output=True, **kwargs)
+        utils.run(["docker", "compose", "up", "-d"], **kwargs)
         yield
     finally:
         down = ["docker", "compose", "down"]
@@ -51,7 +51,7 @@ def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
         if "env" in kwargs:
             down_kwargs["env"] = kwargs["env"]
 
-        utils.run(down, capture_output=True, **down_kwargs)
+        utils.run(down, **down_kwargs)
 
 
 def _compose_exec(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
@@ -63,7 +63,7 @@ def _manage(container: str, *args: str, **kwargs: Any) -> "subprocess.CompletedP
     return _compose_exec(container, "manage", *args, **kwargs)
 
 
-def _sign_cert(container: str, ca: str, csr: str) -> str:
+def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
     subject = f"signed-in-{container}.{ca.lower()}.example.com"
 
     _manage(
@@ -71,10 +71,9 @@ def _sign_cert(container: str, ca: str, csr: str) -> str:
         "sign_cert",
         f"--ca={ca}",
         f"--subject=/CN={subject}",
-        capture_output=True,
-        input=csr,
-        text=True,
+        input=csr.encode("utf-8"),
         compose_args=["-T"],
+        **kwargs,
     )
     return subject
 
@@ -84,15 +83,15 @@ def _run_py(container: str, code: str, env: Optional[Dict[str, str]] = None) -> 
     return typing.cast(str, proc.stdout)  # is a str because of text=True above
 
 
-def _openssl_verify(ca_file: str, cert_file: str) -> "subprocess.CompletedProcess[Any]":
+def _openssl_verify(ca_file: str, cert_file: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     return utils.run(
-        ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file],
-        capture_output=True,
-        text=True,
+        ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file], **kwargs
     )
 
 
-def _openssl_ocsp(ca_file: str, cert_file: str, url: str) -> "subprocess.CompletedProcess[Any]":
+def _openssl_ocsp(
+    ca_file: str, cert_file: str, url: str, **kwargs: Any
+) -> "subprocess.CompletedProcess[Any]":
     return utils.run(
         [
             "openssl",
@@ -107,8 +106,7 @@ def _openssl_ocsp(ca_file: str, cert_file: str, url: str) -> "subprocess.Complet
             "-url",
             url,
         ],
-        capture_output=True,
-        text=True,
+        **kwargs,
     )
 
 
@@ -123,8 +121,7 @@ def _validate_container_versions(release: str, env: Optional[Dict[str, str]] = N
         errors += err(f"backend container identifies as {backend_ver} instead of {release}.")
     if frontend_ver != release:
         errors += err(f"frontend container identifies as {frontend_ver} instead of {release}.")
-    if not errors:
-        ok(f"Container version: {backend_ver}")
+
     return errors
 
 
@@ -168,12 +165,12 @@ def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
-    proc = _openssl_ocsp(ca_file, cert_file, ocsp_url)
+    proc = _openssl_ocsp(ca_file, cert_file, ocsp_url, capture_output=True, text=True)
     assert "Cert Status: revoked" in proc.stdout
 
     # Make sure that CRL validation fails now too
     try:
-        _openssl_verify(ca_file, cert_file)
+        _openssl_verify(ca_file, cert_file, capture_output=True, text=True)
     except subprocess.CalledProcessError as ex:
         # OpenSSL in Ubuntu 20.04 outputs this on stdout, in 22.04 it goes to stderr
         assert "verification failed" in ex.stdout or "verification failed" in ex.stderr
@@ -211,9 +208,9 @@ def _sign_certificates(csr: str) -> str:
     _sign_cert("frontend", "Intermediate", csr)
 
     try:
-        _sign_cert("frontend", "Root", csr)
+        _sign_cert("frontend", "Root", csr, capture_output=True)
     except subprocess.CalledProcessError as ex:
-        assert re.search(r"Root:.*Private key does not exist\.", ex.stderr)
+        assert re.search(rb"Root:.*Private key does not exist\.", ex.stderr)
     else:
         raise RuntimeError("Was able to sign root cert in frontend.")
 
@@ -276,8 +273,8 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements,t
             ok("Containers seem to have started properly.")
 
             # Check that we didn't forget any migrations
-            _manage("backend", "makemigrations", "--check", capture_output=True)
-            _manage("frontend", "makemigrations", "--check", capture_output=True)
+            _manage("backend", "makemigrations", "--check")
+            _manage("frontend", "makemigrations", "--check")
 
             # Validate that the container versions match the expected version
             errors += _validate_container_versions(release)
@@ -323,10 +320,8 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements,t
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
 
-                utils.run(["docker", "compose", "down"], capture_output=True)
-                utils.run(
-                    ["docker", "compose", "up", "-d"], env={"DJANGO_CA_VERSION": release}, capture_output=True
-                )
+                utils.run(["docker", "compose", "down"])
+                utils.run(["docker", "compose", "up", "-d"], env={"DJANGO_CA_VERSION": release})
                 ok("Restarted docker containers.")
 
                 # Finally some manual testing
@@ -385,8 +380,10 @@ POSTGRES_PASSWORD=mysecretpassword
             # Start previous version
             with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
                 # Make sure we have started the right version
+                info(f"Start previous version ({last_release}).")
                 _validate_container_versions(last_release)
 
+                info("Create test data...")
                 docker_cp(str(standalone_dir / "create-testdata.py"), backend, standalone_dest)
                 docker_cp(str(standalone_dir / "create-testdata.py"), frontend, standalone_dest)
                 _compose_exec("backend", "./create-testdata.py", "--env", "backend")
@@ -396,9 +393,11 @@ POSTGRES_PASSWORD=mysecretpassword
             shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
 
             with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
+                info(f"Start current version ({last_release}).")
                 # Make sure we have the new version
                 _validate_container_versions(release)
 
+                info("Validate test data...")
                 docker_cp(str(standalone_dir / "validate-testdata.py"), backend, standalone_dest)
                 docker_cp(str(standalone_dir / "validate-testdata.py"), frontend, standalone_dest)
                 _compose_exec("backend", "./validate-testdata.py", "--env", "backend")
@@ -411,7 +410,7 @@ POSTGRES_PASSWORD=mysecretpassword
 
 def test_acme(release: str, image: str) -> int:
     """Test ACMEv2 validation."""
-    info(f"Validating ACMVEv2 implementation {image}...")
+    info(f"Validating ACMVEv2 implementation on {image}...")
 
     compose_override = config.DEVSCRIPTS_FILES / "docker-compose.certbot.yaml"
     compose_files = f"docker-compose.yml:{compose_override}"
@@ -430,12 +429,7 @@ def test_acme(release: str, image: str) -> int:
 
         with utils.chdir(dest):
             # build containers
-            utils.run(
-                ["docker", "compose", "build", "--build-arg", f"IMAGE={image}"],
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                env=environ,
-            )
+            utils.run(["docker", "compose", "build", "--build-arg", f"IMAGE={image}"], env=environ)
 
             # Start containers
             with _compose_up(env=environ):
@@ -480,7 +474,7 @@ def test_acme(release: str, image: str) -> int:
     return errors
 
 
-def _validate_default_version(path: Union[str, os.PathLike[str]], release: str) -> int:
+def _validate_default_version(path: Union[str, "os.PathLike[str]"], release: str) -> int:
     info(f"Validating {path}...")
     if not os.path.exists(path):
         return err(f"{path}: File not found.")
@@ -506,13 +500,16 @@ def validate_docker_compose_files(release: str) -> int:
 
 
 class Command(DevCommand):
+    """Class implementing the ``dev.py validate docker-compose`` command."""
+
     modules = (("django_ca", "django-ca"),)
     django_ca: ModuleType
     help_text = "Validate Docker Compose setup."
 
     @property
     def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
-        return [self.parent.docker_options]  # type: ignore[attr-defined]  # set in the constructor
+        # pylint: disable-next=no-member  # set in the constructor of parent class
+        return [self.parent.docker_options]  # type: ignore[attr-defined]  # see pylint above
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(

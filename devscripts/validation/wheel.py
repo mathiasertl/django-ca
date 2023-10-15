@@ -19,12 +19,11 @@ import time
 from types import ModuleType
 from typing import Any
 
-import docker
 from setuptools.config.pyprojecttoml import read_configuration
 
 from devscripts import config, utils
 from devscripts.commands import DevCommand
-from devscripts.out import info
+from devscripts.out import info, ok
 
 
 def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
@@ -45,31 +44,26 @@ def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subpr
         f"/tmp/venv/bin/python {command}",
     ]
 
-    try:
-        return utils.docker_run(
-            "-v",
-            f"{pip_cache_dir}:{docker_pip_cache}",
-            f"--user={os.getuid()}:{os.getgid()}",
-            "--rm",
-            image,
-            "/bin/sh",
-            "-c",
-            "; ".join(commands),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-    except subprocess.CalledProcessError as ex:
-        print(ex.stdout)
-        raise
+    return utils.docker_run(
+        "-v",
+        f"{pip_cache_dir}:{docker_pip_cache}",
+        f"--user={os.getuid()}:{os.getgid()}",
+        "--rm",
+        image,
+        "/bin/sh",
+        "-c",
+        "; ".join(commands),
+    )
 
 
 class Command(DevCommand):
+    """Class implementing the ``dev.py validate wheel`` command."""
+
     modules = (("django_ca", "django-ca"),)
     django_ca: ModuleType
     help_text = "Test wheel with extras on various distributions."
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.pyproject_toml = read_configuration(config.ROOT_DIR / "pyproject.toml")
         self.project_config = config.get_project_config()
@@ -95,7 +89,7 @@ class Command(DevCommand):
     def handle(self, args: argparse.Namespace) -> None:
         info("Testing Python wheel...")
         release = self.django_ca.__version__
-        client = docker.from_env()
+        client = self.docker.from_env()
 
         # get pip  cache dir in image
         host_pip_cache = subprocess.run(
@@ -134,4 +128,4 @@ class Command(DevCommand):
 
             time.sleep(1)
             image.remove(force=True)
-        info("Python wheel is okay.")
+        ok("Python wheel validated.")

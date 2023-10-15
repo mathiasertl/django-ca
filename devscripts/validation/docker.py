@@ -104,13 +104,13 @@ def docker_cp(src: str, container: str, dest: str) -> None:
 def build_docker_image(release: str, prune: bool = True, build: bool = True) -> str:
     """Build the docker image."""
     if prune:
-        utils.run(["docker", "system", "prune", "-af"], capture_output=True)
+        utils.run(["docker", "system", "prune", "-af"])
 
     tag = f"{config.DOCKER_TAG}:{release}"
     if build:
         info("Building docker image...")
-        utils.run(["docker", "build", "-t", tag, "."], env={"DOCKER_BUILDKIT": "1"}, capture_output=True)
-        ok("Docker image built.")
+        utils.run(["docker", "build", "-t", tag, "."], env={"DOCKER_BUILDKIT": "1"})
+        ok(f"Docker image built as {tag}.")
     return tag
 
 
@@ -149,7 +149,6 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
         with tut.run("start-dependencies.yaml"), tut.run("start-django-ca.yaml"), tut.run(
             "start-nginx.yaml"
         ), tut.run("setup-cas.yaml"):
-            input(os.getcwd())
             errors += _test_connectivity(standalone_src)
 
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
@@ -159,13 +158,16 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
 
 
 class Command(DevCommand):
+    """Class implementing the ``dev.py validate docker`` command."""
+
     modules = (("django_ca", "django-ca"),)
     django_ca: ModuleType
     help_text = "Validate Docker setup."
 
     @property
     def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
-        return [self.parent.docker_options]  # type: ignore[attr-defined]  # set in the constructor
+        # pylint: disable-next=no-member  # set in the constructor of parent class
+        return [self.parent.docker_options]  # type: ignore[attr-defined]  # see pylint above
 
     def handle(self, args: argparse.Namespace) -> None:
         release = self.django_ca.__version__

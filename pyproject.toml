@@ -24,16 +24,17 @@ docker-image-blacklist = [
 # List of tested Debian releases:
 #   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
 debian-releases = [
-    "bullseye",
-    "bookworm",
+    "bullseye",  # June 2026
+    "bookworm",  # until June 2028
 ]
 
 # List of tested Ubuntu releases:
 #   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
 ubuntu-releases = [
-    "focal",
-    "jammy",
-    "lunar",
+    "focal",  # until 2025-04-23
+    "jammy",  # until  2027-04-21
+    "lunar",  # until 2024-01-20
+    "mantic",  # until 2024-07
 ]
 
 [django-ca.validation]

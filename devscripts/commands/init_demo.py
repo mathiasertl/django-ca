@@ -208,7 +208,6 @@ class Command(DevCommand):
             [
                 "python",
                 "dev.py",
-                "--quiet",
                 "recreate-fixtures",
                 "--no-delay",
                 "--no-ocsp",

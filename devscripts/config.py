@@ -30,7 +30,8 @@ DOCKER_TAG = "mathiasertl/django-ca"
 DEVSCRIPTS_DIR = ROOT_DIR / "devscripts"
 DEVSCRIPTS_FILES = DEVSCRIPTS_DIR / "files"
 
-OUTPUT_COMMANDS = True
+SHOW_COMMANDS = False
+SHOW_COMMAND_OUTPUT = False
 
 
 def minor_to_major(version: str) -> str:

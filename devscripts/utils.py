@@ -80,7 +80,7 @@ def _wait_for(
         wait_for_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
 
         for i in range(0, 15):
-            wait_for_proc = run(wait_for_cmd, check=False, capture_output=True, **kwargs)
+            wait_for_proc = run(wait_for_cmd, check=False, **kwargs)
             if wait_for_proc.returncode == 0:
                 break
             time.sleep(1)
@@ -132,7 +132,7 @@ def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
             # If a "wait_for" command is defined, don't run actual command until it succeeds
             _wait_for(command.get("wait_for"), env, context, env=shell_env)
 
-            run(args, capture_output=command.get("capture_output", True), input=stdin, env=shell_env)
+            run(args, input=stdin, env=shell_env)
 
             for cmd in command.get("after_command", []):
                 run(shlex.split(env.from_string(cmd).render(**context)))
@@ -142,7 +142,7 @@ def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
         yield
     finally:
         for args in reversed(clean_commands):
-            run(args, check=False, capture_output=True)
+            run(args, check=False)
 
 
 def get_previous_release(current_release: Optional[str] = None) -> str:
@@ -193,8 +193,11 @@ def tmpdir() -> Iterator[str]:
 def run(args: Sequence[str], **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
-    if config.OUTPUT_COMMANDS:
+    if config.SHOW_COMMANDS:
         print("+", shlex.join(args))
+    if not config.SHOW_COMMAND_OUTPUT and not kwargs.get("capture_output"):
+        kwargs.setdefault("stdout", subprocess.DEVNULL)
+        kwargs.setdefault("stderr", subprocess.DEVNULL)
     return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
 
 

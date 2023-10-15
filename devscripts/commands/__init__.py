@@ -60,6 +60,7 @@ class DevCommand:
 
     @property
     def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
+        """Argument parser parents, can be overwritten by subclasses."""
         return []
 
     def __init__(self, **kwargs: Any) -> None:
@@ -79,8 +80,10 @@ class DevCommand:
             mod = importlib.import_module(mod_name)
             setattr(self, mod_name, mod)
 
-        if args.quiet:
-            config.OUTPUT_COMMANDS = False
+        if args.show_commands:
+            config.SHOW_COMMANDS = True
+        if args.show_output:
+            config.SHOW_COMMAND_OUTPUT = True
 
         try:
             self.handle(args)
@@ -176,6 +179,7 @@ class DevSubCommand(DevCommand):
 
 
 def add_subcommands(parser: argparse.ArgumentParser, path: str, dest: str = "command", **kwargs: Any) -> None:
+    """Function to add subcommands gin `path` to `parser`."""
     commands = parser.add_subparsers(dest=dest)
 
     # Get a list of submodules:

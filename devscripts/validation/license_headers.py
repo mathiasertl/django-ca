@@ -73,6 +73,8 @@ def handle_python_file(path: Union[str, "os.PathLike[str]"], script: bool) -> in
 
 
 class Command(DevCommand):
+    """Class implementing the ``dev.py validate license-headers`` command."""
+
     help_text = "Ensure consistent license headers in source files."
 
     def handle(self, args: argparse.Namespace) -> None:
