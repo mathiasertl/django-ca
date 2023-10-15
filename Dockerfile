@@ -20,6 +20,7 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 
 COPY requirements/ requirements/
+COPY requirements-pinned.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
 COPY ca/django_ca/__init__.py ca/django_ca/
@@ -28,7 +29,7 @@ COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
-        -r requirements/requirements-pinned.txt \
+        -r requirements-pinned.txt \
         -e .[celery,redis,mysql,psycopg3,yaml]
 
 
