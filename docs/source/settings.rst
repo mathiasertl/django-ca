@@ -528,7 +528,7 @@ configure PostgreSQL:
 
    DATABASES:
       default:
-         ENGINE: django.db.backends.postgresql_psycopg2
+         ENGINE: django.db.backends.postgresql
 
 ... and then start your docker containers with (not a full example here):
 

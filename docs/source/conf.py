@@ -416,6 +416,7 @@ jinja_contexts = {
         "postgres_host": "postgres",
         "postgres_password": "password",
         "redis_host": "redis",
+        "secret_key": "changeme",
     },
     "quickstart-with-docker-compose": {
         "ca_default_hostname": _ca_default_hostname,

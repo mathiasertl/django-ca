@@ -118,5 +118,8 @@ USER django-ca:django-ca
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
 WORKDIR /usr/src/django-ca/ca/
+
 ENV DJANGO_CA_SETTINGS=conf/
+ENV DJANGO_CA_SECRET_KEY_FILE=/var/lib/django-ca/certs/ca/shared/secret_key
+
 CMD ./uwsgi.sh

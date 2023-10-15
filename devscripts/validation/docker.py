@@ -18,6 +18,8 @@ import pathlib
 from types import ModuleType
 from typing import Sequence
 
+from django.core.management.utils import get_random_secret_key
+
 from devscripts import config, utils
 from devscripts.commands import DevCommand
 from devscripts.out import err, info, ok
@@ -136,6 +138,7 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
         "postgres_host": "postgres",
         "postgres_password": "random-password",
         "redis_host": "redis",
+        "secret_key": get_random_secret_key(),
     }
 
     info("Testing tutorial...")
@@ -146,6 +149,7 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
         with tut.run("start-dependencies.yaml"), tut.run("start-django-ca.yaml"), tut.run(
             "start-nginx.yaml"
         ), tut.run("setup-cas.yaml"):
+            input(os.getcwd())
             errors += _test_connectivity(standalone_src)
 
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")

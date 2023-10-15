@@ -63,6 +63,13 @@ Initial configuration
 django-ca requires some initial configuration (like where to find the PostgreSQL server) to run and the domain
 name you have set up above.
 
+Django requires a ``SECRET_KEY`` to run, and it should be shared between the Celery worker and the uWSGI
+instance. Generate a sufficiently long secret key and set it as ``SECRET_KEY`` below:
+
+.. code-block:: console
+
+   user@host:~$ cat /dev/urandom | tr -dc '[:alnum:][:punct:]' | tr -d '"' | fold -w ${1:-50} | head -n 1
+
 To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
 and add at least these settings (and adjust to your configuration):
 

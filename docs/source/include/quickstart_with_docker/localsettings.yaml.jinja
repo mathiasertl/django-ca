@@ -1,14 +1,22 @@
 # Configuration for django-ca. You can add/update settings here and then
 # restart your containers.
 
+# Secret key used for session handling etc, must be a long, random string.
+# Generate with:
+#
+#   cat /dev/urandom | tr -dc '[:alnum:][:punct:]' | tr -d '"' | fold -w ${1:-50} | head -n 1
+#
+SECRET_KEY: "{{ secret_key }}"
+
 # Where to find your database
 DATABASES:
     default:
-        ENGINE: django.db.backends.postgresql_psycopg2
+        ENGINE: django.db.backends.postgresql
         HOST: {{ postgres_host }}
         PORT: 5432
         PASSWORD: {{ postgres_password }}
 
+# Shared, persistent cache
 CACHES:
     default:
         BACKEND: django.core.cache.backends.redis.RedisCache

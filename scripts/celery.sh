@@ -1,6 +1,9 @@
 #!/bin/sh -e
 
 DJANGO_CA_SECRET_KEY=${DJANGO_CA_SECRET_KEY:-}
+
+# Default path to the file holding the secret key. Note that the default here matches the default set in the
+# Dockerfile. docker-compose.yml will override this with a path shared between backend and frontend.
 DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
@@ -10,7 +13,7 @@ if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
         chmod go-rwx ${KEY_DIR}
     fi
 
-    # Wait for uWSGI container to create secret key file
+    # Wait for uWSGI container to create the secret key file
     for i in $(seq 1 5); do
         if [ -e "${DJANGO_CA_SECRET_KEY_FILE}" ]; then
             break
@@ -31,6 +34,9 @@ with open('${DJANGO_CA_SECRET_KEY_FILE}', 'w') as stream:
 EOF
     fi
     chmod go-rwx ${DJANGO_CA_SECRET_KEY_FILE}
+
+    # Export DJANGO_CA_SECRET_KEY_FILE so that django-ca itself will pick it up.
+    export DJANGO_CA_SECRET_KEY_FILE
 else
     export DJANGO_CA_SECRET_KEY
 fi
