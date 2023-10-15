@@ -40,7 +40,7 @@ def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subpr
     commands = [
         "python -m venv /tmp/venv",
         # NOTE: We require at least setuptools>=68.1 for reading package configuration from pyproject.toml
-        f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} -U pip setuptools>=68.1",
+        f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} -U pip 'setuptools>=68.1'",
         f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} {wheel}",
         f"/tmp/venv/bin/python {command}",
     ]
