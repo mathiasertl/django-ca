@@ -49,7 +49,7 @@ services:
                     - ca.example.com
     certbot:
         build: 
-            context: devscripts/files/
+            context: .
             dockerfile: devscripts/files/Dockerfile.certbot
 
         hostname: certbot

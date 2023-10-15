@@ -413,7 +413,8 @@ def test_acme(release: str, image: str) -> int:
     """Test ACMEv2 validation."""
     info(f"Validating ACMVEv2 implementation {image}...")
 
-    compose_files = "docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml"
+    compose_override = config.DEVSCRIPTS_FILES / "docker-compose.certbot.yaml"
+    compose_files = f"docker-compose.yml:{compose_override}"
     environ = dict(os.environ, COMPOSE_FILE=compose_files, DJANGO_CA_VERSION=release)
     errors = 0
 
