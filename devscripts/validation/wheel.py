@@ -69,18 +69,51 @@ class Command(DevCommand):
     django_ca: ModuleType
     help_text = "Test wheel with extras on various distributions."
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.pyproject_toml = read_configuration(config.ROOT_DIR / "pyproject.toml")
+        self.project_config = config.get_project_config()
+        self.extra_choices = ["none"] + list(self.pyproject_toml["project"]["optional-dependencies"])
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--python",
+            choices=self.project_config["python-major"],
+            default=[],
+            action="append",
+            help="Only test the specified Python version (can be given multiple times).",
+        )
+
+        parser.add_argument(
+            "--extra",
+            choices=self.extra_choices,
+            default=[],
+            action="append",
+            help="Only test the specified extras, add 'none' for no extras (can be given multiple times).",
+        )
+
     def handle(self, args: argparse.Namespace) -> None:
         info("Testing Python wheel...")
         release = self.django_ca.__version__
-        project_config = config.get_project_config()
         client = docker.from_env()
 
+        # get pip  cache dir in image
         host_pip_cache = subprocess.run(
             ["pip", "cache", "dir"], check=True, capture_output=True, text=True
         ).stdout.strip()
-        project_configuration = read_configuration(config.ROOT_DIR / "pyproject.toml")
 
-        for pyver in project_config["python-major"]:
+        python_versions = args.python
+        if not python_versions:
+            python_versions = self.project_config["python-major"]
+
+        extras = args.extra
+        if not extras:
+            extras = self.extra_choices
+
+        test_no_extras = "none" in extras
+        extras = [extra for extra in extras if extra != "none"]
+
+        for pyver in python_versions:
             info(f"Testing with Python {pyver}.", indent="  ")
 
             # build the image
@@ -91,10 +124,11 @@ class Command(DevCommand):
                 target="test",
             )
 
-            # get cache dir in image
-            run(release, image.id, host_pip_cache)
+            if test_no_extras:
+                info("Test with no extras", indent="    ")
+                run(release, image.id, host_pip_cache)
 
-            for extra in list(project_configuration["project"]["optional-dependencies"]):
+            for extra in extras:
                 info(f"Test extra: {extra}", indent="    ")
                 run(release, image.id, host_pip_cache, extra=extra)
 
