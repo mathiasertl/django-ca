@@ -60,7 +60,7 @@ def _test_extras(docker_tag: str) -> int:
     cwd = os.getcwd()
     utils.docker_run(
         "-v",
-        f"{cwd}/setup.cfg:/usr/src/django-ca/setup.cfg",
+        f"{cwd}/pyproject.toml:/usr/src/django-ca/pyproject.toml",
         "-v",
         f"{cwd}/devscripts/:/usr/src/django-ca/devscripts",
         "-w",

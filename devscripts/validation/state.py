@@ -169,13 +169,13 @@ def check_tox(project_config: Dict[str, Any]) -> int:
 
 
 def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
-    """Check setup.cfg."""
+    """Check pyproject.toml."""
     check_path("pyproject.toml")
     errors = 0
 
     project_configuration = read_configuration(os.path.join(config.ROOT_DIR, "pyproject.toml"))
 
-    # parse data from setup.cfg
+    # Get data from pyproject.toml
     classifiers = project_configuration["project"]["classifiers"]
 
     # Get requirements - split everything after the first comma, to allow excluding single versions

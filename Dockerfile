@@ -84,7 +84,7 @@ COPY nginx/ nginx/
 
 COPY devscripts/ devscripts/
 
-RUN rm -rf requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example 
+RUN rm -rf requirements-pinned.txt requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
 
 # Test that imports are working
 RUN cp -a /install/* /usr/local/
