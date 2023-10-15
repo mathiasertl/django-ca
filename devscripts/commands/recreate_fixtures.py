@@ -463,7 +463,9 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
 
 
 class Command(DevCommand):
-    """Regenerate fixtures for testing."""
+    """Class implementing the ``dev.py recreate-fixtures`` command."""
+
+    help_text = "Regenerate fixtures for testing."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(

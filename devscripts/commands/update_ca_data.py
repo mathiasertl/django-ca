@@ -648,11 +648,18 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
 
 
 class Command(DevCommand):
-    """Update tables for docs/source/ca_examples.rst.
+    """Class implementing the ``dev.py update-ca-data`` command."""
 
+    help_text = "Update tables for docs/source/ca_examples.rst."
+
+    description = (
+        help_text
+        + """
+    
     This command updates the generated tables showing how X509 extensions are used in real-world certificates.
     It should be used when new CAs/certificates are added in docs/source/_files/.
     """
+    )
 
     def handle(self, args: argparse.Namespace) -> None:
         OUT_DIR.mkdir(exist_ok=True)

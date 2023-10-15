@@ -20,7 +20,7 @@ import pkgutil
 import subprocess
 import sys
 import typing
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import django
 
@@ -57,6 +57,14 @@ class DevCommand:
     modules: Tuple[Tuple[str, str], ...] = tuple()
     help_text: str = ""
     description = ""
+
+    @property
+    def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
+        return []
+
+    def __init__(self, **kwargs: Any) -> None:
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments to the command line parser."""
@@ -161,46 +169,38 @@ class DevSubCommand(DevCommand):
     module_name: str
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        subcommands = parser.add_subparsers(dest="subcommand")
-
-        module = importlib.import_module(f"devscripts.{self.module_name}")
-        submodules = pkgutil.iter_modules(module.__path__)
-        for finder, name, is_pkg in submodules:
-            submodule = importlib.import_module(f"devscripts.{self.module_name}.{name}")
-
-            # Get Command class of the module, skip module if it doesn't contain it
-            command_cls = getattr(submodule, "Command", None)
-            if not command_cls or not issubclass(command_cls, DevCommand):
-                continue
-
-            command = command_cls()
-            subcommand_parser = subcommands.add_parser(
-                name, help=command.help_text, description=command.description
-            )
-            subcommand_parser.set_defaults(func=command.exec)
+        add_subcommands(parser, f"devscripts.{self.module_name}", "subcommand", parent=self)
 
     def handle(self, args: argparse.Namespace) -> None:
         raise CommandError("Subcommand is must be given.")
 
 
-def add_command(cmd_subparser: "argparse._SubParsersAction[argparse.ArgumentParser]", name: str) -> None:
-    """Add a subcommand with the given name to the sub-command parser.
+def add_subcommands(parser: argparse.ArgumentParser, path: str, dest: str = "command", **kwargs: Any) -> None:
+    commands = parser.add_subparsers(dest=dest)
 
-    The function expects to find ``Command`` class to be defined in `devscripts.{name}`.
-    """
-    mod_name = name.replace("-", "_")
-    mod = importlib.import_module(f"devscripts.commands.{mod_name}")
-    cmd = mod.Command()
+    # Get a list of submodules:
+    module = importlib.import_module(path)
+    submodules = pkgutil.iter_modules(module.__path__)
 
-    help_text = cmd.help_text
-    description = cmd.description
-    if cmd.__doc__ is not None:
-        doc_lines = cmd.__doc__.splitlines()
-        if not help_text:
-            help_text = doc_lines[0].strip()
-        if not description and len(doc_lines) > 1:
-            description = " ".join(doc_lines[1:]).strip()
+    for finder, name, is_pkg in submodules:
+        # Import module
+        submodule = importlib.import_module(f"{path}.{name}")
 
-    cmd_parser = cmd_subparser.add_parser(name, help=help_text, description=description)
-    cmd_parser.set_defaults(func=cmd.exec)
-    cmd.add_arguments(cmd_parser)
+        # Try to find the "Command" class in the module
+        command_cls = getattr(submodule, "Command", None)
+        if not command_cls or not issubclass(command_cls, DevCommand):
+            continue
+
+        # Instantiate command class and add its arguments
+        command = command_cls(**kwargs)
+
+        name = name.replace("_", "-")
+        description = command.description
+        if not description:
+            description = command.help_text
+
+        subcommand_parser = commands.add_parser(
+            name, help=command.help_text, description=description, parents=command.parser_parents
+        )
+        subcommand_parser.set_defaults(func=command.exec)
+        command.add_arguments(subcommand_parser)

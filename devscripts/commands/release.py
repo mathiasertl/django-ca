@@ -30,7 +30,9 @@ if typing.TYPE_CHECKING:
 
 
 class Command(DevCommand):
-    """Create a new release."""
+    """Class implementing the ``dev.py release`` command."""
+
+    help_text = "Create a new release."
 
     modules = (
         ("django_ca", "django-ca"),

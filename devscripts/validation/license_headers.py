@@ -12,14 +12,14 @@
 # <http://www.gnu.org/licenses/>.
 
 """validation module to validate license headers."""
-
+import argparse
 import difflib
 import os
 import textwrap
 from pathlib import Path
 from typing import Union
 
-from devscripts.commands import CommandError
+from devscripts.commands import CommandError, DevCommand
 
 try:
     import tomllib
@@ -72,19 +72,22 @@ def handle_python_file(path: Union[str, "os.PathLike[str]"], script: bool) -> in
     return 0
 
 
-def validate() -> None:
-    """Main validation function."""
-    errors = 0
-    with open("pyproject.toml", "rb") as stream:
-        config = tomllib.load(stream)
+class Command(DevCommand):
+    help_text = "Ensure consistent license headers in source files."
 
-    standalone_scripts = config["django-ca"]["validation"]["standalone-scripts"]
-    excludes = config["django-ca"]["validation"]["excludes"]
+    def handle(self, args: argparse.Namespace) -> None:
+        """Main validation function."""
+        errors = 0
+        with open("pyproject.toml", "rb") as stream:
+            config = tomllib.load(stream)
 
-    for directory in ["ca", "docs/source", "devscripts"]:
-        for path in sorted(Path(directory).glob("**/*.py")):
-            if not any(path.match(exclude) for exclude in excludes):
-                errors += handle_python_file(path, script=str(path) in standalone_scripts)
+        standalone_scripts = config["django-ca"]["validation"]["standalone-scripts"]
+        excludes = config["django-ca"]["validation"]["excludes"]
 
-    if errors != 0:
-        raise CommandError(f"{errors} inconsistent license headers found.")
+        for directory in ["ca", "docs/source", "devscripts"]:
+            for path in sorted(Path(directory).glob("**/*.py")):
+                if not any(path.match(exclude) for exclude in excludes):
+                    errors += handle_python_file(path, script=str(path) in standalone_scripts)
+
+        if errors != 0:
+            raise CommandError(f"{errors} inconsistent license headers found.")

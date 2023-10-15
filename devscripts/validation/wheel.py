@@ -12,16 +12,18 @@
 # <http://www.gnu.org/licenses/>.
 
 """Functions for validating the Docker image and the respective tutorial."""
-
+import argparse
 import os
 import subprocess
 import time
+from types import ModuleType
 from typing import Any
 
 import docker
 from setuptools.config.pyprojecttoml import read_configuration
 
 from devscripts import config, utils
+from devscripts.commands import DevCommand
 from devscripts.out import info
 
 
@@ -62,35 +64,40 @@ def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subpr
         raise
 
 
-def validate(release: str) -> None:
-    """Main validation entry function."""
-    info("Testing Python wheel...")
-    project_config = config.get_project_config()
-    client = docker.from_env()
+class Command(DevCommand):
+    modules = (("django_ca", "django-ca"),)
+    django_ca: ModuleType
+    help_text = "Test wheel with extras on various distributions."
 
-    host_pip_cache = subprocess.run(
-        ["pip", "cache", "dir"], check=True, capture_output=True, text=True
-    ).stdout.strip()
-    project_configuration = read_configuration(config.ROOT_DIR / "pyproject.toml")
+    def handle(self, args: argparse.Namespace) -> None:
+        info("Testing Python wheel...")
+        release = self.django_ca.__version__
+        project_config = config.get_project_config()
+        client = docker.from_env()
 
-    for pyver in project_config["python-major"]:
-        info(f"Testing with Python {pyver}.", indent="  ")
+        host_pip_cache = subprocess.run(
+            ["pip", "cache", "dir"], check=True, capture_output=True, text=True
+        ).stdout.strip()
+        project_configuration = read_configuration(config.ROOT_DIR / "pyproject.toml")
 
-        # build the image
-        image, _logs = client.images.build(
-            path=str(config.ROOT_DIR),
-            dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel"),
-            buildargs={"IMAGE": f"python:{pyver}"},
-            target="test",
-        )
+        for pyver in project_config["python-major"]:
+            info(f"Testing with Python {pyver}.", indent="  ")
 
-        # get cache dir in image
-        run(release, image.id, host_pip_cache)
+            # build the image
+            image, _logs = client.images.build(
+                path=str(config.ROOT_DIR),
+                dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel"),
+                buildargs={"IMAGE": f"python:{pyver}"},
+                target="test",
+            )
 
-        for extra in list(project_configuration["project"]["optional-dependencies"]):
-            info(f"Test extra: {extra}", indent="    ")
-            run(release, image.id, host_pip_cache, extra=extra)
+            # get cache dir in image
+            run(release, image.id, host_pip_cache)
 
-        time.sleep(1)
-        image.remove(force=True)
-    info("Python wheel is okay.")
+            for extra in list(project_configuration["project"]["optional-dependencies"]):
+                info(f"Test extra: {extra}", indent="    ")
+                run(release, image.id, host_pip_cache, extra=extra)
+
+            time.sleep(1)
+            image.remove(force=True)
+        info("Python wheel is okay.")

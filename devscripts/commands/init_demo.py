@@ -35,7 +35,9 @@ if typing.TYPE_CHECKING:
 
 
 class Command(DevCommand):
-    """Initialize this project with useful example data."""
+    """Class implementing the ``dev.py init-demo`` command."""
+
+    help_text = "Initialize this project with useful example data."
 
     modules = (("termcolor", "termcolor"),)
     termcolor: types.ModuleType

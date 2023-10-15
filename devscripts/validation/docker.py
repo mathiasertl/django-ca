@@ -12,11 +12,14 @@
 # <http://www.gnu.org/licenses/>.
 
 """Functions for validating the Docker image and the respective tutorial."""
-
+import argparse
 import os
 import pathlib
+from types import ModuleType
+from typing import Sequence
 
 from devscripts import config, utils
+from devscripts.commands import DevCommand
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
@@ -151,7 +154,16 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
     return errors
 
 
-def validate(release: str, prune: bool, build: bool) -> None:
-    """Main validation entry function."""
-    docker_tag = build_docker_image(release=release, prune=prune, build=build)
-    validate_docker_image(release, docker_tag)
+class Command(DevCommand):
+    modules = (("django_ca", "django-ca"),)
+    django_ca: ModuleType
+    help_text = "Validate Docker setup."
+
+    @property
+    def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
+        return [self.parent.docker_options]  # type: ignore[attr-defined]  # set in the constructor
+
+    def handle(self, args: argparse.Namespace) -> None:
+        release = self.django_ca.__version__
+        docker_tag = build_docker_image(release=release, prune=args.docker_prune, build=args.build)
+        validate_docker_image(release, docker_tag)

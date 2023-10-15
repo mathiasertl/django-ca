@@ -23,7 +23,9 @@ from devscripts.out import err, info, ok
 
 
 class Command(DevCommand):
-    """Build the Docker image using various base images."""
+    """Class implementing the ``dev.py docker-test`` command."""
+
+    help_text = "Build the Docker image using various base images."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         project_config = config.get_project_config()

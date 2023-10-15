@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Functions for validating docker compose and the respective tutorial."""
-
+import argparse
 import os
 import re
 import shutil
@@ -22,7 +22,8 @@ import time
 import typing
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Union
+from types import ModuleType
+from typing import Any, Dict, Iterator, Optional, Sequence, Union
 
 import requests
 import yaml
@@ -31,6 +32,7 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from devscripts import config, utils
+from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 from devscripts.validation.docker import build_docker_image, docker_cp
@@ -477,41 +479,6 @@ def test_acme(release: str, image: str) -> int:
     return errors
 
 
-def validate(
-    release: str,
-    prune: bool,
-    build: bool,
-    tutorial: bool = True,
-    update: bool = True,
-    acme: bool = True,
-    acme_dist: Optional[str] = None,
-) -> int:
-    """Validate the docker compose file (and the tutorial)."""
-    print("Validating docker compose setup...")
-    tag = build_docker_image(release=release, prune=prune, build=build)
-    info(f"Using {tag} as docker image.")
-
-    errors = 0
-
-    if tutorial:
-        errors += test_tutorial(release)
-
-    if update and errors == 0:
-        errors += test_update(release)
-
-    if acme and errors == 0:
-        cfg = config.get_project_config()
-        if acme_dist is not None:
-            errors += test_acme(release, acme_dist)
-        else:
-            for dist in cfg["debian-releases"]:
-                errors += test_acme(release, f"debian:{dist}")
-            for dist in cfg["ubuntu-releases"]:
-                errors += test_acme(release, f"ubuntu:{dist}")
-
-    return errors
-
-
 def _validate_default_version(path: Union[str, os.PathLike[str]], release: str) -> int:
     info(f"Validating {path}...")
     if not os.path.exists(path):
@@ -535,3 +502,63 @@ def validate_docker_compose_files(release: str) -> int:
     errors += _validate_default_version("docker-compose.yml", release)
     errors += _validate_default_version(Path(f"docs/source/_files/{release}/docker-compose.yml"), release)
     return errors
+
+
+class Command(DevCommand):
+    modules = (("django_ca", "django-ca"),)
+    django_ca: ModuleType
+    help_text = "Validate Docker Compose setup."
+
+    @property
+    def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
+        return [self.parent.docker_options]  # type: ignore[attr-defined]  # set in the constructor
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--no-tutorial",
+            dest="tutorial",
+            default=True,
+            action="store_false",
+            help="Do not test the tutorial.",
+        )
+        parser.add_argument(
+            "--no-update",
+            dest="update",
+            default=True,
+            action="store_false",
+            help="Do not test the update from the last version.",
+        )
+        parser.add_argument(
+            "--no-acme", dest="acme", default=True, action="store_false", help="Do not test ACMEv2."
+        )
+        parser.add_argument(
+            "--acme-dist", metavar="DIST", help="Test ACMEv2 only with DIST (example: ubuntu:jammy)."
+        )
+
+    def handle(self, args: argparse.Namespace) -> None:
+        release = self.django_ca.__version__
+
+        print("Validating docker compose setup...")
+        tag = build_docker_image(release=release, prune=args.docker_prune, build=args.build)
+        info(f"Using {tag} as docker image.")
+
+        errors = 0
+
+        if args.tutorial:
+            errors += test_tutorial(release)
+
+        if args.update and errors == 0:
+            errors += test_update(release)
+
+        if args.acme and errors == 0:
+            cfg = config.get_project_config()
+            if args.acme_dist is not None:
+                errors += test_acme(release, args.acme_dist)
+            else:
+                for dist in cfg["debian-releases"]:
+                    errors += test_acme(release, f"debian:{dist}")
+                for dist in cfg["ubuntu-releases"]:
+                    errors += test_acme(release, f"ubuntu:{dist}")
+
+        if errors != 0:
+            raise CommandError(f"{errors} found.")

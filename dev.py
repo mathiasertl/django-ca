@@ -17,22 +17,11 @@
 
 import argparse
 
-from devscripts.commands import add_command
+from devscripts.commands import add_subcommands
 
 parser = argparse.ArgumentParser(description="Helper-script for various tasks during development.")
 parser.add_argument("-q", "--quiet", default=False, action="store_true", help="Do not display commands.")
-commands = parser.add_subparsers(dest="command")
-
-add_command(commands, "build")
-add_command(commands, "clean")
-add_command(commands, "code-quality")
-add_command(commands, "docker-test")
-add_command(commands, "init-demo")
-add_command(commands, "pin-requirements")
-add_command(commands, "recreate-fixtures")
-add_command(commands, "release")
-add_command(commands, "update-ca-data")
-add_command(commands, "validate")
+add_subcommands(parser, "devscripts.commands")
 args = parser.parse_args()
 
 if hasattr(args, "func"):

@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Script to make sure that the source code is in a consistent state."""
-
+import argparse
 import configparser
 import importlib.util
 import os
@@ -27,6 +27,7 @@ from setuptools.config.pyprojecttoml import read_configuration
 from termcolor import colored
 
 from devscripts import config
+from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, ok
 
 CheckFuncSpec = typing.ParamSpec("CheckFuncSpec")
@@ -248,24 +249,17 @@ def check_readme(project_config: Dict[str, Any]) -> int:
     return errors
 
 
-def validate_main() -> int:
-    """Main validation function, not calling sys.exit()."""
-    project_config = config.get_project_config()
+class Command(DevCommand):
+    help_text = "Validate state of various configuration and documentation files."
 
-    total_errors = check(check_github_actions_tests, project_config)
-    total_errors += check(check_tox, project_config)
-    total_errors += check(check_pyproject_toml, project_config)
-    total_errors += check(check_intro, project_config)
-    total_errors += check(check_readme, project_config)
+    def handle(self, args: argparse.Namespace) -> None:
+        project_config = config.get_project_config()
 
-    return total_errors
+        total_errors = check(check_github_actions_tests, project_config)
+        total_errors += check(check_tox, project_config)
+        total_errors += check(check_pyproject_toml, project_config)
+        total_errors += check(check_intro, project_config)
+        total_errors += check(check_readme, project_config)
 
-
-def validate() -> None:
-    """Main function."""
-    total_errors = validate_main()
-    if total_errors:
-        print(colored(f"A total of {total_errors} error(s) found!", "red", attrs=["bold"]))
-        sys.exit(1)
-    else:
-        print(colored("Congratulations. All clean.", "green"))
+        if total_errors != 0:
+            raise CommandError(f"A total of {total_errors} error(s) found!")

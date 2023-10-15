@@ -22,10 +22,10 @@ from devscripts.commands import DevCommand
 
 
 class Command(DevCommand):
-    """Run linters and manage.py check commands.
+    """Class implementing the ``dev.py code-quality`` command."""
 
-    This command does **not** invoke pylint (too slow) or mypy.
-    """
+    help_text = "Run linters and manage.py check commands."
+    description = help_text + " This command does **not** invoke pylint (too slow) or mypy."
 
     def manage(self, *args: str) -> None:
         """Shortcut to run manage.py with warnings turned into errors."""
