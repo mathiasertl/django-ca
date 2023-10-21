@@ -30,8 +30,8 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.urls import reverse
 
-from devscripts import config
 from devscripts.commands import DevCommand
+from devscripts.config import config
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"

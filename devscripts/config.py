@@ -13,25 +13,11 @@
 
 """Collection of directories and constants."""
 
+import os
 from pathlib import Path
 from typing import Any, Dict
 
-BASE_DIR = Path(__file__).resolve()
-ROOT_DIR = Path(BASE_DIR).parent.parent
-PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
-DOCS_DIR = Path(ROOT_DIR) / "docs"
-DOCS_BUILD_DIR = DOCS_DIR / "build"
-DOCS_SOURCE_DIR = DOCS_DIR / "source"
-DOC_TEMPLATES_DIR = DOCS_SOURCE_DIR / "include"
-SRC_DIR = ROOT_DIR / "ca"
-MANAGE_PY = SRC_DIR / "manage.py"
-FIXTURES_DIR = SRC_DIR / "django_ca" / "tests" / "fixtures"
-DOCKER_TAG = "mathiasertl/django-ca"
-DEVSCRIPTS_DIR = ROOT_DIR / "devscripts"
-DEVSCRIPTS_FILES = DEVSCRIPTS_DIR / "files"
-
-SHOW_COMMANDS = False
-SHOW_COMMAND_OUTPUT = False
+from django.utils.functional import LazyObject, empty
 
 
 def minor_to_major(version: str) -> str:
@@ -41,42 +27,83 @@ def minor_to_major(version: str) -> str:
     return ".".join(version.split(".", 2)[:2])
 
 
-def get_project_config() -> Dict[str, Any]:
-    """Get project configuration from pyproject.toml."""
-    # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
-    try:
-        import tomllib  # pylint: disable=import-outside-toplevel
-    except ImportError:  # pragma: py<3.11
-        # pylint: disable-next=import-outside-toplevel
-        import tomli as tomllib  # type: ignore[no-redef]
+class WrappedConfig:
+    def __init__(self, path: "os.PathLike[str]") -> None:
+        # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
+        try:
+            import tomllib  # pylint: disable=import-outside-toplevel
+        except ImportError:  # pragma: py<3.11
+            # pylint: disable-next=import-outside-toplevel
+            import tomli as tomllib  # type: ignore[no-redef]
 
-    with open(PYPROJECT_PATH, "rb") as stream:
-        full_config = tomllib.load(stream)
+        with open(path, "rb") as stream:
+            full_config = tomllib.load(stream)
 
-    cfg: Dict[str, Any] = full_config["django-ca"]["release"]
-    cfg["python-map"] = {minor_to_major(pyver): pyver for pyver in cfg["python"]}
-    cfg["python-major"] = [minor_to_major(pyver) for pyver in cfg["python"]]
+        cfg: Dict[str, Any] = full_config["django-ca"]["release"]
+        self.PYTHON_MAP = {minor_to_major(pyver): pyver for pyver in cfg["python"]}
+        self.PYTHON_MAJOR = [minor_to_major(pyver) for pyver in cfg["python"]]
+        self.DJANGO = tuple(cfg["django"])
+        self.CRYPTOGRAPHY = tuple(cfg["cryptography"])
+        self.ACME = tuple(cfg["acme"])
 
-    cfg["docker"] = full_config["django-ca"].setdefault("docker", {})
-    _alpine_images = cfg["docker"].setdefault("alpine-images", [])
-    if "default" not in _alpine_images:
-        _alpine_images.append("default")
+        self.ALPINE_RELEASES = tuple(cfg["alpine"])
+        self.DEBIAN_RELEASES = tuple(cfg["debian-releases"])
+        self.UBUNTU_RELEASES = tuple(cfg["ubuntu-releases"])
 
-    cfg["docker"]["metavar"] = "default|python:{%s-%s}-alpine{%s-%s}" % (
-        cfg["python-major"][0],
-        cfg["python-major"][-1],
-        cfg["alpine"][0],
-        cfg["alpine"][-1],
-    )
-    for pyver in reversed(cfg["python-major"]):
-        for alpver in reversed(cfg["alpine"]):
-            image_name = f"python:{pyver}-alpine{alpver}"
+        # Compute list of valid alpine images
+        alpine_images = ["default"]
+        for python_version in reversed(self.PYTHON_MAJOR):
+            for alpine_version in reversed(self.ALPINE_RELEASES):
+                image_name = f"python:{python_version}-alpine{alpine_version}"
 
-            # Skip images that are just no longer built upstream
-            if image_name in cfg["docker-image-blacklist"]:
-                continue
+                # Skip images that are just no longer built upstream
+                if image_name in cfg["docker-image-blacklist"]:
+                    continue
 
-            if image_name not in _alpine_images:
-                _alpine_images.append(image_name)
+                alpine_images.append(image_name)
+        self.ALPINE_IMAGES = tuple(alpine_images)
 
-    return cfg
+    def __getattr__(self, name: str) -> Any:
+        if name.isupper():
+            try:
+                return globals()[name]
+            except KeyError as ex:
+                raise AttributeError(f"{name}: Unknown (global) setting") from ex
+        raise AttributeError(f"{name}: Settings must be upper case")
+
+
+class LazyConfig(LazyObject):
+    _wrapped = None
+
+    # Settings that can be computed at module load time
+    BASE_DIR = Path(__file__).resolve()
+    ROOT_DIR = Path(BASE_DIR).parent.parent
+    PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
+    DOCS_DIR = Path(ROOT_DIR) / "docs"
+    DOCS_BUILD_DIR = DOCS_DIR / "build"
+    DOCS_SOURCE_DIR = DOCS_DIR / "source"
+    DOC_TEMPLATES_DIR = DOCS_SOURCE_DIR / "include"
+    SRC_DIR = ROOT_DIR / "ca"
+    MANAGE_PY = SRC_DIR / "manage.py"
+    FIXTURES_DIR = SRC_DIR / "django_ca" / "tests" / "fixtures"
+    DOCKER_TAG = "mathiasertl/django-ca"
+    DEVSCRIPTS_DIR = ROOT_DIR / "devscripts"
+    DEVSCRIPTS_FILES = DEVSCRIPTS_DIR / "files"
+
+    SHOW_COMMANDS = False
+    SHOW_COMMAND_OUTPUT = False
+
+    def _setup(self, path: "os.PathLike[str]") -> None:
+        self._wrapped = WrappedConfig(path)
+
+    def __getattr__(self, name: str) -> Any:
+        if (_wrapped := self._wrapped) is empty:
+            self._setup(self.PYPROJECT_PATH)
+            _wrapped = self._wrapped
+        val = getattr(_wrapped, name)
+
+        self.__dict__[name] = val
+        return val
+
+
+config = LazyConfig()

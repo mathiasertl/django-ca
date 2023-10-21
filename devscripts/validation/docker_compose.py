@@ -31,8 +31,9 @@ import yaml
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from devscripts import config, utils
+from devscripts import utils
 from devscripts.commands import CommandError, DevCommand
+from devscripts.config import config
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 from devscripts.validation.docker import build_docker_image, docker_cp
@@ -549,13 +550,12 @@ class Command(DevCommand):
             errors += test_update(release)
 
         if args.acme and errors == 0:
-            cfg = config.get_project_config()
             if args.acme_dist is not None:
                 errors += test_acme(release, args.acme_dist)
             else:
-                for dist in cfg["debian-releases"]:
+                for dist in config.DEBIAN_RELEASES:
                     errors += test_acme(release, f"debian:{dist}")
-                for dist in cfg["ubuntu-releases"]:
+                for dist in config.UBUNTU_RELEASES:
                     errors += test_acme(release, f"ubuntu:{dist}")
 
         if errors != 0:

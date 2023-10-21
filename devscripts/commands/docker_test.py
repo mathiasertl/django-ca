@@ -17,8 +17,8 @@ import os
 import subprocess
 import sys
 
-from devscripts import config
 from devscripts.commands import DevCommand
+from devscripts.config import config
 from devscripts.out import err, info, ok
 
 
@@ -28,14 +28,20 @@ class Command(DevCommand):
     help_text = "Build the Docker image using various base images."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        project_config = config.get_project_config()
+        image_metavar = "default|python:{%s-%s}-alpine{%s-%s}" % (
+            config.PYTHON_MAJOR[0],
+            config.PYTHON_MAJOR[-1],
+            config.ALPINE_RELEASES[0],
+            config.ALPINE_RELEASES[-1],
+        )
+
         parser.add_argument(
             "-i",
             "--image",
             action="append",
             dest="images",
-            choices=project_config["docker"]["alpine-images"],
-            metavar=project_config["docker"]["metavar"],
+            choices=config.ALPINE_IMAGES,
+            metavar=image_metavar,
             help="Base images to test on, may be given multiple times.",
         )
         parser.add_argument(

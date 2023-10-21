@@ -20,8 +20,9 @@ from typing import Sequence
 
 from django.core.management.utils import get_random_secret_key
 
-from devscripts import config, utils
+from devscripts import utils
 from devscripts.commands import DevCommand
+from devscripts.config import config
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
@@ -120,7 +121,6 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
 
     errors = 0
     standalone_src = pathlib.Path().absolute() / "devscripts" / "standalone"
-    project_config = config.get_project_config()
 
     _test_clean(docker_tag)
     if release is not None:

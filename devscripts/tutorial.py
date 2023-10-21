@@ -19,7 +19,8 @@ from contextlib import contextmanager
 
 import jinja2
 
-from devscripts import config, utils
+from devscripts import utils
+from devscripts.config import config
 
 
 class Tutorial:

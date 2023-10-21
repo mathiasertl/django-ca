@@ -21,8 +21,9 @@ from typing import Any
 
 from setuptools.config.pyprojecttoml import read_configuration
 
-from devscripts import config, utils
+from devscripts import utils
 from devscripts.commands import DevCommand
+from devscripts.config import config
 from devscripts.out import info, ok
 
 
@@ -66,13 +67,12 @@ class Command(DevCommand):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.pyproject_toml = read_configuration(config.ROOT_DIR / "pyproject.toml")
-        self.project_config = config.get_project_config()
         self.extra_choices = ["none"] + list(self.pyproject_toml["project"]["optional-dependencies"])
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--python",
-            choices=self.project_config["python-major"],
+            choices=config.PYTHON_MAJOR,
             default=[],
             action="append",
             help="Only test the specified Python version (can be given multiple times).",
@@ -98,7 +98,7 @@ class Command(DevCommand):
 
         python_versions = args.python
         if not python_versions:
-            python_versions = self.project_config["python-major"]
+            python_versions = self.config.PYTHON_MAJOR
 
         extras = args.extra
         if not extras:

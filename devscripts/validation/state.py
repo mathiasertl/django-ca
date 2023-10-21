@@ -19,14 +19,14 @@ import os
 import re
 import types
 import typing
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import yaml
 from setuptools.config.pyprojecttoml import read_configuration
 from termcolor import colored
 
-from devscripts import config
 from devscripts.commands import CommandError, DevCommand
+from devscripts.config import config
 from devscripts.out import err, ok
 
 if typing.TYPE_CHECKING:  # pragma: only py<3.10  # remove TYPE_CHECKING check once support for 3.9 is dropped
@@ -47,11 +47,11 @@ TOX_ENV_SHORT_NAMES = {
 }
 
 
-def get_expected_version_line(project_config: Dict[str, Any]) -> str:
+def get_expected_version_line() -> str:
     """Get expected string for README and intro.rst."""
-    min_pyver = project_config["python-major"][0]
-    min_django_version = project_config["django"][0]
-    min_cryptography_version = project_config["cryptography"][0]
+    min_pyver = config.PYTHON_MAJOR[0]
+    min_django_version = config.DJANGO[0]
+    min_cryptography_version = config.CRYPTOGRAPHY[0]
     return (
         f"Written in Python {min_pyver}+, Django {min_django_version}+ and cryptography "
         f"{min_cryptography_version}+."
@@ -99,7 +99,7 @@ def check(
     return errors
 
 
-def check_github_actions_tests(project_config: Dict[str, Any]) -> int:
+def check_github_actions_tests() -> int:
     """Check GitHub actions."""
     relpath = os.path.join(".github", "workflows", "tests.yml")
     full_path = os.path.join(config.ROOT_DIR, relpath)
@@ -108,15 +108,13 @@ def check_github_actions_tests(project_config: Dict[str, Any]) -> int:
         action_config = yaml.safe_load(stream)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
-    errors = simple_diff("Python versions", matrix["python-version"], list(project_config["python-map"]))
-    errors += simple_diff("Django versions", matrix["django-version"], project_config["django"])
-    errors += simple_diff(
-        "cryptography versions", matrix["cryptography-version"], project_config["cryptography"]
-    )
+    errors = simple_diff("Python versions", matrix["python-version"], list(config.PYTHON_MAP))
+    errors += simple_diff("Django versions", tuple(matrix["django-version"]), config.DJANGO)
+    errors += simple_diff("cryptography versions", tuple(matrix["cryptography-version"]), config.CRYPTOGRAPHY)
     return errors
 
 
-def check_tox(project_config: Dict[str, Any]) -> int:
+def check_tox() -> int:
     """Check tox.ini."""
     errors = 0
     check_path("tox.ini")
@@ -131,10 +129,10 @@ def check_tox(project_config: Dict[str, Any]) -> int:
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
     expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}" % (
-        ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
-        ",".join(project_config["django"]),
-        ",".join(project_config["cryptography"]),
-        ",".join(project_config["acme"]),
+        ",".join([pyver.replace(".", "") for pyver in config.PYTHON_MAP]),
+        ",".join(config.DJANGO),
+        ",".join(config.CRYPTOGRAPHY),
+        ",".join(config.ACME),
     )
 
     # pylint: enable=consider-using-f-string
@@ -149,10 +147,10 @@ def check_tox(project_config: Dict[str, Any]) -> int:
         errors += simple_diff(
             f"{component} conditional dependencies present",
             [e for e in tox_env_reqs if e.startswith(short_name)],
-            [f"{short_name}{major}" for major in project_config[f"{component}"]],
+            [f"{short_name}{major}" for major in getattr(config, component.upper())],
         )
 
-        for major in project_config[f"{component}"]:
+        for major in getattr(config, component.upper()):
             name = f"{short_name}{major}"
             try:
                 actual = tox_env_reqs[name]
@@ -170,7 +168,7 @@ def check_tox(project_config: Dict[str, Any]) -> int:
     return errors
 
 
-def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
+def check_pyproject_toml() -> int:
     """Check pyproject.toml."""
     check_path("pyproject.toml")
     errors = 0
@@ -187,41 +185,41 @@ def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
     pyver_cfs = [
         m.groups(0)[0] for m in filter(None, [re.search(r"Python :: (3\.[0-9]+)$", cf) for cf in classifiers])
     ]
-    if pyver_cfs != project_config["python-major"]:
-        errors += err(f'Wrong python classifiers: Have {pyver_cfs}, wanted {project_config["python-major"]}')
+    if pyver_cfs != config.PYTHON_MAJOR:
+        errors += err(f"Wrong python classifiers: Have {pyver_cfs}, wanted {config.PYTHON_MAJOR}")
 
-    djver_cfs = [
+    djver_cfs = tuple(
         m.groups(0)[0]
         for m in filter(None, [re.search(r"Django :: ([0-9]\.[0-9]+)$", cf) for cf in classifiers])
-    ]
-    if djver_cfs != project_config["django"]:
-        errors += err(f'Wrong python classifiers: Have {djver_cfs}, wanted {project_config["django"]}')
+    )
+    if djver_cfs != config.DJANGO:
+        errors += err(f"Wrong python classifiers: Have {djver_cfs}, wanted {config.DJANGO}")
 
-    for djver in project_config["django"]:
+    for djver in config.DJANGO:
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += err(f"Django {djver} classifier not found.")
 
-    expected_py_req = f">={project_config['python-major'][0]}"
+    expected_py_req = f">={config.PYTHON_MAJOR[0]}"
     actual_py_req = project_configuration["project"]["requires-python"]
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
-    expected_django_req = f"Django>={project_config['django'][0]}"
+    expected_django_req = f"Django>={config.DJANGO[0]}"
     if expected_django_req not in install_requires:
         errors += err(f"{expected_django_req}: Expected Django requirement not found.")
 
-    expected_cg_req = f"cryptography>={project_config['cryptography'][0]}"
+    expected_cg_req = f"cryptography>={config.CRYPTOGRAPHY[0]}"
     if expected_cg_req not in install_requires:
         errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
-    expected_acme_req = f"acme>={project_config['acme'][0]}"
+    expected_acme_req = f"acme>={config.ACME[0]}"
     if expected_acme_req not in install_requires:
         errors += err(f"{expected_acme_req}: Expected acme requirement not found.")
 
     return errors
 
 
-def check_intro(project_config: Dict[str, Any]) -> int:
+def check_intro() -> int:
     """Check intro.rst (reused in a couple of places)."""
     errors = 0
     intro_path = os.path.join("docs", "source", "intro.rst")
@@ -230,13 +228,13 @@ def check_intro(project_config: Dict[str, Any]) -> int:
     with open(intro_fullpath, encoding="utf-8") as stream:
         intro = stream.read()
 
-    exp_version_line = get_expected_version_line(project_config)
+    exp_version_line = get_expected_version_line()
     if f"#. {exp_version_line}" not in intro.splitlines():
         errors += err('Does not contain correct version line ("Written in ...").')
     return errors
 
 
-def check_readme(project_config: Dict[str, Any]) -> int:
+def check_readme() -> int:
     """Check contents of README.md."""
     errors = 0
     check_path("README.md")
@@ -244,7 +242,7 @@ def check_readme(project_config: Dict[str, Any]) -> int:
     with open(readme_fullpath, encoding="utf-8") as stream:
         readme = stream.read()
 
-    exp_version_line = get_expected_version_line(project_config)
+    exp_version_line = get_expected_version_line()
     if f"{exp_version_line}" not in readme:
         errors += err('Does not contain correct version line ("Written in ...").')
 
@@ -257,13 +255,11 @@ class Command(DevCommand):
     help_text = "Validate state of various configuration and documentation files."
 
     def handle(self, args: argparse.Namespace) -> None:
-        project_config = config.get_project_config()
-
-        total_errors = check(check_github_actions_tests, project_config)
-        total_errors += check(check_tox, project_config)
-        total_errors += check(check_pyproject_toml, project_config)
-        total_errors += check(check_intro, project_config)
-        total_errors += check(check_readme, project_config)
+        total_errors = check(check_github_actions_tests)
+        total_errors += check(check_tox)
+        total_errors += check(check_pyproject_toml)
+        total_errors += check(check_intro)
+        total_errors += check(check_readme)
 
         if total_errors != 0:
             raise CommandError(f"A total of {total_errors} error(s) found!")

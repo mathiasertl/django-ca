@@ -17,8 +17,8 @@ import argparse
 import os
 from types import ModuleType
 
-from devscripts import config
 from devscripts.commands import DevCommand
+from devscripts.config import config
 from devscripts.out import ok
 
 
@@ -34,11 +34,10 @@ class Command(DevCommand):
     def handle(self, args: argparse.Namespace) -> None:
         release = self.django_ca.__version__
         destination_dir = config.ROOT_DIR / "dist"
-        project_config = config.get_project_config()
 
         os.makedirs(destination_dir, exist_ok=True)
 
-        latest_python_version = project_config["python-major"][-1]
+        latest_python_version = config.PYTHON_MAJOR[-1]
 
         image = self.docker_build(
             tag=f"django-ca-build-wheel:{release}",
