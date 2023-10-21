@@ -17,8 +17,8 @@ import argparse
 import os
 from typing import List, Union
 
+from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.config import config
 
 
 class Command(DevCommand):

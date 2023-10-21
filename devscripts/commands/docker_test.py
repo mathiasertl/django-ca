@@ -16,10 +16,19 @@ import argparse
 import os
 import subprocess
 import sys
+from typing import List, TypedDict
 
+from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.config import config
 from devscripts.out import err, info, ok
+
+
+class DockerRunDict(TypedDict):
+    """TypedDict for docker runs."""
+
+    image: str
+    success: bool
+    error: str
 
 
 class Command(DevCommand):
@@ -29,8 +38,8 @@ class Command(DevCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         image_metavar = "default|python:{%s-%s}-alpine{%s-%s}" % (
-            config.PYTHON_MAJOR[0],
-            config.PYTHON_MAJOR[-1],
+            config.PYTHON_RELEASES[0],
+            config.PYTHON_RELEASES[-1],
             config.ALPINE_RELEASES[0],
             config.ALPINE_RELEASES[-1],
         )
@@ -54,10 +63,9 @@ class Command(DevCommand):
         parser.add_argument("-l", "--list", action="store_true", help="List images and exit.")
 
     def handle(self, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
-        docker_runs = []
+        docker_runs: List[DockerRunDict] = []
 
-        project_config = config.get_project_config()
-        images = args.images or project_config["docker"]["alpine-images"]
+        images = args.images or config.ALPINE_IMAGES
 
         if args.list:
             for image in images:
@@ -120,8 +128,8 @@ class Command(DevCommand):
                         }
                     )
 
-            except Exception as e:  # pylint: disable=broad-except; to make sure we test all images
-                msg = f"{image}: {type(e).__name__} {e}"
+            except Exception as ex:  # pylint: disable=broad-except; to make sure we test all images
+                msg = f"{image}: {type(ex).__name__} {ex}"
                 docker_runs.append({"image": image, "success": False, "error": msg})
                 err(f"\n{msg}\n")
                 if args.fail_fast:

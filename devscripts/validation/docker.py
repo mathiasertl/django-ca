@@ -20,9 +20,8 @@ from typing import Sequence
 
 from django.core.management.utils import get_random_secret_key
 
-from devscripts import utils
+from devscripts import config, utils
 from devscripts.commands import DevCommand
-from devscripts.config import config
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
@@ -125,7 +124,7 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
     _test_clean(docker_tag)
     if release is not None:
         errors += _test_version(docker_tag, release)
-    errors += _test_alpine_version(docker_tag, project_config["alpine"][-1])
+    errors += _test_alpine_version(docker_tag, config.ALPINE_RELEASES[-1])
     errors += _test_extras(docker_tag)
 
     context = {

@@ -45,10 +45,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
 import django  # NOQA: E402
 from django.conf import settings  # NOQA: E402
 
-from devscripts.config import get_project_config  # NOQA: E402
+from devscripts import config  # NOQA: E402
 from devscripts.versions import get_last_version  # NOQA: E402
-
-CONFIG = get_project_config()
 
 settings.configure(
     SECRET_KEY="dummy",
@@ -353,17 +351,17 @@ autodoc_mock_imports = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
-    "cg": ("https://cryptography.io/en/%s/" % CONFIG["cryptography"][-1], None),
+    "cg": ("https://cryptography.io/en/stable/", None),
     "django": (
-        "https://docs.djangoproject.com/en/%s/" % CONFIG["django-major"][-1],
-        "https://docs.djangoproject.com/en/%s/_objects/" % CONFIG["django-major"][-1],
+        "https://docs.djangoproject.com/en/%s/" % config.DJANGO[-1],
+        "https://docs.djangoproject.com/en/%s/_objects/" % config.DJANGO[-1],
     ),
     "acme": ("https://acme-python.readthedocs.io/en/stable/", None),
     "josepy": ("https://josepy.readthedocs.io/en/stable/", None),
 }
 
 rst_epilog = f"""
-.. |minimum-python| replace:: {CONFIG['python-major'][0]}
+.. |minimum-python| replace:: {config.PYTHON_RELEASES[0]}
 .. |Extension| replace:: :py:class:`~cg:cryptography.x509.Extension`
 .. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
 """

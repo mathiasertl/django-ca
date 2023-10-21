@@ -1,4 +1,4 @@
-acme==2.7.1
+acme==2.7.2
 amqp==5.1.1
 asgiref==3.7.2
 asn1crypto==1.5.1

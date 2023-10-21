@@ -21,9 +21,8 @@ from typing import Any
 
 from setuptools.config.pyprojecttoml import read_configuration
 
-from devscripts import utils
+from devscripts import config, utils
 from devscripts.commands import DevCommand
-from devscripts.config import config
 from devscripts.out import info, ok
 
 
@@ -72,7 +71,7 @@ class Command(DevCommand):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--python",
-            choices=config.PYTHON_MAJOR,
+            choices=config.PYTHON_RELEASES,
             default=[],
             action="append",
             help="Only test the specified Python version (can be given multiple times).",
@@ -98,7 +97,7 @@ class Command(DevCommand):
 
         python_versions = args.python
         if not python_versions:
-            python_versions = self.config.PYTHON_MAJOR
+            python_versions = config.PYTHON_RELEASES
 
         extras = args.extra
         if not extras:

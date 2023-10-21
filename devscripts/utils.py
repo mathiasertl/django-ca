@@ -41,7 +41,7 @@ from cryptography.hazmat.primitives.serialization import (
 )
 from cryptography.x509.oid import NameOID
 
-from devscripts.config import config
+from devscripts import config
 
 if typing.TYPE_CHECKING:
     import jinja2

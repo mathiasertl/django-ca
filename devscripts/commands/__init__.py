@@ -24,8 +24,7 @@ from typing import Any, Optional, Sequence, Tuple, Union
 
 import django
 
-from devscripts import utils
-from devscripts.config import config
+from devscripts import config, utils
 from devscripts.out import err, info
 
 if typing.TYPE_CHECKING:

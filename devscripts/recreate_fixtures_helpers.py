@@ -46,8 +46,7 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
-from devscripts import utils
-from devscripts.config import config
+from devscripts import config, utils
 from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority

@@ -25,8 +25,8 @@ from cryptography import x509
 
 from django.core.files.storage import Storage
 
+from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.config import config
 from devscripts.out import bold
 
 if typing.TYPE_CHECKING:

@@ -20,8 +20,8 @@ import types
 import typing
 from datetime import date
 
+from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.config import config
 from devscripts.out import err, ok
 from devscripts.utils import redirect_output
 

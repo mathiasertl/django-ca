@@ -19,8 +19,8 @@ environments.
 import argparse
 import importlib
 
+from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.config import config
 
 
 class Command(DevCommand):

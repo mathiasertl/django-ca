@@ -25,8 +25,8 @@ import yaml
 from setuptools.config.pyprojecttoml import read_configuration
 from termcolor import colored
 
+from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.config import config
 from devscripts.out import err, ok
 
 if typing.TYPE_CHECKING:  # pragma: only py<3.10  # remove TYPE_CHECKING check once support for 3.9 is dropped
@@ -49,7 +49,7 @@ TOX_ENV_SHORT_NAMES = {
 
 def get_expected_version_line() -> str:
     """Get expected string for README and intro.rst."""
-    min_pyver = config.PYTHON_MAJOR[0]
+    min_pyver = config.PYTHON_RELEASES[0]
     min_django_version = config.DJANGO[0]
     min_cryptography_version = config.CRYPTOGRAPHY[0]
     return (
@@ -108,7 +108,7 @@ def check_github_actions_tests() -> int:
         action_config = yaml.safe_load(stream)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
-    errors = simple_diff("Python versions", matrix["python-version"], list(config.PYTHON_MAP))
+    errors = simple_diff("Python versions", tuple(matrix["python-version"]), config.PYTHON_RELEASES)
     errors += simple_diff("Django versions", tuple(matrix["django-version"]), config.DJANGO)
     errors += simple_diff("cryptography versions", tuple(matrix["cryptography-version"]), config.CRYPTOGRAPHY)
     return errors
@@ -129,7 +129,7 @@ def check_tox() -> int:
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
     expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}" % (
-        ",".join([pyver.replace(".", "") for pyver in config.PYTHON_MAP]),
+        ",".join([pyver.replace(".", "") for pyver in config.PYTHON_RELEASES]),
         ",".join(config.DJANGO),
         ",".join(config.CRYPTOGRAPHY),
         ",".join(config.ACME),
@@ -182,11 +182,11 @@ def check_pyproject_toml() -> int:
     install_requires = [s.split(",")[0] for s in project_configuration["project"]["dependencies"]]
 
     # validate that we have the proper language/django classifiers
-    pyver_cfs = [
+    pyver_cfs = tuple(
         m.groups(0)[0] for m in filter(None, [re.search(r"Python :: (3\.[0-9]+)$", cf) for cf in classifiers])
-    ]
-    if pyver_cfs != config.PYTHON_MAJOR:
-        errors += err(f"Wrong python classifiers: Have {pyver_cfs}, wanted {config.PYTHON_MAJOR}")
+    )
+    if pyver_cfs != config.PYTHON_RELEASES:
+        errors += err(f"Wrong python classifiers: Have {pyver_cfs}, wanted {config.PYTHON_RELEASES}")
 
     djver_cfs = tuple(
         m.groups(0)[0]
@@ -199,7 +199,7 @@ def check_pyproject_toml() -> int:
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += err(f"Django {djver} classifier not found.")
 
-    expected_py_req = f">={config.PYTHON_MAJOR[0]}"
+    expected_py_req = f">={config.PYTHON_RELEASES[0]}"
     actual_py_req = project_configuration["project"]["requires-python"]
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")

@@ -31,9 +31,8 @@ import yaml
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from devscripts import utils
+from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
-from devscripts.config import config
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 from devscripts.validation.docker import build_docker_image, docker_cp

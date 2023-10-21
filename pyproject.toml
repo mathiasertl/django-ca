@@ -7,14 +7,18 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
-python = ["3.8.18", "3.9.18", "3.10.13", "3.11.6", "3.12.0"]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["3.2", "4.2"]
 cryptography = ["41.0"]
 acme = ["2.6", "2.7"]
 
 # https://alpinelinux.org/releases/
-alpine = ["3.16", "3.17", "3.18"]
+alpine = [
+    "3.16",  # until 2024-05-23
+    "3.17",  # until 2024-11-22
+    "3.18",  # until 2025-05-09
+]
 
 # Blacklist images that are just no longer built
 docker-image-blacklist = [

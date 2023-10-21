@@ -24,8 +24,8 @@ from tabulate import tabulate
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 
+from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.config import config
 from devscripts.out import warn
 
 HASH_NAMES = {
