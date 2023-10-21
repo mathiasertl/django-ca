@@ -62,7 +62,7 @@ class Command(DevCommand):
         parser.add_argument("--keep-image", action="store_true", default=False, help="Do not remove images.")
         parser.add_argument("-l", "--list", action="store_true", help="List images and exit.")
 
-    def handle(self, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
+    def handle(self, args: argparse.Namespace) -> None:
         docker_runs: List[DockerRunDict] = []
 
         images = args.images or config.ALPINE_IMAGES

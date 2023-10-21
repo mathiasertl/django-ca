@@ -213,7 +213,7 @@ def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
     return x509.UniformResourceIdentifier(url)
 
 
-def ip(  # pylint: disable=invalid-name  # just a shortcut
+def ip(
     name: Union[ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network]
 ) -> x509.IPAddress:
     """Shortcut to get a :py:class:`cg:cryptography.x509.IPAddress`."""

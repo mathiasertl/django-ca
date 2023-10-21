@@ -120,7 +120,7 @@ def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
 
 @pytest.fixture()
 def user(
-    db: None,  # pylint: disable=unused-argument,invalid-name  # required for database access
+    db: None,  # pylint: disable=unused-argument  # required for database access
     django_user_model: Type["User"],
 ) -> "User":
     """Fixture for a basic Django user with no extra permissions."""

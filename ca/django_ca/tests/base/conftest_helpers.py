@@ -156,7 +156,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
     @pytest.fixture()
     def fixture(
         request: "SubRequest",
-        db: Any,  # pylint: disable=unused-argument,invalid-name  # usefixtures does not work for fixtures
+        db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
     ) -> Iterator[CertificateAuthority]:
         data = CERT_DATA[name]
         pub = request.getfixturevalue(f"{name}_pub")

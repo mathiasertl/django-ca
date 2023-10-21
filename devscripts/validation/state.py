@@ -19,6 +19,7 @@ import os
 import re
 import types
 import typing
+from pathlib import Path
 from typing import Any, Union
 
 import yaml
@@ -101,10 +102,9 @@ def check(
 
 def check_github_actions_tests() -> int:
     """Check GitHub actions."""
-    relpath = os.path.join(".github", "workflows", "tests.yml")
-    full_path = os.path.join(config.ROOT_DIR, relpath)
+    relpath = Path(".github", "workflows", "tests.yml")
     check_path(relpath)
-    with open(full_path, encoding="utf-8") as stream:
+    with open(config.ROOT_DIR / relpath, encoding="utf-8") as stream:
         action_config = yaml.safe_load(stream)
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
@@ -119,7 +119,7 @@ def check_tox() -> int:
     errors = 0
     check_path("tox.ini")
     tox_config = configparser.ConfigParser()
-    tox_config.read(os.path.join(config.ROOT_DIR, "tox.ini"))
+    tox_config.read(config.ROOT_DIR / "tox.ini")
 
     # Mapping of additional testenv specific requirements
     tox_deps = tox_config["testenv"]["deps"].splitlines()
@@ -173,7 +173,7 @@ def check_pyproject_toml() -> int:
     check_path("pyproject.toml")
     errors = 0
 
-    project_configuration = read_configuration(os.path.join(config.ROOT_DIR, "pyproject.toml"))
+    project_configuration = read_configuration(config.ROOT_DIR / "pyproject.toml")
 
     # Get data from pyproject.toml
     classifiers = project_configuration["project"]["classifiers"]
@@ -222,10 +222,9 @@ def check_pyproject_toml() -> int:
 def check_intro() -> int:
     """Check intro.rst (reused in a couple of places)."""
     errors = 0
-    intro_path = os.path.join("docs", "source", "intro.rst")
-    intro_fullpath = os.path.join(config.ROOT_DIR, intro_path)
+    intro_path = Path("docs", "source", "intro.rst")
     check_path(intro_path)
-    with open(intro_fullpath, encoding="utf-8") as stream:
+    with open(config.ROOT_DIR / intro_path, encoding="utf-8") as stream:
         intro = stream.read()
 
     exp_version_line = get_expected_version_line()
@@ -238,8 +237,7 @@ def check_readme() -> int:
     """Check contents of README.md."""
     errors = 0
     check_path("README.md")
-    readme_fullpath = os.path.join(config.ROOT_DIR, "README.md")
-    with open(readme_fullpath, encoding="utf-8") as stream:
+    with open(config.ROOT_DIR / "README.md", encoding="utf-8") as stream:
         readme = stream.read()
 
     exp_version_line = get_expected_version_line()

@@ -94,7 +94,7 @@ def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
 
     env = jinja2.Environment(autoescape=False, undefined=jinja2.StrictUndefined)
 
-    with open(os.path.join(config.DOC_TEMPLATES_DIR, path), encoding="utf-8") as stream:
+    with open(config.DOC_TEMPLATES_DIR / path, encoding="utf-8") as stream:
         commands = yaml.safe_load(stream)["commands"]
 
     clean_commands = []

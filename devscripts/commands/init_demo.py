@@ -51,7 +51,7 @@ class Command(DevCommand):
         """Get a file path."""
         return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
 
-    def ok(self, msg: str = " OK.", **kwargs: Any) -> None:  # pylint: disable=invalid-name
+    def ok(self, msg: str = " OK.", **kwargs: Any) -> None:
         """Just print "OK" in green."""
         print(self.termcolor.colored(msg, "green"), **kwargs)
 

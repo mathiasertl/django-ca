@@ -226,20 +226,16 @@ class LazyBinaryField(
             return value.der
         return self.wrapper(value).der
 
-    # TYPEHINT NOTE: django-stubs 4.2.5 introduces a bug here, likely fixed in the next release:
-    #   https://github.com/typeddjango/django-stubs/pull/1724#discussion_r1364368358
-    def formfield(  # type: ignore[override]
+    def formfield(
         self,
-        form_class: Optional[Type[forms.Field]] = None,  # type: ignore[override]
+        form_class: Optional[Type[forms.Field]] = None,
         choices_form_class: Optional[Type[forms.ChoiceField]] = None,
         **kwargs: Any,
     ) -> forms.Field:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
-        return super().formfield(  # type: ignore[return-value]
-            form_class, choices_form_class, **kwargs  # type: ignore[arg-type]
-        )
+        return super().formfield(form_class, choices_form_class, **kwargs)
 
     def to_python(
         self,

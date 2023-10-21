@@ -42,7 +42,6 @@ _ExtensionExampleDict = typing.TypedDict(
 )
 
 
-# pylint: disable-next=inherit-non-class; False positive
 class ExtensionExampleDict(_ExtensionExampleDict, total=False):
     """Value used to define generic test cases."""
 

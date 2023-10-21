@@ -39,7 +39,7 @@ def warn(msg: str) -> int:
     return 0
 
 
-def ok(msg: str) -> int:  # pylint: disable=invalid-name
+def ok(msg: str) -> int:
     """Print success message."""
     print(colored("[OKAY]", "green"), msg)
     return 0

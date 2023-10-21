@@ -36,7 +36,7 @@ debian-releases = [
 #   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
 ubuntu-releases = [
     "focal",  # until 2025-04-23
-    "jammy",  # until  2027-04-21
+    "jammy",  # until 2027-04-21
     "lunar",  # until 2024-01-20
     "mantic",  # until 2024-07
 ]

@@ -1,7 +1,7 @@
 -r requirements-dev-common.txt
 -r requirements-test.txt
 mypy==1.6.1
-django-stubs==4.2.5
+django-stubs==4.2.6
 types-docutils==0.20.0.3
 types-freezegun==1.1.10
 types-jinja2==2.11.9
