@@ -26,7 +26,7 @@ from devscripts.out import err, ok
 from devscripts.utils import redirect_output
 
 if typing.TYPE_CHECKING:
-    from git import Repo  # type: ignore[attr-defined]
+    from git import Repo
 
 
 class Command(DevCommand):

@@ -19,7 +19,7 @@
 import abc
 import json
 import typing
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -49,6 +49,7 @@ WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ig
 
 # django-stubs models.Field subclasses generic, so we need  a different base when type checking.
 if typing.TYPE_CHECKING:
+    GenericModelField = models.fields.Field[Any, Any]
 
     class LazyBinaryFieldBase(
         models.BinaryField[Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
@@ -57,6 +58,7 @@ if typing.TYPE_CHECKING:
         """Base class for binary fields with generics for type checking."""
 
 else:
+    GenericModelField = models.fields.Field
 
     class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar, WrapperTypeVar]):
         """Generic class for binary fields at runtime."""
@@ -182,7 +184,7 @@ class LazyBinaryField(
         kwargs.setdefault("editable", True)
         super().__init__(*args, **kwargs)
 
-    def deconstruct(self) -> Tuple[str, str, List[str], Dict[str, str]]:
+    def deconstruct(self) -> Tuple[str, str, Sequence[str], Dict[str, str]]:
         """Used in migrations."""
         name, path, args, kwargs = super().deconstruct()
 
@@ -224,17 +226,20 @@ class LazyBinaryField(
             return value.der
         return self.wrapper(value).der
 
-    def formfield(
+    # TYPEHINT NOTE: django-stubs 4.2.5 introduces a bug here, likely fixed in the next release:
+    #   https://github.com/typeddjango/django-stubs/pull/1724#discussion_r1364368358
+    def formfield(  # type: ignore[override]
         self,
-        form_class: Optional[Type[forms.Field]] = None,
-        choices_form_class: Optional[Type[forms.Field]] = None,
+        form_class: Optional[Type[forms.Field]] = None,  # type: ignore[override]
+        choices_form_class: Optional[Type[forms.ChoiceField]] = None,
         **kwargs: Any,
     ) -> forms.Field:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
-        # TYPEHINT NOTE: return value of parent is typed to any.
-        return super().formfield(form_class, choices_form_class, **kwargs)  # type: ignore[no-any-return]
+        return super().formfield(  # type: ignore[return-value]
+            form_class, choices_form_class, **kwargs  # type: ignore[arg-type]
+        )
 
     def to_python(
         self,

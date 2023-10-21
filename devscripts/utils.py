@@ -153,7 +153,7 @@ def get_previous_release(current_release: Optional[str] = None) -> str:
     """
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
     import semantic_version  # pylint: disable=import-outside-toplevel
-    from git import Repo  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
+    from git import Repo  # pylint: disable=import-outside-toplevel
 
     repo = Repo(config.ROOT_DIR)
     tags = [tag.name for tag in repo.tags]
