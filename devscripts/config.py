@@ -56,12 +56,6 @@ def get_project_config() -> Dict[str, Any]:
     cfg: Dict[str, Any] = full_config["django-ca"]["release"]
     cfg["python-map"] = {minor_to_major(pyver): pyver for pyver in cfg["python"]}
     cfg["python-major"] = [minor_to_major(pyver) for pyver in cfg["python"]]
-    cfg["django-map"] = {minor_to_major(djver): djver for djver in cfg["django"]}
-    cfg["django-major"] = [minor_to_major(djver) for djver in cfg["django"]]
-    cfg["cryptography-map"] = {minor_to_major(cgver): cgver for cgver in cfg["cryptography"]}
-    cfg["cryptography-major"] = [minor_to_major(cgver) for cgver in cfg["cryptography"]]
-    cfg["acme-map"] = {minor_to_major(acmever): acmever for acmever in cfg["acme"]}
-    cfg["acme-major"] = [minor_to_major(acmever) for acmever in cfg["acme"]]
 
     cfg["docker"] = full_config["django-ca"].setdefault("docker", {})
     _alpine_images = cfg["docker"].setdefault("alpine-images", [])

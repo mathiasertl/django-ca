@@ -50,8 +50,8 @@ TOX_ENV_SHORT_NAMES = {
 def get_expected_version_line(project_config: Dict[str, Any]) -> str:
     """Get expected string for README and intro.rst."""
     min_pyver = project_config["python-major"][0]
-    min_django_version = project_config["django-major"][0]
-    min_cryptography_version = project_config["cryptography-major"][0]
+    min_django_version = project_config["django"][0]
+    min_cryptography_version = project_config["cryptography"][0]
     return (
         f"Written in Python {min_pyver}+, Django {min_django_version}+ and cryptography "
         f"{min_cryptography_version}+."
@@ -109,9 +109,9 @@ def check_github_actions_tests(project_config: Dict[str, Any]) -> int:
     matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
 
     errors = simple_diff("Python versions", matrix["python-version"], list(project_config["python-map"]))
-    errors += simple_diff("Django versions", matrix["django-version"], project_config["django-major"])
+    errors += simple_diff("Django versions", matrix["django-version"], project_config["django"])
     errors += simple_diff(
-        "cryptography versions", matrix["cryptography-version"], project_config["cryptography-major"]
+        "cryptography versions", matrix["cryptography-version"], project_config["cryptography"]
     )
     return errors
 
@@ -132,9 +132,9 @@ def check_tox(project_config: Dict[str, Any]) -> int:
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
     expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}" % (
         ",".join([pyver.replace(".", "") for pyver in project_config["python-map"]]),
-        ",".join(project_config["django-map"]),
-        ",".join(project_config["cryptography-major"]),
-        ",".join(project_config["acme-map"]),
+        ",".join(project_config["django"]),
+        ",".join(project_config["cryptography"]),
+        ",".join(project_config["acme"]),
     )
 
     # pylint: enable=consider-using-f-string
@@ -149,10 +149,10 @@ def check_tox(project_config: Dict[str, Any]) -> int:
         errors += simple_diff(
             f"{component} conditional dependencies present",
             [e for e in tox_env_reqs if e.startswith(short_name)],
-            [f"{short_name}{major}" for major in project_config[f"{component}-major"]],
+            [f"{short_name}{major}" for major in project_config[f"{component}"]],
         )
 
-        for major in project_config[f"{component}-major"]:
+        for major in project_config[f"{component}"]:
             name = f"{short_name}{major}"
             try:
                 actual = tox_env_reqs[name]
@@ -194,10 +194,10 @@ def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
         m.groups(0)[0]
         for m in filter(None, [re.search(r"Django :: ([0-9]\.[0-9]+)$", cf) for cf in classifiers])
     ]
-    if djver_cfs != project_config["django-major"]:
-        errors += err(f'Wrong python classifiers: Have {djver_cfs}, wanted {project_config["django-major"]}')
+    if djver_cfs != project_config["django"]:
+        errors += err(f'Wrong python classifiers: Have {djver_cfs}, wanted {project_config["django"]}')
 
-    for djver in project_config["django-map"]:
+    for djver in project_config["django"]:
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += err(f"Django {djver} classifier not found.")
 
@@ -206,11 +206,11 @@ def check_pyproject_toml(project_config: Dict[str, Any]) -> int:
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
-    expected_django_req = f"Django>={project_config['django-major'][0]}"
+    expected_django_req = f"Django>={project_config['django'][0]}"
     if expected_django_req not in install_requires:
         errors += err(f"{expected_django_req}: Expected Django requirement not found.")
 
-    expected_cg_req = f"cryptography>={project_config['cryptography-major'][0]}"
+    expected_cg_req = f"cryptography>={project_config['cryptography'][0]}"
     if expected_cg_req not in install_requires:
         errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
