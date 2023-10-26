@@ -14,10 +14,12 @@
 """Shared typehints for tests."""
 
 import typing
-from typing import Any, Dict
+from typing import Any, Callable, ContextManager, Dict, List, Protocol
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
+
+from django.db import DEFAULT_DB_ALIAS
 
 from django_ca.models import DjangoCAModel
 
@@ -63,6 +65,15 @@ class FixtureData(typing.TypedDict):
 KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": CertificateIssuerPrivateKeyTypes, "der": bytes})
 PubDict = typing.TypedDict("PubDict", {"pem": str, "parsed": x509.Certificate, "der": bytes})
 CsrDict = typing.TypedDict("CsrDict", {"pem": str, "parsed": x509.CertificateSigningRequest})
+
+
+class CaptureOnCommitCallbacks(Protocol):
+    """Typehint for TestCase.captureOnCommitCallbacks()."""
+
+    def __call__(
+        self, using: str = DEFAULT_DB_ALIAS, execute: bool = False
+    ) -> ContextManager[List[Callable[..., Any]]]:  # pragma: no cover
+        ...
 
 
 __all__ = ["HttpResponse", "User"]

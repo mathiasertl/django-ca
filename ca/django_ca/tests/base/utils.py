@@ -21,12 +21,14 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any, Iterable, Iterator, Optional, Tuple, Union
+from unittest import mock
 from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.test import override_settings
+from django.utils.crypto import get_random_string
 
 from django_ca.models import X509CertMixin
 from django_ca.profiles import profiles
@@ -225,6 +227,14 @@ def rdn(
 ) -> x509.RelativeDistinguishedName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.RelativeDistinguishedName`."""
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
+
+
+@contextmanager
+def mock_slug() -> Iterator[str]:
+    """Mock random slug generation, yields the static value."""
+    slug = get_random_string(length=12)
+    with mock.patch("django_ca.models.get_random_string", return_value=slug):
+        yield slug
 
 
 @contextmanager

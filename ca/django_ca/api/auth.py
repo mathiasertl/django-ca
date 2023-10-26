@@ -12,9 +12,12 @@
 # <http://www.gnu.org/licenses/>.
 
 """Authentication classes for the API."""
+from typing import Literal, Union
+
 from ninja.security import HttpBasicAuth
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest
 
 from django_ca.api.errors import Forbidden
@@ -37,10 +40,12 @@ class BasicAuth(HttpBasicAuth):
         self.permission = permission
         super().__init__()
 
-    def authenticate(self, request: HttpRequest, username: str, password: str) -> bool:
+    def authenticate(
+        self, request: HttpRequest, username: str, password: str
+    ) -> Union[Literal[False], AbstractUser]:
         user = User.objects.get(username=username)
         if user.check_password(password) is False:
             return False
         if user.has_perm(self.permission) is False:
             raise Forbidden(self.permission)
-        return True
+        return user

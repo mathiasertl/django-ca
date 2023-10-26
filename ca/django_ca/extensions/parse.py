@@ -89,7 +89,10 @@ def _parse_policy_qualifiers(
 
 def _parse_reason(reason: Union[str, x509.ReasonFlags]) -> x509.ReasonFlags:
     if isinstance(reason, str):
-        return x509.ReasonFlags[reason]
+        try:
+            return x509.ReasonFlags[reason]  # e.g. key_compromise
+        except KeyError:
+            return x509.ReasonFlags(reason)  # e.g. keyCompromise
     return reason
 
 

@@ -30,13 +30,12 @@ from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPri
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from django.urls import reverse
-from django.utils.crypto import get_random_string
 
 from django_ca.acme.responses import AcmeResponseUnauthorized
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import mock_slug, override_tmpcadir
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 
@@ -179,8 +178,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
     @contextmanager
     def mock_slug(self) -> Iterator[str]:
         """Mock random slug generation, yields the static value."""
-        slug = get_random_string(length=12)
-        with mock.patch("django_ca.models.get_random_string", return_value=slug):
+        with mock_slug() as slug:
             yield slug
 
     def post(

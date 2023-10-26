@@ -1415,6 +1415,44 @@ class Certificate(X509CertMixin):
         return self.ca.root
 
 
+class CertificateOrder(DjangoCAModel):
+    """An order for a certificate that is issued asynchronously (usually via the API)."""
+
+    STATUS_PENDING = "pending"
+    STATUS_ISSUED = "issued"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, _("Choices")),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_ISSUED, _("Issued")),
+    )
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    certificate_authority = models.ForeignKey(
+        CertificateAuthority, on_delete=models.CASCADE, related_name="orders"
+    )
+    certificate = models.OneToOneField(
+        Certificate,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="order",
+        help_text=_("Certificate issued for this order."),
+    )
+    slug = models.SlugField(unique=True, default=acme_slug, help_text=_("Slug identifying the order."))
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text=_("User used for creating the order.")
+    )
+    status = models.CharField(
+        max_length=8, default=STATUS_PENDING, help_text=_("Current status of the order.")
+    )
+    error_code = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text=_("Machine readable error code.")
+    )
+    error = models.CharField(blank=True, max_length=256, help_text=_("Human readable error message."))
+
+
 class AcmeAccount(DjangoCAModel):
     """Implements an ACME account object.
 

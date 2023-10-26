@@ -26,7 +26,7 @@ from django_ca import ca_settings, constants
 from django_ca.api.extension_schemas import DATETIME_EXAMPLE, ExtensionsSchema
 from django_ca.constants import ReasonFlags
 from django_ca.extensions import serialize_extension
-from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.models import Certificate, CertificateAuthority, CertificateOrder, X509CertMixin
 from django_ca.typehints import SerializedExtension
 
 
@@ -170,6 +170,18 @@ class CertificateAuthorityUpdateSchema(CertificateAuthorityBaseSchema):
 
     class Config(CertificateAuthorityBaseSchema.Config):  # pylint: disable=missing-class-docstring
         model_fields_optional = "__all__"
+
+
+class CertificateOrderSchema(ModelSchema):
+    """Schema for certificate orders."""
+
+    user: str = Field(alias="user.get_username", description="Username of the user.")
+    serial: Optional[str] = Field(alias="certificate.serial")
+    updated: datetime = Field(description="When the order was last updated.", example=DATETIME_EXAMPLE)
+
+    class Config:  # pylint: disable=missing-class-docstring
+        model = CertificateOrder
+        model_fields = sorted(["created", "updated", "slug", "status", "user"])
 
 
 class CertificateSchema(X509BaseSchema):
