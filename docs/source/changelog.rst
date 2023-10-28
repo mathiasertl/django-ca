@@ -22,6 +22,14 @@ Backwards incompatible changes
 * Support for non-standard algorithm names in profile settings was removed.
 * Drop support for ``Django==4.1``, ``cryptography==40.x``, ``acme==1.25.0`` and ``celery==5.2.x``.
 
+API changes
+===========
+
+.. NOTE:: The API is still experimental and API endpoints will change without notice.
+
+* Certificate issuance is now asynchronous, similar to how certificates are issued via ACME. This enables
+  using CAs where the private key is not directly available to the webserver.
+
 .. _changelog-1.26.0:
 
 *******************

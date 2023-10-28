@@ -414,6 +414,9 @@ filterwarnings = [
 
     "ignore:The USE_L10N setting is deprecated.::django",
     "ignore:django.core.files.storage.get_storage_class is deprecated::django",
+
+    # pyOpenSSL>=23.3.0 raises this warning, acme==2.7.3 still uses the deprecated APIs.
+    "ignore:^X509Extension support in pyOpenSSL is deprecated\\. You should use the APIs in cryptography\\.$::acme",
 ]
 
 [tool.ruff]
