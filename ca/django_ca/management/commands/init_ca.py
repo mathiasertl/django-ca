@@ -215,6 +215,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         self.add_acme_group(parser)
         self.add_ocsp_group(parser)
+        self.add_rest_api_group(parser)
 
         self.add_authority_information_access_group(parser, ("--ca-ocsp-url",), ("--ca-issuer-url",))
         self.add_basic_constraints_group(parser)
@@ -445,7 +446,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             if options[opt] is not None:
                 kwargs[opt] = options[opt]
 
-        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
+        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False b/c parser throws error already
             # These settings are only there if ACME is enabled
             for opt in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
                 if options[opt] is not None:
@@ -455,6 +456,10 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 if acme_profile not in ca_settings.CA_PROFILES:
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 kwargs["acme_profile"] = acme_profile
+
+        if ca_settings.CA_ENABLE_REST_API:  # pragma: no branch; never False b/c parser throws error already
+            if (api_enabled := options.get("api_enabled")) is not None:
+                kwargs["api_enabled"] = api_enabled
 
         try:
             ca = CertificateAuthority.objects.init(

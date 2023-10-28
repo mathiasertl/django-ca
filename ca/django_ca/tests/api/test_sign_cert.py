@@ -507,18 +507,6 @@ def test_expired_ca(api_client: Client) -> None:
     assert response.json() == {"detail": "Not Found"}, response.json()
 
 
-@pytest.mark.usefixtures("tmpcadir")
-@freeze_time(TIMESTAMPS["everything_valid"])
-def test_disabled_ca(api_client: Client, root: CertificateAuthority) -> None:
-    """Test that you cannot sign a certificate for a disabled CA."""
-    root.enabled = False
-    root.save()
-
-    response = request(api_client, {"csr": CERT_DATA["root-cert"]["csr"]["pem"], "subject": default_subject})
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.content
-    assert response.json() == {"detail": "Not Found"}, response.json()
-
-
 class TestPermissions(APIPermissionTestBase):
     """Test permissions for this view."""
 

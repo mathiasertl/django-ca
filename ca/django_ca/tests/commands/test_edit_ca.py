@@ -168,6 +168,26 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertIs(self.ca.acme_requires_contact, True)  # state unchanged
 
     @override_tmpcadir()
+    def test_rest_api_arguments(self) -> None:
+        """Test REST API arguments."""
+        # Test initial state
+        self.assertIs(self.ca.api_enabled, False)
+
+        # change all settings
+        self.edit_ca("--api-enable")
+        self.assertIs(self.ca.api_enabled, True)
+
+        # Try mutually exclusive arguments
+        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
+            self.edit_ca("--api-enable", "--api-disable")
+        self.assertEqual(excm.exception.args, (2,))
+        self.assertIs(self.ca.api_enabled, True)  # state unchanged
+
+        # change all settings
+        self.edit_ca("--api-disable")
+        self.assertIs(self.ca.api_enabled, False)
+
+    @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:
         """Test ACME arguments."""
         self.edit_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")

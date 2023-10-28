@@ -33,7 +33,7 @@ DetailResponse = Dict[str, Any]
 ListResponse = List[DetailResponse]
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_user(user: User, api_permission: Tuple[Type[Model], str]) -> User:
     """Extend user fixture to add required permission."""
     content_type = ContentType.objects.get_for_model(api_permission[0])
@@ -42,12 +42,20 @@ def api_user(user: User, api_permission: Tuple[Type[Model], str]) -> User:
     return user
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_client(client: Client, api_user: User) -> Client:
     """HTTP client with HTTP basic authentication for the user."""
     credentials = base64.b64encode(api_user.username.encode("utf-8") + b":password").decode()
     client.defaults["HTTP_AUTHORIZATION"] = "Basic " + credentials
     return client
+
+
+@pytest.fixture
+def root(root: CertificateAuthority) -> CertificateAuthority:
+    """Extend root fixture to enable API access."""
+    root.api_enabled = True
+    root.save()
+    return root
 
 
 @pytest.fixture
@@ -104,6 +112,8 @@ class APIPermissionTestBase:
     """Base class for testing permission handling in API views."""
 
     path: str
+    expected_disabled_status_code = HTTPStatus.NOT_FOUND
+    expected_disabled_response: Any = {"detail": "Not Found"}
 
     def request(self, client: Client) -> HttpResponse:
         """Make a default request to the view under test (non-GET requests must override this)."""
@@ -131,3 +141,21 @@ class APIPermissionTestBase:
         response = self.request(api_client)
         assert response.status_code == HTTPStatus.FORBIDDEN, response.content
         assert response.json() == {"detail": "Forbidden"}, response.json()
+
+    def test_disabled_ca(self, api_client: Client, root: CertificateAuthority) -> None:
+        """Test that disabling the API access for the CA really disables it."""
+        root.enabled = False
+        root.save()
+
+        response = self.request(api_client)
+        assert response.status_code == self.expected_disabled_status_code, response.content
+        assert response.json() == self.expected_disabled_response
+
+    def test_disabled_api_access(self, api_client: Client, root: CertificateAuthority) -> None:
+        """Test that disabling the API access for the CA really disables it."""
+        root.api_enabled = False
+        root.save()
+
+        response = self.request(api_client)
+        assert response.status_code == self.expected_disabled_status_code, response.content
+        assert response.json() == self.expected_disabled_response

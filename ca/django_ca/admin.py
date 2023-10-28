@@ -425,15 +425,18 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         if obj is None:  # pragma: no cover  # we never add certificate authorities, so it's never None
             return fieldsets
 
+        # Mark certificate policies as read-only if the configured extension is to complex for the widget.
         sign_certificate_policies = obj.sign_certificate_policies
         if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
             detail_fields = fieldsets[1][1]["fields"]
             sign_certificate_policies_index = detail_fields.index("sign_certificate_policies")
             detail_fields[sign_certificate_policies_index] = "sign_certificate_policies_readonly"
 
+        api_index = 1
         if ca_settings.CA_ENABLE_ACME:
+            api_index = 2
             fieldsets.insert(
-                2,
+                1,
                 (
                     _("ACME"),
                     {
@@ -446,6 +449,9 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                     },
                 ),
             )
+
+        if ca_settings.CA_ENABLE_REST_API:
+            fieldsets.insert(api_index, (_("API"), {"fields": ["api_enabled"]}))
 
         return fieldsets
 

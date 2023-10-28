@@ -603,6 +603,13 @@ class CertificateAuthority(X509CertMixin):
     )
     # CAA record and website are general fields
 
+    # API fields
+    api_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable API"),
+        help_text=_("Whether it is possible to use the API for this CA."),
+    )
+
     _key = None
 
     def key(self, password: Optional[Union[str, bytes]] = None) -> CertificateIssuerPrivateKeyTypes:

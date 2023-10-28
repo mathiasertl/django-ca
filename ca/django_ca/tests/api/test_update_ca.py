@@ -178,22 +178,6 @@ def test_update_expired_ca(
     assert response.json() == expected_response, response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-def test_disabled_ca(root: CertificateAuthority, api_client: Client, payload: Dict[str, Any]) -> None:
-    """Test that a disabled CA is *not* updatable."""
-    root.enabled = False
-    root.save()
-
-    response = request(api_client, payload)
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.content
-    assert response.json() == {"detail": "Not Found"}, response.json()
-
-    # Make sure that fields where not updated in the database
-    refetched_root: CertificateAuthority = CertificateAuthority.objects.get(pk=root.pk)
-    assert root.terms_of_service == refetched_root.terms_of_service
-    assert root.website == refetched_root.website
-
-
 class TestPermissions(APIPermissionTestBase):
     """Test permissions for this view."""
 
@@ -201,3 +185,18 @@ class TestPermissions(APIPermissionTestBase):
 
     def request(self, client: Client) -> HttpResponse:
         return request(client, {"ocsp_responder_key_validity": 10})
+
+    def test_disabled_ca(self, api_client: Client, root: CertificateAuthority) -> None:
+        super().test_disabled_ca(api_client, root)
+
+        # Make sure that fields where not updated in the database
+        root.refresh_from_db()
+        assert root.ocsp_responder_key_validity == 3
+
+    def test_disabled_api_access(self, api_client: Client, root: CertificateAuthority) -> None:
+        """Test that disabling the API access for the CA really disables it."""
+        super().test_disabled_api_access(api_client, root)
+
+        # Make sure that fields where not updated in the database
+        root.refresh_from_db()
+        assert root.ocsp_responder_key_validity == 3

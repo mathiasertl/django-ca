@@ -80,6 +80,7 @@ extensions = [
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     "celery.contrib.sphinx",
     "numpydoc",
+    "sphinx_inline_tabs",
     "sphinx_jinja",
     "sphinxcontrib.openapi",
     "sphinxcontrib.jquery",

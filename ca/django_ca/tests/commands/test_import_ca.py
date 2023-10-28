@@ -101,6 +101,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             self.assertIs(ca.acme_registration, True)
             self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
             self.assertIs(ca.acme_requires_contact, True)
+            self.assertIs(ca.api_enabled, False)
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_valid"])
@@ -236,6 +237,12 @@ class ImportCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.acme_profile, "client")
         self.assertIs(ca.acme_requires_contact, False)
         self.assertIs(ca.acme_registration, False)
+
+    @override_tmpcadir()
+    def test_rest_api_arguments(self) -> None:
+        """Test REST API arguments."""
+        ca = self.import_ca("--api-enable")
+        self.assertIs(ca.api_enabled, True)
 
     @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:

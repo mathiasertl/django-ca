@@ -258,6 +258,7 @@ class CertificateAuthorityManager(
         sign_certificate_policies: Optional[x509.Extension[x509.CertificatePolicies]] = None,
         ocsp_responder_key_validity: Optional[int] = None,
         ocsp_response_validity: Optional[int] = None,
+        api_enabled: Optional[bool] = None,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
@@ -340,6 +341,8 @@ class CertificateAuthorityManager(
             How long (in days) OCSP responder keys should be valid.
         ocsp_response_validity : int, optional
             How long (in seconds) OCSP responses should be valid.
+        api_enabled : bool, optional
+            If the REST API shall be enabled.
 
         Raises
         ------
@@ -456,6 +459,7 @@ class CertificateAuthorityManager(
             sign_certificate_policies=sign_certificate_policies,
             ocsp_responder_key_validity=ocsp_responder_key_validity,
             ocsp_response_validity=ocsp_response_validity,
+            api_enabled=api_enabled,
         )
 
         private_key = generate_private_key(key_size, key_type, elliptic_curve)
@@ -516,6 +520,8 @@ class CertificateAuthorityManager(
             ca.ocsp_responder_key_validity = ocsp_responder_key_validity
         if ocsp_response_validity is not None:
             ca.ocsp_response_validity = ocsp_response_validity
+        if api_enabled is not None:
+            ca.api_enabled = api_enabled
 
         ca.update_certificate(certificate)
 

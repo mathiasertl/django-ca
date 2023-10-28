@@ -35,7 +35,7 @@ __doctest_skip__ = ["*"]
 
 def get_certificate_authority(serial: str, expired: bool = False) -> CertificateAuthority:
     """Get a certificate authority from the given serial."""
-    qs = CertificateAuthority.objects.enabled()
+    qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
     if expired is False:
         qs = qs.valid()
 

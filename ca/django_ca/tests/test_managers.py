@@ -352,13 +352,21 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "acme"
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(
-                name, self.subject, acme_enabled=False, acme_profile="client", acme_requires_contact=False
+                name, self.subject, acme_enabled=True, acme_profile="client", acme_requires_contact=False
             )
         self.assertProperties(ca, name, self.subject)
-        self.assertFalse(ca.acme_enabled)
+        self.assertTrue(ca.acme_enabled)
         self.assertEqual(ca.acme_profile, "client")
         self.assertFalse(ca.acme_requires_contact)
-        ca.key().public_key()  # just access private key to make sure we can load it
+
+    @override_tmpcadir()
+    def test_api_parameters(self) -> None:
+        """Test parameters for the REST API."""
+        name = "api"
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, self.subject, api_enabled=True)
+        self.assertProperties(ca, name, self.subject)
+        self.assertTrue(ca.api_enabled)
 
     def test_unknown_profile(self) -> None:
         """Test creating a certificate authority with a profile that doesn't exist."""

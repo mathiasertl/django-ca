@@ -202,7 +202,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         return group
 
     def add_acme_group(self, parser: CommandParser) -> None:
-        """Add arguments for ACMEv2."""
+        """Add arguments for ACMEv2 (if enabled)."""
         if not ca_settings.CA_ENABLE_ACME:
             return
 
@@ -277,6 +277,24 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             min=600,
             metavar="SECONDS",
             help="How long (*in seconds*) OCSP responses are valid (default: 86400).",
+        )
+
+    def add_rest_api_group(self, parser: CommandParser) -> None:
+        """Add arguments for the REST API (if enabled)."""
+        if not ca_settings.CA_ENABLE_REST_API:
+            return
+
+        group = parser.add_argument_group("API Access")
+        enable_group = group.add_mutually_exclusive_group()
+        enable_group.add_argument(
+            "--api-enable",
+            dest="api_enabled",
+            action="store_true",
+            default=None,
+            help="Enable API support.",
+        )
+        enable_group.add_argument(
+            "--api-disable", dest="api_enabled", action="store_false", help="Disable API support."
         )
 
     def add_ca_args(self, parser: ActionsContainer) -> None:

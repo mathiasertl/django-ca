@@ -62,7 +62,7 @@ def list_certificate_authorities(
     request: WSGIRequest, filters: CertificateAuthorityFilterSchema = Query(...)
 ) -> CertificateAuthorityQuerySet:
     """Retrieve a list of currently usable certificate authorities."""
-    qs = CertificateAuthority.objects.enabled()
+    qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
     if filters.expired is False:
         qs = qs.valid()
     return qs
@@ -148,7 +148,9 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
 )
 def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> CertificateOrder:
     """Retrieve information about the certificate order identified by `slug`."""
-    return CertificateOrder.objects.get(certificate_authority__serial=serial, slug=slug)
+    return CertificateOrder.objects.get(
+        certificate_authority__serial=serial, certificate_authority__api_enabled=True, slug=slug
+    )
 
 
 @api.get(

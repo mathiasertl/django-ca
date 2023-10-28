@@ -65,10 +65,12 @@ def test_list_view(api_client: Client, expected_response: ListResponse) -> None:
     assert response.json() == expected_response, response.json()
 
 
+@pytest.mark.usefixtures("root")
 @freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_certificate_authorities_are_excluded(api_client: Client) -> None:
     """Test that expired CAs are excluded by default."""
     response = request(api_client)
+    assert CertificateAuthority.objects.count() > 0  # just to be sure that there would be some
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.json() == [], response.json()
 
@@ -81,18 +83,10 @@ def test_expired_filter(api_client: Client, expected_response: ListResponse) -> 
     assert response.json() == expected_response, response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-def test_disabled_ca(api_client: Client, root: CertificateAuthority) -> None:
-    """Test that a disabled CA is *not* included."""
-    root.enabled = False
-    root.save()
-
-    response = request(api_client)
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.json() == [], response.json()
-
-
 class TestPermissions(APIPermissionTestBase):
     """Test permissions for this view."""
 
     path = path
+
+    expected_disabled_status_code = HTTPStatus.OK
+    expected_disabled_response = []

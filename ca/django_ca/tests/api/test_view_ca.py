@@ -53,17 +53,6 @@ def test_view_expired_ca(api_client: Client, root_response: Dict[str, Any]) -> N
     assert response.json() == root_response, response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-def test_disabled_ca(root: CertificateAuthority, api_client: Client) -> None:
-    """Test that a disabled CA is *not* viewable."""
-    root.enabled = False
-    root.save()
-
-    response = api_client.get(path)
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.content
-    assert response.json() == {"detail": "Not Found"}, response.json()
-
-
 class TestPermissions(APIPermissionTestBase):
     """Test permissions for this view."""
 

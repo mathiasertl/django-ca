@@ -603,9 +603,20 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.acme_profile, "client")
         self.assertIs(ca.acme_requires_contact, False)
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False)
-    def test_disabled_acme_arguments(self) -> None:
-        """Test that ACME options don't work when ACME is disabled."""
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_REST_API=True)
+    def test_api_arguments(self) -> None:
+        """Test REST API arguments."""
+        ca = self.init_ca_e2e(
+            "Test CA",
+            "/CN=api.example.com",
+            "--api-enable",
+        )
+
+        self.assertIs(ca.api_enabled, True)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False, CA_ENABLE_REST_API=False)
+    def test_disabled_arguments(self) -> None:
+        """Test that ACME/REST API options don't work when feature is disabled."""
         with self.assertSystemExit(2):
             self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-enable"])
 
@@ -623,6 +634,9 @@ class InitCATest(TestCaseMixin, TestCase):
 
         with self.assertSystemExit(2):
             self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-profile=client"])
+
+        with self.assertSystemExit(2):
+            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--api-enable"])
 
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:

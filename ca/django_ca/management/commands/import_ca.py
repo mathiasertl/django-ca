@@ -65,6 +65,7 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         self.add_acme_group(parser)
         self.add_ocsp_group(parser)
+        self.add_rest_api_group(parser)
         self.add_ca_args(parser)
 
         parser.add_argument("name", help="Human-readable name of the CA")
@@ -149,6 +150,11 @@ Note that the private key will be copied to the directory configured by the CA_D
 
             if acme_profile := options["acme_profile"]:
                 ca.acme_profile = acme_profile
+
+        # Set API options
+        if ca_settings.CA_ENABLE_REST_API:  # pragma: no branch; never False b/c parser throws error already
+            if (api_enabled := options.get("api_enabled")) is not None:
+                ca.api_enabled = api_enabled
 
         # load public key
         try:

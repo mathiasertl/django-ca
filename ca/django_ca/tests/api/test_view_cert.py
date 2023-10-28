@@ -22,7 +22,7 @@ from django.urls import reverse_lazy
 import pytest
 from freezegun import freeze_time
 
-from django_ca.models import Certificate, CertificateAuthority
+from django_ca.models import Certificate
 from django_ca.tests.api.conftest import APIPermissionTestBase
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 
@@ -52,17 +52,6 @@ def test_expired_certificate(api_client: Client, root_cert_response: Dict[str, A
     response = api_client.get(path)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.json() == root_cert_response, response.json()
-
-
-@freeze_time(TIMESTAMPS["everything_valid"])
-def test_disabled_ca(root: CertificateAuthority, api_client: Client) -> None:
-    """Test that certificates for a disabled can *not* be viewed."""
-    root.enabled = False
-    root.save()
-
-    response = api_client.get(path)
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.content
-    assert response.json() == {"detail": "Not Found"}, response.json()
 
 
 class TestPermissions(APIPermissionTestBase):

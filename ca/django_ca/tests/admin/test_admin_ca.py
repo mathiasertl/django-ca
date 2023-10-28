@@ -37,8 +37,13 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
     )
 
     @override_settings(CA_ENABLE_ACME=False)
-    def test_change_view_with_acme(self) -> None:
+    def test_change_view_without_acme(self) -> None:
         """Basic tests but with ACME support disabled."""
+        self.test_change_view()
+
+    @override_settings(CA_ENABLE_REST_API=False)
+    def test_change_view_without_api(self) -> None:
+        """Basic tests but with API support disabled."""
         self.test_change_view()
 
     def test_complex_sign_certificate_policies(self) -> None:
