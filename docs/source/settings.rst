@@ -188,7 +188,26 @@ CA_DEFAULT_NAME_ORDER
 
    Default order to use for x509 Names (such as the certificates subject). Must be a ``tuple``, with the
    values being either a :py:class:`~cg:cryptography.x509.oid.NameOID` or a ``str``. String values must be one of
-   the values listed in :py:attr:`~django_ca.constants.NAME_OID_TYPES`.
+   the values listed in :py:attr:`~django_ca.constants.NAME_OID_TYPES` or the dotted string value of the OID:
+
+   .. tab:: Python
+
+      .. code-block:: python
+
+         CA_DEFAULT_NAME_ORDER = (
+            "countryName",
+            NameOID.ORGANIZATION_NAME,
+            "2.5.4.3",  # OID for commonName
+         )
+
+   .. tab:: YAML
+
+      .. code-block:: yaml
+
+         CA_DEFAULT_NAME_ORDER:
+           - countryName
+           - organizationName
+           - 2.5.4.3  # OID for commonName
 
    The default is based on experience with existing certificates, as there is no known standard for an order.
 
@@ -236,29 +255,43 @@ CA_DEFAULT_SUBJECT
    signing certificates will fail.
 
    In its most trivial form, this value is a ``tuple`` consisting of two-tuples naming the attribute type and
-   value. Attribute types must be one of the values in :py:attr:`~django_ca.constants.NAME_OID_TYPES`::
+   value. Attribute types must be one of the values in :py:attr:`~django_ca.constants.NAME_OID_TYPES` or a
+   dotted string for an arbitrary object identifier:
+
+   .. tab:: Python
+
+      .. code-block:: python
+
+         CA_DEFAULT_SUBJECT = (
+            ("countryName", "AT"),
+            ("2.5.4.8", "Vienna"),  # dottet string for "stateOrProvinceName"
+            ("organizationName", "orgName"),
+            ("organizationalUnitName", "orgUnitName"),
+         )
+
+   .. tab:: YAML
+
+      .. code-block:: YAML
+
+         CA_DEFAULT_SUBJECT:
+           - [ countryName, AT ]
+           - [ "2.5.4.8", "Vienna"]  # dottet string for "stateOrProvinceName"
+           - [ organizationName, orgName ]
+           - [ organizationalUnitName, orgUnitName ]
+
+   If you use Python as a configuration format, the value can also be a :py:class:`x509.Name
+   <cg:cryptography.x509.Name>` instance.  For convenience, you can also give :py:class:`x509.NameAttribute
+   <cg:cryptography.x509.NameAttribute>` instances in the tuple defined above, or use an
+   :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as key:
+
+
+   .. code-block:: python
 
       CA_DEFAULT_SUBJECT = (
-         ("C", "AT"),
-         ("ST", "Vienna"),
-         ("L", "Vienna"),
-         ("O", "Example"),
-         ("OU", "Example Unit"),
-      )
-
-   For complex use cases, the value can also be a :py:class:`x509.Name <cg:cryptography.x509.Name>` instance.
-   For convenience, you can also give :py:class:`x509.NameAttribute <cg:cryptography.x509.NameAttribute>`
-   instances in the tuple defined above, or use an
-   :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as key::
-
-      CA_DEFAULT_NAME_ORDER = (
-         # ...
-         NameOID.INN,
-         NameOID.POSTAL_CODE,
-      )
-      CA_DEFAULT_SUBJECT = (
-         NameAttribute(NameOID.INN, "An exotic inn"),
-         (NameOID.POSTAL_CODE, "1010"),
+         ("countryName", "AT"),
+         ("2.5.4.8", "Vienna"),  # dottet string for "stateOrProvinceName"
+         (NameOID.ORGANIZATION_NAME, "orgName"),
+         x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="orgUnitName"),
       )
 
       # Or you just define the full name:
