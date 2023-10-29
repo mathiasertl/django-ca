@@ -41,7 +41,6 @@ from django_ca.models import (
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import basic_constraints, key_usage, override_tmpcadir
-from django_ca.utils import x509_name
 
 
 class QuerySetTestCaseMixin(TestCaseMixin):
@@ -119,26 +118,21 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_path_length(self) -> None:
         """Test path_length parameter in manager."""
+        subject = x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="ca.example.com")])
         ca = CertificateAuthority.objects.init(
-            name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=x509_name("CN=ca.example.com")
+            name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
         )
         self.assertEqual(ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True))
 
         ca = CertificateAuthority.objects.init(
-            path_length=0,
-            name="2",
-            key_size=ca_settings.CA_MIN_KEY_SIZE,
-            subject=x509_name("CN=ca.example.com"),
+            path_length=0, name="2", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
         )
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
         )
 
         ca = CertificateAuthority.objects.init(
-            path_length=2,
-            name="3",
-            key_size=ca_settings.CA_MIN_KEY_SIZE,
-            subject=x509_name("CN=ca.example.com"),
+            path_length=2, name="3", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
         )
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=2)
@@ -154,14 +148,14 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             parent=None,
             path_length=1,
             key_size=key_size,
-            subject=x509_name("CN=ca.example.com"),
+            subject=x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="ca.example.com")]),
         )
         child = CertificateAuthority.objects.init(
             name="Child",
             parent=parent,
             path_length=0,
             key_size=key_size,
-            subject=x509_name("CN=child.ca.example.com"),
+            subject=x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="child.ca.example.com")]),
         )
 
         self.assertAuthorityKeyIdentifier(parent, child)

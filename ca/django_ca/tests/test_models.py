@@ -72,7 +72,7 @@ from django_ca.tests.base.utils import (
     subject_key_identifier,
     uri,
 )
-from django_ca.utils import ca_storage, get_crl_cache_key, x509_name
+from django_ca.utils import ca_storage, get_crl_cache_key
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
 
@@ -1030,9 +1030,19 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
                 CERT_DATA[name].get("subject_alternative_name"),
             )
 
+        # Directory names are almost never used in SubjectAlternativeName
+        directory_name = x509.DirectoryName(
+            x509.Name(
+                [
+                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="AT"),
+                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com"),
+                ]
+            )
+        )
+
         # Create a cert with some weirder SANs to test that too
         san = subject_alternative_name(
-            x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
+            directory_name,
             x509.RFC822Name("user@example.com"),
             x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
         )
@@ -1044,7 +1054,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         )
 
         expected_san = subject_alternative_name(
-            x509.DirectoryName(x509_name("/C=AT/CN=example.com")),
+            directory_name,
             x509.RFC822Name("user@example.com"),
             x509.IPAddress(ipaddress.IPv6Address("fd00::1")),
             dns("test-models.certificatetests.test-subject-alternative-name.example.com"),
