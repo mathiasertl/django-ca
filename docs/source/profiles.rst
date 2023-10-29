@@ -54,17 +54,37 @@ Configure profiles
 
 You can add new profiles with the :ref:`CA_PROFILES <settings-ca-profiles>` setting. The setting a dictionary
 with the key identifying the certificate and the values configuring various aspects of certificates signed
-using this profile. A simple profile might look like this::
+using this profile. A simple profile might look like this:
 
-   CA_PROFILES = {
-       'example': {  # actually a duplicate of the predefined "client" profile
-           'description': _('An example profile.'),
-           'extensions': {
-               'key_usage': {'value': ['digitalSignature']},
-               'extended_key_usage': {'value': ['clientAuth']},
-           },
-       },
-   }
+.. tab:: Python
+
+   .. code-block:: python
+
+      CA_PROFILES = {
+          'example': {  # actually a duplicate of the predefined "client" profile
+              'description': _('An example profile.'),
+              'extensions': {
+                  'key_usage': {'value': ['digitalSignature']},
+                  'extended_key_usage': {'value': ['clientAuth']},
+              },
+          },
+      }
+
+.. tab:: YAML
+
+   .. code-block:: YAML
+
+      CA_PROFILES:
+        example:
+          description: An example profile
+          extensions:
+            key_usage:
+              value:
+                - digitalSignature
+            extended_key_usage:
+              value:
+                - clientAuth
+              
 
 After defining a profile, it can be immediately used with the Python API, the Admin web interface (WSGI
 servers typically need to reload the code to see the new profile) or the command line:
@@ -135,10 +155,10 @@ When issuing certificates via the command line or the admin interface, the given
 subject of the profile, with explicitly given values taking precedence. As an example, given a profile
 defining this subject::
 
-    "subject": {
+    "subject": (
         ("C", "AT"),
         ("ST", "Vienna"),
-    }
+    )
 
 ... signing a certificate with ``manage.py sign_cert --subject=/CN=example.com`` will give the certificate
 a subject of ``/C=AT/ST=Vienna/CN=example.com``. If you sign with

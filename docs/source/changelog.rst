@@ -11,6 +11,10 @@ ChangeLog
 ************
 
 * Add support for Python 3.12.
+* :ref:`settings-ca-default-subject`, :ref:`subjects in profiles <profiles-subject>` and
+  :ref:`settings-ca-default-name-order` now also support a dotted string to include arbitrary object
+  identifiers.
+* :ref:`settings-ca-default-name-order` can now be configured in YAML files.
 
 Backwards incompatible changes
 ==============================

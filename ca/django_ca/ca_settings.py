@@ -72,7 +72,10 @@ def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
         try:
             return constants.NAME_OID_TYPES[value]
         except KeyError as kex:
-            raise ImproperlyConfigured(f"{kex.args[0]}: Unknown attribute type.") from kex
+            try:
+                return x509.ObjectIdentifier(value)
+            except ValueError as vex:
+                raise ImproperlyConfigured(f"{kex.args[0]}: Unknown attribute type.") from vex
 
     raise ImproperlyConfigured(f"{value}: Must be a x509.ObjectIdentifier or str.")
 
@@ -242,7 +245,7 @@ _CA_DEFAULT_NAME_ORDER = (
 CA_DEFAULT_NAME_ORDER: Tuple[x509.ObjectIdentifier, ...] = getattr(
     settings, "CA_DEFAULT_NAME_ORDER", _CA_DEFAULT_NAME_ORDER
 )
-if not isinstance(CA_DEFAULT_NAME_ORDER, tuple):
+if not isinstance(CA_DEFAULT_NAME_ORDER, (list, tuple)):
     raise ImproperlyConfigured("CA_DEFAULT_NAME_ORDER: setting must be a tuple.")
 CA_DEFAULT_NAME_ORDER = tuple(_normalize_name_oid(name_oid) for name_oid in CA_DEFAULT_NAME_ORDER)
 
