@@ -350,6 +350,7 @@ def parse_name_x509(name: ParsableName) -> Tuple[x509.NameAttribute, ...]:
         # TYPE NOTE: mypy detects t.split() as Tuple[str, ...] and does not recognize the maxsplit parameter
         name = tuple(tuple(t.split("=", 1)) for t in split_str(name.strip(), "/"))  # type: ignore[misc]
 
+    # TODO: allow dotted strings!
     try:
         items = tuple((NAME_CASE_MAPPINGS[t[0].strip().upper()], t[1].strip()) for t in name)
     except KeyError as e:

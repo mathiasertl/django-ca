@@ -36,7 +36,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import override_tmpcadir
-from django_ca.utils import serialize_name, x509_name
+from django_ca.utils import serialize_name
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
@@ -47,13 +47,13 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     @classmethod
     def create_csr(
-        cls, subject: str
+        cls, subject: x509.Name
     ) -> Tuple[CertificateIssuerPrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
         builder = x509.CertificateSigningRequestBuilder()
 
-        builder = builder.subject_name(x509_name(subject))
+        builder = builder.subject_name(subject)
         builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
         request = builder.sign(private_key, hashes.SHA256())
 
@@ -74,12 +74,14 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
+        self.maxDiff = None
         subject = [
-            (f, "AT" if f in ("countryName", "jurisdictionCountryName") else f"test-{f}")
-            for f in constants.NAME_OID_NAMES.values()
+            x509.NameAttribute(
+                oid=oid, value="AT" if name in ("countryName", "jurisdictionCountryName") else f"test-{name}"
+            )
+            for oid, name in constants.NAME_OID_NAMES.items()
         ]
-        subject_strs = [f"{k}={v}" for k, v in sorted(subject)]
-        csr = self.create_csr("/".join(subject_strs))[1]
+        csr = self.create_csr(x509.Name(sorted(subject, key=lambda attr: attr.oid.dotted_string)))[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
 
         response = self.client.post(
@@ -87,17 +89,13 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
         self.assertEqual(response.status_code, 200, response.json())
         expected = [
-            {"key": NameOID.BUSINESS_CATEGORY.dotted_string, "value": "test-businessCategory"},
-            {"key": NameOID.COMMON_NAME.dotted_string, "value": "test-commonName"},
-            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
+            {"key": NameOID.USER_ID.dotted_string, "value": "test-uid"},
             {"key": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-domainComponent"},
-            {"key": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
-            {"key": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
-            {"key": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
-            {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"},
+            {"key": NameOID.OGRN.dotted_string, "value": "test-ogrn"},
+            {"key": NameOID.SNILS.dotted_string, "value": "test-snils"},
             {"key": NameOID.INN.dotted_string, "value": "test-inn"},
-            {"key": NameOID.JURISDICTION_COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"key": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
+            {"key": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
             {
                 "key": NameOID.JURISDICTION_LOCALITY_NAME.dotted_string,
                 "value": "test-jurisdictionLocalityName",
@@ -106,22 +104,27 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 "key": NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME.dotted_string,
                 "value": "test-jurisdictionStateOrProvinceName",
             },
-            {"key": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
-            {"key": NameOID.OGRN.dotted_string, "value": "test-ogrn"},
+            {"key": NameOID.JURISDICTION_COUNTRY_NAME.dotted_string, "value": "AT"},
             {"key": NameOID.ORGANIZATION_NAME.dotted_string, "value": "test-organizationName"},
             {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "test-organizationalUnitName"},
+            {"key": NameOID.TITLE.dotted_string, "value": "test-title"},
+            {"key": NameOID.BUSINESS_CATEGORY.dotted_string, "value": "test-businessCategory"},
             {"key": NameOID.POSTAL_ADDRESS.dotted_string, "value": "test-postalAddress"},
             {"key": NameOID.POSTAL_CODE.dotted_string, "value": "test-postalCode"},
-            {"key": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
+            {"key": NameOID.COMMON_NAME.dotted_string, "value": "test-commonName"},
+            {"key": NameOID.SURNAME.dotted_string, "value": "test-surname"},
+            {"key": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
+            {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"},
+            {"key": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
+            {"key": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "test-x500UniqueIdentifier"},
+            {"key": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
             {"key": NameOID.SERIAL_NUMBER.dotted_string, "value": "test-serialNumber"},
-            {"key": NameOID.SNILS.dotted_string, "value": "test-snils"},
+            # tmp
+            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"key": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
+            {"key": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
             {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-stateOrProvinceName"},
             {"key": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
-            {"key": NameOID.SURNAME.dotted_string, "value": "test-surname"},
-            {"key": NameOID.TITLE.dotted_string, "value": "test-title"},
-            {"key": NameOID.USER_ID.dotted_string, "value": "test-uid"},
-            {"key": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
-            {"key": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "test-x500UniqueIdentifier"},
         ]
 
         self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})

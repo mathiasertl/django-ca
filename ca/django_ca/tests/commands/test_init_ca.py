@@ -54,7 +54,7 @@ from django_ca.tests.base.utils import (
     subject_alternative_name,
     uri,
 )
-from django_ca.utils import get_crl_cache_key, int_to_hex, x509_name
+from django_ca.utils import get_crl_cache_key, int_to_hex
 
 
 class InitCATest(TestCaseMixin, TestCase):
@@ -121,14 +121,14 @@ class InitCATest(TestCaseMixin, TestCase):
 
         self.assertEqual(
             ca.pub.loaded.subject,
-            x509_name(
+            x509.Name(
                 [
-                    ("C", "AT"),
-                    ("ST", "Vienna"),
-                    ("L", "Vienna"),
-                    ("O", "Org"),
-                    ("OU", "OrgUnit"),
-                    ("CN", name),
+                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="AT"),
+                    x509.NameAttribute(oid=NameOID.STATE_OR_PROVINCE_NAME, value="Vienna"),
+                    x509.NameAttribute(oid=NameOID.LOCALITY_NAME, value="Vienna"),
+                    x509.NameAttribute(oid=NameOID.ORGANIZATION_NAME, value="Org"),
+                    x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OrgUnit"),
+                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=name),
                 ]
             ),
         )

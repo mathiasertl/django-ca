@@ -66,7 +66,7 @@ from django_ca.tests.base.utils import (
     uri,
 )
 from django_ca.typehints import SerializedExtension
-from django_ca.utils import ca_storage, x509_name
+from django_ca.utils import ca_storage
 
 
 @freeze_time(TIMESTAMPS["after_child"])
@@ -144,7 +144,15 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
+        self.assertEqual(
+            cert.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=cname),
+                ]
+            ),
+        )
         self.assertIssuer(ca, cert)
         self.assertExtensions(
             cert,
@@ -518,7 +526,15 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
+        self.assertEqual(
+            cert.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=cname),
+                ]
+            ),
+        )
         self.assertIssuer(ca, cert)
         self.assertEqual(cert.ca, ca)
         self.assertEqual(cert.csr.pem, csr)
@@ -650,7 +666,15 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         self.assertPostIssueCert(post, cert)
-        self.assertEqual(cert.pub.loaded.subject, x509_name([("C", "US"), ("CN", cname)]))
+        self.assertEqual(
+            cert.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=cname),
+                ]
+            ),
+        )
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
 
