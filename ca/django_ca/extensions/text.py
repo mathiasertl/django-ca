@@ -19,7 +19,7 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django_ca import typehints
-from django_ca.constants import EXTENDED_KEY_USAGE_NAMES
+from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, NAME_OID_DISPLAY_NAMES
 from django_ca.extensions.utils import key_usage_items, signed_certificate_timestamp_values
 from django_ca.utils import bytes_to_hex, format_general_name, format_name
 
@@ -103,7 +103,12 @@ def _distribution_points_as_text(value: typehints.CRLExtensionType) -> str:
             lines.append("  * Full Name:")
             lines += [f"    * {format_general_name(name)}" for name in distribution_point.full_name]
         elif distribution_point.relative_name:
-            lines.append(f"  * Relative Name: {format_name(distribution_point.relative_name)}")
+            lines.append("  * Relative Name:")
+            lines += [
+                f"    * {NAME_OID_DISPLAY_NAMES[attr.oid]}: {attr.value}"
+                for attr in distribution_point.relative_name
+            ]
+
         else:  # pragma: no cover; either full_name or relative_name must be not-None.
             raise ValueError("Either full_name or relative_name must be not None.")
 

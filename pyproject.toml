@@ -416,6 +416,8 @@ filterwarnings = [
     "ignore:django.core.files.storage.get_storage_class is deprecated::django",
 
     # pyOpenSSL>=23.3.0 raises this warning, acme==2.7.3 still uses the deprecated APIs.
+    # acme uses X509Extension in acme.crypto_util.gen_ss_cert(). See also:
+    #   https://github.com/certbot/certbot/issues/9828
     "ignore:^X509Extension support in pyOpenSSL is deprecated\\. You should use the APIs in cryptography\\.$::acme",
 ]
 

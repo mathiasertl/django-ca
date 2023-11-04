@@ -351,6 +351,25 @@ NAME_OID_NAMES = MappingProxyType(
     }
 )
 
+RFC4514_NAME_OVERRIDES = MappingProxyType(
+    {
+        k: v
+        for k, v in NAME_OID_NAMES.items()
+        if k
+        not in (
+            NameOID.COMMON_NAME,
+            NameOID.LOCALITY_NAME,
+            NameOID.STATE_OR_PROVINCE_NAME,
+            NameOID.ORGANIZATION_NAME,
+            NameOID.ORGANIZATIONAL_UNIT_NAME,
+            NameOID.COUNTRY_NAME,
+            NameOID.STREET_ADDRESS,
+            NameOID.DOMAIN_COMPONENT,
+            NameOID.USER_ID,
+        )
+    }
+)
+
 
 NAME_OID_SHORTCUTS = MappingProxyType(
     {

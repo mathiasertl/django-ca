@@ -38,7 +38,11 @@ from django_ca.typehints import (
     ParsableSubjectKeyIdentifier,
     ParsableUserNotice,
 )
-from django_ca.utils import hex_to_bytes, parse_general_name, x509_relative_name
+from django_ca.utils import (
+    hex_to_bytes,
+    parse_general_name,
+    parse_serialized_name_attributes,
+)
 
 ##########################################
 # Parsers for sub-elements of extensions #
@@ -109,11 +113,13 @@ def _parse_distribution_points(
             if unparsed_full_name is not None:
                 full_name = [parse_general_name(name) for name in unparsed_full_name]
 
-            if dpoint.get("relative_name"):
-                if isinstance(dpoint["relative_name"], x509.RelativeDistinguishedName):
-                    relative_name = dpoint["relative_name"]
+            if raw_relative_name := dpoint.get("relative_name"):
+                if isinstance(raw_relative_name, x509.RelativeDistinguishedName):
+                    relative_name = raw_relative_name
                 else:
-                    relative_name = x509_relative_name(dpoint["relative_name"])
+                    relative_name = x509.RelativeDistinguishedName(
+                        parse_serialized_name_attributes(raw_relative_name)
+                    )
 
             if dpoint.get("crl_issuer"):
                 crl_issuer = [parse_general_name(name) for name in dpoint["crl_issuer"]]

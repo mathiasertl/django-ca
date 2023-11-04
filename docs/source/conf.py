@@ -365,6 +365,8 @@ rst_epilog = f"""
 .. |minimum-python| replace:: {config.PYTHON_RELEASES[0]}
 .. |Extension| replace:: :py:class:`~cg:cryptography.x509.Extension`
 .. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
+.. |Name| replace:: :py:class:`~cg:cryptography.x509.Name`
+.. |RelativeDistinguishedName| replace:: :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`
 """
 
 html_theme = "sphinx_rtd_theme"

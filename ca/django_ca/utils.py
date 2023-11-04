@@ -37,6 +37,7 @@ from django.core.validators import URLValidator
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
+from django_ca.constants import NAME_OID_DISPLAY_NAMES
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -152,6 +153,32 @@ def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> st
     return f"/{values}"
 
 
+def format_name_rfc4514(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
+    """Format the given (relative distinguished) name as RFC4514 compatible string.
+
+    This adds OIDs from :py:attr:`~django_ca.constants.NAME_OID_NAMES` to the output string.
+
+    >>> format_name_rfc4514(
+    ...     x509.Name(
+    ...         [
+    ...             x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+    ...             x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
+    ...             x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
+    ...         ]
+    ...     )
+    ... )
+    'emailAddress=user@example.com,CN=example.com,C=AT'
+
+    """
+    return subject.rfc4514_string(attr_name_overrides=constants.RFC4514_NAME_OVERRIDES)
+
+
+def serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
+    if isinstance(name_attribute.value, bytes):
+        return bytes_to_hex(name_attribute.value)
+    return name_attribute.value
+
+
 def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> SerializedName:
     """Serialize a :py:class:`~cg:cryptography.x509.Name`.
 
@@ -170,13 +197,54 @@ def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> Se
         ... ]))
         [{'oid': '2.5.4.6', 'value': 'AT'}, {'oid': '2.5.4.3', 'value': 'example.com'}]
     """
-    items: SerializedName = []
-    for attr in name:
-        value = attr.value
-        if isinstance(value, bytes):
-            value = bytes_to_hex(value)
-        items.append({"oid": attr.oid.dotted_string, "value": value})
-    return items
+    return [{"oid": attr.oid.dotted_string, "value": serialize_name_attribute_value(attr)} for attr in name]
+
+
+def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> List[Tuple[str, str]]:
+    """Convert a |Name| or |RelativeDistinguishedName| into a list of key/value pairs for display.
+
+    This function is used as a helper function to loop over the elements of a name to prepare them for
+    consistent display.
+
+    The function converts the OID into a readable string (e.g. "commonName (CN)") with any unknown OIDs
+    converted to a dotted string. If the value is not a string, it is converted to a hex string.
+
+    >>> name_for_display(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
+    [('commonName (CN)', 'example.com')]
+    """
+    return [
+        (NAME_OID_DISPLAY_NAMES.get(attr.oid, attr.oid.dotted_string), serialize_name_attribute_value(attr))
+        for attr in name
+    ]
+
+
+def parse_serialized_name_attributes(name: SerializedName) -> List[x509.NameAttribute]:
+    """Parse a serialized list of name attributes into a list of NameAttributes.
+
+    This function takes care of parsing hex-encoded byte values name attributes that are known to use bytes
+    (currently only :py:attr:`NameOID.X500_UNIQUE_IDENTIFIER
+    <cg:cryptography.x509.oid.NameOID.X500_UNIQUE_IDENTIFIER>`).
+
+    >>> parse_serialized_name_attributes([{"oid": "2.5.4.3", "value": "example.com"}])
+    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
+
+    This function is more or less the inverse of :py:func:`~django_ca.utils.serialize_name`, except that it
+    returns a list of :py:class:`~cg:cryptography.x509.NameAttribute` instances (``serialize_name()`` takes a
+    :py:class:`~cg:cryptography.x509.Name` or :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`)
+    and byte-values for unknown OIDs will **not** be correctly parsed.
+    """
+    attrs: List[x509.NameAttribute] = []
+    for attr_dict in name:
+        oid = x509.ObjectIdentifier(attr_dict["oid"])
+        raw_value = attr_dict["value"]
+
+        if oid == NameOID.X500_UNIQUE_IDENTIFIER:
+            value: Union[str, bytes] = hex_to_bytes(raw_value)
+        else:
+            value = raw_value
+
+        attrs.append(x509.NameAttribute(oid=oid, value=value))
+    return attrs
 
 
 def format_general_name(name: x509.GeneralName) -> str:

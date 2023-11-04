@@ -37,7 +37,7 @@ from django_ca.typehints import (
     SerializedPolicyQualifiers,
     SerializedUserNotice,
 )
-from django_ca.utils import bytes_to_hex, format_general_name, format_name
+from django_ca.utils import bytes_to_hex, format_general_name, serialize_name
 
 
 def _authority_information_access_serialized(
@@ -118,7 +118,7 @@ def _distribution_points_serialized(
         if distribution_point.full_name:
             point["full_name"] = [format_general_name(name) for name in distribution_point.full_name]
         elif distribution_point.relative_name:  # pragma: no branch  # Distribution Point has only these two
-            point["relative_name"] = format_name(distribution_point.relative_name)
+            point["relative_name"] = serialize_name(distribution_point.relative_name)
 
         if distribution_point.crl_issuer:
             point["crl_issuer"] = [format_general_name(name) for name in distribution_point.crl_issuer]

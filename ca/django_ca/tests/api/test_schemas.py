@@ -20,7 +20,7 @@ from cryptography.x509.oid import NameOID
 
 import pytest
 
-from django_ca.api.schemas import NameAttributeSchema
+from django_ca.api.extension_schemas import NameAttributeSchema
 
 
 @pytest.mark.parametrize(

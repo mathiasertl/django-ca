@@ -1,5 +1,5 @@
 {% extends "django_ca/admin/extensions/base/base.html" %}
-{% load django_ca %}
+{% load django_ca i18n %}
 
 {% block content %}
 {% for dp in value %}
@@ -9,7 +9,16 @@
       <li>Full Name: {{ dp.full_name|format_general_names|join:", " }}</li>
     {% endif %}
     {% if dp.relative_name %}
-      <li>Relative Name: {{ dp.relative_name|format_name }}</li>
+      <li>Relative Name:
+        {# TODO: duplicate of x509_name.html #}
+        <ul>
+              {% for key, value in dp.relative_name|name_for_display %}
+              <li>{{ key }}: {{ value }}</li>
+              {% empty %}
+              {% translate "Empty name" %}
+              {% endfor %}
+        </ul>
+      </li>
     {% endif %}
     {% if dp.crl_issuer %}
       <li>CRL Issuer: {{ dp.crl_issuer|format_general_names|join:", " }}</li>

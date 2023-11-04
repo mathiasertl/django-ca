@@ -46,7 +46,7 @@ from django_ca.models import (
 )
 from django_ca.profiles import profiles
 from django_ca.typehints import AllowedHashTypes, ParsableKeyType, SerializedObjectIdentifier
-from django_ca.utils import parse_general_name
+from django_ca.utils import parse_general_name, parse_serialized_name_attributes
 
 log = logging.getLogger(__name__)
 
@@ -175,9 +175,8 @@ def sign_certificate(  # pylint: disable=too-many-locals
 
     parsed_algorithm = parsed_expires = None
     parsed_csr = x509.load_pem_x509_csr(csr.encode())
-    parsed_subject = x509.Name(
-        [x509.NameAttribute(oid=x509.ObjectIdentifier(attr["oid"]), value=attr["value"]) for attr in subject]
-    )
+    parsed_subject = x509.Name(parse_serialized_name_attributes(subject))
+
     if algorithm is not None:
         parsed_algorithm = constants.HASH_ALGORITHM_TYPES[algorithm]()
     if expires is not None:

@@ -25,12 +25,12 @@ from django.utils.translation import gettext as _
 
 from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_CRITICAL_HELP, EXTENSION_RFC_DEFINITION
 from django_ca.extensions.utils import key_usage_items, signed_certificate_timestamp_values
-from django_ca.utils import add_colons, bytes_to_hex, format_general_name, format_name, int_to_hex
+from django_ca.utils import add_colons, bytes_to_hex, format_general_name, int_to_hex, name_for_display
 
 register = template.Library()
 
 
-register.filter("format_name", format_name)
+register.filter("name_for_display", name_for_display)
 register.filter("key_usage_items", key_usage_items)
 register.filter("signed_certificate_timestamp_values", signed_certificate_timestamp_values)
 

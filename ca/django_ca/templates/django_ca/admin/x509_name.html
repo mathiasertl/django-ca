@@ -1,4 +1,7 @@
-{% load i18n %}
+{% load i18n %}{% comment %}
+Display an x509 name as a list of key/value pairs. {{ name }} is the utils.name_for_display() value of an
+x509.Name instance.
+{% endcomment %}
 <span class="django-ca-extension">
     <div class="django-ca-extension-value">
         <ul>
