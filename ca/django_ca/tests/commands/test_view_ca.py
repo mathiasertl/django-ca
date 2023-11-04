@@ -148,9 +148,11 @@ Digest:
 {pub[pem]}""",
     "child": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): child.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): root.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -460,9 +462,17 @@ Digest:
 {pub[pem]}""",
     "digicert_ev_root": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert High Assurance EV Root CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert High Assurance EV Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -499,9 +509,19 @@ Digest:
 {pub[pem]}""",
     "comodo": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO RSA Certification Authority
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO RSA Certification Authority
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -614,9 +634,19 @@ Digest:
 {pub[pem]}""",
     "comodo_dv": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO RSA Domain Validation Secure Server CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO RSA Certification Authority
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -743,9 +773,19 @@ Digest:
 {pub[pem]}""",
     "comodo_ev": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO RSA Extended Validation Secure Server CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO RSA Certification Authority
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -1322,9 +1362,17 @@ Digest:
 {pub[pem]}""",
     "digicert_global_root": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert Global Root CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert Global Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -1422,6 +1470,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
+        self.maxDiff = None
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
             data = self.get_cert_context(name)

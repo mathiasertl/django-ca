@@ -99,6 +99,7 @@ def sign_certificate(
     # Issue a signing request
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         response = request(client, data)
+        assert response.status_code == HTTPStatus.OK, response.content
 
         # Get order before on_commit callbacks are called to test pending state
         order: CertificateOrder = CertificateOrder.objects.get(certificate_authority=ca)
@@ -110,7 +111,6 @@ def sign_certificate(
     assert len(callbacks) == 1
 
     # Test that the response looks okay
-    assert response.status_code == HTTPStatus.OK, response.content
     expected_response["slug"] = order.slug
     assert response.json() == expected_response
 
@@ -280,7 +280,11 @@ def test_sign_certificate_with_extensions(
                             "crl_issuer": ["http://api.crl2.example.com"],
                             "reasons": ["keyCompromise"],
                         },
-                        {"relative_name": "/CN=example.com"},
+                        {
+                            "relative_name": [
+                                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
+                            ]
+                        },
                     ]
                 },
                 "extended_key_usage": {"value": ["serverAuth", "1.2.3"]},
@@ -409,7 +413,9 @@ def test_crldp_with_full_name_and_relative_name(api_client: Client) -> None:
                     "value": [
                         {
                             "full_name": ["http://api.crl1.example.com"],
-                            "relative_name": "/CN=example.com",
+                            "relative_name": [
+                                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
+                            ],
                         },
                     ]
                 },

@@ -29,7 +29,12 @@ from django_ca.extensions.utils import extension_as_admin_html
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin, TestCaseProtocol
 from django_ca.tests.base.utils import dns, rdn, uri
-from django_ca.typehints import CRLExtensionType, ParsableDistributionPoint, ParsablePolicyInformation
+from django_ca.typehints import (
+    CRLExtensionType,
+    ParsableDistributionPoint,
+    ParsablePolicyInformation,
+    SerializedObjectIdentifier,
+)
 
 _ExtensionExampleDict = typing.TypedDict(
     "_ExtensionExampleDict",
@@ -131,7 +136,9 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     uri2 = "http://ca.example.net/crl"
     uri3 = "http://ca.example.com/"
     dns1 = "example.org"
-    rdn1 = "/CN=example.com"
+    rdn1: List[SerializedObjectIdentifier] = [
+        {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
+    ]
 
     s1: ParsableDistributionPoint = {"full_name": [f"URI:{uri1}"]}
     s2: ParsableDistributionPoint = {"full_name": [f"URI:{uri1}", f"DNS:{dns1}"]}
@@ -148,6 +155,7 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     }
 
     cg_rdn1 = rdn([(NameOID.COMMON_NAME, "example.com")])
+    serialized_rdn1 = cg_rdn1.rfc4514_string()  # no need for formatting function in utils for simple case
 
     cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
     cg_dp2 = x509.DistributionPoint(
@@ -199,14 +207,14 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}\n    * DNS:{self.dns1}",
             },
             "rdn": {
-                "admin_html": f"""DistributionPoint:
+                "admin_html": """DistributionPoint:
   <ul>
-      <li>Relative Name: {self.rdn1}</li>
+      <li>Relative Name:<ul><li>commonName (CN): example.com</li></ul></li>
   </ul>""",
                 "serialized_alternatives": [[self.s3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
                 "serialized": [self.s3],
                 "extension_type": self.cg_dps3,
-                "text": f"* DistributionPoint:\n  * Relative Name: {self.rdn1}",
+                "text": "* DistributionPoint:\n  * Relative Name:\n    * commonName (CN): example.com",
             },
             "adv": {
                 "admin_html": f"""DistributionPoint:

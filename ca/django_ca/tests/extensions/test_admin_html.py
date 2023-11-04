@@ -261,7 +261,7 @@ DistributionPoint:
 
 DistributionPoint:
 <ul>
-  <li>Relative Name: /CN=rdn.ca.example.com</li>
+  <li>Relative Name: <ul><li>commonName (CN): rdn.ca.example.com</li></ul></li>
   <li>CRL Issuer: URI:http://crl.ca.example.com, URI:http://crl.ca.example.net</li>
   <li>Reasons: ca_compromise, key_compromise</li>
 </ul>""",

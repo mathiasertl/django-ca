@@ -79,7 +79,7 @@ from django_ca.profiles import profiles
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import CRLExtensionType, X509CertMixinTypeVar
-from django_ca.utils import SERIAL_RE, add_colons
+from django_ca.utils import SERIAL_RE, add_colons, name_for_display
 
 log = logging.getLogger(__name__)
 
@@ -234,7 +234,7 @@ class CertificateMixin(
     @admin.display(description=_("Issuer"))
     def issuer_field(self, obj: X509CertMixinTypeVar) -> str:
         """Display the issuer as list."""
-        name = [(constants.NAME_OID_DISPLAY_NAMES[attr.oid], attr.value) for attr in obj.issuer]
+        name = name_for_display(obj.issuer)
         return render_to_string("django_ca/admin/x509_name.html", context={"name": name})
 
     def serial_field(self, obj: X509CertMixinTypeVar) -> str:
@@ -247,7 +247,7 @@ class CertificateMixin(
     @admin.display(description=_("Subject"))
     def subject_field(self, obj: X509CertMixinTypeVar) -> str:
         """Display the subject as list."""
-        name = [(constants.NAME_OID_DISPLAY_NAMES[attr.oid], attr.value) for attr in obj.subject]
+        name = name_for_display(obj.subject)
         return render_to_string("django_ca/admin/x509_name.html", context={"name": name})
 
     def get_search_results(

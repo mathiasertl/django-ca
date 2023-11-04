@@ -136,7 +136,7 @@ ParsableDistributionPoint = typing.TypedDict(
     "ParsableDistributionPoint",
     {
         "full_name": Optional[ParsableGeneralNameList],
-        "relative_name": Union[str, x509.RelativeDistinguishedName],
+        "relative_name": Union[SerializedName, x509.RelativeDistinguishedName],
         "crl_issuer": ParsableGeneralNameList,
         "reasons": Iterable[Union[str, x509.ReasonFlags]],
     },
@@ -255,7 +255,7 @@ SerializedDistributionPoint = typing.TypedDict(
     "SerializedDistributionPoint",
     {
         "full_name": List[str],
-        "relative_name": str,
+        "relative_name": SerializedName,
         "crl_issuer": List[str],
         "reasons": List[str],
     },

@@ -40,7 +40,7 @@ from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ExtensionMapping
-from django_ca.utils import add_colons, format_name
+from django_ca.utils import add_colons, name_for_display
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -543,11 +543,24 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         else:
             self.stdout.write("* Status: Valid")
 
+    def output_name(self, name: x509.Name, indent: str = "  ") -> None:
+        for key, value in name_for_display(name):
+            self.stdout.write(f"{indent}* {key}: {value}")
+
     def output_header(self, cert: X509CertMixin) -> None:
         """Output basic certificate information."""
-        self.stdout.write(f"* Subject: {format_name(cert.subject)}")
+        if cert.subject:
+            self.stdout.write("* Subject:")
+            self.output_name(cert.subject)
+        else:
+            self.stdout.write("* Subject: (empty)")
+
         self.stdout.write(f"* Serial: {add_colons(cert.serial)}")
-        self.stdout.write(f"* Issuer: {format_name(cert.issuer)}")
+        if cert.issuer:
+            self.stdout.write("* Issuer:")
+            self.output_name(cert.issuer)
+        else:
+            self.stdout.write("* Issuer: (empty)")
         self.stdout.write(f"* Valid from: {cert.not_before.isoformat(' ')}")
         self.stdout.write(f"* Valid until: {cert.not_after.isoformat(' ')}")
         self.output_status(cert)
